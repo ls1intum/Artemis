@@ -815,36 +815,25 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Finds the id of the latest result of a participation that a student is allowed to see. A result is visible when it is automatic (including Athena automatic feedback), or
-     * when
-     * it is a completed manual assessment whose exercise has no assessment due date or one that has already passed. "Latest" is the highest id among the visible results, which is
-     * the
-     * single-row equivalent of the release gate the student-facing retrieval endpoints use ({@link #findLatestResultWithFeedbacksBySubmissionId}); it prevents the score of a
-     * not-yet-released manual assessment from leaking while still falling back to an earlier automatic result. Only the id is selected so no result entity (and no eagerly fetched
-     * submission) is materialized for the discarded history. The exam-specific hiding is applied separately by the caller before this query runs.
+     * Finds the id of the latest result a student may see for a participation (the highest visible result id), or empty if none is visible. A result is visible when it is
+     * automatic
+     * (including Athena) or a completed manual assessment whose assessment due date is unset or has passed, mirroring {@link #findLatestResultWithFeedbacksBySubmissionId}.
+     * Selecting
+     * only the id avoids materializing the discarded result history; exam hiding is applied by the caller beforehand.
      *
-     * @param participationId the id of the participation to load the latest visible result id for
-     * @param dateTime        the reference time the assessment due date is compared against (usually now)
-     * @return the id of the latest visible result of the participation, or an empty optional if none is visible
+     * @param participationId the participation to load the latest visible result id for
+     * @param dateTime        the reference time compared against the assessment due date (usually now)
+     * @return the latest visible result id, or empty if none is visible
      */
     @Query("""
-            SELECT r.id
-            FROM Result r
-            WHERE r.id = (
-                SELECT MAX(r2.id)
-                FROM Result r2
-                    JOIN r2.submission s2
-                    JOIN s2.participation p2
-                    LEFT JOIN p2.exercise e2
-                WHERE p2.id = :participationId
-                    AND (
-                        r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                        OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
-                        OR (
-                            r2.completionDate IS NOT NULL
-                            AND (e2.assessmentDueDate IS NULL OR e2.assessmentDueDate < :dateTime)
-                        )
-                    )
+            SELECT r.id FROM Result r WHERE r.id = (
+                SELECT MAX(r2.id) FROM Result r2
+                    JOIN r2.submission s2 JOIN s2.participation p2 LEFT JOIN p2.exercise e2
+                WHERE p2.id = :participationId AND (
+                    r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                    OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                    OR (r2.completionDate IS NOT NULL AND (e2.assessmentDueDate IS NULL OR e2.assessmentDueDate < :dateTime))
+                )
             )
             """)
     Optional<Long> findLatestVisibleResultIdForParticipation(@Param("participationId") long participationId, @Param("dateTime") ZonedDateTime dateTime);
