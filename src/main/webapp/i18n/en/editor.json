@@ -29,7 +29,7 @@
             "refreshingFiles": "Refreshing...",
             "submit": "Submit",
             "submitDescription": "Stage, commit, push, build and test your changes.",
-            "buildOutput": "&nbsp; Build Output",
+            "buildOutput": "Build Output",
             "building": "Building and testing...",
             "queued": "Queued...",
             "toolTip": "Submissions are first queued and then processed. The estimated time for each step is displayed. Please note that this is an estimate and may vary.",
