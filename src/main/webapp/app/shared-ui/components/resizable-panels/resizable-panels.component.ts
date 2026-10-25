@@ -64,6 +64,14 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      * needs no such bound, as dragging it narrow collapses it (see {@link collapseSnapPercent}). 0 leaves it unbounded.
      */
     readonly leftMinSizePercent = input(0);
+    /**
+     * {@link leftMinSizePercent}, capped so the right panel can still be dragged as wide again as {@link collapseSnapPercent}.
+     * A larger minimum would leave every permitted drag below the threshold, so each drag would close the right panel.
+     */
+    protected readonly effectiveLeftMinSizePercent = computed(() => {
+        const snap = this.collapseSnapPercent();
+        return snap > 0 ? Math.max(0, Math.min(this.leftMinSizePercent(), 100 - 2 * snap)) : this.leftMinSizePercent();
+    });
 
     /**
      * Gutter size (px) of the splitter: the divider between the two panels, as wide as on every other page that divides panels
@@ -109,7 +117,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      * internal buffer, so a drag would silently corrupt the remembered split (a near-zero snap size would leak into
      * savedSizes + localStorage and reopen/reload jammed). Spreading here hands the splitter a throwaway copy.
      */
-    readonly panelSizesForSplitter = computed(() => [...(this.savedSizes() ?? ResizablePanelsComponent.DEFAULT_SIZES)]);
+    readonly panelSizesForSplitter = computed(() => [...(this.savedSizes() ?? this.defaultSizes())]);
 
     private resizeObserver?: ResizeObserver;
     private rightPanelCollapseChangedByUser = false;
@@ -140,7 +148,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         // The splitter refuses every drag that leaves the left panel below its minimum, so a remembered split that is
         // already below it (e.g. saved before the minimum applied) would freeze the slider. Widen it to the minimum.
         effect(() => {
-            this.leftMinSizePercent();
+            this.effectiveLeftMinSizePercent();
             untracked(() => {
                 const sizes = this.savedSizes();
                 if (sizes) {
@@ -221,8 +229,13 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
 
     /** The split itself when its left panel keeps {@link leftMinSizePercent}, otherwise the split widened to it. */
     private withLeftMinSize(sizes: number[]): number[] {
-        const leftMinSize = this.leftMinSizePercent();
+        const leftMinSize = this.effectiveLeftMinSizePercent();
         return sizes[0] >= leftMinSize ? sizes : [leftMinSize, 100 - leftMinSize];
+    }
+
+    /** {@link DEFAULT_SIZES}, widened to {@link leftMinSizePercent}. */
+    private defaultSizes(): number[] {
+        return this.withLeftMinSize(ResizablePanelsComponent.DEFAULT_SIZES);
     }
 
     setActiveRight(value: string | number | undefined): void {
@@ -250,7 +263,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      */
     private restoreUsableSplit(): void {
         const current = this.savedSizes();
-        const usable = current && (current[1] ?? 0) >= this.collapseSnapPercent() ? [...current] : [...ResizablePanelsComponent.DEFAULT_SIZES];
+        const usable = current && (current[1] ?? 0) >= this.collapseSnapPercent() ? [...current] : [...this.defaultSizes()];
         this.savedSizes.set(usable);
 
         // Direct-child combinator: PrimeNG applies the root class to the <p-splitter> host and renders the panel
@@ -289,7 +302,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             // belt-and-suspenders to panelSizesForSplitter's copy, against any near-zero size that aliasing might
             // have left in savedSizes), so reopening/reloading never restores a jammed sliver.
             const remembered = this.savedSizes();
-            const reopenSizes = remembered && (remembered[1] ?? 0) > this.collapseSnapPercent() ? [...remembered] : [...ResizablePanelsComponent.DEFAULT_SIZES];
+            const reopenSizes = remembered && (remembered[1] ?? 0) > this.collapseSnapPercent() ? [...remembered] : [...this.defaultSizes()];
             this.savedSizes.set(reopenSizes);
             this.persistSizes(reopenSizes);
             this.collapseRightPanel();

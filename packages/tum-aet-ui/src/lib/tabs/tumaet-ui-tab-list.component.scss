@@ -2,6 +2,9 @@
     // The scroll buttons take over from the scrollbar, which would otherwise squeeze a thin bar under the tabs
     scrollbar-width: none;
 
+    // Keeps a tab the keyboard scrolls into view clear of the scroll buttons that cover the list's edges
+    scroll-padding-inline: 1.75rem;
+
     &::-webkit-scrollbar {
         display: none;
     }
