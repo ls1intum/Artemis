@@ -53,7 +53,7 @@ buildscript {
         // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
         // this version in sync with the project-level jackson-bom import below. (Jackson 3, group
         // tools.jackson.*, is intentionally not touched.)
-        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.1")
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.4")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -193,8 +193,8 @@ ext["tomcat.version"] = "11.0.25"
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
 dependencyManagement {
     imports {
-        mavenBom "tools.jackson:jackson-bom:3.1.5"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.1"
+        mavenBom "tools.jackson:jackson-bom:3.1.8"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
     }
 }
 
@@ -391,7 +391,7 @@ dependencies {
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
 
-    implementation "org.jsoup:jsoup:1.23.1"
+    implementation "org.jsoup:jsoup:1.23.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.22.0"
 

@@ -7,8 +7,8 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.6.4
-  '@analogjs/vitest-angular': 2.6.4
+  '@analogjs/vite-plugin-angular': 2.7.3
+  '@analogjs/vitest-angular': 2.7.3
   '@arethetypeswrong/cli': 0.18.5
   '@angular-devkit/architect': 0.2201.8
   '@angular-devkit/core': 22.1.8
@@ -27,24 +27,24 @@ catalog:
   '@fortawesome/free-solid-svg-icons': 7.3.1
   '@compodoc/compodoc': 2.0.0
   '@playwright/test': 1.62.1
-  '@storybook/addon-a11y': 10.5.5
-  '@storybook/addon-docs': 10.5.5
-  '@storybook/addon-themes': 10.5.5
-  '@storybook/addon-vitest': 10.5.5
-  '@storybook/angular-vite': 10.5.5
+  '@storybook/addon-a11y': 10.6.2
+  '@storybook/addon-docs': 10.6.2
+  '@storybook/addon-themes': 10.6.2
+  '@storybook/addon-vitest': 10.6.2
+  '@storybook/angular-vite': 10.6.2
   '@tailwindcss/postcss': 4.3.3
   '@types/node': 24.13.3
   '@types/react': 19.2.17
-  '@vitest/browser': 4.1.10
-  '@vitest/browser-playwright': 4.1.10
-  '@vitest/coverage-istanbul': 4.1.10
-  '@vitest/coverage-v8': 4.1.10
+  '@vitest/browser': 4.1.12
+  '@vitest/browser-playwright': 4.1.12
+  '@vitest/coverage-istanbul': 4.1.12
+  '@vitest/coverage-v8': 4.1.12
   chokidar: 5.0.0
   concurrently: 10.0.4
   cross-env: 10.1.0
   dayjs: 1.11.23
   eslint: 10.8.0
-  eslint-plugin-storybook: 10.5.5
+  eslint-plugin-storybook: 10.6.2
   jsdom: 30.0.1
   lodash-es: 4.18.1
   ng-packagr: 22.1.1
@@ -55,13 +55,13 @@ catalog:
   rxjs: 7.8.2
   sass: 1.104.1
   semver: 7.8.5
-  storybook: 10.5.5
+  storybook: 10.6.2
   stylelint: 17.14.1
   tailwindcss: 4.3.3
   tslib: 2.8.1
   typescript: 6.0.3
-  vite: 8.1.5
-  vitest: 4.1.10
+  vite: 8.1.6
+  vitest: 4.1.12
   yaml: 2.9.1
   zone.js: 0.16.3
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
@@ -134,25 +134,29 @@ overrides:
   '@primeuix/styled': '0.7.4'
   '@primeuix/utils': '0.7.2'
   '@sinonjs/fake-timers': '15.4.0'
+  # Keep the CLI's MCP SDK on its compatible 1.x line and Zod on its existing 4.x line.
+  # Chromium tooling still requires Zod 3, so its separate dependency is unaffected.
+  '@modelcontextprotocol/sdk@1.30.0': '1.32.0'
+  'zod@4.4.3': '4.6.6'
   ajv: '8.20.0'
-  brace-expansion: '5.0.9'
+  brace-expansion: '5.0.12'
   braces: '3.0.3'
   cookie: '1.1.1'
   debug: '4.4.3'
   diff: '9.0.0'
-  dompurify: '3.4.13'
+  dompurify: '3.4.17'
   esbuild: '0.28.1'
   express: '5.2.1'
   # Kept on the 3.x line (ajv/fast-json-stringify require ^3).
-  fast-uri: '3.1.5'
+  fast-uri: '3.1.9'
   globals: '17.8.0'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'
-  ip-address: '10.3.1'
+  ip-address: '10.7.4'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
-  js-yaml: '4.3.1'
+  js-yaml: '4.3.2'
   jsdom: '30.0.1'
-  katex: '0.18.1'
+  katex: '0.18.7'
   minimatch: '10.2.6'
   # Reached dev-side via postcss, whose range allows the patched 3.3.17.
   nanoid: '3.3.19'
@@ -165,21 +169,36 @@ overrides:
   react: '19.2.8'
   react-dom: '19.2.8'
   semver: '7.8.5'
-  serialize-javascript: '7.0.7'
-  shell-quote: '1.10.0'
+  serialize-javascript: '7.1.3'
+  shell-quote: '1.11.0'
   tar: '7.5.22'
   tmp: '0.2.7'
   tough-cookie: '6.0.2'
-  undici: '7.29.1'
+  undici: '7.30.1'
   uuid: '14.0.2'
   # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
   # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
-  'vitest>vite': '7.3.6'
-  '@vitest/mocker>vite': '7.3.6'
-  '@analogjs/vite-plugin-angular>vite': '7.3.6'
-  'vite-tsconfig-paths>vite': '7.3.6'
+  'vitest>vite': '7.3.7'
+  '@vitest/mocker>vite': '7.3.7'
+  '@analogjs/vite-plugin-angular>vite': '7.3.7'
+  'vite-tsconfig-paths>vite': '7.3.7'
+  # Security patches within the existing consumers' supported ranges. Version selectors
+  # leave unrelated dependency lines intact.
+  'body-parser@2.3.0': '2.4.0'
+  'colord@2.9.3': '2.9.4'
+  'compression@1.8.1': '1.8.2'
+  'devalue@5.8.1': '5.9.4'
+  'follow-redirects@1.16.0': '1.16.1'
+  'handlebars@4.7.9': '4.7.10'
+  'hono@4.12.34': '4.13.11'
+  'launch-editor@2.14.1': '2.14.2'
+  'postcss-selector-parser@7.1.4': '7.1.6'
+  'proxy-addr@2.0.7': '2.0.8'
+  'qs@6.15.2': '6.16.0'
+  'source-map-js@1.2.1': '1.2.2'
+  'vue@3.5.39': '3.5.42'
   webpack: '5.109.2'
-  webpack-dev-middleware: '7.4.5'
+  webpack-dev-middleware: '7.4.6'
   # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
   webpack-dev-server: '5.2.6'
   word-wrap: '1.2.5'
