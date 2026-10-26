@@ -95,8 +95,10 @@ public interface ContinuousIntegrationTriggerService {
     /**
      * Triggers a build of the given commit, reusing inputs the caller already resolved for the whole exercise.
      * <p>
-     * Unlike {@link #triggerBuild(ProgrammingExerciseParticipation, boolean, SharedBuildTriggerData)}, this does not read the head of the repository at the time of the
-     * trigger, so a caller that already created a submission for a commit gets exactly that commit built even if the repository received another push in the meantime.
+     * Local CI builds exactly that commit, so a caller that already created a submission for it gets that commit built even if the repository received another push in the
+     * meantime. A CI system that cannot pin a commit, such as Jenkins, builds the head of the repository when the build starts, which is the default here. Its result is
+     * matched to the submission of the commit the build reports, so a submission and its result always belong to the same commit; if the head moved on in between, the
+     * result belongs to the submission of the newer commit.
      *
      * @param participation     the participation with the id of the build plan that should be triggered
      * @param commitHash        the commit to build

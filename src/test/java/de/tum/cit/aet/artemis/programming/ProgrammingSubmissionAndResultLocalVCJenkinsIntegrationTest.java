@@ -2,11 +2,22 @@ package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -28,17 +39,23 @@ import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestCaseDTO;
 import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestCaseDetailMessageDTO;
 import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestResultsDTO;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
+import de.tum.cit.aet.artemis.localvc.service.PushProcessingOutcome;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
@@ -46,6 +63,15 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
     @Autowired
     private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private LocalVCServletService localVCServletService;
+
+    @Autowired
+    private ProgrammingTriggerService programmingTriggerService;
 
     private ProgrammingExercise exercise;
 
@@ -68,6 +94,57 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
     @AfterEach
     void tearDown() throws Exception {
         jenkinsRequestMockProvider.reset();
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void aStudentPushBeforeTheStartDateIsDeferredAndItsResultFromJenkinsBelongsToTheStartDateSubmission() throws Exception {
+        String studentLogin = TEST_PREFIX + "student1";
+        ProgrammingExercise earlyAccessExercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+        earlyAccessExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        earlyAccessExercise.setStartDate(ZonedDateTime.now().plusHours(1));
+        earlyAccessExercise.setAllowRepositoryAccessBeforeStartDate(true);
+        programmingExerciseRepository.save(earlyAccessExercise);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, studentLogin);
+        participation.setProgrammingExercise(exercise);
+
+        // The student works on the repository before the start date; the second commit is the one that moves the head past the setup commit
+        var repository = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
+        RepositoryExportTestUtil.writeFilesAndPush(repository, Map.of("first.txt", "first"), "First");
+        String headCommitHash = RepositoryExportTestUtil.writeFilesAndPush(repository, Map.of("second.txt", "second"), "Second").getName();
+        var outcome = localVCServletService.processNewPush(headCommitHash, repository.bareRepository().getRepository(), userUtilService.getUserByLogin(studentLogin),
+                Optional.empty(), Optional.empty(), Optional.empty());
+
+        // Jenkins is not asked to build it, and there is no submission yet
+        assertThat(outcome).isEqualTo(PushProcessingOutcome.DEFERRED_UNTIL_START_DATE);
+        assertThat(submissionRepository.findAllByParticipationIdWithResults(participation.getId())).isEmpty();
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(argThat(p -> p != null && p.getId().equals(participation.getId())), anyBoolean());
+
+        // At the start date, the head gets a submission dated then, and Jenkins builds the plan
+        ZonedDateTime startDate = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS).minusSeconds(1);
+        earlyAccessExercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+        earlyAccessExercise.setStartDate(startDate);
+        programmingExerciseRepository.save(earlyAccessExercise);
+        jenkinsRequestMockProvider.mockTriggerBuild(exercise.getProjectKey(), participation.getBuildPlanId(), false);
+        programmingTriggerService.triggerBuildsForChangesBeforeStartDate(exercise.getId());
+
+        await().untilAsserted(() -> assertThat(submissionRepository.findAllByParticipationIdWithResults(participation.getId())).singleElement()
+                .satisfies(submission -> assertThat(submission.getCommitHash()).isEqualTo(headCommitHash)));
+        var startDateSubmission = submissionRepository.findAllByParticipationIdWithResults(participation.getId()).getFirst();
+        assertThat(startDateSubmission.getSubmissionDate()).isEqualTo(startDate);
+        verify(continuousIntegrationTriggerService, timeout(5000)).triggerBuild(argThat(p -> p.getId().equals(participation.getId())), eq(headCommitHash), eq(RepositoryType.USER),
+                eq(true), any());
+
+        // Jenkins cannot pin the commit and builds the head, and its result is matched to the submission by the commit it reports
+        var repoName = (exercise.getProjectKey() + "-" + studentLogin).toUpperCase(Locale.ROOT);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), studentLogin, ProgrammingLanguage.JAVA, List.of(), List.of(),
+                List.of(new CommitDTO(headCommitHash, repoName, "main")));
+        postResult(notification, HttpStatus.OK);
+
+        assertNoNewSubmissions(participation.getId(), startDateSubmission);
+        assertThat(resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId())).singleElement()
+                .satisfies(result -> assertThat(result.getSubmission().getId()).isEqualTo(startDateSubmission.getId()));
     }
 
     @Test
