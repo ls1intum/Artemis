@@ -479,12 +479,16 @@ export class CommunicationService implements OnDestroy {
             .delete(this.courseId, post)
             .pipe(
                 tap(() => {
-                    this.pendingPostUpdates?.push({ action: CommunicationCrudAction.DELETE, post });
                     const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
                     // Delete the cached post if it still exists (might be already deleted due to WebSocket message)
                     if (indexToUpdate > -1) {
                         this.cachedPosts.splice(indexToUpdate, 1);
                         this.changePostCount(-1);
+                    } else if (post.conversation?.id && this.currentPostContextFilter.conversationIds?.includes(post.conversation.id)) {
+                        this.invalidatePostCountForUnloadedDeletion(post);
+                    }
+                    this.pendingPostUpdates?.push({ action: CommunicationCrudAction.DELETE, post });
+                    if (indexToUpdate > -1) {
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -837,7 +841,6 @@ export class CommunicationService implements OnDestroy {
         }
 
         const previousPostCount = this.cachedPosts.length;
-        if (publish) this.pendingPostUpdates?.push(postDTO);
         postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
         postDTO.post.answers?.forEach((answer: AnswerPost) => {
             answer.creationDate = dayjs(answer.creationDate);
@@ -845,14 +848,8 @@ export class CommunicationService implements OnDestroy {
 
         switch (postDTO.action) {
             case CommunicationCrudAction.CREATE:
-                const isAuthorFilterActive = this.currentPostContextFilter.authorIds && this.currentPostContextFilter.authorIds?.length > 0;
-                const doesNotMatchAuthorFilter = isAuthorFilterActive && postDTO.post.author?.id && !this.currentPostContextFilter.authorIds?.includes(postDTO.post.author?.id);
                 const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
-                const doesNotMatchSearchString =
-                    this.currentPostContextFilter.searchText?.length &&
-                    !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
-
-                if (doesNotMatchAuthorFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
+                if (this.isPostExcludedByAuthorOrSearch(postDTO.post) || doesNotMatchReactedFilter) {
                     break;
                 }
                 // we can add the received conversation message to the cached messages without violating the current context filter setting
@@ -908,6 +905,8 @@ export class CommunicationService implements OnDestroy {
                 const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToDelete > -1) {
                     this.cachedPosts.splice(indexToDelete, 1);
+                } else if (publish) {
+                    this.invalidatePostCountForUnloadedDeletion(postDTO.post);
                 }
                 const currentPinnedPosts = this.pinnedPosts$.getValue();
                 const isPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postDTO.post.id);
@@ -921,6 +920,7 @@ export class CommunicationService implements OnDestroy {
                 break;
         }
         if (publish) {
+            this.pendingPostUpdates?.push(postDTO);
             this.changePostCount(this.cachedPosts.length - previousPostCount);
             this.publishCachedPosts();
         }
@@ -1069,6 +1069,27 @@ export class CommunicationService implements OnDestroy {
             catchError((error) => {
                 return throwError(() => error);
             }),
+        );
+    }
+
+    /** An unloaded deletion cannot prove a count delta; retain only known exclusions and already observed deletions. */
+    private invalidatePostCountForUnloadedDeletion(post: Post): void {
+        if (
+            this.isPostExcludedByAuthorOrSearch(post) ||
+            this.pendingPostUpdates?.some((update) => update.action === CommunicationCrudAction.DELETE && update.post.id === post.id)
+        ) {
+            return;
+        }
+        this.pendingPostCountHistory = undefined;
+        this.cachedPostCountContext = undefined;
+    }
+
+    /** Identifies posts whose author or content proves they do not belong to the current filtered total. */
+    private isPostExcludedByAuthorOrSearch(post: Post): boolean {
+        const { authorIds, searchText } = this.currentPostContextFilter;
+        return !!(
+            (authorIds?.length && post.author?.id && !authorIds.includes(post.author.id)) ||
+            (searchText?.length && !post.content?.toLowerCase().includes(searchText.toLowerCase().trim()))
         );
     }
 
