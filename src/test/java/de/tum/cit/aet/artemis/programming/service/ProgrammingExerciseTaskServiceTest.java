@@ -63,7 +63,7 @@ class ProgrammingExerciseTaskServiceTest {
     }
 
     private void withTestCases(String... names) {
-        Set<ProgrammingExerciseTestCase> testCases = Arrays.stream(names).map(name -> new ProgrammingExerciseTestCase().testName(name).id((long) name.hashCode()))
+        Set<ProgrammingExerciseTestCase> testCases = Arrays.stream(names).map(name -> new ProgrammingExerciseTestCase().testName(name).active(true).id((long) name.hashCode()))
                 .collect(Collectors.toSet());
         when(testCaseRepository.findByExerciseIdAndActive(anyLong(), eq(true))).thenReturn(testCases);
     }
@@ -117,7 +117,7 @@ class ProgrammingExerciseTaskServiceTest {
 
     @Test
     void shouldResolveATestIdReferenceTheSameWayExtractTasksDoes() {
-        ProgrammingExerciseTestCase testCase = new ProgrammingExerciseTestCase().testName("testBubbleSort").id(7L);
+        ProgrammingExerciseTestCase testCase = new ProgrammingExerciseTestCase().testName("testBubbleSort").active(true).id(7L);
         when(testCaseRepository.findByExerciseIdAndActive(anyLong(), eq(true))).thenReturn(Set.of(testCase));
         when(exercise.getProblemStatement()).thenReturn("[task][Sort](<testid>7</testid>)");
 
@@ -132,7 +132,7 @@ class ProgrammingExerciseTaskServiceTest {
      */
     @Test
     void shouldReportAReferenceThatOnlyResolvesToAnInactiveTestCase() {
-        ProgrammingExerciseTestCase renamed = new ProgrammingExerciseTestCase().testName("testLettuceSort").id(2L);
+        ProgrammingExerciseTestCase renamed = new ProgrammingExerciseTestCase().testName("testLettuceSort").active(true).id(2L);
         // The stale "testBubbleSort" row still exists on the exercise, but the current test repository no longer
         // produces it — findByExerciseIdAndActive(.., true) therefore does not return it.
         when(testCaseRepository.findByExerciseIdAndActive(anyLong(), eq(true))).thenReturn(Set.of(renamed));
@@ -156,6 +156,7 @@ class ProgrammingExerciseTaskServiceTest {
         ProgrammingExerciseTestCase testCase1 = mock(ProgrammingExerciseTestCase.class);
         when(testCase1.getId()).thenReturn(1L);
         when(testCase1.getTestName()).thenReturn("TestTask");
+        when(testCase1.isActive()).thenReturn(true);
 
         doReturn((Set.of(testCase1))).when(testCaseRepository).findByExerciseIdAndActive(1L, true);
 
@@ -179,10 +180,12 @@ class ProgrammingExerciseTaskServiceTest {
         ProgrammingExerciseTestCase testCase1 = mock(ProgrammingExerciseTestCase.class);
         when(testCase1.getId()).thenReturn(1L);
         when(testCase1.getTestName()).thenReturn("Outerclass$Innerclass#method");
+        when(testCase1.isActive()).thenReturn(true);
 
         ProgrammingExerciseTestCase testCase2 = mock(ProgrammingExerciseTestCase.class);
         when(testCase2.getId()).thenReturn(2L);
         when(testCase2.getTestName()).thenReturn("someTestNameThatContains\\\\");
+        when(testCase2.isActive()).thenReturn(true);
 
         doReturn((Set.of(testCase1, testCase2))).when(testCaseRepository).findByExerciseIdAndActive(1L, true);
 
@@ -202,6 +205,7 @@ class ProgrammingExerciseTaskServiceTest {
         ProgrammingExerciseTestCase testCase = new ProgrammingExerciseTestCase();
         testCase.setId(id);
         testCase.setTestName(testName);
+        testCase.setActive(true);
         return testCase;
     }
 
@@ -374,6 +378,60 @@ class ProgrammingExerciseTaskServiceTest {
 
         assertThat(realExercise.getProblemStatement()).isEqualTo("[task][Contract](<testid>7</testid>)\n@startuml\nclass Contract #testsColor(<testid>7</testid>)\n@enduml");
         assertThat(taskService.findUnresolvedTaskTestReferences(realExercise)).isEmpty();
+    }
+
+    @Test
+    void updateTasksFromProblemStatement_matchesValidationWhenAnInactiveExactNameExists() {
+        var inactiveExactTest = testCase(1L, "testfoo");
+        inactiveExactTest.setActive(false);
+        var activeTest = testCase(2L, "testFoo");
+        var realExercise = exerciseWith("[task][Contract](testfoo)", inactiveExactTest, activeTest);
+        when(testCaseRepository.findByExerciseIdAndActive(1L, true)).thenReturn(Set.of(activeTest));
+        when(taskRepository.findByExerciseIdWithTestCases(1L)).thenReturn(Set.of());
+
+        assertThat(taskService.findUnresolvedTaskTestReferences(realExercise)).isEmpty();
+        taskService.updateTasksFromProblemStatement(realExercise);
+
+        ArgumentCaptor<Iterable<ProgrammingExerciseTask>> saved = ArgumentCaptor.captor();
+        verify(taskRepository).saveAll(saved.capture());
+        assertThat(saved.getValue()).singleElement().satisfies(task -> assertThat(task.getTestCases()).containsExactly(activeTest));
+        taskService.replaceTestNamesWithIds(realExercise);
+        assertThat(realExercise.getProblemStatement()).isEqualTo("[task][Contract](<testid>2</testid>)");
+    }
+
+    @Test
+    void updateTasksFromProblemStatement_doesNotAttachAnInactiveName() {
+        var inactiveTest = testCase(1L, "testfoo");
+        inactiveTest.setActive(false);
+        String statement = "[task][Contract](testfoo)";
+        var realExercise = exerciseWith(statement, inactiveTest);
+        when(testCaseRepository.findByExerciseIdAndActive(1L, true)).thenReturn(Set.of());
+        when(taskRepository.findByExerciseIdWithTestCases(1L)).thenReturn(Set.of());
+
+        assertThat(taskService.findUnresolvedTaskTestReferences(realExercise)).containsExactly("testfoo");
+        taskService.updateTasksFromProblemStatement(realExercise);
+
+        ArgumentCaptor<Iterable<ProgrammingExerciseTask>> saved = ArgumentCaptor.captor();
+        verify(taskRepository).saveAll(saved.capture());
+        assertThat(saved.getValue()).singleElement().satisfies(task -> assertThat(task.getTestCases()).isEmpty());
+        taskService.replaceTestNamesWithIds(realExercise);
+        assertThat(realExercise.getProblemStatement()).isEqualTo(statement);
+    }
+
+    @Test
+    void updateTasksFromProblemStatement_preservesAnExplicitInactiveTestId() {
+        var inactiveTest = testCase(1L, "testfoo");
+        inactiveTest.setActive(false);
+        var realExercise = exerciseWith("[task][Contract](<testid>1</testid>)", inactiveTest);
+        when(taskRepository.findByExerciseIdWithTestCases(1L)).thenReturn(Set.of());
+
+        taskService.updateTasksFromProblemStatement(realExercise);
+
+        ArgumentCaptor<Iterable<ProgrammingExerciseTask>> saved = ArgumentCaptor.captor();
+        verify(taskRepository).saveAll(saved.capture());
+        assertThat(saved.getValue()).singleElement().satisfies(task -> assertThat(task.getTestCases()).containsExactly(inactiveTest));
+        taskService.replaceTestIdsWithNames(realExercise);
+        assertThat(realExercise.getProblemStatement()).isEqualTo("[task][Contract](testfoo)");
     }
 
     @Test

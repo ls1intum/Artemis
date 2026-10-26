@@ -297,12 +297,14 @@ public class ProgrammingExerciseTaskService {
             return testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst();
         }
         else {
+            // New name references use active candidates; stored ID references above retain their historical links.
             String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
-            var exactMatch = testCases.stream().filter(tc -> tc.getTestName().equals(storedTestName)).findFirst();
+            var activeTestCases = testCases.stream().filter(testCase -> Boolean.TRUE.equals(testCase.isActive())).toList();
+            var exactMatch = activeTestCases.stream().filter(tc -> tc.getTestName().equals(storedTestName)).findFirst();
             if (exactMatch.isPresent()) {
                 return exactMatch;
             }
-            var caseInsensitiveMatches = testCases.stream().filter(tc -> tc.getTestName().equalsIgnoreCase(storedTestName)).limit(2).toList();
+            var caseInsensitiveMatches = activeTestCases.stream().filter(tc -> tc.getTestName().equalsIgnoreCase(storedTestName)).limit(2).toList();
             return caseInsensitiveMatches.size() == 1 ? Optional.of(caseInsensitiveMatches.getFirst()) : Optional.empty();
         }
     }
