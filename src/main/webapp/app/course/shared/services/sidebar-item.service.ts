@@ -2,6 +2,7 @@ import { Service } from '@angular/core';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
+    faHouse,
     faBullseye,
     faCalendarDays,
     faChalkboardTeacher,
@@ -45,6 +46,10 @@ export class CourseSidebarItemService {
             this.getExercisesItem(courseId),
             this.getStatisticsItem(courseId),
         ];
+    }
+
+    getHomeItem(): SidebarItem {
+        return { routerLink: 'home', icon: faHouse, title: 'Home', translation: 'artemisApp.courseOverview.menu.home', testId: 'home-tab', hidden: false };
     }
 
     getExercisesItem(courseId?: number): SidebarItem {

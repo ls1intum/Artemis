@@ -373,6 +373,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());
 
+        sidebarItems.unshift(this.sidebarItemService.getHomeItem());
         return sidebarItems;
     }
 

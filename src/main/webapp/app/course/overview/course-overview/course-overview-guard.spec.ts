@@ -63,7 +63,7 @@ describe('CourseOverviewGuard', () => {
     /** Asserts that a guard result is a redirect to the exercises tab of course 1. */
     const expectRedirectToExercises = (result: boolean | UrlTree) => {
         expect(result).toBeInstanceOf(UrlTree);
-        expect(router.serializeUrl(result as UrlTree)).toBe('/courses/1/exercises');
+        expect(router.serializeUrl(result as UrlTree)).toBe('/courses/1/home');
     };
 
     afterEach(() => {
@@ -104,7 +104,7 @@ describe('CourseOverviewGuard', () => {
             expect(fetchSpy).toHaveBeenLastCalledWith(2);
         });
 
-        it('should deny and redirect to exercises when the target tab is unavailable', () => {
+        it('should deny and redirect to Home when the target tab is unavailable', () => {
             vi.spyOn(courseManagementService, 'getCourseAvailableTabs').mockReturnValue(of(tabs({ lectures: false })));
             let resultValue: boolean | UrlTree = true;
             guard.canActivate(route(CourseOverviewRoutePath.LECTURES)).subscribe((result) => (resultValue = result));
@@ -122,6 +122,7 @@ describe('CourseOverviewGuard', () => {
     describe('decideAccess', () => {
         it.each([
             { path: CourseOverviewRoutePath.EXERCISES, available: tabs() },
+            { path: 'home', available: tabs() },
             { path: CourseOverviewRoutePath.LECTURES, available: tabs({ lectures: true }) },
             { path: CourseOverviewRoutePath.EXAMS, available: tabs({ exams: true }) },
             { path: CourseOverviewRoutePath.COMPETENCIES, available: tabs({ competencies: true }) },
@@ -136,11 +137,11 @@ describe('CourseOverviewGuard', () => {
             expect(guard.decideAccess(1, available, path)).toBe(true);
         });
 
-        it('should deny and redirect to exercises for a guarded tab whose flag is not set', () => {
+        it('should deny and redirect to Home for a guarded tab whose flag is not set', () => {
             expectRedirectToExercises(guard.decideAccess(1, tabs(), CourseOverviewRoutePath.EXAMS));
         });
 
-        it('should deny and redirect to exercises for an unknown path', () => {
+        it('should deny and redirect to Home for an unknown path', () => {
             expectRedirectToExercises(guard.decideAccess(1, allTabs, 'unknown'));
         });
     });

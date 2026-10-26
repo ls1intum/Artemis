@@ -89,7 +89,7 @@ export const courseRoutes: Routes = [
         canActivate: [UserRouteAccessService],
         children: [
             {
-                path: 'home',
+                path: CourseOverviewRoutePath.HOME,
                 loadComponent: () => import('app/course/overview/course-home/course-home.component').then((m) => m.CourseHomeComponent),
                 data: { authorities: IS_AT_LEAST_STUDENT, pageTitle: 'artemisApp.courseHome.title', hasSidebar: false },
                 canActivate: [UserRouteAccessService],
@@ -432,7 +432,7 @@ export const courseRoutes: Routes = [
             },
             {
                 path: '',
-                redirectTo: CourseOverviewRoutePath.EXERCISES,
+                redirectTo: CourseOverviewRoutePath.HOME,
                 pathMatch: 'full',
             },
             {
