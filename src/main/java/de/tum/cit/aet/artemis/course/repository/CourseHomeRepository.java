@@ -2,6 +2,10 @@ package de.tum.cit.aet.artemis.course.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -10,13 +14,48 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 
 @Repository
 @Lazy
 @Profile(PROFILE_CORE)
 public interface CourseHomeRepository extends ArtemisJpaRepository<Course, Long> {
+
+    /** Course columns only; configurations and content are read independently. */
+    interface Header {
+
+        long getId();
+
+        String getTitle();
+
+        @Nullable
+        String getDescription();
+
+        @Nullable
+        Language getLanguage();
+
+        @Nullable
+        ZonedDateTime getStartDate();
+
+        @Nullable
+        ZonedDateTime getEndDate();
+
+        CourseInformationSharingConfiguration getCourseInformationSharingConfiguration();
+
+        boolean getLearningPathsEnabled();
+    }
+
+    @Query("""
+            SELECT c.id AS id, c.title AS title, SUBSTRING(c.description, 1, 4000) AS description,
+                c.language AS language, c.startDate AS startDate, c.endDate AS endDate,
+                c.courseInformationSharingConfiguration AS courseInformationSharingConfiguration,
+                c.learningPathsEnabled AS learningPathsEnabled
+            FROM Course c WHERE c.id = :courseId
+            """)
+    Optional<Header> findHeaderById(@Param("courseId") long courseId);
 
     interface Staff {
 
