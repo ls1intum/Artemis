@@ -93,6 +93,7 @@ describe('ExerciseMetadataHandlers', () => {
                 showTestNamesToStudents: true,
                 buildAndTestStudentSubmissionsAfterDueDate: '2026-02-01T00:00:00.000Z',
                 releaseTestsWithExampleSolution: true,
+                allowRepositoryAccessBeforeStartDate: true,
                 buildConfig: {
                     sequentialTestRuns: true,
                     buildPlanConfiguration: 'Maven',
@@ -135,6 +136,7 @@ describe('ExerciseMetadataHandlers', () => {
         expect(exercise.showTestNamesToStudents).toBe(true);
         expect(dayjs.isDayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate)).toBe(true);
         expect(exercise.releaseTestsWithExampleSolution).toBe(true);
+        expect(exercise.allowRepositoryAccessBeforeStartDate).toBe(true);
         expect(exercise.auxiliaryRepositories).toHaveLength(2);
         expect(exercise.auxiliaryRepositories?.[0].name).toBe('aux-1');
         expect(exercise.auxiliaryRepositories?.[0].checkoutDirectory).toBe('aux-1');

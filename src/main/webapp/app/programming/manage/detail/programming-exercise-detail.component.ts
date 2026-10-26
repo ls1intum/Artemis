@@ -731,6 +731,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolution',
                     data: { boolean: exercise.releaseTestsWithExampleSolution },
                 },
+                !this.isExamExercise() && {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.timeline.allowRepositoryAccessBeforeStartDate',
+                    data: { boolean: exercise.allowRepositoryAccessBeforeStartDate ?? false },
+                },
 
                 { type: DetailType.Markdown, title: 'artemisApp.exercise.assessmentInstructions', data: { innerHtml: this.formattedGradingInstructions } },
                 exercise.gradingCriteria && {

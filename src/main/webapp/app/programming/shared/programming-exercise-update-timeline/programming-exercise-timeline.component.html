@@ -122,6 +122,24 @@
                         <jhi-help-icon placement="right auto" text="artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip" />
                     </div>
                 }
+                @if (isAllowRepositoryAccessBeforeStartDateVisible()) {
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="allowRepositoryAccessBeforeStartDate"
+                            [(ngModel)]="allowRepositoryAccessBeforeStartDate"
+                            id="allowRepositoryAccessBeforeStartDate"
+                            data-testid="allow-repository-access-before-start-date-checkbox"
+                        />
+                        <label
+                            class="form-control-label"
+                            for="allowRepositoryAccessBeforeStartDate"
+                            jhiTranslate="artemisApp.programmingExercise.timeline.allowRepositoryAccessBeforeStartDate"
+                        ></label>
+                        <jhi-help-icon placement="right auto" text="artemisApp.programmingExercise.timeline.allowRepositoryAccessBeforeStartDateTooltip" />
+                    </div>
+                }
                 @if (!isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.showTestNamesToStudents) {
                     <div class="form-check">
                         <input

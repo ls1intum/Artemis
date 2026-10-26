@@ -41,6 +41,7 @@ import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detai
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
@@ -277,6 +278,35 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 await new Promise((r) => setTimeout(r, 100));
             },
         );
+
+        it.each([
+            [false, true],
+            [true, false],
+        ])('should show the early repository access detail only for course exercises (exam: %s)', async (isExam: boolean, expected: boolean) => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 124;
+            exercise.allowRepositoryAccessBeforeStartDate = true;
+            if (isExam) {
+                exercise.exerciseGroup = { id: 1, exam: { id: 2, course: new Course() } } as ExerciseGroup;
+            }
+            const route = TestBed.inject(ActivatedRoute);
+            route.snapshot.data = { programmingExercise: exercise };
+            vi.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+                of({ body: exercise } as unknown as HttpResponse<ProgrammingExercise>),
+            );
+
+            comp.ngOnInit();
+            await new Promise((r) => setTimeout(r, 0));
+
+            const detail = comp
+                .exerciseDetailSections()
+                .flatMap((section) => section.details)
+                .find((d) => d && d.title === 'artemisApp.programmingExercise.timeline.allowRepositoryAccessBeforeStartDate');
+            expect(!!detail).toBe(expected);
+            if (expected) {
+                expect((detail as any).data.boolean).toBe(true);
+            }
+        });
 
         it('should handle repositoryFilesError gracefully', async () => {
             // Create a fresh programming exercise for this test

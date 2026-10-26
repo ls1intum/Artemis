@@ -93,6 +93,48 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         vi.restoreAllMocks();
     });
 
+    describe('allowRepositoryAccessBeforeStartDate', () => {
+        const checkbox = () => fixture.debugElement.query(By.css('#allowRepositoryAccessBeforeStartDate'));
+
+        it('should show the checkbox if a start date is set', () => {
+            createTestComponent();
+
+            expect(component.isAllowRepositoryAccessBeforeStartDateVisible()).toBe(true);
+            expect(checkbox()).not.toBeNull();
+        });
+
+        it('should hide the checkbox without a start date and reset the value', () => {
+            createTestComponent();
+            fixture.componentRef.setInput('allowRepositoryAccessBeforeStartDate', true);
+            fixture.detectChanges();
+            expect(component.allowRepositoryAccessBeforeStartDate()).toBe(true);
+
+            fixture.componentRef.setInput('startDate', undefined);
+            fixture.detectChanges();
+
+            expect(checkbox()).toBeNull();
+            expect(component.allowRepositoryAccessBeforeStartDate()).toBe(false);
+        });
+
+        it('should hide the checkbox in exam mode', () => {
+            createTestComponent();
+            fixture.componentRef.setInput('isExamMode', true);
+            fixture.detectChanges();
+
+            expect(checkbox()).toBeNull();
+        });
+
+        it('should hide the checkbox if the current mode record prohibits it', () => {
+            createTestComponent();
+            fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', {
+                allowRepositoryAccessBeforeStartDate: false,
+            } as Record<ProgrammingExerciseInputField, boolean>);
+            fixture.detectChanges();
+
+            expect(checkbox()).toBeNull();
+        });
+    });
+
     it('should show release date picker if not in exam mode and no current mode record is available', () => {
         createTestComponent();
 

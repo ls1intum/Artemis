@@ -101,6 +101,7 @@ export class ProgrammingExerciseEditSelectedComponent {
         programmingExercise.assessmentType = this.newProgrammingExercise.assessmentType;
         programmingExercise.assessmentDueDate = this.newProgrammingExercise.assessmentDueDate;
         programmingExercise.exampleSolutionPublicationDate = this.newProgrammingExercise.exampleSolutionPublicationDate;
+        programmingExercise.allowRepositoryAccessBeforeStartDate = this.newProgrammingExercise.allowRepositoryAccessBeforeStartDate;
         return programmingExercise;
     }
 

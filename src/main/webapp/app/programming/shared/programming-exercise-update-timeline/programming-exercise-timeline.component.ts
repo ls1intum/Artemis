@@ -60,10 +60,12 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
     setTestCaseVisibilityToAfterDueDate = model<boolean>();
     allowComplaintsForAutomaticAssessments = model<boolean>();
     releaseTestsWithExampleSolution = model<boolean>();
+    allowRepositoryAccessBeforeStartDate = model<boolean>();
     showTestNamesToStudents = model<boolean>();
 
     isDatePickerForReleaseDateVisible = computed(() => this.computeIsDatePickerForReleaseDateVisible());
     isDatePickerForStartDateVisible = computed(() => this.computeIsDatePickerForStartDateVisible());
+    isAllowRepositoryAccessBeforeStartDateVisible = computed(() => this.computeIsAllowRepositoryAccessBeforeStartDateVisible());
     isDatePickerForDueDateVisible = computed(() => this.computeIsDatePickerForDueDateVisible());
     isEnablingToRunTestsAfterDueDateToggleVisible = computed(() => this.computeIsEnablingToRunTestsAfterDueDateToggleVisible());
     isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => this.isExamMode() || !!this.dueDate());
@@ -126,6 +128,11 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
             }
             if (!this.isDatePickerForExampleSolutionPublicationDateVisible()) {
                 this.exampleSolutionPublicationDate.set(undefined);
+            }
+        });
+        effect(() => {
+            if (!this.startDate() && this.allowRepositoryAccessBeforeStartDate()) {
+                this.allowRepositoryAccessBeforeStartDate.set(false);
             }
         });
         effect(() => {
@@ -247,6 +254,11 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
     private computeIsDatePickerForStartDateVisible(): boolean {
         const isDisplayedInCurrentMode = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.startDate ?? true;
         return !this.isExamMode() && (isDisplayedInCurrentMode || this.startDate() !== undefined);
+    }
+
+    private computeIsAllowRepositoryAccessBeforeStartDateVisible(): boolean {
+        const isDisplayedInCurrentMode = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.allowRepositoryAccessBeforeStartDate ?? true;
+        return !this.isExamMode() && isDisplayedInCurrentMode && this.startDate() !== undefined;
     }
 
     private computeIsDatePickerForDueDateVisible(): boolean {

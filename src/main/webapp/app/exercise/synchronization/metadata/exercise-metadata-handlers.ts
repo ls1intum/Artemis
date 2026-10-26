@@ -353,6 +353,14 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
             applyValue: (exercise, value) => ((exercise as ProgrammingExercise).releaseTestsWithExampleSolution = value),
         } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
         {
+            key: 'programmingData.allowRepositoryAccessBeforeStartDate',
+            labelKey: 'artemisApp.programmingExercise.timeline.allowRepositoryAccessBeforeStartDate',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate,
+            getIncomingValue: (snapshot) => snapshot.programmingData?.allowRepositoryAccessBeforeStartDate,
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
+        {
             key: 'programmingData.buildConfig',
             labelKey: 'artemisApp.programmingExercise.buildConfiguration',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).buildConfig,

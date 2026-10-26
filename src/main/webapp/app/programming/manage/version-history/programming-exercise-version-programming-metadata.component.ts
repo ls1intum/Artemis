@@ -99,6 +99,10 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             this.toTextField('artemisApp.programmingExercise.packageName', data.packageName),
             this.toTextField('artemisApp.programmingExercise.allowOfflineIde.title', booleanLabel(this.translateService, data.allowOfflineIde)),
             this.toTextField('artemisApp.programmingExercise.allowOnlineEditor.title', booleanLabel(this.translateService, data.allowOnlineEditor)),
+            this.toTextField(
+                'artemisApp.programmingExercise.timeline.allowRepositoryAccessBeforeStartDate',
+                booleanLabel(this.translateService, data.allowRepositoryAccessBeforeStartDate),
+            ),
             this.toTextField('artemisApp.programmingExercise.allowOnlineIde.title', booleanLabel(this.translateService, data.allowOnlineIde)),
             this.toTextField('artemisApp.programmingExercise.enableStaticCodeAnalysis.title', booleanLabel(this.translateService, data.staticCodeAnalysisEnabled)),
             this.toTextField('artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title', data.maxStaticCodeAnalysisPenalty),

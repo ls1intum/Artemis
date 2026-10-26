@@ -694,6 +694,8 @@
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
                 "exampleSolutionPublicationDateTooltipOnImport": "The date when the Solution Repository becomes available to download for students. Cannot be set on import.",
                 "includeTestsIntoExampleSolution": "Include tests in example solution",
+                "allowRepositoryAccessBeforeStartDate": "Allow repository access before start date",
+                "allowRepositoryAccessBeforeStartDateTooltip": "Students can start the exercise, clone the repository and push before the start date. No builds run and no submissions are created until the start date; then every repository with new commits is built.",
                 "includeTestsIntoExampleSolutionTooltip": "In addition to the example solution, the automatic tests can be published. Only available if an example solution publication date is configured.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
                 "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results.",

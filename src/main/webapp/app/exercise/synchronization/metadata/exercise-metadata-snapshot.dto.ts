@@ -78,6 +78,7 @@ export interface ProgrammingExerciseSnapshotDTO {
     submissionPolicy?: SubmissionPolicySnapshotDTO;
     projectType?: ProjectType;
     releaseTestsWithExampleSolution?: boolean;
+    allowRepositoryAccessBeforeStartDate?: boolean;
     buildConfig?: ProgrammingExerciseBuildConfigSnapshotDTO;
     testsCommitId?: string;
 }

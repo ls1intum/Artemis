@@ -87,6 +87,16 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             expect(comp.isSaving()).toBe(false);
         });
 
+        it('should copy the early repository access option to the selected exercises', () => {
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 1;
+            comp.newProgrammingExercise.allowRepositoryAccessBeforeStartDate = true;
+
+            const result = comp.setNewValues(entity);
+
+            expect(result.allowRepositoryAccessBeforeStartDate).toBe(true);
+        });
+
         it('should display error and not close modal', () => {
             // GIVEN
             const newProgrammingExercise = new ProgrammingExercise(new Course(), undefined);
