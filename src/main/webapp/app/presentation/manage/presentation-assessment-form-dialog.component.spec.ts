@@ -8,6 +8,7 @@ import { PresentationAssessment } from 'app/presentation/shared/entities/present
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 
 describe('PresentationAssessmentFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentFormDialogComponent>;
@@ -231,6 +232,22 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         fixture.detectChanges();
 
         expect(byTestId('presentation-title-error')).not.toBeNull();
+    });
+
+    it('should show the max points and take typed points with a comma and up to three fraction digits', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const input = fixture.nativeElement.querySelector('input#presentation-assessment-max-points') as HTMLInputElement;
+        expect(input.value).toBe('20');
+
+        typeIntoInputNumber(input, '1,125');
+        expect(component.editForm.controls.maxPoints.value).toBe(1.125);
+        expect(component.editForm.controls.maxPoints.valid).toBe(true);
+
+        // 0.0009 is below the minimum of 0.001, which the field applies when it is left
+        typeIntoInputNumber(input, '0.0009');
+        expect(component.editForm.controls.maxPoints.value).toBe(0.001);
     });
 
     it('should show the max points error for points above the upper bound', () => {
