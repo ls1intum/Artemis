@@ -190,7 +190,8 @@ public class ExerciseConceptSelector {
     }
 
     /**
-     * Keeps the better of the incumbent fallback and this batch's least-rejected candidate: fewer failed required axes wins, and an incumbent is kept on a tie so the earliest
+     * Keeps the better of the incumbent fallback and this batch's least-rejected candidate, ranked by {@link SpecFidelityCritic.ConceptFallback#LEAST_REJECTED}; an incumbent
+     * is kept on a tie so the earliest
      * batch is preferred. Every objection this review raised travels with the candidate, whichever way the comparison goes.
      */
     private static @Nullable ConceptFallback better(@Nullable ConceptFallback incumbent, SpecFidelityCritic.ConceptSelectionReview review, Map<Integer, String> candidates) {
@@ -202,10 +203,10 @@ public class ExerciseConceptSelector {
         if (concept == null || concept.isBlank()) {
             return incumbent;
         }
-        if (incumbent != null && incumbent.failedRequiredAxes() <= reviewed.failedRequiredAxes()) {
+        if (incumbent != null && SpecFidelityCritic.ConceptFallback.LEAST_REJECTED.compare(incumbent.rank(), reviewed) <= 0) {
             return incumbent;
         }
-        return new ConceptFallback(concept, reviewed.candidate(), reviewed.failedRequiredAxes(), review.findings());
+        return new ConceptFallback(concept, reviewed.candidate(), reviewed.failedObjectiveAxes(), reviewed.failedRequiredAxes(), review.findings());
     }
 
     private static Map<Integer, String> parseCandidates(String response) {
@@ -238,12 +239,16 @@ public class ExerciseConceptSelector {
      * The best concept a completed review rejected, together with the verbatim findings that rejected it.
      * <p>
      * Offered so a caller facing "no candidate was admissible" can proceed with a draft plus its objections instead of producing no artifacts at all. It carries no verdict:
-     * {@link ConceptSelection#accepted()} stays false, and {@code failedRequiredAxes} only ever picks between candidates, never admits one.
+     * {@link ConceptSelection#accepted()} stays false, and the failed-axis counts only ever pick between candidates, never admit one.
      */
-    public record ConceptFallback(String concept, int candidate, int failedRequiredAxes, List<String> findings) {
+    public record ConceptFallback(String concept, int candidate, int failedObjectiveAxes, int failedRequiredAxes, List<String> findings) {
 
         public ConceptFallback {
             findings = List.copyOf(findings);
+        }
+
+        private SpecFidelityCritic.ConceptFallback rank() {
+            return new SpecFidelityCritic.ConceptFallback(candidate, failedObjectiveAxes, failedRequiredAxes);
         }
     }
 

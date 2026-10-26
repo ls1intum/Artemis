@@ -468,7 +468,7 @@ class SpecFidelityCriticTest {
         assertThat(review.accepted()).isFalse();
         assertThat(review.selectedCandidate()).isNull();
         // Candidate 2 fails one required axis, candidate 3 fails two, candidate 1 fails six; fewest failures wins.
-        assertThat(review.fallback()).isEqualTo(new SpecFidelityCritic.ConceptFallback(2, 1));
+        assertThat(review.fallback()).isEqualTo(new SpecFidelityCritic.ConceptFallback(2, 0, 1));
         assertThat(review.findings()).hasSize(3);
     }
 
@@ -495,7 +495,29 @@ class SpecFidelityCriticTest {
 
         SpecFidelityCritic.ConceptSelectionReview review = critic.reviewConceptCandidates("Create an intermediate unusual Strategy exercise.", candidates, null, () -> false);
 
-        assertThat(review.fallback()).isEqualTo(new SpecFidelityCritic.ConceptFallback(1, 1));
+        assertThat(review.fallback()).isEqualTo(new SpecFidelityCritic.ConceptFallback(1, 0, 1));
+    }
+
+    @Test
+    void aFailedObjectiveAxisOutranksMoreFailedSecondaryAxesWhenChoosingTheFallback() {
+        Map<Integer, String> candidates = conceptCandidates("Strategies multiply potion volume by different constants.",
+                "Strategies reconcile overlapping fragments with different conflict policies.", "Strategies label readings from fixed thresholds.");
+        String evaluation = """
+                  {"candidate":%d,"candidateEvidenceIds":["C%d.2"],"briefCoverage":"The surface brief is covered.",
+                   "objectiveCounterfactual":"The cited policies own the stated behavior.","difficultyFit":"The cited reasoning matches the requested level.",
+                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                   "domainGrounding":"The cited domain constrains the behavior.","feasibility":"The bounded scope is deterministic and proportionate.",
+                   "objectiveEssential":%b,"briefCovered":true,"learningFitSufficient":%b,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":%b,"domainGrounded":%b,"feasibleAndProportionate":%b}\
+                """;
+        // Candidate 1 fails the objective, and with it learning fit: two axes. Candidate 2 keeps the objective but fails three secondary axes. Candidate 3 fails all five.
+        SpecFidelityCritic critic = criticReturning(rawResponse("{\"selectedCandidate\":null,\"selectionReason\":\"No candidate clears every required axis.\",\"evaluations\":["
+                + evaluation.formatted(1, 1, false, false, true, true, true) + "," + evaluation.formatted(2, 2, true, true, false, false, false) + ","
+                + evaluation.formatted(3, 3, false, false, false, false, false) + "]}"));
+
+        SpecFidelityCritic.ConceptSelectionReview review = critic.reviewConceptCandidates("Create an intermediate unusual Strategy exercise.", candidates, null, () -> false);
+
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.fallback()).isEqualTo(new SpecFidelityCritic.ConceptFallback(2, 0, 3));
     }
 
     @Test

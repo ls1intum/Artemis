@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradl
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -160,12 +159,19 @@ class ConceptSelectionCritic {
     }
 
     /**
-     * Names the candidate this completed review rejected least, so a caller may proceed with findings attached instead of producing nothing. Fewest failed required axes wins,
-     * ties broken by the lower candidate number; both inputs are judgments the reviewer already returned, so this adds no scoring model. The verdict itself is untouched.
+     * Names the candidate this completed review rejected least, so a caller may proceed with findings attached instead of producing nothing. Fewest failed objective axes wins,
+     * then fewest failed required axes, ties broken by the lower candidate number; all inputs are judgments the reviewer already returned, so this adds no scoring model. The
+     * verdict itself is untouched.
      */
     private static SpecFidelityCritic.ConceptFallback leastRejectedCandidate(Map<Integer, ConceptCandidateReviewItem> evaluations) {
-        return evaluations.entrySet().stream().map(entry -> new SpecFidelityCritic.ConceptFallback(entry.getKey(), failedRequiredAxes(entry.getValue())))
-                .min(Comparator.comparingInt(SpecFidelityCritic.ConceptFallback::failedRequiredAxes).thenComparingInt(SpecFidelityCritic.ConceptFallback::candidate)).orElseThrow();
+        return evaluations.entrySet().stream()
+                .map(entry -> new SpecFidelityCritic.ConceptFallback(entry.getKey(), failedObjectiveAxes(entry.getValue()), failedRequiredAxes(entry.getValue())))
+                .min(SpecFidelityCritic.ConceptFallback.LEAST_REJECTED.thenComparingInt(SpecFidelityCritic.ConceptFallback::candidate)).orElseThrow();
+    }
+
+    /** Counts the failed axes that decide whether the candidate teaches the objective at all; a subset of {@link #failedRequiredAxes}. */
+    private static int failedObjectiveAxes(ConceptCandidateReviewItem item) {
+        return (item.objectiveEssential() ? 0 : 1) + (item.learnerOwnsObjectiveMechanism() ? 0 : 1) + (item.objectiveObservable() ? 0 : 1);
     }
 
     /** Counts the {@link #conceptPasses} axes this candidate failed. Kept in lockstep with that method: every axis it requires is counted here exactly once. */

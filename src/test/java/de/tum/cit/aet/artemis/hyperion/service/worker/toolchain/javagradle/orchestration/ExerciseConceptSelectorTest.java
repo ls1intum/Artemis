@@ -137,7 +137,7 @@ class ExerciseConceptSelectorTest {
         when(loop.runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any()))
                 .thenReturn(new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()));
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, null,
-                List.of("Candidate 2: difficulty — one reconciliation step"), "", "", new SpecFidelityCritic.ConceptFallback(2, 1)));
+                List.of("Candidate 2: difficulty — one reconciliation step"), "", "", new SpecFidelityCritic.ConceptFallback(2, 0, 1)));
 
         ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
@@ -159,8 +159,8 @@ class ExerciseConceptSelectorTest {
                 new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()),
                 new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, replacementCandidates), List.of()));
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(
-                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch one objection"), "", "", new SpecFidelityCritic.ConceptFallback(2, 1)),
-                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch two objection"), "", "", new SpecFidelityCritic.ConceptFallback(1, 4)));
+                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch one objection"), "", "", new SpecFidelityCritic.ConceptFallback(2, 0, 1)),
+                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch two objection"), "", "", new SpecFidelityCritic.ConceptFallback(1, 0, 4)));
 
         ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
@@ -179,12 +179,31 @@ class ExerciseConceptSelectorTest {
                 new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()),
                 new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, replacementCandidates), List.of()));
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(
-                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch one objection"), "", "", new SpecFidelityCritic.ConceptFallback(3, 5)),
-                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch two objection"), "", "", new SpecFidelityCritic.ConceptFallback(1, 2)));
+                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch one objection"), "", "", new SpecFidelityCritic.ConceptFallback(3, 0, 5)),
+                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch two objection"), "", "", new SpecFidelityCritic.ConceptFallback(1, 0, 2)));
 
         ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
         assertThat(result.fallback().failedRequiredAxes()).isEqualTo(2);
+        assertThat(result.fallback().concept()).contains("tide charts");
+        assertThat(result.fallback().findings()).containsExactly("batch two objection");
+    }
+
+    @Test
+    void aLaterBatchThatKeepsTheObjectiveReplacesAnEarlierFallbackThatFailedIt() {
+        String replacementCandidates = THREE_CANDIDATES.replace("clock repair", "tide charts");
+        AgentLoopRunner loop = mock(AgentLoopRunner.class);
+        SpecFidelityCritic critic = mock(SpecFidelityCritic.class);
+        when(loop.runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any())).thenReturn(
+                new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()),
+                new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, replacementCandidates), List.of()));
+        when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(
+                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch one objection"), "", "", new SpecFidelityCritic.ConceptFallback(2, 1, 1)),
+                new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch two objection"), "", "", new SpecFidelityCritic.ConceptFallback(1, 0, 3)));
+
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
+
+        assertThat(result.fallback().failedObjectiveAxes()).isZero();
         assertThat(result.fallback().concept()).contains("tide charts");
         assertThat(result.fallback().findings()).containsExactly("batch two objection");
     }

@@ -666,7 +666,7 @@ class StagedGenerationRunnerTest {
     private static ExerciseConceptSelector rejectingSelectorWithFallback() {
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
         ExerciseConceptSelector.ConceptFallback fallback = new ExerciseConceptSelector.ConceptFallback(
-                "## Candidate 2\nCentral interaction: a bounded stack over a fixed-size array.", 2, 1, List.of("Candidate 2: difficulty — only one numeric method",
+                "## Candidate 2\nCentral interaction: a bounded stack over a fixed-size array.", 2, 0, 1, List.of("Candidate 2: difficulty — only one numeric method",
                         "Selected concept failed focused admission: introduces a fixed capacity limit the brief does not require"));
         when(conceptSelector.select(eq("brief"), eq(""), anyInt(), any(), any(), any()))
                 .thenReturn(new ExerciseConceptSelector.ConceptSelection(true, null, null, 2, List.of(), "No candidate was admitted.", "", fallback));
