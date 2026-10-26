@@ -53,7 +53,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -81,7 +81,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         SelectModule,
         CheckboxModule,
         InputTextModule,
-        InputNumberModule,
+        PointsInputComponent,
     ],
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit {

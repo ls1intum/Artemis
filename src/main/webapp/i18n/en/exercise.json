@@ -66,6 +66,11 @@
                 "loading": "Loading...",
                 "searchInCourses": "Search in courses?",
                 "searchInExams": "Search in exams?",
+                "preview": {
+                    "title": "Preview: {{ title }}",
+                    "buttonLabel": "Preview {{ title }}",
+                    "loadFailed": "The preview could not be loaded."
+                },
                 "table": {
                     "title": "Title",
                     "language": "Language",
