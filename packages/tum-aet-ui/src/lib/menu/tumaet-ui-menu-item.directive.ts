@@ -17,7 +17,7 @@ import { MenuItem } from '@angular/aria/menu';
     host: {
         // Lets the Angular Aria test harnesses (`@angular/aria/menu/testing`) find the entry.
         ngMenuItem: '',
-        '[attr.aria-checked]': 'menuItem.role() === "menuitemradio" ? checked() : null',
+        '[attr.aria-checked]': 'menuItem.role() !== "menuitem" ? menuItemChecked() : null',
         class:
             'tumaet-ui-menu-item tumaet:flex tumaet:cursor-pointer tumaet:items-center tumaet:gap-2 tumaet:border-0 tumaet:bg-transparent tumaet:px-3 tumaet:py-2 tumaet:text-start tumaet:text-base tumaet:text-text tumaet:no-underline ' +
             'tumaet:hover:bg-hover-background tumaet:hover:text-text-hover tumaet:focus-visible:bg-highlight-focus-background tumaet:focus-visible:text-highlight tumaet:focus-visible:outline-none ' +
@@ -29,8 +29,8 @@ export class TumAetUiMenuItemDirective {
     protected readonly menuItem = inject<MenuItem<unknown>>(MenuItem);
     private readonly element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
-    /** Selected state for a `menuItemRole="menuitemradio"` entry. */
-    readonly checked = input(false);
+    /** Selected state for radio or checkbox entries. Consumers provide a visible indicator in the item content. */
+    readonly menuItemChecked = input(false);
 
     /** Emits when the entry is chosen with a click, Enter, or Space; never while it is disabled. */
     readonly triggered = output<void>();

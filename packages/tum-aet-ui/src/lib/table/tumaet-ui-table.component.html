@@ -1,7 +1,7 @@
 @if (showSearch() || tableActions()) {
     <div class="tumaet:mb-3 tumaet:flex tumaet:flex-wrap tumaet:items-center tumaet:gap-2">
         @if (showSearch()) {
-            <div class="tumaet:relative tumaet:min-w-0 tumaet:grow tumaet:basis-60" [class]="tableActions() ? 'tumaet:max-w-64' : ''">
+            <div class="tumaet-ui-table-search tumaet:relative tumaet:min-w-0 tumaet:grow tumaet:basis-60">
                 <fa-icon [icon]="faMagnifyingGlass" class="tumaet:pointer-events-none tumaet:absolute tumaet:start-3 tumaet:top-1/2 tumaet:-translate-y-1/2 tumaet:text-muted" />
                 <input
                     #searchInput

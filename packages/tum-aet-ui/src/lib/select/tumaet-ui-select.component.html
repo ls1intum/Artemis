@@ -75,7 +75,9 @@
                     (keydown.enter)="selectOption(option)"
                     (mouseenter)="setActive(i)"
                 >
-                    <span class="tumaet:min-w-0 tumaet:flex-1 tumaet:whitespace-normal tumaet:break-words">{{ label(option) }}</span>
+                    <span class="tumaet:min-w-0 tumaet:flex-1" [class]="matchTriggerWidth() ? 'tumaet:truncate' : 'tumaet:whitespace-normal tumaet:break-words'">{{
+                        label(option)
+                    }}</span>
                     @if (isSelected(option)) {
                         <fa-icon [icon]="faCheck" class="tumaet:ms-2 tumaet:shrink-0" />
                     }

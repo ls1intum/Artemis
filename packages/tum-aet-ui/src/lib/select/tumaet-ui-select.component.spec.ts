@@ -96,6 +96,15 @@ describe('TumAetUiSelectComponent', () => {
         }
     });
 
+    it.each([true, false])('only wraps option labels when matchTriggerWidth is false (%s)', (matchTriggerWidth) => {
+        fixture.componentRef.setInput('matchTriggerWidth', matchTriggerWidth);
+        fixture.detectChanges();
+        openPanel();
+        const label = optionElements()[0].querySelector('span')!;
+        expect(label.classList.contains('tumaet:truncate')).toBe(matchTriggerWidth);
+        expect(label.classList.contains('tumaet:whitespace-normal')).toBe(!matchTriggerWidth);
+    });
+
     it('renders the placeholder when nothing is selected', () => {
         fixture.componentRef.setInput('placeholder', 'Pick one');
         fixture.detectChanges();

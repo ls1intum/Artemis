@@ -47,6 +47,8 @@ let nextMultiSelectId = 0;
 /**
  * ControlValueAccessor that chooses any number of values from a listbox overlay. The value is an array of the chosen
  * options (or of their `optionValue` property); the panel stays open while options are toggled.
+ * Unlike select, date picker and popover, it has no backdrop: the page remains scrollable and outside clicks
+ * dismiss the panel without intercepting the clicked control.
  *
  * The trigger is a `div` with `role="combobox"` rather than a `button`, so that a projected `#selectedItems` template
  * may hold interactive content of its own (a chip with a remove button, say).
@@ -202,12 +204,11 @@ export class TumAetUiMultiSelectComponent extends OptionControl implements Contr
         const initialIndex = firstSelected >= 0 ? firstSelected : this.options().length > 0 ? 0 : -1;
         this.keyManager.setActiveItem(initialIndex);
         const origin = this.trigger();
-        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom');
-        this.overlayRef.updateSize({ minWidth: Math.max(origin.nativeElement.getBoundingClientRect().width, MIN_PANEL_WIDTH_PX) });
+        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { minWidthFromOrigin: true, minWidth: MIN_PANEL_WIDTH_PX });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.scrollOptionIntoView(initialIndex);
         this.overlayRef.outsidePointerEvents().subscribe((event) => {
-            if (!origin.nativeElement.contains(event.target as Node)) {
+            if (event.target instanceof Node && !origin.nativeElement.contains(event.target)) {
                 this.close(false);
             }
         });

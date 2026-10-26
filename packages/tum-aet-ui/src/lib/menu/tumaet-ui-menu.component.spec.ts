@@ -15,16 +15,8 @@ import { TumAetUiMenuTriggerDirective } from './tumaet-ui-menu-trigger.directive
         <button id="after">After</button>
         <ng-template #actions>
             <tumaet-ui-menu>
-                <button tumAetUiMenuItem [menuItemRole]="radio() ? 'menuitemradio' : 'menuitem'" [checked]="picked() === 'students'" (triggered)="picked.set('students')">
-                    Add students
-                </button>
-                <button
-                    tumAetUiMenuItem
-                    [menuItemRole]="radio() ? 'menuitemradio' : 'menuitem'"
-                    [checked]="picked() === 'tutors'"
-                    [disabled]="tutorsDisabled()"
-                    (triggered)="picked.set('tutors')"
-                >
+                <button tumAetUiMenuItem [menuItemRole]="itemRole()" [menuItemChecked]="picked() === 'students'" (triggered)="picked.set('students')">Add students</button>
+                <button tumAetUiMenuItem [menuItemRole]="itemRole()" [menuItemChecked]="picked() === 'tutors'" [disabled]="tutorsDisabled()" (triggered)="picked.set('tutors')">
                     Add tutors
                 </button>
                 <a tumAetUiMenuItem href="#editors" (click)="$event.preventDefault(); linkClicks = linkClicks + 1" (triggered)="picked.set('editors')">Add editors</a>
@@ -33,7 +25,7 @@ import { TumAetUiMenuTriggerDirective } from './tumaet-ui-menu-trigger.directive
     `,
 })
 class HostComponent {
-    readonly radio = signal(false);
+    readonly itemRole = signal<'menuitem' | 'menuitemradio' | 'menuitemcheckbox'>('menuitem');
     readonly picked = signal<string | undefined>(undefined);
     readonly tutorsDisabled = signal(false);
     readonly events: string[] = [];
@@ -55,7 +47,7 @@ describe('TumAetUiMenuComponent', () => {
 
     const trigger = () => fixture.debugElement.query(By.css('#trigger')).nativeElement as HTMLButtonElement;
     const menu = () => document.querySelector('[role="menu"]') as HTMLElement | null;
-    const items = () => Array.from(document.querySelectorAll('[role="menuitem"], [role="menuitemradio"]')) as HTMLElement[];
+    const items = () => Array.from(document.querySelectorAll('[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]')) as HTMLElement[];
 
     async function settle(): Promise<void> {
         fixture.detectChanges();
@@ -90,39 +82,43 @@ describe('TumAetUiMenuComponent', () => {
         expect(host.events).toEqual(['opened']);
     });
 
-    it.each(['Enter', ' '])('keeps radio-item semantics and keyboard navigation with %j activation', async (key) => {
-        host.radio.set(true);
-        host.picked.set('students');
-        await open();
-        expect(
-            items()
-                .slice(0, 2)
-                .map((item) => item.getAttribute('role')),
-        ).toEqual(['menuitemradio', 'menuitemradio']);
-        expect(
-            items()
-                .slice(0, 2)
-                .map((item) => item.getAttribute('aria-checked')),
-        ).toEqual(['true', 'false']);
-        await press(items()[0], 'End');
-        expect(document.activeElement).toBe(items()[2]);
-        await press(items()[2], 'Home');
-        expect(document.activeElement).toBe(items()[0]);
-        await press(items()[0], 'ArrowDown');
-        expect(document.activeElement).toBe(items()[1]);
-        await press(items()[1], 'ArrowUp');
-        expect(document.activeElement).toBe(items()[0]);
-        await press(items()[0], 'ArrowDown');
-        await press(items()[1], key);
-        expect(host.picked()).toBe('tutors');
-        expect(menu()).toBeNull();
-        await open();
-        expect(
-            items()
-                .slice(0, 2)
-                .map((item) => item.getAttribute('aria-checked')),
-        ).toEqual(['false', 'true']);
-    });
+    it.each((['menuitemradio', 'menuitemcheckbox'] as const).flatMap((role) => ['Enter', ' '].map((key) => ({ role, key }))))(
+        'keeps $role semantics and keyboard navigation with $key activation',
+        async ({ role, key }) => {
+            host.itemRole.set(role);
+            host.picked.set('students');
+            await open();
+            expect(
+                items()
+                    .slice(0, 2)
+                    .map((item) => item.getAttribute('role')),
+            ).toEqual([role, role]);
+            expect(items()[2].getAttribute('aria-checked')).toBeNull();
+            expect(
+                items()
+                    .slice(0, 2)
+                    .map((item) => item.getAttribute('aria-checked')),
+            ).toEqual(['true', 'false']);
+            await press(items()[0], 'End');
+            expect(document.activeElement).toBe(items()[2]);
+            await press(items()[2], 'Home');
+            expect(document.activeElement).toBe(items()[0]);
+            await press(items()[0], 'ArrowDown');
+            expect(document.activeElement).toBe(items()[1]);
+            await press(items()[1], 'ArrowUp');
+            expect(document.activeElement).toBe(items()[0]);
+            await press(items()[0], 'ArrowDown');
+            await press(items()[1], key);
+            expect(host.picked()).toBe('tutors');
+            expect(menu()).toBeNull();
+            await open();
+            expect(
+                items()
+                    .slice(0, 2)
+                    .map((item) => item.getAttribute('aria-checked')),
+            ).toEqual(['false', 'true']);
+        },
+    );
 
     it('renders a link item as an anchor so it keeps native link behaviour', async () => {
         await open();

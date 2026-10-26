@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { DomPortal } from '@angular/cdk/portal';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Directionality } from '@angular/cdk/bidi';
 import { vi } from 'vitest';
 import { TumAetUiOverlayPlacement, TumAetUiOverlayService } from './tumaet-ui-overlay.service';
@@ -10,7 +11,7 @@ describe('TumAetUiOverlayService', () => {
     let origin: HTMLElement;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({ imports: [OverlayModule] });
+        TestBed.configureTestingModule({ imports: [OverlayModule, CdkScrollable] });
         service = TestBed.inject(TumAetUiOverlayService);
         origin = document.createElement('button');
         document.body.appendChild(origin);
@@ -35,36 +36,46 @@ describe('TumAetUiOverlayService', () => {
         overlayRef.dispose();
     });
 
-    it('tracks ancestor scrolling on every attachment and stops on detach or disposal', () => {
-        const parent = document.createElement('div');
+    it('repositions on registered ancestor scrolling while attached', () => {
+        vi.useFakeTimers();
+        const scrollable = TestBed.createDirective(CdkScrollable, { tagName: 'div' });
+        scrollable.detectChanges();
+        scrollable.nativeElement.appendChild(origin);
         const content = document.createElement('div');
-        document.body.append(parent, content);
-        parent.appendChild(origin);
+        document.body.appendChild(content);
         const overlayRef = service.createConnectedOverlay(origin, 'bottom');
         const updatePosition = vi.spyOn(overlayRef, 'updatePosition').mockImplementation(() => {});
         const portal = new DomPortal(content);
-        const scroll = () => parent.dispatchEvent(new Event('scroll'));
+        const scroll = () => {
+            scrollable.nativeElement.dispatchEvent(new Event('scroll'));
+            vi.advanceTimersByTime(20);
+        };
 
-        scroll();
-        expect(updatePosition).not.toHaveBeenCalled();
-        overlayRef.attach(portal);
-        updatePosition.mockClear();
-        scroll();
-        expect(updatePosition).toHaveBeenCalledOnce();
-        overlayRef.detach();
-        updatePosition.mockClear();
-        scroll();
-        expect(updatePosition).not.toHaveBeenCalled();
-        overlayRef.attach(portal);
-        updatePosition.mockClear();
-        scroll();
-        expect(updatePosition).toHaveBeenCalledOnce();
-        overlayRef.dispose();
-        updatePosition.mockClear();
-        scroll();
-        expect(updatePosition).not.toHaveBeenCalled();
-        parent.remove();
-        content.remove();
+        try {
+            overlayRef.attach(portal);
+            vi.advanceTimersByTime(20);
+            updatePosition.mockClear();
+            scroll();
+            expect(updatePosition).toHaveBeenCalled();
+            overlayRef.detach();
+            updatePosition.mockClear();
+            scroll();
+            expect(updatePosition).not.toHaveBeenCalled();
+            overlayRef.attach(portal);
+            vi.advanceTimersByTime(20);
+            updatePosition.mockClear();
+            scroll();
+            expect(updatePosition).toHaveBeenCalled();
+            overlayRef.dispose();
+            updatePosition.mockClear();
+            scroll();
+            expect(updatePosition).not.toHaveBeenCalled();
+        } finally {
+            overlayRef.dispose();
+            scrollable.destroy();
+            content.remove();
+            vi.useRealTimers();
+        }
     });
 
     it('can match the overlay width to its origin', () => {
@@ -75,7 +86,7 @@ describe('TumAetUiOverlayService', () => {
         overlayRef.dispose();
     });
 
-    it('tracks origin width and disconnects its resize observer when disposed', () => {
+    it.each(['width', 'minWidth'] as const)('tracks origin %s across attachments and cleans up on detach and disposal', (dimension) => {
         let resize!: () => void;
         const observe = vi.fn();
         const disconnect = vi.fn();
@@ -91,20 +102,37 @@ describe('TumAetUiOverlayService', () => {
         vi.stubGlobal('ResizeObserver', MockResizeObserver);
         let width = 288;
         vi.spyOn(origin, 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect);
-
-        const overlayRef = service.createConnectedOverlay(origin, 'bottom', { matchOriginWidth: true });
+        const content = document.createElement('div');
+        document.body.appendChild(content);
+        const portal = new DomPortal(content);
+        const overlayRef = service.createConnectedOverlay(origin, 'bottom', {
+            matchOriginWidth: dimension === 'width',
+            minWidthFromOrigin: dimension === 'minWidth',
+            minWidth: 192,
+        });
         try {
+            overlayRef.attach(portal);
             expect(observe).toHaveBeenCalledWith(origin);
-            expect(overlayRef.getConfig().width).toBe(288);
+            expect(overlayRef.getConfig()[dimension]).toBe(288);
 
             width = 320;
             resize();
-            expect(overlayRef.getConfig().width).toBe(320);
+            expect(overlayRef.getConfig()[dimension]).toBe(320);
+            width = 120;
+            resize();
+            expect(overlayRef.getConfig()[dimension]).toBe(dimension === 'minWidth' ? 192 : 120);
+
+            overlayRef.detach();
+            expect(disconnect).toHaveBeenCalledOnce();
+            overlayRef.attach(portal);
+            expect(observe).toHaveBeenCalledTimes(2);
+            overlayRef.dispose();
+            expect(disconnect).toHaveBeenCalledTimes(3);
         } finally {
             overlayRef.dispose();
+            content.remove();
             vi.unstubAllGlobals();
         }
-        expect(disconnect).toHaveBeenCalledOnce();
     });
 
     it('propagates right-to-left direction while preserving physical horizontal placements', () => {

@@ -38,7 +38,10 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
     '2xl': 'tumaet:hidden tumaet:2xl:table-cell',
 };
 
-/** Server-driven table whose consumer owns rows and responds to query changes. */
+/**
+ * Server-driven table whose consumer owns rows and responds to query changes.
+ * Set `--tumaet-ui-table-search-max-width` on the host to limit the growing search field.
+ */
 @Component({
     selector: 'tumaet-ui-table',
     templateUrl: './tumaet-ui-table.component.html',

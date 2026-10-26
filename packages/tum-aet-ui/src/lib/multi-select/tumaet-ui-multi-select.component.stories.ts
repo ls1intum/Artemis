@@ -23,6 +23,14 @@ const meta = {
         options: eventTypes,
         placeholder: 'Choose event types',
     },
+    parameters: {
+        docs: {
+            description: {
+                component:
+                    'The panel stays open while selecting values and allows page scrolling. Outside clicks dismiss it without intercepting the clicked control. Unlike multi-select, select, date picker and popover use a backdrop that intercepts outside pointer interactions.',
+            },
+        },
+    },
     argTypes: {
         size: {
             control: 'inline-radio',

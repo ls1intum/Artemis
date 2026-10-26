@@ -60,7 +60,7 @@
                                         id="useHTTPSButton"
                                         (triggered)="useHttpsPassword()"
                                         menuItemRole="menuitemradio"
-                                        [checked]="selectedAuthenticationMechanism() === mechanism"
+                                        [menuItemChecked]="selectedAuthenticationMechanism() === mechanism"
                                     >
                                         HTTPS
                                     </button>
@@ -72,7 +72,7 @@
                                         id="useHTTPSWithTokenButton"
                                         (triggered)="useHttpsToken()"
                                         menuItemRole="menuitemradio"
-                                        [checked]="selectedAuthenticationMechanism() === mechanism"
+                                        [menuItemChecked]="selectedAuthenticationMechanism() === mechanism"
                                     >
                                         Token
                                     </button>
@@ -84,7 +84,7 @@
                                         id="useSSHButton"
                                         (triggered)="useSshUrl()"
                                         menuItemRole="menuitemradio"
-                                        [checked]="selectedAuthenticationMechanism() === mechanism"
+                                        [menuItemChecked]="selectedAuthenticationMechanism() === mechanism"
                                     >
                                         SSH
                                     </button>
