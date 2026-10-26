@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -90,6 +91,8 @@ class SecurityFrameworkServiceTest {
 
     private Path remote;
 
+    private final AtomicInteger directoryCounter = new AtomicInteger();
+
     private GitService gitService;
 
     private BareGitRepositoryService bareGitRepositoryService;
@@ -131,7 +134,7 @@ class SecurityFrameworkServiceTest {
                 .thenAnswer(_ -> new Repository(new FileRepositoryBuilder().setGitDir(remote.toFile()).setBare().setup(), remote, mock(LocalVCRepositoryUri.class)));
 
         TempFileUtilService tempFileUtilService = mock(TempFileUtilService.class);
-        when(tempFileUtilService.createTempDirectory(anyString())).thenAnswer(call -> Files.createTempDirectory(root, call.getArgument(0, String.class)));
+        when(tempFileUtilService.createTempDirectory(anyString())).thenAnswer(call -> newDirectory(call.getArgument(0, String.class)));
 
         ProgrammingExerciseBuildConfigRepository buildConfigRepository = mock(ProgrammingExerciseBuildConfigRepository.class);
         when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(anyLong())).thenReturn(new ProgrammingExerciseBuildConfig());
@@ -141,10 +144,17 @@ class SecurityFrameworkServiceTest {
     }
 
     /**
+     * Creates a new, uniquely named directory below the test's temporary folder (the architecture tests forbid {@code Files.createTempDirectory}).
+     */
+    private Path newDirectory(String prefix) throws IOException {
+        return Files.createDirectories(root.resolve(prefix + directoryCounter.incrementAndGet()));
+    }
+
+    /**
      * Creates the bare tests repository with a single commit, laid out like the tests repository of the Java Gradle template.
      */
     private void initRemote(boolean withPolicy) throws Exception {
-        Path seed = Files.createTempDirectory(root, "seed");
+        Path seed = newDirectory("seed-");
         FileUtils.writeStringToFile(seed.resolve("build.gradle").toFile(), "ext {\n    aresVersion = '2.2.1'\n}\n", StandardCharsets.UTF_8);
         if (withPolicy) {
             FileUtils.writeStringToFile(seed.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), CUSTOM_POLICY, StandardCharsets.UTF_8);

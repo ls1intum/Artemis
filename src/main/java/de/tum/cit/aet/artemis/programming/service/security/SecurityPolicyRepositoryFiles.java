@@ -128,7 +128,8 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the Ares version pinned in the build file, if any
      */
     public static Optional<String> readAresVersion(Path repositoryRoot) {
-        return parseAresVersion(readFileIfPresent(repositoryRoot.resolve(GRADLE_BUILD_FILE)).orElse(null), readFileIfPresent(repositoryRoot.resolve(MAVEN_BUILD_FILE)).orElse(null));
+        return parseAresVersion(readFileIfPresent(repositoryRoot.resolve(GRADLE_BUILD_FILE)).orElse(null),
+                readFileIfPresent(repositoryRoot.resolve(MAVEN_BUILD_FILE)).orElse(null));
     }
 
     /**
@@ -275,8 +276,7 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static List<Path> javaFiles(Path repositoryRoot) {
         try (Stream<Path> files = Files.walk(repositoryRoot)) {
-            return files.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".java") && isScannedSource(repositoryRoot, path)).sorted()
-                    .toList();
+            return files.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".java") && isScannedSource(repositoryRoot, path)).sorted().toList();
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
