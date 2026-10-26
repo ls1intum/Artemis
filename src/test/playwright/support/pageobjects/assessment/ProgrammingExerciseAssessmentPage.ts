@@ -20,7 +20,7 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     }
 
     private async typePointsIntoFeedbackEditor(points: number, index: number) {
-        await this.setPointsViaStepper(this.getInlineFeedback(index), points);
+        await this.setPoints(this.getInlineFeedback(index), points);
     }
 
     private getInlineFeedback(line: number) {

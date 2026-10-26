@@ -214,6 +214,53 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
     });
 
+    it('lets students dismiss the submission confirmation while waiting for live quiz results', () => {
+        fixture.detectChanges();
+        component.submission.set({ submitted: true });
+        fixture.detectChanges();
+
+        const confirmation = () => fixture.nativeElement.querySelector('.quiz-submitted-overlay');
+        expect(confirmation()?.textContent).toContain('artemisApp.quizExercise.successfullySubmittedText');
+        const dismissButton = fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]') as HTMLButtonElement;
+        expect(dismissButton).not.toBeNull();
+        dismissButton.click();
+        fixture.detectChanges();
+
+        expect(confirmation()).toBeNull();
+        expect(component.submission().submitted).toBe(true);
+        expect(component.showingResult()).toBe(false);
+    });
+
+    it('keeps the submission confirmation dismissed when the same live quiz refreshes', () => {
+        fixture.detectChanges();
+        component.submission.set({ submitted: true });
+        fixture.detectChanges();
+        const dismissButton = fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]') as HTMLButtonElement;
+        dismissButton.click();
+
+        component.refreshQuiz(true);
+        component.submission.set({ submitted: true });
+        fixture.detectChanges();
+
+        expect(component.submissionConfirmationDismissed()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]')).toBeNull();
+        expect(component.submission().submitted).toBe(true);
+        expect(component.showingResult()).toBe(false);
+    });
+
+    it('shows the submission confirmation again when another live quiz starts', () => {
+        fixture.detectChanges();
+        component.submissionConfirmationDismissed.set(true);
+
+        component.quizId = 2;
+        component.initLiveMode();
+        component.submission.set({ submitted: true });
+        fixture.detectChanges();
+
+        expect(component.submissionConfirmationDismissed()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]')).not.toBeNull();
+    });
+
     it('should capture exception when element is not found', () => {
         const questionIndex = 1;
         vi.spyOn(document, 'getElementById').mockReturnValue(null);
