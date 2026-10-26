@@ -39,6 +39,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
@@ -306,7 +307,7 @@ class GenerationSeedServiceTest {
                 .getExistingBareRepository(uri, "main");
         Map<String, String> harness = service.readTestHarness(exercise);
         assertThat(harness).containsOnlyKeys("gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
-        assertThat(AresTestHarness.reasons(harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
+        assertThat(AresTestHarness.reasons(GenerationBuildTool.GRADLE, harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
         verifyNoInteractions(git);
     }
 
@@ -316,7 +317,7 @@ class GenerationSeedServiceTest {
                 .getExistingBareRepository(uri, "main");
         Map<String, String> harness = service.readTestHarness(exercise);
         assertThat(harness).containsOnlyKeys("gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
-        assertThat(AresTestHarness.reasons(harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
+        assertThat(AresTestHarness.reasons(GenerationBuildTool.GRADLE, harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
         verifyNoInteractions(git);
     }
 

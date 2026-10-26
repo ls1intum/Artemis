@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.aiworker.config.WorkerSandboxConfiguration;
 import de.tum.cit.aet.artemis.aiworker.config.WorkerSettings;
 import de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -45,7 +46,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.WorkspaceArchive;
 
-/** Actual offline canonical Gradle builds; a shell-only image cannot satisfy this contract. */
+/** Actual offline canonical Gradle and Maven builds; a shell-only image cannot satisfy this contract. */
 @EnabledIfEnvironmentVariable(named = "HYPERION_GRADLE_TEST_IMAGE", matches = "sha256:[a-f0-9]{64}")
 class DockerGradleBuildTest {
 
@@ -55,7 +56,7 @@ class DockerGradleBuildTest {
 
     private final GenerationWorkspace workspace = new GenerationWorkspace(commands, resources);
 
-    private final GenerationInput exercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of());
+    private final GenerationInput exercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
     private static final ContractWitness HIGH_SCORE_WITNESS = new ContractWitness("R1", "testScoreAboveOneHundred", """
             @org.junit.jupiter.api.Test
@@ -477,6 +478,53 @@ class DockerGradleBuildTest {
         assertThat(isolated.exitCode()).as(isolated.buildDiagnostic()).isZero();
         assertThat(isolated.testNames()).containsExactlyInAnyOrderElementsOf(solution.testNames());
         assertThat(isolated.failures()).isZero();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "java/test/maven/projectTemplate/pom.xml", "java/maven_maven/test/projectTemplate/pom.xml" })
+    void mavenSolutionPassesAndTemplateFailsOfflineWithTheMavenHarness(String pomTemplate) throws IOException {
+        var mavenExercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), GenerationBuildTool.MAVEN);
+        String session = sandbox.createSession();
+        workspace.seedWorkspace(sandbox, session, mavenExercise, Mode.ADAPT, mavenSnapshot(pomTemplate), true);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(mavenExercise)), Map.of()));
+
+        var solution = build(session, "solution");
+        assertThat(solution.exitCode()).as(solution.buildDiagnostic()).isZero();
+        assertThat(solution.testNames()).containsExactlyInAnyOrder("testPublicApi", "testRepresentativeScores", "testBoundaryScores", "testEmptyInput");
+        assertThat(solution.failures()).isZero();
+
+        var template = build(session, "template");
+        assertThat(template.tests()).as(template.buildDiagnostic()).isEqualTo(4);
+        assertThat(template.exitCode()).isNotZero();
+        assertThat(template.testFailedNames()).containsExactlyInAnyOrder("testRepresentativeScores", "testBoundaryScores", "testEmptyInput");
+
+        var isolated = build(session, "solution", "behavior-isolated");
+        assertThat(isolated.exitCode()).as(isolated.buildDiagnostic()).isZero();
+        assertThat(isolated.testNames()).containsExactlyInAnyOrderElementsOf(solution.testNames());
+        assertThat(isolated.failures()).isZero();
+    }
+
+    /** The Gradle seed with the rendered Maven test harness in place of the Gradle one, as exercise creation produces it. */
+    private WorkspaceSnapshot mavenSnapshot(String pomTemplate) throws IOException {
+        List<WorkspaceFile> files = new ArrayList<>();
+        for (WorkspaceFile file : snapshot().files()) {
+            if (file.path().equals("tests/SecurityPolicy.yaml")) {
+                String policy = new String(file.content(), StandardCharsets.UTF_8).replace("JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ", "JAVA_USING_MAVEN_ARCHUNIT_AND_ASPECTJ");
+                files.add(new WorkspaceFile(file.path(), policy.getBytes(StandardCharsets.UTF_8), false));
+            }
+            else if (!file.path().startsWith("tests/") || file.path().startsWith("tests/test/")) {
+                files.add(file);
+            }
+        }
+        String pom = new String(read(pomTemplate), StandardCharsets.UTF_8);
+        for (String block : List.of("static-code-analysis", "maven-central-mirror")) {
+            pom = pom.replaceAll("(?s)<!--%" + block + "-start%-->.*?<!--%" + block + "-stop%-->", "");
+        }
+        pom = pom.replace("${studentWorkingDirectory}", "/assignment/src").replace("${exerciseNamePomXml}", "hyperion-readiness").replace("${exerciseName}", "hyperion-readiness")
+                .replace("${packageName}", "de.tum.cit.aet.reference").replace("${packaging}", "jar");
+        files.add(new WorkspaceFile("tests/pom.xml", pom.getBytes(StandardCharsets.UTF_8), false));
+        return new WorkspaceSnapshot(files);
     }
 
     private BuildSummary ordinaryBuild(String session, WorkspaceSnapshot seed, String lane) throws IOException {

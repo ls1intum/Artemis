@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationToolchain;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmissionService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
@@ -33,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.Generat
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -104,6 +108,39 @@ class GenerationCapabilityServiceTest {
         when(workers.hasAvailableGenerationSandboxSlot(GenerationToolchain.JAVA_GRADLE)).thenReturn(true);
         assertThat(service.describe(exercise).capacityAvailable()).isTrue();
         verify(workers).hasAvailableGenerationSandboxSlot(GenerationToolchain.JAVA_GRADLE);
+    }
+
+    @Test
+    void mavenExercisesUseTheMavenHarnessAndTheSharedJavaSandbox() throws Exception {
+        String pom = new ClassPathResource("templates/java/test/maven/projectTemplate/pom.xml").getContentAsString(StandardCharsets.UTF_8);
+        exercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        when(seeds.readTestHarness(exercise)).thenReturn(Map.of("pom.xml", pom, "SecurityPolicy.yaml", "trustedPackages: []"));
+        when(workers.hasAvailableGenerationSandboxSlot(GenerationToolchain.JAVA_GRADLE)).thenReturn(true);
+
+        var result = service.describe(exercise);
+        assertThat(result.supported()).isTrue();
+        assertThat(result.capacityAvailable()).isTrue();
+        assertThat(result.restriction()).isNull();
+        assertThat(LanguageGenerationProfile.buildToolFor(exercise)).isEqualTo(GenerationBuildTool.MAVEN);
+        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
+        assertThat(LanguageGenerationProfile.buildToolFor(exercise)).isEqualTo(GenerationBuildTool.MAVEN);
+
+        // A Gradle harness cannot stand in for a Maven exercise's harness.
+        exercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        when(seeds.readTestHarness(exercise)).thenReturn(Map.of("build.gradle", "testImplementation 'de.tum.cit.ase:ares:2.2.1'\napply from: 'gradle/AresReservedPackages.gradle'",
+                "gradle/AresReservedPackages.gradle", "de/tum/cit/ase/ares/** org/junit/**", "SecurityPolicy.yaml", "trustedPackages: []"));
+        assertThatThrownBy(() -> service.requireSupportedConfiguration(exercise)).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void mavenBlackboxIsNotQualified() {
+        exercise.setProjectType(ProjectType.MAVEN_BLACKBOX);
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        assertThat(LanguageGenerationProfile.isSupported(exercise, buildConfig)).isFalse();
+        exercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        assertThat(LanguageGenerationProfile.isSupported(exercise, buildConfig)).isTrue();
+        exercise.setProjectType(null);
+        assertThat(LanguageGenerationProfile.isSupported(exercise, buildConfig)).isFalse();
     }
 
     @Test

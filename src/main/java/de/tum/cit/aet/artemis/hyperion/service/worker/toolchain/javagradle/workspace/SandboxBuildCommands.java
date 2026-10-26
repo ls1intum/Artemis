@@ -12,12 +12,13 @@ import java.util.stream.Collectors;
 
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 
 /**
- * Renders the canonical Java Gradle LocalCI phases for the agent and verifier; a missing recipe fails closed.
+ * Renders the canonical Java Gradle or Maven LocalCI phases for the agent and verifier, selected by the exercise's build tool; a missing recipe fails closed.
  * Each invocation creates a fresh build tree and collects reports for the production Java parsers; shell output does not determine the verdict.
  */
 public class SandboxBuildCommands {
@@ -25,6 +26,13 @@ public class SandboxBuildCommands {
     private static final Pattern CLEAN_TASK = Pattern.compile("(?<![\\w-])clean(?![\\w-])\\s*");
 
     private static final Pattern GRADLE_TEST_TASK = Pattern.compile("(?<![\\w-])(test|structuralTests|behaviorTests)(?![\\w-])");
+
+    private static final Pattern MAVEN_TEST_PHASE = Pattern.compile("(?<![\\w:.-])test(?![\\w:.-])");
+
+    /** Private writable Maven repository; the image's offline repository is chained behind it as a read-only tail. */
+    static final String MAVEN_PRIVATE_REPOSITORY = "/tmp/hyperion-maven-repository";
+
+    static final String MAVEN_IMAGE_REPOSITORY = "/root/.m2/repository";
 
     public static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
@@ -52,10 +60,17 @@ public class SandboxBuildCommands {
 
     public static final String COLLECTED_NAME_SEPARATOR = "__";
 
-    private final BuildRecipe recipe;
+    private final BuildRecipe gradleRecipe;
+
+    private final BuildRecipe mavenRecipe;
 
     public SandboxBuildCommands(GenerationResources resources) {
-        try (var input = resources.getResource(Path.of("templates/phases/java/plain_gradle.yaml")).getInputStream()) {
+        gradleRecipe = loadRecipe(resources, "templates/phases/java/plain_gradle.yaml");
+        mavenRecipe = loadRecipe(resources, "templates/phases/java/plain_maven.yaml");
+    }
+
+    private static BuildRecipe loadRecipe(GenerationResources resources, String phasesFile) {
+        try (var input = resources.getResource(Path.of(phasesFile)).getInputStream()) {
             var phases = YAMLMapper.builder().build().readTree(input);
             List<String> scripts = new ArrayList<>();
             List<String> reports = new ArrayList<>();
@@ -66,13 +81,17 @@ public class SandboxBuildCommands {
                 }
             }
             if (scripts.isEmpty() || reports.isEmpty()) {
-                throw new IllegalStateException("Canonical Gradle build recipe is incomplete");
+                throw new IllegalStateException("Canonical build recipe is incomplete: " + phasesFile);
             }
-            recipe = new BuildRecipe(List.copyOf(scripts), List.copyOf(reports), "assignment", "");
+            return new BuildRecipe(List.copyOf(scripts), List.copyOf(reports), "assignment", "");
         }
         catch (IOException e) {
-            throw new IllegalStateException("Canonical Gradle build recipe is unavailable", e);
+            throw new IllegalStateException("Canonical build recipe is unavailable: " + phasesFile, e);
         }
+    }
+
+    private BuildRecipe recipeFor(GenerationInput exercise) {
+        return exercise.buildTool() == GenerationBuildTool.MAVEN ? mavenRecipe : gradleRecipe;
     }
 
     public String pristineSolutionBuildCommand() {
@@ -120,13 +139,20 @@ public class SandboxBuildCommands {
     }
 
     private String verifyScriptContent(GenerationInput exercise, boolean readinessProbe) {
+        BuildRecipe recipe = recipeFor(exercise);
+        boolean maven = exercise.buildTool() == GenerationBuildTool.MAVEN;
         String findExpression = buildFindExpression(recipe.reportGlobs());
         String assignmentDestination = "$BUILD_DIR/" + recipe.assignmentDir();
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
-        String isolatedPhaseSection = buildIsolatedGradlePhaseSection(recipe);
+        String isolatedPhaseSection = maven ? buildIsolatedMavenPhaseSection(recipe) : buildIsolatedGradlePhaseSection(recipe);
         // Each lane replaces the disposable Gradle cache. A persistent daemon would retain its deleted JARs in bounded tmpfs.
-        String gradleOptions = "export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Dorg.gradle.daemon=false\"";
+        // Maven runs offline against a fresh private repository chained to the image's read-only one; MAVEN_ARGS reaches every mvn invocation of the phases.
+        String buildToolOptions = maven ? """
+                rm -rf "@@MAVEN_PRIVATE_REPOSITORY@@"
+                export MAVEN_ARGS="-o -Dmaven.repo.local=@@MAVEN_PRIVATE_REPOSITORY@@ -Dmaven.repo.local.tail=@@MAVEN_IMAGE_REPOSITORY@@"
+                """.replace("@@MAVEN_PRIVATE_REPOSITORY@@", MAVEN_PRIVATE_REPOSITORY).replace("@@MAVEN_IMAGE_REPOSITORY@@", MAVEN_IMAGE_REPOSITORY).strip()
+                : "export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Dorg.gradle.daemon=false\"";
         // The assignment build checks out no sibling solution/, so the solution placeholder collapses to the assignment directory.
         String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
         String solutionPlaceholderValue = "assignment";
@@ -251,7 +277,7 @@ public class SandboxBuildCommands {
         return script.replace("@@WORKSPACE@@", GenerationWorkspace.WORKSPACE).replace("@@REPORTS_DIR@@", REPORTS_DIR).replace("@@ASSIGNMENT_DEST@@", assignmentDestination)
                 .replace("@@ASSIGNMENT_DIR@@", recipe.assignmentDir()).replace("@@ASSIGNMENT_PARENT@@", assignmentParentPlaceholderValue).replace("@@TEST_DEST@@", testDestination)
                 .replace("@@SOLUTION_COPY@@", solutionCopySection).replace("@@SOLUTION_DIR@@", solutionPlaceholderValue).replace("@@TEST_DIR@@", testPlaceholderValue)
-                .replace("@@REPORT_FIND@@", findExpression).replace("@@GRADLE_OPTIONS@@", gradleOptions).replace("@@PHASES@@", phaseSection)
+                .replace("@@REPORT_FIND@@", findExpression).replace("@@GRADLE_OPTIONS@@", buildToolOptions).replace("@@PHASES@@", phaseSection)
                 .replace("@@ISOLATED_PHASES@@", isolatedPhaseSection).replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR).replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN)
                 .replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER).replace("@@READINESS_OVERLAY@@", readinessOverlay).replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR)
                 .replace("@@TRUSTED_STRUCTURAL_DIR@@", TRUSTED_STRUCTURAL_DIR).replace("@@PRISTINE_VERIFY_DIR@@", PRISTINE_VERIFY_DIR);
@@ -303,6 +329,40 @@ public class SandboxBuildCommands {
                 fi""";
     }
 
+    /**
+     * Maven counterpart of {@link #buildIsolatedGradlePhaseSection}: runs the test phase's lifecycle through {@code process-test-classes} (compile, Ares weaving, the
+     * reserved-package guard, and the Ares agent copy), deletes every source, then invokes only the Surefire goal on the compiled classes.
+     */
+    private static String buildIsolatedMavenPhaseSection(BuildRecipe recipe) {
+        List<String> setupPhases = new ArrayList<>();
+        List<String> compilePhases = new ArrayList<>();
+        List<String> executePhases = new ArrayList<>();
+        boolean reachedTests = false;
+        for (String phase : recipe.phases()) {
+            Matcher matcher = MAVEN_TEST_PHASE.matcher(phase);
+            if (!phase.contains("mvn") || !matcher.find()) {
+                if (reachedTests) {
+                    return "run_phase 'echo \"Source-isolated verification requires compile/setup phases before Maven test phases\" >&2; exit 65'";
+                }
+                setupPhases.add(phase);
+                continue;
+            }
+            reachedTests = true;
+            compilePhases.add(matcher.replaceFirst("process-test-classes"));
+            executePhases.add(CLEAN_TASK.matcher(matcher.replaceFirst("surefire:test")).replaceFirst("").strip());
+        }
+        if (executePhases.isEmpty()) {
+            return "run_phase 'echo \"Source-isolated verification requires a standalone Maven test phase\" >&2; exit 65'";
+        }
+        return buildPhaseSection(setupPhases) + "\n" + buildPhaseSection(compilePhases) + """
+
+                if [ "$rc" -eq 0 ]; then
+                    find "$BUILD_DIR" "$WORKSPACE" -type f -name '*.java' -delete 2>/dev/null || exit 74
+                """ + buildPhaseSection(executePhases) + """
+
+                fi""";
+    }
+
     private static String gradleProducerExclusions(String task) {
         String sourceSet = task.equals("test") ? "Test" : Character.toUpperCase(task.charAt(0)) + task.substring(1, task.length() - "Tests".length()) + "Test";
         return " -x compileJava -x processResources -x compile" + sourceSet + "Java -x process" + sourceSet + "Resources -x " + decapitalize(sourceSet) + "Classes";
@@ -338,11 +398,12 @@ public class SandboxBuildCommands {
     private record BuildRecipe(List<String> phases, List<String> reportGlobs, String assignmentDir, String testDir) {
     }
 
-    /** Canonical Gradle commands and report paths, also exposed in the agent's build instructions. */
+    /** Canonical build commands and report paths, also exposed in the agent's build instructions. */
     public record BuildContextSummary(List<String> phaseScripts, List<String> reportGlobs, String testCheckoutDir) {
     }
 
     public BuildContextSummary describeBuildContext(GenerationInput exercise) {
+        BuildRecipe recipe = recipeFor(exercise);
         return new BuildContextSummary(recipe.phases(), recipe.reportGlobs(), recipe.testDir());
     }
 }

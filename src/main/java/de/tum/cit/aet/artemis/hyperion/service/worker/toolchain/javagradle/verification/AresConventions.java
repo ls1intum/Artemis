@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 
 /** Checks the current Ares harness and trusted annotations for Java generation. */
@@ -37,7 +38,11 @@ final class AresConventions {
             reasons.add("Java tests repository must not contain generated build output such as target/ or build/ files; remove "
                     + sampleNames(new LinkedHashSet<>(generatedBuildOutput)) + ".");
         }
-        reasons.addAll(AresTestHarness.reasons(producedTestsFiles));
+        // The seed harness was checked against the brief's build tool before authoring, and the tampering gate pins every build file to that seed, so the produced
+        // repository's own build file identifies the same tool.
+        GenerationBuildTool buildTool = producedTestsFiles.containsKey("pom.xml") && !producedTestsFiles.containsKey("build.gradle") ? GenerationBuildTool.MAVEN
+                : GenerationBuildTool.GRADLE;
+        reasons.addAll(AresTestHarness.reasons(buildTool, producedTestsFiles));
         if (producedTestsFiles.containsKey(AresSecurityPolicy.PATH)) {
             reasons.addAll(AresSecurityPolicy.reasons(seed, producedTestsFiles));
         }

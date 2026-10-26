@@ -15,7 +15,7 @@ source tree, like Build Agent and LocalCI. They are not Gradle subprojects.
 | `aiworker.config`, `aiworker.service`             | Provider transport, sandbox, supervisor, and core-side coordination              |
 | `aiworker.web.admin`                              | Infrastructure status for administrators                                         |
 | `hyperion.service.worker`                         | Conditional Hyperion workload and typed translation                              |
-| `hyperion.service.worker.toolchain.javagradle`    | Java/Gradle authoring and independent verification                               |
+| `hyperion.service.worker.toolchain.javagradle`    | Java (Gradle and Maven) authoring and independent verification                   |
 | Other `hyperion` packages                         | Instructor access, exercise state, persistence and review                        |
 
 `aiworker` must not import Hyperion. Its portable contracts must not import Spring
@@ -55,7 +55,7 @@ The worker calls the configured LLM provider directly; core does not proxy those
    and startup with core services absent. Qualify the exact sandbox image with a real
    build before enabling it.
 
-Only the Java/Gradle Hyperion toolchain is qualified. A fake adapter in tests does
+Only the Java Hyperion toolchain (`java-gradle`, which builds Gradle and Maven exercises) is qualified. A fake adapter in tests does
 not establish support for another language.
 
 ## Checks

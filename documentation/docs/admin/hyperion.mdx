@@ -253,11 +253,12 @@ worker connects as a Hazelcast client or to Redis/Valkey; it does not join the
 core Hazelcast cluster as a member. Worker IDs must match the configured pool. A missing capable worker returns `503 generationCapacityUnavailable`;
 starting a supervisor process is not evidence that generation is available.
 
-Generation and adaptation accept mutable Java Gradle exercises (`PLAIN_GRADLE` or
-`GRADLE_GRADLE`; both share the Gradle test harness) without auxiliary
-repositories, sequential test runs, or static code analysis. Maven projects are
-not supported. The current offline sandbox uses the canonical Java 25 / Ares 2
-harness. Ares 1 harnesses are not supported by generation or adaptation. Migrate an older
+Generation and adaptation accept mutable Java exercises built with Gradle
+(`PLAIN_GRADLE` or `GRADLE_GRADLE`) or Maven (`PLAIN_MAVEN` or `MAVEN_MAVEN`)
+without auxiliary repositories, sequential test runs, or static code analysis.
+Maven black-box (`MAVEN_BLACKBOX`) exercises are not supported. The worker runs
+the exercise's own build tool: one offline sandbox image contains the canonical
+Java 25 / Ares 2 Gradle and Maven harnesses and their dependencies. Ares 1 harnesses are not supported by generation or adaptation. Migrate an older
 exercise to the current Artemis harness separately; Hyperion does not rewrite its build files.
 Rebuild and qualify `deployment/docker/hyperion/gradle-sandbox.Dockerfile` when its
 canonical toolchain or dependencies change; an older Java 17 sandbox cannot grade
@@ -413,8 +414,9 @@ bounded assignment, selects a qualified toolchain and returns typed generation e
 The generic transport does not interpret briefs, tests, quality findings or exercise IDs.
 
 Configure `artemis.aiworker.workload=hyperion-generation`, `workload-version=1` and
-`profile=java-gradle`, with the qualified offline sandbox image. Only Java/Gradle is
-qualified; naming another profile does not add a language implementation. Core admission
+`profile=java-gradle`, with the qualified offline sandbox image. The profile name predates
+Maven support; the same profile and image serve Java exercises built with Gradle or Maven,
+and the brief names the build tool. Only Java is qualified; naming another profile does not add a language implementation. Core admission
 and returned evidence must agree on the workload schema, profile, image and execution.
 See [AI Worker operations](/admin/aiworker) for infrastructure configuration.
 
@@ -609,7 +611,7 @@ the operator's checks.
 The LocalCI build that synchronizes saved tests is restricted to network `none`
 and receives no exercise-configured environment variables. Its persisted build
 job ID carries the `hyperion-sync-` prefix so retries retain the same restrictions.
-Provision the matching offline Gradle toolchain and dependencies on those build
+Provision the matching offline Gradle or Maven toolchain and dependencies on those build
 agents; retries do not fall back to a network-enabled build. This post-save
 synchronization consumes ordinary LocalCI build capacity. A separate AI Worker
 does not isolate these jobs from exam builds. Use suitable build agents and

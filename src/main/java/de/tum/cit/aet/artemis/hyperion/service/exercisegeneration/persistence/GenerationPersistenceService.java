@@ -240,7 +240,8 @@ public class GenerationPersistenceService {
         requirePersistenceInputsSafe(outcome);
         ProgrammingExercise current = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(exercise.getId());
         if (!LanguageGenerationProfile.isSupported(current, buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()),
-                !current.getAuxiliaryRepositories().isEmpty())) {
+                !current.getAuxiliaryRepositories().isEmpty()) || current.getProjectType() != exercise.getProjectType()) {
+            // The candidate was verified with the authorized project type's build tool; another type, even a supported one, was never verified.
             throw new IllegalStateException("The exercise configuration changed and is no longer supported for generation");
         }
         GenerationGrading.validatePlan(current, outcome.testPlanJson());

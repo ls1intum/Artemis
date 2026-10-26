@@ -76,7 +76,7 @@ final class RepairPromptComposer {
     String editBeforeInspecting(int completedAttempt) {
         return attemptFraming(completedAttempt) + "Your previous attempt reached its step limit before making any change; the workspace is still the unmodified seeded exercise. "
                 + "Edit first: open only `problem-statement.md` and the file(s) the adaptation request names, apply the requested change with write_file or edit_file, then call the "
-                + "structured `verify` tool and submit when it reports MECHANICAL PRECHECK: PASS. Do not read the Gradle harness, the wrapper, or the Ares structural providers "
+                + "structured `verify` tool and submit when it reports MECHANICAL PRECHECK: PASS. Do not read the build harness (Gradle or Maven), the wrapper, or the Ares structural providers "
                 + "(`ClassTest`, `MethodTest`, `AttributeTest`, `ConstructorTest`, `test.json`); they are immutable. Everything the request does not mention stays as it is.\n\n"
                 + authoringBrief;
     }

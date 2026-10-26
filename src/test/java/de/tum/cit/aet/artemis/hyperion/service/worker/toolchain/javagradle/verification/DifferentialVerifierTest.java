@@ -39,6 +39,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -64,7 +65,7 @@ class DifferentialVerifierTest {
     }
 
     private static GenerationInput input() {
-        return new GenerationInput(1, "de.test", null, false, Set.of(), Set.of());
+        return new GenerationInput(1, "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
     }
 
     private static DifferentialVerifier newVerifier() {
@@ -541,7 +542,7 @@ class DifferentialVerifierTest {
     void adaptationPreservesSavedHiddenTestsWithoutBindingThemOrInventingSpecificationSeams(boolean withPlan) {
         List<String> names = List.of("visibleBehavior", "otherVisibleBehavior", "savedHiddenBehavior");
         String statement = "[task][Implement behavior](visibleBehavior,otherVisibleBehavior)\nImplement the documented sorting behavior for the supplied input values.";
-        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"));
+        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"), GenerationBuildTool.GRADLE);
         String plan = """
                 {"tests":[
                   {"name":"visibleBehavior","seamWeightTier":3,"visibility":"ALWAYS"},
@@ -563,7 +564,7 @@ class DifferentialVerifierTest {
     void adaptationStillRejectsUnboundVisibleTestsAndNewUnapprovedHiddenTests() {
         List<String> names = List.of("visibleBehavior", "otherVisibleBehavior", "savedHiddenBehavior");
         String statement = "[task][Implement behavior](otherVisibleBehavior)\nImplement the documented sorting behavior for the supplied input values.";
-        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"));
+        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"), GenerationBuildTool.GRADLE);
         var request = new VerificationRequest(harness(), Map.of(), Map.of(), harness(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.copyOf(names), statement,
                 null, true);
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement);
@@ -591,7 +592,7 @@ class DifferentialVerifierTest {
     void savedHiddenExemptionDoesNotApplyToVisiblePlanEntriesOrGeneration() {
         List<String> names = List.of("visibleBehavior", "savedHiddenBehavior");
         String statement = "[task][Implement behavior](visibleBehavior)\nImplement the documented sorting behavior for the supplied input values.";
-        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"));
+        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"), GenerationBuildTool.GRADLE);
         String plan = """
                 {"tests":[
                   {"name":"visibleBehavior","seamWeightTier":3,"visibility":"ALWAYS"},
@@ -799,7 +800,7 @@ class DifferentialVerifierTest {
     @Test
     void integrityGates_adaptationPreservesUntouchedLegacyTestsButChecksNewTests() {
         GenerationInput exercise = input();
-        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of());
+        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         String legacyTest = """
                 package de.test;
                 import org.junit.jupiter.api.Test;
@@ -833,7 +834,7 @@ class DifferentialVerifierTest {
     @Test
     void integrityGates_rejectJavaSourcesWhosePackageDoesNotMatchTheirPath() {
         GenerationInput exercise = input();
-        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of());
+        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         String pom = aresGradle();
         String test = """
                 package de.test;
@@ -1454,7 +1455,7 @@ class DifferentialVerifierTest {
             Map<String, String> testsFiles = withHarness(Map.of("test/de/test/SpellTest.java", test));
             List<String> names = List.of(DEFAULT_BOUND_NAMES);
             GenerationInput javaExercise = input();
-            javaExercise = new GenerationInput(javaExercise.id(), "de.test", null, false, Set.of(), Set.of());
+            javaExercise = new GenerationInput(javaExercise.id(), "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
             DifferentialVerifier verifier = newVerifier(spec);
 
             ScriptedSandbox misleading = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)

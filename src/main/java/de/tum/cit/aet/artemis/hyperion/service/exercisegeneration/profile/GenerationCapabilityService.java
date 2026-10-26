@@ -83,8 +83,10 @@ public class GenerationCapabilityService {
                     "generationHarnessUnavailable");
         }
         if (harnessRestriction != null) {
-            throw new BadRequestAlertException("Exercise generation requires an Ares 2 Gradle test harness. Migrate the exercise harness manually before starting generation; "
-                    + "Hyperion does not change build dependencies or security settings automatically.", ENTITY_NAME, "generationHarnessUnsupported");
+            throw new BadRequestAlertException(
+                    "Exercise generation requires an Ares 2 Gradle or Maven test harness. Migrate the exercise harness manually before starting generation; "
+                            + "Hyperion does not change build dependencies or security settings automatically.",
+                    ENTITY_NAME, "generationHarnessUnsupported");
         }
     }
 
@@ -112,7 +114,7 @@ public class GenerationCapabilityService {
     @Nullable
     private String harnessRestriction(ProgrammingExercise exercise) {
         try {
-            return AresTestHarness.reasons(seeds.readTestHarness(exercise)).isEmpty() ? null : "generationHarnessUnsupported";
+            return AresTestHarness.reasons(LanguageGenerationProfile.buildToolFor(exercise), seeds.readTestHarness(exercise)).isEmpty() ? null : "generationHarnessUnsupported";
         }
         catch (RuntimeException failure) {
             return "generationHarnessUnavailable";
