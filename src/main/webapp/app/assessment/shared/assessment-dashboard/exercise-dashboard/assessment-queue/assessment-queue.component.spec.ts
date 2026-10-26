@@ -62,6 +62,28 @@ describe('AssessmentQueueComponent', () => {
         expect(comp.isLoading()).toBe(false);
     });
 
+    it.each([false, true])('shows sortable dates and text language with role-specific team labels: %s', (isAtLeastInstructor) => {
+        fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT, isAtLeastInstructor });
+        expect(comp.translationKey()).toBe('artemisApp.exerciseAssessmentDashboard.' + (isAtLeastInstructor ? 'allTeams' : 'myTeams'));
+        expect(comp.columns()).toEqual(
+            expect.arrayContaining([expect.objectContaining({ field: 'submissionDate', sort: true }), expect.objectContaining({ field: 'submissionLanguage', sort: true })]),
+        );
+    });
+
+    it('explains unavailable second corrections and assessments locked by other tutors', () => {
+        fixture.componentRef.setInput('correctionRoundsEnabled', 2);
+        const row = {
+            ...teamRow,
+            assessableCorrectionRounds: [0],
+            correctionRoundResults: [{ resultId: 1, correctionRound: 0, completionDate: dayjs(), ownedByCurrentUser: true }],
+        };
+        comp.rows.set([row]);
+        expect(comp.hasAssessableSubmissions()).toBe(false);
+        expect(comp.assessedPreviousRound(row)).toBe(true);
+        expect(comp.lockedByAnotherTutor(row)).toBe(false);
+        expect(comp.lockedByAnotherTutor({ ...row, correctionRoundResults: [{ resultId: 2, correctionRound: 1, ownedByCurrentUser: false }] })).toBe(true);
+    });
+
     it('ignores stale responses, completions and errors while a newer request is loading', () => {
         const first = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();
         const second = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();

@@ -212,6 +212,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('shows the warning when the course-wide draft limit is reached', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        fixture.detectChanges();
+        comp.exercise.set({ ...comp.exercise(), isAtLeastInstructor: true });
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), stats, { numberOfAssessmentLocks: 10 }));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"]')).not.toBeNull();
+    });
+
     it('should initialize', () => {
         const user = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity.set(user);

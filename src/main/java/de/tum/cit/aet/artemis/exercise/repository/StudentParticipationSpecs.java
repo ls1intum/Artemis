@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Result_;
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -40,6 +41,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission_;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission_;
 
 /**
  * JPA Specifications for {@link StudentParticipation} queries.
@@ -503,6 +506,18 @@ public class StudentParticipationSpecs {
                     Root<Submission> submissionRoot = countSub.from(Submission.class);
                     countSub.select(cb.count(submissionRoot)).where(cb.equal(submissionRoot.get(Submission_.PARTICIPATION), root));
                     orders.add(asc ? cb.asc(countSub) : cb.desc(countSub));
+                }
+                case "submissionDate" -> {
+                    Subquery<ZonedDateTime> date = query.subquery(ZonedDateTime.class);
+                    Root<Submission> submission = date.from(Submission.class);
+                    date.select(submission.get(Submission_.SUBMISSION_DATE)).where(cb.equal(submission.get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)));
+                    orders.add(asc ? cb.asc(date) : cb.desc(date));
+                }
+                case "submissionLanguage" -> {
+                    Subquery<Language> language = query.subquery(Language.class);
+                    Root<TextSubmission> submission = language.from(TextSubmission.class);
+                    language.select(submission.get(TextSubmission_.LANGUAGE)).where(cb.equal(submission.get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)));
+                    orders.add(asc ? cb.asc(language) : cb.desc(language));
                 }
                 case "score" -> {
                     Subquery<Double> scoreSub = buildLatestResultFieldSubquery(root, query, cb, Result_.SCORE, Double.class);

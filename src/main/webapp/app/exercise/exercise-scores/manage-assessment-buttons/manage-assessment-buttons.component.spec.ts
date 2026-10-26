@@ -299,6 +299,21 @@ describe('ManageAssessmentButtonsComponent', () => {
             vi.restoreAllMocks();
         });
 
+        it.each([
+            [AssessmentType.MANUAL, false, undefined],
+            [AssessmentType.MANUAL, true, 'open'],
+            [AssessmentType.AUTOMATIC, false, 'assess'],
+        ])('protects other exam assessments while permitting new assessments: %s %s', (assessmentType, isAtLeastInstructor, expectedAction) => {
+            fixture.componentRef.setInput('exercise', { ...exercise, isAtLeastInstructor, exerciseGroup: { id: 2, exam: { numberOfCorrectionRoundsInExam: 1 } } });
+            fixture.componentRef.setInput('participation', {
+                id: 22,
+                submissions: [{ id: 33, results: [{ id: 44, correctionRound: 0, assessmentType, completionDate: dayjs() }] }],
+            });
+            fixture.componentRef.setInput('ownedCorrectionRounds', []);
+            fixture.componentRef.setInput('assessableCorrectionRounds', [0]);
+            expect(comp.assessmentLinks().map((link) => link.action)).toEqual(expectedAction ? [expectedAction] : []);
+        });
+
         it('should cancel programming assessment', () => {
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');

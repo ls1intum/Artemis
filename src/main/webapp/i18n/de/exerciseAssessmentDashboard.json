@@ -71,6 +71,15 @@
                 "empty": "Es gibt keine Abgaben von Studierenden in dieser Übung.",
                 "participant": "ID"
             },
+            "allTeams": {
+                "title": "Alle Teams",
+                "hint": "Abgaben aller Teams dieser Übung. Lehrende können jedes Team bewerten.",
+                "empty": "Es gibt keine Teams in dieser Übung.",
+                "participant": "Team"
+            },
+            "queueUnavailable": "Auf dieser Seite sind keine neuen Bewertungen verfügbar. Die Verfügbarkeit hängt vom Abgabestatus, den Fristen und gesperrten Bewertungen ab. Zweitkorrekturen erfordern eine abgeschlossene Erstkorrektur durch eine andere Person.",
+            "lockedByAnotherTutor": "Diese Bewertung ist durch eine andere betreuende Person gesperrt.",
+            "correctionRound": "Korrekturrunde",
             "myTeams": {
                 "title": "Deine Teams",
                 "hint": "Die Teams, deren Tutor:in du bist. Nur du kannst ihre Abgaben bewerten.",

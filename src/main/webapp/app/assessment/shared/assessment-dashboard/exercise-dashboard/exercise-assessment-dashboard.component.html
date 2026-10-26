@@ -381,6 +381,11 @@
                         </p-message>
                     }
                     @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {
+                        @if (statsForDashboard().numberOfAssessmentLocks >= 10) {
+                            <p-message severity="warn">
+                                <span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></span>
+                            </p-message>
+                        }
                         <jhi-assessment-queue
                             class="mb-4 block"
                             [exercise]="exercise()"
@@ -388,6 +393,7 @@
                             [assessmentDisabled]="!!assessmentNotPossibleYetReason()"
                             [assessmentDisabledTooltip]="assessmentNotPossibleYetTooltip()"
                             [correctionRoundsEnabled]="isTestRun() ? 1 : numberOfCorrectionRoundsEnabled()"
+                            (assessmentChanged)="loadAll()"
                         />
                     }
                     <!-- Complaints -->

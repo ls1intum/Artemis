@@ -1357,7 +1357,8 @@ public class ParticipationService {
                         ? IntStream.range(0, exercise.getNumberOfCorrectionRounds())
                                 .filter(round -> latestSubmission != null && assessmentEligibilityService.canStartAssessment(latestSubmission, exercise, round, assessmentUser))
                                 .boxed().toList()
-                        : null);
+                        : null,
+                latestSubmission instanceof de.tum.cit.aet.artemis.text.domain.TextSubmission textSubmission ? textSubmission.getLanguage() : null);
     }
 
     /**

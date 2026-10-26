@@ -52,7 +52,7 @@ class SubmissionAssessmentEligibilityServiceTest {
     @BeforeEach
     void setup() {
         tutor.setId(1L);
-        when(userRepository.getUser()).thenReturn(tutor);
+        when(userRepository.getUserWithAuthorities()).thenReturn(tutor);
         exercise.setDueDate(now().minusHours(1));
         participation.setExercise(exercise);
         submission.setParticipation(participation);
@@ -64,7 +64,16 @@ class SubmissionAssessmentEligibilityServiceTest {
         assertThat(service.canStartAssessment(submission, exercise, 0)).isTrue();
         assertThat(service.canStartAssessment(submission, exercise, 0, tutor)).isTrue();
         assertThat(service.canStartAssessment(submission, exercise, 1, tutor)).isFalse();
-        verify(userRepository, times(1)).getUser();
+        verify(userRepository, times(1)).getUserWithAuthorities();
+    }
+
+    @Test
+    void instructorsCanAssessSubmittedWorkBeforeItsIndividualDeadline() {
+        when(authCheckService.isAtLeastInstructorForExercise(exercise, tutor)).thenReturn(true);
+        participation.setIndividualDueDate(now().plusDays(1));
+        assertThat(service.canStartAssessment(submission, exercise, 0)).isTrue();
+        submission.setSubmitted(false);
+        assertThat(service.canStartAssessment(submission, exercise, 0)).isFalse();
     }
 
     @Test

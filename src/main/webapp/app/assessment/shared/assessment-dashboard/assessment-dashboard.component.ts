@@ -350,7 +350,7 @@ export class AssessmentDashboardComponent implements OnInit {
             (accumulator, entry) => {
                 return {
                     summedAverageRatings: accumulator.summedAverageRatings + entry.averageRating,
-                    summedAverageScore: accumulator.summedAverageScore + entry.averageScore,
+                    summedAverageScore: accumulator.summedAverageScore + (entry.averageScore ?? 0),
                     summedComplaintRatio: accumulator.summedComplaintRatio + complaintRatio(entry),
                 };
             },
@@ -372,7 +372,7 @@ export class AssessmentDashboardComponent implements OnInit {
                 ),
                 new TutorIssueScoreChecker(
                     entry.numberOfAssessments,
-                    entry.averageScore,
+                    entry.averageScore ?? 0,
                     courseInformation.summedAverageScore / numberOfTutorsWithNonZeroAssessments,
                     entry.name,
                     entry.userId,

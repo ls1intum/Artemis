@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCodeCommit, faEllipsisVertical, faFolderOpen, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -31,6 +31,8 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ManageAssessmentButtonsComponent } from 'app/exercise/exercise-scores/manage-assessment-buttons/manage-assessment-buttons.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type AssessmentState = 'noSubmission' | 'notAssessed' | 'inProgress' | 'complaint' | 'assessed';
@@ -83,6 +85,7 @@ export function getAssessmentState(dto: ParticipationManagementDTO, correctionRo
         ResultComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
+        ArtemisDatePipe,
     ],
 })
 export class AssessmentQueueComponent {
@@ -95,9 +98,20 @@ export class AssessmentQueueComponent {
     readonly assessmentDisabled = input(false);
     readonly assessmentDisabledTooltip = input('');
     readonly correctionRoundsEnabled = input(1);
+    readonly assessmentChanged = output<void>();
     readonly teamMode = computed(() => !!this.exercise().teamMode);
     readonly participantSortField = computed(() => (this.teamMode() ? 'participantName' : 'participationId'));
-    readonly translationKey = computed(() => 'artemisApp.exerciseAssessmentDashboard.' + (this.teamMode() ? 'myTeams' : 'students'));
+    readonly translationKey = computed(
+        () => 'artemisApp.exerciseAssessmentDashboard.' + (this.teamMode() ? (this.exercise().isAtLeastInstructor ? 'allTeams' : 'myTeams') : 'students'),
+    );
+    readonly examMode = computed(() => !!this.exercise().exerciseGroup);
+    readonly hasAssessableSubmissions = computed(() =>
+        this.rows().some((row) =>
+            row.assessableCorrectionRounds?.some(
+                (round) => round < this.correctionRoundsEnabled() && !row.correctionRoundResults?.some((result) => (result.correctionRound ?? 0) === round),
+            ),
+        ),
+    );
 
     readonly rows = signal<ParticipationManagementDTO[]>([]);
     readonly totalRecords = signal(0);
@@ -110,12 +124,23 @@ export class AssessmentQueueComponent {
 
     readonly participantTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('participantTemplate');
     readonly statusTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('statusTemplate');
+    readonly submissionDateTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('submissionDateTemplate');
+    readonly languageTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('languageTemplate');
     readonly resultTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('resultTemplate');
 
     readonly columns = computed<ColumnDef<ParticipationManagementDTO>[]>(() => [
         { field: this.participantSortField(), headerKey: this.translationKey() + '.participant', sort: true, templateRef: this.participantTemplate() },
+        { field: 'submissionDate', headerKey: 'artemisApp.exerciseAssessmentDashboard.submissionDate', sort: true, templateRef: this.submissionDateTemplate() },
+        ...(this.exercise().type === ExerciseType.TEXT
+            ? [{ field: 'submissionLanguage', headerKey: 'artemisApp.exerciseAssessmentDashboard.language', sort: true, templateRef: this.languageTemplate() }]
+            : []),
         { headerKey: 'artemisApp.exerciseAssessmentDashboard.myTeams.status', templateRef: this.statusTemplate() },
-        { field: 'score', headerKey: 'artemisApp.exerciseAssessmentDashboard.myTeams.result', sort: true, templateRef: this.resultTemplate() },
+        {
+            field: 'score',
+            headerKey: 'artemisApp.exerciseAssessmentDashboard.myTeams.result',
+            sort: !this.examMode() || !!this.exercise().isAtLeastInstructor,
+            templateRef: this.resultTemplate(),
+        },
     ]);
 
     protected readonly faEllipsisVertical = faEllipsisVertical;
@@ -147,6 +172,8 @@ export class AssessmentQueueComponent {
                               participationId: submission.participation!.id!,
                               submissionCount: 1,
                               submissionId: submission.id,
+                              submissionDate: submission.submissionDate,
+                              submissionLanguage: (submission as TextSubmission).language,
                               testRun: true,
                               resultId: result?.id,
                               score: result?.score,
@@ -211,6 +238,16 @@ export class AssessmentQueueComponent {
 
     stateSeverity(dto: ParticipationManagementDTO): TumAetUiTagSeverity {
         return STATE_SEVERITY[this.state(dto)];
+    }
+
+    lockedByAnotherTutor(dto: ParticipationManagementDTO): boolean {
+        return !this.isTestRun() && !this.exercise().isAtLeastInstructor && !!dto.correctionRoundResults?.some((result) => !result.completionDate && !result.ownedByCurrentUser);
+    }
+
+    assessedPreviousRound(dto: ParticipationManagementDTO): boolean {
+        return (
+            this.correctionRoundsEnabled() > 1 && !!dto.correctionRoundResults?.some((result) => result.correctionRound === 0 && result.ownedByCurrentUser && result.completionDate)
+        );
     }
 
     teamMembers(dto: ParticipationManagementDTO): string {

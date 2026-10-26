@@ -41,7 +41,7 @@ public class SubmissionAssessmentEligibilityService {
      * @return whether the current user may start this correction
      */
     public boolean canStartAssessment(Submission submission, Exercise exercise, int correctionRound) {
-        return canStartAssessment(submission, exercise, correctionRound, userRepository.getUser());
+        return canStartAssessment(submission, exercise, correctionRound, userRepository.getUserWithAuthorities());
     }
 
     /**
@@ -55,16 +55,16 @@ public class SubmissionAssessmentEligibilityService {
      */
     public boolean canStartAssessment(Submission submission, Exercise exercise, int correctionRound, User user) {
         var participation = submission.getParticipation();
-        if (exercise.isTeamMode() && !authCheckService.isAtLeastInstructorForExercise(exercise, user)
-                && (!(participation instanceof StudentParticipation student) || student.getTeam().filter(team -> team.isOwner(user)).isEmpty())) {
+        boolean instructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        if (exercise.isTeamMode() && !instructor && (!(participation instanceof StudentParticipation student) || student.getTeam().filter(team -> team.isOwner(user)).isEmpty())) {
             return false;
         }
         boolean testRun = participation instanceof StudentParticipation student && student.isTestRun();
         if (!testRun && (!Boolean.TRUE.equals(submission.isSubmitted())
-                || (!exercise.isExamExercise() && ExerciseDateService.getDueDate(participation).filter(date -> date.isAfter(ZonedDateTime.now())).isPresent()))) {
+                || (!instructor && !exercise.isExamExercise() && ExerciseDateService.getDueDate(participation).filter(date -> date.isAfter(ZonedDateTime.now())).isPresent()))) {
             return false;
         }
-        if (!testRun && !exercise.isExamExercise() && exercise instanceof ProgrammingExercise programmingExercise
+        if (!testRun && !instructor && !exercise.isExamExercise() && exercise instanceof ProgrammingExercise programmingExercise
                 && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                 && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
             return false;

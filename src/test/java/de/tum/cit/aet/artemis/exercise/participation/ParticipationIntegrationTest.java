@@ -2370,6 +2370,75 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "submissionDate", "submissionLanguage" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void assessmentQueueSortsLatestSubmissionDatesAndLanguages(String sortedColumn) throws Exception {
+        var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1));
+        var german = new TextSubmission();
+        german.setSubmitted(true);
+        german.setLanguage(de.tum.cit.aet.artemis.core.domain.Language.GERMAN);
+        german.setSubmissionDate(ZonedDateTime.now().minusHours(2));
+        var english = new TextSubmission();
+        english.setSubmitted(true);
+        english.setLanguage(de.tum.cit.aet.artemis.core.domain.Language.ENGLISH);
+        english.setSubmissionDate(ZonedDateTime.now().minusHours(3));
+        participationUtilService.addSubmission(exercise, german, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(exercise, english, TEST_PREFIX + "student2");
+        var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue";
+        for (var order : SortingOrder.values()) {
+            var search = new ParticipationSearchDTO(0, 20, order, sortedColumn, "", "NoPracticeMode", null, null);
+            var rows = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(rows).extracting(ParticipationManagementDTO::submissionId)
+                    .containsExactlyElementsOf(order == SortingOrder.ASCENDING ? List.of(english.getId(), german.getId()) : List.of(german.getId(), english.getId()));
+            assertThat(rows).allSatisfy(row -> {
+                assertThat(row.submissionDate()).isNotNull();
+                assertThat(row.submissionLanguage()).isNotNull();
+            });
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 1, 2 })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void examQueueHidesOtherAssessorsGradesUntilOwnSecondCorrectionIsComplete(int ownCorrectionState) throws Exception {
+        var exam = ExamFactory.generateExamWithExerciseGroup(course, false);
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam = examRepository.save(exam);
+        var exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst()));
+        var submission = participationUtilService.addSubmission(exercise, new TextSubmission().submitted(true), TEST_PREFIX + "student1");
+        var first = new Result().submission(submission).assessmentType(AssessmentType.MANUAL);
+        first.setExerciseId(exercise.getId());
+        first.setCorrectionRound(0);
+        first.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        first.setScore(75.0);
+        first.setCompletionDate(ZonedDateTime.now().minusHours(1));
+        resultRepository.save(first);
+        if (ownCorrectionState > 0) {
+            var second = new Result().submission(submission).assessmentType(AssessmentType.MANUAL);
+            second.setExerciseId(exercise.getId());
+            second.setCorrectionRound(1);
+            second.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+            if (ownCorrectionState == 2) {
+                second.setScore(80.0);
+                second.setCompletionDate(ZonedDateTime.now());
+            }
+            resultRepository.save(second);
+        }
+        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "submissionDate", "", "NoPracticeMode", null, null);
+        var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue";
+        var rows = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+        var firstRound = rows.getFirst().correctionRoundResults().stream().filter(result -> result.correctionRound() == 0).findFirst().orElseThrow();
+        assertThat(firstRound.score()).isEqualTo(ownCorrectionState == 2 ? 75.0 : null);
+        assertThat(rows.getFirst().score()).isEqualTo(ownCorrectionState == 2 ? 80.0 : null);
+        var scoreSearch = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "score", "", "NoPracticeMode", null, null);
+        request.getList(url, HttpStatus.FORBIDDEN, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(scoreSearch));
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var instructorRows = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(scoreSearch));
+        assertThat(instructorRows.getFirst().correctionRoundResults().stream().filter(result -> result.correctionRound() == 0).findFirst().orElseThrow().score()).isEqualTo(75.0);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentIdForTeam() throws Exception {

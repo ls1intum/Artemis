@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,9 @@ import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackR
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Profile(PROFILE_CORE)
@@ -37,10 +40,14 @@ public class TutorLeaderboardService {
 
     private final UserRepository userRepository;
 
-    public TutorLeaderboardService(ResultRepository resultRepository, ComplaintRepository complaintRepository, UserRepository userRepository) {
+    private final AuthorizationCheckService authCheckService;
+
+    public TutorLeaderboardService(ResultRepository resultRepository, ComplaintRepository complaintRepository, UserRepository userRepository,
+            AuthorizationCheckService authCheckService) {
         this.resultRepository = resultRepository;
         this.complaintRepository = complaintRepository;
         this.userRepository = userRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -68,23 +75,23 @@ public class TutorLeaderboardService {
         }
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessmentDTOS, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
-                tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, false);
+                tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, false, null);
     }
 
     /**
      * Returns tutor leaderboards for the specified course.
      *
-     * @param course      - course for which leaderboard is fetched
+     * @param exam        - exam for which leaderboard is fetched
      * @param exerciseIds - the exercise ids for which the leaderboard will be fetched
      * @return list of tutor leaderboard objects
      */
-    public List<TutorLeaderboardDTO> getExamLeaderboard(Course course, Collection<Long> exerciseIds) {
-        var tutors = userRepository.getTutors(course);
+    public List<TutorLeaderboardDTO> getExamLeaderboard(Exam exam, Collection<Long> exerciseIds) {
+        var tutors = userRepository.getTutors(exam.getCourse());
         var tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseIds(exerciseIds);
         var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExerciseIds(exerciseIds);
         var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseIds(exerciseIds);
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, new ArrayList<>(), tutorLeaderboardComplaintResponses,
-                new ArrayList<>(), true);
+                new ArrayList<>(), true, getVisibleScoreAssessorId(exam));
     }
 
     /**
@@ -101,13 +108,24 @@ public class TutorLeaderboardService {
         var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseId(exercise.getId());
         var tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(exercise.getId());
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
-                tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, exercise.isExamExercise());
+                tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, exercise.isExamExercise(),
+                exercise.isExamExercise() ? getVisibleScoreAssessorId(exercise.getExamElseThrow()) : null);
+    }
+
+    @Nullable
+    private Long getVisibleScoreAssessorId(Exam exam) {
+        if (exam.resultsPublished() || authCheckService.isAtLeastInstructorInCourse(exam.getCourse().getId())) {
+            return null;
+        }
+        // Aggregates include submissions the tutor has not corrected, even after finishing an individual second correction.
+        return userRepository.getUser().getId();
     }
 
     @NonNull
     private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(Set<User> tutors, List<TutorLeaderboardAssessmentsDTO> assessments,
             List<TutorLeaderboardComplaintsDTO> complaints, List<TutorLeaderboardMoreFeedbackRequestsDTO> feedbackRequests,
-            List<TutorLeaderboardComplaintResponsesDTO> complaintResponses, List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> answeredFeedbackRequests, boolean isExam) {
+            List<TutorLeaderboardComplaintResponsesDTO> complaintResponses, List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> answeredFeedbackRequests, boolean isExam,
+            @Nullable Long visibleScoreAssessorId) {
 
         var assessmentsMap = assessments.stream().collect(Collectors.toMap(TutorLeaderboardAssessmentsDTO::userId, value -> value));
         var complaintsMap = complaints.stream().collect(Collectors.toMap(TutorLeaderboardComplaintsDTO::userId, value -> value));
@@ -156,7 +174,8 @@ public class TutorLeaderboardService {
 
             var leaderboardEntry = new TutorLeaderboardDTO(tutor.getId(), tutor.getName(), numberOfAssessments, numberOfAcceptedComplaints, numberOfTutorComplaints,
                     numberOfNotAnsweredMoreFeedbackRequests, numberOfComplaintResponses, numberOfAnsweredMoreFeedbackRequests, numberOfTutorMoreFeedbackRequests, points,
-                    assessmentsOfTutor.averageScore(), assessmentsOfTutor.averageRating(), assessmentsOfTutor.numberOfRatings());
+                    visibleScoreAssessorId == null || visibleScoreAssessorId.equals(tutor.getId()) ? assessmentsOfTutor.averageScore() : null, assessmentsOfTutor.averageRating(),
+                    assessmentsOfTutor.numberOfRatings());
             tutorLeaderBoardEntries.add(leaderboardEntry);
         }
         return tutorLeaderBoardEntries;

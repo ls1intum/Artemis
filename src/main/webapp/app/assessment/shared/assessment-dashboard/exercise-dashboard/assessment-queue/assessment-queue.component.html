@@ -6,6 +6,9 @@
     @if (!isTestRun() && (exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1) > correctionRoundsEnabled()) {
         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></p>
     }
+    @if (!isTestRun() && !assessmentDisabled() && totalRecords() > 0 && !hasAssessableSubmissions()) {
+        <p class="text-sm text-muted-color" role="status" jhiTranslate="artemisApp.exerciseAssessmentDashboard.queueUnavailable"></p>
+    }
     <tumaet-ui-table
         data-testid="assessment-queue-table"
         [columns]="columns()"
@@ -36,14 +39,40 @@
     }
 </ng-template>
 
+<ng-template #submissionDateTemplate let-cell>
+    {{ cell.data.submissionDate | artemisDate }}
+</ng-template>
+
+<ng-template #languageTemplate let-cell>
+    {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (cell.data.submissionLanguage ?? 'UNKNOWN') | artemisTranslate }}
+</ng-template>
+
 <ng-template #statusTemplate let-cell>
     <tumaet-ui-tag data-testid="assessment-state" [attr.data-state]="state(cell.data)" [severity]="stateSeverity(cell.data)">
         {{ 'artemisApp.exerciseAssessmentDashboard.myTeams.state.' + state(cell.data) | artemisTranslate }}
     </tumaet-ui-tag>
+    @if (lockedByAnotherTutor(cell.data)) {
+        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.lockedByAnotherTutor"></p>
+    } @else if (assessedPreviousRound(cell.data) && !cell.data.assessableCorrectionRounds?.includes(1) && state(cell.data) !== 'assessed') {
+        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself"></p>
+    }
 </ng-template>
 
 <ng-template #resultTemplate let-cell>
-    @if (toResult(cell.data); as result) {
+    @if (examMode() && !isTestRun()) {
+        @for (result of cell.data.correctionRoundResults ?? []; track result.resultId) {
+            <div data-testid="assessment-round-score">
+                {{ 'artemisApp.exerciseAssessmentDashboard.correctionRound' | artemisTranslate }} {{ (result.correctionRound ?? 0) + 1 }}:
+                @if (result.completionDate && result.score !== undefined && result.score !== null) {
+                    {{ result.score }}%
+                } @else {
+                    <span>–</span>
+                }
+            </div>
+        } @empty {
+            <span>–</span>
+        }
+    } @else if (toResult(cell.data); as result) {
         <jhi-result [exercise]="exercise()" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
     } @else {
         <span>–</span>
@@ -63,7 +92,7 @@
             [assessableCorrectionRounds]="isTestRun() ? undefined : (dto.assessableCorrectionRounds ?? [])"
             [ownedCorrectionRounds]="isTestRun() ? undefined : ownedCorrectionRounds(dto)"
             [isTestRun]="isTestRun()"
-            (refresh)="refresh()"
+            (refresh)="refresh(); assessmentChanged.emit()"
         />
         @if (isProgrammingExercise() || dto.teamId) {
             <button

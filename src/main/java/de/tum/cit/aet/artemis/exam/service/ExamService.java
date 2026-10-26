@@ -1457,7 +1457,7 @@ public class ExamService {
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(exerciseIds);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exerciseIds);
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(examRepository.findByIdElseThrow(examId), exerciseIds);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
         return stats;
     }

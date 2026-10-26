@@ -56,7 +56,7 @@ export class ManageAssessmentButtonsComponent {
                 (correctionRound > 0 && !this.resultForRound(correctionRound - 1)?.completionDate) ||
                 (!this.newManualResultAllowed() &&
                     (!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC || result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) ||
-                (action === 'continue' && !canManageDraft) ||
+                ((action === 'continue' || (this.examMode() && (action === 'open' || action === 'complaint'))) && !canManageDraft) ||
                 (action === 'assess' && this.assessableCorrectionRounds() !== undefined && !this.assessableCorrectionRounds()!.includes(correctionRound))
             ) {
                 return [];

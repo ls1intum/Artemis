@@ -40,6 +40,7 @@ export interface ParticipationManagementDTO {
     lastResultIsManual?: boolean;
     submissionId?: number;
     submissionDate?: dayjs.Dayjs;
+    submissionLanguage?: string;
     // The fields below describe the newest result of the latest submission
     resultId?: number;
     score?: number;

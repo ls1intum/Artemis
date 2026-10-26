@@ -138,10 +138,11 @@
                         <td class="hidden w-32 whitespace-nowrap text-end xl:table-cell">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
                     }
                     <td class="hidden w-28 whitespace-nowrap text-end xl:table-cell">
-                        @if (tutor.numberOfAssessments > 0) {
+                        @if (tutor.averageScore === undefined) {
+                            <span>–</span>
+                        } @else if (tutor.numberOfAssessments > 0) {
                             <span> {{ tutor.averageScore.toFixed(1) }}% </span>
-                        }
-                        @if (tutor.numberOfAssessments === 0) {
+                        } @else {
                             <span> n.a. </span>
                         }
                     </td>

@@ -233,8 +233,16 @@ public class ParticipationRetrievalResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Long teamOwnerId = exercise.isTeamMode() && (ownTeams || !authCheckService.isAtLeastInstructorForExercise(exercise)) ? userRepository.getUser().getId() : null;
+        boolean independentAssessment = exercise.isExamExercise() && !authCheckService.isAtLeastInstructorForExercise(exercise);
+        if (independentAssessment && ("score".equals(search.sortedColumn()) || search.scoreRangeLower() != null || search.scoreRangeUpper() != null
+                || "Successful".equals(search.filterProp()) || "Unsuccessful".equals(search.filterProp()))) {
+            throw new AccessForbiddenException("Score filtering and sorting are unavailable during independent assessment.");
+        }
         boolean hideParticipant = teamOwnerId == null && shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
         Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search, teamOwnerId, true);
+        if (independentAssessment) {
+            page = page.map(row -> row.forIndependentAssessment(exercise.getNumberOfCorrectionRounds()));
+        }
         if (hideParticipant) {
             page = page.map(ParticipationManagementDTO::withoutParticipantInformation);
         }
