@@ -7,8 +7,10 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -147,6 +150,44 @@ class ProgrammingExerciseParticipationResourceResetTest {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         verify(programmingExerciseParticipationService).resetRepository(participation.getVcsRepositoryUri(), exercise.getVcsTemplateRepositoryUri());
+        verify(continuousIntegrationTriggerService).triggerBuild(participation, true);
+    }
+
+    /**
+     * Puts the exercise into its early repository access phase: released, but its start date lies ahead.
+     */
+    private Course inTheEarlyRepositoryAccessPhase() {
+        var course = new Course();
+        course.setId(3L);
+        exercise.setCourse(course);
+        exercise.setAllowRepositoryAccessBeforeStartDate(true);
+        exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        exercise.setStartDate(ZonedDateTime.now().plusDays(1));
+        return course;
+    }
+
+    @Test
+    void aStudentResettingBeforeTheStartDateGetsNoBuildUntilTheStartDate() throws Exception {
+        // Like the student's pushes in this phase, the reset is built together with them at the start date, so it must neither build nor create a submission now.
+        withAResettableParticipation();
+        var course = inTheEarlyRepositoryAccessPhase();
+        when(authCheckService.isOnlyStudentInCourse(course, null)).thenReturn(true);
+
+        var response = resource.resetRepository(PARTICIPATION_ID, null);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        verify(programmingExerciseParticipationService).resetRepository(participation.getVcsRepositoryUri(), exercise.getVcsTemplateRepositoryUri());
+        verifyNoInteractions(continuousIntegrationTriggerService);
+    }
+
+    @Test
+    void aTutorResettingBeforeTheStartDateStillGetsTheBuild() throws Exception {
+        withAResettableParticipation();
+        var course = inTheEarlyRepositoryAccessPhase();
+        when(authCheckService.isOnlyStudentInCourse(course, null)).thenReturn(false);
+
+        resource.resetRepository(PARTICIPATION_ID, null);
+
         verify(continuousIntegrationTriggerService).triggerBuild(participation, true);
     }
 

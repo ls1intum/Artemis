@@ -433,6 +433,11 @@ public class ProgrammingExerciseParticipationResource {
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri);
 
+        // Like a student's push before the start date, a student's reset in that phase is only stored: the build of the repository follows at the start date
+        if (exercise.isInEarlyRepositoryAccessPhase() && authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null)) {
+            return ResponseEntity.ok().build();
+        }
+
         continuousIntegrationTriggerService
                 .orElseThrow(() -> new UnsupportedOperationException(
                         "Cannot trigger build because neither the Jenkins nor the LocalCI profile are active. This is a misconfiguration if you want to use programming exercises"))
