@@ -3747,16 +3747,16 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void studentsMayNotListTheParticipations() throws Exception {
-            request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl)
-                    .params(pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All"))))
+            request.performMvcRequest(
+                    MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All"))))
                     .andExpect(status().isForbidden());
         }
 
         @Test
         @WithMockUser(username = OTHER_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
         void instructorsOfAnotherCourseMayNotListTheParticipations() throws Exception {
-            request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl)
-                    .params(pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All"))))
+            request.performMvcRequest(
+                    MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All"))))
                     .andExpect(status().isForbidden());
         }
 

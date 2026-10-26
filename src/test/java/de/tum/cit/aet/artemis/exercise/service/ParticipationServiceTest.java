@@ -521,8 +521,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         var participation = participationUtilService.addTeamParticipationForExercise(teamExercise, team.getId());
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        var managementPage = participationService.findParticipationsForExercise(teamExercise,
-                new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL"), null, null);
+        var managementPage = participationService.findParticipationsForExercise(teamExercise, new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL"), null, null);
 
         assertThat(managementPage.getContent()).as("the team participation is listed").hasSize(1);
         var managementDto = managementPage.getContent().getFirst();
