@@ -428,20 +428,23 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         const response = await examAssessment.submitTextAssessment();
         expect(response.status()).toBe(200);
 
-        // The dashboard lists what the signed-in corrector assessed, so the instructor sees their second round only,
-        // with the score they gave.
+        // Instructors can open both corrections and see that each retained its own score.
         await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
         await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
         await expect(page.locator('[data-testid="manage-assessment-link"][data-correction-round="1"]')).toBeVisible();
         await expect(page.locator('[data-testid="manage-assessment-link"][data-assessment-action="open"]')).toHaveCount(2);
         await expect(page.getByText('90%').first()).toBeVisible();
 
-        // The tutor still sees their own first round with the score they gave, so the second round did not overwrite it.
+        await expect(page.getByTestId('assessment-round-score')).toHaveText([/Correction round 1:\s*60%/, /Correction round 2:\s*90%/]);
+
+        // Tutors can open their own first correction, while the other assessor's second correction stays hidden.
         await login(tutor);
         await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
         await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
-        await expect(page.locator('[data-testid="manage-assessment-link"][data-assessment-action="open"]')).toHaveCount(2);
-        await expect(page.getByText('90%').first()).toBeVisible();
+        const tutorOpenLink = page.locator('[data-testid="manage-assessment-link"][data-assessment-action="open"]');
+        await expect(tutorOpenLink).toHaveCount(1);
+        await expect(tutorOpenLink).toHaveAttribute('data-correction-round', '0');
+        await expect(page.getByTestId('assessment-round-score')).toHaveText([/Correction round 1:\s*60%/, /Correction round 2:\s*–/]);
         // The student is shown the second corrector's result, not the first one.
         await login(studentOne, `/courses/${dashboardCourse.id}/exams/${exam.id}`);
         await examParticipation.checkResultScore('90%');

@@ -350,15 +350,17 @@ export class AssessmentDashboardComponent implements OnInit {
             (accumulator, entry) => {
                 return {
                     summedAverageRatings: accumulator.summedAverageRatings + entry.averageRating,
-                    summedAverageScore: accumulator.summedAverageScore + (entry.averageScore ?? 0),
                     summedComplaintRatio: accumulator.summedComplaintRatio + complaintRatio(entry),
                 };
             },
-            { summedAverageRatings: 0, summedAverageScore: 0, summedComplaintRatio: 0 },
+            { summedAverageRatings: 0, summedComplaintRatio: 0 },
         );
 
         const numberOfTutorsWithNonZeroRatings = tutorLeaderboardEntries.filter((entry) => entry.averageRating > 0).length;
         const numberOfTutorsWithNonZeroAssessments = tutorLeaderboardEntries.filter((entry) => entry.numberOfAssessments > 0).length;
+
+        const visibleScores = tutorLeaderboardEntries.flatMap((entry) => (entry.numberOfAssessments > 0 && entry.averageScore != null ? [entry.averageScore] : []));
+        const averageScore = visibleScores.length ? visibleScores.reduce((sum, score) => sum + score, 0) / visibleScores.length : 0;
 
         tutorLeaderboardEntries
             // create the tutor issue checkers for rating, score and complaints
@@ -370,13 +372,9 @@ export class AssessmentDashboardComponent implements OnInit {
                     entry.name,
                     entry.userId,
                 ),
-                new TutorIssueScoreChecker(
-                    entry.numberOfAssessments,
-                    entry.averageScore ?? 0,
-                    courseInformation.summedAverageScore / numberOfTutorsWithNonZeroAssessments,
-                    entry.name,
-                    entry.userId,
-                ),
+                ...(entry.numberOfAssessments > 0 && entry.averageScore != null
+                    ? [new TutorIssueScoreChecker(entry.numberOfAssessments, entry.averageScore, averageScore, entry.name, entry.userId)]
+                    : []),
                 new TutorIssueComplaintsChecker(
                     entry.numberOfTutorComplaints,
                     complaintRatio(entry),
