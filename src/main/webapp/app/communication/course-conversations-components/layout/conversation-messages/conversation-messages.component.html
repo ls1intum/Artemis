@@ -106,16 +106,14 @@
             </div>
             @if (_activeConversation(); as activeConversation) {
                 @if (newPost() && canCreateNewMessageInConversation(activeConversation) && !isMobile()) {
-                    <div class="d-none d-sm-block px-3">
+                    <div class="d-none d-sm-block px-3 py-2">
                         @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
-                            <div class="pt-2">
-                                <button
-                                    type="button"
-                                    class="btn btn-md btn-primary"
-                                    (click)="createEditModal()?.open()"
-                                    jhiTranslate="artemisApp.communication.newAnnouncement"
-                                ></button>
-                            </div>
+                            <button
+                                type="button"
+                                class="btn btn-md btn-primary"
+                                (click)="createEditModal()?.open()"
+                                jhiTranslate="artemisApp.communication.newAnnouncement"
+                            ></button>
                         } @else {
                             <jhi-message-inline-input
                                 class="message-input"
