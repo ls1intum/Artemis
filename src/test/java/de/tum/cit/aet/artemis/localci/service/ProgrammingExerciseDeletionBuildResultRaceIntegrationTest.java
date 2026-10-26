@@ -15,11 +15,15 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -67,6 +71,18 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
+    }
+
+    @BeforeEach
+    @AfterEach
+    void clearResultQueues() {
+        // A result worker can defer an item after polling it, so finish submitted work before clearing either queue.
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) ReflectionTestUtils.getField(localCIResultProcessingService, "resultProcessingExecutor");
+        await().atMost(Duration.ofSeconds(30)).until(() -> executor.getActiveCount() == 0 && executor.getQueue().isEmpty());
+        // This lane shares its queues between classes. Each explicit processing call polls only one item,
+        // so a result left by another test must not consume the trigger intended for this test's race.
+        distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
     }
 
     private BuildResult buildResult() {
