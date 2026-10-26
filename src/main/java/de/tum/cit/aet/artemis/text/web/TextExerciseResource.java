@@ -38,11 +38,12 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -158,15 +159,6 @@ public class TextExerciseResource {
         return ResponseEntity.ok().body(dtos);
     }
 
-    private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
-        var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId);
-        if (includePlagiarismDetectionConfig) {
-            // The plagiarism detection configuration is not part of the exercise, so it is read here.
-            textExercise.ifPresent(plagiarismDetectionConfigRepository::attachTo);
-        }
-        return textExercise;
-    }
-
     /**
      * GET /text-exercises/:id : get the "id" textExercise.
      *
@@ -176,20 +168,35 @@ public class TextExerciseResource {
      *         status 404 (Not Found)
      */
     @GetMapping("text-exercises/{exerciseId}")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<TextExerciseResponseDTO> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
-        log.debug("REST request to get TextExercise : {}", exerciseId);
-        var textExercise = findTextExercise(exerciseId, withPlagiarismDetectionConfig).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
+        return loadTextExerciseDetails(exerciseId, withPlagiarismDetectionConfig, false);
+    }
 
-        // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
-        if (textExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
+    /**
+     * Retrieves management details of an exam text exercise.
+     *
+     * @param exerciseId                    the id of the exam exercise to retrieve
+     * @param withPlagiarismDetectionConfig whether to include the plagiarism detection configuration
+     * @return the full management details of the exam exercise
+     */
+    @GetMapping("text-exercises/{exerciseId}/for-exam")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<TextExerciseResponseDTO> getTextExerciseForExam(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+        return loadTextExerciseDetails(exerciseId, withPlagiarismDetectionConfig, true);
+    }
+
+    private ResponseEntity<TextExerciseResponseDTO> loadTextExerciseDetails(Long exerciseId, boolean withPlagiarismDetectionConfig, boolean forExam) {
+        log.debug("REST request to get TextExercise : {}", exerciseId);
+        var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
+        if (forExam ? !textExercise.isExamExercise() : !textExercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
         }
-        else {
-            // in courses, also tutors can access the exercise
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
+        if (withPlagiarismDetectionConfig) {
+            plagiarismDetectionConfigRepository.attachTo(textExercise);
         }
+
         if (textExercise.isCourseExercise()) {
             String channelName = channelRepository.findChannelNameByExerciseId(textExercise.getId());
             if (channelName != null) {

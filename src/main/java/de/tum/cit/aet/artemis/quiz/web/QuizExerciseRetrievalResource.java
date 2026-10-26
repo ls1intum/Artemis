@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -178,12 +179,29 @@ public class QuizExerciseRetrievalResource {
     @GetMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExerciseDetailsDTO> getQuizExercise(@PathVariable long quizExerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
+        return loadQuizExerciseDetails(quizExerciseId, false);
+    }
+
+    /**
+     * Retrieves management details of an exam quiz exercise.
+     *
+     * @param quizExerciseId the id of the exam exercise to retrieve
+     * @return the full management details of the exam exercise
+     */
+    @GetMapping("quiz-exercises/{quizExerciseId}/for-exam")
+    @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<QuizExerciseDetailsDTO> getQuizExerciseForExam(@PathVariable long quizExerciseId) {
+        return loadQuizExerciseDetails(quizExerciseId, true);
+    }
+
+    private ResponseEntity<QuizExerciseDetailsDTO> loadQuizExerciseDetails(long quizExerciseId, boolean forExam) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         var user = userRepository.getUserWithAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExerciseId);
+        if (forExam ? !quizExercise.isExamExercise() : !quizExercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
+        }
         if (quizExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
         }
         if (quizExercise.isCourseExercise()) {

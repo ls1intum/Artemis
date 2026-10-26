@@ -20,9 +20,12 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -63,6 +66,9 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     private ProgrammingExercise exercise;
 
     private ProgrammingExercise examExercise;
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
     @BeforeEach
     void setUp() {
@@ -138,7 +144,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         var exerciseGroup = examExercise.getExerciseGroup();
         var exam = exerciseGroup.getExam();
 
-        ProgrammingExerciseResponseDTO response = request.get(EXERCISE_BASE + examExercise.getId(), HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+        ProgrammingExerciseResponseDTO response = request.get(EXERCISE_BASE + examExercise.getId() + "/for-exam", HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
 
         assertThat(response.id()).isEqualTo(examExercise.getId());
         assertThat(response.type()).isEqualTo("programming");
@@ -481,4 +487,41 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         return participation.submissions().stream().filter(submission -> submission.results() != null).flatMap(submission -> submission.results().stream()).map(ResultDTO::id)
                 .toList();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getProgrammingExercise_routesEnforceKindAndCurrentDatabaseRoles() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise = programmingExerciseRepository.save(exercise);
+        var teamSettings = new TeamAssignmentConfig();
+        teamSettings.setMinTeamSize(2);
+        teamSettings.setMaxTeamSize(4);
+        teamAssignmentConfigRepository.applyTo(exercise, teamSettings);
+        var examCourse = examExercise.getExerciseGroup().getExam().getCourse();
+        String courseUrl = EXERCISE_BASE + exercise.getId();
+        String examUrl = EXERCISE_BASE + examExercise.getId();
+        var courseResponse = request.get(courseUrl, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+        assertThat(courseResponse.teamAssignmentConfig().minTeamSize()).isEqualTo(2);
+        assertThat(courseResponse.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
+        request.get(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+        request.get(examUrl, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam", HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+
+        var editor = userUtilService.addEditorToCourse(TEST_PREFIX + "tutor1", examCourse);
+        request.get(examUrl, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+        var response = request.get(examUrl + "/for-exam?withPlagiarismDetectionConfig=true", HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+        assertThat(response).isNotNull();
+        assertThat(response.exerciseGroup().exam().course().id()).isEqualTo(examCourse.getId());
+        assertThat(response.course()).isNull();
+        assertThat(response.teamAssignmentConfig()).as("individual exam exercises omit the stored team configuration").isNull();
+        assertThat(response.buildConfig()).isNotNull();
+        assertThat(response.plagiarismDetectionConfig()).isNotNull();
+        userUtilService.unenrollUserFromCourse(editor, examCourse);
+        userUtilService.addEditorToCourse(TEST_PREFIX + "tutor1", exercise.getCourseViaExerciseGroupOrCourseMember());
+        request.get(examUrl, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam", HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+        request.get(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+        request.get(courseUrl, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+    }
+
 }

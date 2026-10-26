@@ -3,7 +3,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -83,7 +83,13 @@ describe('QuizExerciseUpdateComponent', () => {
 
     resetQuizExercise();
 
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) }, queryParams: of({}) } as any as ActivatedRoute;
+    const route = {
+        snapshot: {
+            paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }),
+            pathFromRoot: [{ params: { courseId: course.id, exerciseId: quizExercise.id } }],
+        },
+        queryParams: of({}),
+    } as any as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -176,6 +182,7 @@ describe('QuizExerciseUpdateComponent', () => {
         fixture = TestBed.createComponent(QuizExerciseUpdateComponent);
         comp = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+        vi.spyOn(courseManagementService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         router = fixture.debugElement.injector.get(Router);
         alertService = fixture.debugElement.injector.get(AlertService);
@@ -191,7 +198,7 @@ describe('QuizExerciseUpdateComponent', () => {
         let exerciseGroupServiceStub: any;
         let initStub: any;
         const configureStubs = () => {
-            quizExerciseServiceStub = vi.spyOn(quizExerciseService, 'find');
+            quizExerciseServiceStub = vi.spyOn(quizExerciseService, comp['route'].snapshot.pathFromRoot.some((ancestor) => !!ancestor.params['examId']) ? 'findForExam' : 'find');
             courseManagementServiceStub = vi.spyOn(courseManagementService, 'find');
             exerciseGroupServiceStub = vi.spyOn(exerciseGroupService, 'find');
             initStub = vi.spyOn(comp, 'init');
@@ -199,6 +206,37 @@ describe('QuizExerciseUpdateComponent', () => {
             courseManagementServiceStub.mockReturnValue(of(new HttpResponse<Course>({ body: course })));
             exerciseGroupServiceStub.mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: undefined })));
         };
+
+        const configureFreshFixture = async (testRoute?: ActivatedRoute) => {
+            resetQuizExercise();
+            quizExercise.course = course;
+            quizExercise.exerciseGroup = undefined;
+            await configureTestBed(testRoute);
+            configureFixtureAndServices();
+            configureStubs();
+        };
+
+        it.each([
+            ['true', false],
+            ['false', true],
+            [undefined, true],
+        ])('loads import source %s before target exam context %s after reload', async (sourceFlag, targetIsExam) => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: 123, exerciseId: 456, ...(targetIsExam ? { examId: 7, exerciseGroupId: 8 } : {}) };
+            snapshot.queryParams = sourceFlag === undefined ? {} : { sourceIsExamExercise: sourceFlag };
+            vi.spyOn(snapshot, 'routeConfig', 'get').mockReturnValue({ path: 'quiz-exercises/:exerciseId/import' });
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureTestBed({ snapshot, queryParams: of(snapshot.queryParams) } as ActivatedRoute);
+            configureFixtureAndServices();
+            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: new ExerciseGroup() })));
+            vi.spyOn(comp, 'init').mockImplementation(() => {});
+            const courseFind = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
+            const examFind = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(quizExercise));
+            comp.ngOnInit();
+            expect(sourceFlag === 'true' ? examFind : courseFind).toHaveBeenCalledExactlyOnceWith(456);
+            expect(sourceFlag === 'true' ? courseFind : examFind).not.toHaveBeenCalled();
+        });
 
         describe('without exam id', () => {
             beforeEach(async () => {
@@ -242,7 +280,10 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('with exam id', () => {
             const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }),
+                    pathFromRoot: [{ params: { courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 } }],
+                },
                 queryParams: of({}),
             } as any as ActivatedRoute;
 
@@ -266,7 +307,13 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('with exam id but without exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) }, queryParams: of({}) } as any as ActivatedRoute;
+            const testRoute = {
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }),
+                    pathFromRoot: [{ params: { courseId: course.id, examId: 1, exerciseGroupId: 2 } }],
+                },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
             beforeEach(async () => {
                 await configureTestBed(testRoute);
             });
@@ -287,7 +334,10 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('without exam id and exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, queryParams: of({}) } as any as ActivatedRoute;
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id }), pathFromRoot: [{ params: { courseId: course.id } }] },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
             beforeEach(async () => {
                 await configureTestBed(testRoute);
             });
@@ -309,7 +359,10 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('with exercise id and exam with test runs', () => {
             const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }),
+                    pathFromRoot: [{ params: { courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 } }],
+                },
                 queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(async () => {
@@ -483,7 +536,10 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('set isEditable', () => {
             const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }),
+                    pathFromRoot: [{ params: { courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 } }],
+                },
                 queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(async () => {
@@ -543,8 +599,8 @@ describe('QuizExerciseUpdateComponent', () => {
             });
         });
 
-        it('should set isImport to true when route contains /import', () => {
-            configureStubs();
+        it('should set isImport to true when route contains /import', async () => {
+            await configureFreshFixture();
             vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/quiz-exercises/import');
 
             comp.ngOnInit();
@@ -552,16 +608,11 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.isImport()).toBeTruthy();
         });
 
-        it('should assign exerciseGroup to existing quizExercise in exam mode', () => {
-            configureStubs();
-            comp.isExamMode.set(true);
-
-            const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456, examId: 1, exerciseGroupId: 2 }) },
-                queryParams: of({}),
-            } as any as ActivatedRoute;
-            (comp as any).route = testRoute;
-
+        it('should assign exerciseGroup to existing quizExercise in exam mode', async () => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: course.id, exerciseId: 456, examId: 1, exerciseGroupId: 2 };
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureFreshFixture({ snapshot, queryParams: of({}) } as ActivatedRoute);
             comp.quizExercise.set(new QuizExercise(undefined, undefined));
             comp.savedEntity = new QuizExercise(undefined, undefined);
 
@@ -571,28 +622,26 @@ describe('QuizExerciseUpdateComponent', () => {
 
             comp.ngOnInit();
 
+            expect(quizExerciseServiceStub).toHaveBeenCalledExactlyOnceWith(456);
             expect(comp.quizExercise().exerciseGroup).toEqual(exerciseGroup);
         });
 
-        it('should assign course to existing quizExercise in course mode', () => {
-            configureStubs();
-            comp.isExamMode.set(false);
-
-            const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456 }) },
-                queryParams: of({}),
-            } as any as ActivatedRoute;
-            (comp as any).route = testRoute;
-
+        it('should assign course to existing quizExercise in course mode', async () => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: course.id, exerciseId: 456 };
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureFreshFixture({ snapshot, queryParams: of({}) } as ActivatedRoute);
             comp.quizExercise.set(new QuizExercise(undefined, undefined));
             comp.savedEntity = new QuizExercise(undefined, undefined);
 
             comp.ngOnInit();
 
+            expect(quizExerciseServiceStub).toHaveBeenCalledExactlyOnceWith(456);
             expect(comp.quizExercise().course).toEqual(course);
         });
 
-        it('should updateCategories properly by making category available for selection again when removing it', () => {
+        it('should updateCategories properly by making category available for selection again when removing it', async () => {
+            await configureFreshFixture();
             comp.quizExercise.set(quizExercise);
             comp.exerciseCategories.set([]);
             const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
@@ -1430,7 +1479,10 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.examId = 789;
                 comp.isExamMode.set(true);
                 const testRoute = {
-                    snapshot: { paramMap: convertToParamMap({ courseId: 123, examId: 789, exerciseGroupId: 111, exerciseId: 456 }) },
+                    snapshot: {
+                        paramMap: convertToParamMap({ courseId: 123, examId: 789, exerciseGroupId: 111, exerciseId: 456 }),
+                        pathFromRoot: [{ params: { courseId: 123, examId: 789, exerciseGroupId: 111, exerciseId: 456 } }],
+                    },
                     queryParams: of({}),
                 } as any as ActivatedRoute;
                 (comp as any).route = testRoute;

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { asyncScheduler, of } from 'rxjs';
 import { observeOn } from 'rxjs/operators';
 import { provideHttpClient } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -36,7 +36,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     quizExercise.id = 456;
     quizExercise.title = 'MyQuiz';
 
-    const route = { params: of({ exerciseId: 123 }) } as any as ActivatedRoute;
+    const route = { params: of({ exerciseId: 123 }), snapshot: { pathFromRoot: [{ params: {} }] } } as any as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -77,6 +77,10 @@ describe('QuizExercise Re-evaluate Component', () => {
     };
 
     beforeEach(() => {
+        const courseSnapshot = new ActivatedRouteSnapshot();
+        courseSnapshot.params = {};
+        vi.spyOn(courseSnapshot, 'pathFromRoot', 'get').mockReturnValue([courseSnapshot]);
+        route.snapshot = courseSnapshot;
         vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
@@ -105,6 +109,21 @@ describe('QuizExercise Re-evaluate Component', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+    });
+
+    it('loads exam re-evaluation details from route context', () => {
+        const previousSnapshot = route.snapshot;
+        const examSnapshot = new ActivatedRouteSnapshot();
+        examSnapshot.params = { examId: 7 };
+        vi.spyOn(examSnapshot, 'pathFromRoot', 'get').mockReturnValue([examSnapshot]);
+        route.snapshot = examSnapshot;
+        const examFind = vi.spyOn(quizService, 'findForExam').mockReturnValue(of(quizExercise).pipe(observeOn(asyncScheduler)));
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        expect(examFind).toHaveBeenCalledWith(123);
+        expect(quizServiceFindStub).not.toHaveBeenCalled();
+        expect(comp.quizExercise()).toEqual(quizExercise);
+        route.snapshot = previousSnapshot;
     });
 
     it('should initialize quiz exercise', () => {

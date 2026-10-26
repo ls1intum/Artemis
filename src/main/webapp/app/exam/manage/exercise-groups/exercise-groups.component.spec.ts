@@ -205,7 +205,9 @@ describe('Exercise Groups Component', () => {
 
             expect(comp['exerciseImportVisible']()).toBe(false);
             expect(router.navigate).toHaveBeenCalledOnce();
-            expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import', 1]);
+            expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import', 1], {
+                queryParams: { sourceIsExamExercise: false },
+            });
         },
     );
 

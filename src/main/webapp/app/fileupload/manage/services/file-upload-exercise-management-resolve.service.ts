@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -22,7 +23,11 @@ export class FileUploadExerciseManagementResolve implements Resolve<FileUploadEx
      */
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
-            return this.fileUploadExerciseService.find(route.params['exerciseId']).pipe(
+            return (
+                isExamExerciseRoute(route)
+                    ? this.fileUploadExerciseService.findForExam(route.params['exerciseId'])
+                    : this.fileUploadExerciseService.find(route.params['exerciseId'])
+            ).pipe(
                 filter((res) => !!res.body),
                 map((fileUploadExercise: HttpResponse<FileUploadExercise>) => fileUploadExercise.body!),
             );

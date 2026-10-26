@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -134,6 +135,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         }
         return criteria.stream().map(GradingCriterionDTO::of).toList();
     }
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -409,7 +413,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     private void getExamFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(TEST_PREFIX, false);
-        request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
+        request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/for-exam", HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
     @Test
@@ -417,7 +421,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void getExamFileUploadExercise_asInstructor() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(TEST_PREFIX, false);
 
-        FileUploadExerciseDTO receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK,
+        FileUploadExerciseDTO receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/for-exam", HttpStatus.OK,
                 FileUploadExerciseDTO.class);
         assertThat(receivedFileUploadExercise).as("exercise was retrieved").isNotNull();
         assertThat(receivedFileUploadExercise.id()).as("exercise with the right id was retrieved").isEqualTo(fileUploadExercise.getId());
@@ -430,16 +434,15 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getFileUploadExerciseFails_wrongId() throws Exception {
         fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
-        request.get("/api/fileupload/file-upload-exercises/" + 555555, HttpStatus.NOT_FOUND, FileUploadExercise.class);
+        request.get("/api/fileupload/file-upload-exercises/" + 555555, HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
     @Test
     @WithMockUser(username = OTHER_INSTRUCTOR, roles = "USER")
     void getExamFileUploadExercise_InstructorNotInGroup() throws Exception {
-        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
-        for (var exercise : course.getExercises()) {
-            request.get("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
-        }
+        var examExercise = fileUploadExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(TEST_PREFIX, false);
+        request.get("/api/fileupload/file-upload-exercises/" + examExercise.getId() + "/for-exam", HttpStatus.FORBIDDEN, FileUploadExercise.class);
+        request.get("/api/fileupload/file-upload-exercises/" + examExercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
     @Test
@@ -1297,6 +1300,42 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), inputDTO(fileUploadExercise), FileUploadExercise.class,
                 HttpStatus.BAD_REQUEST);
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getFileUploadExercise_routesEnforceKindAndCurrentDatabaseRoles() throws Exception {
+        fileUploadExercise.setMode(ExerciseMode.TEAM);
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        var teamSettings = new TeamAssignmentConfig();
+        teamSettings.setMinTeamSize(2);
+        teamSettings.setMaxTeamSize(4);
+        teamAssignmentConfigRepository.applyTo(fileUploadExercise, teamSettings);
+        var examExercise = fileUploadExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(TEST_PREFIX, false);
+        var examCourse = examExercise.getExerciseGroup().getExam().getCourse();
+        String courseUrl = "/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId();
+        String examUrl = "/api/fileupload/file-upload-exercises/" + examExercise.getId();
+        var courseResponse = request.get(courseUrl, HttpStatus.OK, FileUploadExerciseDTO.class);
+        assertThat(courseResponse.teamAssignmentConfig().minTeamSize()).isEqualTo(2);
+        assertThat(courseResponse.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
+        request.get(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, FileUploadExerciseDTO.class);
+        request.get(examUrl, HttpStatus.FORBIDDEN, FileUploadExerciseDTO.class);
+        request.get(examUrl + "/for-exam", HttpStatus.FORBIDDEN, FileUploadExerciseDTO.class);
+
+        var editor = userUtilService.addEditorToCourse(TEST_PREFIX + "tutor1", examCourse);
+        request.get(examUrl, HttpStatus.FORBIDDEN, FileUploadExerciseDTO.class);
+        var response = request.get(examUrl + "/for-exam", HttpStatus.OK, FileUploadExerciseDTO.class);
+        assertThat(response).isNotNull();
+        assertThat(response.exerciseGroup().exam().course().id()).isEqualTo(examCourse.getId());
+        assertThat(response.course()).isNull();
+        assertThat(response.teamAssignmentConfig()).as("individual exam exercises omit the stored team configuration").isNull();
+        assertThat(response.plagiarismDetectionConfig()).isNotNull();
+        userUtilService.unenrollUserFromCourse(editor, examCourse);
+        userUtilService.addEditorToCourse(TEST_PREFIX + "tutor1", fileUploadExercise.getCourseViaExerciseGroupOrCourseMember());
+        request.get(examUrl, HttpStatus.FORBIDDEN, FileUploadExerciseDTO.class);
+        request.get(examUrl + "/for-exam", HttpStatus.FORBIDDEN, FileUploadExerciseDTO.class);
+        request.get(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, FileUploadExerciseDTO.class);
+        request.get(courseUrl, HttpStatus.OK, FileUploadExerciseDTO.class);
     }
 
 }

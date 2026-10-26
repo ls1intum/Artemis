@@ -235,8 +235,17 @@ export class ProgrammingExerciseService {
      * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
     find(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(programmingExerciseId, false, withPlagiarismDetectionConfig);
+    }
+
+    /** Loads management details of an exam exercise with the same options and conversion as course details. */
+    findForExam(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(programmingExerciseId, true, withPlagiarismDetectionConfig);
+    }
+
+    private findDetails(programmingExerciseId: number, exam: boolean, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, {
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}${exam ? '/for-exam' : ''}`, {
                 observe: 'response',
                 params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig },
             })

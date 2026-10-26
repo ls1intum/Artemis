@@ -2,7 +2,7 @@ import { type MockInstance, beforeEach, describe, expect, it, vi, afterEach as v
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -186,6 +186,7 @@ describe('QuizParticipationComponent - live mode', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
                         data: of({ mode: 'live' }),
                         parent: { parent: { params: of({ courseId: 1 }) } },
                     },
@@ -876,6 +877,7 @@ describe('QuizParticipationComponent - preview mode', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
                         data: of({ mode: 'preview' }),
                     },
                 },
@@ -892,6 +894,21 @@ describe('QuizParticipationComponent - preview mode', () => {
     vitestAfterEach(() => {
         httpMock.verify();
         vi.restoreAllMocks();
+    });
+
+    it('should load exam preview mode from ancestor exam context', () => {
+        const snapshot = new ActivatedRouteSnapshot();
+        snapshot.params = { exerciseId: 1 };
+        const ancestor = new ActivatedRouteSnapshot();
+        ancestor.params = { examId: 2 };
+        vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([ancestor, snapshot]);
+        TestBed.inject(ActivatedRoute).snapshot = snapshot;
+        const examFind = vi.spyOn(exerciseService, 'findForExam').mockReturnValue(of(quizExercise));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
+        component.quizId = 1;
+        component.initPreview();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(1);
+        expect(exerciseService.find).not.toHaveBeenCalled();
     });
 
     it('should initialize', () => {
@@ -963,6 +980,7 @@ describe('QuizParticipationComponent - practice mode', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ courseId: 1, exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
                         data: of({ mode: 'practice' }),
                     },
                 },
@@ -1130,6 +1148,7 @@ describe('QuizParticipationComponent - solution mode', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ courseId: 1, exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
                         data: of({ mode: 'solution' }),
                     },
                 },
@@ -1145,6 +1164,21 @@ describe('QuizParticipationComponent - solution mode', () => {
 
     vitestAfterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should load exam solution mode from ancestor exam context', () => {
+        const snapshot = new ActivatedRouteSnapshot();
+        snapshot.params = { exerciseId: 1 };
+        const ancestor = new ActivatedRouteSnapshot();
+        ancestor.params = { examId: 2 };
+        vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([ancestor, snapshot]);
+        TestBed.inject(ActivatedRoute).snapshot = snapshot;
+        const examFind = vi.spyOn(exerciseService, 'findForExam').mockReturnValue(of(quizExerciseForPractice));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExerciseForPractice));
+        component.quizId = 1;
+        component.initShowSolution();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(1);
+        expect(exerciseService.find).not.toHaveBeenCalled();
     });
 
     it('should initialize', () => {
@@ -1208,6 +1242,7 @@ describe('QuizParticipationComponent - relativeTimeText', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
                         data: of({ mode: 'preview' }),
                     },
                 },
@@ -1289,6 +1324,7 @@ describe('QuizParticipationComponent - applySelection', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
                         data: of({ mode: 'preview' }),
                     },
                 },
@@ -1375,6 +1411,7 @@ describe('QuizParticipationComponent - showResult', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
                         data: of({ mode: 'preview' }),
                     },
                 },
@@ -1476,6 +1513,7 @@ describe('QuizParticipationComponent - onSaveError', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
                         data: of({ mode: 'preview' }),
                     },
                 },

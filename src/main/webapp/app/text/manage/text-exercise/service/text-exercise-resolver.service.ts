@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -23,7 +24,11 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
      */
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
-            return this.textExerciseService.find(route.params['exerciseId'], true).pipe(
+            return (
+                isExamExerciseRoute(route)
+                    ? this.textExerciseService.findForExam(route.params['exerciseId'], true)
+                    : this.textExerciseService.find(route.params['exerciseId'], true)
+            ).pipe(
                 filter((res) => !!res.body),
                 map((textExercise: HttpResponse<TextExercise>) => textExercise.body!),
             );

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -52,7 +52,7 @@ import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-
 import { expectElementToBeEnabled, getElement } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -209,7 +209,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: ProgrammingExerciseService, useFactory: () => Object.assign(new MockProgrammingExerciseService(), { findForExam: vi.fn() }) },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
@@ -249,6 +249,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         routeSubject = new Subject();
         // @ts-ignore
         (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
+        route.snapshot = { paramMap: route.snapshot.paramMap, pathFromRoot: [{ params: {} }] } as ActivatedRouteSnapshot;
 
         testCasesChangedStub = vi.spyOn(programmingExerciseWebsocketService, 'getTestCaseState');
         getExerciseTestCaseStateStub = vi.spyOn(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
@@ -293,6 +294,18 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         (gradingService as unknown as MockProgrammingExerciseGradingService).nextTestCases(testCases);
         (gradingService as unknown as MockProgrammingExerciseGradingService).nextCategories(codeAnalysisCategories1);
     };
+
+    it('loads exam grading details from an ancestor exam route', () => {
+        const examSnapshot = new ActivatedRouteSnapshot();
+        examSnapshot.params = { examId: 7 };
+        vi.spyOn(examSnapshot, 'pathFromRoot', 'get').mockReturnValue([examSnapshot]);
+        route.snapshot = examSnapshot;
+        const examFind = vi.spyOn(programmingExerciseService, 'findForExam').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        initGradingComponent();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(exerciseId);
+        expect(loadExerciseStub).not.toHaveBeenCalled();
+        expect(comp.programmingExercise).toEqual(exercise);
+    });
 
     it('should show the updatedTests badge when the exercise is released and has student results', () => {
         initGradingComponent();

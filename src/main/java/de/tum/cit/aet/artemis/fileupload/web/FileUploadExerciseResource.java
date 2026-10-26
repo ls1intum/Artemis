@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -570,21 +572,29 @@ public class FileUploadExerciseResource {
      *         fileUploadExercise, or with status 404 (Not Found)
      */
     @GetMapping("file-upload-exercises/{exerciseId}")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<FileUploadExerciseDTO> getFileUploadExercise(@PathVariable Long exerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
+        return loadFileUploadExerciseDetails(exerciseId, false);
+    }
+
+    /**
+     * Retrieves management details of an exam file upload exercise.
+     *
+     * @param exerciseId the id of the exam exercise to retrieve
+     * @return the full management details of the exam exercise
+     */
+    @GetMapping("file-upload-exercises/{exerciseId}/for-exam")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<FileUploadExerciseDTO> getFileUploadExerciseForExam(@PathVariable Long exerciseId) {
+        return loadFileUploadExerciseDetails(exerciseId, true);
+    }
+
+    private ResponseEntity<FileUploadExerciseDTO> loadFileUploadExerciseDetails(Long exerciseId, boolean forExam) {
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
         var exercise = loadFileUploadExercise(exerciseId);
-        // If the exercise belongs to an exam, only editors or above are allowed to
-        // access it, otherwise also TA have access
-        if (exercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        if (forExam ? !exercise.isExamExercise() : !exercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
         }
-        else {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        }
-
         return ResponseEntity.ok(FileUploadExerciseDTO.of(enrichFileUploadExerciseForResponse(exercise)));
     }
 

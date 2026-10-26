@@ -925,7 +925,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     void testGetExamQuizExercise() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(10));
 
-        QuizExercise quizExerciseGet = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        QuizExercise quizExerciseGet = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-exam", OK, QuizExercise.class);
         checkQuizExercises(quizExercise, quizExerciseGet);
 
         assertThat(quizExerciseGet).as("Quiz exercise was retrieved").isEqualTo(quizExercise).isNotNull();
@@ -937,7 +937,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamQuizExercise_asTutor_forbidden() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(10));
-        request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), FORBIDDEN, QuizExercise.class);
+        request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-exam", FORBIDDEN, QuizExercise.class);
     }
 
     @Test
@@ -1276,7 +1276,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     }
 
     private boolean canBeEvaluated(QuizExercise quizExercise) throws Exception {
-        JsonNode details = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, JsonNode.class);
+        JsonNode details = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + (quizExercise.isExamExercise() ? "/for-exam" : ""), OK, JsonNode.class);
         return details.path("canBeEvaluated").asBoolean(false);
     }
 
@@ -2595,4 +2595,36 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(imported.getDifficulty()).as("difficulty must be preserved").isEqualTo(source.getDifficulty());
         assertThat(imported.getMaxPoints()).as("maxPoints must be preserved").isEqualTo(source.getMaxPoints());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getQuizExercise_routesEnforceKindAndCurrentDatabaseRoles() throws Exception {
+        var examExercise = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(1));
+        var courseExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
+        var examCourse = examExercise.getExerciseGroup().getExam().getCourse();
+        String courseUrl = "/api/quiz/quiz-exercises/" + courseExercise.getId();
+        String examUrl = "/api/quiz/quiz-exercises/" + examExercise.getId();
+        var courseResponse = request.get(courseUrl, HttpStatus.OK, QuizExercise.class);
+        assertThat(courseResponse.getExerciseGroup()).isNull();
+        request.get(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, QuizExercise.class);
+        request.get(examUrl, HttpStatus.FORBIDDEN, QuizExercise.class);
+        request.get(examUrl + "/for-exam", HttpStatus.FORBIDDEN, QuizExercise.class);
+
+        var editor = userUtilService.addEditorToCourse(TEST_PREFIX + "tutor1", examCourse);
+        request.get(examUrl, HttpStatus.FORBIDDEN, QuizExercise.class);
+        var response = request.get(examUrl + "/for-exam", HttpStatus.OK, QuizExercise.class);
+        assertThat(response).isNotNull();
+        assertThat(response.isExamExercise()).as("detail payload retains the exam source context").isTrue();
+        assertThat(response.getExerciseGroup().getId()).isEqualTo(examExercise.getExerciseGroup().getId());
+        assertThat(response.getExerciseGroup().getExam().getId()).isEqualTo(examExercise.getExerciseGroup().getExam().getId());
+        assertThat(response.getExerciseGroup().getExam().getCourse().getId()).isEqualTo(examCourse.getId());
+        assertThat(response.isExamExercise()).isTrue();
+        userUtilService.unenrollUserFromCourse(editor, examCourse);
+        userUtilService.addEditorToCourse(TEST_PREFIX + "tutor1", courseExercise.getCourseViaExerciseGroupOrCourseMember());
+        request.get(examUrl, HttpStatus.FORBIDDEN, QuizExercise.class);
+        request.get(examUrl + "/for-exam", HttpStatus.FORBIDDEN, QuizExercise.class);
+        request.get(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, QuizExercise.class);
+        request.get(courseUrl, HttpStatus.OK, QuizExercise.class);
+    }
+
 }

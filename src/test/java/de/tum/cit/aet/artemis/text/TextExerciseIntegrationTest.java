@@ -1485,7 +1485,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = new TextExercise();
         textExercise.setId(114213211L);
 
-        request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.NOT_FOUND, TextExerciseResponseDTO.class);
+        request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
     }
 
     @Test
@@ -1533,7 +1533,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var exam = exerciseGroup.getExam();
         Course examCourse = exam.getCourse();
 
-        TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + examTextExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
+        TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + examTextExercise.getId() + "/for-exam", HttpStatus.OK,
+                TextExerciseResponseDTO.class);
 
         assertThat(textExerciseServer).as("exam text exercise was retrieved").isNotNull();
         assertThat(textExerciseServer.exerciseGroup()).as("nested exerciseGroup is exposed for an exam exercise").isNotNull();
@@ -1572,11 +1573,11 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getExamTextExerciseAsTutor_forbidden() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
-        request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
+        request.get("/api/text/text-exercises/" + textExercise.getId() + "/for-exam", HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
     }
 
     @Test
@@ -1586,7 +1587,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
-        TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
+        TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId() + "/for-exam", HttpStatus.OK, TextExerciseResponseDTO.class);
         assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
         assertThat(textExerciseServer.id()).as("Text exercise with the right id was retrieved").isEqualTo(textExercise.getId());
         // Exam exercises resolve their course client-side via the exercise group, mirroring the original entity where
@@ -2393,4 +2394,42 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextSubmissionAssessmentDTO submission = result.submissions().getLast();
         assertThat(submission.submitted()).isFalse();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getTextExercise_routesEnforceKindAndCurrentDatabaseRoles() throws Exception {
+        textExercise.setMode(ExerciseMode.TEAM);
+        textExercise = textExerciseRepository.save(textExercise);
+        var teamSettings = new TeamAssignmentConfig();
+        teamSettings.setMinTeamSize(2);
+        teamSettings.setMaxTeamSize(4);
+        teamAssignmentConfigRepository.applyTo(textExercise, teamSettings);
+        var group = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
+        var examExercise = textExerciseUtilService.createTextExerciseForExam(group);
+        var examCourse = examExercise.getExerciseGroup().getExam().getCourse();
+        String courseUrl = "/api/text/text-exercises/" + textExercise.getId();
+        String examUrl = "/api/text/text-exercises/" + examExercise.getId();
+        var courseResponse = request.get(courseUrl, HttpStatus.OK, TextExerciseResponseDTO.class);
+        assertThat(courseResponse.teamAssignmentConfig().minTeamSize()).isEqualTo(2);
+        assertThat(courseResponse.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
+        request.get(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
+        request.get(examUrl, HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam", HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
+
+        var editor = userUtilService.addEditorToCourse(TEST_PREFIX + "tutor1", examCourse);
+        request.get(examUrl, HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
+        var response = request.get(examUrl + "/for-exam?withPlagiarismDetectionConfig=true", HttpStatus.OK, TextExerciseResponseDTO.class);
+        assertThat(response).isNotNull();
+        assertThat(response.exerciseGroup().exam().course().id()).isEqualTo(examCourse.getId());
+        assertThat(response.course()).isNull();
+        assertThat(response.teamAssignmentConfig()).as("individual exam exercises omit the stored team configuration").isNull();
+        assertThat(response.plagiarismDetectionConfig()).isNotNull();
+        userUtilService.unenrollUserFromCourse(editor, examCourse);
+        userUtilService.addEditorToCourse(TEST_PREFIX + "tutor1", textExercise.getCourseViaExerciseGroupOrCourseMember());
+        request.get(examUrl, HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam", HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
+        request.get(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, TextExerciseResponseDTO.class);
+        request.get(courseUrl, HttpStatus.OK, TextExerciseResponseDTO.class);
+    }
+
 }

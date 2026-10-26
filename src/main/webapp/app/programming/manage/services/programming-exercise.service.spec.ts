@@ -627,4 +627,10 @@ describe('ProgrammingExercise Service', () => {
     afterEach(() => {
         httpMock.verify();
     });
+    it('should load exam details from the exam route with the same options', () => {
+        service.findForExam(123, true).subscribe((response) => expect(response.body?.id).toBe(123));
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/programming/programming-exercises/123/for-exam');
+        expect(req.request.params.get('withPlagiarismDetectionConfig')).toBe('true');
+        req.flush({ id: 123 });
+    });
 });
