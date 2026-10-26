@@ -89,6 +89,22 @@ class LectureCourseHomeApiTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     @Test
+    void changingExistingMaterialPreservesItsOriginalCreationTimestamp() {
+        var lecture = lectures.createLecture(course);
+        var unit = lectures.createTextUnit(lecture);
+        var created = unit.getCreatedDate();
+        assertThat(created).isNotNull();
+        unit.setName("Updated material");
+        assertThat(units.saveAndFlush(unit).getCreatedDate().toInstant()).isEqualTo(created.toInstant());
+        unit.setCreatedDate(base.minusDays(30));
+        var original = units.saveAndFlush(unit);
+        original.setName("Still the same published material");
+        assertThat(units.saveAndFlush(original).getCreatedDate().toInstant()).isEqualTo(base.minusDays(30).toInstant());
+        original.setCreatedDate(null);
+        assertThat(units.saveAndFlush(original).getCreatedDate()).isNull();
+    }
+
+    @Test
     void undatedNewlyPublishedMaterialIsIncluded() {
         var lecture = lectures.createLecture(course);
         var unit = lectures.createTextUnit(lecture);
