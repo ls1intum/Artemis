@@ -329,10 +329,20 @@ public class ProgrammingExercise extends Exercise {
         return releaseTestsWithExampleSolution;
     }
 
+    /**
+     * Whether students may start the exercise and push to their repository before the start date.
+     *
+     * @return true if the option is enabled
+     */
     public boolean isAllowRepositoryAccessBeforeStartDate() {
         return allowRepositoryAccessBeforeStartDate;
     }
 
+    /**
+     * Sets whether students may start the exercise and push to their repository before the start date.
+     *
+     * @param allowRepositoryAccessBeforeStartDate true to enable the option
+     */
     public void setAllowRepositoryAccessBeforeStartDate(boolean allowRepositoryAccessBeforeStartDate) {
         this.allowRepositoryAccessBeforeStartDate = allowRepositoryAccessBeforeStartDate;
     }

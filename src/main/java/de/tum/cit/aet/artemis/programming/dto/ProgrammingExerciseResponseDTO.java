@@ -193,6 +193,15 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         return of(exercise, buildConfigEntity, gradingInstructionFeedbackUsed, false);
     }
 
+    /**
+     * Converts the exercise, optionally stripping the ids and references an export must not carry.
+     *
+     * @param exercise                       the exercise to convert
+     * @param buildConfigEntity              its build configuration, which is stored separately and read by the caller
+     * @param gradingInstructionFeedbackUsed whether grading instruction feedback was used
+     * @param forExport                      whether the DTO is written to an export
+     * @return the corresponding DTO
+     */
     private static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfigEntity,
             Boolean gradingInstructionFeedbackUsed, boolean forExport) {
         if (exercise == null) {

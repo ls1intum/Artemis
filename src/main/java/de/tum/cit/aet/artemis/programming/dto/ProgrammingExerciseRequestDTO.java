@@ -92,6 +92,11 @@ public interface ProgrammingExerciseRequestDTO {
 
     Boolean releaseTestsWithExampleSolution();
 
+    /**
+     * Whether students may work on their repository between the release and the start date. Ignored for exam exercises and exercises without a start date.
+     *
+     * @return true if the option is requested
+     */
     Boolean allowRepositoryAccessBeforeStartDate();
 
     ProgrammingLanguage programmingLanguage();

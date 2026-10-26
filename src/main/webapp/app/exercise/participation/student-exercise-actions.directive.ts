@@ -209,6 +209,7 @@ export abstract class StudentExerciseActionsDirective {
             });
     }
 
+    /** Whether a student has to wait for the start date, which is not the case in the early repository access phase. */
     get isBeforeStartDateAndStudent(): boolean {
         const exercise = this.exercise();
         return !exercise.isAtLeastTutor && !!exercise.startDate && dayjs().isBefore(exercise.startDate) && !isInEarlyRepositoryAccessPhase(exercise);

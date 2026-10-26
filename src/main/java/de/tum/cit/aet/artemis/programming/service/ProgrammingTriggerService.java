@@ -193,6 +193,12 @@ public class ProgrammingTriggerService {
         }
     }
 
+    /**
+     * Creates a submission and triggers a build for every graded participation whose repository head was pushed before the start date and has no submission yet.
+     * Does nothing if the exercise no longer exists, does not allow repository access before the start date or has not started.
+     *
+     * @param exerciseId the id of the programming exercise
+     */
     private void buildChangesBeforeStartDate(long exerciseId) {
         var exercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId).orElse(null);
         if (exercise == null) {
@@ -262,6 +268,12 @@ public class ProgrammingTriggerService {
         log.info("Triggered {} builds for changes pushed before the start date of exercise {}", index, exerciseId);
     }
 
+    /**
+     * Reads the head commit of the assignment repository of a candidate, see {@link BareGitRepositoryService#findHeadCommitHashIfChangedSinceSetup}.
+     *
+     * @param candidate the participation to inspect
+     * @return the hash of the head commit if it was pushed after the setup, or empty if the repository does not exist or was not changed
+     */
     private Optional<String> findHeadCommitHashIfChangedSinceSetup(StartDateBuildCandidateDTO candidate) {
         if (candidate.repositoryUri() == null) {
             return Optional.empty();
@@ -530,12 +542,29 @@ public class ProgrammingTriggerService {
         log.info("User {} triggered an instructor build for all participations in exercise {} with id {}", user.getLogin(), exercise.getTitle(), exercise.getId());
     }
 
+    /**
+     * Creates and saves a submission for the given commit, dated now.
+     *
+     * @param participation  the participation the submission belongs to
+     * @param commitHash     the commit of the submission
+     * @param submissionType the type of the submission
+     * @return the saved submission
+     */
     private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, String commitHash,
             SubmissionType submissionType) {
         // Make sure that the new submission has the submission date of now
         return createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType, ZonedDateTime.now());
     }
 
+    /**
+     * Creates and saves a submission for the given commit with an explicit submission date.
+     *
+     * @param participation  the participation the submission belongs to
+     * @param commitHash     the commit of the submission
+     * @param submissionType the type of the submission
+     * @param submissionDate the date of the submission
+     * @return the saved submission
+     */
     private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType,
             ZonedDateTime submissionDate) {
         ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash).submitted(true).submissionDate(submissionDate)

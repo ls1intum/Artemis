@@ -671,6 +671,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         };
     }
 
+    /**
+     * Builds the grading section of the detail page, including the early repository access option for course exercises.
+     * @param exercise the programming exercise to display
+     */
     getExerciseDetailsGradingSection(exercise: ProgrammingExercise): DetailOverviewSection {
         const includedInScoreIsBoolean = exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_AS_BONUS;
         const includedInScore: Detail = includedInScoreIsBoolean

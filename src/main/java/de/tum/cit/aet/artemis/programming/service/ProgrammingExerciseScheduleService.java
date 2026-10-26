@@ -248,6 +248,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
     }
 
+    /**
+     * Schedules the tasks of a course exercise, among them the build of the changes pushed before the start date.
+     *
+     * @param exercise the course exercise to schedule
+     */
     private void scheduleCourseExercise(ProgrammingExercise exercise) {
         SecurityUtils.setAuthorizationObject();
 
@@ -303,6 +308,12 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
     }
 
+    /**
+     * Creates the task that builds the changes pushed before the start date, to be run by the scheduler.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the task, which runs with system authorization
+     */
     @NonNull
     private Runnable buildChangesBeforeStartDateRunnable(long exerciseId) {
         // Handed to a scheduler, so this lambda is its own entry point on a pooled thread. The trigger reloads the exercise and checks the option and the start date again.

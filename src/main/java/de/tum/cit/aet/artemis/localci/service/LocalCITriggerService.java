@@ -193,6 +193,16 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         triggerBuild(participation, null, null, triggerAll, 0, sharedData);
     }
 
+    /**
+     * Queues a build of the given commit with the inputs the caller already resolved for the whole exercise.
+     *
+     * @param participation     the participation to build
+     * @param commitHash        the commit to build
+     * @param triggeredByPushTo type of the repository the commit belongs to
+     * @param triggerAll        true if this build is part of a bulk run
+     * @param sharedData        inputs shared by every participation of the exercise
+     * @throws LocalCIException if the build could not be queued
+     */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo, boolean triggerAll,
             SharedBuildTriggerData sharedData) throws LocalCIException {

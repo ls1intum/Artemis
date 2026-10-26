@@ -83,6 +83,7 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
     private previousAutomaticAfterDueDatePreviewRequest: AutomaticAfterDueDatePreviewRequest | undefined = undefined;
     private automaticAfterDueDatePreviewRequests = new Subject<AutomaticAfterDueDatePreviewRequest>();
 
+    /** Registers the effects that keep dependent dates and options consistent, e.g. resetting the early repository access option when the start date is cleared. */
     constructor() {
         this.automaticAfterDueDatePreviewRequests
             .pipe(
@@ -256,6 +257,7 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
         return !this.isExamMode() && (isDisplayedInCurrentMode || this.startDate() !== undefined);
     }
 
+    /** The early repository access option is shown for course exercises with a start date, if the current mode displays it. */
     private computeIsAllowRepositoryAccessBeforeStartDateVisible(): boolean {
         const isDisplayedInCurrentMode = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.allowRepositoryAccessBeforeStartDate ?? true;
         return !this.isExamMode() && isDisplayedInCurrentMode && this.startDate() !== undefined;

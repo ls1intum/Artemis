@@ -65,6 +65,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     readonly lightweight = signal(false);
     // Bumped when the start date is reached so that time-dependent state is re-evaluated
     private readonly now = signal(Date.now());
+    /** Whether the student can already work in the repository although builds and tests only start at the start date. */
     readonly inEarlyRepositoryAccessPhase = computed(() => {
         this.now();
         return !!this.exercise() && isInEarlyRepositoryAccessPhase(this.exercise());
@@ -91,6 +92,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     readonly hasTutorAssessment = signal(false);
     readonly numberOfSubmissionsForSubmissionPolicy = signal<number | undefined>(undefined);
 
+    /** Re-evaluates the early repository access phase when the start date is reached while the editor stays open. */
     constructor() {
         // Re-evaluate the early repository access phase once the start date is reached while the editor stays open
         effect((onCleanup) => {
