@@ -374,6 +374,18 @@ describe('CodeButtonComponent', () => {
             expect(component.copyEnabled()).toBe(true);
         });
 
+        it('closes the code popover with Escape without clicking its covered trigger', () => {
+            fixture.componentRef.setInput('participations', [participation]);
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
+            fixture.detectChanges();
+            expect(document.querySelector('[data-testid="code-popover"]')).not.toBeNull();
+
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(document.querySelector('[data-testid="code-popover"]')).toBeNull();
+        });
+
         it('should display password warning nudge when password is selected and switch to token on click', () => {
             fixture.componentRef.setInput('participations', [participation]);
 

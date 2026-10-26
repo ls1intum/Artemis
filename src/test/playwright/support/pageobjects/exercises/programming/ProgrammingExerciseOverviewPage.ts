@@ -116,6 +116,11 @@ export class ProgrammingExerciseOverviewPage {
         }
     }
 
+    async closeCloneMenu() {
+        await this.page.keyboard.press('Escape');
+        await expect(this.page.getByTestId('code-popover')).toBeHidden();
+    }
+
     /**
      * Reads the clone URL from the code popover, waiting until it belongs to the selected clone method.
      * <p>
@@ -162,8 +167,7 @@ export class ProgrammingExerciseOverviewPage {
         try {
             await expect(button).toBeEnabled({ timeout: 30000 });
         } catch {
-            await codeButtonLocator.click();
-            await this.page.waitForTimeout(500);
+            await this.closeCloneMenu();
             await codeButtonLocator.click();
             await this.page.getByTestId('code-popover').waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
