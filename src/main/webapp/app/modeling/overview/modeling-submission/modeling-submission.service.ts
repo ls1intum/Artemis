@@ -1,3 +1,4 @@
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -105,13 +106,13 @@ export class ModelingSubmissionService {
     }
 
     /**
-     * Get a submission with given Id
+     * Get a submission for assessment with the given Id
      * @param submissionId - Id of the submission
      * @param correctionRound
      * @param resultId
      */
     getSubmission(submissionId: number, correctionRound = 0, resultId?: number): Observable<ModelingSubmission> {
-        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}`;
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/for-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
@@ -123,23 +124,14 @@ export class ModelingSubmissionService {
     }
 
     /**
-     * Get a submission with given Id without locking it on artemis
-     * @param submissionId - Id of the submission
-     */
-    getSubmissionWithoutLock(submissionId: number): Observable<ModelingSubmission> {
-        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}`;
-        let params = new HttpParams();
-        params = params.set('withoutResults', 'true');
-        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
-    }
-
-    /**
      * Get the latest submission for a given participation
      * @param participationId - Id of the participation
      */
-    getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
+    getLatestSubmissionForModelingEditor(participationId: number, purpose: EditorViewingPurpose = 'owner'): Observable<ModelingSubmission> {
         return this.http
-            .get<ModelingSubmission>(`${this.resourceUrl}/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' })
+            .get<ModelingSubmission>(`${this.resourceUrl}/participations/${participationId}/latest-modeling-submission${purpose === 'staff-preview' ? '/for-staff' : ''}`, {
+                responseType: 'json',
+            })
             .pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
@@ -147,8 +139,8 @@ export class ModelingSubmissionService {
      * Get all submissions with results for a participation
      * @param participationId - Id of the participation
      */
-    getSubmissionsWithResultsForParticipation(participationId: number): Observable<ModelingSubmission[]> {
-        const url = `${this.resourceUrl}/participations/${participationId}/submissions-with-results`;
+    getSubmissionsWithResultsForParticipation(participationId: number, purpose: EditorViewingPurpose = 'owner'): Observable<ModelingSubmission[]> {
+        const url = `${this.resourceUrl}/participations/${participationId}/submissions-with-results${purpose === 'staff-preview' ? '/for-staff' : ''}`;
         return this.http.get<ModelingSubmission[]>(url).pipe(
             map((submissions: ModelingSubmission[]) => {
                 return submissions.map((submission) => this.submissionService.convertSubmissionFromServer(submission));

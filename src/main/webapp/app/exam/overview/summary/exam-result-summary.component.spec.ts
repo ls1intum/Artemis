@@ -1,3 +1,5 @@
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -755,5 +757,29 @@ describe('ExamResultSummaryComponent', () => {
             button.click();
             expect(toggleShowSampleSolutionSpy).toHaveBeenCalled();
         });
+    });
+    it.each([
+        { testRun: false, instructorView: false, purpose: 'owner' },
+        { testRun: true, instructorView: false, purpose: 'staff-preview' },
+        { testRun: false, instructorView: true, purpose: 'staff-preview' },
+    ])('derives reusable editor purpose from explicit context $purpose, test run $testRun, management $instructorView', ({ testRun, instructorView, purpose }) => {
+        const fileSubmission = { id: 5, submitted: true } as FileUploadSubmission;
+        const fileParticipation = { id: 5, student: user, submissions: [fileSubmission] } as StudentParticipation;
+        const fileExercise = { id: 5, type: ExerciseType.FILE_UPLOAD, studentParticipations: [fileParticipation], exerciseGroup } as FileUploadExercise;
+        fixture.componentRef.setInput('studentExam', { ...studentExam, exercises: [...exercises, fileExercise] });
+        fixture.detectChanges();
+        component.isTestRun.set(testRun);
+        fixture.componentRef.setInput('instructorView', instructorView);
+        component.exerciseInfos.set({
+            ...component.exerciseInfos(),
+            1: { participation: textParticipation, submission: textSubmission, isCollapsed: false } as ResultSummaryExerciseInfo,
+            3: { participation: modelingParticipation, submission: modelingSubmission, isCollapsed: false } as ResultSummaryExerciseInfo,
+            5: { participation: fileParticipation, submission: fileSubmission, isCollapsed: false } as ResultSummaryExerciseInfo,
+        });
+        fixture.changeDetectorRef.detectChanges();
+        for (const editorType of [TextExamSummaryComponent, ModelingExamSummaryComponent, FileUploadExamSummaryComponent]) {
+            const editor = fixture.debugElement.query(By.directive(editorType)).componentInstance;
+            expect(editor.viewingPurpose()).toBe(purpose);
+        }
     });
 });

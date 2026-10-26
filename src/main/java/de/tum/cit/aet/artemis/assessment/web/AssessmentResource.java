@@ -70,7 +70,7 @@ public abstract class AssessmentResource {
      */
     public ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId) {
         log.debug("REST request to get assessment for submission with id {}", submissionId);
-        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
+        Submission submission = loadSubmissionForAssessment(submissionId);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
@@ -90,6 +90,16 @@ public abstract class AssessmentResource {
         }
 
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Loads the latest-result assessment context, shared with explicit modeling read audiences.
+     *
+     * @param submissionId the submission to load
+     * @return the submission with results, feedback and ownership context
+     */
+    protected Submission loadSubmissionForAssessment(Long submissionId) {
+        return submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
     }
 
     /**

@@ -160,4 +160,10 @@ describe('TextSubmission Service', () => {
         expect(req.request.params.get('correction-round')).toBe('2');
         req.flush([]);
     });
+    it.each(['owner', 'staff-preview'] as const)('selects plagiarism text URL from explicit %s purpose', (purpose) => {
+        service.getTextSubmission(123, purpose).subscribe((data) => expect(data.id).toBe(123));
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe(`api/text/text-submissions/123${purpose === 'staff-preview' ? '/for-staff' : ''}`);
+        req.flush({ id: 123 });
+    });
 });

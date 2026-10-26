@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
@@ -106,30 +107,51 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<ResultDTO> getAssessmentBySubmissionId(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
-        if (resultId != null) {
-            log.debug("REST request to get result {} for modeling submission {}", resultId, submissionId);
-            ModelingSubmission submission = modelingSubmissionRepository
-                    .findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
-            Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        return getAssessmentBySubmissionId(submissionId, resultId, false);
+    }
 
-            if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
-                throw new AccessForbiddenException();
-            }
-            ModelingExercise exercise = modelingExerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+    /**
+     * Returns a modeling result using the existing instructor eligibility policy.
+     *
+     * @param submissionId the submission owning the result
+     * @param resultId     optional specific result, which must belong to the submission
+     * @return the instructor result projection
+     */
+    @FeatureUsage(UserFeature.EXERCISE_FEEDBACK)
+    @GetMapping("modeling-submissions/{submissionId}/result/for-instructor")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ResultDTO> getAssessmentBySubmissionIdForInstructor(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        return getAssessmentBySubmissionId(submissionId, resultId, true);
+    }
 
-            if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
-                throw new AccessForbiddenException();
-            }
-
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                exercise.filterSensitiveInformation();
-                result.filterSensitiveInformation();
-            }
-
-            return ResponseEntity.ok(ResultDTO.of(result));
+    private ResponseEntity<ResultDTO> getAssessmentBySubmissionId(Long submissionId, Long resultId, boolean instructorView) {
+        var submission = resultId == null ? loadSubmissionForAssessment(submissionId)
+                : modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
+        if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+            throw new AccessForbiddenException();
         }
-        ResponseEntity<Result> response = super.getAssessmentBySubmissionId(submissionId);
-        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(ResultDTO.of(response.getBody()));
+        var exercise = participation.getExercise();
+        if (instructorView) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        }
+        else if (!authCheckService.isOwnerOfParticipation(participation)) {
+            throw new AccessForbiddenException();
+        }
+
+        Result result = resultId == null ? submission.getLatestResult()
+                : submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        if (result == null) {
+            throw new EntityNotFoundException("Result with submission", submissionId);
+        }
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result, instructorView)) {
+            throw new AccessForbiddenException();
+        }
+        if (!instructorView) {
+            exercise.filterSensitiveInformation();
+            result.filterSensitiveInformation();
+        }
+        return ResponseEntity.ok(ResultDTO.of(result));
     }
 
     /**

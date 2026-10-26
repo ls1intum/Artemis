@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -50,6 +51,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRe
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -1258,4 +1260,69 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     private static List<Result> resultsInCreationOrder(Submission submission) {
         return submission.getResults().stream().filter(Objects::nonNull).sorted(Comparator.comparing(Result::getId)).toList();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerResultRequiresOwnershipEvenForInstructor() throws Exception {
+        saveModelingSubmissionAndAssessment(true);
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        var url = API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result";
+        request.get(url, HttpStatus.FORBIDDEN, ResultDTO.class);
+        request.get(url + "?resultId=" + modelingSubmission.getLatestResult().getId(), HttpStatus.FORBIDDEN, ResultDTO.class);
+        assertThat(request.get(url + "/for-instructor", HttpStatus.OK, ResultDTO.class).assessor()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerResultAlwaysFiltersInstructorOwner() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise,
+                ParticipationFactory.generateModelingSubmission(validModel, true), TEST_PREFIX + "instructor1", TEST_PREFIX + "tutor1");
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        var url = API_MODELING_SUBMISSIONS + submission.getId() + "/result";
+        assertThat(request.get(url, HttpStatus.OK, ResultDTO.class).assessor()).isNull();
+        assertThat(request.get(url + "?resultId=" + submission.getLatestResult().getId(), HttpStatus.OK, ResultDTO.class).assessor()).isNull();
+        assertThat(request.get(url + "/for-instructor", HttpStatus.OK, ResultDTO.class).assessor()).isNotNull();
+    }
+
+    @ParameterizedTest
+    @EnumSource(CourseRole.class)
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void instructorResultReadsUseCurrentOwningCourseRole(CourseRole role) throws Exception {
+        saveModelingSubmissionAndAssessment(true);
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, course, role);
+        var url = API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result";
+        for (var suffix : List.of("", "?resultId=" + modelingSubmission.getLatestResult().getId())) {
+            request.get(url + "/for-instructor" + suffix, role == CourseRole.INSTRUCTOR ? HttpStatus.OK : HttpStatus.FORBIDDEN, ResultDTO.class);
+            request.get(url + suffix, HttpStatus.FORBIDDEN, ResultDTO.class);
+        }
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, courseUtilService.addEnrolledEmptyCourse("foreignmodelresult"), CourseRole.INSTRUCTOR);
+        request.get(url + "/for-instructor", HttpStatus.FORBIDDEN, ResultDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorResultsRetainStrictEligibilityAndTestRunException() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise,
+                ParticipationFactory.generateModelingSubmission(validModel, true), TEST_PREFIX + "instructor1", TEST_PREFIX + "tutor1");
+        var url = API_MODELING_SUBMISSIONS + submission.getId() + "/result";
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().plusHours(1));
+        request.get(url + "/for-instructor", HttpStatus.FORBIDDEN, ResultDTO.class);
+        var result = resultRepository.findByIdElseThrow(submission.getLatestResult().getId());
+        result.setCompletionDate(null);
+        resultRepository.save(result);
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        request.get(url + "/for-instructor", HttpStatus.FORBIDDEN, ResultDTO.class);
+        var participation = studentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
+        participation.setTestRun(true);
+        studentParticipationRepository.save(participation);
+        for (var suffix : List.of("", "?resultId=" + result.getId())) {
+            request.get(url + "/for-instructor" + suffix, HttpStatus.OK, ResultDTO.class);
+            request.get(url + suffix, HttpStatus.FORBIDDEN, ResultDTO.class);
+        }
+    }
+
 }

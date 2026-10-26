@@ -19,6 +19,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
@@ -845,4 +848,84 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions/assessed-by-me", HttpStatus.FORBIDDEN,
                 FileUploadSubmissionDTO.class);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerFileEditorNeverElevatesInstructorProjection() throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(assessedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "instructor1", TEST_PREFIX + "tutor1", ParticipationFactory.generateFeedback());
+        var url = "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-editor";
+        var owner = request.get(url, HttpStatus.OK, FileUploadSubmissionDTO.class);
+        assertThat(owner.results()).hasSize(1);
+        assertThat(owner.results().getFirst().assessor()).isNull();
+        var staff = request.get(url + "/for-staff", HttpStatus.OK, FileUploadSubmissionDTO.class);
+        assertThat(staff.results().getFirst().assessor()).isNotNull();
+        assertThat(staff.participation().exercise().isAtLeastInstructor()).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(CourseRole.class)
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void fileEditorStaffReadsUseCurrentOwningCourseRole(CourseRole role) throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(assessedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "student2", TEST_PREFIX + "tutor1", ParticipationFactory.generateFeedback());
+        var course = assessedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, course, role);
+        var url = "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-editor";
+        request.get(url + "/for-staff", role == CourseRole.STUDENT ? HttpStatus.FORBIDDEN : HttpStatus.OK, FileUploadSubmissionDTO.class);
+        request.get(url, HttpStatus.FORBIDDEN, FileUploadSubmissionDTO.class);
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, courseUtilService.addEnrolledEmptyCourse("foreignfileeditor"), CourseRole.INSTRUCTOR);
+        request.get(url + "/for-staff", HttpStatus.FORBIDDEN, FileUploadSubmissionDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void fileOwnerEditorRemainsAvailableAfterMembershipRevocation() throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(assessedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "instructor1", TEST_PREFIX + "tutor1", ParticipationFactory.generateFeedback());
+        var url = "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-editor";
+        request.get(url + "/for-staff", HttpStatus.OK, FileUploadSubmissionDTO.class);
+        userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), assessedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember());
+        var owner = request.get(url, HttpStatus.OK, FileUploadSubmissionDTO.class);
+        assertThat(owner.results().getFirst().assessor()).isNull();
+        request.get(url + "/for-staff", HttpStatus.FORBIDDEN, FileUploadSubmissionDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void fileStaffEditorRetainsResultTiming() throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(assessedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", ParticipationFactory.generateFeedback());
+        var url = "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-editor/for-staff";
+        exerciseUtilService.updateAssessmentDueDate(assessedFileUploadExercise.getId(), ZonedDateTime.now().plusHours(1));
+        assertThat(request.get(url, HttpStatus.OK, FileUploadSubmissionDTO.class).results()).isNullOrEmpty();
+        exerciseUtilService.updateAssessmentDueDate(assessedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+        assertThat(request.get(url, HttpStatus.OK, FileUploadSubmissionDTO.class).results()).hasSize(1);
+        var result = resultRepository.findByIdElseThrow(submission.getLatestResult().getId());
+        result.setCompletionDate(null);
+        resultRepository.save(result);
+        assertThat(request.get(url, HttpStatus.OK, FileUploadSubmissionDTO.class).results()).isNullOrEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseRole.class, names = { "STUDENT", "TEACHING_ASSISTANT", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void fileStaffEditorAuthorizesOwningCourseBeforeExerciseType(CourseRole role) throws Exception {
+        var owningCourse = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
+        var exercise = ExerciseUtilService.findModelingExerciseWithTitle(owningCourse.getExercises(), "ClassDiagram");
+        var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.unenrollUserFromCourse(caller, owningCourse);
+        // The instructor case has membership only in another course.
+        var membershipCourse = role == CourseRole.INSTRUCTOR ? assessedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember() : owningCourse;
+        userUtilService.unenrollUserFromCourse(caller, membershipCourse);
+        userUtilService.enrollUserInCourse(caller, membershipCourse, role);
+        request.get("/api/fileupload/participations/" + participation.getId() + "/file-upload-editor/for-staff",
+                role == CourseRole.TEACHING_ASSISTANT ? HttpStatus.BAD_REQUEST : HttpStatus.FORBIDDEN, FileUploadSubmissionDTO.class);
+        assertThat(studentParticipationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).getSubmissions()).isEmpty();
+    }
+
 }

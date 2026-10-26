@@ -924,11 +924,25 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
-        if (isAtLeastInstructorForExercise(exercise) && participation.isTestRun()) {
+        return isUserAllowedToGetResult(exercise, participation, result, true);
+    }
+
+    /**
+     * Checks result eligibility for an explicitly selected owner or instructor view.
+     *
+     * @param exercise       the owning exercise
+     * @param participation  the owning participation
+     * @param result         the requested result
+     * @param instructorView whether the endpoint permits instructor access beyond ownership
+     * @return whether the result is visible in this view
+     */
+    @CheckReturnValue
+    public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result, boolean instructorView) {
+        if (instructorView && isAtLeastInstructorForExercise(exercise) && participation.isTestRun()) {
             return true;
         }
 
-        return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
+        return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || instructorView && isAtLeastInstructorForExercise(exercise))
                 && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
     }
 

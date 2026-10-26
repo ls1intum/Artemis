@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
@@ -368,7 +369,28 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("participations/{participationId}/file-upload-editor")
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadSubmissionDTO> getDataForFileUpload(@PathVariable Long participationId) {
+        return getDataForFileUpload(participationId, false);
+    }
+
+    /**
+     * Returns the file upload editor data for staff in the owning exercise.
+     *
+     * @param participationId the participation to view
+     * @return the staff editor data and capabilities
+     */
+    @GetMapping("participations/{participationId}/file-upload-editor/for-staff")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<FileUploadSubmissionDTO> getDataForFileUploadForStaff(@PathVariable Long participationId) {
+        return getDataForFileUpload(participationId, true);
+    }
+
+    private ResponseEntity<FileUploadSubmissionDTO> getDataForFileUpload(Long participationId, boolean staffView) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
+        User user = userRepository.getUserWithAuthorities();
+        if (staffView) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), user);
+        }
         FileUploadExercise fileUploadExercise;
         if (participation.getExercise() instanceof FileUploadExercise) {
             fileUploadExercise = (FileUploadExercise) participation.getExercise();
@@ -380,12 +402,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
                     "The exercise of the participation is not a file upload exercise.")).body(null);
         }
 
-        User user = userRepository.getUserWithAuthorities();
         boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
         var accessRights = getAccessRights(fileUploadExercise, user);
 
-        // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
-        if (!(isOwner || accessRights.isAtLeastTutor())) {
+        if (!staffView && !isOwner) {
             throw new AccessForbiddenException("participation", participationId);
         }
 
@@ -412,8 +432,14 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // do not send the assessor information to students
-        if (fileUploadSubmission.getLatestResult() != null && !accessRights.isAtLeastTutor()) {
-            fileUploadSubmission.getLatestResult().filterSensitiveInformation();
+        if (fileUploadSubmission.getLatestResult() != null) {
+            Result result = fileUploadSubmission.getLatestResult();
+            if (!staffView) {
+                result.filterSensitiveInformation();
+            }
+            else if (result.getAssessor() != null) {
+                result.setAssessor(userRepository.findByIdElseThrow(result.getAssessor().getId()));
+            }
         }
 
         return ResponseEntity.ok(FileUploadSubmissionDTO.ofForEditor(fileUploadSubmission, isOwner, accessRights.isAtLeastTutor(), accessRights.isAtLeastEditor(),

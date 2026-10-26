@@ -27,7 +27,10 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -240,16 +243,29 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         log.debug("REST request to get text submission: {}", submissionId);
         var textSubmission = textSubmissionRepository.findWithEagerResultsAssessorByIdElseThrow(submissionId);
         var participation = textSubmission.getParticipation();
-        var textExercise = participation.getExercise();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
-            checkSubmissionAccessForStudent(participation);
-            checkPotentialPlagiarismCaseForStudent(textSubmission);
-            anonymizeSubmissionForStudent(textSubmission);
-            return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission));
+        checkSubmissionAccessForStudent(participation);
+        checkPotentialPlagiarismCaseForStudent(textSubmission);
+        anonymizeSubmissionForStudent(textSubmission);
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission));
+    }
+
+    /**
+     * Returns the full text submission for staff in its owning exercise.
+     *
+     * @param submissionId the submission to retrieve
+     * @return the staff submission projection
+     */
+    @GetMapping("text-submissions/{submissionId}/for-staff")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<TextSubmissionResponseDTO> getTextSubmissionForStaff(@PathVariable long submissionId) {
+        var submission = textSubmissionRepository.findWithEagerResultsAssessorByIdElseThrow(submissionId);
+        if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+            throw new EntityNotFoundException("Student participation", "of text submission " + submissionId);
         }
-
-        return ResponseEntity.ok().body(TextSubmissionResponseDTO.of(textSubmission, true));
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), null);
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(submission, true));
     }
 
     /**

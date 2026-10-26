@@ -95,4 +95,9 @@ describe('StudentExamSummaryComponent', () => {
             expect(tag!.previousElementSibling).toBe(title.querySelector('h5'));
         });
     });
+    it('supplies explicit management viewing purpose to the shared summary', () => {
+        fixture.detectChanges();
+        expect(component.summaryComponent()?.instructorView()).toBe(true);
+        expect(component.summaryComponent()?.studentExam()).toEqual(studentExamValue);
+    });
 });

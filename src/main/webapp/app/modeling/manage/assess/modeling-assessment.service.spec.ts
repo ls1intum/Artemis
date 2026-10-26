@@ -484,4 +484,11 @@ describe('ModelingAssessmentService', () => {
             expect(result).toBe(true);
         });
     });
+    it.each(['owner', 'staff-preview'] as const)('selects result URL from explicit %s purpose', (purpose) => {
+        service.getAssessment(123, 456, purpose).subscribe((data) => expect(data.id).toBe(456));
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe(`api/modeling/modeling-submissions/123/result${purpose === 'staff-preview' ? '/for-instructor' : ''}`);
+        expect(req.request.params.get('resultId')).toBe('456');
+        req.flush({ id: 456 });
+    });
 });

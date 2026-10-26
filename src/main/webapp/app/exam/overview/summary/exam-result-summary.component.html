@@ -155,6 +155,7 @@
                                 @switch (exercise.type) {
                                     @case (TEXT) {
                                         <jhi-text-exam-summary
+                                            [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
                                             [exercise]="exercise"
                                             [submission]="exerciseInfos()[exercise.id!]!.submission!"
                                             [expandProblemStatement]="expandProblemStatement()"
@@ -163,6 +164,7 @@
                                     }
                                     @case (MODELING) {
                                         <jhi-modeling-exam-summary
+                                            [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
                                             [exercise]="exercise"
                                             [submission]="exerciseInfos()[exercise.id!]!.submission!"
                                             [isPrinting]="isPrinting()"
@@ -180,6 +182,7 @@
                                     }
                                     @case (FILE_UPLOAD) {
                                         <jhi-file-upload-exam-summary
+                                            [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
                                             [submission]="exerciseInfos()[exercise.id!]!.submission!"
                                             [exercise]="exercise"
                                             [expandProblemStatement]="expandProblemStatement()"

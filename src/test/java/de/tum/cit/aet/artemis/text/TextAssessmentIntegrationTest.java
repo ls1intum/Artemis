@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
@@ -492,7 +493,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         // Get Text Submission and Complaint
         request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, TextParticipationDTO.class);
-        final ComplaintDTO complaintDto = request.get("/api/assessment/complaints?submissionId=" + textSubmission.getId(), HttpStatus.OK, ComplaintDTO.class);
+        final ComplaintDTO complaintDto = request.get("/api/assessment/complaints/for-assessment?submissionId=" + textSubmission.getId(), HttpStatus.OK, ComplaintDTO.class);
         final Complaint complaint = complaintRepo.findById(complaintDto.id()).orElseThrow();
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
@@ -929,7 +930,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
+        TextParticipationDTO participation = request.get("/api/text/participations/" + textSubmission.getParticipation().getId() + "/text-editor/for-staff", HttpStatus.OK,
+                TextParticipationDTO.class);
 
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.submissions().getLast().results().getFirst()).as("result found").isNotNull();
@@ -941,7 +943,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void getDataForTextEditor_submissionWithoutResult() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
-        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
+        request.get("/api/text/participations/" + textSubmission.getParticipation().getId() + "/text-editor/for-staff", HttpStatus.OK, TextParticipationDTO.class);
     }
 
     @Test
@@ -1017,7 +1019,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithAthenaResult(textExercise, textSubmission, TEST_PREFIX + "student1");
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
+        TextParticipationDTO participation = request.get("/api/text/participations/" + textSubmission.getParticipation().getId() + "/text-editor/for-staff", HttpStatus.OK,
+                TextParticipationDTO.class);
 
         assertThat(participation.submissions()).hasSize(1);
         assertThat(participation.submissions().getLast().results()).hasSize(2);
@@ -1032,7 +1035,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithAthenaResult(textExercise, textSubmission, TEST_PREFIX + "student1");
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
+        TextParticipationDTO participation = request.get("/api/text/participations/" + textSubmission.getParticipation().getId() + "/text-editor/for-staff", HttpStatus.OK,
+                TextParticipationDTO.class);
         assertThat(participation.submissions()).hasSize(1);
         assertThat(participation.submissions().getLast().results()).hasSize(2);
     }
@@ -1872,4 +1876,51 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                     ResultDTO.class, expectedStatus);
         }
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getDataForTextEditor_InstructorOwnerBeforePublication_Forbidden() throws Exception {
+        // create exam
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        exam.setStartDate(now().minusHours(2));
+        exam.setEndDate(now().minusHours(1));
+        exam.setVisibleDate(now().minusHours(3));
+        exam.setPublishResultsDate(now().plusHours(3));
+
+        // creating exercise
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        exerciseGroup.addExercise(textExercise);
+        exerciseGroupRepository.save(exerciseGroup);
+        textExercise = exerciseRepository.save(textExercise);
+
+        examTestRepository.save(exam);
+
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "instructor1", TEST_PREFIX + "tutor1");
+        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, TextParticipationDTO.class);
+        request.get("/api/text/participations/" + textSubmission.getParticipation().getId() + "/text-editor", HttpStatus.FORBIDDEN, TextParticipationDTO.class);
+        request.get("/api/text/participations/" + textSubmission.getParticipation().getId() + "/text-editor/for-staff", HttpStatus.OK, TextParticipationDTO.class);
+
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseRole.class, names = { "STUDENT", "TEACHING_ASSISTANT", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void textStaffEditorAuthorizesOwningCourseBeforeExerciseType(CourseRole role) throws Exception {
+        var exercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf", course);
+        exercise = exerciseRepository.save(exercise);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.unenrollUserFromCourse(caller, course);
+        // The instructor case has membership only in another course.
+        var membershipCourse = role == CourseRole.INSTRUCTOR ? courseUtilService.addEnrolledEmptyCourse("foreigntexteditortype") : course;
+        userUtilService.unenrollUserFromCourse(caller, membershipCourse);
+        userUtilService.enrollUserInCourse(caller, membershipCourse, role);
+        request.get("/api/text/participations/" + participation.getId() + "/text-editor/for-staff",
+                role == CourseRole.TEACHING_ASSISTANT ? HttpStatus.BAD_REQUEST : HttpStatus.FORBIDDEN, TextParticipationDTO.class);
+        assertThat(studentParticipationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).getSubmissions()).isEmpty();
+    }
+
 }

@@ -74,4 +74,15 @@ public class ExamAccessApi extends AbstractExamApi {
     public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
         examAccessService.checkIfAllowedToGetExamResult(examExercise, studentParticipation, user);
     }
+
+    /**
+     * Checks exam result timing for the fixed owner projection.
+     *
+     * @param examExercise         the owning exam exercise
+     * @param studentParticipation the participation used for individual working time
+     */
+    public void checkIfOwnerAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation) {
+        examAccessService.checkIfOwnerAllowedToGetExamResult(examExercise, studentParticipation);
+    }
+
 }

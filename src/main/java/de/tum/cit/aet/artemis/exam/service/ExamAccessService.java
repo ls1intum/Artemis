@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -84,6 +85,20 @@ public class ExamAccessService {
      * @throws EntityNotFoundException if the course of the exam exercise cannot be resolved
      */
     public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
+        checkIfAllowedToGetExamResult(examExercise, studentParticipation, user, true);
+    }
+
+    /**
+     * Applies exam result timing to an owner view, including when the owner teaches the course.
+     *
+     * @param examExercise         the owning exam exercise
+     * @param studentParticipation the participation used for individual working time
+     */
+    public void checkIfOwnerAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation) {
+        checkIfAllowedToGetExamResult(examExercise, studentParticipation, null, false);
+    }
+
+    private void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, @Nullable User user, boolean staffView) {
         if (!examExercise.isExamExercise()) {
             throw new ConflictException("Given examExercise does not belong to an exam", "Exercise", "notExamExercise");
         }
@@ -92,7 +107,7 @@ public class ExamAccessService {
         if (course == null) {
             throw new EntityNotFoundException("Course", "of exam exercise " + examExercise.getId());
         }
-        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (staffView && authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return;
         }
         Exam exam = examExercise.getExam();

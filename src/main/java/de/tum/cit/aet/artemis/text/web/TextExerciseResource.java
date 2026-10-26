@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
@@ -251,21 +252,47 @@ public class TextExerciseResource {
     @GetMapping({ "participations/{participationId}/text-editor", "text-editor/{participationId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<TextParticipationDTO> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        return getDataForTextEditor(participationId, resultId, false);
+    }
+
+    /**
+     * Returns the text editor payload for staff in the participation's exercise.
+     *
+     * @param participationId the participation to view
+     * @param resultId        optional result selection
+     * @return the staff editor projection
+     */
+    @FeatureUsage(UserFeature.TEXT_EXERCISES)
+    @GetMapping("participations/{participationId}/text-editor/for-staff")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<TextParticipationDTO> getDataForTextEditorForStaff(@PathVariable Long participationId,
+            @RequestParam(value = "resultId", required = false) Long resultId) {
+        return getDataForTextEditor(participationId, resultId, true);
+    }
+
+    private ResponseEntity<TextParticipationDTO> getDataForTextEditor(Long participationId, Long resultId, boolean staffView) {
         User user = userRepository.getUserWithAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
+        if (staffView) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), user);
+        }
         if (!(participation.getExercise() instanceof TextExercise textExercise)) {
             throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
         }
 
-        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
-        if (!authCheckService.isOwnerOfParticipation(participation, user) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+        if (!staffView && !authCheckService.isOwnerOfParticipation(participation, user)) {
             throw new AccessForbiddenException();
         }
 
-        // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (textExercise.isExamExercise()) {
             ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
-            api.checkIfAllowedToGetExamResult(textExercise, participation, user);
+            if (staffView) {
+                api.checkIfAllowedToGetExamResult(textExercise, participation, user);
+            }
+            else {
+                api.checkIfOwnerAllowedToGetExamResult(textExercise, participation);
+            }
         }
 
         Set<Submission> submissions = participation.getSubmissions();
@@ -279,7 +306,7 @@ public class TextExerciseResource {
                 // set reference to participation to null, since we are already inside a participation
                 textSubmission.setParticipation(null);
 
-                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !staffView) {
                     // We want to have the preliminary feedback before the assessment due date too
                     List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
                     textSubmission.setResults(new LinkedHashSet<>(athenaResults));
@@ -307,8 +334,11 @@ public class TextExerciseResource {
                             returnedResult.setFeedbacks(assessments);
                         }
 
-                        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+                        if (!staffView) {
                             returnedResult.filterSensitiveInformation();
+                        }
+                        else if (returnedResult.getAssessor() != null) {
+                            returnedResult.setAssessor(userRepository.findByIdElseThrow(returnedResult.getAssessor().getId()));
                         }
                     }
                 }
