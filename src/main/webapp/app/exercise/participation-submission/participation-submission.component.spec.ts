@@ -242,12 +242,12 @@ describe('ParticipationSubmissionComponent', () => {
         it.each([ProgrammingSubmissionState.IS_QUEUED, ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION])(
             'triggers an instructor build from the page toolbar and disables it in state %s',
             (submissionState) => {
-                const trigger = vi.spyOn(buildService, 'triggerBuild').mockReturnValue(of({}));
+                const trigger = vi.spyOn(buildService, 'triggerInstructorBuild').mockReturnValue(of({}));
                 render();
                 const button: HTMLButtonElement | null = fixture.nativeElement.querySelector('[data-testid="trigger-build"] button');
                 expect(button).not.toBeNull();
                 button!.click();
-                expect(trigger).toHaveBeenCalledExactlyOnceWith(1, SubmissionType.INSTRUCTOR);
+                expect(trigger).toHaveBeenCalledExactlyOnceWith(100, 1, false);
 
                 buildStates.next({ participationId: 1, submissionState, submission: { id: 8 } });
                 render();
