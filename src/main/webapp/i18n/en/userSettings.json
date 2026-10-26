@@ -4,6 +4,14 @@
             "saveChanges": "Save Changes",
             "saveSettingsSuccessAlert": "Your Settings have been successfully saved.",
             "userSettings": "User Settings",
+            "navigation": {
+                "profile": "Profile",
+                "credentials": "Credentials",
+                "learning": "Learning",
+                "exercises": "Exercises",
+                "collapse": "Collapse settings menu",
+                "expand": "Expand settings menu"
+            },
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
             "vcsAccessTokensOverview": {

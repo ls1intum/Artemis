@@ -18,6 +18,15 @@ describe('app.routes', () => {
         });
     });
 
+    describe('parallel user settings layout', () => {
+        it('loads the V2 routes without changing the existing settings route', () => {
+            const settingsRoutes = routes.filter((route) => route.path === '' && route.loadChildren);
+
+            expect(settingsRoutes.some((route) => route.loadChildren?.toString().includes('user-settings.route'))).toBe(true);
+            expect(settingsRoutes.some((route) => route.loadChildren?.toString().includes('user-settings-v2.route'))).toBe(true);
+        });
+    });
+
     describe('legacy course management overview', () => {
         it('redirects at the root with a relative target before loading the management routes', () => {
             const managementRoutes = routes.filter((route) => route.path === 'course-management');
