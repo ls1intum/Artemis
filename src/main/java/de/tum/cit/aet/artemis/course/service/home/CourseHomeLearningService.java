@@ -7,6 +7,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -63,8 +65,14 @@ public class CourseHomeLearningService {
         add(candidates, exercises.findAvailableAction(courseId, user.getId(), now, one), CourseHomeWelcomeCase.CAUGHT_UP);
         var updates = exercises.findUpdates(courseId, user.getId(), now, baseline, PageRequest.of(0, 3)).stream().map(row -> item(row, CourseHomeWelcomeCase.NEW_EXERCISE))
                 .toList();
-        return new CourseHomeLearningDTO(new CourseHomeDTO.ProgressDTO(counts.getReleased(), counts.getSubmitted(), counts.getDue(), counts.getDueSubmitted()), candidates,
-                updates);
+        var changes = exercises.findChanges(courseId, user.getId(), now, now.plusHours(72));
+        var nextRefresh = Stream
+                .of(changes.getReleaseDate(), changes.getStartDate(), changes.getDueDate(),
+                        changes.getDueOutsideWindow() == null ? null : changes.getDueOutsideWindow().minusHours(72), changes.getFeedbackDate(),
+                        exercises.findNextQuizBatchStart(courseId, user.getId(), now))
+                .filter(Objects::nonNull).map(ZonedDateTime::toInstant).filter(date -> date.isAfter(asOf)).min(Instant::compareTo).orElse(null);
+        return new CourseHomeLearningDTO(new CourseHomeDTO.ProgressDTO(counts.getReleased(), counts.getSubmitted(), counts.getDue(), counts.getDueSubmitted()), candidates, updates,
+                nextRefresh);
     }
 
     private void add(List<CourseHomeLearningDTO.CandidateDTO> candidates, List<ExerciseHomeRepository.Item> rows, CourseHomeWelcomeCase reason) {

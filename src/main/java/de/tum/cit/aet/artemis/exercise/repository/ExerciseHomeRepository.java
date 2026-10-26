@@ -27,14 +27,15 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
              LEFT JOIN QuizExercise q ON q.id = e.id
             """;
 
-    String VISIBLE = """
+    String ACCESSIBLE = """
              WHERE e.course.id = :courseId AND e.exerciseGroup IS NULL
-             AND (e.releaseDate IS NULL OR e.releaseDate <= :asOf)
              AND (COALESCE(e.course.onlineCourse, FALSE) = FALSE OR EXISTS (
                  SELECT l.id FROM LtiResourceLaunch l WHERE l.exercise = e AND l.user.id = :userId))
              AND (e.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL OR EXISTS (
                  SELECT t.id FROM Team t JOIN t.students enrolledStudent WHERE t.exercise = e AND enrolledStudent.id = :userId))
             """;
+
+    String VISIBLE = ACCESSIBLE + " AND (e.releaseDate IS NULL OR e.releaseDate <= :asOf) ";
 
     String OWNED = """
              ((p.student.id = :userId AND e.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL)
@@ -111,6 +112,41 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
         @Nullable
         ZonedDateTime getActivityAt();
     }
+
+    interface Changes {
+
+        @Nullable
+        ZonedDateTime getReleaseDate();
+
+        @Nullable
+        ZonedDateTime getStartDate();
+
+        @Nullable
+        ZonedDateTime getDueDate();
+
+        @Nullable
+        ZonedDateTime getDueOutsideWindow();
+
+        @Nullable
+        ZonedDateTime getFeedbackDate();
+    }
+
+    @Query("SELECT MIN(CASE WHEN e.releaseDate > :asOf THEN e.releaseDate END) AS releaseDate, "
+            + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND e.startDate > :asOf THEN e.startDate END) AS startDate, "
+            + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND " + DUE + " > :asOf THEN " + DUE + " END) AS dueDate, "
+            + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND " + DUE + " > :dueSoon THEN " + DUE + " END) AS dueOutsideWindow, "
+            + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND e.assessmentDueDate > :asOf AND EXISTS ("
+            + "SELECT r.id FROM Result r JOIN r.submission s JOIN TREAT(s.participation AS StudentParticipation) p "
+            + "WHERE p.exercise=e AND p.testRun=FALSE AND r.rated=TRUE AND r.completionDate IS NOT NULL AND r.completionDate <= :asOf AND " + OWNED
+            + " AND NOT (TYPE(e)=ProgrammingExercise AND r.assessmentType=de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC)) "
+            + "THEN e.assessmentDueDate END) AS feedbackDate " + FROM + ACCESSIBLE)
+    Changes findChanges(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, @Param("dueSoon") ZonedDateTime dueSoon);
+
+    @Query("SELECT MIN(b.startTime) " + FROM + " JOIN QuizBatch b ON b.quizExercise=q " + VISIBLE + " AND b.startTime > :asOf AND "
+            + "(q.quizMode=de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED OR EXISTS ("
+            + "SELECT qs.id FROM QuizSubmission qs JOIN TREAT(qs.participation AS StudentParticipation) qp WHERE qs.quizBatch=b.id AND qp.student.id=:userId))")
+    @Nullable
+    ZonedDateTime findNextQuizBatchStart(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf);
 
     @Query("SELECT COUNT(DISTINCT COALESCE(g.id, -e.id)) AS released, COUNT(DISTINCT CASE WHEN " + SUBMITTED + " THEN COALESCE(g.id, -e.id) END) AS submitted, "
             + "COUNT(DISTINCT CASE WHEN " + DUE + " > :asOf AND " + DUE + " <= :dueSoon THEN COALESCE(g.id, -e.id) END) AS due, " + "COUNT(DISTINCT CASE WHEN " + DUE
