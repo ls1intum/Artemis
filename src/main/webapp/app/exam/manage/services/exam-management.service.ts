@@ -33,6 +33,7 @@ import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shar
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
