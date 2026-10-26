@@ -135,6 +135,13 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
         expect(javaField!.isEmpty).toBeFalsy();
     });
 
+    it('should show an absent repository access option before the start date as disabled', () => {
+        const field = component.languageFields().find((f) => f.translatedLabel.includes('allowRepositoryAccessBeforeStartDate'));
+        expect(field).toBeDefined();
+        expect(field!.isEmpty).toBeFalsy();
+        expect(field!.displayValue).toContain('artemisApp.exercise.no');
+    });
+
     it('should detect empty values correctly via isEmpty', () => {
         fixture.componentRef.setInput('programmingData', {
             programmingLanguage: 'JAVA',

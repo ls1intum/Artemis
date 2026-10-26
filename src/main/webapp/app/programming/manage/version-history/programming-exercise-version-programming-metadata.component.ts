@@ -101,7 +101,8 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             this.toTextField('artemisApp.programmingExercise.allowOnlineEditor.title', booleanLabel(this.translateService, data.allowOnlineEditor)),
             this.toTextField(
                 'artemisApp.programmingExercise.timeline.allowRepositoryAccessBeforeStartDate',
-                booleanLabel(this.translateService, data.allowRepositoryAccessBeforeStartDate),
+                // The snapshot omits the option when it is disabled
+                booleanLabel(this.translateService, data.allowRepositoryAccessBeforeStartDate ?? false),
             ),
             this.toTextField('artemisApp.programmingExercise.allowOnlineIde.title', booleanLabel(this.translateService, data.allowOnlineIde)),
             this.toTextField('artemisApp.programmingExercise.enableStaticCodeAnalysis.title', booleanLabel(this.translateService, data.staticCodeAnalysisEnabled)),
