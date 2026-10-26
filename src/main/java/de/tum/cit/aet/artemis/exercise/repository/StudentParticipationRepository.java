@@ -1192,7 +1192,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * <li>Only participations belonging to the specified exercise are retrieved.</li>
      * <li>Participations marked as a test run are excluded.</li>
      * <li>Only the latest submission for each participation is considered.</li>
-     * <li>Only the latest rated result for each submission is considered.</li>
+     * <li>Only the latest rated non-Athena result for each submission is considered.</li>
      * </ul>
      *
      * @param exerciseId the ID of the exercise for which to retrieve participations.
@@ -1208,7 +1208,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.id = (SELECT MAX(s2.id) FROM p.submissions s2)
-                AND r.id = (SELECT MAX(r2.id) FROM s.results r2 WHERE r2.rated = TRUE)
+                AND r.id = (SELECT MAX(r2.id) FROM s.results r2 WHERE r2.rated = TRUE
+                    AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA))
             """)
     List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
 

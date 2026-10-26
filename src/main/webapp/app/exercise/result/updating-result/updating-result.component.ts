@@ -15,7 +15,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
-import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { MissingResultInformation, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ResultComponent } from '../result.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -96,7 +96,7 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
                     this.tearDownSubmissionSubscription();
                     return;
                 }
-                this.result.set(getLatestResultOfStudentParticipation(participation, this.showUngradedResults(), true));
+                this.result.set(getLatestResultOfStudentParticipation(participation, this.showUngradedResults()));
                 this.missingResultInfo.set(MissingResultInformation.NONE);
 
                 this.subscribeForNewResults();
@@ -163,19 +163,11 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
             .pipe(
                 // Ignore initial null result of subscription
                 filter((result) => !!result),
-                // Ignore ungraded results if ungraded results are supposed to be ignored.
-                // If the result is a preliminary feedback(being generated), show it
-                filter((result: Result) => this.showUngradedResults() || result.rated === true || isAthenaAIResult(result)),
+                // AI feedback has its own status in the feedback request and result history.
+                filter((result: Result) => !isAthenaAIResult(result) && (this.showUngradedResults() || result.rated === true)),
                 map((result): Result => cloneWith(result, { completionDate: convertDateFromServer(result.completionDate) }) satisfies Result),
                 tap((result) => {
-                    const showUngradedResults = this.showUngradedResults();
-                    if ((isAthenaAIResult(result) && isAIResultAndIsBeingProcessed(result)) || result.rated) {
-                        this.result.set(result);
-                    } else if (result.rated === false && showUngradedResults) {
-                        this.result.set(result);
-                    } else {
-                        this.result.set(getLatestResultOfStudentParticipation(this.participation(), showUngradedResults, false));
-                    }
+                    this.result.set(result);
                     this.onParticipationChange.emit();
                     if (result) {
                         this.showResult.emit();

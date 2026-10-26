@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { orderBy as _orderBy } from 'lodash-es';
-import { isAIResultAndIsBeingProcessed } from 'app/exercise/result/result.utils';
+import { isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
@@ -75,17 +75,12 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
 };
 
 /**
- * Returns the latest result of a given student participation.
+ * Returns the latest official result of a given student participation. AI feedback remains available through the result history.
  *
  * @param participation
  * @param showUngradedResults
- * @param showAthenaPreliminaryFeedback
  */
-export function getLatestResultOfStudentParticipation(
-    participation: StudentParticipation | undefined,
-    showUngradedResults: boolean,
-    showAthenaPreliminaryFeedback: boolean = false,
-): Result | undefined {
+export function getLatestResultOfStudentParticipation(participation: StudentParticipation | undefined, showUngradedResults: boolean): Result | undefined {
     if (!participation) {
         return undefined;
     }
@@ -98,6 +93,6 @@ export function getLatestResultOfStudentParticipation(
     }
 
     // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-    const latestResult = results?.find((result) => showUngradedResults || result.rated === true || (showAthenaPreliminaryFeedback && isAIResultAndIsBeingProcessed(result)));
+    const latestResult = results?.find((result) => !isAthenaAIResult(result) && (showUngradedResults || result.rated === true));
     return latestResult ? latestResult : undefined;
 }

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
@@ -164,6 +165,34 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
             assertThat(studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(course.getId()), student.getId())).isEmpty();
             assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), student.getId())).isEmpty();
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = { "AUTOMATIC,NULL,NULL", "AUTOMATIC,20,true", "AUTOMATIC,NULL,false", "NULL,20,true" }, nullValues = "NULL")
+    void plagiarismSelectionIgnoresAthena(AssessmentType officialType, Double aiScore, Boolean successful) {
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise(TEST_PREFIX + "plagiarism");
+        TextExercise exercise = (TextExercise) course.getExercises().iterator().next();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var submission = addTextSubmissionWithResult(participation, now.minusHours(1), now.minusMinutes(30), 80.0);
+        var official = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
+        official.setAssessmentType(officialType);
+        resultRepository.save(official);
+        var ai = new Result().submission(submission).assessmentType(AssessmentType.AUTOMATIC_ATHENA).rated(true).score(aiScore);
+        ai.setExerciseId(exercise.getId());
+        ai.setSuccessful(successful);
+        ai.setCompletionDate(now);
+        ai = resultRepository.save(ai);
+
+        var selected = studentParticipationRepository.findAllForPlagiarism(exercise.getId());
+        assertThat(selected).singleElement().satisfies(candidate -> {
+            var selectedSubmission = candidate.findLatestSubmission().orElseThrow();
+            assertThat(selectedSubmission.getLatestResult().getId()).isEqualTo(official.getId());
+            assertThat(PlagiarismService.hasMinimumScore(selectedSubmission, 50)).isTrue();
+        });
+        assertThat(resultRepository.findById(ai.getId())).isPresent();
+
+        resultRepository.deleteById(official.getId());
+        assertThat(studentParticipationRepository.findAllForPlagiarism(exercise.getId())).isEmpty();
     }
 
     private void assertOfficialGrade(Course course, TextExercise exercise, long studentId, boolean teamExercise) {
