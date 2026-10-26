@@ -111,8 +111,8 @@ Use the same WAR for core nodes, build agents, and AI Workers. There is no separ
 worker WAR.
 Run AI Workers from the normal Artemis image of the release (`ghcr.io/ls1intum/artemis:<version>`),
 as for Build Agents, with the Spring profiles `prod,aiworker`. Disable the image's HTTP
-health check, because a worker has no HTTP server, and give the container at least 6 GB
-of memory: the image starts the JVM with a 5 GB maximum heap. The worker starts the
+health check, because a worker has no HTTP server, and give the container 8 GB of
+memory: the image fixes a 5 GB maximum heap. The worker starts the
 normal `ArtemisApp` in a separate process. It uses the normal Artemis component scan.
 Profiles and feature conditions select AI Worker services and the configured workload.
 The `aiworker` profile disables server modules, the HTTP server, and database services.
