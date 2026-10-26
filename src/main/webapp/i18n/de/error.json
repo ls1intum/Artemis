@@ -88,6 +88,7 @@
         "concurrentModification": "Die Präsentation wurde geändert, während deine Änderung geprüft wurde. Bitte lade die Seite neu und versuche es erneut.",
         "studentNotInCourse": "Die ausgewählte Person ist keine Studentin oder kein Student dieses Kurses.",
         "maxPointsBelowExistingResult": "Die maximale Punktzahl darf nicht unter einem bereits eingetragenen Ergebnis liegen.",
+        "maxScoreInvalid": "Die maximale Punktzahl einer Aufgabe muss größer als 0 sein.",
         "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximale Punktzahl nicht überschreiten.",
         "exerciseNotInCourse": "Die verknüpfte Aufgabe muss zu diesem Kurs gehören.",
         "studentAlreadyAssigned": "Diese Studierenden haben diese Präsentation bereits: {{ logins }}",

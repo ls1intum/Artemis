@@ -1671,8 +1671,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             it.each([
                 { name: 'a negative value', maxPoints: -1, expected: ['artemisApp.exercise.form.points.customMin'] },
                 { name: 'a value above the maximum', maxPoints: 10_000, expected: ['artemisApp.exercise.form.points.customMax'] },
-                { name: 'no value', maxPoints: undefined, expected: [] },
-                { name: 'zero', maxPoints: 0, expected: [] },
+                { name: 'no value', maxPoints: undefined, expected: ['artemisApp.exercise.form.points.undefined'] },
+                { name: 'zero', maxPoints: 0, expected: ['artemisApp.exercise.form.points.customMin'] },
+                { name: 'a positive value', maxPoints: 5, expected: [] },
             ])('validates $name as the points of an exercise that is not included in the course score', ({ maxPoints, expected }) => {
                 comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
                 comp.programmingExercise.maxPoints = maxPoints;
@@ -1845,12 +1846,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(reasons).toContainEqual(gradingReason);
         });
 
-        it('should not require points when exercise is not included in the course score', () => {
+        it('should require points when exercise is not included in the course score', () => {
             comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
             comp.programmingExercise.maxPoints = undefined;
 
-            expect(comp.getInvalidReasons()).not.toContainEqual({
+            expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('should reject zero points when exercise is not included in the course score', () => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            comp.programmingExercise.maxPoints = 0;
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
                 translateValues: {},
             });
         });

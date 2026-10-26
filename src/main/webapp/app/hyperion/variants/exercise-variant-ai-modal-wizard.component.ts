@@ -58,6 +58,7 @@ import { VariantGenerationRequest, VariantGenerationRequestNarrativeStyleEnum } 
 import { VariantPlacement } from 'app/openapi/model/variant-placement';
 import { StepOutput } from 'app/openapi/model/step-output';
 import { VariantJobDetail } from 'app/openapi/model/variant-job-detail';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { PlacementChoice, adaptationChips, difficultySeverity, difficultyTranslationKey, durationDays, narrativeStyleTranslationKey } from './exercise-variant-ai-modal.utils';
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
@@ -108,6 +109,7 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
         TumAetUiMessageComponent,
         TumAetUiConfirmDialogComponent,
         FormsModule,
+        PointsInputComponent,
         FaIconComponent,
         ArtemisTranslatePipe,
         NgTemplateOutlet,

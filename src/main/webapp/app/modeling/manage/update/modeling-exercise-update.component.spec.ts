@@ -28,6 +28,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { Component, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -253,6 +254,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 set: {
                     imports: [
                         FormsModule,
+                        PointsInputComponent,
                         MockDirective(TranslateDirective),
                         FaIconComponent,
                         NgbTooltip,
@@ -955,6 +957,18 @@ describe('ModelingExerciseUpdateComponent', () => {
         });
 
         // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should take decimal points and bonus points typed with a comma or a point', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+
+            await typeInto('#field_points', '2,5');
+            await typeInto('#field_bonusPoints', '0.75');
+
+            expect(exercise.maxPoints).toBe(2.5);
+            expect(exercise.bonusPoints).toBe(0.75);
+            expect(comp.invalidReasons()).toEqual([]);
+        });
+
         it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
             const exercise = filledInExercise();
             exercise.maxPoints = undefined;

@@ -155,10 +155,15 @@ public class SpecFidelityCritic {
      * The best candidate a <em>completed</em> review saw, recorded even when that candidate was not admitted. Never softens {@link ConceptSelectionReview#accepted()}; it only
      * names which candidate a caller should fall back to if it proceeds with findings attached rather than producing nothing at all.
      *
-     * @param candidate          the candidate number, in the reviewer's own numbering
-     * @param failedRequiredAxes how many of the selection reviewer's required axes this candidate failed; zero means only a later, narrower pass objected
+     * @param candidate           the candidate number, in the reviewer's own numbering
+     * @param failedObjectiveAxes how many of the objective axes (essential, learner-owned, observable) this candidate failed; ranked before every other axis
+     * @param failedRequiredAxes  how many of the selection reviewer's required axes this candidate failed; zero means only a later, narrower pass objected
      */
-    public record ConceptFallback(int candidate, int failedRequiredAxes) {
+    public record ConceptFallback(int candidate, int failedObjectiveAxes, int failedRequiredAxes) {
+
+        /** Least rejected first: a failed objective axis outweighs any number of failed secondary axes, then the total decides. */
+        public static final Comparator<ConceptFallback> LEAST_REJECTED = Comparator.comparingInt(ConceptFallback::failedObjectiveAxes)
+                .thenComparingInt(ConceptFallback::failedRequiredAxes);
     }
 
     /** A grounded, property-only verdict over three generator-authored concepts. */
@@ -348,7 +353,7 @@ public class SpecFidelityCritic {
                 + ") during concept exploration. Keep the qualitative learner-owned branching or transformation, but leave exact constructs to the specification and preserve "
                 + "an instructor-requested technique there as non-graded pedagogy when public behavior cannot prove it.";
         String audit = review.auditSummary() + "\n\nServer concept invariant: rejected selected candidate — " + finding;
-        return new ConceptSelectionReview(true, null, List.of(finding), finding, audit, new ConceptFallback(review.selectedCandidate(), 0));
+        return new ConceptSelectionReview(true, null, List.of(finding), finding, audit, new ConceptFallback(review.selectedCandidate(), 0, 0));
     }
 
     public List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, @Nullable Consumer<ChatResponse> usageSink,

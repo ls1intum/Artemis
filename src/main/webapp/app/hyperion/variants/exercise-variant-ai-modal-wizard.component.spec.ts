@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { NEVER, Subject, of, throwError } from 'rxjs';
 import { MockComponent, MockPipe } from 'ng-mocks';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
@@ -285,6 +286,30 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
             type: 'NEW_GROUP',
             newGroup: expect.objectContaining({ releaseDate: release.toISOString(), dueDate: due.toISOString(), startDate: undefined, assessmentDueDate: undefined }),
         });
+    });
+
+    it('shows the points of the source in the new group and sends the typed points with a fraction', async () => {
+        await createWizard({ ...programmingExercise, maxPoints: 10 } as Exercise);
+        component.goToPlacement();
+        // The outer ngModel and the inner input of the points input each write the model value one microtask late.
+        for (let round = 0; round < 3; round++) {
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+
+        const pointsInput = document.body.querySelector<HTMLInputElement>('input#wiz-group-max-points')!;
+        expect(pointsInput.value).toBe('10');
+
+        typeIntoInputNumber(pointsInput, '7,5');
+        fixture.detectChanges();
+
+        expect(component.newGroupMaxPoints()).toBe(7.5);
+        expect(component['buildPlacement']()).toEqual({ type: 'NEW_GROUP', newGroup: expect.objectContaining({ maxPoints: 7.5 }) });
+
+        typeIntoInputNumber(pointsInput, '');
+        fixture.detectChanges();
+
+        expect(component.newGroupMaxPoints()).toBeUndefined();
     });
 
     it('takes a date typed into a new-group picker', async () => {

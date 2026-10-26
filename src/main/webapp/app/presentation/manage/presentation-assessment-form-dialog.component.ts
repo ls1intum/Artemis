@@ -10,7 +10,6 @@ import {
     TumAetUiButtonComponent,
     TumAetUiButtonDirective,
     TumAetUiInputDirective,
-    TumAetUiInputNumberComponent,
     TumAetUiMessageComponent,
 } from '@tumaet/ui-angular';
 
@@ -20,6 +19,7 @@ import { PresentationAssessment } from 'app/presentation/shared/entities/present
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 export interface PresentationAssessmentFormDialogResult {
     presentationAssessment: PresentationAssessment;
@@ -45,7 +45,7 @@ const exerciseSelected: ValidatorFn = (control: AbstractControl): ValidationErro
         TumAetUiButtonComponent,
         TumAetUiButtonDirective,
         TumAetUiInputDirective,
-        TumAetUiInputNumberComponent,
+        PointsInputComponent,
         TumAetUiMessageComponent,
         DeleteButtonDirective,
     ],
@@ -70,7 +70,6 @@ export class PresentationAssessmentFormDialogComponent {
     protected readonly faTrash = faTrash;
     protected readonly maxPointsUpperBound = MAX_POINTS_UPPER_BOUND;
     protected readonly minPoints = MIN_POINTS;
-    protected readonly acceptedPointsDecimalSeparators = ['.', ','];
     readonly filteredExercises = signal<ExerciseTitle[]>([]);
 
     editForm = this.formBuilder.group({
