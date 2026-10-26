@@ -1,12 +1,12 @@
 @import '../../../../../../../../node_modules/bootstrap/scss/functions';
 @import '../../../../../../../../node_modules/bootstrap/scss/variables';
 @import '../../../../../../../../node_modules/bootstrap/scss/mixins';
-@import '../../../../../content/scss/artemis-mixins';
 
 .conversation-messages {
-    --channel-search-height: 40px;
-    --channel-header-height: 45px;
-    --spacing: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
 
     .search-active {
         input {
@@ -44,6 +44,8 @@
     }
 
     .posting-infinite-scroll-container {
+        flex: 1 1 auto;
+        min-height: 0;
         overflow-y: auto;
     }
 
@@ -62,12 +64,12 @@
 .message-group {
     display: flex;
     flex-direction: column;
-    margin-bottom: 10px;
+    // margin-bottom: 0.5rem;
 }
 
 .grouped-posts {
-    margin-left: 30px;
-    padding-left: 10px;
+    margin-left: 2rem;
+    padding-left: 0.5rem;
 }
 
 .grouped-posts,
@@ -78,14 +80,14 @@
 }
 
 jhi-posting-thread {
-    margin-bottom: 5px;
+    margin-bottom: 0.25rem;
 }
 
 .channel-content {
-    @include dynamic-content-height(--channel-header-height, --channel-search-height);
-
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
     justify-content: space-between;
 }
 

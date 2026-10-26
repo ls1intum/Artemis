@@ -40,8 +40,23 @@
     }
 }
 
+/* Keep the composer inside the filled pane: the header takes its natural height and the messages fill the remainder. */
 .communication-message-wrap {
     min-width: 30%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+
+    > jhi-conversation-header {
+        flex: 0 0 auto;
+    }
+
+    > jhi-conversation-messages {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
 }
 
 /*
