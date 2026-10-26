@@ -138,8 +138,14 @@
                 }
                 @if (!gradedParticipation() && isStartExerciseAvailable()) {
                     <span
-                        [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
-                        [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+                        [tabindex]="isBeforeStartDateAndStudent || inEarlyRepositoryAccessPhase ? 0 : -1"
+                        [ngbTooltip]="
+                            isBeforeStartDateAndStudent
+                                ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate)
+                                : inEarlyRepositoryAccessPhase
+                                  ? ('artemisApp.exerciseActions.earlyRepositoryAccessHint' | artemisTranslate)
+                                  : ''
+                        "
                     >
                         <button
                             type="button"

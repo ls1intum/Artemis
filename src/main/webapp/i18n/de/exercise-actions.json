@@ -74,6 +74,7 @@
             "repositoryAccessTokenForbidden": "Du bist nicht berechtigt, auf dieses Repository zuzugreifen.",
             "repositoryAccessTokenError": "Das Repository-Zugriffstoken konnte nicht abgerufen werden. Bitte versuche es erneut.",
             "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",
+            "earlyRepositoryAccessHint": "Du kannst bereits in deinem Repository arbeiten. Builds und Tests starten zum Startdatum.",
             "deleteMultipleExercisesQuestion": "Sollen die ausgewählten Aufgaben des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann <strong class=\"text-danger\">NICHT</strong> rückgängig gemacht werden!",
             "aiExperienceConfirmation": {
                 "popUpLabel": "Bestätigung der KI-Verwendung",

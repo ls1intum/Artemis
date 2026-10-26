@@ -659,6 +659,20 @@ describe('ExerciseHeaderActionsComponent', () => {
             fixture.detectChanges();
             expect(fixture.componentInstance.isBeforeStartDateAndStudent).toBe(false);
         });
+
+        it('should not block the start and show the hint during the early repository access phase', () => {
+            const exercise = programmingExercise([]);
+            exercise.startDate = dayjs().add(1, 'day');
+            exercise.allowRepositoryAccessBeforeStartDate = true;
+            createComponent(exercise);
+            expect(fixture.componentInstance.inEarlyRepositoryAccessPhase).toBe(true);
+            expect(fixture.componentInstance.isBeforeStartDateAndStudent).toBe(false);
+
+            fixture.componentRef.setInput('exercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise, { allowRepositoryAccessBeforeStartDate: false }));
+            fixture.detectChanges();
+            expect(fixture.componentInstance.inEarlyRepositoryAccessPhase).toBe(false);
+            expect(fixture.componentInstance.isBeforeStartDateAndStudent).toBe(true);
+        });
     });
 
     describe('allowEditing', () => {

@@ -19,6 +19,14 @@
     }
 
     @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
+        @if (inEarlyRepositoryAccessPhase()) {
+            <tumaet-ui-message
+                severity="info"
+                class="mb-2"
+                data-testid="early-repository-access-hint"
+                [text]="'artemisApp.exerciseActions.earlyRepositoryAccessHint' | artemisTranslate"
+            />
+        }
         <jhi-code-editor-container
             [isProblemStatementVisible]="false"
             [editable]="!repositoryIsLocked()"

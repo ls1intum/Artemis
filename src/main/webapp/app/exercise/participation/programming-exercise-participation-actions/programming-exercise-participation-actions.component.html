@@ -13,8 +13,14 @@
 }
 @if (actions.isStartExerciseAvailable()) {
     <span
-        [tabindex]="startTooltipTabIndex() ?? (actions.isBeforeStartDateAndStudent ? 0 : -1)"
-        [tumAetUiTooltip]="actions.isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+        [tabindex]="startTooltipTabIndex() ?? (actions.isBeforeStartDateAndStudent || actions.inEarlyRepositoryAccessPhase ? 0 : -1)"
+        [tumAetUiTooltip]="
+            actions.isBeforeStartDateAndStudent
+                ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate)
+                : actions.inEarlyRepositoryAccessPhase
+                  ? ('artemisApp.exerciseActions.earlyRepositoryAccessHint' | artemisTranslate)
+                  : ''
+        "
     >
         <button
             type="button"

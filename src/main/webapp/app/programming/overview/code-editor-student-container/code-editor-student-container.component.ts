@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
@@ -19,9 +19,11 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
-import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
+import { hasExerciseDueDatePassed, isInEarlyRepositoryAccessPhase } from 'app/exercise/util/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult as isManualResultFunction } from 'app/exercise/result/result.utils';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseInstructionComponent } from '../../shared/instructions-render/programming-exercise-instruction.component';
@@ -44,6 +46,8 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseInstructionComponent,
         AdditionalFeedbackComponent,
+        TumAetUiMessageComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, ExerciseSubmission {
@@ -57,6 +61,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
 
     readonly participationId = input<number>();
     readonly lightweight = signal(false);
+    readonly inEarlyRepositoryAccessPhase = computed(() => !!this.exercise() && isInEarlyRepositoryAccessPhase(this.exercise()));
     readonly SubmissionPolicyType = SubmissionPolicyType;
 
     ButtonSize = ButtonSize;

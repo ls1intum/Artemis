@@ -570,6 +570,28 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         },
     );
 
+    it.each([
+        [true, false],
+        [false, true],
+    ])('should handle the start button before start date with early repository access %s', async (allowRepositoryAccessBeforeStartDate: boolean, expectedDisabled: boolean) => {
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exercise', {
+            type: ExerciseType.PROGRAMMING,
+            allowRepositoryAccessBeforeStartDate,
+            releaseDate: dayjs().subtract(1, 'hour'),
+            startDate: dayjs().add(1, 'hour'),
+        } as ProgrammingExercise);
+        TestBed.tick();
+
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton).not.toBeNull();
+        expect(startExerciseButton.componentInstance.overwriteDisabled()).toBe(expectedDisabled);
+        expect(comp.inEarlyRepositoryAccessPhase).toBe(allowRepositoryAccessBeforeStartDate);
+    });
+
     describe('assignedTeamId', () => {
         it('should fall back to the exercise when the participation carries no team', () => {
             // The course overview projects participations without their team, so branching on the participation

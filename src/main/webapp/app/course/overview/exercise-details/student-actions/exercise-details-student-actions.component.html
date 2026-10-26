@@ -127,7 +127,16 @@
                         [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
                     ></button>
                 }
-                <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
+                <span
+                    tabindex="0"
+                    [ngbTooltip]="
+                        isBeforeStartDateAndStudent
+                            ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate)
+                            : inEarlyRepositoryAccessPhase
+                              ? ('artemisApp.exerciseActions.earlyRepositoryAccessHint' | artemisTranslate)
+                              : ''
+                    "
+                >
                     @if (!gradedParticipation() && isStartExerciseAvailable()) {
                         <button
                             type="button"

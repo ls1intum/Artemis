@@ -74,6 +74,7 @@
             "repositoryAccessTokenForbidden": "You are not allowed to access this repository.",
             "repositoryAccessTokenError": "Could not obtain the repository access token. Please try again.",
             "startExerciseBeforeStartDate": "You cannot participate before the start date of the exercise.",
+            "earlyRepositoryAccessHint": "You can already work in your repository. Builds and tests start at the start date.",
             "deleteMultipleExercisesQuestion": "Are you sure you want to delete the selected exercises of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>? This action can <strong class=\"text-danger\">NOT</strong> be undone!",
             "aiExperienceConfirmation": {
                 "popUpLabel": "Confirm AI Usage",

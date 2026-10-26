@@ -2,7 +2,13 @@ import { Directive, computed, effect, inject, input, output, signal, untracked }
 import { AlertService } from 'app/foundation/service/alert.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
+import {
+    hasExerciseDueDatePassed,
+    isInEarlyRepositoryAccessPhase,
+    isResumeExerciseAvailable,
+    isStartExerciseAvailable,
+    isStartPracticeAvailable,
+} from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -205,7 +211,12 @@ export abstract class StudentExerciseActionsDirective {
 
     get isBeforeStartDateAndStudent(): boolean {
         const exercise = this.exercise();
-        return !exercise.isAtLeastTutor && !!exercise.startDate && dayjs().isBefore(exercise.startDate);
+        return !exercise.isAtLeastTutor && !!exercise.startDate && dayjs().isBefore(exercise.startDate) && !isInEarlyRepositoryAccessPhase(exercise);
+    }
+
+    /** Whether the student can already work in the repository although builds and tests only start at the start date. */
+    get inEarlyRepositoryAccessPhase(): boolean {
+        return isInEarlyRepositoryAccessPhase(this.exercise());
     }
 
     /**

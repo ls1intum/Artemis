@@ -154,6 +154,20 @@ export const isStartExerciseAvailable = (exercise: Exercise, participation?: Stu
 };
 
 /**
+ * Whether the exercise is in the early repository access phase: the instructor allowed repository access before the start date, the start date is still in the future,
+ * and the exercise is already released. In this phase students can start the exercise and work in their repository, but no builds run yet.
+ * Mirrors the server-side check; exam exercises never have this phase.
+ * @param exercise the exercise to check
+ */
+export const isInEarlyRepositoryAccessPhase = (exercise: Exercise): boolean => {
+    if (exercise.type !== ExerciseType.PROGRAMMING || exercise.exerciseGroup || !(exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate || !exercise.startDate) {
+        return false;
+    }
+    const now = dayjs();
+    return now.isBefore(exercise.startDate) && (!exercise.releaseDate || !dayjs(exercise.releaseDate).isAfter(now));
+};
+
+/**
  * Determines if the student can resume a participation
  * @param exercise the exercise that should be started
  * @param participation the optional student participation with possibly an individual due date

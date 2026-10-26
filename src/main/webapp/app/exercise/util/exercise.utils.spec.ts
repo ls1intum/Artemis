@@ -13,12 +13,14 @@ import {
     getPositiveAndCappedTotalScore,
     getTotalMaxPoints,
     hasExerciseDueDatePassed,
+    isInEarlyRepositoryAccessPhase,
     isResumeExerciseAvailable,
     isStartExerciseAvailable,
     isStartPracticeAvailable,
     validateStrictDateSequence,
     withPracticeParticipations,
 } from 'app/exercise/util/exercise.utils';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
@@ -282,6 +284,41 @@ describe('ExerciseUtils', () => {
             [{ dueDate: dayjs().subtract(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, { initializationState: InitializationState.REPO_COPIED }, false],
         ])('should correctly determine if starting an exercise is available', (exercise: Exercise, participation: StudentParticipation | undefined, expected: boolean) => {
             expect(isStartExerciseAvailable(exercise, participation)).toBe(expected);
+        });
+    });
+
+    describe('isInEarlyRepositoryAccessPhase()', () => {
+        const earlyExercise = (changes: Partial<ProgrammingExercise> = {}) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.allowRepositoryAccessBeforeStartDate = true;
+            exercise.startDate = dayjs().add(1, 'hour');
+            exercise.releaseDate = dayjs().subtract(1, 'hour');
+            return Object.assign(exercise, changes);
+        };
+
+        it('should be true before the start date of a released exercise with the flag', () => {
+            expect(isInEarlyRepositoryAccessPhase(earlyExercise())).toBe(true);
+        });
+
+        it('should be true without a release date', () => {
+            expect(isInEarlyRepositoryAccessPhase(earlyExercise({ releaseDate: undefined }))).toBe(true);
+        });
+
+        it.each([
+            ['the flag is off', { allowRepositoryAccessBeforeStartDate: false }],
+            ['the flag is unset', { allowRepositoryAccessBeforeStartDate: undefined }],
+            ['there is no start date', { startDate: undefined }],
+            ['the start date has passed', { startDate: dayjs().subtract(1, 'minute') }],
+            ['the exercise is not yet released', { releaseDate: dayjs().add(30, 'minute') }],
+            ['it is an exam exercise', { exerciseGroup: {} as ExerciseGroup }],
+        ])('should be false if %s', (_description, changes) => {
+            expect(isInEarlyRepositoryAccessPhase(earlyExercise(changes as Partial<ProgrammingExercise>))).toBe(false);
+        });
+
+        it('should be false for non-programming exercises', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.startDate = dayjs().add(1, 'hour');
+            expect(isInEarlyRepositoryAccessPhase(exercise)).toBe(false);
         });
     });
 
