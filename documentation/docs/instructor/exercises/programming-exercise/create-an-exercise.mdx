@@ -54,7 +54,7 @@ The table below lists which settings each mode shows.
 | Language | Programming Language, Package Name | Project Type, Exemplary Dependency, Online IDE Configuration and Experience Level, Static Code Analysis, Sequential Test Runs, Build Plan |
 | Version Control | — | Allow Custom Branches, Branch Name Pattern |
 | Problem | Problem Statement | Linked Competencies |
-| Grading | Score inclusion, Points, Bonus Points, Release Date, Due Date, Assessment Due Date, Grading Instructions | Submission Policy, Start Date, Run Tests after Due Date, Example Solution Publication Date, Complaints on Automatic Assessment, Show Test Names, Include Tests in Example Solution, Presentation Score, Plagiarism Control |
+| Grading | Score inclusion, Points, Bonus Points, Release Date, Due Date, Assessment Due Date, Grading Instructions | Submission Policy, Start Date, Allow Repository Access before Start Date, Run Tests after Due Date, Example Solution Publication Date, Complaints on Automatic Assessment, Show Test Names, Include Tests in Example Solution, Presentation Score, Plagiarism Control |
 
 **Difficulty** is the one setting that moves rather than appears: simple mode shows it in **General**, because **Mode**
 is hidden there, and advanced mode shows it in **Mode**.
@@ -186,6 +186,7 @@ The policy chosen here is the initial one. Changing it later happens on the grad
 
 - **Release Date**: When the exercise becomes visible to students.
 - **Start Date**: When students can begin participating. If unset, they can start as soon as the exercise is released. Advanced mode only.
+- **Allow Repository Access before Start Date**: Off by default. Course exercises only, and only available when a start date is set. If enabled, students can start the exercise, clone the repository, and push (via Git and the online editor) from the release date, or immediately if there is no release date, until the start date. During this phase no builds run and no submissions are created. At the start date, Artemis builds every student repository that received commits, and these builds count toward the submission policy. Pushes by Teaching Assistants and Instructors still trigger builds, and students cannot trigger builds manually before the start date. Advanced mode only.
 - **Due Date**: The submission deadline. Commits after it are not graded.
 - **Run Tests after Due Date**: Rebuilds each student's last in-time submission at this date, which is how hidden tests are executed. Must be after the due date. Advanced mode only.
 - **Enable manual assessment**: Off by default, so the exercise is graded automatically from the test results. Switch it on to have tutors review submissions afterward. It can only be set once the exercise has a due date.

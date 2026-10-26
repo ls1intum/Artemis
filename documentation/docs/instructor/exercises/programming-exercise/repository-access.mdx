@@ -64,7 +64,7 @@ The following sections explain repository types and access rights for different 
 | Base                          | Student            | all          | none   |
 |                               | Teaching Assistant | all          | R      |
 |                               | Instructor         | all          | R/W    |
-| Student Assignment            | Student            | Before start | none   |
+| Student Assignment            | Student            | Before start | none³  |
 |                               | Student            | Working time | R/W    |
 |                               | Student            | After due    | R¹     |
 |                               | Teaching Assistant | all          | R      |
@@ -109,6 +109,8 @@ The following sections explain repository types and access rights for different 
 1. Only valid for course exercises. Students cannot read exam exercise repositories after due date.
 
 2. Instructors can access Instructor Assignment repository via online editor from Course Management (Edit in editor) or Course Overview (Open code editor). After due date, push only via online editor from Course Management or local Git client. Online editor from Course Overview shows locked repository.
+
+3. If **Allow repository access before start date** is enabled for a course exercise, students get read and write access (R/W) to their Student Assignment repository between the release date and the start date. Pushes during this phase do not trigger a build and create no submission. At the start date, Artemis builds every student repository that received commits; these builds count toward the [submission policy](/instructor/exercises/programming-exercise/create-an-exercise#timeline). Pushes by Teaching Assistants and Instructors still trigger builds, and students cannot trigger a build manually before the start date.
 
 <Callout variant={CalloutVariant.info}>
 
