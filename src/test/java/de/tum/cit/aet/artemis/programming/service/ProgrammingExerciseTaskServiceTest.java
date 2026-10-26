@@ -12,7 +12,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -317,6 +319,61 @@ class ProgrammingExerciseTaskServiceTest {
 
         assertThat(exercise.getProblemStatement()).as("the comma inside the arguments does not split the name")
                 .isEqualTo("[task][Sorting](<testid>1</testid>,<testid>2</testid>,<testid>3</testid>)");
+    }
+
+    @Test
+    void replaceTestNamesWithIds_prefersExactCaseForTaskAndDiagramReferences() {
+        var lowerCaseTest = testCase(1L, "testfoo");
+        var exactTest = testCase(2L, "testFoo");
+        var realExercise = exerciseWith("[task][Contract](testFoo)\n@startuml\nclass Contract #testsColor(testFoo)\n@enduml", lowerCaseTest, exactTest);
+        when(testCaseRepository.findByExerciseIdAndActive(1L, true)).thenReturn(new LinkedHashSet<>(List.of(lowerCaseTest, exactTest)));
+
+        taskService.replaceTestNamesWithIds(realExercise);
+
+        assertThat(realExercise.getProblemStatement()).isEqualTo("[task][Contract](<testid>2</testid>)\n@startuml\nclass Contract #testsColor(<testid>2</testid>)\n@enduml");
+    }
+
+    @Test
+    void updateTasksFromProblemStatement_prefersTheExactCaseTestLink() {
+        var lowerCaseTest = testCase(1L, "testfoo");
+        var exactTest = testCase(2L, "testFoo");
+        var realExercise = exerciseWith("[task][Contract](testFoo)", lowerCaseTest, exactTest);
+        when(testCaseRepository.findByExerciseIdAndActive(1L, true)).thenReturn(new LinkedHashSet<>(List.of(lowerCaseTest, exactTest)));
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(new LinkedHashSet<>(List.of(lowerCaseTest, exactTest)));
+        when(taskRepository.findByExerciseIdWithTestCases(1L)).thenReturn(Set.of());
+
+        taskService.updateTasksFromProblemStatement(realExercise);
+
+        ArgumentCaptor<Iterable<ProgrammingExerciseTask>> saved = ArgumentCaptor.captor();
+        verify(taskRepository).saveAll(saved.capture());
+        assertThat(saved.getValue()).singleElement().satisfies(task -> assertThat(task.getTestCases()).containsExactly(exactTest));
+    }
+
+    @Test
+    void replaceTestNamesWithIds_keepsAmbiguousCaseInsensitiveReferencesUnresolved() {
+        String statement = "[task][Contract](TESTFOO)\n@startuml\nclass Contract #testsColor(TESTFOO)\n@enduml";
+        var lowerCaseTest = testCase(1L, "testfoo");
+        var mixedCaseTest = testCase(2L, "testFoo");
+        var realExercise = exerciseWith(statement, lowerCaseTest, mixedCaseTest);
+        when(testCaseRepository.findByExerciseIdAndActive(1L, true)).thenReturn(new LinkedHashSet<>(List.of(lowerCaseTest, mixedCaseTest)));
+
+        taskService.replaceTestNamesWithIds(realExercise);
+
+        assertThat(realExercise.getProblemStatement()).isEqualTo(statement);
+        assertThat(taskService.findUnresolvedTaskTestReferences(realExercise)).containsExactly("TESTFOO");
+    }
+
+    @Test
+    void replaceTestNamesWithIds_resolvesAUniqueCaseInsensitiveLongName() {
+        String originalName = "testMethods[" + "structuralContract".repeat(20) + "]";
+        var storedTest = testCase(7L, ProgrammingExerciseTestCase.normalizeTestName(originalName));
+        String upperCaseName = originalName.toUpperCase(Locale.ROOT);
+        var realExercise = exerciseWith("[task][Contract](" + upperCaseName + ")\n@startuml\nclass Contract #testsColor(" + upperCaseName + ")\n@enduml", storedTest);
+
+        taskService.replaceTestNamesWithIds(realExercise);
+
+        assertThat(realExercise.getProblemStatement()).isEqualTo("[task][Contract](<testid>7</testid>)\n@startuml\nclass Contract #testsColor(<testid>7</testid>)\n@enduml");
+        assertThat(taskService.findUnresolvedTaskTestReferences(realExercise)).isEmpty();
     }
 
     @Test

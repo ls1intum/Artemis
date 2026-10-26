@@ -251,7 +251,7 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Finds every test reference in the problem statement's task markers that does NOT resolve to an ACTIVE test
-     * case of the exercise (by case-insensitive name or {@code <testid>} id) — e.g. a typo, a stale name left over from
+     * case of the exercise (by exact name, unique case-insensitive name or {@code <testid>} id) — e.g. a typo, a stale name left over from
      * before a rename, or a test the transformation removed without updating the marker. Unlike
      * {@link #extractTasks}, which silently drops unresolved references when building tasks, this reports them so
      * callers can surface a precise error instead of a silently-broken task-test link.
@@ -298,7 +298,12 @@ public class ProgrammingExerciseTaskService {
         }
         else {
             String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
-            return testCases.stream().filter(tc -> tc.getTestName().equalsIgnoreCase(storedTestName)).findFirst();
+            var exactMatch = testCases.stream().filter(tc -> tc.getTestName().equals(storedTestName)).findFirst();
+            if (exactMatch.isPresent()) {
+                return exactMatch;
+            }
+            var caseInsensitiveMatches = testCases.stream().filter(tc -> tc.getTestName().equalsIgnoreCase(storedTestName)).limit(2).toList();
+            return caseInsensitiveMatches.size() == 1 ? Optional.of(caseInsensitiveMatches.getFirst()) : Optional.empty();
         }
     }
 
