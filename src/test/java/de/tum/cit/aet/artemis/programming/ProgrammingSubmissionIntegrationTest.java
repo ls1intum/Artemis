@@ -25,6 +25,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -62,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
 import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunStatusDTO;
@@ -760,6 +762,42 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
             assertThat(feedback.getId()).isNegative();
             assertThat(feedback.getDetailText()).isEqualTo("lock failure message");
         });
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "instructor1,false,true,SEMI_AUTOMATIC,OK", "instructor1,true,true,SEMI_AUTOMATIC,OK", "tutor1,false,true,SEMI_AUTOMATIC,FORBIDDEN",
+            "tutor1,true,true,SEMI_AUTOMATIC,FORBIDDEN", "instructor1,false,false,SEMI_AUTOMATIC,FORBIDDEN", "instructor1,true,false,SEMI_AUTOMATIC,FORBIDDEN",
+            "instructor1,false,true,AUTOMATIC,FORBIDDEN", "instructor1,true,true,AUTOMATIC,FORBIDDEN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testLockAndGetProgrammingSubmissionEarlyAssessment(String assessor, boolean futureFinalTests, boolean submitted, AssessmentType assessmentType, HttpStatus status)
+            throws Exception {
+        exercise.setAssessmentType(assessmentType);
+        exercise.setAllowComplaintsForAutomaticAssessments(false);
+        exercise.setDueDate(ZonedDateTime.now().plusDays(futureFinalTests ? -1 : 1));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(futureFinalTests ? ZonedDateTime.now().plusDays(2) : null);
+        programmingExerciseRepository.saveAndFlush(exercise);
+        var commitHash = participationCommitHashes.get(programmingExerciseStudentParticipation.getParticipantIdentifier());
+        var submission = ParticipationFactory.generateProgrammingSubmission(submitted, commitHash, SubmissionType.MANUAL);
+        submission.setParticipation(programmingExerciseStudentParticipation);
+        submission = submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
+        userUtilService.changeUser(TEST_PREFIX + assessor);
+
+        var locked = request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", status, ProgrammingSubmission.class);
+
+        if (status == HttpStatus.OK) {
+            var draft = locked.getLatestResult();
+            assertThat(draft.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + assessor);
+            assertThat(draft.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            var body = new ProgrammingManualResultRequestDTO(draft.getId(), 0.0, false, true, List.of(), null);
+            var url = "/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results";
+            request.put(url, body, HttpStatus.OK);
+            request.put(url + "?submit=true", body, HttpStatus.OK);
+            assertThat(resultRepository.findById(draft.getId()).orElseThrow().getCompletionDate()).isNotNull();
+        }
+        else {
+            assertThat(resultRepository.countBySubmissionId(submission.getId())).isOne();
+        }
     }
 
     @Test

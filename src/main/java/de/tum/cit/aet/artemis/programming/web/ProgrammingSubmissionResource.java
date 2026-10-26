@@ -385,7 +385,7 @@ public class ProgrammingSubmissionResource {
 
         programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
         programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, submissionId, correctionRound);
-        if (!programmingExercise.areManualResultsAllowed()) {
+        if (!programmingExercise.areManualResultsAllowed(authCheckService.isAtLeastInstructorForExercise(programmingExercise, user))) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
 
