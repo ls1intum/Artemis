@@ -163,6 +163,16 @@ give groups of controls an accessible group name. The
 the element choice or group names, in TUM AET UI and the client template areas listed in
 `eslint.config.mjs`.
 
+## Points inputs
+
+Enter points, bonus points and credits only with `jhi-points-input` (`PointsInputComponent`,
+`app/shared-ui/tum-aet-ui-integration/points-input`), not with `<input type="number">` or PrimeNG. It fixes
+the setup (three fraction digits, `.` and `,` accepted, no grouping) on `tumaet-ui-input-number` and works with
+`ngModel`, `formControlName` and `formControl`. Bind `[min]`/`[max]` on it (a native attribute does not validate
+a custom control) and pass `inputId` for labels and E2E locators. In specs, type with `typeIntoInputNumber` from
+`src/test/javascript/spec/helpers/input-number-test-helpers.ts`; the adapter writes a model value to its inner input
+one microtask late, so await `fixture.whenStable()` before reading it. Percentages, durations and counts are not points.
+
 ## Copying objects
 
 In production `src/main/webapp/app/**/*.ts`, use the wrappers in

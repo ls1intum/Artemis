@@ -115,6 +115,8 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                     this.getPostingType() === 'answerPost' ? this.communicationService.currentUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false,
                 );
                 if (this.getPostingType() === 'post') {
+                    // The permission to pin depends on the conversation of the posting, which differs when the component is reused
+                    this.updateCanPin();
                     this.resetTooltipsAndPriority();
                 }
                 this.setMayDelete();
@@ -199,8 +201,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
         );
 
         if (this.getPostingType() === 'post') {
-            const currentConversation = this.communicationService.getCurrentConversation();
-            this.setCanPin(currentConversation);
+            this.updateCanPin();
             this.resetTooltipsAndPriority();
         }
         this.setMayDelete();
@@ -224,11 +225,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      */
     setCanPin(currentConversation: ConversationDTO | undefined) {
         if (!currentConversation) {
-            this.canPin.set(this.communicationService.currentUserIsAtLeastTutorInCourse());
-            return;
-        }
-
-        if (isChannelDTO(currentConversation)) {
+            // Pinning is a moderation right of the conversation, so the user is not offered it while the conversation is unknown
+            this.canPin.set(false);
+        } else if (isChannelDTO(currentConversation)) {
             this.canPin.set(currentConversation.hasChannelModerationRights ?? false);
         } else if (isGroupChatDTO(currentConversation)) {
             this.canPin.set(currentConversation.creator?.id === this.accountService.userIdentity()?.id);
@@ -236,6 +235,19 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             this.canPin.set(true);
         }
         this.canPinOutput.emit(this.canPin());
+    }
+
+    private updateCanPin() {
+        this.setCanPin(this.communicationService.getCurrentConversation() ?? this.getCachedConversationOfPost());
+    }
+
+    /**
+     * Posts outside of a selected conversation (e.g. in the course-wide search) only carry a reference to their conversation,
+     * which lacks what the user may do in it. The cached conversation of the user has it.
+     */
+    private getCachedConversationOfPost(): ConversationDTO | undefined {
+        const conversationId = (this.posting() as Post).conversation?.id;
+        return conversationId === undefined ? undefined : this.courseConversationsService.getCachedConversation(conversationId);
     }
 
     private resetTooltipsAndPriority() {
