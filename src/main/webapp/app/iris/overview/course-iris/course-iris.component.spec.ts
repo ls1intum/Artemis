@@ -103,6 +103,12 @@ describe('CourseIrisComponent', () => {
         expect(component.sessionId()).toBeUndefined();
     });
 
+    it.each(['-1', '0', '1.5', 'Infinity', '9007199254740992'])('ignores invalid linked session id %s', async (id) => {
+        queryParamMapSubject.next(convertToParamMap({ [IRIS_SESSION_QUERY_PARAM]: id }));
+        await fixture.whenStable();
+        expect(component.sessionId()).toBeUndefined();
+    });
+
     it('should derive isCollapsed from the chatbot chat-history open state', () => {
         const isChatHistoryOpen = signal(true);
         vi.spyOn(component as unknown as CourseIrisInternals, 'courseChatbot').mockReturnValue({ isChatHistoryOpen, toggleChatHistory: vi.fn() });

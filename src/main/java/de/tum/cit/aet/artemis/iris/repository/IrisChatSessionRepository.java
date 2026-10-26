@@ -28,6 +28,44 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 @Conditional(IrisEnabled.class)
 public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChatSession, Long> {
 
+    interface HomeSession {
+
+        long getId();
+
+        String getTitle();
+
+        IrisChatMode getMode();
+
+        long getEntityId();
+
+        String getEntityName();
+
+        java.time.ZonedDateTime getLastActivity();
+    }
+
+    /** Bounded metadata only; the latest assistant response counts as activity, but an empty chat never does. */
+    @Query("""
+            SELECT s.id AS id, SUBSTRING(s.title, 1, 160) AS title, s.chatMode AS mode, s.entityId AS entityId,
+                CASE s.chatMode
+                    WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.LECTURE_CHAT THEN l.title
+                    WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMING_EXERCISE_CHAT THEN e.title
+                    WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.TEXT_EXERCISE_CHAT THEN e.title
+                    ELSE NULL END AS entityName,
+                MAX(m.sentAt) AS lastActivity
+            FROM IrisChatSession s JOIN s.messages m
+                LEFT JOIN Exercise e ON e.id = s.entityId AND e.course.id = :courseId AND s.chatMode IN (
+                    de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMING_EXERCISE_CHAT,
+                    de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.TEXT_EXERCISE_CHAT)
+                LEFT JOIN Lecture l ON l.id = s.entityId AND l.course.id = :courseId
+                    AND s.chatMode = de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.LECTURE_CHAT
+            WHERE s.userId = :userId AND s.courseId = :courseId AND m.sentAt <= :asOf
+                AND EXISTS (SELECT authored.id FROM IrisMessage authored WHERE authored.session = s
+                    AND authored.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER AND authored.sentAt <= :asOf)
+            GROUP BY s.id, s.title, s.chatMode, s.entityId, e.title, l.title
+            ORDER BY MAX(m.sentAt) DESC, s.id DESC
+            """)
+    List<HomeSession> findForCourseHome(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") java.time.ZonedDateTime asOf, Pageable pageable);
+
     // -------------------------------------------------------------------------
     // Sidebar overview query (course-scoped, all modes)
     // -------------------------------------------------------------------------
