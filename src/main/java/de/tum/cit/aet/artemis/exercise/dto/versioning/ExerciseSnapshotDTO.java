@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.dto.versioning;
 import java.io.Serializable;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,7 +42,7 @@ public record ExerciseSnapshotDTO(
         // not included fields: teams, studentParticipations, tutorParticipations, exampleSubmission, attachment, course, exerciseGroup
         Set<CompetencyExerciseLinkSnapshotDTO> competencyLinks, Boolean allowComplaintsForAutomaticAssessments, IncludedInOverallScore includedInOverallScore,
         String problemStatement, String gradingInstructions, Set<String> categories, TeamAssignmentConfigSnapshotDTO teamAssignmentConfig, Boolean presentationScoreEnabled,
-        Boolean secondCorrectionEnabled, Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig,
+        Boolean secondCorrectionEnabled, List<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig,
         ProgrammingExerciseSnapshotDTO programmingData, TextExerciseSnapshotDTO textData, ModelingExerciseSnapshotDTO modelingData, QuizExerciseSnapshotDTO quizData,
         FileUploadExerciseSnapshotDTO fileUploadData, Long variantGroupId
 
@@ -59,7 +60,7 @@ public record ExerciseSnapshotDTO(
             ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO programmingCommitHashes) {
 
         var competencyLinks = CollectionUtil.nullIfEmpty(exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet()));
-        var gradingCriteria = CollectionUtil.nullIfEmpty(exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()));
+        var gradingCriteria = CollectionUtil.nullIfEmpty(GradingCriterionDTO.ofAll(exercise.getGradingCriteria()));
         var categories = CollectionUtil.nullIfEmpty(exercise.getCategories());
         var plagiarismDetectionConfig = PlagiarismDetectionConfigSnapshotDTO.of(exercise.getPlagiarismDetectionConfig());
 

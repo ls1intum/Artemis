@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,8 +33,41 @@ public record GradingCriterionDTO(Long id, String title, List<GradingInstruction
      */
     public static GradingCriterionDTO of(@NotNull GradingCriterion gradingCriterion) {
         List<GradingInstructionDTO> instructions = gradingCriterion.getStructuredGradingInstructions() == null ? List.of()
-                : gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).toList();
+                : gradingCriterion.getStructuredGradingInstructions().stream().sorted(
+                        Comparator.comparingLong(GradingInstruction::getSortOrder).thenComparing(GradingInstruction::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                        .map(GradingInstructionDTO::of).toList();
         return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(), instructions);
+    }
+
+    /**
+     * Converts loaded rubric rows in their persisted order, retaining duplicate-valued rows in exported payloads.
+     *
+     * @param criteria the initialized criteria
+     * @return the criteria in instructor order, with legacy ties resolved by row id
+     */
+    public static List<GradingCriterionDTO> ofAll(Collection<GradingCriterion> criteria) {
+        return criteria.stream().filter(Objects::nonNull)
+                .sorted(Comparator.comparingLong(GradingCriterion::getSortOrder).thenComparing(GradingCriterion::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(GradingCriterionDTO::of).toList();
+    }
+
+    /**
+     * Creates ordered domain rows, assigning positions from the request array rather than accepting client positions.
+     *
+     * @param criteria requested rubric rows, or null when absent
+     * @return new criteria retaining all rows and their request order
+     */
+    public static Set<GradingCriterion> toEntities(Collection<GradingCriterionDTO> criteria) {
+        Set<GradingCriterion> entities = new LinkedHashSet<>();
+        if (criteria != null) {
+            long position = 0;
+            for (GradingCriterionDTO dto : criteria) {
+                GradingCriterion criterion = dto.toEntity();
+                criterion.setSortOrder(position++);
+                entities.add(criterion);
+            }
+        }
+        return entities;
     }
 
     /**
@@ -54,11 +90,7 @@ public record GradingCriterionDTO(Long id, String title, List<GradingInstruction
     public GradingCriterion toEntity() {
         GradingCriterion criterion = new GradingCriterion();
         criterion.setId(this.id);
-        criterion.setTitle(this.title);
-        if (this.structuredGradingInstructions != null && !this.structuredGradingInstructions.isEmpty()) {
-            Set<GradingInstruction> instructions = this.structuredGradingInstructions.stream().map(GradingInstructionDTO::toEntity).collect(Collectors.toSet());
-            criterion.setStructuredGradingInstructions(instructions);
-        }
+        applyTo(criterion);
         return criterion;
     }
 
@@ -77,12 +109,14 @@ public record GradingCriterionDTO(Long id, String title, List<GradingInstruction
 
         Set<GradingInstruction> existing = gradingCriterion.getStructuredGradingInstructions();
         if (existing == null) {
-            existing = new HashSet<>();
+            existing = new LinkedHashSet<>();
+            gradingCriterion.setStructuredGradingInstructions(existing);
         }
 
         Map<Long, GradingInstruction> existingById = existing.stream().filter(i -> i.getId() != null).collect(Collectors.toMap(GradingInstruction::getId, i -> i));
 
-        Set<GradingInstruction> updatedInstructions = new HashSet<>();
+        Set<GradingInstruction> updatedInstructions = new LinkedHashSet<>();
+        long position = 0;
 
         for (GradingInstructionDTO instructionDTO : this.structuredGradingInstructions) {
             GradingInstruction instruction = instructionDTO.id() != null ? existingById.get(instructionDTO.id()) : null;
@@ -94,8 +128,11 @@ public record GradingCriterionDTO(Long id, String title, List<GradingInstruction
             else {
                 instructionDTO.applyTo(instruction);
             }
+            instruction.setSortOrder(position++);
             updatedInstructions.add(instruction);
         }
-        gradingCriterion.setStructuredGradingInstructions(updatedInstructions);
+        // Keep Hibernate's orphan-removal collection and existing instruction instances, which feedback references.
+        existing.clear();
+        existing.addAll(updatedInstructions);
     }
 }
