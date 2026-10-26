@@ -105,13 +105,16 @@ public class ExerciseScoresChartService {
         long courseId = course.getId();
         ZonedDateTime now = ZonedDateTime.now();
         var candidates = exerciseRepository.findMetadataForPeerComparison(courseId, now, course.isOnlineCourse(), user.getLogin());
-        Set<Long> extensionIds = candidates.stream().filter(exercise -> exercise.assessmentDueDate() == null && exercise.dueDate() != null).map(ExercisePeerMetadataDTO::id)
+        Set<Long> extensionIds = candidates.stream().filter(exercise -> exercise.assessmentDueDate() != null || exercise.dueDate() != null).map(ExercisePeerMetadataDTO::id)
                 .collect(Collectors.toSet());
         Map<Long, ZonedDateTime> latestDueDates = extensionIds.isEmpty() ? Map.of()
                 : participationRepository.findLatestIndividualDueDates(extensionIds).stream()
                         .collect(Collectors.toMap(ExerciseLatestDueDateDTO::exerciseId, ExerciseLatestDueDateDTO::dueDate));
-        var exercises = candidates.stream().filter(exercise -> exercise.assessmentDueDate() != null ? now.isAfter(exercise.assessmentDueDate())
-                : exercise.dueDate() != null && now.isAfter(latestDueDates.getOrDefault(exercise.id(), exercise.dueDate()))).toList();
+        // Submission extensions can outlast the assessment deadline, so every applicable cutoff must have passed.
+        var exercises = candidates.stream().filter(exercise -> extensionIds.contains(exercise.id()))
+                .filter(exercise -> exercise.dueDate() == null || now.isAfter(exercise.dueDate()))
+                .filter(exercise -> exercise.assessmentDueDate() == null || now.isAfter(exercise.assessmentDueDate()))
+                .filter(exercise -> !latestDueDates.containsKey(exercise.id()) || now.isAfter(latestDueDates.get(exercise.id()))).toList();
         if (exercises.isEmpty()) {
             return new ExercisePeerComparisonDTO(List.of(), 0, 0);
         }

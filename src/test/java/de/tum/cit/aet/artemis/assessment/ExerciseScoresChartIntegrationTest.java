@@ -10,6 +10,8 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -148,12 +150,13 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
                 .isNull();
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void comparisonWaitsUntilAllIndividualDeadlinesHavePassed() throws Exception {
+    void comparisonWaitsUntilAllIndividualDeadlinesHavePassed(boolean hasAssessmentDueDate) throws Exception {
         Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         ZonedDateTime past = ZonedDateTime.now().minusDays(5);
-        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, past, past, null);
+        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, past, past, hasAssessmentDueDate ? past : null);
         var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
         studentParticipationTestRepository.saveAndFlush(participation);
@@ -166,6 +169,55 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
         var afterDeadline = request.get(endpoint, HttpStatus.OK, ExercisePeerComparisonDTO.class);
         assertThat(afterDeadline.exercises()).singleElement().satisfies(score -> {
             assertThat(score.exerciseId()).isEqualTo(exercise.getId());
+            assertThat(score.ownScore()).isNull();
+            assertThat(score.peerAverage()).isNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void comparisonWaitsForTheAssessmentDeadlineAfterSubmissionExtensionsEnd() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        ZonedDateTime past = ZonedDateTime.now().minusDays(5);
+        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, past, past, ZonedDateTime.now().plusDays(1));
+        var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationTestRepository.saveAndFlush(participation);
+
+        var response = request.get("/api/exercise/courses/" + course.getId() + "/charts/peer-comparison", HttpStatus.OK, ExercisePeerComparisonDTO.class);
+
+        assertThat(response.exercises()).isNullOrEmpty();
+        assertThat(response.groupCount()).isZero();
+        assertThat(response.peerCount()).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void comparisonDoesNotLetAnEarlierExtensionShortenTheCourseDeadline() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        ZonedDateTime past = ZonedDateTime.now().minusDays(5);
+        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, past, ZonedDateTime.now().plusDays(1), past);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationTestRepository.saveAndFlush(participation);
+
+        var response = request.get("/api/exercise/courses/" + course.getId() + "/charts/peer-comparison", HttpStatus.OK, ExercisePeerComparisonDTO.class);
+
+        assertThat(response.exercises()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void comparisonIncludesAssessmentOnlyExercisesButExcludesUndatedExercises() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        ZonedDateTime past = ZonedDateTime.now().minusDays(5);
+        TextExercise assessmentOnly = textExerciseUtilService.createIndividualTextExercise(course, past, null, past);
+        textExerciseUtilService.createIndividualTextExercise(course, past, null, null);
+
+        var response = request.get("/api/exercise/courses/" + course.getId() + "/charts/peer-comparison", HttpStatus.OK, ExercisePeerComparisonDTO.class);
+
+        assertThat(response.exercises()).singleElement().satisfies(score -> {
+            assertThat(score.exerciseId()).isEqualTo(assessmentOnly.getId());
             assertThat(score.ownScore()).isNull();
             assertThat(score.peerAverage()).isNull();
         });
