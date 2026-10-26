@@ -455,20 +455,24 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 }
                 this.scheduleAssessmentAvailabilityUpdate();
 
+                if (!this.isTestRun()) {
+                    const complaintQueue = this.accountService.isAtLeastInstructorForExercise(exercise)
+                        ? this.submissionService.getSubmissionsWithComplaintsForInstructor(this.exerciseId())
+                        : this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId());
+                    complaintQueue.subscribe({
+                        next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+                            this.submissionsWithComplaints.set(res.body || []);
+                            this.sortComplaintRows();
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                }
                 this.setupLinks();
             },
             error: (response: string) => this.onError(response),
         });
 
         if (!this.isTestRun()) {
-            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId()).subscribe({
-                next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
-                    this.submissionsWithComplaints.set(res.body || []);
-                    this.sortComplaintRows();
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
-
             this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithMoreFeedbackRequests.set(res.body || []);

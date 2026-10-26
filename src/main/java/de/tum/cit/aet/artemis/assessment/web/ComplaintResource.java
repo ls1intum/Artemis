@@ -34,22 +34,25 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 
 /**
  * REST controller for managing complaints.
@@ -72,7 +75,7 @@ public class ComplaintResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ExerciseRepository exerciseRepository;
+    private final SubmissionRepository submissionRepository;
 
     private final UserRepository userRepository;
 
@@ -82,18 +85,15 @@ public class ComplaintResource {
 
     private final ComplaintRepository complaintRepository;
 
-    private final CourseRepository courseRepository;
-
     private final Optional<ExamAccessApi> examAccessApi;
 
-    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, ResultRepository resultRepository,
-            ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository, Optional<ExamAccessApi> examAccessApi) {
+    public ComplaintResource(AuthorizationCheckService authCheckService, SubmissionRepository submissionRepository, UserRepository userRepository,
+            ResultRepository resultRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, Optional<ExamAccessApi> examAccessApi) {
         this.authCheckService = authCheckService;
-        this.exerciseRepository = exerciseRepository;
+        this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.complaintService = complaintService;
-        this.courseRepository = courseRepository;
         this.complaintRepository = complaintRepository;
         this.examAccessApi = examAccessApi;
     }
@@ -160,28 +160,53 @@ public class ComplaintResource {
             return ResponseEntity.ok().build();
         }
         Complaint complaint = optionalComplaint.get();
-        User user = userRepository.getUserWithAuthorities();
         StudentParticipation participation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
-        Exercise exercise = participation.getExercise();
-        boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
-        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-        if (!isOwner && !isAtLeastTutor) {
+        if (!authCheckService.isOwnerOfParticipation(participation, userRepository.getUserWithAuthorities())) {
             throw new AccessForbiddenException();
         }
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        boolean isTeamParticipation = participation.getParticipant() instanceof Team;
-        boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner() != null ? team.getOwner().getLogin() : null).orElse(null));
-
-        if (!isAtLeastTutor) {
-            complaint.getResult().filterSensitiveInformation();
-            if (complaint.getComplaintResponse() != null) {
-                complaint.getComplaintResponse().setReviewer(null);
-            }
+        complaint.getResult().filterSensitiveInformation();
+        if (complaint.getComplaintResponse() != null) {
+            complaint.getComplaintResponse().setReviewer(null);
         }
+        complaint.filterSensitiveInformation();
+        return complaintDetailResponse(complaint);
+    }
+
+    /**
+     * Get a complaint for assessment using the submission's exercise to authorize the caller, including when no complaint exists.
+     *
+     * @param submissionId the submission whose complaint is requested
+     * @return the assessment complaint or an empty response
+     */
+    @GetMapping(value = "complaints/for-assessment", params = { "submissionId" })
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ComplaintDTO> getComplaintBySubmissionIdForAssessment(@RequestParam Long submissionId) {
+        Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
+        var submission = optionalComplaint.map(complaint -> complaint.getResult().getSubmission()).orElseGet(() -> submissionRepository.findByIdElseThrow(submissionId));
+        Participation participation = submission.getParticipation();
+        if (participation == null || participation.getExercise() == null || participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null) {
+            throw new EntityNotFoundException("Course", "of submission " + submissionId);
+        }
+        Exercise exercise = participation.getExercise();
+        User user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
+        if (optionalComplaint.isEmpty()) {
+            return ResponseEntity.ok().build();
+        }
+        Complaint complaint = optionalComplaint.get();
+        StudentParticipation studentParticipation = (StudentParticipation) participation;
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        boolean isTeamParticipation = studentParticipation.getParticipant() instanceof Team;
+        boolean isTutorOfTeam = user.getLogin().equals(studentParticipation.getTeam().map(team -> team.getOwner() != null ? team.getOwner().getLogin() : null).orElse(null));
         if (!isAtLeastInstructor && (!isTeamParticipation || !isTutorOfTeam)) {
             complaint.filterSensitiveInformation();
         }
-        // hide participation + exercise + course which might include sensitive information
+        return complaintDetailResponse(complaint);
+    }
+
+    private ResponseEntity<ComplaintDTO> complaintDetailResponse(Complaint complaint) {
+        // Hide participation + exercise + course which might include sensitive information.
         complaint.getResult().getSubmission().setParticipation(null);
         return ResponseEntity.ok(ComplaintDTO.of(complaint));
     }
@@ -195,7 +220,7 @@ public class ComplaintResource {
      * @param principal  the user that wants to get complaints
      * @return the ResponseEntity with status 200 (OK) and a list of complaints or a list of more feedback requests. The list can be empty
      */
-    @GetMapping(value = "complaints", params = { "exerciseId" })
+    @GetMapping(value = "complaints", params = { "exerciseId", "!complaintType", "!courseId", "!submissionId" })
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<ComplaintDTO>> getComplaintsForTestRunDashboard(Principal principal, @RequestParam Long exerciseId) {
         List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
@@ -204,93 +229,86 @@ public class ComplaintResource {
     }
 
     /**
-     * GET complaints: get all the complaints filtered by courseId, complaintType, and optionally tutorId.
+     * Get identified course complaints for instructors, optionally filtered by assessor.
      *
-     * @param tutorId               the id of the tutor by which we want to filter
-     * @param courseId              the id of the course we are interested in
-     * @param complaintType         the type of complaints we are interested in
-     * @param allComplaintsForTutor flag if all complaints should be sent to a tutor
-     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     * @param courseId              the course
+     * @param complaintType         the complaint type
+     * @param tutorId               optional assessor filter
+     * @param allComplaintsForTutor whether to redact foreign assessors in the existing all overview
+     * @return the matching complaints
      */
-    @GetMapping(value = "complaints", params = { "courseId", "complaintType" })
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @GetMapping(value = "complaints", params = { "courseId", "complaintType", "!exerciseId", "!examId", "!submissionId" })
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<ComplaintDTO>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
-        // Filtering by courseId
-        Course course = courseRepository.findByIdElseThrow(courseId);
-
-        User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
-
-        if (!isAtLeastInstructor) {
-            tutorId = user.getId();
-        }
-        List<Complaint> complaints;
-
-        if (tutorId == null) {
-            complaints = complaintService.getAllComplaintsByCourseId(courseId);
-            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
-        }
-        else if (allComplaintsForTutor) {
-            complaints = complaintService.getAllComplaintsByCourseId(courseId);
-            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
-            // Redact foreign assessor public-info on the DTO while keeping privacy-safe assessorKey/assessorLabel for filtering.
-            return ResponseEntity.ok(getComplaintsByComplaintTypeForTutorOverview(complaints, complaintType, user));
-        }
-        else {
-            complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
-            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
-        }
-
-        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+        return courseComplaintResponse(courseId, complaintType, tutorId, allComplaintsForTutor, false);
     }
 
     /**
-     * GET complaints: get all the complaints filtered by exerciseId, complaintType, and optionally tutorId.
+     * Get identified exercise complaints for instructors, optionally filtered by assessor.
      *
-     * @param tutorId               the id of the tutor by which we want to filter
-     * @param exerciseId            the id of the exercise we are interested in
-     * @param complaintType         the type of complaints we are interested in
-     * @param allComplaintsForTutor flag if all complaints of the exercise should be sent to a tutor
-     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     * @param exerciseId            the exercise
+     * @param complaintType         the complaint type
+     * @param tutorId               optional assessor filter
+     * @param allComplaintsForTutor whether to redact foreign assessors in the existing all overview
+     * @return the matching complaints
      */
-    @GetMapping(value = "complaints", params = { "exerciseId", "complaintType" })
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @GetMapping(value = "complaints", params = { "exerciseId", "complaintType", "!courseId", "!submissionId" })
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<ComplaintDTO>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
-        // Filtering by exerciseId
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithAuthorities();
+        return exerciseComplaintResponse(exerciseId, complaintType, tutorId, allComplaintsForTutor, false);
+    }
 
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+    /**
+     * Get anonymous course complaints, deriving the assessor for the mine scope from the current user.
+     *
+     * @param courseId              the course
+     * @param complaintType         the complaint type
+     * @param allComplaintsForTutor whether to include all assessors
+     * @return the matching anonymous complaints
+     */
+    @GetMapping(value = "complaints/for-tutor", params = { "courseId", "complaintType", "!exerciseId", "!examId", "!submissionId" })
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsForTutorByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
+            @RequestParam(required = false) boolean allComplaintsForTutor) {
+        return courseComplaintResponse(courseId, complaintType, userRepository.getUser().getId(), allComplaintsForTutor, true);
+    }
 
-        // Only instructors can access all complaints about an exercise without filtering by tutorId
-        if (!isAtLeastInstructor) {
-            tutorId = user.getId();
-        }
+    /**
+     * Get anonymous exercise complaints, deriving the assessor for the mine scope from the current user.
+     *
+     * @param exerciseId            the exercise
+     * @param complaintType         the complaint type
+     * @param allComplaintsForTutor whether to include all assessors
+     * @return the matching anonymous complaints
+     */
+    @GetMapping(value = "complaints/for-tutor", params = { "exerciseId", "complaintType", "!courseId", "!examId", "!submissionId" })
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsForTutorByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
+            @RequestParam(required = false) boolean allComplaintsForTutor) {
+        return exerciseComplaintResponse(exerciseId, complaintType, userRepository.getUser().getId(), allComplaintsForTutor, true);
+    }
 
-        List<Complaint> complaints;
+    private ResponseEntity<List<ComplaintDTO>> courseComplaintResponse(Long courseId, ComplaintType complaintType, Long tutorId, boolean allComplaintsForTutor,
+            boolean tutorProjection) {
+        List<Complaint> complaints = tutorId == null || allComplaintsForTutor ? complaintService.getAllComplaintsByCourseId(courseId)
+                : complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
+        return complaintListResponse(complaints, complaintType, tutorId != null && allComplaintsForTutor, tutorProjection);
+    }
 
-        if (tutorId == null) {
-            complaints = complaintService.getAllComplaintsByExerciseId(exerciseId);
-            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
-        }
-        else if (allComplaintsForTutor) {
-            complaints = complaintService.getAllComplaintsByExerciseId(exerciseId);
-            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
-            // Redact foreign assessor public-info on the DTO while keeping privacy-safe assessorKey/assessorLabel for filtering.
-            return ResponseEntity.ok(getComplaintsByComplaintTypeForTutorOverview(complaints, complaintType, user));
-        }
-        else {
-            complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId);
-            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
-        }
+    private ResponseEntity<List<ComplaintDTO>> exerciseComplaintResponse(Long exerciseId, ComplaintType complaintType, Long tutorId, boolean allComplaintsForTutor,
+            boolean tutorProjection) {
+        List<Complaint> complaints = tutorId == null || allComplaintsForTutor ? complaintService.getAllComplaintsByExerciseId(exerciseId)
+                : complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId);
+        return complaintListResponse(complaints, complaintType, tutorId != null && allComplaintsForTutor, tutorProjection);
+    }
 
-        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+    private ResponseEntity<List<ComplaintDTO>> complaintListResponse(List<Complaint> complaints, ComplaintType complaintType, boolean redactForeignAssessors,
+            boolean tutorProjection) {
+        filterStudentInformationFromComplaints(complaints, tutorProjection);
+        return ResponseEntity.ok(redactForeignAssessors ? getComplaintsByComplaintTypeForTutorOverview(complaints, complaintType, userRepository.getUser())
+                : getComplaintsByComplaintType(complaints, complaintType));
     }
 
     /**
@@ -300,9 +318,8 @@ public class ComplaintResource {
      * @param courseId the id of the course we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping(value = "complaints", params = { "courseId", "examId" })
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @GetMapping(value = "complaints", params = { "courseId", "examId", "!exerciseId", "!submissionId" })
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<ComplaintDTO>> getComplaintsByCourseIdAndExamId(@RequestParam Long courseId, @RequestParam Long examId) {
         // checks the instructor role in the course and that the exam belongs to the course
         ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));

@@ -60,7 +60,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
@@ -310,6 +310,20 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it.each([false, true])('chooses the complaint queue from known exercise roles, instructor=%s', (isInstructor) => {
+        accountService.userIdentity.set({ id: 10, login: isInstructor ? 'instructor1' : 'tutor1' } as User);
+        vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(isInstructor);
+        comp.ngOnInit();
+        if (isInstructor) {
+            const req = TestBed.inject(HttpTestingController).expectOne(`api/exercise/exercises/${modelingExercise.id}/submissions-with-complaints/for-instructor`);
+            expect(req.request.method).toBe('GET');
+            req.flush([]);
+            expect(submissionService.getSubmissionsWithComplaintsForTutor).not.toHaveBeenCalled();
+        } else {
+            expect(submissionService.getSubmissionsWithComplaintsForTutor).toHaveBeenCalledExactlyOnceWith(modelingExercise.id);
+        }
     });
 
     it('should initialize', () => {

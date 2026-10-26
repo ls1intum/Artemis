@@ -195,15 +195,21 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
      */
     @GetMapping("exercises/{exerciseId}/submissions-with-complaints")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForAssessmentDashboard(@PathVariable Long exerciseId) {
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, isAtLeastInstructor);
+        return ResponseEntity.ok(submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, false));
+    }
 
-        return ResponseEntity.ok(submissionWithComplaintDTOs);
+    /**
+     * Get all complained-about assessments for the instructor dashboard, excluding test runs.
+     *
+     * @param exerciseId the exercise
+     * @return the submissions with complaints
+     */
+    @GetMapping("exercises/{exerciseId}/submissions-with-complaints/for-instructor")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForInstructorAssessmentDashboard(@PathVariable Long exerciseId) {
+        return ResponseEntity.ok(submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, true));
     }
 
     /**

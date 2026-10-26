@@ -174,7 +174,9 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should place the complaint banner and form beside the diagram, not in the scrolling feedback pane', async () => {
         vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
-        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>));
+        vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(
+            of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>),
+        );
 
         component.ngOnInit();
         await fixture.whenStable();
@@ -208,7 +210,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     describe('ngOnInit tests', () => {
         it('ngOnInit', async () => {
             modelingSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission');
-            complaintSpy = vi.spyOn(complaintService, 'findBySubmissionId');
+            complaintSpy = vi.spyOn(complaintService, 'findBySubmissionIdForAssessment');
             const submission = getSubmissionWithData();
 
             modelingSubmissionSpy.mockReturnValue(of(submission));
@@ -487,7 +489,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 },
             } as ModelingSubmission;
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
             const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
             const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
 

@@ -10,6 +10,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -21,6 +23,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintAction;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
@@ -95,6 +98,37 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), Optional.empty());
+    }
+
+    @Test
+    @WithMockUser(username = "team1" + TEST_PREFIX + "1", roles = "USER")
+    void teamMemberComplaintOwnerKeepsStudentProjection() throws Exception {
+        complaint.setParticipant(team);
+        complaintRepo.save(complaint);
+        var received = request.get(resourceUrl + "?submissionId=" + modelingSubmission.getId(), HttpStatus.OK, ComplaintDTO.class);
+        assertThat(received.id()).isEqualTo(complaint.getId());
+        assertThat(received.participant()).isNull();
+        assertThat(received.result().assessor()).isNull();
+        assertThat(received.result().submission().participation()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "tutor1", "tutor2", "instructor1" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void assessmentComplaintPreservesAssignedTeamTutorIdentityException(String caller) throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + caller);
+        complaint.setParticipant(team);
+        complaintRepo.save(complaint);
+        var received = request.get(resourceUrl + "/for-assessment?submissionId=" + modelingSubmission.getId(), HttpStatus.OK, ComplaintDTO.class);
+        assertThat(received.result().submission().participation()).isNull();
+        assertThat(received.result().id()).isEqualTo(modelingAssessment.getId());
+        if (caller.equals("tutor2")) {
+            assertThat(received.participant()).isNull();
+        }
+        else {
+            assertThat(received.participant()).isNotNull();
+            assertThat(received.participant().id()).isEqualTo(team.getId());
+        }
     }
 
     @Test
