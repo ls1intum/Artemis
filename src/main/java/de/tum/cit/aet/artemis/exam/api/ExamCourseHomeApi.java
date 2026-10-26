@@ -12,6 +12,8 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeSectionStatus;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeTargetKind;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeTargetDTO;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -36,8 +38,8 @@ public class ExamCourseHomeApi extends AbstractExamApi {
         if (!authorization.isAtLeastStudentInCourse(courseId))
             throw new AccessForbiddenException("course", courseId);
         var now = ZonedDateTime.ofInstant(asOf, ZoneOffset.UTC);
-        return new ExamCourseHomeDTO(CourseHomeDTO.SectionStatus.AVAILABLE,
-                exams.findUpcoming(courseId, user.getId(), now, now.plusHours(24), PageRequest.of(0, 1)).stream().map(row -> new CourseHomeDTO.Item(row.getTitle(),
-                        new CourseHomeTargetDTO(CourseHomeTargetDTO.Kind.EXAM, row.getId(), null, null), null, row.getStartDate().toInstant(), "EXAM_SOON")).toList());
+        return new ExamCourseHomeDTO(CourseHomeSectionStatus.AVAILABLE,
+                exams.findUpcoming(courseId, user.getId(), now, now.plusHours(24), PageRequest.of(0, 1)).stream().map(row -> new CourseHomeDTO.ItemDTO(row.getTitle(),
+                        new CourseHomeTargetDTO(CourseHomeTargetKind.EXAM, row.getId(), null, null), null, row.getStartDate().toInstant(), "EXAM_SOON")).toList());
     }
 }

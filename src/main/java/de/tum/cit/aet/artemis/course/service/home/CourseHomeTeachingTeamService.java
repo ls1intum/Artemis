@@ -34,7 +34,7 @@ public class CourseHomeTeachingTeamService {
             throw new BadRequestAlertException("Invalid team page", "courseHome", "invalidPage");
         var result = courses.findStaff(courseId, PageRequest.of(page, size));
         return new CourseHomeTeachingTeamDTO(result.stream()
-                .map(row -> new CourseHomeTeachingTeamDTO.Member(row.getId(),
+                .map(row -> new CourseHomeTeachingTeamDTO.MemberDTO(row.getId(),
                         de.tum.cit.aet.artemis.account.domain.User.displayName(row.getFirstName(), row.getLastName(), row.getLogin()),
                         de.tum.cit.aet.artemis.core.util.ServedFileUrl.profilePicture(row.getId(), row.getImageUrl()), switch (row.getRank()) {
                             case 0 -> "INSTRUCTOR";

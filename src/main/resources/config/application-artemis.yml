@@ -3,6 +3,15 @@
 # ===================================================================
 
 artemis:
+  course-home:
+    ai:
+      enabled: false
+      # Home uses its own explicitly configured OpenAI-compatible provider, independently of Iris and Atlas.
+      # location: LOCAL # LOCAL or CLOUD; LOCAL_AI consent never permits CLOUD.
+      # base-url: http://localhost:11434/v1
+      # api-key: <deployment-secret>
+      # model: <configured-chat-model>
+      # Fixed limits: 3 seconds, 160 output tokens, 4 workers, no queued work or retries.
   tum-live:
     integration-enabled: false
     # api-base-url: https://live.example.edu/api/v2

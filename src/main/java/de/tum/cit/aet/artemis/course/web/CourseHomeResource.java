@@ -4,6 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import jakarta.validation.Valid;
 
@@ -22,19 +25,25 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeWelcomeSource;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO;
+import de.tum.cit.aet.artemis.course.dto.home.CourseHomeGeneratedWelcomeDTO;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeQueryDTO;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeTeachingTeamDTO;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeVisitAcknowledgmentDTO;
+import de.tum.cit.aet.artemis.course.dto.home.CourseHomeWelcomeRequestDTO;
 import de.tum.cit.aet.artemis.course.service.home.CourseHomeService;
 import de.tum.cit.aet.artemis.course.service.home.CourseHomeTeachingTeamService;
 import de.tum.cit.aet.artemis.course.service.home.CourseHomeVisitService;
 
 /** Student Home: reads are independent from successful-render acknowledgments and optional wording. */
+@FeatureUsage(UserFeature.COURSE_OVERVIEW)
 @RestController
 @Lazy
 @Profile(PROFILE_CORE)
-@RequestMapping("api/course/courses/{courseId}/home")
+@RequestMapping("api/course/")
 public class CourseHomeResource {
 
     private final UserRepository users;
@@ -45,14 +54,18 @@ public class CourseHomeResource {
 
     private final CourseHomeVisitService visits;
 
-    public CourseHomeResource(UserRepository users, CourseHomeService home, CourseHomeTeachingTeamService team, CourseHomeVisitService visits) {
+    private final de.tum.cit.aet.artemis.course.service.home.CourseHomeWelcomeService welcomes;
+
+    public CourseHomeResource(UserRepository users, CourseHomeService home, CourseHomeTeachingTeamService team, CourseHomeVisitService visits,
+            de.tum.cit.aet.artemis.course.service.home.CourseHomeWelcomeService welcomes) {
         this.users = users;
         this.home = home;
         this.team = team;
         this.visits = visits;
+        this.welcomes = welcomes;
     }
 
-    @GetMapping
+    @GetMapping("courses/{courseId}/home")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseHomeDTO> get(@PathVariable long courseId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Nullable Instant since) {
@@ -60,19 +73,35 @@ public class CourseHomeResource {
         return ResponseEntity.ok(home.load(courseId, users.getUserWithAuthorities(), new CourseHomeQueryDTO(since), asOf));
     }
 
-    @GetMapping("teaching-team")
+    @GetMapping("courses/{courseId}/home/teaching-team")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseHomeTeachingTeamDTO> teachingTeam(@PathVariable long courseId, @RequestParam(defaultValue = "0") int page) {
         home.checkAccess(courseId);
         return ResponseEntity.ok(team.load(courseId, page, 6));
     }
 
-    @PostMapping("visits")
+    @PostMapping("courses/{courseId}/home/visits")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Void> acknowledge(@PathVariable long courseId, @Valid @RequestBody CourseHomeVisitAcknowledgmentDTO request) {
         home.checkAccess(courseId);
         var user = users.getUserWithAuthorities();
         visits.acknowledge(courseId, user.getId(), request.snapshotAt(), request.observedVariantCursor(), Instant.now());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("courses/{courseId}/home/welcome")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<CourseHomeGeneratedWelcomeDTO> welcome(@PathVariable long courseId, @Valid @RequestBody CourseHomeWelcomeRequestDTO request) {
+        try {
+            var result = welcomes.generate(courseId, users.getUserWithAuthorities(), request, Instant.now().truncatedTo(ChronoUnit.MILLIS)).get(3500, TimeUnit.MILLISECONDS);
+            return ResponseEntity.ok(result);
+        }
+        catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.ok(new CourseHomeGeneratedWelcomeDTO(request.contextFingerprint(), null, CourseHomeWelcomeSource.FALLBACK));
+        }
+        catch (ExecutionException | TimeoutException ex) {
+            return ResponseEntity.ok(new CourseHomeGeneratedWelcomeDTO(request.contextFingerprint(), null, CourseHomeWelcomeSource.FALLBACK));
+        }
     }
 }

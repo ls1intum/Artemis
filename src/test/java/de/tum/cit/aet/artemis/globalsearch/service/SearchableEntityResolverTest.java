@@ -10,8 +10,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
@@ -32,7 +32,7 @@ class SearchableEntityResolverTest {
 
     private final SearchableEntityPostRepository searchableEntityPostRepository = mock(SearchableEntityPostRepository.class);
 
-    private final SearchableEntityResolver resolver = new SearchableEntityResolver(courseRepository, mock(FaqRepository.class), searchableEntityPostRepository,
+    private final SearchableEntityResolver resolver = new SearchableEntityResolver(courseRepository, mock(FaqTestRepository.class), searchableEntityPostRepository,
             mock(ChannelRepository.class), mock(ExerciseSearchableEntityLoadService.class), Optional.empty(), Optional.empty(), Optional.empty());
 
     @Test

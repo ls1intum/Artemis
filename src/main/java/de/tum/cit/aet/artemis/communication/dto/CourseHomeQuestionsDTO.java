@@ -7,17 +7,14 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO.SectionStatus;
+import de.tum.cit.aet.artemis.communication.domain.CourseHomeQuestionState;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeSectionStatus;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseHomeQuestionsDTO(SectionStatus status, List<Item> items) {
-
-    public enum State {
-        AWAITING_REPLY, ANSWERED, RESOLVED
-    }
+public record CourseHomeQuestionsDTO(CourseHomeSectionStatus status, List<ItemDTO> items) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record Item(long postId, long conversationId, String title, long totalReplies, State state, @Nullable Long unreadReplies, Instant latestActivity,
+    public record ItemDTO(long postId, long conversationId, String title, long totalReplies, CourseHomeQuestionState state, @Nullable Long unreadReplies, Instant latestActivity,
             @Nullable Long focusReplyId) {
     }
 }
