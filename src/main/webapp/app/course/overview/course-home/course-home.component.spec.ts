@@ -4,6 +4,10 @@ import localeDe from '@angular/common/locales/de';
 import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
+import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -20,6 +24,9 @@ import de from '../../../../i18n/de/courseHome.json';
 describe('CourseHomeComponent', () => {
     let fixture: ComponentFixture<CourseHomeComponent>;
     let loads: Subject<CourseHome>[];
+    let reselections: Subject<void>;
+    let notifications: Subject<{ courseId: number }>;
+    const clock = { now: () => dayjs('2026-10-26T10:00:00Z') };
     let ai: Subject<CourseHomeGeneratedWelcome>;
     let route: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
     const user = signal<User | undefined>(undefined);
@@ -35,6 +42,8 @@ describe('CourseHomeComponent', () => {
     beforeEach(async () => {
         registerLocaleData(localeDe);
         loads = [];
+        reselections = new Subject();
+        notifications = new Subject();
         ai = new Subject();
         route = new BehaviorSubject(convertToParamMap({ courseId: '42' }));
         user.set({ id: 1, firstName: 'Alex', courseRoles: [{ courseId: 42, roles: ['STUDENT'] }], selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
@@ -60,6 +69,9 @@ describe('CourseHomeComponent', () => {
             imports: [CourseHomeComponent],
             providers: [
                 provideRouter([]),
+                { provide: ArtemisServerDateService, useValue: clock },
+                { provide: CourseTabRefreshService, useValue: { reselections: () => reselections } },
+                { provide: CourseNotificationWebsocketService, useValue: { websocketNotification$: notifications } },
                 provideTranslateService(),
                 { provide: ActivatedRoute, useValue: { parent: { paramMap: route }, pathFromRoot: [] } },
                 { provide: AccountService, useValue: { userIdentity: user, isAtLeastTutorInCourse: () => false } },
@@ -75,6 +87,7 @@ describe('CourseHomeComponent', () => {
         fixture.detectChanges();
     });
     afterEach(() => {
+        vi.useRealTimers();
         fixture.destroy();
         vi.clearAllMocks();
     });
@@ -170,5 +183,66 @@ describe('CourseHomeComponent', () => {
         expect(api.teachingTeam).toHaveBeenCalledWith(42, 0);
         expect(text()).toContain('Grace Hopper');
         expect(fixture.nativeElement.querySelectorAll('tumaet-ui-avatar').length).toBe(2);
+    });
+    it('refreshes on reselection without rotating or acknowledging another visit', async () => {
+        const initial = createCourseHomeFixture('first');
+        await render(initial);
+        const body = fixture.nativeElement.querySelector('[data-testid="home-welcome-body"]').textContent;
+        reselections.next();
+        expect(api.load).toHaveBeenLastCalledWith(42, initial.visit.newSince);
+        const refreshed = createCourseHomeFixture('first');
+        refreshed.visit.firstVisit = false;
+        refreshed.welcome.variantIndex = 0;
+        await render(refreshed);
+        expect(fixture.nativeElement.querySelector('[data-testid="home-welcome-body"]').textContent).toBe(body);
+        expect(text()).toContain('How we learn in this course');
+        expect(api.acknowledgeVisit).toHaveBeenCalledOnce();
+        expect(api.generateWelcome).not.toHaveBeenCalled();
+    });
+    it('coalesces current-course notifications and cancels a pending burst on destroy', async () => {
+        await render(createCourseHomeFixture('minimal'));
+        vi.useFakeTimers();
+        notifications.next({ courseId: 77 });
+        await vi.advanceTimersByTimeAsync(300);
+        expect(api.load).toHaveBeenCalledTimes(1);
+        notifications.next({ courseId: 42 });
+        notifications.next({ courseId: 42 });
+        await vi.advanceTimersByTimeAsync(299);
+        expect(api.load).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(api.load).toHaveBeenCalledTimes(2);
+        notifications.next({ courseId: 42 });
+        fixture.destroy();
+        await vi.advanceTimersByTimeAsync(300);
+        expect(api.load).toHaveBeenCalledTimes(2);
+    });
+    it('refreshes the selected action at a server-time boundary', async () => {
+        const home = createCourseHomeFixture('due-today');
+        home.nextRefreshAt = '2026-10-26T10:00:01Z';
+        vi.useFakeTimers();
+        loads.at(-1)!.next(home);
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(1100);
+        expect(api.load).toHaveBeenCalledTimes(2);
+        expect(api.load).toHaveBeenLastCalledWith(42, home.visit.newSince);
+    });
+    it('refreshes when the document becomes visible', async () => {
+        await render(createCourseHomeFixture('minimal'));
+        document.dispatchEvent(new Event('visibilitychange'));
+        expect(api.load).toHaveBeenCalledTimes(2);
+    });
+    it('retains deterministic text on AI failure and retries a failed core load', async () => {
+        loads[0].error(new Error('unavailable'));
+        fixture.detectChanges();
+        expect(text()).toContain('could not be loaded');
+        fixture.nativeElement.querySelector('button').click();
+        user.update((u) => ({ ...u!, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI }));
+        fixture.detectChanges();
+        await render(createCourseHomeFixture('first'));
+        ai.error(new Error('provider down'));
+        fixture.detectChanges();
+        expect(text()).toContain('Make this course your own');
+        expect(text()).not.toContain('AI-generated encouragement');
+        expect(api.acknowledgeVisit).toHaveBeenCalledOnce();
     });
 });

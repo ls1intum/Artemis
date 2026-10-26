@@ -128,12 +128,12 @@ describe('CourseIrisComponent', () => {
         expect(toggleChatHistory).toHaveBeenCalledOnce();
     });
 
-    it('should navigate to exercises when the user opts out of AI via the chat service', async () => {
+    it('should navigate to Home when the user opts out of AI via the chat service', async () => {
         await fixture.whenStable();
 
         llmOptedOutSubject.next();
 
-        expect(router.navigate).toHaveBeenCalledWith(['/courses', 123, 'exercises']);
+        expect(router.navigate).toHaveBeenCalledWith(['/courses', 123, 'home']);
     });
 
     it('should not navigate if the course id is not resolved yet when the opt-out event fires', async () => {
