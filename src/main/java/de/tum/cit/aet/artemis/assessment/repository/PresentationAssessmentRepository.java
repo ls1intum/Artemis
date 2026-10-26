@@ -71,7 +71,7 @@ public interface PresentationAssessmentRepository extends ArtemisJpaRepository<P
                 AND assessment.version = :expectedVersion
             """)
     int updateIfVersionMatches(@Param("assessmentId") long assessmentId, @Param("courseId") long courseId, @Param("expectedVersion") long expectedVersion,
-            @Param("title") String title, @Param("description") String description, @Param("maxPoints") double maxPoints, @Param("exercise") Exercise exercise);
+            @Param("title") String title, @Param("description") String description, @Param("maxPoints") Double maxPoints, @Param("exercise") Exercise exercise);
 
     /**
      * Increments the presentation assessment version if it still matches the expected version.

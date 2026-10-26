@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Every presentation is graded by one method. Existing presentations were all graded by points, so they become SCORE. The default also
+        keeps inserts of the previous version working, which do not know the column. Only SCORE presentations have maximum points.
+    -->
+    <changeSet id="20261026152205-01-add-presentation-grading-method" author="suckart">
+        <addColumn tableName="presentation_assessment">
+            <column name="grading_method" type="varchar(20)" defaultValue="SCORE"><constraints nullable="false"/></column>
+        </addColumn>
+        <dropNotNullConstraint tableName="presentation_assessment" columnName="max_points" columnDataType="double"/>
+    </changeSet>
+
+    <changeSet id="20261026152205-02-add-presentation-instance-results" author="suckart">
+        <addColumn tableName="presentation_assessment_instance">
+            <column name="passed" type="boolean"/>
+            <column name="rubric_score" type="double"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20261026152205-03-create-presentation-rubric" author="suckart">
+        <createTable tableName="presentation_rubric_criterion">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_presentation_rubric_criterion" nullable="false"/>
+            </column>
+            <column name="presentation_assessment_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="position" type="int"><constraints nullable="false"/></column>
+            <column name="name" type="varchar(255)"><constraints nullable="false"/></column>
+            <column name="description" type="varchar(1000)"/>
+            <column name="weight" type="int"><constraints nullable="false"/></column>
+            <column name="scale" type="varchar(20)"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="presentation_assessment_id" baseTableName="presentation_rubric_criterion"
+                                 constraintName="fk_presentation_rubric_criterion_assessment_id" referencedColumnNames="id"
+                                 referencedTableName="presentation_assessment" onDelete="CASCADE"/>
+        <createIndex indexName="uc_presentation_rubric_criterion_assessment_position" tableName="presentation_rubric_criterion" unique="true">
+            <column name="presentation_assessment_id"/>
+            <column name="position"/>
+        </createIndex>
+
+        <createTable tableName="presentation_rubric_level">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_presentation_rubric_level" nullable="false"/>
+            </column>
+            <column name="criterion_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="position" type="int"><constraints nullable="false"/></column>
+            <column name="description" type="varchar(1000)"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="criterion_id" baseTableName="presentation_rubric_level"
+                                 constraintName="fk_presentation_rubric_level_criterion_id" referencedColumnNames="id"
+                                 referencedTableName="presentation_rubric_criterion" onDelete="CASCADE"/>
+        <createIndex indexName="uc_presentation_rubric_level_criterion_position" tableName="presentation_rubric_level" unique="true">
+            <column name="criterion_id"/>
+            <column name="position"/>
+        </createIndex>
+
+        <createTable tableName="presentation_rubric_rating">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_presentation_rubric_rating" nullable="false"/>
+            </column>
+            <column name="instance_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="criterion_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="level_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="comment" type="varchar(1000)"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="instance_id" baseTableName="presentation_rubric_rating"
+                                 constraintName="fk_presentation_rubric_rating_instance_id" referencedColumnNames="id"
+                                 referencedTableName="presentation_assessment_instance" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseColumnNames="criterion_id" baseTableName="presentation_rubric_rating"
+                                 constraintName="fk_presentation_rubric_rating_criterion_id" referencedColumnNames="id"
+                                 referencedTableName="presentation_rubric_criterion" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseColumnNames="level_id" baseTableName="presentation_rubric_rating"
+                                 constraintName="fk_presentation_rubric_rating_level_id" referencedColumnNames="id"
+                                 referencedTableName="presentation_rubric_level" onDelete="CASCADE"/>
+        <createIndex indexName="uc_presentation_rubric_rating_instance_criterion" tableName="presentation_rubric_rating" unique="true">
+            <column name="instance_id"/>
+            <column name="criterion_id"/>
+        </createIndex>
+        <createIndex indexName="idx_presentation_rubric_rating_criterion_id" tableName="presentation_rubric_rating">
+            <column name="criterion_id"/>
+        </createIndex>
+        <createIndex indexName="idx_presentation_rubric_rating_level_id" tableName="presentation_rubric_rating">
+            <column name="level_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

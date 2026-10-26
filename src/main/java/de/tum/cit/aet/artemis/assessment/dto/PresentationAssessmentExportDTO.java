@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
  *
  * @param courseTitle       the title of the course the presentation belongs to
  * @param presentationTitle the title of the presentation
- * @param maxPoints         the maximum points of the presentation
+ * @param maxPoints         the maximum points of the presentation, or null if it is not graded by score
  * @param presentationDate  when the presentation took place
  * @param resultPoints      the achieved points, or null if the presentation has not been assessed yet
  * @param language          the language of the presentation
@@ -21,6 +21,6 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
  * @param remark            the remark the instructors entered about the presentation
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PresentationAssessmentExportDTO(String courseTitle, String presentationTitle, double maxPoints, ZonedDateTime presentationDate, Double resultPoints, String language,
+public record PresentationAssessmentExportDTO(String courseTitle, String presentationTitle, Double maxPoints, ZonedDateTime presentationDate, Double resultPoints, String language,
         PresentationAssessmentMode mode, String location, String meetingLink, String remark) {
 }

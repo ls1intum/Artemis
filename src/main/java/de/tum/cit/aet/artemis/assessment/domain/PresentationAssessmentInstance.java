@@ -34,6 +34,12 @@ public class PresentationAssessmentInstance extends DomainObject {
     @Column(name = "result_points")
     private Double resultPoints;
 
+    @Column(name = "passed")
+    private Boolean passed;
+
+    @Column(name = "rubric_score")
+    private Double rubricScore;
+
     @Column(name = "language", nullable = false, length = 10)
     private String language;
 
@@ -76,6 +82,22 @@ public class PresentationAssessmentInstance extends DomainObject {
 
     public void setResultPoints(Double resultPoints) {
         this.resultPoints = resultPoints;
+    }
+
+    public Boolean getPassed() {
+        return passed;
+    }
+
+    public void setPassed(Boolean passed) {
+        this.passed = passed;
+    }
+
+    public Double getRubricScore() {
+        return rubricScore;
+    }
+
+    public void setRubricScore(Double rubricScore) {
+        this.rubricScore = rubricScore;
     }
 
     public String getLanguage() {
