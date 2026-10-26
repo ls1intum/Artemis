@@ -17,7 +17,7 @@ import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/upd
 
 const VERSIONS: SecurityFrameworkVersions = {
     selectableVersions: ['3.4.1', '3.3.0', '3.2.2'],
-    templateVersions: { [ProjectType.PLAIN_GRADLE]: '3.2.2', [ProjectType.PLAIN_MAVEN]: '3.3.0' },
+    templateVersions: { [ProjectType.PLAIN_GRADLE]: '3.2.2', [ProjectType.PLAIN_MAVEN]: '3.3.0', [ProjectType.MAVEN_MAVEN]: '3.4.1' },
 };
 
 const inactiveConfig = (): SecurityFrameworkConfig => ({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '3.4.1' });
@@ -88,11 +88,11 @@ describe('ProgrammingExerciseSecurityComponent', () => {
 
     it('hides the card for the black-box project type, which runs its tests without Ares', () => {
         initCreate(ProgrammingLanguage.JAVA);
-        fixture.componentRef.setInput('selectedProjectType', ProjectType.MAVEN_BLACKBOX);
+        fixture.componentRef.setInput('projectType', ProjectType.MAVEN_BLACKBOX);
         fixture.detectChanges();
         expect(comp.isAvailable()).toBe(false);
 
-        fixture.componentRef.setInput('selectedProjectType', ProjectType.PLAIN_GRADLE);
+        fixture.componentRef.setInput('projectType', ProjectType.PLAIN_GRADLE);
         fixture.detectChanges();
         expect(comp.isAvailable()).toBe(true);
     });
@@ -104,11 +104,11 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         exercise.projectType = ProjectType.MAVEN_BLACKBOX;
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
-        fixture.componentRef.setInput('selectedProjectType', ProjectType.MAVEN_BLACKBOX);
+        fixture.componentRef.setInput('projectType', ProjectType.MAVEN_BLACKBOX);
         fixture.detectChanges();
         expect(service.getConfig).not.toHaveBeenCalled();
 
-        fixture.componentRef.setInput('selectedProjectType', ProjectType.PLAIN_GRADLE);
+        fixture.componentRef.setInput('projectType', ProjectType.PLAIN_GRADLE);
         fixture.detectChanges();
         expect(service.getConfig).toHaveBeenCalledOnce();
         expect(service.getConfig).toHaveBeenCalledWith(42);
@@ -149,13 +149,13 @@ describe('ProgrammingExerciseSecurityComponent', () => {
 
     it('follows the template version of the selected project type until the instructor picks a version', () => {
         initCreate();
-        fixture.componentRef.setInput('selectedProjectType', ProjectType.PLAIN_MAVEN);
+        fixture.componentRef.setInput('projectType', ProjectType.PLAIN_MAVEN);
         fixture.detectChanges();
         expect(comp.config().frameworkVersion).toBe('3.3.0');
 
         comp.onFrameworkVersionChanged('3.4.1');
         fixture.componentRef.setInput('stagedChoice', { active: true, frameworkVersion: '3.4.1' });
-        fixture.componentRef.setInput('selectedProjectType', ProjectType.PLAIN_GRADLE);
+        fixture.componentRef.setInput('projectType', ProjectType.PLAIN_GRADLE);
         fixture.detectChanges();
         expect(comp.config().frameworkVersion).toBe('3.4.1');
     });
@@ -164,6 +164,17 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         initEdit(activeConfig('2.0.0'));
         comp.onFrameworkVersionChanged('2.0.0');
         expect(service.updateFrameworkVersion).not.toHaveBeenCalled();
+    });
+
+    it('uses the template of the effective Maven project type, which differs with dependencies', () => {
+        initCreate();
+        fixture.componentRef.setInput('projectType', ProjectType.MAVEN_MAVEN);
+        fixture.detectChanges();
+        expect(comp.config().frameworkVersion).toBe('3.4.1');
+
+        fixture.componentRef.setInput('projectType', ProjectType.PLAIN_MAVEN);
+        fixture.detectChanges();
+        expect(comp.config().frameworkVersion).toBe('3.3.0');
     });
 
     it('activates an exercise that pins a no longer selectable version with the template version', () => {

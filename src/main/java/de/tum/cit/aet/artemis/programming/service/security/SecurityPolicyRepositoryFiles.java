@@ -6,13 +6,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.StringJoiner;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -47,21 +43,6 @@ public final class SecurityPolicyRepositoryFiles {
     private static final Pattern GRADLE_ARES_VERSION = Pattern.compile("(aresVersion\\s*=\\s*['\"])([^'\"]+)(['\"])");
 
     private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<]+)(</ares\\.version>)");
-
-    /** Matches the fully qualified {@code @Policy} annotation together with its arguments. */
-    private static final Pattern QUALIFIED_POLICY_ANNOTATION = Pattern.compile("(@de\\.tum\\.cit\\.ase\\.ares\\.api\\.Policy)\\b(?:\\s*\\(([^)]*)\\))?");
-
-    /** Matches the simple-name {@code @Policy} annotation; only applied to files that import the Ares annotation. */
-    private static final Pattern SIMPLE_POLICY_ANNOTATION = Pattern.compile("(@Policy)\\b(?:\\s*\\(([^)]*)\\))?");
-
-    private static final Pattern ARES_POLICY_IMPORT = Pattern.compile("^\\s*import\\s+de\\.tum\\.cit\\.ase\\.ares\\.api\\.Policy\\s*;", Pattern.MULTILINE);
-
-    /** A named annotation argument such as {@code activated = false}. */
-    private static final Pattern NAMED_ARGUMENT = Pattern.compile("^\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*(.*?)\\s*$", Pattern.DOTALL);
-
-    private static final String ACTIVATED_ARGUMENT = "activated";
-
-    private static final String VALUE_ARGUMENT = "value";
 
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w.]+)\\s*;", Pattern.MULTILINE);
 
@@ -122,10 +103,7 @@ public final class SecurityPolicyRepositoryFiles {
      * @return whether the file contains an Ares {@code @Policy} annotation with {@code activated = false}
      */
     public static boolean containsDeactivatedPolicyAnnotation(String javaSource) {
-        if (containsDeactivatedAnnotation(QUALIFIED_POLICY_ANNOTATION.matcher(javaSource))) {
-            return true;
-        }
-        return ARES_POLICY_IMPORT.matcher(javaSource).find() && containsDeactivatedAnnotation(SIMPLE_POLICY_ANNOTATION.matcher(javaSource));
+        return AresPolicyAnnotations.containsDeactivated(javaSource);
     }
 
     /**
@@ -142,20 +120,6 @@ public final class SecurityPolicyRepositoryFiles {
             }
         }
         return true;
-    }
-
-    private static boolean containsDeactivatedAnnotation(Matcher annotations) {
-        while (annotations.find()) {
-            if (!isActivated(parseArguments(annotations.group(2)))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean isActivated(Map<String, String> arguments) {
-        String activated = arguments.get(ACTIVATED_ARGUMENT);
-        return activated == null || !"false".equals(activated);
     }
 
     /**
@@ -259,100 +223,11 @@ public final class SecurityPolicyRepositoryFiles {
         int changedFiles = 0;
         for (Path javaFile : javaFiles(repositoryRoot)) {
             String content = readFile(javaFile);
-            String updated = QUALIFIED_POLICY_ANNOTATION.matcher(content).replaceAll(match -> Matcher.quoteReplacement(rewriteAnnotation(match, active)));
-            if (ARES_POLICY_IMPORT.matcher(updated).find()) {
-                updated = SIMPLE_POLICY_ANNOTATION.matcher(updated).replaceAll(match -> Matcher.quoteReplacement(rewriteAnnotation(match, active)));
-            }
-            if (writeIfChanged(javaFile, content, updated)) {
+            if (writeIfChanged(javaFile, content, AresPolicyAnnotations.setActive(content, active))) {
                 changedFiles++;
             }
         }
         return changedFiles;
-    }
-
-    /**
-     * Rewrites one annotation. An annotation that already has the requested state is returned unchanged, so no formatting changes are committed.
-     *
-     * @param match  the annotation, with its name in group 1 and its arguments, if any, in group 2
-     * @param active whether the annotation should enforce its policy
-     * @return the rewritten annotation
-     */
-    private static String rewriteAnnotation(MatchResult match, boolean active) {
-        String name = match.group(1);
-        Map<String, String> arguments = parseArguments(match.group(2));
-        if (isActivated(arguments) == active) {
-            return match.group();
-        }
-        if (active) {
-            arguments.remove(ACTIVATED_ARGUMENT);
-        }
-        else {
-            arguments.put(ACTIVATED_ARGUMENT, "false");
-        }
-        if (arguments.isEmpty()) {
-            return name;
-        }
-        StringJoiner rendered = new StringJoiner(", ", name + "(", ")");
-        arguments.forEach((argumentName, argumentValue) -> rendered.add(argumentName + " = " + argumentValue));
-        return rendered.toString();
-    }
-
-    /**
-     * Parses the arguments of an annotation into their names and source expressions, keeping their order. A single unnamed argument is the
-     * {@code value}, as in Java.
-     */
-    private static Map<String, String> parseArguments(@Nullable String arguments) {
-        Map<String, String> parsed = new LinkedHashMap<>();
-        if (arguments == null || arguments.isBlank()) {
-            return parsed;
-        }
-        for (String argument : splitTopLevel(arguments)) {
-            Matcher named = NAMED_ARGUMENT.matcher(argument);
-            if (named.matches()) {
-                parsed.put(named.group(1), named.group(2));
-            }
-            else if (!argument.isBlank()) {
-                parsed.put(VALUE_ARGUMENT, argument.strip());
-            }
-        }
-        return parsed;
-    }
-
-    /**
-     * Splits annotation arguments at the commas that are not part of a string or character literal.
-     */
-    private static List<String> splitTopLevel(String arguments) {
-        List<String> parts = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        char quote = 0;
-        boolean escaped = false;
-        for (char character : arguments.toCharArray()) {
-            if (quote != 0) {
-                current.append(character);
-                if (escaped) {
-                    escaped = false;
-                }
-                else if (character == '\\') {
-                    escaped = true;
-                }
-                else if (character == quote) {
-                    quote = 0;
-                }
-            }
-            else if (character == '"' || character == '\'') {
-                quote = character;
-                current.append(character);
-            }
-            else if (character == ',') {
-                parts.add(current.toString());
-                current.setLength(0);
-            }
-            else {
-                current.append(character);
-            }
-        }
-        parts.add(current.toString());
-        return parts;
     }
 
     /**
@@ -396,7 +271,7 @@ public final class SecurityPolicyRepositoryFiles {
     static List<String> findTestClasses(Path repositoryRoot) {
         List<String> testClasses = new ArrayList<>();
         for (Path javaFile : javaFiles(repositoryRoot)) {
-            String content = readFile(javaFile);
+            String content = AresPolicyAnnotations.mask(readFile(javaFile));
             if (!TEST_CLASS_MARKER.matcher(content).find()) {
                 continue;
             }

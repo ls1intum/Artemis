@@ -8,8 +8,11 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -52,10 +55,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkVersionsDTO;
+import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 
 /**
  * Tests {@link SecurityFrameworkService} against real git repositories: a bare repository stands in for the LocalVC tests repository, laid out like the
@@ -63,6 +70,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
  * run for real and the assertions see exactly what an instructor would find in the repository.
  */
 class SecurityFrameworkServiceTest {
+
+    private static final long SOLUTION_PARTICIPATION_ID = 5L;
 
     private static final Path MAIN_RESOURCES = Path.of("src", "main", "resources");
 
@@ -119,6 +128,8 @@ class SecurityFrameworkServiceTest {
     private ResourceLoaderService resourceLoaderService;
 
     private LocalVCServletService localVCServletService;
+
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private SecurityFrameworkService securityFrameworkService;
 
@@ -178,6 +189,7 @@ class SecurityFrameworkServiceTest {
         resourceLoaderService = mock(ResourceLoaderService.class);
         when(resourceLoaderService.getResource(any(Path.class))).thenAnswer(call -> new FileSystemResource(MAIN_RESOURCES.resolve(call.getArgument(0, Path.class))));
         localVCServletService = mock(LocalVCServletService.class);
+        programmingSubmissionRepository = mock(ProgrammingSubmissionRepository.class);
 
         securityFrameworkService = createService("2.3.0", "2.2.1");
     }
@@ -185,8 +197,12 @@ class SecurityFrameworkServiceTest {
     private SecurityFrameworkService createService(String... configuredVersions) {
         ProgrammingExerciseBuildConfigRepository buildConfigRepository = mock(ProgrammingExerciseBuildConfigRepository.class);
         when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(anyLong())).thenReturn(new ProgrammingExerciseBuildConfig());
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(SOLUTION_PARTICIPATION_ID);
+        SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
+        when(solutionParticipationRepository.findByProgrammingExerciseId(anyLong())).thenReturn(Optional.of(solutionParticipation));
         return new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository, resourceLoaderService,
-                Optional.of(localVCServletService), "main", configuredVersions);
+                Optional.of(localVCServletService), solutionParticipationRepository, programmingSubmissionRepository, "main", configuredVersions);
     }
 
     /**
@@ -414,11 +430,46 @@ class SecurityFrameworkServiceTest {
     void aChangeRunsThePushProcessingOfTheTestsRepository() throws Exception {
         securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user);
 
-        String pushedHead;
-        try (Git git = Git.open(remote.toFile())) {
-            pushedHead = git.getRepository().resolve("refs/heads/main").name();
-        }
+        String pushedHead = pushedHead();
         verify(localVCServletService).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
+    }
+
+    @Test
+    void aRetryResumesTheProcessingOfAChangeWhoseProcessingFailed() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(),
+                any());
+
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
+                .matches(exception -> "securityFrameworkProcessingFailed".equals(exception.getErrorKey()));
+        String pushedHead = pushedHead();
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+
+        // The retry finds nothing left to change, but the pushed change has not been processed yet.
+        doNothing().when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        SecurityFrameworkConfigDTO config = securityFrameworkService.deactivate(exercise, user);
+
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThat(pushedHead()).isEqualTo(pushedHead);
+        verify(localVCServletService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()),
+                eq(Optional.empty()));
+    }
+
+    @Test
+    void aRepeatedActionDoesNotProcessAnAlreadyProcessedChangeAgain() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        when(programmingSubmissionRepository.existsByParticipationIdAndCommitHash(SOLUTION_PARTICIPATION_ID, pushedHead())).thenReturn(true);
+
+        securityFrameworkService.deactivate(exercise, user);
+
+        verify(localVCServletService, times(1)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+    }
+
+    private String pushedHead() throws IOException {
+        try (Git git = Git.open(remote.toFile())) {
+            return git.getRepository().resolve("refs/heads/main").name();
+        }
     }
 
     @Test

@@ -52,6 +52,8 @@ import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStat
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkVersionsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyRepositoryFiles.BuildTool;
 
 /**
@@ -86,6 +88,9 @@ public class SecurityFrameworkService {
      */
     private static final Map<ProjectType, Path> TEMPLATE_BUILD_FILES = templateBuildFiles();
 
+    /** Marks the commits of this service, so a retry can tell an unprocessed change of its own from any other commit. */
+    private static final String COMMIT_TRAILER = "\n\nChanged-by: Artemis Security Framework";
+
     private final GitService gitService;
 
     private final BareGitRepositoryService bareGitRepositoryService;
@@ -100,10 +105,15 @@ public class SecurityFrameworkService {
 
     private final Optional<LocalVCServletService> localVCServletService;
 
+    private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     private final List<String> configuredFrameworkVersions;
 
     public SecurityFrameworkService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, TempFileUtilService tempFileUtilService,
             ProgrammingExerciseBuildConfigRepository buildConfigRepository, ResourceLoaderService resourceLoaderService, Optional<LocalVCServletService> localVCServletService,
+            SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             @Value("${artemis.version-control.default-branch:main}") String defaultBranch,
             @Value("${artemis.programming.security-framework.supported-versions:}") String[] configuredFrameworkVersions) {
         this.gitService = gitService;
@@ -112,6 +122,8 @@ public class SecurityFrameworkService {
         this.buildConfigRepository = buildConfigRepository;
         this.resourceLoaderService = resourceLoaderService;
         this.localVCServletService = localVCServletService;
+        this.solutionParticipationRepository = solutionParticipationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.defaultBranch = defaultBranch;
         this.configuredFrameworkVersions = Arrays.stream(configuredFrameworkVersions).map(String::trim).filter(version -> !version.isEmpty()).distinct().toList();
     }
@@ -267,9 +279,13 @@ public class SecurityFrameworkService {
             String checkedOutHead = gitService.getLocalHeadHash(repository);
             change.accept(repository);
             if (gitService.stageAllChanges(repository)) {
-                String commitHash = gitService.commitStagedChanges(repository, commitMessage, user);
+                String commitHash = gitService.commitStagedChanges(repository, commitMessage + COMMIT_TRAILER, user);
                 gitService.pushCommitWithLease(repository, commitHash, branch, checkedOutHead);
                 processPushToTestRepository(testRepositoryUri, branch, commitHash, user);
+            }
+            else if (checkedOutHead != null && isUnprocessedSecurityFrameworkCommit(exercise, repository, checkedOutHead)) {
+                // A retry after the processing of an earlier change failed: the change is already pushed, so resume its processing.
+                processPushToTestRepository(testRepositoryUri, branch, checkedOutHead, user);
             }
             return readConfig(repository);
         }
@@ -297,7 +313,29 @@ public class SecurityFrameworkService {
             try (Repository serverRepository = bareGitRepositoryService.getBareRepository(testRepositoryUri, branch, false)) {
                 servletService.processNewPush(commitHash, serverRepository, user, Optional.empty(), Optional.empty(), Optional.empty());
             }
+            catch (RuntimeException e) {
+                // The change itself is pushed. Retrying the same action resumes the processing, see isUnprocessedSecurityFrameworkCommit.
+                log.error("Could not process the Security Framework commit {} of the tests repository {}", commitHash, testRepositoryUri, e);
+                throw new InternalServerErrorAlertException("The Security Framework change was saved, but the builds could not be started. Please retry.", ENTITY_NAME,
+                        "securityFrameworkProcessingFailed");
+            }
         });
+    }
+
+    /**
+     * Processing a push creates a submission of the solution participation for the pushed tests commit, so a commit of this service without such a submission
+     * was pushed, but its processing failed.
+     *
+     * @return whether the head of the tests repository is a Security Framework commit whose processing has not happened
+     */
+    private boolean isUnprocessedSecurityFrameworkCommit(ProgrammingExercise exercise, Repository repository, String head) throws IOException {
+        try (RevWalk revWalk = new RevWalk(repository)) {
+            if (!revWalk.parseCommit(repository.resolve(head)).getFullMessage().contains(COMMIT_TRAILER.strip())) {
+                return false;
+            }
+        }
+        return solutionParticipationRepository.findByProgrammingExerciseId(exercise.getId())
+                .map(solutionParticipation -> !programmingSubmissionRepository.existsByParticipationIdAndCommitHash(solutionParticipation.getId(), head)).orElse(false);
     }
 
     private SecurityFrameworkConfigDTO readConfig(Repository repository) {

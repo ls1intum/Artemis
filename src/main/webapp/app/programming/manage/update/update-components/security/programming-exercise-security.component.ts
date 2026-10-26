@@ -68,8 +68,11 @@ export class ProgrammingExerciseSecurityComponent {
      * place, which a read through the exercise input alone would not pick up in a zoneless app).
      */
     readonly selectedProgrammingLanguage = input<ProgrammingLanguage | undefined>(undefined);
-    /** Selected project type, passed explicitly for the same reason as the language. */
-    readonly selectedProjectType = input<ProjectType | undefined>(undefined);
+    /**
+     * The exercise's effective project type (e.g. MAVEN_MAVEN rather than the PLAIN_MAVEN the project type picker shows), passed explicitly for the same
+     * reason as the language. It selects the template whose Ares version a new exercise starts with.
+     */
+    readonly projectType = input<ProjectType | undefined>(undefined);
     /** Create-mode choice the parent form holds, passed back in so it survives this card being re-created. */
     readonly stagedChoice = input<SecurityStagedChoice | undefined>(undefined);
     /** Emits the create-mode choice so the parent can apply it once the exercise has been created. */
@@ -83,7 +86,7 @@ export class ProgrammingExerciseSecurityComponent {
         return language !== undefined && ProgrammingExerciseSecurityComponent.SUPPORTED_LANGUAGES.has(language);
     });
     /** The black-box template runs its tests without Ares, so there is nothing to activate. */
-    readonly isSupportedProjectType = computed(() => (this.selectedProjectType() ?? this.programmingExercise().projectType) !== ProjectType.MAVEN_BLACKBOX);
+    readonly isSupportedProjectType = computed(() => (this.projectType() ?? this.programmingExercise().projectType) !== ProjectType.MAVEN_BLACKBOX);
     /** Whether the card is shown at all. */
     readonly isAvailable = computed(() => this.isSupportedLanguage() && this.isSupportedProjectType());
 
@@ -99,7 +102,7 @@ export class ProgrammingExerciseSecurityComponent {
      */
     readonly defaultVersion = computed(() => {
         const templateVersions = this.versions()?.templateVersions ?? {};
-        const projectType = this.selectedProjectType() ?? this.programmingExercise().projectType;
+        const projectType = this.projectType() ?? this.programmingExercise().projectType;
         return (projectType ? templateVersions[projectType] : undefined) ?? Object.values(templateVersions)[0] ?? this.latestVersion();
     });
 
