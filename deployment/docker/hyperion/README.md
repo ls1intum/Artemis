@@ -20,8 +20,8 @@ guarantee: core must fence the lost incarnation using the evidence it already ho
 ## Hyperion workload
 
 The normal Artemis WAR contains the generic AI Worker and Hyperion's workload.
-Build the WAR and the [AI Worker image](../aiworker/worker.Dockerfile) once. Set the
-worker's workload to `hyperion-generation`; the Hyperion adapter stays inactive
+The worker runs the normal Artemis image with the `prod,aiworker` profiles. Its
+workload defaults to `hyperion-generation`; the Hyperion adapter stays inactive
 for other workloads. Keep the worker process in an isolated VM.
 
 ## Offline Java Gradle build image

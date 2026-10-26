@@ -109,10 +109,11 @@ Never flush or replace the store under running writers.
 Build the normal Artemis WAR once per release with `./gradlew -Pprod -Pwar bootWar`.
 Use the same WAR for core nodes, build agents, and AI Workers. There is no separate
 worker WAR.
-The [worker image recipe](https://github.com/ls1intum/Artemis/blob/develop/deployment/docker/aiworker/worker.Dockerfile)
-sets worker launch defaults around that WAR and runs as UID 1000. It does not
-remove application classes from the WAR. It starts the normal `ArtemisApp` with
-`prod,aiworker` in a separate process. It uses the normal Artemis component scan.
+Run AI Workers from the normal Artemis image of the release (`ghcr.io/ls1intum/artemis:<version>`),
+as for Build Agents, with the Spring profiles `prod,aiworker`. Disable the image's HTTP
+health check, because a worker has no HTTP server, and give the container at least 6 GB
+of memory: the image starts the JVM with a 5 GB maximum heap. The worker starts the
+normal `ArtemisApp` in a separate process. It uses the normal Artemis component scan.
 Profiles and feature conditions select AI Worker services and the configured workload.
 The `aiworker` profile disables server modules, the HTTP server, and database services.
 The selected distributed-data provider supplies the shared client.
@@ -139,9 +140,6 @@ artemis:
     aiworker:
         id: worker-1
         image: registry.example/hyperion-java-gradle@sha256:<qualified-digest>
-        workload: hyperion-generation
-        workload-version: 1
-        profile: java-gradle
         max-concurrent-executions: 1
         runtime: runc
         memory-bytes: 2147483648
@@ -153,8 +151,9 @@ artemis:
 ```
 
 Replace the digest placeholder with the image's actual 64-digit SHA-256 digest.
-The environment-based entry point also accepts `AI_WORKER_ID`, `AI_WORKER_SANDBOX_IMAGE`,
-`AI_WORKER_WORKLOAD` and `AI_WORKER_PROFILE`. Configure provider access through
+The environment-based entry point also accepts `AI_WORKER_ID` and `AI_WORKER_SANDBOX_IMAGE`.
+The workload defaults to `hyperion-generation`, schema `1`, profile `java-gradle`; set
+`artemis.aiworker.workload` and `artemis.aiworker.profile` only for another installed workload. Configure provider access through
 Spring properties or a protected, read-only configuration mount.
 A mounted Spring configuration can supply the corresponding properties directly.
 

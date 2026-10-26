@@ -36,8 +36,9 @@ artemis:
     aiworker:
         id: ${AI_WORKER_ID}
         image: ${AI_WORKER_SANDBOX_IMAGE}
-        workload: ${AI_WORKER_WORKLOAD}
-        profile: ${AI_WORKER_PROFILE}
+        # Hyperion generation is the only shipped workload; override both only for another installed workload.
+        workload: ${AI_WORKER_WORKLOAD:hyperion-generation}
+        profile: ${AI_WORKER_PROFILE:java-gradle}
 management:
     tracing:
         sampling:
