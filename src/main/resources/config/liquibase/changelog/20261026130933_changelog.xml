@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Opt-in option for course programming exercises: students may start the exercise and push to their repository between the
+         release date and the start date. The default keeps existing exercises unchanged, and the previous version can still insert rows. -->
+    <changeSet id="20261026130933-01-allow-repository-access-before-start-date" author="dfuchss">
+        <addColumn tableName="programming_exercise_details">
+            <column name="allow_repository_access_before_start_date" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

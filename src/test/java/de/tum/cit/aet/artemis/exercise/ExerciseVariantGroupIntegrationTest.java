@@ -799,7 +799,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         GroupTimeline timeline = createGroupWithTimelineFor(programmingExercise.getId());
         ProgrammingExercise member = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
         ProgrammingExerciseTimelineUpdateDTO timelineUpdate = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), timeline.release().plusDays(2), null,
-                timeline.due().plusDays(2), member.getAssessmentType(), timeline.assessmentDue().plusDays(2), null, null);
+                timeline.due().plusDays(2), member.getAssessmentType(), timeline.assessmentDue().plusDays(2), null, null, null);
 
         request.put("/api/programming/programming-exercises/timeline", timelineUpdate, HttpStatus.BAD_REQUEST);
 

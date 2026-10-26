@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * @param allowOfflineIde                            whether a programming exercise can be cloned and worked on locally
  * @param staticCodeAnalysisEnabled                  whether a programming exercise reports static code analysis issues, which gates the code-issue counter
  *                                                       shown on the exercise header
+ * @param allowRepositoryAccessBeforeStartDate       whether a programming exercise can be started before its start date, which enables the start button; only
+ *                                                       sent when enabled
  * @param allowOnlineIde                             whether a programming exercise can be opened in the online IDE, read by the code button. This and the four
  *                                                       programming fields below are only populated when the exercise is projected from the entity (lecture exercise
  *                                                       units, whose row also opens the result and feedback views); the course overview query leaves them out on
@@ -68,7 +70,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Double maxPoints, Double bonusPoints, ZonedDateTime releaseDate, ZonedDateTime startDate,
         ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, AssessmentType assessmentType, DifficultyLevel difficulty, ExerciseMode mode, boolean teamMode,
         IncludedInOverallScore includedInOverallScore, Set<String> categories, Boolean presentationScoreEnabled, boolean allowFeedbackRequests, Boolean allowOnlineEditor,
-        Boolean allowOfflineIde, Boolean staticCodeAnalysisEnabled, Boolean allowOnlineIde, ProgrammingLanguage programmingLanguage,
+        Boolean allowOfflineIde, Boolean staticCodeAnalysisEnabled, Boolean allowRepositoryAccessBeforeStartDate, Boolean allowOnlineIde, ProgrammingLanguage programmingLanguage,
         ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, Boolean showTestNamesToStudents, Integer maxStaticCodeAnalysisPenalty, Boolean quizEnded,
         Set<QuizBatchOverviewDTO> quizBatches, Long studentAssignedTeamId, boolean studentAssignedTeamIdComputed, ExerciseVariantGroupReferenceDTO exerciseVariantGroup,
         Set<ParticipationOverviewDTO> studentParticipations) {
@@ -93,8 +95,9 @@ public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Doub
                 exercise.getMode(), exercise.isTeamMode(), exercise.getIncludedInOverallScore(), categories, exercise.getPresentationScoreEnabled(),
                 exercise.getAllowFeedbackRequests(), programmingExercise == null ? null : programmingExercise.isAllowOnlineEditor(),
                 programmingExercise == null ? null : programmingExercise.isAllowOfflineIde(),
-                programmingExercise == null ? null : programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise == null ? null : programmingExercise.isAllowOnlineIde(),
-                programmingExercise == null ? null : programmingExercise.getProgrammingLanguage(),
+                programmingExercise == null ? null : programmingExercise.isStaticCodeAnalysisEnabled(),
+                programmingExercise != null && programmingExercise.isAllowRepositoryAccessBeforeStartDate() ? Boolean.TRUE : null,
+                programmingExercise == null ? null : programmingExercise.isAllowOnlineIde(), programmingExercise == null ? null : programmingExercise.getProgrammingLanguage(),
                 programmingExercise == null ? null : programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(),
                 programmingExercise == null ? null : programmingExercise.getShowTestNamesToStudents(),
                 programmingExercise == null ? null : programmingExercise.getMaxStaticCodeAnalysisPenalty(), quizExercise == null ? null : quizExercise.isQuizEnded(), quizBatches,

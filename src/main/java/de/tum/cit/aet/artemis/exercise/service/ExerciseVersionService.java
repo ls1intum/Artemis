@@ -669,6 +669,8 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "programmingData.buildAndTestStudentSubmissionsAfterDueDate", newData, previousData,
                 ProgrammingExerciseSnapshotDTO::buildAndTestStudentSubmissionsAfterDueDate);
         addIfChanged(changedFields, "programmingData.releaseTestsWithExampleSolution", newData, previousData, ProgrammingExerciseSnapshotDTO::releaseTestsWithExampleSolution);
+        addIfChanged(changedFields, "programmingData.allowRepositoryAccessBeforeStartDate", newData, previousData,
+                ProgrammingExerciseSnapshotDTO::allowRepositoryAccessBeforeStartDate);
         addIfChanged(changedFields, "programmingData.buildConfig", newData, previousData, ProgrammingExerciseSnapshotDTO::buildConfig);
     }
 

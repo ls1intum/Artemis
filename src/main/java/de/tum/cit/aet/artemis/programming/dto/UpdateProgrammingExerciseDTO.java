@@ -56,6 +56,7 @@ public record UpdateProgrammingExerciseDTO(
         boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, ProgrammingLanguage programmingLanguage, String packageName,
         boolean showTestNamesToStudents, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, Boolean testCasesChanged, String projectKey,
         @Nullable SubmissionPolicyDTO submissionPolicy, @Nullable ProjectType projectType, boolean releaseTestsWithExampleSolution, @Nullable AssessmentType assessmentType,
+        boolean allowRepositoryAccessBeforeStartDate,
 
         // Build config
         UpdateProgrammingExerciseBuildConfigDTO buildConfig,
@@ -118,6 +119,6 @@ public record UpdateProgrammingExerciseDTO(
                 exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(), exercise.getPackageName(),
                 exercise.getShowTestNamesToStudents(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(), exercise.getProjectKey(),
                 submissionPolicyDTO, exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), exercise.getAssessmentType(),
-                UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), plagiarismDetectionConfigDTO);
+                exercise.isAllowRepositoryAccessBeforeStartDate(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), plagiarismDetectionConfigDTO);
     }
 }

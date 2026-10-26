@@ -25,8 +25,8 @@ public record ExerciseForCourseOverviewDTO(ExerciseType type, Long id, String ti
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, AssessmentType assessmentType,
         @Nullable DifficultyLevel difficulty, ExerciseMode mode, IncludedInOverallScore includedInOverallScore, @Nullable Boolean presentationScoreEnabled,
         boolean allowFeedbackRequests, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOfflineIde, @Nullable Boolean staticCodeAnalysisEnabled,
-        @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, @Nullable Long variantGroupId, @Nullable String variantGroupTitle,
-        @Nullable Double variantGroupMaxPoints, @Nullable ZonedDateTime variantGroupReleaseDate, @Nullable ZonedDateTime variantGroupStartDate,
+        @Nullable Boolean allowRepositoryAccessBeforeStartDate, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, @Nullable Long variantGroupId,
+        @Nullable String variantGroupTitle, @Nullable Double variantGroupMaxPoints, @Nullable ZonedDateTime variantGroupReleaseDate, @Nullable ZonedDateTime variantGroupStartDate,
         @Nullable ZonedDateTime variantGroupDueDate, @Nullable ZonedDateTime variantGroupAssessmentDueDate, @Nullable ZonedDateTime variantGroupExampleSolutionPublicationDate) {
 
     /**
@@ -36,14 +36,14 @@ public record ExerciseForCourseOverviewDTO(ExerciseType type, Long id, String ti
             @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, AssessmentType assessmentType,
             @Nullable DifficultyLevel difficulty, ExerciseMode mode, IncludedInOverallScore includedInOverallScore, @Nullable Boolean presentationScoreEnabled,
             boolean allowFeedbackRequests, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOfflineIde, @Nullable Boolean staticCodeAnalysisEnabled,
-            @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, @Nullable Long variantGroupId, @Nullable String variantGroupTitle,
-            @Nullable Double variantGroupMaxPoints, @Nullable ZonedDateTime variantGroupReleaseDate, @Nullable ZonedDateTime variantGroupStartDate,
-            @Nullable ZonedDateTime variantGroupDueDate, @Nullable ZonedDateTime variantGroupAssessmentDueDate,
+            @Nullable Boolean allowRepositoryAccessBeforeStartDate, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, @Nullable Long variantGroupId,
+            @Nullable String variantGroupTitle, @Nullable Double variantGroupMaxPoints, @Nullable ZonedDateTime variantGroupReleaseDate,
+            @Nullable ZonedDateTime variantGroupStartDate, @Nullable ZonedDateTime variantGroupDueDate, @Nullable ZonedDateTime variantGroupAssessmentDueDate,
             @Nullable ZonedDateTime variantGroupExampleSolutionPublicationDate) {
         this(ExerciseType.getExerciseTypeFromClass(type), id, title, maxPoints, bonusPoints, releaseDate, startDate, dueDate, assessmentDueDate, assessmentType, difficulty, mode,
                 includedInOverallScore, presentationScoreEnabled, allowFeedbackRequests, allowOnlineEditor, allowOfflineIde, staticCodeAnalysisEnabled,
-                buildAndTestStudentSubmissionsAfterDueDate, variantGroupId, variantGroupTitle, variantGroupMaxPoints, variantGroupReleaseDate, variantGroupStartDate,
-                variantGroupDueDate, variantGroupAssessmentDueDate, variantGroupExampleSolutionPublicationDate);
+                allowRepositoryAccessBeforeStartDate, buildAndTestStudentSubmissionsAfterDueDate, variantGroupId, variantGroupTitle, variantGroupMaxPoints, variantGroupReleaseDate,
+                variantGroupStartDate, variantGroupDueDate, variantGroupAssessmentDueDate, variantGroupExampleSolutionPublicationDate);
     }
 
     /**
@@ -59,6 +59,8 @@ public record ExerciseForCourseOverviewDTO(ExerciseType type, Long id, String ti
         Set<QuizBatchOverviewDTO> quizBatches = quizBatchStarted ? Set.of(QuizBatchOverviewDTO.STARTED) : Set.of();
         return new ExerciseOverviewDTO(type, id, title, maxPoints, bonusPoints, releaseDate, startDate, dueDate, assessmentDueDate, assessmentType, difficulty, mode, teamMode,
                 includedInOverallScore, categories, presentationScoreEnabled, allowFeedbackRequests, allowOnlineEditor, allowOfflineIde, staticCodeAnalysisEnabled,
+                // only sent when enabled, so the flag adds nothing to the payload of the many exercises without it
+                Boolean.TRUE.equals(allowRepositoryAccessBeforeStartDate) ? Boolean.TRUE : null,
                 // the programming configuration stays off the overview wire (see CourseOverviewLoadProfileTest); only lecture exercise units carry it
                 null, null, null, null, null, quizEnded, quizBatches, studentAssignedTeamId, teamMode, variantGroup, studentParticipations);
     }

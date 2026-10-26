@@ -32,7 +32,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
         String packageName, Boolean showTestNamesToStudents, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, String projectKey,
         ParticipationSnapshotDTO templateParticipation, ParticipationSnapshotDTO solutionParticipation, Set<ProgrammingExerciseTestCaseDTO> testCases,
         Set<ProgrammingExerciseTaskSnapshotDTO> tasks, Set<StaticCodeAnalysisCategorySnapshotDTO> staticCodeAnalysisCategories, SubmissionPolicySnapshotDTO submissionPolicy,
-        ProjectType projectType, Boolean releaseTestsWithExampleSolution, ProgrammingExerciseBuildConfigSnapshotDTO buildConfig,
+        ProjectType projectType, Boolean releaseTestsWithExampleSolution, Boolean allowRepositoryAccessBeforeStartDate, ProgrammingExerciseBuildConfigSnapshotDTO buildConfig,
         // Derivative fields for versioning
         String testsCommitId) implements Serializable {
 
@@ -90,7 +90,9 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
                 exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(),
                 exercise.getPackageName(), exercise.getShowTestNamesToStudents(), toUtc(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()), exercise.getProjectKey(),
                 templateParticipation, solutionParticipation, testCases, tasks, analysisCategories, SubmissionPolicySnapshotDTO.of(exercise.getSubmissionPolicy()),
-                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), ProgrammingExerciseBuildConfigSnapshotDTO.of(buildConfig), testCommitHash);
+                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(),
+                // null when disabled, so snapshots taken before the option existed do not differ from new ones
+                exercise.isAllowRepositoryAccessBeforeStartDate() ? Boolean.TRUE : null, ProgrammingExerciseBuildConfigSnapshotDTO.of(buildConfig), testCommitHash);
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

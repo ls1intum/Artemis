@@ -178,7 +178,7 @@ class CourseOverviewExerciseVisibilityTest {
 
     private static ExerciseForCourseOverviewDTO exercise(ExerciseType type, ZonedDateTime due, ZonedDateTime assessmentDue) {
         return new ExerciseForCourseOverviewDTO(type, 7L, "Exercise", 100.0, 0.0, PAST, PAST, due, assessmentDue, AssessmentType.AUTOMATIC, null, ExerciseMode.INDIVIDUAL,
-                IncludedInOverallScore.INCLUDED_COMPLETELY, false, true, true, true, false, null, null, null, null, null, null, null, null, null);
+                IncludedInOverallScore.INCLUDED_COMPLETELY, false, true, true, true, false, null, null, null, null, null, null, null, null, null, null);
     }
 
     private static ParticipationOverviewRowDTO row(long submissionId, ZonedDateTime submittedAt, Boolean submitted, ZonedDateTime individualDue, Long resultId, Boolean rated,

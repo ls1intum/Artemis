@@ -1414,7 +1414,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
             ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO templateParticipation, ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO solutionParticipation,
             List<ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO> auxiliaryRepositories) {
         return new ProgrammingExerciseSnapshotDTO(testRepositoryUri, auxiliaryRepositories, null, null, null, null, null, null, null, null, null, null, templateParticipation,
-                solutionParticipation, null, null, null, null, null, null, null, testsCommitId);
+                solutionParticipation, null, null, null, null, null, null, null, null, testsCommitId);
     }
 
     private RepoHistory createRepoWithTwoCommits(String suffix) throws Exception {

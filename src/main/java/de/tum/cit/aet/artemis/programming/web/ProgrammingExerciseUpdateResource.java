@@ -400,6 +400,8 @@ public class ProgrammingExerciseUpdateResource {
         exercise.setSubmissionPolicy(dto.submissionPolicy() == null ? null : dto.submissionPolicy().toEntity());
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
+        // only course exercises with a start date have a phase before the start date
+        exercise.setAllowRepositoryAccessBeforeStartDate(dto.allowRepositoryAccessBeforeStartDate() && exercise.isCourseExercise() && exercise.getStartDate() != null);
 
         // Update auxiliary repositories. Attached one by one rather than assigned as a collection: a repository
         // carries the key to its exercise, and one deserialized from the request body names none until it is attached,

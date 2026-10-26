@@ -747,7 +747,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         // Fields covered by addIfChanged calls in ExerciseVersionService.collectProgrammingChanges
         Set<String> coveredFields = Set.of("allowOnlineEditor", "allowOfflineIde", "allowOnlineIde", "maxStaticCodeAnalysisPenalty", "showTestNamesToStudents",
-                "auxiliaryRepositories", "buildAndTestStudentSubmissionsAfterDueDate", "releaseTestsWithExampleSolution", "buildConfig");
+                "auxiliaryRepositories", "buildAndTestStudentSubmissionsAfterDueDate", "releaseTestsWithExampleSolution", "allowRepositoryAccessBeforeStartDate", "buildConfig");
 
         // Fields intentionally excluded: not editable on the exercise edit page or handled separately
         Set<String> excludedFields = Set.of("testRepositoryUri", // not editable

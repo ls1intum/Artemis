@@ -92,6 +92,8 @@ public interface ProgrammingExerciseRequestDTO {
 
     Boolean releaseTestsWithExampleSolution();
 
+    Boolean allowRepositoryAccessBeforeStartDate();
+
     ProgrammingLanguage programmingLanguage();
 
     ProjectType projectType();
@@ -187,5 +189,8 @@ public interface ProgrammingExerciseRequestDTO {
         if (request.exerciseGroup() != null) {
             exercise.setExerciseGroup(request.exerciseGroup().toEntity());
         }
+        // only course exercises with a start date have a phase before the start date
+        exercise.setAllowRepositoryAccessBeforeStartDate(
+                Boolean.TRUE.equals(request.allowRepositoryAccessBeforeStartDate()) && request.exerciseGroup() == null && request.startDate() != null);
     }
 }

@@ -76,6 +76,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param maxStaticCodeAnalysisPenalty               the maximum static code analysis penalty
  * @param showTestNamesToStudents                    whether test names are shown to students
  * @param releaseTestsWithExampleSolution            whether tests are released with the example solution
+ * @param allowRepositoryAccessBeforeStartDate       whether students may work on their repository between the release and the start date
  * @param programmingLanguage                        the programming language
  * @param projectType                                the project type (build tool / IDE flavour)
  * @param buildConfig                                the build configuration; {@code null} yields 400 buildConfigMissing
@@ -97,8 +98,8 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
-        ProgrammingLanguage programmingLanguage, ProjectType projectType, UpdateProgrammingExerciseBuildConfigDTO buildConfig, Set<GradingCriterionDTO> gradingCriteria,
-        Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
+        Boolean allowRepositoryAccessBeforeStartDate, ProgrammingLanguage programmingLanguage, ProjectType projectType, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
+        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup)
         implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
@@ -136,8 +137,8 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
                 exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(),
                 exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
                 exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(),
-                exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig),
-                gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig,
+                exercise.isReleaseTestsWithExampleSolution(), exercise.isAllowRepositoryAccessBeforeStartDate(), exercise.getProgrammingLanguage(), exercise.getProjectType(),
+                UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig,
                 exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
                 exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()));
     }

@@ -251,6 +251,6 @@ class ExerciseReviewVersionChangeEdgeCasesTest {
     private static ProgrammingExerciseSnapshotDTO programming(String uri, String commit, ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO template,
             ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO solution, List<ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO> auxiliary) {
         return new ProgrammingExerciseSnapshotDTO(uri, auxiliary, null, null, null, null, null, null, null, null, null, null, template, solution, null, null, null, null, null,
-                null, null, commit);
+                null, null, null, commit);
     }
 }

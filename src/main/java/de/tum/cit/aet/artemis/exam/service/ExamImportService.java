@@ -560,6 +560,7 @@ public class ExamImportService {
         newExercise.setDueDate(null);
         newExercise.setAssessmentDueDate(null);
         newExercise.setExampleSolutionPublicationDate(null);
+        newExercise.setAllowRepositoryAccessBeforeStartDate(false);
 
         newExercise.forceNewProjectKey();
     }

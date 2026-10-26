@@ -174,6 +174,13 @@ public class ProgrammingExercise extends Exercise {
     private boolean releaseTestsWithExampleSolution = false;
 
     /**
+     * Whether students may start the exercise and clone and push their repository between the release date and the start date.
+     * Pushes in this phase trigger no build; Artemis builds the changed repositories once at the start date.
+     */
+    @Column(name = "allow_repository_access_before_start_date", table = "programming_exercise_details", nullable = false)
+    private boolean allowRepositoryAccessBeforeStartDate = false;
+
+    /**
      * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
      * @return The URI of the template repository as a String
@@ -322,6 +329,38 @@ public class ProgrammingExercise extends Exercise {
         return releaseTestsWithExampleSolution;
     }
 
+    public boolean isAllowRepositoryAccessBeforeStartDate() {
+        return allowRepositoryAccessBeforeStartDate;
+    }
+
+    public void setAllowRepositoryAccessBeforeStartDate(boolean allowRepositoryAccessBeforeStartDate) {
+        this.allowRepositoryAccessBeforeStartDate = allowRepositoryAccessBeforeStartDate;
+    }
+
+    /**
+     * Checks whether the exercise is currently in its early repository access phase, see {@link #isInEarlyRepositoryAccessPhase(ZonedDateTime)}.
+     *
+     * @return true if students may already work on their repository, but the exercise has not started yet
+     */
+    @JsonIgnore
+    public boolean isInEarlyRepositoryAccessPhase() {
+        return isInEarlyRepositoryAccessPhase(ZonedDateTime.now());
+    }
+
+    /**
+     * Checks whether the exercise is in its early repository access phase at the given time: the option is enabled, the exercise is a course exercise,
+     * it has been released (or has no release date) and its start date lies in the future.
+     *
+     * @param now the point in time to check
+     * @return true if students may already work on their repository, but the exercise has not started yet
+     */
+    @JsonIgnore
+    public boolean isInEarlyRepositoryAccessPhase(ZonedDateTime now) {
+        ZonedDateTime startDate = getStartDate();
+        ZonedDateTime releaseDate = getReleaseDate();
+        return allowRepositoryAccessBeforeStartDate && !isExamExercise() && startDate != null && now.isBefore(startDate) && (releaseDate == null || !releaseDate.isAfter(now));
+    }
+
     /**
      * Generates the full repository name for a given repository type.
      *
@@ -413,6 +452,7 @@ public class ProgrammingExercise extends Exercise {
         setMaxStaticCodeAnalysisPenalty(source.getMaxStaticCodeAnalysisPenalty());
         setShowTestNamesToStudents(source.getShowTestNamesToStudents());
         setReleaseTestsWithExampleSolution(source.isReleaseTestsWithExampleSolution());
+        setAllowRepositoryAccessBeforeStartDate(source.isAllowRepositoryAccessBeforeStartDate());
         // The fields below belong to Exercise. They stay here because the programming import service copies none of them either.
         setAssessmentType(source.getAssessmentType());
         setDifficulty(source.getDifficulty());

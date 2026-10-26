@@ -327,7 +327,7 @@ public class ExerciseVariantGroupService {
             @Nullable Duration originalBuildAndTestOffset) {
         ZonedDateTime buildAndTestDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
         ProgrammingExerciseTimelineUpdateDTO timelineUpdate = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), group.getReleaseDate(), group.getStartDate(),
-                group.getDueDate(), programmingExercise.getAssessmentType(), group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate(), buildAndTestDate);
+                group.getDueDate(), programmingExercise.getAssessmentType(), group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate(), buildAndTestDate, null);
         return programmingExerciseCreationUpdateService.updateTimeline(timelineUpdate, null, originalBuildAndTestOffset);
     }
 
