@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
@@ -871,5 +871,23 @@ describe('CourseManagementContainerComponent', () => {
         await component['initializeCourseManagementContainerComponent']();
 
         expect(subscribeSpy).toHaveBeenCalled();
+    });
+    it('broadcasts a successful course reset and clears the dialog error', () => {
+        vi.spyOn(courseAdminService, 'reset').mockReturnValue(of(new HttpResponse<void>()));
+        const broadcast = vi.spyOn(eventManager, 'broadcast');
+        const message = vi.spyOn(component.dialogErrorSource, 'next');
+        component.resetCourse(1);
+        expect(courseAdminService.reset).toHaveBeenCalledExactlyOnceWith(1);
+        expect(broadcast).toHaveBeenCalledExactlyOnceWith({ name: 'courseModification', content: 'artemisApp.course.reset' });
+        expect(message).toHaveBeenCalledExactlyOnceWith('');
+    });
+
+    it('keeps the reset dialog open with the failed reset message', () => {
+        vi.spyOn(courseAdminService, 'reset').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403, statusText: 'Forbidden' })));
+        const broadcast = vi.spyOn(eventManager, 'broadcast');
+        const message = vi.spyOn(component.dialogErrorSource, 'next');
+        component.resetCourse(1);
+        expect(message).toHaveBeenCalledWith(expect.stringContaining('403'));
+        expect(broadcast).not.toHaveBeenCalled();
     });
 });

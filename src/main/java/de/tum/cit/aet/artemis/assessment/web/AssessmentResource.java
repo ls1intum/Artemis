@@ -226,9 +226,12 @@ public abstract class AssessmentResource {
     protected ResponseEntity<Void> cancelAssessment(long submissionId, @Nullable Long resultId) {
         log.debug("REST request to cancel assessment of submission {} and result {}", submissionId, resultId);
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        // Examples and programming template/solution submissions are not ordinary student assessments.
+        if (!(submission.getParticipation() instanceof StudentParticipation studentParticipation)) {
+            throw new AccessForbiddenException();
+        }
         // The caller has to be a tutor of the course before anything about the assessment state is revealed.
         User user = userRepository.getUserWithAuthorities();
-        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
@@ -286,10 +289,13 @@ public abstract class AssessmentResource {
         log.info("REST request by user: {} to delete result {}", userRepository.getUser().getLogin(), resultId);
         // check authentication
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = submission.getParticipation();
+        if (participation == null) {
+            throw new AccessForbiddenException();
+        }
         Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         if (!participation.getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in path does not match the id of the participation to submission " + submissionId + "!", "Participation", "400");
         }

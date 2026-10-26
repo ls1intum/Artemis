@@ -514,4 +514,14 @@ describe('Exercise Groups Component', () => {
 
         expect(fixture.nativeElement.querySelector('#create-first-group')).toBeNull();
     });
+    it('retains existing groups when saving a rename fails', () => {
+        comp.exerciseGroups.set(groups);
+        comp.openGroupEditModal(0);
+        const error = vi.spyOn(alertService, 'error');
+        vi.spyOn(exerciseGroupService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        comp.onGroupEditSaved({ id: 0, title: 'Rejected title', isMandatory: true });
+        expect(exerciseGroupService.update).toHaveBeenCalledWith(456, 123, { id: 0, title: 'Rejected title', isMandatory: true });
+        expect(comp.exerciseGroups()).toEqual(groups);
+        expect(error).toHaveBeenCalledWith('error.http.403');
+    });
 });

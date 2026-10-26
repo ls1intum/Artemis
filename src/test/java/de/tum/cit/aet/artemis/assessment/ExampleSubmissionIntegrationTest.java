@@ -15,6 +15,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1005,6 +1006,69 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true, true));
         assertThat(example.getSubmission().getParticipation()).isNull();
         request.get("/api/modeling/modeling-submissions/" + example.getSubmission().getId() + "/result", HttpStatus.FORBIDDEN, ResultDTO.class);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "text, false", "text, true", "modeling, false", "modeling, true", "fileupload, false", "fileupload, true" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ordinaryCancelRejectsExampleSubmissionWithoutMutation(String route, boolean withResult) throws Exception {
+        ExampleSubmission example = exampleForOrdinaryAssessmentRoute(route);
+        Result result = withResult ? addExampleResult(example) : null;
+        long submissionId = example.getSubmission().getId();
+        if (route.equals("text")) {
+            request.postWithoutResponseBody("/api/text/participations/0/submissions/" + submissionId + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
+        }
+        else {
+            String submissionType = route.equals("modeling") ? "modeling" : "file-upload";
+            request.put("/api/" + route + "/" + submissionType + "-submissions/" + submissionId + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
+        }
+        assertExampleUnchanged(example, result);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "text", "modeling", "fileupload" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ordinaryDeleteRejectsExampleSubmissionWithoutMutation(String route) throws Exception {
+        ExampleSubmission example = exampleForOrdinaryAssessmentRoute(route);
+        Result result = addExampleResult(example);
+        String submissionType = route.equals("fileupload") ? "file-upload" : route;
+        request.delete("/api/" + route + "/participations/0/" + submissionType + "-submissions/" + example.getSubmission().getId() + "/results/" + result.getId(),
+                HttpStatus.FORBIDDEN);
+        assertExampleUnchanged(example, result);
+    }
+
+    private ExampleSubmission exampleForOrdinaryAssessmentRoute(String route) {
+        // File-upload's generic submission loader also accepts an existing modeling example ID.
+        boolean text = route.equals("text");
+        ExampleSubmission example = participationUtilService
+                .addExampleSubmission(participationUtilService.generateExampleSubmission(text ? "Example text" : validModel, text ? textExercise : modelingExercise, true, true));
+        assertThat(example.getSubmission().getParticipation()).isNull();
+        return example;
+    }
+
+    private Result addExampleResult(ExampleSubmission example) {
+        Result result = new Result().submission(example.getSubmission()).assessmentType(AssessmentType.MANUAL).score(50D).rated(true);
+        result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        result.setExerciseId(example.getExercise().getId());
+        result.setExampleResult(true);
+        return resultRepository.save(result);
+    }
+
+    private void assertExampleUnchanged(ExampleSubmission example, Result result) {
+        Submission stored = submissionRepository.findByIdWithResultsElseThrow(example.getSubmission().getId());
+        assertThat(stored.getParticipation()).isNull();
+        assertThat(stored.isExampleSubmission()).isTrue();
+        assertThat(exampleSubmissionRepository.findBySubmissionId(stored.getId())).isPresent();
+        if (result == null) {
+            assertThat(stored.getResults()).isEmpty();
+        }
+        else {
+            assertThat(stored.getResults()).extracting(Result::getId).containsExactly(result.getId());
+            Result storedResult = resultRepository.findByIdElseThrow(result.getId());
+            assertThat(storedResult.getAssessor().getId()).isEqualTo(result.getAssessor().getId());
+            assertThat(storedResult.getScore()).isEqualTo(50D);
+            assertThat(storedResult.isExampleResult()).isTrue();
+        }
     }
 
 }

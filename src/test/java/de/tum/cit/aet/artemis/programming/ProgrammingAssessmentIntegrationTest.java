@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
@@ -846,6 +847,20 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         return resultRepository.save(manualResult);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void cancelAssessmentRejectsTemplateAndSolutionSubmissionsWithoutMutation(boolean solution) throws Exception {
+        var participation = solution ? programmingExercise.getSolutionParticipation() : programmingExercise.getTemplateParticipation();
+        ProgrammingSubmission submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
+        assertThat(submission.getParticipation()).isNotInstanceOf(StudentParticipation.class);
+        request.put("/api/programming/programming-submissions/" + submission.getId() + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
+        Submission stored = submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        assertThat(stored.getParticipation().getId()).isEqualTo(participation.getId());
+        assertThat(stored.getResults()).isEmpty();
+        assertThat(((ProgrammingSubmission) stored).getCommitHash()).isEqualTo(submission.getCommitHash());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void cancelOwnAssessmentAsStudent() throws Exception {
@@ -1559,6 +1574,24 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(testCaseFeedbackRepository.findById(retainedFeedback.getId())).isPresent();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = CourseRole.class, names = { "STUDENT", "TEACHING_ASSISTANT", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deleteAssessmentChecksInstructorRoleBeforeLookingUpResult(CourseRole role) throws Exception {
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        User caller = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, course, role);
+        Submission before = submissionRepository.findByIdWithResultsElseThrow(programmingSubmission.getId());
+        List<Long> resultIds = before.getResults().stream().map(Result::getId).toList();
+        request.delete("/api/programming/participations/" + before.getParticipation().getId() + "/programming-submissions/" + before.getId() + "/results/" + Long.MAX_VALUE,
+                HttpStatus.FORBIDDEN);
+        Submission stored = submissionRepository.findByIdWithResultsElseThrow(before.getId());
+        assertThat(stored.getParticipation().getId()).isEqualTo(before.getParticipation().getId());
+        assertThat(stored.getResults()).extracting(Result::getId).containsExactlyInAnyOrderElementsOf(resultIds);
+        assertThat(((ProgrammingSubmission) stored).getCommitHash()).isEqualTo(programmingSubmission.getCommitHash());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void deleteAssessmentOfOtherTutorAsTutor() throws Exception {
@@ -1601,6 +1634,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
+        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + Long.MAX_VALUE,
+                HttpStatus.NOT_FOUND);
+        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + Long.MAX_VALUE + "/results/"
+                + submission.getFirstResult().getId(), HttpStatus.NOT_FOUND);
         Result resultToDelete = resultsInCreationOrder(submission).get(0);
         Result secondResult = resultsInCreationOrder(submission).get(1);
         Result thirdResult = resultsInCreationOrder(submission).get(2);

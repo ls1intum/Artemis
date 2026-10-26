@@ -344,4 +344,40 @@ describe('Participation Service', () => {
     afterEach(() => {
         httpMock.verify();
     });
+    it('starts a quiz and converts nested response dates for the participation page', () => {
+        service.startQuizParticipation(7).subscribe((response) => {
+            expect(response.body?.id).toBe(9);
+            expect(dayjs.isDayjs(response.body?.initializationDate)).toBe(true);
+            expect(dayjs.isDayjs(response.body?.submissions?.[0].submissionDate)).toBe(true);
+            expect(dayjs.isDayjs(response.body?.exercise?.dueDate)).toBe(true);
+        });
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/quiz-exercises/7/start-participation' });
+        expect(req.request.body).toEqual({});
+        req.flush({ id: 9, initializationDate: '2026-01-01T10:00:00Z', submissions: [{ submissionDate: '2026-01-01T10:00:00Z' }], exercise: { dueDate: '2026-01-02T10:00:00Z' } });
+    });
+
+    it.each([undefined, 11])('loads the selected quiz result with optional submission %s', (submissionId) => {
+        service.getQuizParticipationResult(7, 9, submissionId).subscribe((response) => expect(response.body?.submissions?.[0].results?.[0].score).toBe(80));
+        const req = httpMock.expectOne((r) => r.url === 'api/quiz/quiz-exercises/7/participations/9/result');
+        expect(req.request.params.get('submissionId')).toBe(submissionId === undefined ? null : '11');
+        req.flush({ id: 9, submissions: [{ id: 11, results: [{ id: 12, score: 80 }] }] });
+    });
+
+    it('keeps ordinary and test-run student work separate with participant display identifiers', () => {
+        const original: StudentParticipation = { id: 7, type: ParticipationType.STUDENT, participantName: 'Alice', participantIdentifier: 'alice', submissions: [{ id: 8 }] };
+        const practice: StudentParticipation = {
+            id: 9,
+            type: ParticipationType.STUDENT,
+            testRun: true,
+            participantName: 'Practice',
+            participantIdentifier: 'practice',
+            submissions: [{ id: 10 }],
+        };
+        const merged = service.mergeStudentParticipations([original, practice]);
+        expect(merged).toHaveLength(2);
+        expect(merged[0]).toMatchObject({ id: 7, participantName: 'Alice', participantIdentifier: 'alice', submissions: [{ id: 8 }] });
+        expect(merged[1]).toMatchObject({ id: 9, testRun: true, participantName: 'Practice', participantIdentifier: 'practice', submissions: [{ id: 10 }] });
+        expect(merged[0].submissions?.[0].participation).toBe(merged[0]);
+        expect(merged[1].submissions?.[0].participation).toBe(merged[1]);
+    });
 });

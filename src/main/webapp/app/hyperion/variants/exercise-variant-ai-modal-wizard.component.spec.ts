@@ -144,6 +144,41 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         expect(request.domainText).toBe('banking');
     });
 
+    it('shows a rejected start request as an analyzing failure without a completed variant', () => {
+        fixture.detectChanges();
+        component.changeDomain.set(true);
+        component.domainText.set('banking');
+        generationServiceMock.startGeneration.mockReturnValue(throwError(() => new Error('Unavailable')));
+        component.startGeneration();
+        fixture.detectChanges();
+        expect(component.failurePhase()).toBe('ANALYZING');
+        expect(component.failureDetail()).toBe('artemisApp.exerciseVariantGeneration.wizard.startFailed');
+        expect(component.jobPhase()).toBe('FAILED');
+        expect(component.wizardStep()).toBe(5);
+        expect(component.jobId()).toBeUndefined();
+    });
+
+    it('retains the failing live phase and failure detail when a monitored job fails', () => {
+        const events = new Subject<import('app/hyperion/services/exercise-variant-websocket.service').VariantGenerationEvent>();
+        generationServiceMock.jobEvents.mockReturnValue(events);
+        fixture.detectChanges();
+        component.changeDomain.set(true);
+        component.domainText.set('banking');
+        component.startGeneration();
+        events.next({ type: 'PHASE_CHANGED', phase: 'VERIFYING' });
+        events.next({ type: 'ATTEMPT', attempt: 1, maxAttempts: 3, detail: 'Checking build' });
+        events.next({ type: 'PHASE_CHANGED', phase: 'ANALYZING' });
+        expect(component.attempt()).toBeUndefined();
+        expect(component.progressDetail()).toBeUndefined();
+        events.next({ type: 'FAILED', phase: 'FAILED', detail: 'Build could not be repaired' });
+        fixture.detectChanges();
+        expect(component.failurePhase()).toBe('ANALYZING');
+        expect(component.failureDetail()).toBe('Build could not be repaired');
+        expect(component.jobPhase()).toBe('FAILED');
+        expect(component.wizardStep()).toBe(5);
+        expect(generationServiceMock.getJobDetail).toHaveBeenCalledWith('job-exam');
+    });
+
     afterEach(() => {
         fixture.destroy();
         TestBed.resetTestingModule();

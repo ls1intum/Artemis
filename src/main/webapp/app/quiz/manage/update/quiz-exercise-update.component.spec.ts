@@ -2523,4 +2523,15 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.isSaveTooltipDisabled()).toBe(false);
         });
     });
+    it('clears a dismissed global refinement draft and its busy indicator', async () => {
+        await configureTestBed();
+        configureFixtureAndServices();
+        comp.globalRefinementPrompt.set('Clarify all questions');
+        comp.isGlobalRefining.set(true);
+        comp.isRefinementFabOpen.set(true);
+        comp.closeRefinementFab();
+        expect(comp.globalRefinementPrompt()).toBe('');
+        expect(comp.isGlobalRefining()).toBe(false);
+        expect(comp.isRefinementFabOpen()).toBe(false);
+    });
 });

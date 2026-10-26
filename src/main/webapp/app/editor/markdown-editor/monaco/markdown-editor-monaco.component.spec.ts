@@ -342,7 +342,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(dragOver.defaultPrevented).toBe(true);
         expect(drop.defaultPrevented).toBe(true);
         await vi.waitFor(() => expect(insertAttachment).toHaveBeenCalledOnce());
-        expect(upload).toHaveBeenCalledExactlyOnceWith(file);
+        expect(upload).toHaveBeenCalledExactlyOnceWith(file, undefined);
         expect(insertAttachment).toHaveBeenCalledWith({ text: 'image.png', url: '/files/dropped-image.png' });
     });
 

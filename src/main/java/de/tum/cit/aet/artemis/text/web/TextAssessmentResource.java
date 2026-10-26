@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -368,6 +369,9 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long participationId, @PathVariable Long submissionId,
             @RequestParam(value = "resultId", required = false) Long resultId) {
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        if (submission.getParticipation() == null) {
+            throw new AccessForbiddenException();
+        }
         if (!submission.getParticipation().getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
                     "participationIdMismatch");

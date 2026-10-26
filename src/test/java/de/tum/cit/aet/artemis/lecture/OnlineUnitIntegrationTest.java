@@ -7,8 +7,12 @@ import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
 import java.util.List;
@@ -29,11 +33,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
+import org.springframework.test.util.AopTestUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
+import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinuteAspect;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -66,6 +79,9 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     @Autowired
     private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private LimitRequestsPerMinuteAspect requestLimitAspect;
 
     private Lecture lecture1;
 
@@ -373,6 +389,44 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         assertThat(onlineResourceDTO.url()).isEqualTo(url);
         assertThat(onlineResourceDTO.title()).isNull();
         assertThat(onlineResourceDTO.description()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void getOnlineResource_excessRequestsAreRejectedBeforeAnotherFetch() throws Exception {
+        persistOnlineUnitWithLecture();
+        long unitsBefore = onlineUnitRepository.count();
+        String link = "https://example.com";
+        var connection = mock(Connection.class);
+        jsoupMock.when(() -> Jsoup.connect(link)).thenReturn(connection);
+        when(connection.timeout(anyInt())).thenReturn(connection);
+        when(connection.maxBodySize(anyInt())).thenReturn(connection);
+        when(connection.get()).thenReturn(new Document(link));
+
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setAuthenticationRequestsPerMinute(1);
+        var features = mock(FeatureToggleService.class);
+        when(features.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features);
+        Object aspectTarget = AopTestUtils.getUltimateTargetObject(requestLimitAspect);
+        Object originalLimiter = ReflectionTestUtils.getField(aspectTarget, "rateLimitService");
+        try {
+            ReflectionTestUtils.setField(aspectTarget, "rateLimitService", limiter);
+            request.performMvcRequest(
+                    get("/api/lecture/lectures/online-units/fetch-online-resource").param("link", link).param("courseId", lecture1.getCourse().getId().toString()))
+                    .andExpect(status().isOk());
+            request.performMvcRequest(
+                    get("/api/lecture/lectures/online-units/fetch-online-resource").param("link", link).param("courseId", lecture1.getCourse().getId().toString()))
+                    .andExpect(status().isTooManyRequests()).andExpect(header().exists("Retry-After"));
+            verify(connection, times(1)).get();
+            assertThat(onlineUnitRepository.count()).isEqualTo(unitsBefore);
+            assertThat(onlineUnitRepository.findById(onlineUnit.getId()).orElseThrow().getSource()).isEqualTo(onlineUnit.getSource());
+        }
+        finally {
+            ReflectionTestUtils.setField(aspectTarget, "rateLimitService", originalLimiter);
+        }
+        assertThat(ReflectionTestUtils.getField(aspectTarget, "rateLimitService")).isSameAs(originalLimiter);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

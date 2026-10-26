@@ -210,6 +210,88 @@ describe('QuizParticipationComponent - live mode', () => {
         vi.restoreAllMocks();
     });
 
+    it.each([false, true])('autosaves changed answers and retains dirty state only on failure=%s', (failed) => {
+        fixture.detectChanges();
+        component.selectedAnswerOptions().set(2, [{ id: 1, invalid: false }]);
+        component.onSelectionChanged();
+        const alerts = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        component.triggerSave();
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/exercises/1/submissions/live?submit=false' });
+        expect(req.request.body.submittedAnswers).toEqual(expect.arrayContaining([expect.objectContaining({ selectedOptions: [{ id: 1, invalid: false }] })]));
+        if (failed) req.flush({}, { status: 400, statusText: 'Bad Request' });
+        else req.flush({ id: 7, submissionDate: now.toISOString() });
+        expect(component.unsavedChanges()).toBe(failed);
+        expect(component.isSubmitting()).toBe(false);
+        if (failed) expect(alerts).toHaveBeenCalledOnce();
+        else expect(alerts).not.toHaveBeenCalled();
+    });
+
+    it('submits live answers and emits the confirmed submission once', () => {
+        fixture.detectChanges();
+        component.remainingTimeSeconds.set(10);
+        component.selectedAnswerOptions().set(2, [{ id: 1, invalid: false }]);
+        component.unsavedChanges.set(true);
+        const emitted: QuizSubmission[] = [];
+        component.quizSubmittedEvent.subscribe((submission) => emitted.push(submission));
+        component.submitExercise();
+        expect(component.isSubmitting()).toBe(true);
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/exercises/1/submissions/live?submit=true' });
+        expect(req.request.body.submittedAnswers).toEqual(expect.arrayContaining([expect.objectContaining({ selectedOptions: [{ id: 1, invalid: false }] })]));
+        req.flush({ id: 7, submitted: true, submittedAnswers: [], submissionDate: now.toISOString() });
+        expect(component.isSubmitting()).toBe(false);
+        expect(component.unsavedChanges()).toBe(false);
+        expect(emitted).toEqual([expect.objectContaining({ id: 7, submitted: true })]);
+    });
+
+    it('updates a waiting batch from websocket channels and displays its result', () => {
+        fixture.detectChanges();
+        component.waitingForQuizStart.set(true);
+        component.quizBatch.set({ id: 9, started: false });
+        component.subscribeToWebsocketChannels();
+        const websocket = TestBed.inject(WebsocketService) as WebsocketService & Pick<MockWebsocketService, 'emit'>;
+        const started = { ...quizExercise, quizMode: QuizMode.BATCHED, quizBatches: [{ id: 9, started: true, startTime: now }], quizStarted: true };
+        websocket.emit('/topic/courses/1/quizExercises/9', started);
+        expect(component.waitingForQuizStart()).toBe(false);
+        expect(component.quizExercise().quizQuestions).toHaveLength(3);
+        const received: StudentParticipation[] = [];
+        component.liveQuizResultParticipation.subscribe((participation) => received.push(participation));
+        websocket.emit('/user/topic/exercise/1/participation', {
+            exercise: { ...started, quizEnded: true },
+            submissions: [{ id: 7, submitted: true, submittedAnswers: [], results: [{ id: 8, score: 80 }] }],
+        });
+        expect(component.showingResult()).toBe(true);
+        expect(component.result()?.id).toBe(8);
+        expect(received).toHaveLength(1);
+        expect(received[0].submissions?.[0].id).toBe(7);
+    });
+
+    it.each([false, true])('joins a password-protected batch and starts only when ready=%s', (started) => {
+        fixture.detectChanges();
+        component.password = 'quiz-secret';
+        vi.spyOn(quizExerciseService, 'join').mockReturnValue(of(new HttpResponse({ body: { id: 9, started } })));
+        const refresh = vi
+            .spyOn(quizExerciseService, 'findForStudent')
+            .mockReturnValue(of(new HttpResponse({ body: { ...quizExercise, quizBatches: [{ id: 9, started, startTime: now }] } })));
+        refresh.mockClear();
+        component.joinBatch();
+        expect(quizExerciseService.join).toHaveBeenCalledExactlyOnceWith(1, 'quiz-secret');
+        if (!started) expect(component.quizBatch()?.id).toBe(9);
+        expect(refresh).toHaveBeenCalledTimes(started ? 1 : 0);
+        if (!started) expect(component.quizBatch()?.started).toBe(false);
+    });
+
+    it('shows a rejected password join without replacing the current batch', () => {
+        fixture.detectChanges();
+        const previous = component.quizBatch();
+        const alerts = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        component.password = 'wrong';
+        component.joinBatch();
+        const req = httpMock.expectOne((r) => r.url.includes('/join'));
+        req.flush({}, { status: 403, statusText: 'Forbidden', headers: { 'X-artemisApp-message': 'Wrong password' } });
+        expect(component.quizBatch()).toBe(previous);
+        expect(alerts).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Wrong password'), disableTranslation: true }));
+    });
+
     it('should initialize', () => {
         fixture.detectChanges();
         expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);

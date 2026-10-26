@@ -366,4 +366,29 @@ describe('TextAssessment Service', () => {
     afterEach(() => {
         httpMock.verify();
     });
+    it('converts nested dates and applies exercise access rights after resolving a complaint', () => {
+        const access = vi.spyOn(TestBed.inject(AccountService), 'setAccessRightsForExercise');
+        service.updateAssessmentAfterComplaint([], [], new ComplaintResponse(), 8, 9).subscribe((response) => {
+            expect(response.body?.completionDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            const participation = response.body?.submission?.participation;
+            expect(response.body?.submission?.submissionDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            expect(participation?.initializationDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            expect(participation?.individualDueDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            expect(access).toHaveBeenCalledWith(participation?.exercise);
+        });
+        httpMock.expectOne({ method: 'PUT', url: 'api/text/participations/9/submissions/8/text-assessment-after-complaint' }).flush({
+            id: 7,
+            completionDate: '2026-10-25T08:00:00Z',
+            submission: {
+                id: 8,
+                submissionDate: '2026-10-25T08:00:00Z',
+                participation: {
+                    id: 9,
+                    initializationDate: '2026-10-25T08:00:00Z',
+                    individualDueDate: '2026-10-25T08:00:00Z',
+                    exercise: { id: 20, type: ExerciseType.TEXT },
+                },
+            },
+        });
+    });
 });

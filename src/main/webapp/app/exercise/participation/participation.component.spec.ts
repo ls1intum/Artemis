@@ -11,7 +11,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
@@ -1167,5 +1167,21 @@ describe('ParticipationComponent', () => {
         it('should build a participation without submissions when there is none', () => {
             expect(component.toParticipation(sampleDto).submissions).toHaveLength(0);
         });
+    });
+    it('reports the current page failure while ignoring failure of an older request', () => {
+        const first = new Subject<PageableResult<ParticipationManagementDTO>>();
+        const current = new Subject<PageableResult<ParticipationManagementDTO>>();
+        vi.spyOn(participationService, 'searchParticipations').mockReturnValueOnce(first).mockReturnValueOnce(current);
+        const alert = vi.spyOn(alertService, 'error');
+        component.onLazyLoad({ first: 0, rows: 50, sortField: 'id' });
+        component.onLazyLoad({ first: 50, rows: 50, sortField: 'id' });
+        current.next({ content: [sampleDto], totalElements: 51 });
+        first.error(new HttpErrorResponse({ status: 403 }));
+        expect(component.participations()).toEqual([sampleDto]);
+        expect(alert).not.toHaveBeenCalled();
+        current.error(new HttpErrorResponse({ status: 403 }));
+        expect(alert).toHaveBeenCalledExactlyOnceWith('artemisApp.participation.loadError');
+        expect(component.isLoading()).toBe(false);
+        expect(component.participations()).toEqual([sampleDto]);
     });
 });

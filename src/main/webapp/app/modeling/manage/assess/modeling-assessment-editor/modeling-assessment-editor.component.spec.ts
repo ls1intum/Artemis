@@ -1011,4 +1011,50 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(banner.query(By.css('.feedback-suggestions-chrome'))).toBeNull();
         });
     });
+    it('rejects overlong feedback before saving or submitting an assessment', () => {
+        component.result.set({ id: 7 });
+        component.submission.set({ id: 8 });
+        component.unreferencedFeedback.set([{ text: 'x'.repeat(501), credits: 1 }]);
+        const save = vi.spyOn(service, 'saveAssessment');
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        component.onSaveAssessment();
+        component['submitAssessment']();
+        expect(save).not.toHaveBeenCalled();
+        expect(alert).toHaveBeenCalledTimes(2);
+        expect(alert).toHaveBeenLastCalledWith('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
+    });
+
+    it('retains the assessment after an ordinary save error or a detailed submit error', () => {
+        const result = { id: 7, feedbacks: [] };
+        component.result.set(result);
+        component.submission.set({ id: 8 });
+        vi.spyOn(service, 'saveAssessment')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400 })))
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { entityName: 'modelingExercise', message: 'invalidScore' } })));
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        component.onSaveAssessment();
+        expect(alert).toHaveBeenLastCalledWith('artemisApp.modelingAssessmentEditor.messages.saveFailed');
+        component['submitAssessment']();
+        expect(alert).toHaveBeenLastCalledWith('artemisApp.modelingExercise.invalidScore');
+        expect(component.result()).toBe(result);
+        expect(component.submission()?.id).toBe(8);
+    });
+
+    it('returns empty feedback suggestions and reports a rejected suggestions request', async () => {
+        vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(throwError(() => new Error('Unavailable')));
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        expect(await component['loadFeedbackSuggestions']({ id: 7 } as ModelingExercise, { id: 8 })).toEqual([]);
+        expect(alert).toHaveBeenCalledExactlyOnceWith('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
+    });
+
+    it('keeps an incomplete assessment open when submission confirmation is declined', () => {
+        component.assessmentsAreValid.set(false);
+        vi.spyOn(window, 'confirm').mockReturnValue(false);
+        const save = vi.spyOn(service, 'saveAssessment');
+        component.onSubmitAssessment();
+        expect(window.confirm).toHaveBeenCalledOnce();
+        expect(save).not.toHaveBeenCalled();
+        expect(component.highlightMissingFeedback()).toBe(true);
+        expect(component.legendHighlights()).toContainEqual({ color: FeedbackHighlightColor.RED, text: 'artemisApp.modelingAssessment.legend.missingAssessment' });
+    });
 });

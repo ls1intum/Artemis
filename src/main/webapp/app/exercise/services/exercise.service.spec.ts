@@ -730,4 +730,69 @@ describe('Exercise Service', () => {
             expect(result).toEqual({});
         });
     });
+    it('loads the generic exercise projection and converts exercise dates and categories', () => {
+        let received: Exercise | undefined;
+        service.find(42).subscribe((response) => (received = response.body ?? undefined));
+        const request = httpMock.expectOne({ method: 'GET', url: 'api/exercise/exercises/42' });
+        const dates = {
+            releaseDate: '2026-01-01T10:00:00Z',
+            startDate: '2026-01-02T10:00:00Z',
+            dueDate: '2026-01-03T10:00:00Z',
+            assessmentDueDate: '2026-01-04T10:00:00Z',
+            exampleSolutionPublicationDate: '2026-01-05T10:00:00Z',
+        };
+        request.flush({
+            id: 42,
+            type: ExerciseType.TEXT,
+            releaseDate: dates.releaseDate,
+            categories: [JSON.stringify({ category: 'shared', color: '#123456' })],
+            exerciseVariantGroup: { id: 9, ...dates },
+        });
+
+        expect(received?.id).toBe(42);
+        expect(dayjs.isDayjs(received?.releaseDate)).toBe(true);
+        expect(received?.categories).toEqual([new ExerciseCategory('shared', '#123456')]);
+        // Exam and exercise-list consumers also convert the shared group timeline through this public mapper.
+        ExerciseService.convertExercisesDateFromServer([received!]);
+        for (const [key, value] of Object.entries(dates)) {
+            const converted = received?.exerciseVariantGroup?.[key as keyof typeof dates];
+            expect(dayjs.isDayjs(converted)).toBe(true);
+            expect(converted?.toISOString()).toBe(dayjs(value).toISOString());
+        }
+    });
+
+    it('serializes a detached exercise without shipping its course graph or participation data', () => {
+        const source = new TextExercise(undefined, undefined);
+        source.id = 7;
+        source.releaseDate = dayjs('2026-01-01T10:00:00Z');
+        source.course = { id: 1, exercises: [new TextExercise(undefined, undefined)], lectures: [{ id: 2 }] };
+        source.studentParticipations = [{ id: 3 }];
+        source.categories = [new ExerciseCategory('Practice', '#123456')];
+        const converted = ExerciseService.convertExerciseFromClient(source);
+        expect(converted).not.toBe(source);
+        expect(converted.course).toMatchObject({ id: 1, exercises: [], lectures: [] });
+        expect(converted.studentParticipations).toEqual([]);
+        expect(converted.categories).toEqual([JSON.stringify(new ExerciseCategory('Practice', '#123456'))]);
+        expect(source.course.exercises).toHaveLength(1);
+        expect(source.course.lectures).toHaveLength(1);
+        expect(source.studentParticipations).toEqual([{ id: 3 }]);
+        expect(dayjs.isDayjs(source.releaseDate)).toBe(true);
+    });
+
+    it('loads upcoming exercises with converted dates for the administrator overview', () => {
+        service.getUpcomingExercises().subscribe((response) => {
+            expect(response.body?.[0].id).toBe(7);
+            expect(response.body?.[0].dueDate?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
+        });
+        httpMock.expectOne({ method: 'GET', url: 'api/exercise/admin/exercises/upcoming' }).flush([{ id: 7, type: ExerciseType.TEXT, dueDate: '2026-01-01T10:00:00Z' }]);
+    });
+
+    it('uses the release date before the start date when deciding student visibility', () => {
+        const ex = new TextExercise(undefined, undefined);
+        expect(ExerciseService.isExerciseVisibleToStudents(ex)).toBe(false);
+        ex.startDate = dayjs().subtract(1, 'day');
+        expect(ExerciseService.isExerciseVisibleToStudents(ex)).toBe(true);
+        ex.releaseDate = dayjs().add(1, 'day');
+        expect(ExerciseService.isExerciseVisibleToStudents(ex)).toBe(false);
+    });
 });

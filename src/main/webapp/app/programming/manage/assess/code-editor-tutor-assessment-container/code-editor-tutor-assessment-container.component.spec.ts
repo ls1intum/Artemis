@@ -1241,4 +1241,28 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(findExerciseSpy).not.toHaveBeenCalled();
         });
     });
+    it.each([true, false])('shows the failed participation state with lock limit=%s', (locked) => {
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 403, error: locked ? { errorKey: 'lockedSubmissionsLimitReached' } : { detail: 'Participation unavailable' } })),
+        );
+        fixture.detectChanges();
+        expect(comp.loadingInitialSubmission()).toBe(false);
+        expect(comp.participationCouldNotBeFetched()).toBe(true);
+        expect(comp.lockLimitReached()).toBe(locked);
+        if (locked) expect(alert).not.toHaveBeenCalled();
+        else expect(alert).toHaveBeenCalledWith('Participation unavailable');
+    });
+
+    it('prompts before unloading a submission with unsaved feedback', () => {
+        comp.submission.set(submission);
+        comp.hasPendingChanges = true;
+        const event = new Event('beforeunload', { cancelable: true });
+        comp.handleBeforeUnload(event as BeforeUnloadEvent);
+        expect(event.defaultPrevented).toBe(true);
+        comp.hasPendingChanges = false;
+        const clean = new Event('beforeunload', { cancelable: true });
+        comp.handleBeforeUnload(clean as BeforeUnloadEvent);
+        expect(clean.defaultPrevented).toBe(false);
+    });
 });

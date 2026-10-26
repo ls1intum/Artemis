@@ -1073,4 +1073,24 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
         });
     });
+    it.each([false, true])('reports a failed complaint queue without changing audience, instructor=%s', (isInstructor) => {
+        accountService.userIdentity.set({ id: 10, login: 'assessor' } as User);
+        vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(isInstructor);
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.submissionsWithComplaints.set([]);
+        if (!isInstructor) {
+            vi.mocked(submissionService.getSubmissionsWithComplaintsForTutor).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        }
+
+        comp.ngOnInit();
+        if (isInstructor) {
+            const http = TestBed.inject(HttpTestingController);
+            http.expectOne(`api/exercise/exercises/${modelingExercise.id}/submissions-with-complaints/for-instructor`).flush({}, { status: 403, statusText: 'Forbidden' });
+            expect(submissionService.getSubmissionsWithComplaintsForTutor).not.toHaveBeenCalled();
+        } else {
+            TestBed.inject(HttpTestingController).expectNone(`api/exercise/exercises/${modelingExercise.id}/submissions-with-complaints/for-instructor`);
+        }
+        expect(alert).toHaveBeenCalledExactlyOnceWith('error.http.403');
+        expect(comp.submissionsWithComplaints()).toEqual([]);
+    });
 });

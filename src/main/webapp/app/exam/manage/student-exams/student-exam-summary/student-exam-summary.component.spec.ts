@@ -101,4 +101,10 @@ describe('StudentExamSummaryComponent', () => {
         expect(component.summaryComponent()?.studentExam()).toEqual(studentExamValue);
         expect(component.summaryComponent()?.managementGradeInfo()).toEqual({ studentExam: studentExamValue });
     });
+    it('prints the displayed management summary', () => {
+        fixture.detectChanges();
+        const print = vi.spyOn(component.summaryComponent()!, 'printPDF');
+        component.printPDF();
+        expect(print).toHaveBeenCalledOnce();
+    });
 });

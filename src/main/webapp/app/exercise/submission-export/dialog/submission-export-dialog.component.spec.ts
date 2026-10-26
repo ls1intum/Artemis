@@ -8,7 +8,7 @@ import { SubmissionExportOptions, SubmissionExportService } from 'app/exercise/s
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import * as DownloadUtil from 'app/foundation/util/download.util';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 
@@ -180,5 +180,22 @@ describe('Submission Export Dialog Component', () => {
             expect(exportSubmissionServiceMock).toHaveBeenCalledWith(exerciseId, invalidExerciseType, submissionExportOptions);
             expect(handleExportResponseMock).not.toHaveBeenCalled();
         });
+    });
+    it('closes a failed exercise load and clears the loading state', () => {
+        const error = new Error('Exercise unavailable');
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(throwError(() => error));
+        component.ngOnInit();
+        expect(alertService.error).toHaveBeenCalledExactlyOnceWith(error);
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith('cancel');
+        expect(component.isLoading()).toBe(false);
+        expect(component.exercise()).toBeUndefined();
+    });
+
+    it('allows another export after the export request fails', () => {
+        vi.spyOn(submissionExportService, 'exportSubmissions').mockReturnValue(throwError(() => new Error('Export failed')));
+        component.exportSubmissions(exerciseId);
+        expect(component.exportInProgress()).toBe(false);
+        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+        expect(alertService.success).not.toHaveBeenCalled();
     });
 });
