@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Component, Injector, OnInit, inject, signal } from '@angular/core';
+import { Subject, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -12,6 +12,9 @@ import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiCardComponent } from '@tumaet/ui-angular';
 
 @Component({
@@ -22,9 +25,13 @@ import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiCardComponent
 export class AiExperienceSettingsComponent implements OnInit {
     private readonly accountService = inject(AccountService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
-    private readonly irisChatService = inject(IrisChatService);
+    private readonly injector = inject(Injector);
+    private readonly profileService = inject(ProfileService);
+    private readonly userService = inject(UserService);
     private readonly alertService = inject(AlertService);
     private readonly llmModalService = inject(LLMSelectionModalService);
+
+    readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
 
     protected readonly ActionType = ActionType;
     protected readonly LLMSelectionDecision = LLMSelectionDecision;
@@ -39,16 +46,28 @@ export class AiExperienceSettingsComponent implements OnInit {
 
     ngOnInit() {
         this.updateSelectionFromUser();
-        this.loadCounts();
+        if (this.irisEnabled) {
+            this.loadCounts();
+        }
     }
 
     async openSelectionModal(): Promise<void> {
         const choice = await this.llmModalService.open(this.currentSelection());
 
         if (choice && choice !== LLM_MODAL_DISMISSED) {
-            this.irisChatService.updateLLMUsageConsent(choice);
-            this.accountService.setUserLLMSelectionDecision(choice);
-            this.updateSelectionFromUser();
+            if (this.irisEnabled) {
+                this.injector.get(IrisChatService).updateLLMUsageConsent(choice);
+                this.accountService.setUserLLMSelectionDecision(choice);
+                this.updateSelectionFromUser();
+            } else {
+                try {
+                    await firstValueFrom(this.userService.updateLLMSelectionDecision(choice));
+                    this.accountService.setUserLLMSelectionDecision(choice);
+                    this.updateSelectionFromUser();
+                } catch {
+                    this.alertService.error('artemisApp.userSettings.aiExperienceSettingsPage.updateFailure');
+                }
+            }
         }
     }
 

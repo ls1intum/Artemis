@@ -102,19 +102,30 @@ public class CourseHomeService {
     }
 
     private CourseHomeRepository.Header header(long courseId) {
-        if (!authorization.isAtLeastStudentInCourse(courseId))
+        if (!authorization.isAtLeastStudentInCourse(courseId)) {
             throw new AccessForbiddenException("course", courseId);
+        }
         return courses.findHeaderById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
+    /**
+     * Loads the authorized, bounded Home summary without resource graphs or read-state writes.
+     *
+     * @param courseId the authorized course identifier
+     * @param user     the authenticated user
+     * @param query    the requested new-content baseline
+     * @param asOf     the single server timestamp for this snapshot
+     * @return the authorized contextual Home snapshot
+     */
     public CourseHomeDTO load(long courseId, User user, CourseHomeQueryDTO query, Instant asOf) {
         var header = header(courseId);
         Instant snapshot = asOf.truncatedTo(ChronoUnit.MILLIS);
         var visit = visits.read(courseId, user.getId());
         Instant previous = visit.lastSeenAt() == null ? null : visit.lastSeenAt().isAfter(snapshot) ? snapshot : visit.lastSeenAt();
         Instant since = query.since() != null ? query.since() : previous != null ? previous : snapshot.minus(7, ChronoUnit.DAYS);
-        if (since.isAfter(snapshot) || since.isBefore(Instant.EPOCH))
+        if (since.isAfter(snapshot) || since.isBefore(Instant.EPOCH)) {
             throw new BadRequestAlertException("Invalid Home update baseline", "courseHome", "invalidSince");
+        }
         var info = new CourseHomeDTO.CourseInfoDTO(header.getId(), header.getTitle(), header.getDescription(),
                 header.getLanguage() == null ? null : header.getLanguage().getShortName(), instant(header.getStartDate()), instant(header.getEndDate()),
                 configurations.findStudentWelcomeContextByCourseId(courseId).orElse(null));
@@ -129,8 +140,9 @@ public class CourseHomeService {
         work.candidates().forEach(c -> candidates.add(candidate(c.welcomeCase(), c.item(), c.actionable())));
         lectures.items().forEach(i -> candidates.add(candidate(CourseHomeWelcomeCase.NEW_LECTURE, i, "NEW_LECTURE".equals(i.reason()))));
         exams.items().forEach(i -> candidates.add(candidate(CourseHomeWelcomeCase.EXAM_SOON, i, true)));
-        if (discussions.announcement() != null)
+        if (discussions.announcement() != null) {
             candidates.add(candidate(CourseHomeWelcomeCase.IMPORTANT_ANNOUNCEMENT, discussions.announcement(), true));
+        }
         discussions.faqs().forEach(i -> candidates.add(candidate(CourseHomeWelcomeCase.NEW_FAQ, i, true)));
         discussions.questions().items().stream().filter(q -> q.unreadReplies() != null && q.unreadReplies() > 0)
                 .forEach(q -> candidates.add(new CourseHomeContext.Candidate(CourseHomeWelcomeCase.UNREAD_REPLY,
@@ -161,8 +173,9 @@ public class CourseHomeService {
     }
 
     private LectureCourseHomeDTO lectures(long courseId, User user, Instant now, Instant since) {
-        if (lectureApi.isEmpty())
+        if (lectureApi.isEmpty()) {
             return new LectureCourseHomeDTO(CourseHomeSectionStatus.DISABLED, List.of());
+        }
         try {
             return lectureApi.get().load(courseId, user, now, since);
         }
@@ -172,8 +185,9 @@ public class CourseHomeService {
     }
 
     private ExamCourseHomeDTO exams(long courseId, User user, Instant now, Instant since) {
-        if (examApi.isEmpty())
+        if (examApi.isEmpty()) {
             return new ExamCourseHomeDTO(CourseHomeSectionStatus.DISABLED, List.of());
+        }
         try {
             return examApi.get().load(courseId, user, now, since);
         }
@@ -192,8 +206,9 @@ public class CourseHomeService {
     }
 
     private IrisCourseHomeSessionsDTO chats(long courseId, User user, Instant now, Instant since, boolean enabled) {
-        if (irisApi.isEmpty() || !enabled)
+        if (irisApi.isEmpty() || !enabled) {
             return new IrisCourseHomeSessionsDTO(CourseHomeSectionStatus.DISABLED, List.of());
+        }
         try {
             return irisApi.get().load(courseId, user, now, since);
         }
@@ -208,10 +223,12 @@ public class CourseHomeService {
 
     private @Nullable Instant nextRefresh(Instant now, CourseHomeDTO.CourseInfoDTO course, List<CourseHomeContext.Candidate> candidates) {
         List<Instant> boundaries = new ArrayList<>();
-        if (course.startDate() != null)
+        if (course.startDate() != null) {
             boundaries.add(course.startDate());
-        if (course.endDate() != null)
+        }
+        if (course.endDate() != null) {
             boundaries.add(course.endDate());
+        }
         for (var c : candidates) {
             if (c.dueAt() != null) {
                 boundaries.add(c.dueAt());

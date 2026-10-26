@@ -46,13 +46,24 @@ public class CourseHomeWelcomeService {
         this.meters = meters;
     }
 
+    /**
+     * Generates optional encouragement after validating current access, context and consent.
+     *
+     * @param courseId the authorized course identifier
+     * @param user     the authenticated user
+     * @param request  the fingerprint and requested language
+     * @param asOf     the single server timestamp for this snapshot
+     * @return a future containing validated encouragement or the fallback marker
+     */
     public CompletableFuture<CourseHomeGeneratedWelcomeDTO> generate(long courseId, User user, CourseHomeWelcomeRequestDTO request, Instant asOf) {
-        if (client.isEmpty() || !policy.canGenerate(user.getId()))
+        if (client.isEmpty() || !policy.canGenerate(user.getId())) {
             return CompletableFuture.completedFuture(fallback(request, "ineligible"));
+        }
         // Authorization is intentionally outside the provider-failure boundary.
         var current = home.load(courseId, user, new CourseHomeQueryDTO(null), asOf);
-        if (!current.welcome().aiEligible() || !current.welcome().contextFingerprint().equals(request.contextFingerprint()))
+        if (!current.welcome().aiEligible() || !current.welcome().contextFingerprint().equals(request.contextFingerprint())) {
             return CompletableFuture.completedFuture(fallback(request, "changed_context"));
+        }
         CourseHomeAiClient.Input input;
         try {
             input = prompts.build(current, request.locale());
@@ -60,17 +71,21 @@ public class CourseHomeWelcomeService {
         catch (RuntimeException ex) {
             return CompletableFuture.completedFuture(fallback(request, "prompt"));
         }
-        if (!policy.canGenerate(user.getId()))
+        if (!policy.canGenerate(user.getId())) {
             return CompletableFuture.completedFuture(fallback(request, "revoked"));
+        }
         try {
             return client.get().generate(input).handle((output, error) -> {
-                if (error != null || output == null || output.isEmpty())
+                if (error != null || output == null || output.isEmpty()) {
                     return fallback(request, "provider");
-                if (!policy.canGenerate(user.getId()))
+                }
+                if (!policy.canGenerate(user.getId())) {
                     return fallback(request, "revoked");
+                }
                 String text = output.get().strip();
-                if (!valid(text))
+                if (!valid(text)) {
                     return fallback(request, "invalid_output");
+                }
                 meters.counter("artemis.course.home.welcome", "outcome", "ai", "reason", "generated").increment();
                 return new CourseHomeGeneratedWelcomeDTO(request.contextFingerprint(), text, CourseHomeWelcomeSource.AI);
             });

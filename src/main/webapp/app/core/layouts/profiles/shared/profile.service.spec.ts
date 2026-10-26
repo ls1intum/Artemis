@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
+import { DataGuard } from 'app/account/user/settings/data-guard.service';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('ProfileService', () => {
@@ -174,5 +175,23 @@ describe('ProfileService', () => {
                 expect(service.isTestServer()).toBe(false);
             });
         });
+    });
+    it('offers AI preferences and local consent for a standalone local Home provider', async () => {
+        const loading = service.loadProfileInfo();
+        httpMock
+            .expectOne('management/info')
+            .flush({ ...expectedProfileInfo, activeModuleFeatures: [], localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'LOCAL' });
+        await loading;
+        expect(TestBed.inject(DataGuard).canActivate()).toBe(true);
+        expect(service.isLLMDeploymentEnabled()).toBe(true);
+    });
+    it('keeps a cloud-only Home provider from offering unavailable local inference', async () => {
+        const loading = service.loadProfileInfo();
+        httpMock
+            .expectOne('management/info')
+            .flush({ ...expectedProfileInfo, activeModuleFeatures: [], localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'CLOUD' });
+        await loading;
+        expect(TestBed.inject(DataGuard).canActivate()).toBe(true);
+        expect(service.isLLMDeploymentEnabled()).toBe(false);
     });
 });

@@ -34,14 +34,25 @@ public class LectureCourseHomeApi extends AbstractLectureApi {
         this.authorization = authorization;
     }
 
+    /**
+     * Loads the authorized, bounded Home summary without resource graphs or read-state writes.
+     *
+     * @param courseId the authorized course identifier
+     * @param user     the authenticated user
+     * @param asOf     the single server timestamp for this snapshot
+     * @param since    the preserved new-content baseline
+     * @return published lecture candidates for this student
+     */
     public LectureCourseHomeDTO load(long courseId, User user, Instant asOf, Instant since) {
-        if (!authorization.isAtLeastStudentInCourse(courseId))
+        if (!authorization.isAtLeastStudentInCourse(courseId)) {
             throw new AccessForbiddenException("course", courseId);
+        }
         var now = ZonedDateTime.ofInstant(asOf, ZoneOffset.UTC);
         var rows = lectures.findUpdates(courseId, user.getId(), now, ZonedDateTime.ofInstant(since, ZoneOffset.UTC), PageRequest.of(0, 3));
         boolean isNew = !rows.isEmpty();
-        if (!isNew)
+        if (!isNew) {
             rows = lectures.findReview(courseId, user.getId(), now, PageRequest.of(0, 1));
+        }
         return new LectureCourseHomeDTO(CourseHomeSectionStatus.AVAILABLE,
                 rows.stream().map(row -> new CourseHomeDTO.ItemDTO(row.getTitle(), new CourseHomeTargetDTO(CourseHomeTargetKind.LECTURE, row.getId(), null, null),
                         row.getPublicationDate() == null ? null : row.getPublicationDate().toInstant(), null, isNew ? "NEW_LECTURE" : "REVIEW")).toList());

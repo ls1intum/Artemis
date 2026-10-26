@@ -35,6 +35,13 @@ public class CourseHomeAiPromptBuilderService {
         this.system = resource.getContentAsString(StandardCharsets.UTF_8);
     }
 
+    /**
+     * Builds a bounded prompt using published course information and nonprivate action facts.
+     *
+     * @param home   the current authorized course Home snapshot
+     * @param locale the requested message language
+     * @return the bounded system and user prompt strings
+     */
     public CourseHomeAiClient.Input build(CourseHomeDTO home, String locale) {
         var next = home.nextStep();
         String step = "Choose a manageable learning step";
@@ -63,8 +70,9 @@ public class CourseHomeAiPromptBuilderService {
             String largest = List.of("publishedDescription", "learningApproach", "courseTitle", "nextStep").stream().max(Comparator.comparingInt(k -> data.get(k).length()))
                     .orElseThrow();
             String value = data.get(largest);
-            if (value.isEmpty())
+            if (value.isEmpty()) {
                 throw new IllegalArgumentException("Home welcome system prompt exceeds its bound");
+            }
             data.put(largest, clip(value, value.length() / 2));
             serialized = mapper.writeValueAsString(data);
         }

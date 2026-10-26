@@ -14,10 +14,16 @@ public record CourseHomeAiProperties(boolean enabled, @Nullable String location,
         return location == null ? "" : location.strip().toUpperCase(Locale.ROOT);
     }
 
+    /**
+     * Checks whether all required provider settings are valid and explicitly enabled.
+     *
+     * @return true when provider configuration is complete and valid
+     */
     public boolean isConfigured() {
         if (!enabled || !(providerLocation().equals("LOCAL") || providerLocation().equals("CLOUD")) || baseUrl == null || baseUrl.isBlank() || apiKey == null || apiKey.isBlank()
-                || model == null || model.isBlank())
+                || model == null || model.isBlank()) {
             return false;
+        }
         try {
             var uri = URI.create(baseUrl);
             return uri.getHost() != null && ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme())) && uri.getUserInfo() == null

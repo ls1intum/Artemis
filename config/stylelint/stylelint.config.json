@@ -49,6 +49,7 @@
                 "src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.scss",
                 "src/main/webapp/app/course/manage/user-management-dropdown/**/*.scss",
                 "src/main/webapp/app/course/manage/update/**/*.scss",
+                "src/main/webapp/app/course/overview/course-home/**/*.scss",
                 "src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.scss",
                 "src/main/webapp/app/communication/saved-posting-banner/**/*.scss",
                 "src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.scss",

@@ -62,9 +62,11 @@ test.describe('Course overview navigation', { tag: '@fast' }, () => {
             }
         });
 
-        // Entering the course lands on the exercises tab, which loads its own content
+        // Home does not load the full exercise graph; opening Exercises loads it once.
         await login(studentOne, `/courses/${course.id}`);
-        await page.waitForURL(`**/courses/${course.id}/exercises**`);
+        await page.waitForURL(`**/courses/${course.id}/home`);
+        expect(exerciseRequests).toHaveLength(0);
+        await page.locator(`jhi-course-sidebar a[href="/courses/${course.id}/exercises"]`).first().click();
         await expect.poll(() => exerciseRequests.length, { timeout: 15_000 }).toBe(1);
 
         // Selecting the tab that is already open acts as a refresh, so the data cannot go stale behind the user

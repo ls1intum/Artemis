@@ -1,5 +1,5 @@
 <section aria-labelledby="home-team-heading" data-testid="home-team">
-    <h2 id="home-team-heading" class="text-lg font-semibold mb-4!">{{ 'artemisApp.courseHome.team' | artemisTranslate }}</h2>
+    <h2 id="home-team-heading" class="text-lg! font-semibold! mb-4!">{{ 'artemisApp.courseHome.team' | artemisTranslate }}</h2>
     <ul id="home-team-members" class="list-none p-0! m-0! flex flex-col gap-4!">
         @for (member of team().items ?? []; track member.id) {
             <li class="flex items-center gap-3! min-w-0">
