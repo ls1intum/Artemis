@@ -95,6 +95,7 @@ export interface UpdateProgrammingExerciseDTO {
     submissionPolicy?: SubmissionPolicy;
     projectType?: ProjectType;
     releaseTestsWithExampleSolution: boolean;
+    allowRepositoryAccessBeforeStartDate: boolean;
 
     // Build config
     buildConfig?: UpdateProgrammingExerciseBuildConfigDTO;
@@ -212,6 +213,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         submissionPolicy: exercise.submissionPolicy,
         projectType: exercise.projectType,
         releaseTestsWithExampleSolution: exercise.releaseTestsWithExampleSolution ?? false,
+        allowRepositoryAccessBeforeStartDate: exercise.allowRepositoryAccessBeforeStartDate ?? false,
         buildConfig: buildConfigDTO,
         plagiarismDetectionConfig: exercise.plagiarismDetectionConfig,
     };

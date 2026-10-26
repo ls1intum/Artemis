@@ -64,6 +64,7 @@ export class ProgrammingExercise extends Exercise {
     public submissionPolicy?: SubmissionPolicy;
     public buildConfig?: ProgrammingExerciseBuildConfig;
     public releaseTestsWithExampleSolution?: boolean;
+    public allowRepositoryAccessBeforeStartDate?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;
@@ -90,6 +91,7 @@ export class ProgrammingExercise extends Exercise {
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
         this.projectType = ProjectType.PLAIN_GRADLE; // default value
         this.showTestNamesToStudents = false; // default value
+        this.allowRepositoryAccessBeforeStartDate = false; // default value
         this.buildConfig = new ProgrammingExerciseBuildConfig();
     }
 }

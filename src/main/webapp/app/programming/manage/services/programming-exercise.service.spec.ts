@@ -126,6 +126,30 @@ describe('ProgrammingExercise Service', () => {
             req.flush(returnedFromService);
         });
 
+        it.each([true, false, undefined])('should send allowRepositoryAccessBeforeStartDate %s in the update DTO', (value) => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 11;
+            exercise.allowRepositoryAccessBeforeStartDate = value;
+
+            service.update(exercise).subscribe();
+
+            const req = httpMock.expectOne({ method: 'PUT' });
+            expect(req.request.body.allowRepositoryAccessBeforeStartDate).toBe(value ?? false);
+            req.flush(exercise);
+        });
+
+        it('should send allowRepositoryAccessBeforeStartDate in the timeline update DTO', () => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 11;
+            exercise.allowRepositoryAccessBeforeStartDate = true;
+
+            service.updateTimeline(exercise).subscribe();
+
+            const req = httpMock.expectOne({ method: 'PUT' });
+            expect(req.request.body.allowRepositoryAccessBeforeStartDate).toBe(true);
+            req.flush(exercise);
+        });
+
         it('should persist Hyperion checklist link provenance after creating an exercise', () => {
             const course = Object.assign(new Course(), { id: 7 });
             const exercise = new ProgrammingExercise(course, undefined);

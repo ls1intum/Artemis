@@ -93,6 +93,7 @@ interface ProgrammingCourseManagementExerciseDTO extends AssessedCourseManagemen
     projectKey?: string;
     allowOnlineEditor?: boolean;
     allowOfflineIde?: boolean;
+    allowRepositoryAccessBeforeStartDate?: boolean;
     allowOnlineIde?: boolean;
     staticCodeAnalysisEnabled?: boolean;
     maxStaticCodeAnalysisPenalty?: number;
@@ -263,6 +264,7 @@ export interface CourseDashboardExerciseResponseDTO {
     allowFeedbackRequests?: boolean;
     allowOnlineEditor?: boolean;
     allowOfflineIde?: boolean;
+    allowRepositoryAccessBeforeStartDate?: boolean;
     allowOnlineIde?: boolean;
     staticCodeAnalysisEnabled?: boolean;
     maxStaticCodeAnalysisPenalty?: number;

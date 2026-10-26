@@ -15,6 +15,7 @@ export interface ProgrammingExerciseTimelineUpdateDTO {
     assessmentDueDate?: string;
     exampleSolutionPublicationDate?: string;
     buildAndTestStudentSubmissionsAfterDueDate?: string;
+    allowRepositoryAccessBeforeStartDate?: boolean;
 }
 
 /**
@@ -34,5 +35,6 @@ export function toProgrammingExerciseTimelineUpdateDTO(exercise: ProgrammingExer
         assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
         exampleSolutionPublicationDate: convertDateFromClient(exercise.exampleSolutionPublicationDate),
         buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
+        allowRepositoryAccessBeforeStartDate: exercise.allowRepositoryAccessBeforeStartDate,
     };
 }
