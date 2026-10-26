@@ -1,8 +1,12 @@
 package de.tum.cit.aet.artemis.course.service.home;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.InetSocketAddress;
@@ -22,7 +26,11 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.setup.OpenAiSetup;
 
+import com.openai.client.OpenAIClient;
+import com.openai.client.OpenAIClientAsync;
 import com.sun.net.httpserver.HttpServer;
 
 import de.tum.cit.aet.artemis.course.config.CourseHomeAiProperties;
@@ -106,6 +114,85 @@ class SpringAiCourseHomeClientTest {
             server.stop(0);
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void successfulOutputIsReturnedAndBothFailingTransportsAreClosed() {
+        var model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(response());
+        var closes = new AtomicInteger();
+        AutoCloseable failing = () -> {
+            closes.incrementAndGet();
+            throw new IllegalStateException("transport close failed");
+        };
+        var meters = new SimpleMeterRegistry();
+        try (var client = new SpringAiCourseHomeClient(model, failing, failing, meters)) {
+            assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.of("Keep exploring one manageable step."));
+        }
+        assertThat(closes).hasValue(2);
+        assertThat(meters.counter("artemis.course.home.ai.request", "outcome", "close_failure").count()).isEqualTo(2);
+    }
+
+    @Test
+    void emptyModelChoicesProduceFallbackInsteadOfThrowing() {
+        var model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of()));
+        try (var client = new SpringAiCourseHomeClient(model, () -> {
+        }, () -> {
+        }, new SimpleMeterRegistry())) {
+            assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
+        }
+    }
+
+    @Test
+    void incompleteConfigurationCannotConstructATransport() {
+        assertThatThrownBy(() -> new SpringAiCourseHomeClient(new CourseHomeAiProperties(false, null, null, null, null), new SimpleMeterRegistry()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("configuration is incomplete");
+    }
+
+    @Test
+    void theInputBoundaryRejectsOversizedPrompts() {
+        assertThat(new CourseHomeAiClient.Input("x".repeat(4096), "x".repeat(4096)).userPrompt()).hasSize(4096);
+        assertThatThrownBy(() -> new CourseHomeAiClient.Input("x".repeat(8192), "x")).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("exceeds its bound");
+    }
+
+    @Test
+    void asynchronousTransportConstructionFailureClosesTheSynchronousTransport() {
+        var sync = mock(OpenAIClient.class);
+        try (var setup = mockStatic(OpenAiSetup.class, invocation -> {
+            if (invocation.getMethod().getName().equals("setupSyncClient"))
+                return sync;
+            if (invocation.getMethod().getName().equals("setupAsyncClient"))
+                throw new IllegalStateException("async construction failed");
+            return CALLS_REAL_METHODS.answer(invocation);
+        })) {
+            assertThatThrownBy(() -> new SpringAiCourseHomeClient(configured(), new SimpleMeterRegistry())).isInstanceOf(IllegalStateException.class)
+                    .hasMessage("async construction failed");
+            verify(sync).close();
+        }
+    }
+
+    @Test
+    void modelConstructionFailureClosesBothAllocatedTransports() {
+        var sync = mock(OpenAIClient.class);
+        var async = mock(OpenAIClientAsync.class);
+        try (var setup = mockStatic(OpenAiSetup.class, invocation -> {
+            if (invocation.getMethod().getName().equals("setupSyncClient"))
+                return sync;
+            if (invocation.getMethod().getName().equals("setupAsyncClient"))
+                return async;
+            return CALLS_REAL_METHODS.answer(invocation);
+        }); var models = mockStatic(OpenAiChatModel.class)) {
+            models.when(OpenAiChatModel::builder).thenThrow(new IllegalStateException("model construction failed"));
+            assertThatThrownBy(() -> new SpringAiCourseHomeClient(configured(), new SimpleMeterRegistry())).isInstanceOf(IllegalStateException.class)
+                    .hasMessage("model construction failed");
+            verify(sync).close();
+            verify(async).close();
+        }
+    }
+
+    private CourseHomeAiProperties configured() {
+        return new CourseHomeAiProperties(true, "LOCAL", "http://127.0.0.1:1/v1", "test-key", "test-model");
     }
 
     private ChatResponse response() {

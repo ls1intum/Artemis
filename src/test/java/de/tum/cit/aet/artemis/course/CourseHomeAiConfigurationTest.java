@@ -11,9 +11,11 @@ import java.util.concurrent.Executor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
@@ -57,6 +59,7 @@ class CourseHomeAiConfigurationTest {
         runner.withPropertyValues("artemis.course-home.ai.enabled=true", "artemis.course-home.ai.location=LOCAL", "artemis.course-home.ai.base-url=http://127.0.0.1:1/v1",
                 "artemis.course-home.ai.api-key=not-a-real-key", "artemis.course-home.ai.model=test").run(c -> {
                     assertThat(c).hasSingleBean(CourseHomeAiClient.class);
+                    assertThat(c.getBean(CourseHomeAiClient.class)).isInstanceOf(de.tum.cit.aet.artemis.course.service.home.SpringAiCourseHomeClient.class);
                     assertThat(c.getBeansOfType(ChatModel.class)).containsOnlyKeys("interactiveModel");
                     assertThat(c.getBeansOfType(ChatClient.class)).containsOnlyKeys("interactiveClient");
                     assertThat(c.getBeansOfType(Executor.class)).containsOnlyKeys("interactiveExecutor");
@@ -80,6 +83,24 @@ class CourseHomeAiConfigurationTest {
         assertThat(new CourseHomeAiPolicyService(props, preferences, Optional.empty()).canGenerate(7)).isFalse();
         verifyNoInteractions(preferences);
         assertThat(new CourseHomeAiPolicyService(props, preferences, Optional.of(mock(CourseHomeAiClient.class))).canGenerate(7)).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "http://[invalid", "https://user:secret@example.org/v1", "https://example.org/v1?key=secret", "file:///tmp/provider",
+            "https://example.org/#fragment" })
+    void malformedAndCredentialBearingUrlsCannotEnableAProvider(String url) {
+        var props = new CourseHomeAiProperties(true, "LOCAL", url, "secret", "test");
+        assertThat(props.isConfigured()).isFalse();
+        assertThat(props.toString()).doesNotContain("secret", url);
+    }
+
+    @Test
+    void preferenceDatabaseFailureFallsBackWithoutTreatingItAsConsent() {
+        var preferences = mock(UserAiPreferenceService.class);
+        when(preferences.findDecision(7)).thenThrow(new DataAccessResourceFailureException("unavailable"));
+        var props = new CourseHomeAiProperties(true, "LOCAL", "http://localhost/v1", "test-key", "test");
+        var policy = new CourseHomeAiPolicyService(props, preferences, Optional.of(mock(CourseHomeAiClient.class)));
+        assertThat(policy.canGenerate(7)).isFalse();
     }
 
     @Test

@@ -4,9 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import jakarta.validation.Valid;
 
@@ -27,7 +24,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.course.domain.CourseHomeWelcomeSource;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeGeneratedWelcomeDTO;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeQueryDTO;
@@ -99,16 +95,6 @@ public class CourseHomeResource {
     @PostMapping("courses/{courseId}/home/welcome")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseHomeGeneratedWelcomeDTO> welcome(@PathVariable long courseId, @Valid @RequestBody CourseHomeWelcomeRequestDTO request) {
-        try {
-            var result = welcomes.generate(courseId, users.getUserWithAuthorities(), request, Instant.now().truncatedTo(ChronoUnit.MILLIS)).get(3500, TimeUnit.MILLISECONDS);
-            return ResponseEntity.ok(result);
-        }
-        catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            return ResponseEntity.ok(new CourseHomeGeneratedWelcomeDTO(request.contextFingerprint(), null, CourseHomeWelcomeSource.FALLBACK));
-        }
-        catch (ExecutionException | TimeoutException ex) {
-            return ResponseEntity.ok(new CourseHomeGeneratedWelcomeDTO(request.contextFingerprint(), null, CourseHomeWelcomeSource.FALLBACK));
-        }
+        return ResponseEntity.ok(welcomes.generateBounded(courseId, users.getUserWithAuthorities(), request, Instant.now().truncatedTo(ChronoUnit.MILLIS)));
     }
 }

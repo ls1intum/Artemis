@@ -145,6 +145,36 @@ describe('CourseHomeComponent', () => {
         expect(text()).not.toContain('Stale private response');
         expect(fixture.nativeElement.querySelector('[data-testid="home-iris"]')).toBeNull();
     });
+    it('removes the private Iris primary action and history immediately when consent is revoked', async () => {
+        user.update((u) => ({ ...u!, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI }));
+        fixture.detectChanges();
+        const home = createCourseHomeFixture('iris-follow-up');
+        const title = home.nextStep!.title;
+        await render(home);
+        expect(text()).toContain(title);
+        user.update((u) => ({ ...u!, selectedLLMUsage: LLMSelectionDecision.NO_AI }));
+        fixture.detectChanges();
+        expect(text()).not.toContain(title);
+        expect(fixture.nativeElement.querySelector('[data-testid="home-iris"]')).toBeNull();
+        expect(fixture.componentInstance.home()?.nextStep).toBeUndefined();
+        expect(fixture.componentInstance.home()?.irisSessions.items).toEqual([]);
+        expect(text()).toContain('All exercises');
+    });
+    it('does not restore an Iris continuation from a Home response started before opting out', async () => {
+        user.update((u) => ({ ...u!, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI }));
+        fixture.detectChanges();
+        const response = loads.at(-1)!;
+        user.update((u) => ({ ...u!, selectedLLMUsage: LLMSelectionDecision.NO_AI }));
+        fixture.detectChanges();
+        response.next(createCourseHomeFixture('iris-follow-up'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const snapshot = fixture.componentInstance.home();
+        expect(snapshot?.nextStep).toBeUndefined();
+        expect(snapshot?.irisSessions.items).toEqual([]);
+        expect(fixture.nativeElement.querySelector('[data-testid="home-next-step"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="home-iris"]')).toBeNull();
+    });
     it('clears state on a new account and ignores old course responses', async () => {
         const oldLoad = loads[0];
         user.set({ id: 2, courseRoles: [{ courseId: 42, roles: ['STUDENT'] }] } as User);
@@ -307,6 +337,8 @@ describe('CourseHomeComponent', () => {
         expect(api.acknowledgeVisit).toHaveBeenCalledOnce();
     });
     it('gives an untitled Iris next action an accessible localized link name', async () => {
+        user.update((u) => ({ ...u!, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI }));
+        fixture.detectChanges();
         const home = createCourseHomeFixture('iris-follow-up');
         home.nextStep!.title = '';
         await render(home);

@@ -10,8 +10,10 @@ import java.util.Set;
 import jakarta.persistence.EntityManagerFactory;
 
 import org.hibernate.SessionFactory;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
+@Isolated("Measures SessionFactory-wide entity-load statistics without concurrent test queries.")
 @WithMockUser(username = CourseHomeLearningIntegrationTest.PREFIX + "student1", roles = "USER")
 class CourseHomeLearningIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -75,12 +78,22 @@ class CourseHomeLearningIntegrationTest extends AbstractSpringIntegrationIndepen
 
     private ZonedDateTime base;
 
+    private boolean statisticsEnabledBefore;
+
     @BeforeEach
     void setup() {
+        statisticsEnabledBefore = entityManagerFactory.unwrap(SessionFactory.class).getStatistics().isStatisticsEnabled();
         userUtilService.addUsers(PREFIX, 2, 1, 0, 1);
         course = courseUtilService.createEnrolledCourse(PREFIX);
         student = userUtilService.getUserByLogin(PREFIX + "student1");
         base = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(java.time.temporal.ChronoUnit.MILLIS);
+    }
+
+    @AfterEach
+    void restoreStatistics() {
+        var statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.clear();
+        statistics.setStatisticsEnabled(statisticsEnabledBefore);
     }
 
     @Test
@@ -151,16 +164,18 @@ class CourseHomeLearningIntegrationTest extends AbstractSpringIntegrationIndepen
         var statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
         statistics.setStatisticsEnabled(true);
         statistics.clear();
+        queryInterceptor.startQueryCount();
         learning.load(course.getId(), student, Instant.now(), base.minusDays(7).toInstant());
-        long smallQueries = statistics.getPrepareStatementCount();
+        long smallQueries = queryInterceptor.getQueryCount();
         for (int i = 0; i < 990; i++)
             exercise(base.minusDays(1), base.plusDays(5));
         statistics.clear();
+        queryInterceptor.startQueryCount();
         var large = learning.load(course.getId(), student, Instant.now(), base.minusDays(7).toInstant());
         assertThat(large.progress().releasedExercises()).isEqualTo(1000);
         assertThat(large.updates()).hasSizeLessThanOrEqualTo(3);
         assertThat(large.candidates()).hasSizeLessThanOrEqualTo(6);
-        assertThat(statistics.getPrepareStatementCount()).isLessThanOrEqualTo(smallQueries + 2);
+        assertThat(queryInterceptor.getQueryCount()).isPositive().isLessThanOrEqualTo(smallQueries + 2);
         assertThat(statistics.getEntityLoadCount()).isZero();
     }
 

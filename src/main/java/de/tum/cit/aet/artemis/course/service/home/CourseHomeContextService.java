@@ -81,6 +81,7 @@ public class CourseHomeContextService {
     }
 
     private CourseHomeDTO.ItemDTO item(CourseHomeContext.Candidate c) {
-        return new CourseHomeDTO.ItemDTO(c.title(), c.target(), c.activityAt(), c.dueAt(), c.welcomeCase().name());
+        String reason = c.target().kind() == CourseHomeTargetKind.LECTURE && !c.actionable() ? "REVIEW" : c.welcomeCase().name();
+        return new CourseHomeDTO.ItemDTO(c.title(), c.target(), c.activityAt(), c.dueAt(), reason);
     }
 }
