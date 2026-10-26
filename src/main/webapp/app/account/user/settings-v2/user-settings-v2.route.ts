@@ -47,7 +47,7 @@ export const routes: Routes = [
             },
             {
                 path: 'exercises',
-                loadComponent: () => import('./user-settings-v2-placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
+                loadComponent: () => import('./exercise-settings-v2/exercise-settings-v2.component').then((m) => m.ExerciseSettingsV2Component),
                 data: {
                     pageTitle: 'artemisApp.userSettings.navigation.exercises',
                 },
