@@ -21,7 +21,7 @@ vi.mock('y-monaco', () => {
 });
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Injector, Provider, Signal, WritableSignal, signal } from '@angular/core';
-import { Observable, Subject, defer, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -408,7 +408,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         ['default off', false, {}, false],
         ['exam', true, { exerciseGroup: { id: 1 } }, false],
         ['unsupported language', true, { programmingLanguage: ProgrammingLanguage.PYTHON }, false],
-        ['unsupported project', true, { projectType: ProjectType.MAVEN_MAVEN }, false],
+        ['unsupported project', true, { projectType: ProjectType.MAVEN_BLACKBOX }, false],
         ['not an editor', true, { isAtLeastEditor: false }, false],
         ['not yet persisted', true, { id: undefined }, false],
         ['supported course exercise', true, {}, true],
@@ -1550,30 +1550,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         (comp as any).onAdaptDialogHidden();
     };
 
-    it('keeps adaptation unavailable until the repository has loaded, without reporting unsaved edits', () => {
+    it('opens adaptation while the repository loads but keeps submitting blocked, without reporting unsaved edits', () => {
         const loading = signal(true);
         setCodeEditorContainer(comp, { repositoryLoading: loading });
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.repositorySetupBusy');
         (comp as any).openAdaptDialog();
-        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(comp.adaptDialogVisible()).toBe(true);
+        confirmAdaptDialog('Too early');
+        expect(generationService.generate).not.toHaveBeenCalled();
         loading.set(false);
         expect((comp as any).adaptBlockedReason()).toBeUndefined();
-        (comp as any).openAdaptDialog();
-        expect(comp.adaptDialogVisible()).toBe(true);
-    });
-
-    it('does not expose the legacy fallback to a non-editor or a non-Java exercise', () => {
-        comp.exercise.update((exercise) => Object.assign(exercise!, { isAtLeastEditor: false, projectType: ProjectType.PLAIN_MAVEN }));
-        expect((comp as any).legacyCodeGenerationOffered()).toBe(false);
-        comp.exercise.update((exercise) => Object.assign(exercise!, { isAtLeastEditor: true, programmingLanguage: ProgrammingLanguage.PYTHON }));
-        expect((comp as any).legacyCodeGenerationOffered()).toBe(false);
-    });
-
-    it('does not make a running legacy queue its own external blocker', () => {
-        comp.exercise.update((exercise) => Object.assign(exercise!, { projectType: ProjectType.PLAIN_MAVEN }));
-        (comp as any).legacyCodeGenerationRunning.set(true);
-        expect((comp as any).legacyCodeGenerationOffered()).toBe(true);
-        expect((comp as any).legacyCodeGenerationBlockedReason()).toBeUndefined();
     });
 
     it.each([true, false])("opens the owner's exact run when running=%s", (running) => {
@@ -1628,7 +1614,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect(adaptation!.offered()).toBe(true);
         expect(adaptation!.blockedReason()).toBeUndefined();
         expect((comp as any).adaptOffered()).toBe(true);
-        expect((comp as any).canAdaptNow()).toBe(true);
+        expect((comp as any).adaptUnavailableReason()).toBeUndefined();
     });
 
     it.each([ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_GRADLE])('supports Java generation for project type %s', (projectType) => {
@@ -1638,31 +1624,22 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         TestBed.tick();
 
         expect((comp as any).adaptBlockedReason()).toBeUndefined();
-        expect((comp as any).canAdaptNow()).toBe(true);
-        expect((comp as any).legacyCodeGenerationOffered()).toBe(false);
+        expect((comp as any).adaptOffered()).toBe(true);
     });
 
-    it.each([
-        undefined,
-        null,
-        ProjectType.MAVEN_MAVEN,
-        ProjectType.PLAIN_MAVEN,
-        ProjectType.MAVEN_BLACKBOX,
-        ProjectType.PLAIN,
-        ProjectType.XCODE,
-        ProjectType.FACT,
-        ProjectType.GCC,
-    ])('blocks Java generation for unsupported project type %s', (projectType) => {
-        comp.exercise.update((exercise) => Object.assign(exercise!, { projectType }));
+    it.each([undefined, null, ProjectType.MAVEN_BLACKBOX, ProjectType.PLAIN, ProjectType.XCODE, ProjectType.FACT, ProjectType.GCC])(
+        'blocks Java generation for unsupported project type %s',
+        (projectType) => {
+            comp.exercise.update((exercise) => Object.assign(exercise!, { projectType }));
 
-        expect((comp as any).adaptOffered()).toBe(false);
-        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.unsupportedProjectType');
-        expect((comp as any).legacyCodeGenerationOffered()).toBe(true);
-        expect((comp as any).canAdaptNow()).toBe(false);
-        (comp as any).openAdaptDialog();
-        expect(comp.adaptDialogVisible()).toBe(false);
-        expect(generationService.generate).not.toHaveBeenCalled();
-    });
+            expect((comp as any).adaptOffered()).toBe(false);
+            expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.unsupportedProjectType');
+            expect((comp as any).adaptUnavailableReason()).toBe('artemisApp.hyperion.generation.blocker.unsupportedProjectType');
+            (comp as any).openAdaptDialog();
+            expect(comp.adaptDialogVisible()).toBe(false);
+            expect(generationService.generate).not.toHaveBeenCalled();
+        },
+    );
 
     it('names the missing editor role first, before any exercise blocker', () => {
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: false, releaseDate: undefined }));
@@ -1756,6 +1733,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
 
         (comp as any).openAdaptDialog();
+        confirmAdaptDialog('Run status unknown');
 
         expect(generationService.generate).not.toHaveBeenCalled();
     });
@@ -1763,7 +1741,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
     it.each([
         ['status is loading', { statusLoading: true, statusLoadFailed: false }],
         ['status loading failed', { statusLoading: false, statusLoadFailed: true }],
-    ])('disables and guards Adapt exercise while generation %s', (_description, status) => {
+    ])('opens Adapt exercise but guards submission while generation %s', (_description, status) => {
         (comp as any).generationActivity = {
             jobId: () => undefined,
             attachToJob,
@@ -1773,12 +1751,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         };
 
         expect((comp as any).isExerciseGenerationActionBlocked()).toBe(true);
-        expect((comp as any).canAdaptNow()).toBe(false);
+        expect((comp as any).adaptBlockedReason()).toBeDefined();
 
         (comp as any).openAdaptDialog();
+        confirmAdaptDialog('Run state unknown');
 
         expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
-        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(comp.adaptDialogVisible()).toBe(true);
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
@@ -2004,53 +1983,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect((comp as any).generationRefreshFailed()).toBe(true);
     });
 
-    it('subscribes to the cold legacy completion refresh when the editor is clean', () => {
-        const refreshed = vi.fn();
-        const executeRefresh = vi.fn(() =>
-            defer(() => {
-                refreshed();
-                return of(true);
-            }),
-        );
-        setCodeEditorContainer(comp, { actions: () => ({ onSave: vi.fn(), executeRefresh }) });
-        setEditableInstructions(comp, { unsavedChangesValue: () => false, hasReviewCommentDrafts: () => false });
-
-        comp['onLegacyGenerationRefresh']();
-
-        expect(executeRefresh).toHaveBeenCalledOnce();
-        expect(refreshed).toHaveBeenCalledOnce();
-    });
-
-    it('preserves review drafts and new unsaved files instead of auto-refreshing', () => {
-        const draft = signal('pending review comment');
-        const unsavedFiles = signal<Record<string, string>>({});
-        const executeRefresh = vi.fn(() =>
-            defer(() => {
-                draft.set('');
-                unsavedFiles.set({});
-                return of(true);
-            }),
-        );
-        setCodeEditorContainer(comp, {
-            actions: () => ({ onSave: vi.fn(), executeRefresh }),
-            canDeactivate: () => Object.keys(unsavedFiles()).length === 0,
-            hasReviewCommentDrafts: () => !!draft(),
-        });
-        setEditableInstructions(comp, { unsavedChangesValue: () => false, hasReviewCommentDrafts: () => false });
-
-        comp['onLegacyGenerationRefresh']();
-
-        expect(executeRefresh).not.toHaveBeenCalled();
-        expect(draft()).toBe('pending review comment');
-
-        draft.set('');
-        unsavedFiles.set({ 'App.java': 'new local edit' });
-        comp['onLegacyGenerationRefresh']();
-
-        expect(executeRefresh).not.toHaveBeenCalled();
-        expect(unsavedFiles()).toEqual({ 'App.java': 'new local edit' });
-    });
-
     it('does not reload while a review comment draft is open', () => {
         const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
         setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true, hasReviewCommentDrafts: () => true });
@@ -2207,16 +2139,21 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect(reloadEditor).toHaveBeenCalledOnce();
     });
 
-    it('explains the active-run restriction and restores adaptation when the run finishes', () => {
+    it('opens Adapt exercise while another run is active, explains it, links to the run, and keeps submitting blocked', () => {
         const running = signal(true);
         vi.spyOn(comp['generationActivity'], 'running').mockImplementation(running);
+        expect(comp['adaptUnavailableReason']()).toBeUndefined();
         expect(comp['adaptBlockedReason']()).toBe('artemisApp.review.adaptExercise.runInProgress');
-        comp['openAdaptDialog']();
-        expect(comp.adaptDialogVisible()).toBe(false);
-        running.set(false);
-        expect(comp['adaptBlockedReason']()).toBeUndefined();
+        expect(comp['progressLink']()).toBeDefined();
         comp['openAdaptDialog']();
         expect(comp.adaptDialogVisible()).toBe(true);
+        expect(comp['generationStartPending']()).toBe(false);
+        confirmAdaptDialog('Wait for the other run');
+        expect(generationService.generate).not.toHaveBeenCalled();
+        running.set(false);
+        expect(comp['adaptBlockedReason']()).toBeUndefined();
+        confirmAdaptDialog('Now adapt');
+        expect(generationService.generate).toHaveBeenCalledOnce();
     });
 
     it('keeps the dialog open if a run starts between opening and confirmation', () => {
@@ -2264,11 +2201,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
     it.each([
         ['statusLoading', 'checkingStatus'],
         ['statusLoadFailed', 'statusUnavailable'],
-    ] as const)('explains %s without submitting an adaptation', (state, reason) => {
+    ] as const)('explains %s in the dialog without submitting an adaptation', (state, reason) => {
         vi.spyOn(comp['generationActivity'], state).mockReturnValue(true);
         expect(comp['adaptBlockedReason']()).toBe('artemisApp.review.adaptExercise.' + reason);
         comp['openAdaptDialog']();
-        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(comp.adaptDialogVisible()).toBe(true);
+        confirmAdaptDialog('Blocked');
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
@@ -2423,27 +2361,31 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
     });
 
-    it('offers only the existing legacy workflow for an exam exercise', () => {
+    it('offers no adaptation or feedback selection for an exam exercise', () => {
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, exerciseGroup: new ExerciseGroup() }));
         expect((comp as any).adaptOffered()).toBe(false);
         expect((comp as any).generationSupported()).toBe(false);
-        expect((comp as any).legacyCodeGenerationOffered()).toBe(true);
         const availability = reviewCommentService.connectAdaptation.mock.calls.at(-1)![0] as ReviewAdaptationAvailability;
         expect(availability.offered()).toBe(false);
-        expect(availability.feedbackOffered!()).toBe(true);
+        expect(availability.feedbackOffered!()).toBe(false);
+    });
+
+    it('reports repository setup to the review threads while it blocks adaptation', () => {
+        const availability = reviewCommentService.connectAdaptation.mock.calls.at(-1)![0] as ReviewAdaptationAvailability;
+        comp.loadingState.set(LOADING_STATE.CREATING_ASSIGNMENT_REPO);
+        expect(availability.blockedReason()).toBe('artemisApp.hyperion.generation.blocker.repositorySetupBusy');
+        comp.loadingState.set(LOADING_STATE.CLEAR);
         expect(availability.blockedReason()).toBeUndefined();
     });
 
-    it('keeps legacy feedback selectable for a released exercise when whole-exercise generation is enabled', () => {
+    it('reports why a released exercise cannot be adapted to the review threads', () => {
         comp.exercise.update((exercise) => Object.assign(exercise!, { releaseDate: dayjs().subtract(1, 'day') }));
         const availability = reviewCommentService.connectAdaptation.mock.calls.at(-1)![0] as ReviewAdaptationAvailability;
 
         expect(comp['hyperionGenerationSupported']).toBe(true);
         expect(availability.offered()).toBe(true);
         expect(comp['adaptBlockedReason']()).toBe('artemisApp.hyperion.generation.blocker.released');
-        expect(comp['legacyCodeGenerationOffered']()).toBe(true);
-        expect(availability.feedbackOffered!()).toBe(true);
-        expect(availability.blockedReason()).toBeUndefined();
+        expect(availability.blockedReason()).toBe('artemisApp.hyperion.generation.blocker.released');
     });
 
     it('does not offer adaptation when whole-exercise generation is disabled', () => {
@@ -2465,30 +2407,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
 
         expect((jenkinsComp as any).hyperionEnabled).toBe(true);
         expect((jenkinsComp as any).hyperionGenerationSupported).toBe(false);
-        expect((jenkinsComp as any).legacyCodeGenerationOffered()).toBe(true);
         const availability = reviewCommentService.connectAdaptation.mock.calls.at(-1)![0] as ReviewAdaptationAvailability;
         expect(availability.offered()).toBe(false);
-        expect(availability.feedbackOffered!()).toBe(true);
-        expect(availability.blockedReason()).toBeUndefined();
-        jenkinsComp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().subtract(1, 'minute') }));
-        expect(availability.feedbackOffered!()).toBe(true);
-        expect(availability.blockedReason()).toBeUndefined();
-        jenkinsComp.loadingState.set(LOADING_STATE.CREATING_ASSIGNMENT_REPO);
-        expect(availability.blockedReason()).toBe('artemisApp.hyperion.generation.blocker.repositorySetupBusy');
-        jenkinsComp.loadingState.set(LOADING_STATE.CLEAR);
-        const applying = signal(true);
-        vi.spyOn(jenkinsComp, 'isAiApplying').mockImplementation(() => applying());
-        expect(availability.blockedReason()).toBe('artemisApp.hyperion.generation.blocker.problemStatementBusy');
-        const clean = signal(false);
-        setCodeEditorContainer(jenkinsComp, { canDeactivate: () => clean() });
-        applying.set(false);
-        expect(availability.blockedReason()).toBe('artemisApp.hyperion.generationActivity.saveChangesFirst');
-        clean.set(true);
-        expect(availability.blockedReason()).toBeUndefined();
+        expect(availability.feedbackOffered!()).toBe(false);
 
         expect((jenkinsComp as any).adaptOffered()).toBe(false);
         expect((jenkinsComp as any).generationSupported()).toBe(false);
-        expect((jenkinsComp as any).canAdaptNow()).toBe(false);
 
         (jenkinsComp as any).openAdaptDialog();
         expect(jenkinsComp.adaptDialogVisible()).toBe(false);
@@ -2506,7 +2430,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect((comp as any).generationSupported()).toBe(true);
         expect((comp as any).adaptOffered()).toBe(true);
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.released');
-        expect((comp as any).canAdaptNow()).toBe(false);
+        expect((comp as any).adaptUnavailableReason()).toBe('artemisApp.hyperion.generation.blocker.released');
 
         // A draft without a release date is what an instructor authors on; it stays adaptable.
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: undefined }));
@@ -2525,6 +2449,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
 
         comp.exercise.set(createMockExercise({ ...unreleased, studentParticipations: [], numberOfParticipations: 1 }));
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.studentParticipations');
-        expect((comp as any).canAdaptNow()).toBe(false);
+        expect((comp as any).adaptUnavailableReason()).toBe('artemisApp.hyperion.generation.blocker.studentParticipations');
     });
 });

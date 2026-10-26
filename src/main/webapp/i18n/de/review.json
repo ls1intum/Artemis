@@ -61,10 +61,9 @@
             "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest.",
             "adaptExercise": {
                 "title": "Aufgabe anpassen",
-                "summary": "Wähle die zu bearbeitenden Kommentare aus und ergänze bei Bedarf Anweisungen.",
-                "freeSummary": "Wähle unten Review-Kommentare aus oder beschreibe die gewünschte Änderung.",
+                "summary": "Artemis Intelligence setzt die ausgewählten Review-Kommentare und deine Anweisungen gemeinsam in einem Lauf um und prüft das Ergebnis, bevor es gespeichert wird.",
                 "findingsListLabel": "Review-Kommentare · {{ count }} von {{ total }} ausgewählt",
-                "freeHelp": "Es sind keine Review-Kommentare ausgewählt. Beschreibe die gewünschte Änderung für Artemis Intelligence.",
+                "freeHelp": "Diese Aufgabe hat keine offenen Review-Kommentare. Beschreibe unten die gewünschte Änderung.",
                 "instructionsLabel": "Zusätzliche Anweisungen",
                 "instructionsPlaceholder": "Optional: zusätzliche Hinweise für die Anpassung…",
                 "freeInstructionsPlaceholder": "Beschreibe die gewünschte Änderung…",

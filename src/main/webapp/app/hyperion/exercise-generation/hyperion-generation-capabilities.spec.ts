@@ -45,7 +45,7 @@ describe('Shared programming authoring capabilities', () => {
     it.each(['quiz', 'unsupported', 'exam', 'unauthorized', 'disabled'])('does not request capabilities for %s', (reason) => {
         if (reason === 'exam') exercise.set(Object.assign(supported(), { exerciseGroup: { id: 4 } }));
         if (reason === 'quiz') exercise.set({ id: 12, type: ExerciseType.QUIZ } as Exercise);
-        if (reason === 'unsupported') exercise.set(Object.assign(supported(), { projectType: ProjectType.PLAIN_MAVEN }));
+        if (reason === 'unsupported') exercise.set(Object.assign(supported(), { projectType: ProjectType.MAVEN_BLACKBOX }));
         if (reason === 'unauthorized') authorized.set(false);
         if (reason === 'disabled') enabled.set(false);
         const capabilities = TestBed.runInInjectionContext(() => injectGenerationCapabilities(exercise, authorized));

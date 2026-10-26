@@ -1,11 +1,10 @@
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 /**
- * Both Gradle project types build with the one Gradle test harness the sandbox verifies against; they differ only in
- * whether the sample template ships a third-party dependency. `PLAIN_GRADLE` is what the create form assigns to a Java
- * exercise by default, so a hand-made exercise qualifies just like a generated one.
+ * The sandbox verifies each exercise with its own build: Gradle for the two Gradle types and Maven for the two Maven types. The
+ * dependency variants only differ in whether the sample template ships a third-party dependency. The server stays the authority.
  */
-const SUPPORTED_PROJECT_TYPES: ReadonlySet<ProjectType> = new Set([ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE]);
+const SUPPORTED_PROJECT_TYPES: ReadonlySet<ProjectType> = new Set([ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN]);
 
 export function supportsHyperionExerciseGeneration(language: ProgrammingLanguage | undefined, projectType: ProjectType | null | undefined): boolean {
     return language === ProgrammingLanguage.JAVA && !!projectType && SUPPORTED_PROJECT_TYPES.has(projectType);

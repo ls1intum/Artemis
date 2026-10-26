@@ -197,6 +197,38 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         expect(confirmed).not.toHaveBeenCalled();
         expect(actionButtons(fixture)[1].disabled).toBe(true);
     });
+    it('leads with an active run notice that links to the run and keeps Adapt exercise disabled', async () => {
+        const { fixture, component, confirmed } = await setup();
+        const cancelled = vi.fn();
+        component.cancelled.subscribe(cancelled);
+        component.instructions.set('Shorten the tests');
+        fixture.componentRef.setInput('progressLink', TestBed.inject(Router).createUrlTree(['/editor'], { queryParams: { aiRun: 'authoring:42:latest' } }));
+        fixture.componentRef.setInput('blockedReason', 'artemisApp.review.adaptExercise.runInProgress');
+        fixture.detectChanges();
+
+        const notice = fixture.nativeElement.querySelector('[data-testid="adapt-run-notice"]') as HTMLElement;
+        expect(notice.querySelector('[data-testid="adapt-blocked-reason"]')!.textContent).toContain('runInProgress');
+        const link = notice.querySelector('[data-testid="adapt-open-progress"]') as HTMLAnchorElement;
+        expect(link.textContent).toContain('artemisApp.hyperion.generation.actions.viewRun');
+        expect(actionButtons(fixture)[1].disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('tumaet-ui-button[data-testid="adapt-confirm"]').textContent).toContain('artemisApp.review.adaptExercise.confirm');
+        component['confirm']();
+        expect(confirmed).not.toHaveBeenCalled();
+        // A modified click leaves the navigation to the browser, so the spec observes only the dialog closing.
+        link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true }));
+        expect(cancelled).toHaveBeenCalledOnce();
+    });
+
+    it('allows instructions alone and explains the empty state when there are no review comments', async () => {
+        const { fixture, component, confirmed } = await setup();
+        expect(fixture.nativeElement.querySelector('[data-testid="adapt-no-comments"]').textContent).toContain('artemisApp.review.adaptExercise.freeHelp');
+        expect(fixture.nativeElement.querySelector('[data-testid="adapt-run-notice"]')).toBeNull();
+        component.instructions.set('Add a second task');
+        fixture.detectChanges();
+        component['confirm']();
+        expect(confirmed).toHaveBeenCalledExactlyOnceWith({ instructions: 'Add a second task' });
+    });
+
     it('opens progress in the current tab without discarding the adaptation draft', async () => {
         const { component, fixture } = await setup();
         component.instructions.set('Keep my instructions');

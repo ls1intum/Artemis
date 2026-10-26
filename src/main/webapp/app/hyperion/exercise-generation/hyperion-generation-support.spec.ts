@@ -7,16 +7,16 @@ import { hyperionGenerationBlocker, isHyperionGenerationDraft, supportsHyperionE
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('Hyperion generation support', () => {
-    it.each([ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_GRADLE])('supports the Java Gradle project type %s', (projectType) => {
-        expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.JAVA, projectType)).toBe(true);
-    });
-
-    it.each([ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_BLACKBOX, ProjectType.FACT, undefined, null])(
-        'rejects unsupported or unspecified project type %s',
+    it.each([ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_GRADLE, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN])(
+        'supports the Java Gradle and Maven project type %s',
         (projectType) => {
-            expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.JAVA, projectType)).toBe(false);
+            expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.JAVA, projectType)).toBe(true);
         },
     );
+
+    it.each([ProjectType.MAVEN_BLACKBOX, ProjectType.FACT, undefined, null])('rejects unsupported or unspecified project type %s', (projectType) => {
+        expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.JAVA, projectType)).toBe(false);
+    });
 
     it('rejects non-Java or unspecified languages', () => {
         expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.PYTHON, ProjectType.GRADLE_GRADLE)).toBe(false);
@@ -52,7 +52,7 @@ describe('Hyperion draft eligibility', () => {
     it('names the first blocker in an order the instructor can act on', () => {
         const exercise = draft();
         exercise.programmingLanguage = ProgrammingLanguage.PYTHON;
-        exercise.projectType = ProjectType.PLAIN_MAVEN;
+        exercise.projectType = ProjectType.MAVEN_BLACKBOX;
         exercise.staticCodeAnalysisEnabled = true;
         expect(hyperionGenerationBlocker(exercise, now)).toBe('unsupportedLanguage');
         exercise.programmingLanguage = ProgrammingLanguage.JAVA;

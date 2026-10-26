@@ -61,10 +61,9 @@
             "submitBeforeComment": "Submit the exercise before starting a thread.",
             "adaptExercise": {
                 "title": "Adapt exercise",
-                "summary": "Choose the comments to address and add any further instructions.",
-                "freeSummary": "Choose review comments below or describe the change you want.",
+                "summary": "Artemis Intelligence applies the selected review comments and your instructions together in one run and verifies the result before it saves anything.",
                 "findingsListLabel": "Review comments · {{ count }} of {{ total }} selected",
-                "freeHelp": "No review comments are selected. Describe the change you want Artemis Intelligence to make.",
+                "freeHelp": "There are no open review comments on this exercise. Describe the change you want below.",
                 "instructionsLabel": "Additional instructions",
                 "instructionsPlaceholder": "Optional: add extra guidance for the adaptation…",
                 "freeInstructionsPlaceholder": "Describe the change you want to make…",

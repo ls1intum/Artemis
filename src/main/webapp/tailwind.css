@@ -70,7 +70,6 @@
 @source './app/exercise/import';
 @source './app/exercise/review';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';
-@source './app/programming/manage/code-editor/legacy-code-generation';
 @source './app/iris/manage/settings';
 @source './app/hyperion';
 @source './app/editor/markdown-editor';
@@ -222,7 +221,8 @@
     --tumaet-ui-state-success: var(--artemis-alert-success-color);
     --tumaet-ui-state-success-contrast: var(--artemis-alert-success-background);
     --tumaet-ui-state-warning: var(--artemis-alert-warning-color);
-    --tumaet-ui-state-warning-contrast: var(--artemis-alert-warning-background);
+    /* White on the solid orange, like the legacy Bootstrap warning buttons it stands next to (edit, export). */
+    --tumaet-ui-state-warning-contrast: var(--colored-btn-font);
     --tumaet-ui-state-info: var(--artemis-alert-info-color);
     --tumaet-ui-state-info-contrast: var(--artemis-alert-info-background);
 }

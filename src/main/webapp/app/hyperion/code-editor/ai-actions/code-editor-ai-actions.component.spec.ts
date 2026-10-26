@@ -35,53 +35,73 @@ describe('CodeEditorAiActionsComponent', () => {
         fixture.detectChanges();
     }
 
-    it('emits adaptRequested from the primary action while nothing blocks adaptation', () => {
+    it('offers every AI action in one Artemis Intelligence menu', () => {
+        fixture.componentRef.setInput('variantOffered', true);
+        fixture.componentRef.setInput('progressLink', ['/course-management', 1, 'programming-exercises', 42]);
+        fixture.detectChanges();
+
+        const trigger = testId('hyperion-ai-menu')!;
+        expect(trigger.textContent).toContain('artemisApp.programmingExercise.artemisIntelligence.title');
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="code-editor-ai-action-buttons"] > button')).toHaveLength(1);
+        expect(testId('hyperion-adapt-with-feedback')).toBeNull();
+
+        openMenu();
+        const items = [...document.querySelectorAll('[tumAetUiMenuItem], .tumaet-ui-menu-item')].map((item) => item.getAttribute('data-testid'));
+        expect(items).toEqual([
+            'hyperion-editor-open-generation',
+            'hyperion-adapt-with-feedback',
+            'hyperion-create-variant',
+            'hyperion-refine-problem-statement',
+            'hyperion-check-consistency',
+        ]);
+        expect(overlayTestId('hyperion-adapt-with-feedback')!.textContent).toContain('artemisApp.hyperion.generation.actions.adapt');
+    });
+
+    it('emits adaptRequested from the menu while the exercise can be adapted', () => {
         const adaptRequested = vi.fn();
         comp.adaptRequested.subscribe(adaptRequested);
 
-        const adapt = testId('hyperion-adapt-with-feedback')!;
-        expect(adapt.getAttribute('aria-disabled')).toBeNull();
+        openMenu();
+        const adapt = overlayTestId('hyperion-adapt-with-feedback')!;
+        expect(adapt.getAttribute('aria-disabled')).not.toBe('true');
         adapt.click();
 
         expect(adaptRequested).toHaveBeenCalledOnce();
     });
 
-    it('disables the primary action with a title without adding a second toolbar row', () => {
+    it('disables adaptation with its reason as a title instead of a line of text', () => {
         const adaptRequested = vi.fn();
         comp.adaptRequested.subscribe(adaptRequested);
-        fixture.componentRef.setInput('adaptBlockedReason', 'artemisApp.hyperion.generation.blocker.released');
+        fixture.componentRef.setInput('adaptUnavailableReason', 'artemisApp.hyperion.generation.blocker.released');
         fixture.detectChanges();
 
-        const adapt = testId('hyperion-adapt-with-feedback')!;
-        expect(adapt.hasAttribute('disabled')).toBe(true);
+        openMenu();
+        const adapt = overlayTestId('hyperion-adapt-with-feedback')!;
+        expect(adapt.getAttribute('aria-disabled')).toBe('true');
         expect(adapt.getAttribute('title')).toBe('artemisApp.hyperion.generation.blocker.released');
-        expect(testId('hyperion-adapt-blocker')).toBeNull();
-        expect(fixture.nativeElement.querySelector('p')).toBeNull();
-        expect(fixture.nativeElement.querySelector('tumaet-ui-button-group').children).toHaveLength(2);
-        adapt.click();
+        expect(adapt.textContent).not.toContain('artemisApp.hyperion.generation.blocker.released');
+        comp['requestAdapt']();
 
         expect(adaptRequested).not.toHaveBeenCalled();
     });
 
-    it('shows the selected feedback count on the primary action', () => {
+    it('shows the selected feedback count on the menu trigger', () => {
         expect(testId('hyperion-adapt-selected-count')).toBeNull();
 
         fixture.componentRef.setInput('selectedFeedbackCount', 3);
         fixture.detectChanges();
 
+        expect(testId('hyperion-ai-menu')!.contains(testId('hyperion-adapt-selected-count'))).toBe(true);
         expect(testId('hyperion-adapt-selected-count')!.textContent).toContain('3');
     });
 
-    it('reduces to the labelled menu trigger when adaptation is not offered', () => {
-        fixture.componentRef.setInput('adaptBlockedReason', 'artemisApp.review.adaptExercise.reloadRequired');
+    it('leaves adaptation out of the menu when it is not offered', () => {
         fixture.componentRef.setInput('adaptOffered', false);
         fixture.detectChanges();
 
-        expect(testId('hyperion-adapt-with-feedback')).toBeNull();
-        expect(testId('hyperion-adapt-blocker')).toBeNull();
-        const trigger = testId('hyperion-ai-menu')!;
-        expect(trigger.textContent?.trim()).toBe('');
-        expect(trigger.getAttribute('aria-label')).toBe('artemisApp.programmingExercise.artemisIntelligence.title');
+        openMenu();
+        expect(overlayTestId('hyperion-adapt-with-feedback')).toBeNull();
+        expect(overlayTestId('hyperion-refine-problem-statement')).not.toBeNull();
     });
 
     it('offers direct consistency issue navigation without opening the AI menu', () => {
@@ -110,7 +130,7 @@ describe('CodeEditorAiActionsComponent', () => {
         expect(refine.getAttribute('aria-disabled')).not.toBe('true');
         expect(refine.textContent).toContain('artemisApp.programmingExercise.problemStatement.refinementAssistance');
         expect(consistency.getAttribute('aria-disabled')).toBe('true');
-        expect(consistency.textContent).toContain('artemisApp.hyperion.generation.blocker.consistencyCheckBusy');
+        expect(consistency.getAttribute('title')).toBe('artemisApp.hyperion.generation.blocker.consistencyCheckBusy');
         expect(overlayTestId('hyperion-show-issues')).toBeNull();
     });
 
@@ -126,37 +146,29 @@ describe('CodeEditorAiActionsComponent', () => {
         expect(overlayTestId('hyperion-check-consistency')).toBeNull();
     });
 
-    it('offers the generation page while a run needs attention', () => {
+    it('offers the run in progress in the menu and marks the trigger as running', () => {
         expect(testId('hyperion-editor-open-generation')).toBeNull();
 
         fixture.componentRef.setInput('progressLink', ['/course-management', 1, 'programming-exercises', 42, 'generation']);
         fixture.componentRef.setInput('progressRunning', true);
         fixture.detectChanges();
+        expect(testId('hyperion-ai-menu')!.querySelector('jhi-hyperion-status')).not.toBeNull();
 
-        const link = testId('hyperion-editor-open-generation')!;
         const progressRequested = vi.fn();
         comp.progressRequested.subscribe(progressRequested);
-        link.click();
-        expect(progressRequested).toHaveBeenCalledOnce();
-        expect(link.tagName).toBe('BUTTON');
-        expect(link.textContent).toContain('artemisApp.hyperion.generation.actions.viewRun');
-    });
-
-    it('uses only a chevron next to the main Adapt action and does not repeat Adapt in the menu', () => {
-        const trigger = testId('hyperion-ai-menu')!;
-        expect(trigger.textContent?.trim()).toBe('');
-        expect(trigger.querySelectorAll('fa-icon')).toHaveLength(1);
-        expect(testId('hyperion-adapt-with-feedback')!.textContent).toContain('artemisApp.hyperion.generation.actions.adapt');
         openMenu();
-        expect(overlayTestId('hyperion-adapt-menu-item')).toBeNull();
+        const item = overlayTestId('hyperion-editor-open-generation')!;
+        expect(item.textContent).toContain('artemisApp.hyperion.generation.actions.viewRun');
+        item.click();
+        expect(progressRequested).toHaveBeenCalledOnce();
     });
 
-    it('keeps action buttons and count badges compact in the editor toolbar', () => {
+    it('keeps the trigger and count badges compact in the editor toolbar', () => {
         fixture.componentRef.setInput('issueCount', 1);
         fixture.componentRef.setInput('selectedFeedbackCount', 1);
         fixture.detectChanges();
 
-        for (const id of ['hyperion-adapt-with-feedback', 'hyperion-ai-menu', 'hyperion-show-issues']) {
+        for (const id of ['hyperion-ai-menu', 'hyperion-show-issues']) {
             expect(testId(id)!.getAttribute('size')).toBe('small');
         }
         for (const id of ['hyperion-adapt-selected-count', 'hyperion-issue-count']) {
@@ -184,7 +196,8 @@ describe('CodeEditorAiActionsComponent', () => {
         fixture.detectChanges();
         openMenu();
         expect(overlayTestId('hyperion-create-variant')!.getAttribute('aria-disabled')).toBe('true');
-        expect(overlayTestId('hyperion-create-variant')!.textContent).toContain('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+        expect(overlayTestId('hyperion-create-variant')!.getAttribute('title')).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+        expect(overlayTestId('hyperion-create-variant')!.textContent).not.toContain('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
         comp['requestVariant']();
         expect(variantRequested).not.toHaveBeenCalled();
     });

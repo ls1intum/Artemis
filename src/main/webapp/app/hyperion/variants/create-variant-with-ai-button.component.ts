@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
 import { supportsAiVariantGeneration, variantGenerationBlocker } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
@@ -13,7 +14,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 @Component({
     selector: 'jhi-create-variant-with-ai-button',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumAetUiButtonComponent, TranslateDirective, ExerciseVariantAiModalWizardComponent],
+    imports: [TumAetUiButtonComponent, TranslateDirective, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
     styles: `
         :host {
             display: contents;
@@ -25,7 +26,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     `,
     template: `
         @if (supported()) {
-            <span class="inline-flex flex-col items-start gap-1 {{ styleClass() }}">
+            <!-- The reason is a tooltip on the wrapper: a disabled button receives no pointer events of its own. -->
+            <span class="inline-flex flex-col items-start gap-1 {{ styleClass() }}" [attr.title]="blocker() || '' | artemisTranslate" data-testid="create-variant-ai">
                 <tumaet-ui-button
                     class="[&_button]:gap-1! [&_button]:rounded-[0.1rem]! [&_button]:px-2! [&_button]:py-1! [&_button]:text-[0.7875rem]! [&_button]:leading-normal!"
                     severity="warn"
@@ -39,9 +41,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
                 >
                     <span jhiTranslate="artemisApp.exerciseManagement.action.createVariantWithAi"></span>
                 </tumaet-ui-button>
-                @if (blocker(); as reason) {
-                    <span class="text-sm text-muted-color" role="status" [jhiTranslate]="reason" data-testid="create-variant-ai-reason"></span>
-                }
                 @if (canRetry()) {
                     <tumaet-ui-button severity="secondary" variant="text" size="small" (clicked)="generationCapabilities.reload()" data-testid="create-variant-ai-retry">
                         <span jhiTranslate="artemisApp.hyperion.jobs.retry"></span>

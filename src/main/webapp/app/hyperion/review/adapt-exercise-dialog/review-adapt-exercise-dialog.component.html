@@ -1,12 +1,31 @@
 <div class="flex min-w-0 flex-col gap-3">
-    <p class="m-0 flex items-center gap-2">
-        <fa-icon [icon]="facArtemisIntelligence" class="text-primary" />
-        @if (isFreeMode()) {
-            <span jhiTranslate="artemisApp.review.adaptExercise.freeSummary"></span>
-        } @else {
-            <span jhiTranslate="artemisApp.review.adaptExercise.summary"></span>
-        }
+    <p class="m-0 flex items-start gap-2" id="adaptExerciseSummary">
+        <fa-icon [icon]="facArtemisIntelligence" class="mt-1 text-primary" />
+        <span jhiTranslate="artemisApp.review.adaptExercise.summary"></span>
     </p>
+
+    <!-- Why the run cannot start, at the top so it is read before anything is typed; the dialog still opens so a draft is never lost. -->
+    @if (blockedReason() || submissionError()) {
+        <div
+            class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border px-3 py-2"
+            [class]="submissionError() ? 'border-state-danger/40 bg-state-danger/10' : 'border-state-warning/40 bg-state-warning/10'"
+            data-testid="adapt-run-notice"
+        >
+            <div class="flex min-w-0 flex-1 flex-col gap-1">
+                @if (blockedReason(); as reason) {
+                    <p class="m-0 text-sm" role="status" data-testid="adapt-blocked-reason" [jhiTranslate]="reason"></p>
+                }
+                @if (submissionError(); as error) {
+                    <p class="m-0 text-sm text-state-danger" role="alert" data-testid="adapt-submission-error" [jhiTranslate]="error"></p>
+                }
+            </div>
+            @if (progressLink(); as link) {
+                <a tumAetUiButton severity="secondary" variant="outlined" size="small" [routerLink]="link" (click)="cancelled.emit()" data-testid="adapt-open-progress">
+                    <span jhiTranslate="artemisApp.hyperion.generation.actions.viewRun"></span>
+                </a>
+            }
+        </div>
+    }
 
     @if (totalCount()) {
         <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -192,7 +211,12 @@
             }
         </div>
     } @else {
-        <small class="text-muted-color" id="adaptExerciseFreeHelp" jhiTranslate="artemisApp.review.adaptExercise.freeHelp"></small>
+        <p
+            class="m-0 rounded-md border border-dashed border-surface px-3 py-2 text-sm text-muted-color"
+            id="adaptExerciseFreeHelp"
+            data-testid="adapt-no-comments"
+            jhiTranslate="artemisApp.review.adaptExercise.freeHelp"
+        ></p>
     }
 
     <label class="-mb-1 text-base font-semibold" for="adaptExerciseInstructions">{{ 'artemisApp.review.adaptExercise.instructionsLabel' | artemisTranslate }}</label>
@@ -215,17 +239,6 @@
     </small>
 
     <p class="m-0 text-sm text-muted-color" data-testid="adapt-persistence-notice" jhiTranslate="artemisApp.review.adaptExercise.persistenceNotice"></p>
-    @if (blockedReason(); as reason) {
-        <p class="m-0 text-sm text-state-warning" role="status" data-testid="adapt-blocked-reason" [jhiTranslate]="reason"></p>
-    }
-    @if (submissionError(); as error) {
-        <p class="m-0 text-sm text-state-danger" role="alert" data-testid="adapt-submission-error" [jhiTranslate]="error"></p>
-    }
-    @if ((blockedReason() || submissionError()) && progressLink(); as link) {
-        <a tumAetUiButton severity="secondary" variant="outlined" size="small" class="self-start" [routerLink]="link" data-testid="adapt-open-progress">
-            <span jhiTranslate="artemisApp.hyperion.generation.actions.viewRun"></span>
-        </a>
-    }
     <div class="mt-2 flex justify-end gap-2 border-t border-surface pt-3">
         <tumaet-ui-button size="small" severity="secondary" variant="outlined" [disabled]="submitting()" (clicked)="cancelled.emit()">
             {{ 'artemisApp.review.adaptExercise.cancel' | artemisTranslate }}

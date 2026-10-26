@@ -283,9 +283,9 @@
                 },
                 "blocker": {
                     "requiresEditor": "You need editor rights in this course to change the exercise with AI.",
-                    "examExercise": "Whole-exercise AI authoring is available for course exercises only. Existing repository-level generation remains available.",
+                    "examExercise": "Whole-exercise AI authoring is available for course exercises only.",
                     "unsupportedLanguage": "AI authoring supports Java exercises only.",
-                    "unsupportedProjectType": "This Java exercise builds with Maven or another tool. AI authoring only verifies Gradle builds; the build tool cannot be changed after creation, so create a Gradle exercise to use it.",
+                    "unsupportedProjectType": "This Java exercise uses a project type AI authoring cannot verify, such as Maven black-box tests. AI authoring supports Java exercises built with Gradle or Maven; the project type cannot be changed after creation, so create a Gradle or Maven exercise to use it.",
                     "staticCodeAnalysis": "Disable static code analysis in the exercise settings first. The AI verifier does not model its penalties.",
                     "sequentialTestRuns": "Disable sequential test runs in the exercise settings first. The AI verifier runs all tests in one pass.",
                     "auxiliaryRepositories": "Remove the auxiliary repositories first. AI authoring writes only the template, solution, and test repositories.",
@@ -298,7 +298,7 @@
                     "variantUnavailable": "A variant cannot be created from this exercise. Check the exercise settings and try again.",
                     "saveBeforeVariant": "Save your changes before creating a variant. The variant uses the saved exercise.",
                     "capabilitiesUnavailable": "Checking whether this exercise can be changed. If this persists, reload the page.",
-                    "harnessUnsupported": "This exercise does not use the current Ares 2 Gradle test harness. Migrate and review its test harness manually before using AI authoring. Artemis does not automatically change the exercise security policy.",
+                    "harnessUnsupported": "This exercise does not use the current Ares 2 test harness for Gradle or Maven. Migrate and review its test harness manually before using AI authoring. Artemis does not automatically change the exercise security policy.",
                     "harnessUnavailable": "Artemis could not read the test harness. Check repository read access and try again. This error does not require a harness migration.",
                     "preparationOnly": "AI authoring is available only during preparation, before student exams or test runs are assigned."
                 }

@@ -1,6 +1,8 @@
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
@@ -33,6 +35,7 @@ describe('CreateVariantWithAiButtonComponent', () => {
             providers: [
                 { provide: ProfileService, useValue: { isModuleFeatureActive: moduleFeatureActive } },
                 { provide: HyperionExerciseGenerationApi, useValue: { getGenerationCapabilities: capabilities } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).overrideComponent(CreateVariantWithAiButtonComponent, {
             remove: { imports: [ExerciseVariantAiModalWizardComponent, TranslateDirective] },
@@ -104,10 +107,19 @@ describe('CreateVariantWithAiButtonComponent', () => {
         expect(capabilities).not.toHaveBeenCalled();
     });
     it('shows an unsupported configuration reason without requesting capabilities', () => {
-        const fixture = mount(Object.assign(programming(), { projectType: ProjectType.PLAIN_MAVEN }));
+        const fixture = mount(Object.assign(programming(), { projectType: ProjectType.MAVEN_BLACKBOX }));
         expect(fixture.nativeElement.querySelector('button').disabled).toBe(true);
         expect(fixture.componentInstance.blocker()).toBe('artemisApp.hyperion.generation.blocker.unsupportedProjectType');
         expect(capabilities).not.toHaveBeenCalled();
+    });
+    it('explains a blocked variant only as a tooltip, never as a line of text under the button', () => {
+        const fixture = mount(programming());
+        fixture.componentRef.setInput('disabledReason', 'artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+        fixture.detectChanges();
+        const wrapper = fixture.nativeElement.querySelector('[data-testid="create-variant-ai"]') as HTMLElement;
+        expect(wrapper.getAttribute('title')).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+        expect(fixture.nativeElement.querySelector('[data-testid="create-variant-ai-reason"]')).toBeNull();
+        expect(wrapper.textContent).not.toContain('saveBeforeVariant');
     });
     it('keeps a failed capability lookup visible and retries without opening the wizard', async () => {
         capabilities.mockReturnValueOnce(throwError(() => new Error('network'))).mockReturnValue(of({ canCreateVariant: true }));

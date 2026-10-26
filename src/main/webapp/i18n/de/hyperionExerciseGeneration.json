@@ -283,9 +283,9 @@
                 },
                 "blocker": {
                     "requiresEditor": "Du brauchst Editor-Rechte in diesem Kurs, um die Aufgabe mit KI zu ändern.",
-                    "examExercise": "Die KI-Erstellung ganzer Aufgaben ist nur für Kursaufgaben verfügbar. Die bestehende Generierung einzelner Repositories bleibt verfügbar.",
+                    "examExercise": "Die KI-Erstellung ganzer Aufgaben ist nur für Kursaufgaben verfügbar.",
                     "unsupportedLanguage": "KI-Erstellung unterstützt nur Java-Aufgaben.",
-                    "unsupportedProjectType": "Diese Java-Aufgabe wird mit Maven oder einem anderen Werkzeug gebaut. KI-Erstellung prüft nur Gradle-Builds; das Build-Werkzeug lässt sich nach dem Anlegen nicht ändern, lege dafür eine Gradle-Aufgabe an.",
+                    "unsupportedProjectType": "Diese Java-Aufgabe verwendet einen Projekttyp, den die KI-Erstellung nicht prüfen kann, etwa Maven-Blackbox-Tests. KI-Erstellung unterstützt Java-Aufgaben mit Gradle oder Maven; der Projekttyp lässt sich nach dem Anlegen nicht ändern, lege dafür eine Gradle- oder Maven-Aufgabe an.",
                     "staticCodeAnalysis": "Deaktiviere zuerst die statische Codeanalyse in den Aufgabeneinstellungen. Die KI-Prüfung bildet deren Abzüge nicht ab.",
                     "sequentialTestRuns": "Deaktiviere zuerst sequenzielle Testläufe in den Aufgabeneinstellungen. Die KI-Prüfung führt alle Tests in einem Durchlauf aus.",
                     "auxiliaryRepositories": "Entferne zuerst die zusätzlichen Repositories. KI-Erstellung schreibt nur in Vorlage, Lösung und Tests.",
@@ -298,7 +298,7 @@
                     "variantUnavailable": "Aus dieser Aufgabe kann keine Variante erstellt werden. Prüfe die Aufgabeneinstellungen und versuche es erneut.",
                     "saveBeforeVariant": "Speichere deine Änderungen, bevor du eine Variante erstellst. Die Variante verwendet die gespeicherte Aufgabe.",
                     "capabilitiesUnavailable": "Es wird geprüft, ob diese Aufgabe geändert werden kann. Lade die Seite neu, falls dies anhält.",
-                    "harnessUnsupported": "Diese Aufgabe verwendet nicht das aktuelle Ares-2-Gradle-Testgerüst. Migriere und prüfe das Testgerüst manuell, bevor du die KI-Erstellung verwendest. Artemis ändert die Sicherheitsrichtlinie der Aufgabe nicht automatisch.",
+                    "harnessUnsupported": "Diese Aufgabe verwendet nicht das aktuelle Ares-2-Testgerüst für Gradle oder Maven. Migriere und prüfe das Testgerüst manuell, bevor du die KI-Erstellung verwendest. Artemis ändert die Sicherheitsrichtlinie der Aufgabe nicht automatisch.",
                     "harnessUnavailable": "Artemis konnte das Testgerüst nicht lesen. Prüfe den Lesezugriff auf das Repository und versuche es erneut. Dieser Fehler erfordert keine Migration des Testgerüsts.",
                     "preparationOnly": "KI-Aufgabenerstellung ist nur während der Vorbereitung verfügbar, bevor Prüfungen oder Testläufe zugewiesen werden."
                 }

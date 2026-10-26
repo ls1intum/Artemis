@@ -13,7 +13,8 @@ describe('supportsAiVariantGeneration', () => {
     it('supports only programming configurations verified by the isolated authoring worker', () => {
         const exercise = { id: 1, type: ExerciseType.PROGRAMMING, programmingLanguage: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE } as ProgrammingExercise;
         expect(supportsAiVariantGeneration(exercise)).toBe(true);
-        expect(supportsAiVariantGeneration({ ...exercise, projectType: ProjectType.PLAIN_MAVEN } as ProgrammingExercise)).toBe(false);
+        expect(supportsAiVariantGeneration({ ...exercise, projectType: ProjectType.PLAIN_MAVEN } as ProgrammingExercise)).toBe(true);
+        expect(supportsAiVariantGeneration({ ...exercise, projectType: ProjectType.MAVEN_BLACKBOX } as ProgrammingExercise)).toBe(false);
         expect(supportsAiVariantGeneration({ ...exercise, programmingLanguage: ProgrammingLanguage.PYTHON } as ProgrammingExercise)).toBe(false);
         expect(supportsAiVariantGeneration({ ...exercise, staticCodeAnalysisEnabled: true } as ProgrammingExercise)).toBe(false);
         expect(supportsAiVariantGeneration(exerciseOfType(ExerciseType.PROGRAMMING))).toBe(false);
@@ -102,7 +103,7 @@ describe('variantGenerationBlocker', () => {
 
     it.each([
         [{ programmingLanguage: ProgrammingLanguage.PYTHON }, 'unsupportedLanguage'],
-        [{ projectType: ProjectType.PLAIN_MAVEN }, 'unsupportedProjectType'],
+        [{ projectType: ProjectType.MAVEN_BLACKBOX }, 'unsupportedProjectType'],
         [{ staticCodeAnalysisEnabled: true }, 'staticCodeAnalysis'],
         [{ buildConfig: { sequentialTestRuns: true } }, 'sequentialTestRuns'],
         [{ auxiliaryRepositories: [{}] }, 'auxiliaryRepositories'],

@@ -1,7 +1,6 @@
 import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
 import { variantGenerationBlocker } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
 import { generationCapabilityBlocker, hasSupportedProgrammingConfiguration, injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
-import { LegacyCodeGenerationComponent } from 'app/programming/manage/code-editor/legacy-code-generation/legacy-code-generation.component';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, linkedSignal, signal, untracked, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -46,7 +45,7 @@ import { Observable, Subject, finalize, take, takeUntil, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
@@ -109,7 +108,6 @@ interface ConsistencyIssueNavigationIssue {
     // Keep review comment state scoped to each editor container instance.
     providers: [ExerciseReviewCommentService, TumAetUiConfirmationService, HyperionGenerationActivityFacade],
     imports: [
-        LegacyCodeGenerationComponent,
         ExerciseVariantAiModalWizardComponent,
         FaIconComponent,
         TranslateDirective,
@@ -290,8 +288,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         // generic editors between here and the thread widgets carry no Hyperion inputs.
         this.exerciseReviewCommentService.connectAdaptation({
             offered: this.adaptOffered,
-            feedbackOffered: computed(() => this.adaptOffered() || this.legacyCodeGenerationOffered()),
-            blockedReason: computed(() => (this.legacyCodeGenerationOffered() ? this.legacyCodeGenerationBlockedReason() : this.adaptBlockedReason())),
+            feedbackOffered: this.adaptOffered,
+            blockedReason: this.adaptBlockedReason,
         });
     }
 
@@ -478,13 +476,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         window.history.replaceState(historyState, '');
     }
 
-    protected onLegacyGenerationRefresh(): void {
-        if (!this.canRefreshAfterHyperionRepositoryChange()) {
-            return;
-        }
-        this.codeEditorContainer()?.actions()?.executeRefresh().pipe(takeUntilDestroyed(this.editorDestroyRef)).subscribe();
-    }
-
     private canRefreshAfterHyperionRepositoryChange(): boolean {
         const codeEditor = this.codeEditorContainer();
         const codeEditorClean =
@@ -499,23 +490,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly adaptOffered = computed(
         () => this.hyperionGenerationSupported && !!this.exercise()?.id && (this.exercise()?.isAtLeastEditor ?? false) && hasSupportedProgrammingConfiguration(this.exercise()),
     );
-
-    protected readonly legacyCodeGenerationOffered = computed(() => {
-        const exercise = this.exercise();
-        return (
-            this.hyperionEnabled &&
-            !!exercise?.id &&
-            !!exercise.isAtLeastEditor &&
-            exercise.programmingLanguage === ProgrammingLanguage.JAVA &&
-            (!this.hyperionGenerationSupported || hyperionGenerationBlocker(exercise, this.now()) !== undefined)
-        );
-    });
-    protected readonly legacyCodeGenerationRunning = signal(false);
-    protected readonly legacyCodeGenerationBlockedReason = computed(() => {
-        if (this.isAiApplying() || this.isCheckingConsistency()) return HYPERION_GENERATION_BLOCKER_KEY + 'problemStatementBusy';
-        if (!this.canRefreshAfterHyperionRepositoryChange()) return 'artemisApp.hyperion.generationActivity.saveChangesFirst';
-        return this.runStateBlockedReason();
-    });
 
     /** Whether the run machinery (status polling, editing locks, reload after a save) applies to this exercise at all. */
     protected readonly generationSupported = computed(() => {
@@ -554,10 +528,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private readonly now = serverTimeSignal();
 
     /**
-     * Why adaptation cannot start right now, as a translation key, or `undefined` when it can. Ordered so the
-     * instructor reads what to change first: their role, then the exercise, then what the run state is doing.
+     * Why this exercise cannot be adapted at all, as a translation key: the instructor's role, the exercise itself, or the
+     * deployment. The menu item is disabled with it; every other reason is shown inside the dialog instead.
      */
-    protected readonly adaptBlockedReason = computed(() => {
+    protected readonly adaptUnavailableReason = computed(() => {
         const exercise = this.exercise();
         if (!exercise?.isAtLeastEditor) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'requiresEditor';
@@ -567,8 +541,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return HYPERION_GENERATION_BLOCKER_KEY + blocker;
         }
         if (this.generationCapabilities.isLoading()) return HYPERION_GENERATION_BLOCKER_KEY + 'capabilitiesLoading';
-        const capabilityBlocker = generationCapabilityBlocker(this.generationCapabilities.value());
-        if (capabilityBlocker) return capabilityBlocker;
+        return generationCapabilityBlocker(this.generationCapabilities.value());
+    });
+
+    /**
+     * Why adaptation cannot start right now, as a translation key, or `undefined` when it can. Ordered so the
+     * instructor reads what to change first: their role, then the exercise, then what the run state is doing.
+     */
+    protected readonly adaptBlockedReason = computed(() => {
+        const unavailable = this.adaptUnavailableReason();
+        if (unavailable) return unavailable;
         if (this.repositorySetupBusy()) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'repositorySetupBusy';
         }
@@ -599,7 +581,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!this.exercise()?.isAtLeastEditor) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'requiresEditor';
         }
-        if (this.isAiApplying() || this.legacyCodeGenerationRunning()) {
+        if (this.isAiApplying()) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'problemStatementBusy';
         }
         return this.runStateBlockedReason();
@@ -609,7 +591,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!this.exercise()?.isAtLeastEditor) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'requiresEditor';
         }
-        if (this.isCheckingConsistency() || this.legacyCodeGenerationRunning()) {
+        if (this.isCheckingConsistency()) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'consistencyCheckBusy';
         }
         return this.runStateBlockedReason();
@@ -645,13 +627,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     );
 
     /** Operations with no indicator of their own; a generation run already shows as the progress link's status dot. */
-    protected readonly aiActionsBusy = computed(() => this.isAiApplying() || this.isCheckingConsistency() || this.repositorySetupBusy() || this.legacyCodeGenerationRunning());
+    protected readonly aiActionsBusy = computed(() => this.isAiApplying() || this.isCheckingConsistency() || this.repositorySetupBusy());
 
-    /** Adapt the exercise using the selected review feedback. */
-    protected readonly canAdaptNow = computed(() => this.adaptOffered() && this.adaptBlockedReason() === undefined);
-
+    /**
+     * Opens the adaptation dialog. It also opens while a run is active or the run state is unknown: the dialog then names
+     * the reason, links to the run and keeps submitting disabled, so the action never appears to do nothing.
+     */
     protected openAdaptDialog(): void {
-        if (!this.canAdaptNow()) {
+        if (!this.adaptOffered() || this.adaptUnavailableReason()) {
             return;
         }
         const exerciseId = this.exercise()?.id;
@@ -678,7 +661,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected onAdaptDialogConfirmed(result: ReviewAdaptExerciseDialogResult): void {
         const pending = this.pendingAdaptDialog;
-        if (!pending || this.exercise()?.id !== pending.exerciseId || this.isExerciseGenerationActionBlocked()) {
+        if (!pending || this.exercise()?.id !== pending.exerciseId || this.adaptBlockedReason() || this.isExerciseGenerationActionBlocked()) {
             return;
         }
         if (result.selectedFeedbackThreadIds !== undefined) {

@@ -3,10 +3,9 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, input, model,
 import { FormsModule } from '@angular/forms';
 import { UrlTree } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faCheckDouble, faChevronDown, faPaperPlane, faSpinner, faTimes, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheckDouble, faChevronDown, faClone, faListCheck, faPaperPlane, faPen, faSpinner, faTimes, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import {
     TumAetUiButtonDirective,
-    TumAetUiButtonGroupComponent,
     TumAetUiInputDirective,
     TumAetUiMenuComponent,
     TumAetUiMenuItemDirective,
@@ -20,9 +19,9 @@ import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/hyperion/problem-statement/problem-statement.utils';
 
 /**
- * The code editor's AI actions: **Adapt exercise** as the primary action and a menu with the problem-statement
- * refinement and the consistency check. Nothing here is hidden by state - an action that cannot run right now is
- * disabled with a reason, without adding another row to the editor toolbar.
+ * The code editor's AI actions: one **Artemis Intelligence** menu with the run in progress, adaptation, variants, the
+ * problem-statement refinement and the consistency check. Nothing here is hidden by state - an action that cannot run
+ * right now is disabled with its reason as a tooltip, without adding another control to the editor toolbar.
  *
  * Presentational: the container owns every decision (feature flags, eligibility, run state) and passes the outcome in
  * as a translation key per action; `undefined` means the action is available.
@@ -37,8 +36,6 @@ import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/hyp
         ArtemisTranslatePipe,
         TranslateDirective,
         TumAetUiButtonDirective,
-        TumAetUiButtonGroupComponent,
-
         TumAetUiMenuComponent,
         TumAetUiMenuItemDirective,
         TumAetUiMenuTriggerDirective,
@@ -49,13 +46,16 @@ import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/hyp
     ],
 })
 export class CodeEditorAiActionsComponent {
-    /** Whether this deployment offers whole-exercise adaptation. Without it the group is only the menu. */
+    /** Whether this deployment offers whole-exercise adaptation for the open exercise. */
     readonly adaptOffered = input(false);
-    /** Translation key for why adaptation cannot start now; `undefined` when it can. */
-    readonly adaptBlockedReason = input<string | undefined>();
-    /** Review comments already selected as feedback, shown on the primary action so a selection is never invisible. */
+    /**
+     * Translation key for why this exercise cannot be adapted at all; `undefined` when the dialog may open. A run in
+     * progress is not a reason here: the dialog explains it and links to the run.
+     */
+    readonly adaptUnavailableReason = input<string | undefined>();
+    /** Review comments already selected as feedback, shown on the menu trigger so a selection is never invisible. */
     readonly selectedFeedbackCount = input(0);
-    /** Link opening the generation dialog while a run, or a lost run status, needs the instructor's attention. */
+    /** Link to the run view while a run, or a lost run status, needs the instructor's attention; adds "View AI progress" to the menu. */
     readonly progressLink = input<readonly unknown[] | UrlTree | undefined>();
     readonly progressRunning = input(false);
     readonly variantOffered = input(false);
@@ -68,7 +68,7 @@ export class CodeEditorAiActionsComponent {
     readonly consistencyBlockedReason = input<string | undefined>();
     /** Open consistency issues, available directly from the toolbar. */
     readonly issueCount = input(0);
-    /** Any AI operation in flight, shown as a spinner on the main action. */
+    /** Any AI operation in flight, shown as a spinner on the menu trigger. */
     readonly busy = input(false);
     /** A cancellable problem-statement operation is running. */
     readonly cancelAvailable = input(false);
@@ -86,6 +86,9 @@ export class CodeEditorAiActionsComponent {
     protected readonly faBan = faBan;
     protected readonly faCheckDouble = faCheckDouble;
     protected readonly faChevronDown = faChevronDown;
+    protected readonly faClone = faClone;
+    protected readonly faListCheck = faListCheck;
+    protected readonly faPen = faPen;
     protected readonly faPaperPlane = faPaperPlane;
     protected readonly faSpinner = faSpinner;
     protected readonly faTimes = faTimes;
@@ -114,7 +117,7 @@ export class CodeEditorAiActionsComponent {
     }
 
     protected requestAdapt(): void {
-        if (!this.adaptBlockedReason()) {
+        if (this.adaptOffered() && !this.adaptUnavailableReason()) {
             this.adaptRequested.emit();
         }
     }
