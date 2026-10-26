@@ -18,9 +18,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -250,6 +253,39 @@ class ProgrammingExerciseTaskServiceTest {
 
         taskService.replaceTestIdsWithNames(exercise);
         assertThat(exercise.getProblemStatement()).as("what the editor is shown is what the instructor wrote").isEqualTo(problemStatement);
+    }
+
+    private static Stream<String> parameterizedTestNames() {
+        return Stream.of("testInsert(InsertMock, 1)", "testInsert(" + "InsertMock, ".repeat(25) + "1)", "Test Attributes of Class(" + "parameter, ".repeat(30) + "İ)",
+                "testInsert(" + "a".repeat(177) + "😀" + "b".repeat(80) + ")", "a".repeat(189) + "(" + "x".repeat(100) + ")", "a".repeat(190) + "(" + "x".repeat(100) + ")");
+    }
+
+    @ParameterizedTest
+    @MethodSource("parameterizedTestNames")
+    void parameterizedTestNames_preserveTaskAndDiagramLinksWhenReopenedAndSaved(String rawName) {
+        var linkedTest = testCase(7L, ProgrammingExerciseTestCase.normalizeTestName(rawName));
+        assertThat(linkedTest.getTestName()).hasSizeLessThanOrEqualTo(255);
+        assertThat(linkedTest.getTestName().codePoints().noneMatch(codePoint -> codePoint >= 0xD800 && codePoint <= 0xDFFF)).isTrue();
+        var otherTest = testCase(8L, "testOther()");
+        String problemStatement = "[task][Contract](" + rawName + ",testOther())\n@startuml\nclass Contract #testsColor(" + rawName + ")\n@enduml";
+        var realExercise = exerciseWith(problemStatement, linkedTest, otherTest);
+        String storedStatement = "[task][Contract](<testid>7</testid>,<testid>8</testid>)\n@startuml\nclass Contract #testsColor(<testid>7</testid>)\n@enduml";
+
+        taskService.replaceTestNamesWithIds(realExercise);
+        assertThat(realExercise.getProblemStatement()).as("the original CI name resolves before opening the editor").isEqualTo(storedStatement);
+
+        taskService.replaceTestIdsWithNames(realExercise);
+        taskService.replaceTestNamesWithIds(realExercise);
+
+        assertThat(realExercise.getProblemStatement()).as("reopening and saving keeps both task references and the diagram reference").isEqualTo(storedStatement);
+        when(taskRepository.findByExerciseIdWithTestCases(1L)).thenReturn(Set.of());
+        taskService.updateTasksFromProblemStatement(realExercise);
+        ArgumentCaptor<Iterable<ProgrammingExerciseTask>> saved = ArgumentCaptor.captor();
+        verify(taskRepository).saveAll(saved.capture());
+        assertThat(saved.getValue()).singleElement().satisfies(task -> {
+            assertThat(task.getTaskName()).isEqualTo("Contract");
+            assertThat(task.getTestCases()).containsExactlyInAnyOrder(linkedTest, otherTest);
+        });
     }
 
     /**

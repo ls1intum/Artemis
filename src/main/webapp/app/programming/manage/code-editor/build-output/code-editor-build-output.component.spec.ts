@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -178,6 +179,230 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
     });
 
+    describe('same-result compilation state updates', () => {
+        function participationWithState(buildFailed: boolean | undefined): ProgrammingExerciseStudentParticipation {
+            const result = new Result();
+            result.id = 6;
+            result.assessmentType = AssessmentType.AUTOMATIC;
+            result.feedbacks = [];
+            const submission = new ProgrammingSubmission();
+            submission.id = 6;
+            submission.buildFailed = buildFailed;
+            submission.results = [result];
+            const participation = new ProgrammingExerciseStudentParticipation();
+            participation.id = 6;
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.projectType = ProjectType.PLAIN_MAVEN;
+            participation.exercise = exercise;
+            participation.submissions = [submission];
+            return participation;
+        }
+
+        function expectSuccessfulCompilationWithoutOldLogs() {
+            expect(comp.rawBuildLogs()).toStrictEqual(new BuildLogEntryArray());
+            expect(fixture.nativeElement.textContent).not.toContain('cannot find symbol');
+            expect(fixture.nativeElement.textContent).toContain('artemisApp.editor.buildOutputOnlyOnFailure');
+            expect(fixture.nativeElement.querySelectorAll('.build-output__entry')).toHaveLength(0);
+        }
+
+        it.each([true, undefined])('clears loaded logs when the input reports success after buildFailed=%s with the same IDs', (buildFailed) => {
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+            getBuildLogsStub.mockReturnValue(of(buildLogs));
+            fixture.componentRef.setInput('participation', participationWithState(buildFailed));
+            fixture.detectChanges();
+            expect(fixture.nativeElement.textContent).toContain('cannot find symbol');
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+            const annotations = vi.spyOn(comp.onAnnotations, 'emit');
+
+            fixture.componentRef.setInput('participation', participationWithState(false));
+            fixture.detectChanges();
+
+            expectSuccessfulCompilationWithoutOldLogs();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+            expect(annotations).toHaveBeenLastCalledWith([]);
+            fixture.componentRef.setInput('participation', participationWithState(false));
+            fixture.detectChanges();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+        });
+
+        it.each([true, undefined])('clears loaded logs when the websocket reports success after buildFailed=%s with the same result ID', (buildFailed) => {
+            const websocket = new BehaviorSubject<Result | undefined>(undefined);
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(websocket);
+            getBuildLogsStub.mockReturnValue(of(buildLogs));
+            const participation = participationWithState(buildFailed);
+            participation.submissions = [];
+            fixture.componentRef.setInput('participation', participation);
+            fixture.detectChanges();
+            const result: Result = { id: 6, feedbacks: [], assessmentType: AssessmentType.AUTOMATIC };
+            if (buildFailed !== undefined) result.submission = { id: 6, buildFailed } as ProgrammingSubmission;
+            websocket.next(result);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.textContent).toContain('cannot find symbol');
+            const annotations = vi.spyOn(comp.onAnnotations, 'emit');
+
+            const completed: Result = { ...result, submission: { id: 6, buildFailed: false } as ProgrammingSubmission };
+            websocket.next(completed);
+            fixture.detectChanges();
+
+            expectSuccessfulCompilationWithoutOldLogs();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+            expect(annotations).toHaveBeenLastCalledWith([]);
+            websocket.next({ ...completed, submission: { id: 6, buildFailed: false } as ProgrammingSubmission });
+            fixture.detectChanges();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+        });
+
+        it('recognizes a state change when a websocket result object is mutated in place', () => {
+            const websocket = new BehaviorSubject<Result | undefined>(undefined);
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(websocket);
+            getBuildLogsStub.mockReturnValue(of(buildLogs));
+            fixture.componentRef.setInput('participation', { id: 6 });
+            fixture.detectChanges();
+            const submission = new ProgrammingSubmission();
+            submission.buildFailed = true;
+            const result: Result = { id: 6, submission, feedbacks: [], assessmentType: AssessmentType.AUTOMATIC };
+            websocket.next(result);
+            fixture.detectChanges();
+            expect(comp.rawBuildLogs()).toHaveLength(buildLogs.length);
+
+            submission.buildFailed = false;
+            websocket.next(result);
+            fixture.detectChanges();
+
+            expectSuccessfulCompilationWithoutOldLogs();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+        });
+
+        it('does not replay stale cached websocket failure when an input with the same result ID becomes successful', () => {
+            const initial = participationWithState(true);
+            const result: Result = { ...initial.submissions![0].results![0], submission: initial.submissions![0] };
+            const websocket = new BehaviorSubject(result);
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(websocket);
+            getBuildLogsStub.mockReturnValue(of(buildLogs));
+            fixture.componentRef.setInput('participation', initial);
+            fixture.detectChanges();
+            expect(comp.rawBuildLogs()).toHaveLength(buildLogs.length);
+            getBuildLogsStub.mockClear();
+
+            fixture.componentRef.setInput('participation', participationWithState(false));
+            fixture.detectChanges();
+
+            expectSuccessfulCompilationWithoutOldLogs();
+            expect(getBuildLogsStub).not.toHaveBeenCalled();
+
+            // A fresh explicit server event remains eligible after input success, even with the same result ID.
+            const failedAgain = new ProgrammingSubmission();
+            failedAgain.id = 6;
+            failedAgain.buildFailed = true;
+            websocket.next({ ...result, submission: failedAgain });
+            fixture.detectChanges();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+            expect(comp.rawBuildLogs()).toHaveLength(buildLogs.length);
+        });
+
+        it('does not restore a pending websocket log response after the input reports successful compilation', () => {
+            const pendingLogs = new Subject<typeof buildLogs>();
+            const websocket = new BehaviorSubject<Result | undefined>(undefined);
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(websocket);
+            getBuildLogsStub.mockReturnValue(pendingLogs);
+            fixture.componentRef.setInput('participation', participationWithState(undefined));
+            fixture.detectChanges();
+            const failedSubmission = new ProgrammingSubmission();
+            failedSubmission.buildFailed = true;
+            websocket.next({ id: 6, submission: failedSubmission, feedbacks: [], assessmentType: AssessmentType.AUTOMATIC });
+            fixture.detectChanges();
+            expect(getBuildLogsStub).toHaveBeenCalledTimes(2);
+
+            fixture.componentRef.setInput('participation', participationWithState(false));
+            fixture.detectChanges();
+            pendingLogs.next(buildLogs);
+            pendingLogs.complete();
+            fixture.detectChanges();
+
+            expectSuccessfulCompilationWithoutOldLogs();
+            expect(getBuildLogsStub).toHaveBeenCalledTimes(2);
+        });
+
+        it('does not let a pending input log request overwrite same-ID websocket success', () => {
+            const pendingLogs = new Subject<typeof buildLogs>();
+            const websocket = new BehaviorSubject<Result | undefined>(undefined);
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(websocket);
+            getBuildLogsStub.mockReturnValue(pendingLogs);
+            fixture.componentRef.setInput('participation', participationWithState(true));
+            fixture.detectChanges();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+
+            const successfulSubmission = new ProgrammingSubmission();
+            successfulSubmission.buildFailed = false;
+            websocket.next({ id: 6, submission: successfulSubmission, feedbacks: [], assessmentType: AssessmentType.AUTOMATIC });
+            fixture.detectChanges();
+            expectSuccessfulCompilationWithoutOldLogs();
+            pendingLogs.next(buildLogs);
+            pendingLogs.complete();
+            fixture.detectChanges();
+
+            expectSuccessfulCompilationWithoutOldLogs();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+        });
+
+        it('starts with successful input instead of requesting logs for an older cached websocket failure', () => {
+            const pendingLogs = new Subject<typeof buildLogs>();
+            const failedSubmission = new ProgrammingSubmission();
+            failedSubmission.buildFailed = true;
+            const cachedFailure: Result = { id: 6, submission: failedSubmission, feedbacks: [], assessmentType: AssessmentType.AUTOMATIC };
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(new BehaviorSubject(cachedFailure));
+            getBuildLogsStub.mockReturnValue(pendingLogs);
+
+            fixture.componentRef.setInput('participation', participationWithState(false));
+            fixture.detectChanges();
+            pendingLogs.next(buildLogs);
+            pendingLogs.complete();
+            fixture.detectChanges();
+
+            expectSuccessfulCompilationWithoutOldLogs();
+            expect(getBuildLogsStub).not.toHaveBeenCalled();
+        });
+
+        it('clears successful-compilation logs before delayed feedback details arrive', () => {
+            const pendingFeedback = new Subject<HttpResponse<Feedback[]>>();
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+            getBuildLogsStub.mockReturnValue(of(buildLogs));
+            fixture.componentRef.setInput('participation', participationWithState(true));
+            fixture.detectChanges();
+            expect(comp.rawBuildLogs()).toHaveLength(buildLogs.length);
+            getFeedbackDetailsForResultStub.mockReturnValue(pendingFeedback);
+            const successful = participationWithState(false);
+            successful.submissions![0].results![0].feedbacks = undefined;
+
+            fixture.componentRef.setInput('participation', successful);
+            fixture.detectChanges();
+
+            expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
+            expectSuccessfulCompilationWithoutOldLogs();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+            pendingFeedback.complete();
+        });
+
+        it('does not restore a pending log response after the input reports successful compilation', () => {
+            const pendingLogs = new Subject<typeof buildLogs>();
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+            getBuildLogsStub.mockReturnValue(pendingLogs);
+            fixture.componentRef.setInput('participation', participationWithState(undefined));
+            fixture.detectChanges();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+
+            fixture.componentRef.setInput('participation', participationWithState(false));
+            fixture.detectChanges();
+            pendingLogs.next(buildLogs);
+            pendingLogs.complete();
+            fixture.detectChanges();
+
+            expectSuccessfulCompilationWithoutOldLogs();
+            expect(getBuildLogsStub).toHaveBeenCalledOnce();
+        });
+    });
+
     it('should not retrieve build logs after participation change, if no result is available', () => {
         const participation = { id: 1 } as Participation;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
@@ -257,7 +482,7 @@ describe('CodeEditorBuildOutputComponent', () => {
     it('matches a detached historical result by ID instead of using the latest submission', () => {
         const historical: Result = { id: 6, feedbacks: [], assessmentType: AssessmentType.AUTOMATIC };
         const latest: Result = { id: 7, feedbacks: [], assessmentType: AssessmentType.AUTOMATIC };
-        const websocket = new Subject<Result>();
+        const websocket = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(websocket.asObservable());
         getBuildLogsStub.mockReturnValue(of(buildLogs));
         fixture.componentRef.setInput('participation', {
@@ -297,7 +522,7 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     it('matches unsaved results only by object identity, without treating undefined IDs as equal', () => {
         const ownedResult: Result = { feedbacks: [], assessmentType: AssessmentType.AUTOMATIC };
-        const websocket = new Subject<Result>();
+        const websocket = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(websocket.asObservable());
         getBuildLogsStub.mockReturnValue(of([]));
         fixture.componentRef.setInput('participation', { id: 6, submissions: [{ buildFailed: false, results: [ownedResult] }] });
@@ -314,7 +539,7 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     it('prefers an explicit result submission over a different participation owner state', () => {
         const result: Result = { id: 6, feedbacks: [], assessmentType: AssessmentType.AUTOMATIC };
-        const websocket = new Subject<Result>();
+        const websocket = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(websocket.asObservable());
         getBuildLogsStub.mockReturnValue(of(buildLogs));
         fixture.componentRef.setInput('participation', { id: 6, submissions: [{ buildFailed: true, results: [result] }] });

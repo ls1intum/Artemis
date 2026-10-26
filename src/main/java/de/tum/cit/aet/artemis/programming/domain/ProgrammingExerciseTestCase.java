@@ -86,6 +86,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      * Keeps a CI test name within the database limit without merging distinct names that share a prefix.
      * The digest follows the same codepoint case equivalence as {@link String#equalsIgnoreCase(String)}, so
      * changing only case retains the test case and its grading settings. The readable prefix stays unchanged.
+     * A parameter list cut by the length limit is closed after the digest so task and diagram references still parse.
      *
      * @param testName the original name reported by CI or written in a task marker
      * @return the name used to store and look up the test case
@@ -98,10 +99,16 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         testName.codePoints().forEach(codePoint -> foldedName.appendCodePoint(Character.toLowerCase(Character.toUpperCase(codePoint))));
         String suffix = "-" + sha256Hex(foldedName.toString());
         int prefixLength = MAX_TEST_NAME_LENGTH - suffix.length();
+        int parameterStart = testName.lastIndexOf('(', prefixLength - 1);
+        boolean truncatedParameters = parameterStart > testName.lastIndexOf(')', prefixLength - 1);
+        if (truncatedParameters) {
+            prefixLength--;
+        }
         if (Character.isHighSurrogate(testName.charAt(prefixLength - 1)) && Character.isLowSurrogate(testName.charAt(prefixLength))) {
             prefixLength--;
         }
-        return testName.substring(0, prefixLength) + suffix;
+        // Reserving the closing parenthesis can remove an opener exactly at the prefix boundary.
+        return testName.substring(0, prefixLength) + suffix + (truncatedParameters && parameterStart < prefixLength ? ")" : "");
     }
 
     public ProgrammingExerciseTestCase testName(String testName) {
