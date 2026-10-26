@@ -2,26 +2,7 @@
     @if (!courseId()) {
         <h5 *adminTitleBarTitle id="build-overview-heading" class="mb-0" jhiTranslate="artemisApp.buildQueue.title"></h5>
         <div *adminTitleBarActions class="flex items-center gap-2">
-            <span class="text-muted-color text-sm" jhiTranslate="artemisApp.buildQueue.jumpTo"></span>
-            <tumaet-ui-button-group>
-                <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-running-heading')">
-                    <span jhiTranslate="artemisApp.buildQueue.running"></span>
-                    <tumaet-ui-tag severity="info" class="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
-                </tumaet-ui-button>
-                <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-queued-heading')">
-                    <span jhiTranslate="artemisApp.buildQueue.queued"></span>
-                    <tumaet-ui-tag severity="info" class="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
-                </tumaet-ui-button>
-                <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-finished-heading')">
-                    <span jhiTranslate="artemisApp.buildQueue.finished"></span>
-                    <tumaet-ui-tag severity="info" class="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
-                </tumaet-ui-button>
-            </tumaet-ui-button-group>
-            <span
-                class="text-muted-color text-sm"
-                jhiTranslate="artemisApp.buildQueue.buildCapacityInfo"
-                [translateValues]="{ running: currentBuilds(), capacity: buildCapacity(), agents: onlineAgents() }"
-            ></span>
+            <ng-container [ngTemplateOutlet]="queueNavigation" />
         </div>
     }
 
@@ -29,26 +10,7 @@
         <!-- Navigation bar for course management view -->
         <div class="build-queue-nav-bar">
             <div class="flex justify-end items-center gap-2">
-                <span class="text-muted-color text-sm" jhiTranslate="artemisApp.buildQueue.jumpTo"></span>
-                <tumaet-ui-button-group>
-                    <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-running-heading')">
-                        <span jhiTranslate="artemisApp.buildQueue.running"></span>
-                        <tumaet-ui-tag severity="info" class="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
-                    </tumaet-ui-button>
-                    <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-queued-heading')">
-                        <span jhiTranslate="artemisApp.buildQueue.queued"></span>
-                        <tumaet-ui-tag severity="info" class="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
-                    </tumaet-ui-button>
-                    <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-finished-heading')">
-                        <span jhiTranslate="artemisApp.buildQueue.finished"></span>
-                        <tumaet-ui-tag severity="info" class="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
-                    </tumaet-ui-button>
-                </tumaet-ui-button-group>
-                <span
-                    class="text-muted-color text-sm"
-                    jhiTranslate="artemisApp.buildQueue.buildCapacityInfo"
-                    [translateValues]="{ running: currentBuilds(), capacity: buildCapacity(), agents: onlineAgents() }"
-                ></span>
+                <ng-container [ngTemplateOutlet]="queueNavigation" />
             </div>
         </div>
     }
@@ -106,21 +68,7 @@
                         <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
                         <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
                     </h5>
-                    <div class="flex items-center gap-2">
-                        <input
-                            [attr.aria-label]="'artemisApp.buildQueue.filter.search.title' | artemisTranslate"
-                            tumAetUiInput
-                            type="text"
-                            name="searchTerm"
-                            id="field_searchTerm"
-                            [(ngModel)]="searchTerm"
-                            (focusout)="triggerLoadFinishedJobs()"
-                        />
-                        <jhi-help-icon text="artemisApp.buildQueue.filter.search.tooltip" />
-                        <tumaet-ui-button size="small" (clicked)="triggerLoadFinishedJobs()">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.search.title"></span>
-                        </tumaet-ui-button>
-                    </div>
+                    <div jhi-build-job-search class="flex items-center gap-2" [(searchTerm)]="searchTerm" (searchRequested)="triggerLoadFinishedJobs()"></div>
                     <tumaet-ui-button size="small" (clicked)="loadFinishedBuildJobs()">
                         <fa-icon [icon]="faSync" />
                         <span jhiTranslate="metrics.refresh.button"></span>
@@ -191,3 +139,26 @@
         (confirmed)="onFilterConfirmed($event)"
     />
 </div>
+
+<ng-template #queueNavigation>
+    <span class="text-muted-color text-sm" jhiTranslate="artemisApp.buildQueue.jumpTo"></span>
+    <tumaet-ui-button-group>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-running-heading')">
+            <span jhiTranslate="artemisApp.buildQueue.running"></span>
+            <tumaet-ui-tag severity="info" class="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
+        </tumaet-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-queued-heading')">
+            <span jhiTranslate="artemisApp.buildQueue.queued"></span>
+            <tumaet-ui-tag severity="info" class="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
+        </tumaet-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-finished-heading')">
+            <span jhiTranslate="artemisApp.buildQueue.finished"></span>
+            <tumaet-ui-tag severity="info" class="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
+        </tumaet-ui-button>
+    </tumaet-ui-button-group>
+    <span
+        class="text-muted-color text-sm"
+        jhiTranslate="artemisApp.buildQueue.buildCapacityInfo"
+        [translateValues]="{ running: currentBuilds(), capacity: buildCapacity(), agents: onlineAgents() }"
+    ></span>
+</ng-template>

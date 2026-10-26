@@ -85,27 +85,6 @@ public class StudentParticipationSpecs {
     }
 
     /**
-     * Matches participations that have a team (team mode).
-     *
-     * @return specification matching participations with a team
-     */
-    @NonNull
-    public static Specification<StudentParticipation> hasTeam() {
-        return (root, query, cb) -> cb.isNotNull(root.get(StudentParticipation_.TEAM));
-    }
-
-    /**
-     * Matches participations by student or team based on team mode.
-     *
-     * @param teamMode whether the exercise uses teams
-     * @return specification matching participations for the given mode
-     */
-    @NonNull
-    public static Specification<StudentParticipation> forMode(boolean teamMode) {
-        return teamMode ? hasTeam() : hasStudent();
-    }
-
-    /**
      * Matches the participations the management view lists. An individual exercise lists the participations of students. A team exercise lists the participations of teams and
      * the practice participations of single students, which are the only student participations a team exercise has to show.
      *
@@ -255,7 +234,7 @@ public class StudentParticipationSpecs {
         Root<Result> latestResultRoot = latestResultSub.from(Result.class);
         latestResultSub.select(cb.max(latestResultRoot.get(DomainObject_.ID)));
         latestResultSub.where(cb.equal(latestResultRoot.get(Result_.SUBMISSION), submissionRoot),
-                cb.notEqual(latestResultRoot.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC_ATHENA));
+                cb.or(cb.isNull(latestResultRoot.get(Result_.ASSESSMENT_TYPE)), cb.notEqual(latestResultRoot.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC_ATHENA)));
 
         Predicate isLatestResult = cb.equal(resultJoin.get(DomainObject_.ID), latestResultSub);
 
@@ -278,7 +257,7 @@ public class StudentParticipationSpecs {
     }
 
     // --------------------------------------------------
-    // Scores view filter specifications
+    // Result filter specifications
     // --------------------------------------------------
 
     /**
@@ -369,30 +348,8 @@ public class StudentParticipationSpecs {
         });
     }
 
-    /**
-     * Returns the filter specification for the scores view based on filter name.
-     *
-     * @param filterProp filter name (Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
-     * @return specification, or null for unrecognized filterProp
-     */
-    @NonNull
-    public static Specification<StudentParticipation> scoresFilter(@Nullable String filterProp) {
-        if (filterProp == null) {
-            return noOp();
-        }
-        return switch (filterProp) {
-            case "Successful" -> isSuccessful();
-            case "Unsuccessful" -> isUnsuccessful();
-            case "BuildFailed" -> isBuildFailed();
-            case "Manual" -> hasManualAssessment();
-            case "Automatic" -> hasAutomaticAssessment();
-            case "Locked" -> isLocked();
-            default -> noOp();
-        };
-    }
-
     // --------------------------------------------------
-    // Management view filter specifications
+    // Submission state filter specifications
     // --------------------------------------------------
 
     /**
@@ -453,7 +410,7 @@ public class StudentParticipationSpecs {
     /**
      * Returns the filter specification for the management view based on filter name.
      *
-     * @param filterProp       filter name (Failed, NoSubmissions, NoPracticeMode)
+     * @param filterProp       filter name (Failed, NoSubmissions, NoPracticeMode, Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
      * @param stuckBuildCutoff cutoff timestamp for the Failed filter
      * @return specification, or null for unrecognized filterProp
      */
@@ -466,6 +423,12 @@ public class StudentParticipationSpecs {
             case "Failed" -> hasFailedBuild(stuckBuildCutoff);
             case "NoSubmissions" -> hasNoSubmissions();
             case "NoPracticeMode" -> isNotPracticeMode();
+            case "Successful" -> isSuccessful();
+            case "Unsuccessful" -> isUnsuccessful();
+            case "BuildFailed" -> isBuildFailed();
+            case "Manual" -> hasManualAssessment();
+            case "Automatic" -> hasAutomaticAssessment();
+            case "Locked" -> isLocked();
             default -> noOp();
         };
     }
@@ -473,79 +436,6 @@ public class StudentParticipationSpecs {
     // --------------------------------------------------
     // Ordering specifications
     // --------------------------------------------------
-
-    /**
-     * Applies sorting for the scores view.
-     * Uses CriteriaQuery.orderBy() as a side-effect, since sorting by subquery results
-     * cannot be expressed through Spring Data's Sort abstraction.
-     *
-     * @param sortedColumn the column to sort by (participantName, participantIdentifier, score, completionDate)
-     * @param sortOrder    ascending or descending
-     * @param teamMode     whether the exercise uses teams
-     * @return specification that applies ordering
-     */
-    @NonNull
-    public static Specification<StudentParticipation> orderedForScores(@Nullable String sortedColumn, SortingOrder sortOrder, boolean teamMode) {
-        return (root, query, cb) -> {
-            if (query == null || sortedColumn == null || sortedColumn.isBlank()) {
-                return null;
-            }
-            List<Order> orders = new ArrayList<>();
-            boolean asc = sortOrder == SortingOrder.ASCENDING;
-
-            switch (sortedColumn) {
-                case "id", "participationId" -> {
-                    Expression<?> expr = root.get(DomainObject_.ID);
-                    orders.add(asc ? cb.asc(expr) : cb.desc(expr));
-                }
-                case "participantName" -> {
-                    if (teamMode) {
-                        Expression<?> expr = root.get(StudentParticipation_.TEAM).get(Team_.NAME);
-                        orders.add(asc ? cb.asc(expr) : cb.desc(expr));
-                    }
-                    else {
-                        Expression<String> fullName = cb.concat(cb.concat(cb.coalesce(root.get(StudentParticipation_.STUDENT).get(User_.FIRST_NAME), ""), " "),
-                                cb.coalesce(root.get(StudentParticipation_.STUDENT).get(User_.LAST_NAME), ""));
-                        orders.add(asc ? cb.asc(fullName) : cb.desc(fullName));
-                    }
-                }
-                case "participantIdentifier" -> {
-                    Expression<?> expr = teamMode ? root.get(StudentParticipation_.TEAM).get(Team_.SHORT_NAME) : root.get(StudentParticipation_.STUDENT).get(User_.LOGIN);
-                    orders.add(asc ? cb.asc(expr) : cb.desc(expr));
-                }
-                case "submissionCount" -> {
-                    Subquery<Long> countSub = query.subquery(Long.class);
-                    Root<Submission> submissionRoot = countSub.from(Submission.class);
-                    countSub.select(cb.count(submissionRoot)).where(cb.equal(submissionRoot.get(Submission_.PARTICIPATION), root));
-                    orders.add(asc ? cb.asc(countSub) : cb.desc(countSub));
-                }
-                case "score" -> {
-                    Subquery<Double> scoreSub = buildLatestResultFieldSubquery(root, query, cb, Result_.SCORE, Double.class);
-                    Expression<Double> scoreExpr = cb.coalesce(scoreSub, -1.0);
-                    orders.add(asc ? cb.asc(scoreExpr) : cb.desc(scoreExpr));
-                }
-                case "completionDate" -> {
-                    Subquery<ZonedDateTime> dateSub = buildLatestResultFieldSubquery(root, query, cb, Result_.COMPLETION_DATE, ZonedDateTime.class);
-                    orders.add(asc ? cb.asc(dateSub) : cb.desc(dateSub));
-                }
-                case "assessmentType" -> {
-                    Subquery<AssessmentType> typeSub = buildLatestResultFieldSubquery(root, query, cb, Result_.ASSESSMENT_TYPE, AssessmentType.class);
-                    orders.add(asc ? cb.asc(typeSub) : cb.desc(typeSub));
-                }
-                case "testRun" -> {
-                    Expression<?> expr = root.get(Participation_.TEST_RUN);
-                    orders.add(asc ? cb.asc(expr) : cb.desc(expr));
-                }
-                default -> {
-                    // no custom ordering
-                }
-            }
-            // Tiebreaker: always sort by ID ascending
-            orders.add(cb.asc(root.get(DomainObject_.ID)));
-            query.orderBy(orders);
-            return null;
-        };
-    }
 
     /**
      * Applies sorting for the management view.
@@ -599,6 +489,19 @@ public class StudentParticipationSpecs {
                     Root<Submission> submissionRoot = countSub.from(Submission.class);
                     countSub.select(cb.count(submissionRoot)).where(cb.equal(submissionRoot.get(Submission_.PARTICIPATION), root));
                     orders.add(asc ? cb.asc(countSub) : cb.desc(countSub));
+                }
+                case "score" -> {
+                    Subquery<Double> scoreSub = buildLatestResultFieldSubquery(root, query, cb, Result_.SCORE, Double.class);
+                    Expression<Double> scoreExpr = cb.coalesce(scoreSub, -1.0);
+                    orders.add(asc ? cb.asc(scoreExpr) : cb.desc(scoreExpr));
+                }
+                case "completionDate" -> {
+                    Subquery<ZonedDateTime> dateSub = buildLatestResultFieldSubquery(root, query, cb, Result_.COMPLETION_DATE, ZonedDateTime.class);
+                    orders.add(asc ? cb.asc(dateSub) : cb.desc(dateSub));
+                }
+                case "assessmentType" -> {
+                    Subquery<AssessmentType> typeSub = buildLatestResultFieldSubquery(root, query, cb, Result_.ASSESSMENT_TYPE, AssessmentType.class);
+                    orders.add(asc ? cb.asc(typeSub) : cb.desc(typeSub));
                 }
                 case "initializationState" -> {
                     // Sort by logical progress order: INACTIVE is treated as a deactivated INITIALIZED state,
@@ -662,7 +565,7 @@ public class StudentParticipationSpecs {
         Root<Result> latestResultRoot = latestResultSub.from(Result.class);
         latestResultSub.select(cb.max(latestResultRoot.get(DomainObject_.ID)));
         latestResultSub.where(cb.equal(latestResultRoot.get(Result_.SUBMISSION), submissionRoot),
-                cb.notEqual(latestResultRoot.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC_ATHENA));
+                cb.or(cb.isNull(latestResultRoot.get(Result_.ASSESSMENT_TYPE)), cb.notEqual(latestResultRoot.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC_ATHENA)));
 
         sub.select(resultJoin.get(fieldName));
         sub.where(cb.equal(submissionRoot.get(Submission_.PARTICIPATION), root), cb.equal(submissionRoot.get(DomainObject_.ID), latestSubId),

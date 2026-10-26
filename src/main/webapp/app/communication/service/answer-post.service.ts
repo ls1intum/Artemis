@@ -1,6 +1,7 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingService } from 'app/communication/service/posting.service';
 import { map } from 'rxjs/operators';
@@ -70,8 +71,13 @@ export class AnswerPostService extends PostingService<AnswerPost> {
      */
     getSourceAnswerPostsByIds(courseId: number, answerPostIds: number[]): Observable<AnswerPost[]> {
         const params = new HttpParams().set('answerPostIds', answerPostIds.join(','));
+        // The chat renders an unavailable-source placeholder if a source is deleted or cannot be loaded.
         return this.http
-            .get<AnswerPost[]>(`api/communication/courses/${courseId}/answer-messages-source-posts`, { params, observe: 'response' })
+            .get<AnswerPost[]>(`api/communication/courses/${courseId}/answer-messages-source-posts`, {
+                params,
+                observe: 'response',
+                context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true),
+            })
             .pipe(map((response) => response.body!));
     }
 

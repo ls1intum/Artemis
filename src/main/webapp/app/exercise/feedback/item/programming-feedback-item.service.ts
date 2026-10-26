@@ -1,4 +1,4 @@
-import { FeedbackItemService } from 'app/exercise/feedback/item/feedback-item-service';
+import { FeedbackItemService, gradingInstructionFeedbackItem } from 'app/exercise/feedback/item/feedback-item-service';
 import { Service, inject } from '@angular/core';
 import {
     Feedback,
@@ -63,7 +63,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         } else if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isNonGradedFeedbackSuggestion(feedback)) {
             return this.createAutomaticFeedbackItem(feedback, showTestDetails);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
-            return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
+            return gradingInstructionFeedbackItem(feedback, this.translateService.instant(showTestDetails ? 'artemisApp.course.reviewer' : 'artemisApp.result.detail.feedback'));
         } else {
             return this.createReviewerFeedbackItem(feedback, showTestDetails);
         }
@@ -176,25 +176,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             credits: feedback.credits,
             feedbackReference: feedback,
             codeReference,
-        };
-    }
-
-    /**
-     * Creates a feedback item for a manual feedback where the tutor used a grading instruction.
-     * @param feedback The manual feedback where a grading instruction was used.
-     * @param showTestDetails
-     */
-    private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
-        const gradingInstruction = feedback.gradingInstruction!;
-
-        return {
-            type: feedback.isSubsequent ? 'Subsequent' : 'Reviewer',
-            name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
-            title: feedback.text,
-            text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
-            positive: feedback.positive,
-            credits: feedback.credits,
-            feedbackReference: feedback,
         };
     }
 

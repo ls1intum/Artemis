@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
@@ -51,6 +52,32 @@ public record FeedbackDTO(Long id, String text, String detailText, boolean hasLo
             return new TestCaseDTO(testCase.getId(), testCase.getTestName(), testCase.getWeight(), testCase.isActive(), testCase.getVisibility(), testCase.getBonusMultiplier(),
                     testCase.getBonusPoints(), testCase.getType());
         }
+    }
+
+    /**
+     * Rebuilds the editable assessment feedback, preserving its id and instruction reference. The caller resolves long
+     * text before mapping, because modeling loads it in bulk and text assessments load it individually.
+     *
+     * @param resolvedDetailText full detail text, including any restored stored long text
+     * @return transient feedback carrying the assessment update
+     */
+    public Feedback toAssessmentFeedback(String resolvedDetailText) {
+        Feedback feedback = new Feedback();
+        feedback.setId(id);
+        feedback.setCredits(credits);
+        feedback.setDetailText(resolvedDetailText);
+        feedback.setText(text);
+        feedback.setReference(reference);
+        feedback.setType(type);
+        feedback.setPositive(positive);
+        feedback.setVisibility(visibility);
+        feedback.setSeverity(severity);
+        if (gradingInstruction != null && gradingInstruction.id() != null) {
+            GradingInstruction instruction = new GradingInstruction();
+            instruction.setId(gradingInstruction.id());
+            feedback.setGradingInstruction(instruction);
+        }
+        return feedback;
     }
 
     /**

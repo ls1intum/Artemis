@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
 import de.tum.cit.aet.artemis.communication.service.linkpreview.LinkPreviewService;
+import de.tum.cit.aet.artemis.communication.service.linkpreview.LinkPreviewUrlValidator;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -82,7 +83,7 @@ public class LinkPreviewResource {
         log.debug("REST request to get link preview for URL: {}", decodedUrl);
 
         if (!isValidUrl(decodedUrl)) {
-            log.warn("Rejected link preview request for an invalid or potentially unsafe URL");
+            log.info("Rejected link preview request for an invalid or potentially unsafe URL");
             return ResponseEntity.badRequest().build();
         }
 
@@ -110,7 +111,7 @@ public class LinkPreviewResource {
             String host = parsedUrl.getHost();
 
             // Reject if the host is an IP address (IPv4 or IPv6)
-            if (isIpAddress(host)) {
+            if (LinkPreviewUrlValidator.isIpAddress(host)) {
                 return false;
             }
 
@@ -125,31 +126,6 @@ public class LinkPreviewResource {
         catch (IllegalArgumentException | MalformedURLException e) {
             return false;
         }
-    }
-
-    private boolean isIpAddress(String host) {
-        if (host.startsWith("[") && host.endsWith("]")) {
-            return true;
-        }
-        String[] parts = host.split("\\.", -1);
-        if (parts.length != 4) {
-            return false;
-        }
-        for (String part : parts) {
-            if (part.isEmpty()) {
-                return false;
-            }
-            try {
-                int value = Integer.parseInt(part);
-                if (value < 0 || value > 255) {
-                    return false;
-                }
-            }
-            catch (NumberFormatException e) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private boolean isPrivateNetwork(String host) {

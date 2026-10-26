@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
@@ -95,6 +96,21 @@ class VariantBuildVerificationServiceJointWaitTest {
 
     private void stubResult(long participationId, Result result) {
         when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId)).thenReturn(Optional.of(result));
+    }
+
+    @Test
+    void singleBuildPollRestoresAndPropagatesRepositoryInterruption() {
+        var interruption = new InterruptedException("Repository read interrupted");
+        when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(SOLUTION_PARTICIPATION_ID)).thenAnswer(invocation -> {
+            throw interruption;
+        });
+        try {
+            assertThatThrownBy(() -> service.waitForBuildResult(exercise, "solution-hash", RepositoryType.SOLUTION, Instant.now().minusSeconds(60))).isSameAs(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        }
+        finally {
+            Thread.interrupted();
+        }
     }
 
     @Test

@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
-import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -161,7 +161,6 @@ export class ExamExerciseRowButtonsComponent {
                 kind: 'link',
                 link: [...typeSeg, 'participations'],
             });
-            items.push({ id: 'scores', labelKey: 'entity.action.scores', icon: faTable, severity: 'info', kind: 'link', link: [...typeSeg, 'scores'] });
         }
         if (course.isAtLeastEditor && ex.type === ExerciseType.PROGRAMMING) {
             items.push({

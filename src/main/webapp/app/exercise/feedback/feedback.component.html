@@ -130,33 +130,7 @@
                 </div>
             </div>
         } @else {
-            @if (buildLogs()?.length) {
-                <h4 jhiTranslate="artemisApp.result.buildError"></h4>
-                <dl class="buildoutput">
-                    @for (logEntry of buildLogs(); track logEntry; let i = $index) {
-                        <!--Don't show the timestamp again if it is the same as the last entry's.-->
-                        @if (i === 0 || logEntry.time !== buildLogs()![i - 1].time) {
-                            <dt class="mb-1">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
-                        }
-                        <dd
-                            [style.color]="logEntry.type === BuildLogType.ERROR ? 'var(--danger)' : logEntry.type === BuildLogType.WARNING ? 'var(--warning)' : undefined"
-                            [class.font-bold]="logEntry.type === BuildLogType.ERROR"
-                            [class.mb-4!]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
-                        >
-                            {{ logEntry.log }}
-                        </dd>
-                    }
-                </dl>
-            } @else {
-                @if (!isExamReviewPage()) {
-                    <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
-                } @else {
-                    <span jhiTranslate="artemisApp.result.noResultDetails"></span>
-                }
-                @if (isOnlyCompilationTested()) {
-                    <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested"></p>
-                }
-            }
+            <ng-container [ngTemplateOutlet]="buildLogsContainer" />
         }
     }
 

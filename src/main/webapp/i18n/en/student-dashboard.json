@@ -293,6 +293,7 @@
                 "version": "Version",
                 "isDownloading": "Is downloading...",
                 "downloadMergedPdf": "Download Complete PDF",
+                "downloadMergedPdfError": "The complete PDF could not be downloaded.",
                 "selectLecture": " Please select a Lecture."
             },
             "exerciseDetails": {
