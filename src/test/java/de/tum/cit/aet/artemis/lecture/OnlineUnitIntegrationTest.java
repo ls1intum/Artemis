@@ -481,4 +481,34 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.empty()));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void onlineResourceReadsMetadataAndReportsNetworkFailure() throws Exception {
+        String url = "https://example.com/metadata";
+        var connection = mock(Connection.class);
+        jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connection);
+        when(connection.timeout(anyInt())).thenReturn(connection);
+        when(connection.maxBodySize(anyInt())).thenReturn(connection);
+        when(connection.get()).thenReturn(org.jsoup.parser.Parser
+                .parse("<html><head><meta name='title' content='Course title'><meta property='og:description' content='Course description'></head></html>", url));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("link", url);
+        params.add("courseId", lecture1.getCourse().getId().toString());
+        var response = request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.OK, OnlineResourceDTO.class, params);
+        assertThat(response.url()).isEqualTo(url);
+        assertThat(response.title()).isEqualTo("Course title");
+        assertThat(response.description()).isEqualTo("Course description");
+        when(connection.get()).thenThrow(new java.io.IOException("external metadata unavailable"));
+        request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.INTERNAL_SERVER_ERROR, OnlineResourceDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void emptyMetadataLinkIsRejectedBeforeNetworkAccess() throws Exception {
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/lecture/lectures/online-units/fetch-online-resource")
+                .param("link", "").param("courseId", lecture1.getCourse().getId().toString()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest());
+        jsoupMock.verifyNoInteractions();
+    }
+
 }

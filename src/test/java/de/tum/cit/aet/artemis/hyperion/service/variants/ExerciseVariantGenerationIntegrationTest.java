@@ -791,4 +791,52 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         VariantJob read = jobService.getJob(job.getJobId(), EDITOR_LOGIN).orElseThrow();
         assertThat(read.getPhase()).isEqualTo(VariantJobPhase.ANALYZING);
     }
+
+    @Autowired
+    @org.springframework.beans.factory.annotation.Qualifier("hyperionVariantTaskExecutor")
+    private org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor variantExecutor;
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
+    void saturatedVariantQueueFailsNewJobWithoutProvisioningClone() throws Exception {
+        var release = new java.util.concurrent.CountDownLatch(1);
+        var entered = new java.util.concurrent.CountDownLatch(variantExecutor.getMaxPoolSize());
+        var oldIds = jobService.getJobsOfUser(EDITOR_LOGIN).stream().map(VariantJob::getJobId).collect(java.util.stream.Collectors.toSet());
+        long exercises = exerciseRepository.count();
+        Runnable blocker = () -> {
+            entered.countDown();
+            try {
+                release.await();
+            }
+            catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(exception);
+            }
+        };
+        try {
+            int capacity = variantExecutor.getMaxPoolSize() + variantExecutor.getThreadPoolExecutor().getQueue().remainingCapacity();
+            for (int index = 0; index < capacity; index++) {
+                variantExecutor.execute(blocker);
+            }
+            assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/hyperion/exercises/{id}/generate-variant", sourceQuiz.getId())
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .content(request.getObjectMapper().writeValueAsBytes(domainChangeRequest(standalonePlacement()))))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isServiceUnavailable())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("variantQueueFull"));
+            var jobs = jobService.getJobsOfUser(EDITOR_LOGIN).stream().filter(job -> !oldIds.contains(job.getJobId())).toList();
+            assertThat(jobs).hasSize(1);
+            assertThat(jobs.getFirst().getPhase()).isEqualTo(VariantJobPhase.FAILED);
+            assertThat(jobs.getFirst().getVariantExerciseId()).isNull();
+            assertThat(exerciseRepository.count()).isEqualTo(exercises);
+        }
+        finally {
+            release.countDown();
+            org.awaitility.Awaitility.await().untilAsserted(() -> {
+                assertThat(variantExecutor.getThreadPoolExecutor().getQueue()).isEmpty();
+                assertThat(variantExecutor.getActiveCount()).isZero();
+            });
+        }
+    }
+
 }

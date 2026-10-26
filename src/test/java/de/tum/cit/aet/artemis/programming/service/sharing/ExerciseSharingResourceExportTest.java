@@ -170,4 +170,23 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
         requestUtilService.performMvcRequest(get("/api/programming/sharing/export/INVALID_EXERCISE_TOKEN").queryParam("sec", "someSec")).andExpect(status().isUnauthorized());
     }
 
+    @Autowired
+    private ExerciseSharingService exerciseSharingService;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void validExportTokenWithRemovedTemporaryZipReturnsNotFound() throws Exception {
+        var result = requestUtilService.performMvcRequest(post("/api/programming/sharing/export").param("exerciseId", programmingExercise1.getId().toString())
+                .content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+        String redirect = objectMapper.readValue(result.getResponse().getContentAsString(), String.class);
+        var redirectParams = URLEncodedUtils.parse(new URI(redirect), StandardCharsets.UTF_8);
+        String url = redirectParams.stream().filter(p -> p.getName().equals("exerciseUrl")).findFirst().orElseThrow().getValue();
+        var uri = new URI(url);
+        String token = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
+        var zip = exerciseSharingService.getExportedExerciseByToken(token).orElseThrow();
+        assertThat(zip).exists();
+        java.nio.file.Files.delete(zip);
+        requestUtilService.performMvcRequest(convertToGetRequestBuilder(url)).andExpect(status().isNotFound()).andExpect(content().string(""));
+    }
+
 }

@@ -197,4 +197,38 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         update.put("debounceWindowSecondsOverride", configuration.debounceWindowSecondsOverride());
         update.put("maxDailyOrchestrationOverride", configuration.maxDailyOrchestrationOverride());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void changingCourseShortNameIsRejectedWithoutPersistingOtherEdits() throws Exception {
+        String originalTitle = course.getTitle();
+        String originalShortName = course.getShortName();
+        var loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("shortName", originalShortName + "changed");
+        update.put("title", "Must not be saved");
+        var part = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, request.getObjectMapper().writeValueAsBytes(update));
+        request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + course.getId()).file(part)).andExpect(status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("shortNameCannotChange"));
+        var persisted = courseRepository.findByIdElseThrow(course.getId());
+        assertThat(persisted.getTitle()).isEqualTo(originalTitle);
+        assertThat(persisted.getShortName()).isEqualTo(originalShortName);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void allowedComplaintsReportsRemainingAllowanceAndRejectsTeamWithoutMembership() throws Exception {
+        course.setMaxComplaints(3);
+        course.setMaxComplaintTimeDays(7);
+        courseRepository.save(course);
+        String url = "/api/course/courses/" + course.getId() + "/allowed-complaints";
+        assertThat(request.get(url, HttpStatus.OK, Long.class)).isEqualTo(3L);
+        request.performMvcRequest(MockMvcRequestBuilders.get(url).param("teamMode", "true")).andExpect(status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("noAssignedTeamInCourse"));
+        course.setMaxComplaintTimeDays(0);
+        courseRepository.save(course);
+        request.performMvcRequest(MockMvcRequestBuilders.get(url)).andExpect(status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("complaintsDisabled"));
+    }
+
 }

@@ -787,6 +787,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         var other = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
         request.post(exportByParticipationIdsUrl(other, participation) + "/for-instructor", options, HttpStatus.FORBIDDEN);
+        request.post(exportByParticipationIdsUrl(programmingExercise, participation) + "/for-instructor", ARCHIVAL_OPTIONS, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -1288,4 +1289,48 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(exportedRepository.resolve("src/Main.java")).as("what was submitted in time is exported").isRegularFile();
         assertThat(exportedRepository.resolve("src/Late.java")).as("what was submitted after the deadline is not").doesNotExist();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorDownloadRoutesPreserveRepositoryHistoryAndExerciseDetails() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        for (String type : List.of("TEMPLATE", "SOLUTION", "TESTS")) {
+            var archive = request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + type, HttpStatus.OK);
+            byte[] zip = Files.readAllBytes(archive.toPath());
+            ZipTestUtil.verifyZipContainsGitDirectory(zip);
+            String name = type.equals("TESTS") ? "test/MainTest.java" : "src/Main.java";
+            String expected = switch (type) {
+                case "TEMPLATE" -> "public class Main {}";
+                case "SOLUTION" -> "public class Main { int solved; }";
+                default -> "public class MainTest {}";
+            };
+            assertThat(ZipTestUtil.readEntryAsString(zip, name)).isEqualTo(expected);
+        }
+        var exerciseZip = request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-exercise", HttpStatus.OK);
+        var details = request.getObjectMapper().readTree(ZipTestUtil.extractExerciseJsonFromZip(Files.readAllBytes(exerciseZip.toPath())));
+        assertThat(details.path("title").asString()).isEqualTo(programmingExercise.getTitle());
+        assertThat(details.path("shortName").asString()).isEqualTo(programmingExercise.getShortName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void auxiliaryExportReportsOwnedRepositoryWithoutUriAsUnconfigured() throws Exception {
+        // The creation/import DTO permits an auxiliary configuration before a repository URI has been assigned.
+        var auxiliary = new de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO(null, "pending", null, "pending", "Not configured yet").toEntity();
+        auxiliary.setExercise(programmingExercise);
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliary)));
+        programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+        Long auxiliaryId = programmingExercise.getAuxiliaryRepositories().iterator().next().getId();
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .get("/api/programming/programming-exercises/{id}/export-instructor-auxiliary-repository", programmingExercise.getId())
+                .param("repositoryId", auxiliaryId.toString())).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnprocessableContent())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("X-artemisApp-error", "error.repositoryNotConfigured"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(""));
+        var persisted = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
+        assertThat(persisted.getAuxiliaryRepositories()).hasSize(1);
+        assertThat(persisted.getAuxiliaryRepositories().iterator().next().getId()).isEqualTo(auxiliaryId);
+        assertThat(persisted.getAuxiliaryRepositories().iterator().next().getRepositoryUri()).isNull();
+    }
+
 }

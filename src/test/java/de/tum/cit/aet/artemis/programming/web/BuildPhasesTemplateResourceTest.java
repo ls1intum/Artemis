@@ -121,4 +121,32 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
             assertThat(phase.script()).isNotBlank();
         }
     }
+
+    @Autowired
+    private de.tum.cit.aet.artemis.core.service.ResourceLoaderService resourceLoaderService;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService buildScriptProviderService;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void malformedAdministratorTemplateReturnsNotFound() throws Exception {
+        Object original = org.springframework.test.util.ReflectionTestUtils.getField(resourceLoaderService, "templateFileSystemPath");
+        String filename = buildScriptProviderService.buildTemplateName(java.util.Optional.of(de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE), true, true,
+                "yaml");
+        var file = tempPath.resolve("templates/phases/java").resolve(filename);
+        java.nio.file.Files.createDirectories(file.getParent());
+        org.apache.commons.io.FileUtils.writeStringToFile((file).toFile(), "phases: not-a-list", java.nio.charset.StandardCharsets.UTF_8);
+        try {
+            org.springframework.test.util.ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", java.util.Optional.of(tempPath));
+            request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/localci/phases/templates/JAVA/PLAIN_GRADLE")
+                    .param("staticAnalysis", "true").param("sequentialRuns", "true").param("examMode", "false"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(""));
+        }
+        finally {
+            org.springframework.test.util.ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", original);
+        }
+    }
+
 }

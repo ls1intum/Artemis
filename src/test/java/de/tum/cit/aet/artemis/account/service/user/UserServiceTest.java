@@ -269,4 +269,14 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         long userCountAfter = userRepository.count();
         assertThat(userCountAfter).isEqualTo(userCountBefore);
     }
+
+    @Test
+    void usernameAndPasswordBoundsRejectInvalidInput() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> userService.checkUsernameAndPasswordValidityElseThrow("a", null))
+                .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class).hasMessageContaining("at least");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> userService.checkUsernameAndPasswordValidityElseThrow("a".repeat(256), null))
+                .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class).hasMessageContaining("less than");
+        userService.checkUsernameAndPasswordValidityElseThrow(TEST_PREFIX + "student1", null);
+    }
+
 }

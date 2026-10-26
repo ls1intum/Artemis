@@ -654,4 +654,27 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         request.get("/api/exercise/exercises/" + newExercise.getId() + "/versions/" + versionId, HttpStatus.BAD_REQUEST, ExerciseSnapshotDTO.class);
     }
 
+    @Autowired
+    private de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deletingTasksRemovesOnlyExerciseTasksAndRecordsVersion() throws Exception {
+        var task = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask();
+        task.setTaskName("Task to remove");
+        task.setExercise(programmingExercise);
+        var testCases = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        task.setTestCases(new java.util.HashSet<>(List.of(testCases.getFirst())));
+        task = programmingExerciseTaskRepository.saveAndFlush(task);
+        Long taskId = task.getId();
+        exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        var originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.NO_CONTENT);
+        assertThat(programmingExerciseTaskRepository.existsById(taskId)).isFalse();
+        assertThat(programmingExerciseTestCaseRepository.existsById(testCases.getFirst().getId())).isTrue();
+        assertThat(programmingExerciseRepository.existsById(programmingExercise.getId())).isTrue();
+        var version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        assertThat(version.getId()).isNotEqualTo(originalVersion.getId());
+    }
+
 }

@@ -558,4 +558,19 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(anyExamUser.getPlannedRoom()).isEqualTo(roomToDistributeTo.getRoomNumber());
         assertThat(anyExamUser.getPlannedSeat()).isNotBlank();
     }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
+    void distributionCapacityRejectsInvalidReserveAndEmptySelection() throws Exception {
+        long roomCount = examRoomRepository.count();
+        String url = roomsUrl(course1, exam1) + "/distribution-capacities";
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(url).param("reserveFactor", "1.01").param("examRoomIds", "1"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("reserveFactorOutOfRange"));
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(url).param("reserveFactor", "0.0").param("examRoomIds", ""))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("noRoomIDs"));
+        assertThat(examRoomRepository.count()).isEqualTo(roomCount);
+    }
+
 }

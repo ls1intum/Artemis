@@ -1279,4 +1279,17 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         attachmentVideoUnit.setVideoSource(videoSource);
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void creatingUnitWithoutAttachmentOrVideoLeavesUnitsUnchanged() throws Exception {
+        long before = attachmentVideoUnitRepository.count();
+        attachmentVideoUnit.setVideoSource(null);
+        var part = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(attachmentVideoUnit));
+        request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/{id}/attachment-video-units", lecture1.getId()).file(part))
+                .andExpect(status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("videosourceAndAttachment"));
+        assertThat(attachmentVideoUnitRepository.count()).isEqualTo(before);
+    }
+
 }

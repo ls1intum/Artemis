@@ -386,7 +386,7 @@ public class ProgrammingExerciseIntegrationTestService {
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, excludePracticeSubmissions, false, false, false, false);
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         return unzipExportedFile();
@@ -438,7 +438,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 + String.join(",", List.of(participation.get().getId().toString()));
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         // Read exported project files and assert participant identifier appended
@@ -478,7 +478,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // addParticipantName is on, so the export tries to rename the project and runs into the unparseable files
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         // The export still succeeds, and the files it could not rename are exported unchanged instead of being corrupted or dropped.
@@ -504,7 +504,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // all options false by default, only test if export works at all
         var exportOptions = new RepositoryExportOptionsDTO();
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         List<Path> entries = unzipExportedFile();

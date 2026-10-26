@@ -140,4 +140,15 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentBat
         }
         return events;
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void tutorEffortWithoutAssessmentEventsHasNoContent() throws Exception {
+        long count = textAssessmentEventRepository.count();
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/assessment/courses/{courseId}/exercises/{exerciseId}/tutor-effort",
+                course.getId(), exercise.getId())).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNoContent())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(""));
+        assertThat(textAssessmentEventRepository.count()).isEqualTo(count);
+    }
+
 }

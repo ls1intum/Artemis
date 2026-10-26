@@ -461,4 +461,55 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         assertThat(status.repositoryStatus()).isEqualTo(RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
         // TODO: also test other states
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void commitPullAndResetUseRealTestRepositoryState() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        var repositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        testRepo = repositories.testsRepository();
+        FileUtils.writeStringToFile((testRepo.workingCopyPath().resolve(currentLocalFileName)).toFile(), currentLocalFileContent, java.nio.charset.StandardCharsets.UTF_8);
+        testRepo.workingCopy().add().addFilepattern(currentLocalFileName).call();
+        GitService.commit(testRepo.workingCopy()).setMessage("Seed test file").call();
+        testRepo.workingCopy().push().setRemote("origin").call();
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        String base = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository";
+        request.put(base + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
+        request.postWithoutLocation(base + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation(base + "/pull", null, HttpStatus.OK, null);
+        var status = request.get(base, HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(status.repositoryStatus()).hasToString("CLEAN");
+        Path file;
+        try (var local = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUri(), true, true)) {
+            file = local.getLocalPath().resolve(currentLocalFileName);
+            assertThat(Files.readString(file)).isEqualTo("updatedFileContent");
+            FileUtils.writeStringToFile((file).toFile(), "uncommitted change", java.nio.charset.StandardCharsets.UTF_8);
+        }
+        request.postWithoutLocation(base + "/reset", null, HttpStatus.OK, null);
+        assertThat(Files.readString(file)).isEqualTo("updatedFileContent");
+        assertThat(request.get(base, HttpStatus.OK, RepositoryStatusDTO.class).repositoryStatus()).hasToString("CLEAN");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateFilesReportsCheckoutConflictWithoutOverwritingLocalChanges() throws Exception {
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        Path localFile;
+        try (var local = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUri(), true, true)) {
+            localFile = local.getLocalPath().resolve(currentLocalFileName);
+            FileUtils.writeStringToFile((localFile).toFile(), "Uncommitted local work", java.nio.charset.StandardCharsets.UTF_8);
+        }
+        FileUtils.writeStringToFile((testRepo.workingCopyPath().resolve(currentLocalFileName)).toFile(), "New remote content", java.nio.charset.StandardCharsets.UTF_8);
+        testRepo.workingCopy().add().addFilepattern(currentLocalFileName).call();
+        var remoteCommit = GitService.commit(testRepo.workingCopy()).setMessage("Update remote test file").call();
+        testRepo.workingCopy().push().setRemote("origin").call();
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .put("/api/programming/programming-exercises/{id}/test-repository/files", programmingExercise.getId()).param("commit", "false")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(getFileSubmissions())))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isConflict());
+        assertThat(Files.readString(localFile)).isEqualTo("Uncommitted local work");
+        assertThat(testRepo.bareRepositoryCommits().getFirst().getId()).isEqualTo(remoteCommit.getId());
+    }
+
 }

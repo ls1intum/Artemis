@@ -391,4 +391,38 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         return new TutorialGroupConfigurationDTO(dto.id(), dto.tutorialPeriodStartInclusive(), dto.tutorialPeriodEndInclusive(), dto.useTutorialGroupChannels(),
                 dto.usePublicTutorialGroupChannels(), dto.tutorialGroupFreePeriods() == null ? Set.of() : dto.tutorialGroupFreePeriods());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void freePeriodValidationRejectsMalformedReversedAndOutOfBoundsIntervals() throws Exception {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        var original = TutorialGroupConfigurationDTO.of(configuration);
+        String[][] cases = { { "invalid", "2022-08-10T10:00:00Z", "tutorialFreePeriodInvalidFormat" },
+                { "2022-08-15T10:00:00Z", "2022-08-14T10:00:00Z", "tutorialFreePeriodInvalidOrder" },
+                { "2022-07-01T10:00:00Z", "2022-07-02T10:00:00Z", "tutorialFreePeriodOutOfBounds" } };
+        for (String[] values : cases) {
+            var period = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(null, values[0], values[1], "Invalid interval");
+            var dto = new TutorialGroupConfigurationDTO(original.id(), original.tutorialPeriodStartInclusive(), original.tutorialPeriodEndInclusive(),
+                    original.useTutorialGroupChannels(), original.usePublicTutorialGroupChannels(), java.util.Set.of(period));
+            request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(getTutorialGroupsConfigurationPath(courseId, configuration.getId()))
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(dto)))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value(values[2]));
+        }
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(getTutorialGroupsConfigurationPath(courseId))
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(original)))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("idExists"));
+        var reversed = new TutorialGroupConfigurationDTO(original.id(), original.tutorialPeriodEndInclusive(), original.tutorialPeriodStartInclusive(),
+                original.useTutorialGroupChannels(), original.usePublicTutorialGroupChannels(), java.util.Set.of());
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(getTutorialGroupsConfigurationPath(courseId, configuration.getId()))
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(reversed)))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("tutorialPeriodInvalidOrder"));
+        var persisted = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElseThrow();
+        assertThat(persisted.getTutorialPeriodStartInclusive()).isEqualTo(original.tutorialPeriodStartInclusive());
+        assertThat(persisted.getTutorialPeriodEndInclusive()).isEqualTo(original.tutorialPeriodEndInclusive());
+        assertThat(persisted.getTutorialGroupFreePeriods()).isEmpty();
+    }
+
 }

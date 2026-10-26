@@ -915,4 +915,25 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     void testGetPlagiarismResultWithoutExercise() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResultWithoutExercise();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void unsupportedProgrammingLanguageIsRejectedByBothPlagiarismActions() throws Exception {
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var exercise = (de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise) course.getExercises().iterator().next();
+        var unsupported = java.util.Arrays.stream(ProgrammingLanguage.values())
+                .filter(language -> !programmingLanguageFeatureService.getProgrammingLanguageFeatures(language).plagiarismCheckSupported()).findFirst().orElseThrow();
+        exercise.setProgrammingLanguage(unsupported);
+        programmingExerciseRepository.saveAndFlush(exercise);
+        long results = resultRepository.count();
+        for (String action : java.util.List.of("check-plagiarism", "check-plagiarism-jplag-report")) {
+            request.performMvcRequest(
+                    org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/programming/programming-exercises/{id}/" + action, exercise.getId())
+                            .param("similarityThreshold", "50").param("minimumScore", "0").param("minimumSize", "1"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("programmingLanguageNotSupported"));
+        }
+        org.assertj.core.api.Assertions.assertThat(resultRepository.count()).isEqualTo(results);
+    }
+
 }

@@ -409,4 +409,41 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
         request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isOk());
     }
 
+    @Autowired
+    private de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository exerciseVersionRepository;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void submissionPolicyMutationRecordsSynchronousVersionWhenCoordinationIsEnabled() throws Exception {
+        org.assertj.core.api.Assertions.assertThat(programmingExerciseMutationGuard.isCoordinationEnabled()).isTrue();
+        var exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId).orElseThrow();
+        de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
+        programmingExerciseRepository.saveAndFlush(exercise);
+        var original = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId).map(version -> version.getId());
+        try {
+            var dto = new de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO(null, "lock_repository", 7, null, false);
+            var response = request.postWithResponseBody("/api/programming/programming-exercises/" + exerciseId + "/submission-policy", dto,
+                    de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO.class, org.springframework.http.HttpStatus.CREATED);
+            org.assertj.core.api.Assertions.assertThat(response.id()).isNotNull();
+            var stored = submissionPolicyRepository.findAllByProgrammingExerciseIds(java.util.Set.of(exerciseId));
+            org.assertj.core.api.Assertions.assertThat(stored).hasSize(1);
+            org.assertj.core.api.Assertions.assertThat(stored.iterator().next().getSubmissionLimit()).isEqualTo(7);
+            var version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId).orElseThrow();
+            org.assertj.core.api.Assertions.assertThat(java.util.Optional.of(version.getId())).isNotEqualTo(original);
+            org.assertj.core.api.Assertions.assertThat(version.getExerciseSnapshot().programmingData().submissionPolicy().submissionLimit()).isEqualTo(7);
+        }
+        finally {
+            de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil.cleanupTrackedRepositories();
+        }
+    }
+
 }

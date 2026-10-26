@@ -213,4 +213,26 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         return new SystemNotificationUpdateDTO(notification.getId(), notification.getTitle(), notification.getText(), notification.getNotificationDate(),
                 notification.getExpireDate(), notification.getType());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void maintenanceRecipientCountMatchesCurrentEligibleRecipients() throws Exception {
+        String url = "/api/notification/admin/system-notifications/maintenance-recipients-count";
+        Long before = request.get(url, HttpStatus.OK, Long.class);
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 2);
+        for (int index = 1; index <= 2; index++) {
+            var instructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor" + index).orElseThrow();
+            instructor.setTestUser(false);
+            userTestRepository.saveAndFlush(instructor);
+        }
+        for (int index = 0; index < 2; index++) {
+            var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+            course.setStartDate(ZonedDateTime.now().minusDays(1));
+            course.setEndDate(ZonedDateTime.now().plusDays(1));
+            courseRepository.saveAndFlush(course);
+        }
+        assertThat(request.get(url, HttpStatus.OK, Long.class)).isEqualTo(before + 2);
+
+    }
+
 }

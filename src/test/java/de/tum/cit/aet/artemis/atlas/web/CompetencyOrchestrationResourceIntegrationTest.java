@@ -214,4 +214,33 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     void getDefaults_anonymous_returnsUnauthorized() throws Exception {
         request.performMvcRequest(get("/api/atlas/orchestrator/defaults")).andExpect(status().isUnauthorized());
     }
+
+    @ParameterizedTest
+    @EnumSource(FailureReason.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void lectureUnitFailurePreservesReasonAndMapsHttpStatus(FailureReason reason) throws Exception {
+        var result = CompetencyOrchestrationResultDTO.failed("Lecture orchestration failed", reason);
+        doReturn(result).when(orchestrationService).runLectureUnitWithQueuedFlush(textUnit.getId());
+        int expectedStatus = switch (reason) {
+            case NO_CHAT_CLIENT -> 503;
+            case LLM_ERROR -> 502;
+            case INTERNAL_ERROR -> 500;
+            default -> 422;
+        };
+        request.performMvcRequest(post("/api/atlas/orchestrator/lecture-units/{id}/run", textUnit.getId())).andExpect(status().is(expectedStatus))
+                .andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value(reason.name()))
+                .andExpect(jsonPath("$.summary").value("Lecture orchestration failed"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void lectureUnitSuccessAndInProgressHaveDistinctStatuses() throws Exception {
+        doReturn(CompetencyOrchestrationResultDTO.success("Created lecture competencies", List.of())).when(orchestrationService).runLectureUnitWithQueuedFlush(textUnit.getId());
+        request.performMvcRequest(post("/api/atlas/orchestrator/lecture-units/{id}/run", textUnit.getId())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS")).andExpect(jsonPath("$.summary").value("Created lecture competencies"));
+        doReturn(CompetencyOrchestrationResultDTO.inProgress("Already running")).when(orchestrationService).runLectureUnitWithQueuedFlush(textUnit.getId());
+        request.performMvcRequest(post("/api/atlas/orchestrator/lecture-units/{id}/run", textUnit.getId())).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS")).andExpect(jsonPath("$.summary").value("Already running"));
+    }
+
 }
