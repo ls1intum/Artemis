@@ -87,7 +87,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testSetupPreservesExistingExerciseAndExamDates() {
         var course = courseUtilService.createCourse();
-        var now = ZonedDateTime.now();
+        var now = ZonedDateTime.now().withNano(0);
         var exercise = textExerciseUtilService.createIndividualTextExercise(course, now.minusDays(1), now.plusYears(1), now.plusYears(1).plusDays(1));
         var exam = examUtilService.addExam(course, now, now.plusDays(1), now.plusDays(2));
 
