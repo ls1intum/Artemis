@@ -220,9 +220,6 @@ public class PlagiarismPostService extends PostingService {
      * @param courseId id of the course from the path
      */
     private void checkPostBelongsToCourseElseThrow(Post post, Long courseId) {
-        if (post.getPlagiarismCase() == null) {
-            throw new ConflictException("The post is not a plagiarism post", PlagiarismPostCreationDTO.PLAGIARISM_POST_ENTITY_NAME, "noPlagiarismCase");
-        }
         checkPlagiarismCaseBelongsToCourseElseThrow(post.getPlagiarismCase().getId(), courseId);
     }
 

@@ -43,7 +43,9 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -1459,4 +1461,54 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             assertThat(directories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/");
         }
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importFromFileRejectsGroupOutsidePathCourse() throws Exception {
+        var foreignCourse = courseUtilService.addEmptyCourse();
+        var exam = examUtilService.addExamWithExerciseGroup(foreignCourse, true);
+        var group = exam.getExerciseGroups().getFirst();
+        var resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        ObjectNode body = null;
+        try (var zip = new java.util.zip.ZipInputStream(resource.getInputStream())) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (entry.getName().endsWith(".json")) {
+                    body = (ObjectNode) objectMapper.readTree(zip.readAllBytes());
+                    break;
+                }
+            }
+        }
+        assertThat(body).isNotNull();
+        body.remove("course");
+        body.putNull("id");
+        body.putObject("exerciseGroup").put("id", group.getId());
+        long exercisesBefore = exerciseRepository.count();
+        long configurationsBefore = programmingExerciseBuildConfigRepository.count();
+        long linksBefore = competencyExerciseLinkTestRepository.count();
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", body, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.FORBIDDEN);
+        assertThat(exerciseRepository.count()).isEqualTo(exercisesBefore);
+        assertThat(programmingExerciseBuildConfigRepository.count()).isEqualTo(configurationsBefore);
+        assertThat(competencyExerciseLinkTestRepository.count()).isEqualTo(linksBefore);
+        assertThat(exerciseRepository.findAllExercisesByCourseId(foreignCourse.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importFromFileAcceptsGroupInPathCourse() throws Exception {
+        var exam = examUtilService.addExamWithExerciseGroup(course, true);
+        var group = exam.getExerciseGroups().getFirst();
+        var imported = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", course, body -> {
+            body.remove("course");
+            body.putObject("exerciseGroup").put("id", group.getId());
+            return body;
+        }).importedExercise();
+        var stored = programmingExerciseRepository.findByIdElseThrow(imported.id());
+        assertThat(stored.getExerciseGroup().getId()).isEqualTo(group.getId());
+        assertThat(stored.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course.getId());
+        assertThat(stored.isCourseExercise()).isFalse();
+    }
+
 }

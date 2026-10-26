@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,7 +15,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -457,6 +462,23 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var deletionSummary = request.delete("/api/exam/rooms/admin/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
         validateDeletionSummary(deletionSummary, 59 * (ITERATIONS - 1));
         validateDbStoredElementCounts(59, 14_589, 212);
+    }
+
+    @Autowired
+    private MultipartProperties multipartProperties;
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void oversizedRoomZipIsRejectedBeforeCreatingRooms() throws Exception {
+        long maxBytes = multipartProperties.getMaxFileSize().toBytes();
+        assertThat(maxBytes).isPositive();
+        byte[] paddedZip = Arrays.copyOf(ExamRoomZipFiles.zipFileSingleExamRoom.getBytes(), Math.toIntExact(maxBytes + 1));
+        var file = new MockMultipartFile("file", "oversized.zip", "application/zip", paddedZip);
+        validateDbStoredElementCounts(0, 0, 0);
+        request.performMvcRequest(multipart("/api/exam/rooms/admin/upload").file(file)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("room.fileTooLarge")).andExpect(jsonPath("$.entityName").value("examRoom"))
+                .andExpect(jsonPath("$.params.maxSize").value(multipartProperties.getMaxFileSize().toString()));
+        validateDbStoredElementCounts(0, 0, 0);
     }
 
 }

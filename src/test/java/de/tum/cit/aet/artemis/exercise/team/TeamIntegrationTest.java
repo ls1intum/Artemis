@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.team;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -694,4 +697,15 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         Team team = teamUtilService.addTeamsForExercise(exercise, TEST_PREFIX + "team_forb", TEST_PREFIX + "otherStudent", 1, tutor).getFirst();
         request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.FORBIDDEN, CourseWithTeamExercisesDTO.class);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamSearchRejectsExerciseOutsidePathCourse() throws Exception {
+        var foreignCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise("ForeignTeamSearch");
+        var foreignExercise = foreignCourse.getExercises().iterator().next();
+        request.performMvcRequest(
+                get("/api/exercise/courses/" + course.getId() + "/exercises/" + foreignExercise.getId() + "/team-search-users").param("loginOrName", TEST_PREFIX + "student"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("exerciseCourseMismatch")).andExpect(jsonPath("$.entityName").value("team"));
+    }
+
 }

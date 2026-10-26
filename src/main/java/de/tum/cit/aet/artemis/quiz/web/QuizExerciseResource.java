@@ -140,9 +140,6 @@ public class QuizExerciseResource {
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId,
             @Parameter(schema = @Schema(type = "string", allowableValues = { "start-now", "end-now", "set-visible" })) @PathVariable QuizAction action) {
-        if (action == QuizAction.END_NOW) {
-            throw new BadRequestAlertException("Ending a quiz requires the dedicated instructor operation", ENTITY_NAME, "invalidAction");
-        }
         return performQuizAction(quizExerciseId, action);
     }
 

@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -983,6 +986,25 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         TextExercise otherExercise = ExerciseUtilService.findTextExerciseWithTitle(otherCourse.getExercises(), "Other");
         request.get("/api/text/text-exercises/" + otherExercise.getId(), HttpStatus.FORBIDDEN, String.class);
         return otherExercise;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getExampleModelingAssessmentRejectsAnotherExercise() throws Exception {
+        var foreignCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise("ForeignExample");
+        var foreignExercise = (ModelingExercise) foreignCourse.getExercises().iterator().next();
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, foreignExercise, true, true));
+        request.performMvcRequest(get("/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + example.getSubmission().getId() + "/example-assessment"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("idsNotMatching")).andExpect(jsonPath("$.entityName").value("exampleSubmission"))
+                .andExpect(jsonPath("$.feedbacks").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void modelingOwnerResultRejectsExampleWithoutStudentParticipation() throws Exception {
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true, true));
+        assertThat(example.getSubmission().getParticipation()).isNull();
+        request.get("/api/modeling/modeling-submissions/" + example.getSubmission().getId() + "/result", HttpStatus.FORBIDDEN, ResultDTO.class);
     }
 
 }

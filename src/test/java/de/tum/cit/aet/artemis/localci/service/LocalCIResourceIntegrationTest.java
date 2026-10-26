@@ -3,6 +3,12 @@ package de.tum.cit.aet.artemis.localci.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doReturn;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -20,6 +26,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +35,9 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -45,8 +54,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -748,4 +759,44 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testGetBuildJobByIdForCourse_wrongInstructorForbidden() throws Exception {
         request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
     }
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void buildLogFallbackUsesPersistedCourseAndAdminScope() throws Exception {
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var job = buildJobForStatus(BuildStatus.SUCCESSFUL, "guard-course-log");
+        job.setExerciseId(null);
+        job = buildJobRepository.save(job);
+        Path log = tempFileUtilService.createTempFile("guard-build-log", ".log");
+        FileUtils.writeStringToFile(log.toFile(), "private archived build log", StandardCharsets.UTF_8);
+        // Current storage resolves the directory through an exercise id. Isolate only that file lookup for legacy metadata.
+        doReturn(new FileSystemResource(log)).when(fallbackBuildLogEntryService).retrieveBuildLogsFromFileForBuildJob(job.getBuildJobId());
+        String url = "/api/localci/build-jobs/" + job.getBuildJobId() + "/build-log";
+        try {
+            userUtilService.unenrollUserFromCourse(caller, course);
+            userUtilService.enrollUserInCourse(caller, course, CourseRole.TEACHING_ASSISTANT);
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
+            userUtilService.unenrollUserFromCourse(caller, course);
+            var foreignCourse = courseUtilService.addEmptyCourse();
+            userUtilService.enrollUserInCourse(caller, foreignCourse, CourseRole.EDITOR);
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
+            userUtilService.enrollUserInCourse(caller, course, CourseRole.EDITOR);
+            request.performMvcRequest(get(url)).andExpect(status().isOk()).andExpect(content().string("private archived build log"))
+                    .andExpect(content().contentTypeCompatibleWith("text/plain"))
+                    .andExpect(header().string("Content-Disposition", "form-data; name=\"attachment\"; filename=\"build-guard-course-log.log\""));
+            job.setCourseId(null);
+            buildJobRepository.save(job);
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
+            userUtilService.changeUser(TEST_PREFIX + "admin");
+            assertThat(request.get(url, HttpStatus.OK, String.class)).isEqualTo("private archived build log");
+        }
+        finally {
+            doCallRealMethod().when(fallbackBuildLogEntryService).retrieveBuildLogsFromFileForBuildJob(job.getBuildJobId());
+            Files.deleteIfExists(log);
+        }
+    }
+
 }

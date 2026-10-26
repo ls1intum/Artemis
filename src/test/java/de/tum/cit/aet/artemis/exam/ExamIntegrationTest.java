@@ -3030,7 +3030,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         foreignGroup.addExercise(foreignText);
         ExamImportDTO importDTO = ExamImportDTO.of(foreignExam, course1.getId());
 
+        long examsBefore = examRepository.count();
+        long exercisesBefore = exerciseRepository.count();
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, HttpStatus.FORBIDDEN, null);
+        assertThat(examRepository.count()).isEqualTo(examsBefore);
+        assertThat(exerciseRepository.count()).isEqualTo(exercisesBefore);
+        assertThat(textExerciseRepository.findByIdElseThrow(foreignText.getId()).getExerciseGroup().getId()).isEqualTo(foreignGroup.getId());
     }
 
     @Test
@@ -3043,8 +3048,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         textExerciseRepository.save(foreignText);
         Exam targetExam = examUtilService.addExam(course1);
 
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                List.of(new ExerciseGroupImportDTO(foreignGroup.getTitle(), true, List.of(ExerciseImportDTO.of(foreignText)))), HttpStatus.FORBIDDEN);
+        long exercisesBefore = exerciseRepository.count();
+        long groupsBefore = examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size();
+        String url = "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group";
+        var body = List.of(new ExerciseGroupImportDTO(foreignGroup.getTitle(), true, List.of(ExerciseImportDTO.of(foreignText))));
+        request.post(url, body, HttpStatus.FORBIDDEN);
+        assertThat(exerciseRepository.count()).isEqualTo(exercisesBefore);
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size()).isEqualTo(groupsBefore);
+        userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), foreignCourse, CourseRole.EDITOR);
+        var imported = request.postWithResponseBody(url, body, ExerciseGroupImportResultDTO.class, HttpStatus.OK);
+        long importedId = imported.exerciseGroups().getFirst().exercises().getFirst().id();
+        assertThat(importedId).isNotEqualTo(foreignText.getId());
+        assertThat(textExerciseRepository.findByIdElseThrow(importedId).getTitle()).isEqualTo(foreignText.getTitle());
+        assertThat(textExerciseRepository.findByIdElseThrow(importedId).getExampleSolution()).isEqualTo(foreignText.getExampleSolution());
+        assertThat(textExerciseRepository.findByIdElseThrow(foreignText.getId()).getExerciseGroup().getId()).isEqualTo(foreignGroup.getId());
     }
 
     @Test

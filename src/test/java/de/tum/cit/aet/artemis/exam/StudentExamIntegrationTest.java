@@ -12,6 +12,9 @@ import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -100,6 +103,7 @@ import de.tum.cit.aet.artemis.exam.dto.examevent.WorkingTimeUpdateEventDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamQuizService;
+import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -157,6 +161,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalV
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.dto.TextSubmissionRequestDTO;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
@@ -4917,4 +4922,89 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             assertThat(((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText()).isEqualTo("legacy full entity text");
         }
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void genuineTestRunConductionBindsAudienceOwnerAndCurrentCourseRole() throws Exception {
+        var owner = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = examUtilService.addExamWithExerciseGroup(course1, true);
+        var group = exam.getExerciseGroups().getFirst();
+        var exercise = TextExerciseFactory.generateTextExerciseForExam(group);
+        exerciseRepository.save(exercise);
+        group.addExercise(exercise);
+        var testRun = createTestRun(exam);
+        userUtilService.changeUser(owner.getLogin());
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        String ordinary = base + "/student-exams/" + testRun.getId() + "/conduction";
+        request.get(ordinary + "/for-instructor", HttpStatus.FORBIDDEN, StudentExam.class);
+        assertThat(studentExamRepository.findByIdElseThrow(testRun.getId()).isStarted()).isNotEqualTo(true);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(testRun.getId())).isZero();
+        userUtilService.changeUser(TEST_PREFIX + "instructor2");
+        request.performMvcRequest(get(base + "/test-runs/" + testRun.getId() + "/conduction")).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorKey").value("userMismatch"));
+        assertThat(studentExamRepository.findByIdElseThrow(testRun.getId()).isStarted()).isNotEqualTo(true);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(testRun.getId())).isZero();
+        userUtilService.changeUser(owner.getLogin());
+        userUtilService.unenrollUserFromCourse(owner, course1);
+        userUtilService.enrollUserInCourse(owner, course1, CourseRole.STUDENT);
+        request.get(ordinary, HttpStatus.FORBIDDEN, StudentExam.class);
+        assertThat(studentExamRepository.findByIdElseThrow(testRun.getId()).isStarted()).isNotEqualTo(true);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(testRun.getId())).isZero();
+        userUtilService.enrollUserInCourse(owner, course1, CourseRole.INSTRUCTOR);
+        var response = request.get(ordinary, HttpStatus.OK, StudentExam.class);
+        assertThat(response.isTestRun()).isTrue();
+        assertThat(response.getId()).isEqualTo(testRun.getId());
+        assertThat(studentExamRepository.findByIdElseThrow(testRun.getId()).isStarted()).isTrue();
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(testRun.getId())).isOne();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRunCreatedWithoutWorkingTimeCanBeConducted() throws Exception {
+        var exam = examUtilService.addExamWithExerciseGroup(course1, true);
+        var group = exam.getExerciseGroups().getFirst();
+        var exercise = TextExerciseFactory.generateTextExerciseForExam(group);
+        exerciseRepository.save(exercise);
+        group.addExercise(exercise);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        ObjectNode body = objectMapper.createObjectNode().put("examId", exam.getId()).putNull("workingTime");
+        body.putArray("exerciseIds").add(exercise.getId());
+        var created = request.postWithResponseBody(base + "/test-runs", body, StudentExamDTO.class, HttpStatus.OK);
+        var persisted = studentExamRepository.findByIdWithExercisesElseThrow(created.id());
+        assertThat(persisted.isTestRun()).isTrue();
+        assertThat(persisted.getWorkingTime()).isNull();
+        assertThat(persisted.getExercises()).extracting(Exercise::getId).containsExactly(exercise.getId());
+        assertThat(persisted.getUser().getId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getId());
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var response = request.get(base + "/student-exams/" + created.id() + "/conduction", HttpStatus.OK, StudentExam.class);
+        assertThat(response.getId()).isEqualTo(created.id());
+        assertThat(response.isTestRun()).isTrue();
+        assertThat(response.getExercises()).extracting(Exercise::getId).containsExactly(exercise.getId());
+    }
+
+    @Test
+    void resultVisibilityRequiresKnownActiveTimeOrPublishedResults() {
+        var exam = new Exam();
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exam.setPublishResultsDate(ZonedDateTime.now().plusHours(1));
+        var studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        assertThat(studentExam.isEnded()).isNull();
+        assertThat(ExamService.shouldStudentSeeResult(studentExam, participation)).isFalse();
+        studentExam.setWorkingTime(3600);
+        assertThat(ExamService.shouldStudentSeeResult(studentExam, participation)).isTrue();
+        studentExam.setWorkingTime(1);
+        assertThat(ExamService.shouldStudentSeeResult(studentExam, participation)).isFalse();
+        studentExam.setWorkingTime(null);
+        exam.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+        assertThat(ExamService.shouldStudentSeeResult(studentExam, participation)).isTrue();
+    }
+
 }

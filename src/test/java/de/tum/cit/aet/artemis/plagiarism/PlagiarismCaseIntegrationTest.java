@@ -4,6 +4,9 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict.NO_PLAG
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict.POINT_DEDUCTION;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict.WARNING;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -479,4 +482,14 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
         request.get("/api/plagiarism/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-cases-count", HttpStatus.FORBIDDEN, Long.class);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void plagiarismCountRejectsExerciseOutsidePathCourse() throws Exception {
+        var foreignCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise("ForeignCount");
+        var foreignExercise = foreignCourse.getExercises().iterator().next();
+        request.performMvcRequest(get("/api/plagiarism/courses/" + course.getId() + "/exercises/" + foreignExercise.getId() + "/plagiarism-cases-count"))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.errorKey").value("courseMismatch")).andExpect(jsonPath("$.entityName").value("plagiarismCase"));
+    }
+
 }

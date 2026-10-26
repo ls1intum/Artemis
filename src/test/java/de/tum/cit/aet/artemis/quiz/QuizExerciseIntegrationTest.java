@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertQuizExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.byLessThan;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
@@ -62,7 +61,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
@@ -89,7 +87,6 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
-import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -109,7 +106,6 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
-import de.tum.cit.aet.artemis.quiz.web.QuizExerciseResource;
 
 class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
@@ -1423,16 +1419,14 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(ChronoUnit.MILLIS.between(startNowResponse.startDate(), ZonedDateTime.now())).isCloseTo(0L, byLessThan(2000L));
     }
 
-    @Autowired
-    private QuizExerciseResource quizLifecycleResource;
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void genericLifecycleDispatcherRejectsEndNowWithoutChangingDates() {
+    void genericLifecycleDispatcherRejectsNonCanonicalEndNowWithoutChangingDates() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
                 QuizMode.BATCHED);
         var dueDate = quizExerciseTestRepository.findByIdElseThrow(quizExercise.getId()).getDueDate().toInstant();
-        assertThatThrownBy(() -> quizLifecycleResource.performActionForQuizExercise(quizExercise.getId(), QuizAction.END_NOW)).isInstanceOf(BadRequestAlertException.class);
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        request.put("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/END_NOW", null, BAD_REQUEST);
         assertThat(quizExerciseTestRepository.findByIdElseThrow(quizExercise.getId()).getDueDate().toInstant()).isEqualTo(dueDate);
     }
 

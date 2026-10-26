@@ -3792,4 +3792,37 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             assertThat(searched).extracting(ParticipationManagementDTO::participationId).containsExactly(practice.getId());
         }
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateIndividualDueDateIgnoresForeignParticipation() throws Exception {
+        var allowedCourse = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
+        var allowed = (FileUploadExercise) allowedCourse.getExercises().iterator().next();
+        var foreignCourse = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
+        var foreign = (FileUploadExercise) foreignCourse.getExercises().iterator().next();
+        userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), foreignCourse);
+        ZonedDateTime oldDate = ZonedDateTime.now().plusDays(2).withNano(0);
+        ZonedDateTime newDate = oldDate.plusDays(1);
+        allowed.setDueDate(oldDate.minusDays(1));
+        foreign.setDueDate(oldDate.minusDays(1));
+        exerciseRepository.save(allowed);
+        exerciseRepository.save(foreign);
+        var ownParticipation = (StudentParticipation) fileUploadExerciseUtilService
+                .addFileUploadSubmission(allowed, ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1").getParticipation();
+        var foreignParticipation = (StudentParticipation) fileUploadExerciseUtilService
+                .addFileUploadSubmission(foreign, ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1").getParticipation();
+        ownParticipation.setIndividualDueDate(oldDate);
+        foreignParticipation.setIndividualDueDate(oldDate);
+        participationRepo.saveAll(List.of(ownParticipation, foreignParticipation));
+        var updates = List.of(new ParticipationDueDateUpdateDTO(ownParticipation.getId(), allowed.getId(), newDate),
+                new ParticipationDueDateUpdateDTO(foreignParticipation.getId(), allowed.getId(), newDate));
+        var response = request.putWithResponseBodyList("/api/exercise/exercises/" + allowed.getId() + "/participations/update-individual-due-date", updates,
+                StudentParticipationDTO.class, HttpStatus.OK);
+        assertThat(response).extracting(StudentParticipationDTO::id).containsExactly(ownParticipation.getId());
+        assertThat(participationRepo.findByIdElseThrow(ownParticipation.getId()).getIndividualDueDate().toInstant()).isEqualTo(newDate.toInstant());
+        var unchanged = participationRepo.findByIdElseThrow(foreignParticipation.getId());
+        assertThat(unchanged.getIndividualDueDate().toInstant()).isEqualTo(oldDate.toInstant());
+        assertThat(unchanged.getExercise().getId()).isEqualTo(foreign.getId());
+    }
+
 }

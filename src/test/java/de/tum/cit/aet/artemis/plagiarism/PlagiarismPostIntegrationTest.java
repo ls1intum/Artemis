@@ -4,10 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
@@ -402,6 +406,29 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     protected static List<Arguments> userMentionProvider() {
         return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void plagiarismMutationsRejectOrdinaryPostsWithoutChangingThem() throws Exception {
+        var post = postsBelongingToExercise.getFirst();
+        assertThat(post.getPlagiarismCase()).isNull();
+        String title = post.getTitle();
+        String content = post.getContent();
+        Long conversationId = post.getConversation().getId();
+        String url = "/api/plagiarism/courses/" + courseId + "/posts/" + post.getId();
+        long casesBefore = plagiarismCaseRepository.count();
+        clearInvocations(websocketMessagingService);
+        // The plagiarism repository excludes conversation messages before the service inspects their plagiarism case.
+        request.put(url, new PlagiarismPostUpdateRequestDTO("changed", "changed"), HttpStatus.NOT_FOUND);
+        request.performMvcRequest(delete(url)).andExpect(status().isNotFound()).andExpect(jsonPath("$.status").value(404));
+        assertThat(plagiarismCaseRepository.count()).isEqualTo(casesBefore);
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+        var unchanged = postRepository.findById(post.getId()).orElseThrow();
+        assertThat(unchanged.getTitle()).isEqualTo(title);
+        assertThat(unchanged.getContent()).isEqualTo(content);
+        assertThat(unchanged.getConversation().getId()).isEqualTo(conversationId);
+        assertThat(unchanged.getPlagiarismCase()).isNull();
     }
 
 }

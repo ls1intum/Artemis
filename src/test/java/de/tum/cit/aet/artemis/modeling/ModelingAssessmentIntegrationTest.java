@@ -1262,6 +1262,19 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ownerWithoutResultRequiresCurrentCourseMembership() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmission(classExercise, ParticipationFactory.generateModelingSubmission(validModel, true),
+                TEST_PREFIX + "student1");
+        var url = API_MODELING_SUBMISSIONS + submission.getId() + "/result";
+        assertThat(submission.getLatestResult()).isNull();
+        request.get(url, HttpStatus.NOT_FOUND, ResultDTO.class);
+        userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), course);
+        request.get(url, HttpStatus.FORBIDDEN, ResultDTO.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getLatestResult()).isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void ownerResultRequiresOwnershipEvenForInstructor() throws Exception {
         saveModelingSubmissionAndAssessment(true);

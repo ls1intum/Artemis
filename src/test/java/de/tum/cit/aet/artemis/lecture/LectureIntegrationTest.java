@@ -858,4 +858,19 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(lecture.id()).isEqualTo(lecture2.getId());
         assertThat(lecture.isTutorialLecture()).isTrue();
     }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createLectureRequiresCourseId(boolean includeCourse) throws Exception {
+        long lecturesBefore = lectureRepository.count();
+        long channelsBefore = channelRepository.count();
+        var start = ZonedDateTime.now();
+        var course = includeCourse ? new LectureResource.SimpleLectureDTO.CourseDTO(null, null, null, null) : null;
+        var lecture = new LectureResource.SimpleLectureDTO(null, "Missing course", null, start, start.plusHours(1), false, "missing-course", course);
+        request.postAndExpectError("/api/lecture/lectures", lecture, HttpStatus.BAD_REQUEST, "courseMissing");
+        assertThat(lectureRepository.count()).isEqualTo(lecturesBefore);
+        assertThat(channelRepository.count()).isEqualTo(channelsBefore);
+    }
+
 }

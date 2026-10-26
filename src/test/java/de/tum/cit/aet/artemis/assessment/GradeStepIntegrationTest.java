@@ -443,4 +443,32 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(foundGrade.gradeType()).isEqualTo(GradeType.BONUS);
         assertThat(foundGrade.isPassingGrade()).isFalse();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void singleGradeStepsBindBothScaleAndExamCourse() throws Exception {
+        GradeStep courseStep = saveSingleGuardGradeStep(courseGradingScale, "course grade");
+        GradeStep examStep = saveSingleGuardGradeStep(examGradingScale, "exam grade");
+        String courseUrl = "/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/";
+        String examUrl = "/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps/";
+        assertThat(request.get(courseUrl + courseStep.getId(), HttpStatus.OK, GradeStepDTO.class).gradeName()).isEqualTo("course grade");
+        assertThat(request.get(examUrl + examStep.getId(), HttpStatus.OK, GradeStepDTO.class).gradeName()).isEqualTo("exam grade");
+        request.get(courseUrl + examStep.getId(), HttpStatus.FORBIDDEN, GradeStepDTO.class);
+        request.get(examUrl + courseStep.getId(), HttpStatus.FORBIDDEN, GradeStepDTO.class);
+        exam.setCourse(courseUtilService.createCourse());
+        examRepository.save(exam);
+        request.get(examUrl + examStep.getId(), HttpStatus.FORBIDDEN, GradeStepDTO.class);
+    }
+
+    private GradeStep saveSingleGuardGradeStep(GradingScale scale, String name) {
+        GradeStep step = new GradeStep();
+        step.setGradeName(name);
+        step.setLowerBoundPercentage(0);
+        step.setUpperBoundPercentage(100);
+        step.setUpperBoundInclusive(true);
+        step.setGradingScale(scale);
+        scale.setGradeSteps(Set.of(step));
+        return gradingScaleRepository.save(scale).getGradeSteps().iterator().next();
+    }
+
 }

@@ -27,6 +27,8 @@ import org.eclipse.jgit.lib.Constants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -447,6 +449,54 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         byte[] zipContent = Files.readAllBytes(auxiliaryArchive);
         assertThat(ZipTestUtil.readEntryAsString(zipContent, "hints/Hint.java")).isEqualTo("public class Hint {}");
         ZipTestUtil.verifyZipContainsGitDirectory(zipContent);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false, true", "true, true", "false, false", "true, false" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void auxiliaryExportRejectsRepositoryOfAnotherExercise(boolean sameCourse, boolean configured) throws Exception {
+        ProgrammingExercise allowedExercise = programmingExercise;
+        Course foreignCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(foreignCourse, ProgrammingExercise.class);
+        if (sameCourse) {
+            programmingExercise.setCourse(allowedExercise.getCourseViaExerciseGroupOrCourseMember());
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        }
+        createAndSeedBaseRepositories();
+        seedAuxiliaryRepository("privatehints", Map.of("private.txt", "foreign auxiliary repository content"));
+        var auxiliary = programmingExercise.getAuxiliaryRepositories().iterator().next();
+        if (!configured) {
+            auxiliary.setRepositoryUri((String) null);
+            programmingExerciseRepository.save(programmingExercise);
+            assertThat(programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow().getAuxiliaryRepositories()).singleElement()
+                    .satisfies(stored -> assertThat(stored.getRepositoryUri()).isNull());
+        }
+        var response = request
+                .performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/programming/programming-exercises/" + allowedExercise.getId() + "/export-instructor-auxiliary-repository?repositoryId=" + auxiliary.getId()))
+                .andReturn().getResponse();
+        assertThat(response.getStatus()).as("a tutor must not download a foreign exercise's auxiliary repository").isEqualTo(400);
+        assertThat(JsonObjectMapper.get().readTree(response.getContentAsString()).get("errorKey").asString()).isEqualTo("invalidRepositoryId");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void auxiliaryExportForTutorPreservesContentAndHistory() throws Exception {
+        createAndSeedBaseRepositories();
+        seedAuxiliaryRepository("allowedhints", Map.of("hints.txt", "allowed auxiliary repository content"));
+        var auxiliary = programmingExercise.getAuxiliaryRepositories().iterator().next();
+        File archive = request.getFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-auxiliary-repository?repositoryId=" + auxiliary.getId(),
+                HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(archive.getName()).contains("allowedhints").endsWith(".zip");
+        assertThat(ZipTestUtil.readEntryAsString(zip, "hints.txt")).isEqualTo("allowed auxiliary repository content");
+        ZipTestUtil.verifyZipContainsGitDirectory(zip);
+        Path extracted = tempFileUtilService.createTempDirectory("auxiliary-history");
+        ZipTestUtil.extractZip(zip, extracted);
+        try (Git git = Git.open(extracted.toFile())) {
+            assertThat(git.log().call()).anySatisfy(commit -> assertThat(commit.getFullMessage()).contains("auxiliary content"));
+        }
     }
 
     /** Creates a LocalVC repository for an auxiliary repository of the exercise, pushes one commit and persists it. */

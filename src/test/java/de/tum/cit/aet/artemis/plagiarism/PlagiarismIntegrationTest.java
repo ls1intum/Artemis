@@ -4,6 +4,9 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRME
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 import java.util.Optional;
@@ -313,4 +316,41 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
         request.get("/api/plagiarism/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.FORBIDDEN, Long.class);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void plagiarismResetRejectsForeignResultWithoutDeletingComparisons() throws Exception {
+        var foreignCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise("ForeignReset");
+        var foreignExercise = (TextExercise) foreignCourse.getExercises().iterator().next();
+        var foreignResult = textExerciseUtilService.createPlagiarismResultForExercise(foreignExercise);
+        var foreignComparison = new PlagiarismComparison();
+        foreignComparison.setPlagiarismResult(foreignResult);
+        foreignComparison.setStatus(NONE);
+        var first = participationUtilService.addSubmission(foreignExercise, ParticipationFactory.generateTextSubmission("same words", Language.ENGLISH, true),
+                TEST_PREFIX + "student1");
+        var second = participationUtilService.addSubmission(foreignExercise, ParticipationFactory.generateTextSubmission("same words", Language.ENGLISH, true),
+                TEST_PREFIX + "student2");
+        var firstSide = new PlagiarismSubmission();
+        firstSide.setSubmissionId(first.getId());
+        firstSide.setStudentLogin(TEST_PREFIX + "student1");
+        var secondSide = new PlagiarismSubmission();
+        secondSide.setSubmissionId(second.getId());
+        secondSide.setStudentLogin(TEST_PREFIX + "student2");
+        foreignComparison.setSubmissionA(firstSide);
+        foreignComparison.setSubmissionB(secondSide);
+        foreignComparison = plagiarismComparisonRepository.save(foreignComparison);
+        long resultsBefore = plagiarismResultRepository.count();
+        long comparisonsBefore = plagiarismComparisonRepository.count();
+        request.performMvcRequest(
+                delete("/api/plagiarism/exercises/" + textExercise.getId() + "/plagiarism-results/" + foreignResult.getId() + "/plagiarism-comparisons?deleteAll=false"))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.errorKey").value("exerciseMismatch")).andExpect(jsonPath("$.entityName").value("PlagiarismResult"));
+        assertThat(plagiarismResultRepository.count()).isEqualTo(resultsBefore);
+        assertThat(plagiarismComparisonRepository.count()).isEqualTo(comparisonsBefore);
+        assertThat(plagiarismComparisonRepository.findById(plagiarismComparison1.getId()).orElseThrow().getStatus()).isEqualTo(CONFIRMED);
+        assertThat(plagiarismComparisonRepository.findById(plagiarismComparison2.getId()).orElseThrow().getStatus()).isEqualTo(NONE);
+        assertThat(plagiarismComparisonRepository.findById(foreignComparison.getId()).orElseThrow().getStatus()).isEqualTo(NONE);
+        assertThat(plagiarismResultRepository.findById(foreignResult.getId()).orElseThrow().getExercise().getId()).isEqualTo(foreignExercise.getId());
+        assertThat(plagiarismResultRepository.findById(textPlagiarismResult.getId()).orElseThrow().getExercise().getId()).isEqualTo(textExercise.getId());
+    }
+
 }

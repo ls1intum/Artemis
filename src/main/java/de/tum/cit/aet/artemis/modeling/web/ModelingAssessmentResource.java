@@ -132,10 +132,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
             throw new AccessForbiddenException();
         }
         var exercise = participation.getExercise();
-        if (instructorView) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        }
-        else if (!authCheckService.isOwnerOfParticipation(participation)) {
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(instructorView ? Role.INSTRUCTOR : Role.STUDENT, exercise, null);
+        if (!instructorView && !authCheckService.isOwnerOfParticipation(participation)) {
             throw new AccessForbiddenException();
         }
 

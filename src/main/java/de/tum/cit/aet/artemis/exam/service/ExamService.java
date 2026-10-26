@@ -261,7 +261,7 @@ public class ExamService {
      * @return true if the student should see the result, false otherwise
      */
     public static boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
-        return (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
+        return (studentExam.getExam().isStarted() && Boolean.FALSE.equals(studentExam.isEnded()) && participation instanceof ProgrammingExerciseStudentParticipation)
                 || studentExam.areResultsPublishedYet();
     }
 

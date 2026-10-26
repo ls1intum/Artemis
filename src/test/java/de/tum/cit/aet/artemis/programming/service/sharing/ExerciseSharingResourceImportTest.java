@@ -21,6 +21,8 @@ import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +43,7 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
@@ -398,6 +401,49 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
         ShoppingBasket sb = objectMapper.readerFor(ShoppingBasket.class).readValue(content);
         assertThat(sb.userInfo.email).isEqualTo("test.user@example.com");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
+    void sharingExamImportUsesGroupOwningCourse(boolean editorInTarget) throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN, editorInTarget ? ExpectedCount.twice() : ExpectedCount.once());
+        var details = loadExerciseDetails();
+        var unrelatedCourse = courseUtilService.addEmptyCourse();
+        var targetCourse = courseUtilService.addEmptyCourse();
+        var exam = examUtilService.addExamWithExerciseGroup(targetCourse, true);
+        var group = exam.getExerciseGroups().getFirst();
+        var caller = userUtilService.getUserByLogin(INSTRUCTOR_NAME);
+        userUtilService.enrollUserInCourse(caller, editorInTarget ? targetCourse : unrelatedCourse, CourseRole.EDITOR);
+        ObjectNode body = objectMapper.valueToTree(new SharingSetupInfoDTO(details, unrelatedCourse.getId(), correctSharingInfo()));
+        ObjectNode exercise = (ObjectNode) body.get("exercise");
+        exercise.remove("course");
+        exercise.putObject("exerciseGroup").put("id", group.getId());
+        long exerciseCount = programmingExerciseRepository.count();
+        long configurationCount = programmingExerciseBuildConfigRepository.count();
+        long linkCount = competencyExerciseLinkTestRepository.count();
+        var result = requestUtilService
+                .performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().is(editorInTarget ? 200 : 403)).andReturn();
+        if (!editorInTarget) {
+            assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCount);
+            assertThat(programmingExerciseBuildConfigRepository.count()).isEqualTo(configurationCount);
+            assertThat(competencyExerciseLinkTestRepository.count()).isEqualTo(linkCount);
+            return;
+        }
+        long id = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
+        var imported = programmingExerciseRepository.findByIdElseThrow(id);
+        try {
+            assertThat(imported.getExerciseGroup().getId()).isEqualTo(group.getId());
+            assertThat(imported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(targetCourse.getId());
+            assertThat(imported.isCourseExercise()).isFalse();
+            assertThat(id).isNotEqualTo(details.id());
+            assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCount + 1);
+        }
+        finally {
+            versionControlService.deleteProject(imported.getProjectKey());
+        }
     }
 
 }
