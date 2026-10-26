@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.lecture.api;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -53,8 +55,12 @@ public class LectureCourseHomeApi extends AbstractLectureApi {
         if (!isNew) {
             rows = lectures.findReview(courseId, user.getId(), now, PageRequest.of(0, 1));
         }
+        var changes = lectures.findChanges(courseId, user.getId(), now);
+        var nextRefresh = Stream.of(changes.getUnitRelease(), changes.getAttachmentRelease(), changes.getExerciseRelease()).filter(Objects::nonNull).map(ZonedDateTime::toInstant)
+                .filter(date -> date.isAfter(asOf)).min(Instant::compareTo).orElse(null);
         return new LectureCourseHomeDTO(CourseHomeSectionStatus.AVAILABLE,
                 rows.stream().map(row -> new CourseHomeDTO.ItemDTO(row.getTitle(), new CourseHomeTargetDTO(CourseHomeTargetKind.LECTURE, row.getId(), null, null),
-                        row.getPublicationDate() == null ? null : row.getPublicationDate().toInstant(), null, isNew ? "NEW_LECTURE" : "REVIEW")).toList());
+                        row.getPublicationDate() == null ? null : row.getPublicationDate().toInstant(), null, isNew ? "NEW_LECTURE" : "REVIEW")).toList(),
+                nextRefresh);
     }
 }

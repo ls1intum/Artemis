@@ -40,7 +40,23 @@ class ExamCourseHomeApiTest extends AbstractSpringIntegrationIndependentTest {
     void setup() {
         userUtilService.addUsers(PREFIX, 1, 0, 0, 1);
         course = courseUtilService.createEnrolledCourse(PREFIX);
-        base = ZonedDateTime.now();
+        base = ZonedDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS);
+    }
+
+    @Test
+    void aRegisteredExamSchedulesItsPromotionBeforeItBecomesAnItem() {
+        var start = base.plusHours(24).plusMinutes(1);
+        var exam = exams.save(ExamFactory.generateExam(course, base.minusDays(1), start, start.plusHours(1), false));
+        var user = userUtilService.getUserByLogin(PREFIX + "student1");
+        var registration = new ExamUser();
+        registration.setExam(exam);
+        registration.setUser(user);
+        registrations.saveAndFlush(registration);
+        var initial = home.load(course.getId(), user, base.toInstant(), base.minusDays(7).toInstant());
+        assertThat(initial.items()).isEmpty();
+        assertThat(initial.nextRefreshAt()).isEqualTo(base.plusMinutes(1).toInstant());
+        var promoted = home.load(course.getId(), user, initial.nextRefreshAt(), base.minusDays(7).toInstant());
+        assertThat(promoted.items()).extracting(item -> item.target().id()).containsExactly(exam.getId());
     }
 
     @Test

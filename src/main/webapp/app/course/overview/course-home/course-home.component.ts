@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
@@ -168,13 +169,21 @@ export class CourseHomeComponent {
                 const previous = this.home();
                 this.baseline ??= snapshot.visit.newSince;
                 if (previous && previous.welcome.contextFingerprint === snapshot.welcome.contextFingerprint) {
-                    snapshot = cloneWith(snapshot, { visit: previous.visit, welcome: previous.welcome });
+                    snapshot = cloneWith(snapshot, {
+                        visit: previous.visit,
+                        welcome: cloneWith(snapshot.welcome, {
+                            welcomeCase: previous.welcome.welcomeCase,
+                            variantIndex: previous.welcome.variantIndex,
+                            params: previous.welcome.params,
+                        }),
+                    });
                 } else if (previous) {
                     this.cancelWelcome();
                     this.aiMessage.set(undefined);
                     snapshot = cloneWith(snapshot, { visit: cloneWith(snapshot.visit, { firstVisit: previous.visit.firstVisit }) });
                 }
                 this.home.set(snapshot);
+                if (!snapshot.welcome.aiEligible) this.cancelWelcome();
                 this.scheduleBoundary(snapshot);
                 this.loading.set(false);
                 if (!previous) {
@@ -190,8 +199,12 @@ export class CourseHomeComponent {
                     );
                 }
             },
-            error: () => {
+            error: (error: unknown) => {
                 if (this.scope === scope && this.generation === generation) {
+                    if (this.isAccessError(error)) {
+                        this.clearProtectedData();
+                        return;
+                    }
                     this.loading.set(false);
                     if (this.home()) this.refreshFailed.set(true);
                     else this.failed.set(true);
@@ -214,8 +227,12 @@ export class CourseHomeComponent {
                 this.team.set(cloneWith(team, { items: members.filter((member, index) => members.findIndex((other) => other.id === member.id) === index) }));
                 this.teamLoading.set(false);
             },
-            error: () => {
+            error: (error: unknown) => {
                 if (scope === this.scope && generation === this.generation) {
+                    if (this.isAccessError(error)) {
+                        this.clearProtectedData();
+                        return;
+                    }
                     this.teamLoading.set(false);
                     this.teamFailed.set(true);
                 }
@@ -255,7 +272,10 @@ export class CourseHomeComponent {
             .pipe(
                 timeout(3500),
                 take(1),
-                catchError(() => of(undefined)),
+                catchError((error: unknown) => {
+                    if (scope === this.scope && generation === this.generation && this.isAccessError(error)) this.clearProtectedData();
+                    return of(undefined);
+                }),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
@@ -292,6 +312,24 @@ export class CourseHomeComponent {
                 catchError(() => of(undefined)),
             )
             .subscribe();
+    }
+    private isAccessError(error: unknown): boolean {
+        return error instanceof HttpErrorResponse && [401, 403, 404].includes(error.status);
+    }
+    private clearProtectedData(): void {
+        // Known permission loss invalidates the rendered snapshot and all pending work.
+        this.rendered = undefined;
+        this.closeScope();
+        this.home.set(undefined);
+        this.team.set({ hasMore: false, page: -1 });
+        this.loading.set(false);
+        this.failed.set(true);
+        this.refreshFailed.set(false);
+        this.teamLoading.set(false);
+        this.teamFailed.set(false);
+        this.baseline = undefined;
+        this.acknowledged = false;
+        this.welcomeAttempted = false;
     }
     private closeScope(): void {
         this.generation++;

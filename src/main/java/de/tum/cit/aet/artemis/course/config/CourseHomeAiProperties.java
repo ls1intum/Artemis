@@ -5,8 +5,10 @@ import java.util.Locale;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Lazy;
 
 /** Explicit, independent provider configuration. Missing values leave Home deterministic. */
+@Lazy
 @ConfigurationProperties(prefix = "artemis.course-home.ai")
 public record CourseHomeAiProperties(boolean enabled, @Nullable String location, @Nullable String baseUrl, @Nullable String apiKey, @Nullable String model) {
 

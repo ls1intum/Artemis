@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -195,6 +196,69 @@ describe('CourseHomeComponent', () => {
         expect(text()).toContain('How we learn in this course');
         expect(api.acknowledgeVisit).toHaveBeenCalledOnce();
         expect(api.generateWelcome).not.toHaveBeenCalled();
+    });
+    it.each([401, 403, 404])('clears protected content and pending requests after a denied refresh (%s)', async (status) => {
+        user.update((value) => ({ ...value!, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI }));
+        fixture.detectChanges();
+        await render(createCourseHomeFixture('first'));
+        reselections.next();
+        loads.at(-1)!.error(new HttpErrorResponse({ status }));
+        fixture.detectChanges();
+        expect(fixture.componentInstance.home()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('[data-testid="home-team"]')).toBeNull();
+        expect(text()).not.toContain('Software Engineering');
+        expect(text()).toContain('could not be loaded');
+        ai.next({ contextFingerprint: 'first', source: 'AI', message: 'Late protected wording' });
+        fixture.detectChanges();
+        expect(text()).not.toContain('Late protected wording');
+    });
+    it.each(['welcome', 'team'])('clears protected content when the %s endpoint reports lost access', async (source) => {
+        user.update((value) => ({ ...value!, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI }));
+        fixture.detectChanges();
+        await render(createCourseHomeFixture('first'));
+        const staff = new Subject<never>();
+        if (source === 'team') {
+            api.teachingTeam.mockReturnValue(staff);
+            fixture.componentInstance.loadMoreTeam();
+            staff.error(new HttpErrorResponse({ status: 403 }));
+        } else {
+            ai.error(new HttpErrorResponse({ status: 403 }));
+        }
+        fixture.detectChanges();
+        expect(fixture.componentInstance.home()).toBeUndefined();
+        expect(text()).not.toContain('Software Engineering');
+        expect(text()).toContain('could not be loaded');
+    });
+    it('keeps the rendered snapshot after a transient refresh failure', async () => {
+        await render(createCourseHomeFixture('unread-replies'));
+        reselections.next();
+        loads.at(-1)!.error(new HttpErrorResponse({ status: 503 }));
+        fixture.detectChanges();
+        expect(text()).toContain('Software Engineering');
+        expect(text()).toContain('2 unread replies');
+        expect(text()).toContain('Updates could not be loaded');
+    });
+    it.each([false, true])('adopts revoked server eligibility despite an unchanged fingerprint (already generated: %s)', async (generated) => {
+        user.update((value) => ({ ...value!, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI }));
+        fixture.detectChanges();
+        await render(createCourseHomeFixture('first'));
+        if (generated) {
+            ai.next({ contextFingerprint: 'first', source: 'AI', message: 'Previously generated wording' });
+            ai.complete();
+        }
+        const fresh = createCourseHomeFixture('first');
+        fresh.welcome.aiEligible = false;
+        fresh.welcome.variantIndex = 0;
+        fresh.visit.firstVisit = false;
+        reselections.next();
+        await render(fresh);
+        expect(fixture.componentInstance.home()!.welcome.aiEligible).toBe(false);
+        expect(fixture.componentInstance.home()!.welcome.variantIndex).toBe(2);
+        expect(fixture.componentInstance.home()!.visit.firstVisit).toBe(true);
+        ai.next({ contextFingerprint: 'first', source: 'AI', message: 'Late generated wording' });
+        fixture.detectChanges();
+        expect(text()).not.toContain('AI-generated encouragement');
+        expect(text()).toContain('Make this course your own');
     });
     it('coalesces current-course notifications and cancels a pending burst on destroy', async () => {
         await render(createCourseHomeFixture('minimal'));
