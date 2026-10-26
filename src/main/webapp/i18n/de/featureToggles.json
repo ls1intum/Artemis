@@ -168,13 +168,13 @@
                 },
                 "AtlasML": {
                     "name": "Atlas Machine Learning",
-                    "description": "Nutzt maschinelles Lernen zur automatischen Generierung von Kompetenzempfehlungen basierend auf Kursinhalten, zur Vorhersage von Studierendenleistungen und für intelligente Vorschläge zur Lernpfad-Optimierung.",
-                    "disableWarning": "Automatische Kompetenzgenerierung, Leistungsvorhersagen und ML-basierte Lernempfehlungen sind nicht verfügbar."
+                    "description": "Lässt Artemis den externen AtlasML-Dienst nutzen, um Lehrenden und Editor:innen Kompetenzen für Aufgaben und Beziehungen zwischen Kompetenzen vorzuschlagen, und hält AtlasML mit den Kompetenzen und Aufgabenverknüpfungen der Kurse synchron. Automatische Kompetenzaktualisierungen nutzen den Dienst außerdem, um ähnliche Kompetenzen zu finden. Erfordert einen konfigurierten AtlasML-Dienst (artemis.atlas.atlasml.enabled).",
+                    "disableWarning": "Lehrende und Editor:innen sehen in den Aufgabenformularen und im Formular für Kompetenzbeziehungen keine AtlasML-Vorschläge mehr, Artemis synchronisiert Kompetenzänderungen nicht mehr mit AtlasML, und automatische Kompetenzaktualisierungen laufen ohne Ähnlichkeitshinweise von AtlasML."
                 },
                 "AtlasAgent": {
                     "name": "Atlas-Agent",
-                    "description": "Aktiviert einen KI-Agenten, der Studierenden hilft, Kompetenzen zu verstehen und zu meistern, indem er personalisierte Erklärungen gibt, Fragen zu Lernzielen beantwortet und sie auf ihrem kompetenzbasierten Lernweg begleitet.",
-                    "disableWarning": "Studierende haben keinen Zugriff auf den KI-gestützten Kompetenz-Assistenten."
+                    "description": "Ermöglicht Lehrenden, die Kompetenzen ihres Kurses mit KI aufzubauen und zu pflegen. Der KI-Kompetenz-Assistent im Kompetenzmanagement schlägt Kompetenzen, Beziehungen und Aufgabenverknüpfungen vor und speichert sie nach Freigabe durch die Lehrenden. Atlas kann Kompetenzen und ihre Verknüpfungen mit Aufgaben und Vorlesungseinheiten auch ohne Rückfrage ändern: wenn Lehrende „Kompetenzen vorschlagen“ anklicken oder automatisch in Kursen, in denen Administrator:innen die Atlas-Auto-Orchestrierung eingeschaltet haben. Dabei werden Kursinhalte einschließlich Beispiellösungen an das konfigurierte Sprachmodell gesendet. Erfordert das Modul Atlas KI (LLM).",
+                    "disableWarning": "Lehrende können den KI-Kompetenz-Assistenten und die Schaltfläche „Kompetenzen vorschlagen“ nicht mehr nutzen, und automatische Kompetenzaktualisierungen finden in keinem Kurs mehr statt. Bestehende Kompetenzen bleiben unverändert."
                 },
                 "LectureContentProcessing": {
                     "name": "Indexierung von Vorlesungseinheiten",
