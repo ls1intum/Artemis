@@ -27,9 +27,10 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     template: `
         @if (supported()) {
             <!-- The reason is a tooltip on the wrapper: a disabled button receives no pointer events of its own. -->
+            <!-- White text in both themes, like the Bootstrap warning buttons it stands next to. -->
             <span class="inline-flex flex-col items-start gap-1 {{ styleClass() }}" [attr.title]="blocker() || '' | artemisTranslate" data-testid="create-variant-ai">
                 <tumaet-ui-button
-                    class="[&_button]:gap-1! [&_button]:rounded-[0.1rem]! [&_button]:px-2! [&_button]:py-1! [&_button]:text-[0.7875rem]! [&_button]:leading-normal!"
+                    class="[--tumaet-ui-state-warning-contrast:var(--white)] [&_button]:gap-1! [&_button]:rounded-[0.1rem]! [&_button]:px-2! [&_button]:py-1! [&_button]:text-[0.7875rem]! [&_button]:leading-normal!"
                     severity="warn"
                     variant="solid"
                     size="small"
