@@ -7,8 +7,10 @@ import java.time.ZonedDateTime;
 import jakarta.persistence.EntityManagerFactory;
 
 import org.hibernate.SessionFactory;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -22,6 +24,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
+@Isolated("Measures SessionFactory-wide Hibernate statistics without concurrent test queries.")
 @WithMockUser(username = CourseHomeLoadProfileTest.PREFIX + "student1", roles = "USER")
 class CourseHomeLoadProfileTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -35,10 +38,20 @@ class CourseHomeLoadProfileTest extends AbstractSpringIntegrationIndependentTest
 
     private Course course;
 
+    private boolean statisticsEnabledBefore;
+
     @BeforeEach
     void setup() {
+        statisticsEnabledBefore = emf.unwrap(SessionFactory.class).getStatistics().isStatisticsEnabled();
         userUtilService.addUsers(PREFIX, 1, 1, 0, 1);
         course = courseUtilService.createEnrolledCourse(PREFIX);
+    }
+
+    @AfterEach
+    void restoreStatistics() {
+        var statistics = emf.unwrap(SessionFactory.class).getStatistics();
+        statistics.clear();
+        statistics.setStatisticsEnabled(statisticsEnabledBefore);
     }
 
     @Test
