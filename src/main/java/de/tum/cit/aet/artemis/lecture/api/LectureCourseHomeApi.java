@@ -12,6 +12,8 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeSectionStatus;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeTargetKind;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeTargetDTO;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -40,8 +42,8 @@ public class LectureCourseHomeApi extends AbstractLectureApi {
         boolean isNew = !rows.isEmpty();
         if (!isNew)
             rows = lectures.findReview(courseId, user.getId(), now, PageRequest.of(0, 1));
-        return new LectureCourseHomeDTO(CourseHomeDTO.SectionStatus.AVAILABLE,
-                rows.stream().map(row -> new CourseHomeDTO.Item(row.getTitle(), new CourseHomeTargetDTO(CourseHomeTargetDTO.Kind.LECTURE, row.getId(), null, null),
+        return new LectureCourseHomeDTO(CourseHomeSectionStatus.AVAILABLE,
+                rows.stream().map(row -> new CourseHomeDTO.ItemDTO(row.getTitle(), new CourseHomeTargetDTO(CourseHomeTargetKind.LECTURE, row.getId(), null, null),
                         row.getPublicationDate() == null ? null : row.getPublicationDate().toInstant(), null, isNew ? "NEW_LECTURE" : "REVIEW")).toList());
     }
 }

@@ -16,7 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.communication.FaqFactory;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -41,7 +41,7 @@ class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILo
     private WeaviateService weaviateService;
 
     @Autowired
-    private FaqRepository faqRepository;
+    private FaqTestRepository faqRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

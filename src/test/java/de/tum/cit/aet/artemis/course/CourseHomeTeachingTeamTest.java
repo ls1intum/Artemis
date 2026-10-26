@@ -24,7 +24,7 @@ class CourseHomeTeachingTeamTest extends AbstractSpringIntegrationIndependentTes
     private CourseHomeTeachingTeamService team;
 
     @Autowired
-    private de.tum.cit.aet.artemis.account.repository.UserRepository users;
+    private de.tum.cit.aet.artemis.account.test_repository.UserTestRepository users;
 
     private Course course;
 

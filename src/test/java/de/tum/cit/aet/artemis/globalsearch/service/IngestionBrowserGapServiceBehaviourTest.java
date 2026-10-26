@@ -11,8 +11,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
 
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -64,7 +64,7 @@ class IngestionBrowserGapServiceBehaviourTest {
 
     private static IngestionBrowserGapService gapService(boolean irisEnabled) {
         MockEnvironment environment = new MockEnvironment().withProperty("artemis.iris.enabled", Boolean.toString(irisEnabled));
-        return new IngestionBrowserGapService(mock(ExerciseRepository.class), mock(FaqRepository.class), mock(ChannelRepository.class), mock(CourseRepository.class),
+        return new IngestionBrowserGapService(mock(ExerciseRepository.class), mock(FaqTestRepository.class), mock(ChannelRepository.class), mock(CourseRepository.class),
                 Optional.empty(), Optional.<LectureUnitRepositoryApi>empty(), Optional.<ExamRepositoryApi>empty(), environment);
     }
 }

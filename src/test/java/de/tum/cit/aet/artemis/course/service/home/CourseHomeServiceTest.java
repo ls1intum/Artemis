@@ -16,11 +16,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessResourceFailureException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.communication.domain.CourseHomeQuestionState;
 import de.tum.cit.aet.artemis.communication.dto.CourseHomeCommunicationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseHomeQuestionsDTO;
 import de.tum.cit.aet.artemis.communication.service.CourseHomeCommunicationService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeSectionStatus;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeTargetKind;
 import de.tum.cit.aet.artemis.course.domain.CourseHomeWelcomeCase;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
@@ -69,10 +72,10 @@ class CourseHomeServiceTest {
         when(authorization.isAtLeastStudentInCourse(COURSE)).thenReturn(true);
         when(configurations.findStudentWelcomeContextByCourseId(COURSE)).thenReturn(Optional.empty());
         when(visits.read(COURSE, user.getId())).thenReturn(new CourseHomeVisitService.VisitState(null, null, 0));
-        when(learning.load(anyLong(), any(), any(), any())).thenReturn(new CourseHomeLearningDTO(new CourseHomeDTO.Progress(0, 0, 0, 0), List.of(), List.of()));
+        when(learning.load(anyLong(), any(), any(), any())).thenReturn(new CourseHomeLearningDTO(new CourseHomeDTO.ProgressDTO(0, 0, 0, 0), List.of(), List.of()));
         when(team.load(COURSE, 0, 3)).thenReturn(new CourseHomeTeachingTeamDTO(List.of(), false, 0));
         when(communication.load(anyLong(), any(), any(), any()))
-                .thenReturn(new CourseHomeCommunicationDTO(new CourseHomeQuestionsDTO(CourseHomeDTO.SectionStatus.AVAILABLE, List.of()), null, List.of()));
+                .thenReturn(new CourseHomeCommunicationDTO(new CourseHomeQuestionsDTO(CourseHomeSectionStatus.AVAILABLE, List.of()), null, List.of()));
         when(tabs.getAvailableTabs(COURSE, user, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, false))
                 .thenReturn(new CourseAvailableTabsDTO(false, false, false, false, false, false, false, true, false));
     }
@@ -80,9 +83,9 @@ class CourseHomeServiceTest {
     @Test
     void absentModulesHaveExplicitDisabledSections() {
         var result = service(Optional.empty()).load(COURSE, user, new CourseHomeQueryDTO(null), NOW);
-        assertThat(result.sections().get("lectures")).isEqualTo(CourseHomeDTO.SectionStatus.DISABLED);
-        assertThat(result.sections().get("exams")).isEqualTo(CourseHomeDTO.SectionStatus.DISABLED);
-        assertThat(result.irisSessions().status()).isEqualTo(CourseHomeDTO.SectionStatus.DISABLED);
+        assertThat(result.sections().get("lectures")).isEqualTo(CourseHomeSectionStatus.DISABLED);
+        assertThat(result.sections().get("exams")).isEqualTo(CourseHomeSectionStatus.DISABLED);
+        assertThat(result.irisSessions().status()).isEqualTo(CourseHomeSectionStatus.DISABLED);
     }
 
     @Test
@@ -90,7 +93,7 @@ class CourseHomeServiceTest {
         var api = mock(LectureCourseHomeApi.class);
         when(api.load(anyLong(), any(), any(), any())).thenThrow(new DataAccessResourceFailureException("offline"));
         var result = service(Optional.of(api)).load(COURSE, user, new CourseHomeQueryDTO(null), NOW);
-        assertThat(result.sections().get("lectures")).isEqualTo(CourseHomeDTO.SectionStatus.UNAVAILABLE);
+        assertThat(result.sections().get("lectures")).isEqualTo(CourseHomeSectionStatus.UNAVAILABLE);
         assertThat(result.welcome()).isNotNull();
         assertThat(result.course().id()).isEqualTo(COURSE);
     }
@@ -115,12 +118,12 @@ class CourseHomeServiceTest {
     @Test
     void aNonprimaryDeadlineStillSchedulesTheUrgencyRefresh() {
         var due = NOW.plusSeconds(25 * 3600);
-        var item = new CourseHomeDTO.Item("Exercise", new CourseHomeTargetDTO(CourseHomeTargetDTO.Kind.EXERCISE, 12, null, null), NOW, due, "DEADLINE_SOON");
-        when(learning.load(anyLong(), any(), any(), any())).thenReturn(new CourseHomeLearningDTO(new CourseHomeDTO.Progress(1, 0, 1, 0),
-                List.of(new CourseHomeLearningDTO.Candidate(CourseHomeWelcomeCase.DEADLINE_SOON, item, true)), List.of()));
-        var question = new CourseHomeQuestionsDTO.Item(19, 5, "Private question", 1, CourseHomeQuestionsDTO.State.ANSWERED, 1L, NOW, 20L);
+        var item = new CourseHomeDTO.ItemDTO("Exercise", new CourseHomeTargetDTO(CourseHomeTargetKind.EXERCISE, 12, null, null), NOW, due, "DEADLINE_SOON");
+        when(learning.load(anyLong(), any(), any(), any())).thenReturn(new CourseHomeLearningDTO(new CourseHomeDTO.ProgressDTO(1, 0, 1, 0),
+                List.of(new CourseHomeLearningDTO.CandidateDTO(CourseHomeWelcomeCase.DEADLINE_SOON, item, true)), List.of()));
+        var question = new CourseHomeQuestionsDTO.ItemDTO(19, 5, "Private question", 1, CourseHomeQuestionState.ANSWERED, 1L, NOW, 20L);
         when(communication.load(anyLong(), any(), any(), any()))
-                .thenReturn(new CourseHomeCommunicationDTO(new CourseHomeQuestionsDTO(CourseHomeDTO.SectionStatus.AVAILABLE, List.of(question)), null, List.of()));
+                .thenReturn(new CourseHomeCommunicationDTO(new CourseHomeQuestionsDTO(CourseHomeSectionStatus.AVAILABLE, List.of(question)), null, List.of()));
         var home = service(Optional.empty());
         var result = home.load(COURSE, user, new CourseHomeQueryDTO(null), NOW);
         assertThat(result.welcome().welcomeCase()).isEqualTo(CourseHomeWelcomeCase.UNREAD_REPLY);
@@ -152,6 +155,6 @@ class CourseHomeServiceTest {
 
     private CourseHomeService service(Optional<LectureCourseHomeApi> lectures) {
         return new CourseHomeService(courses, configurations, visits, learning, team, communication, tabs, new CourseHomeContextService(), authorization, lectures,
-                Optional.empty(), Optional.empty());
+                Optional.empty(), Optional.empty(), mock(CourseHomeAiPolicyService.class));
     }
 }

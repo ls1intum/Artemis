@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import de.tum.cit.aet.artemis.course.domain.CourseHomeTargetKind;
 import de.tum.cit.aet.artemis.course.domain.CourseHomeWelcomeCase;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeTargetDTO;
 
@@ -71,6 +72,6 @@ class CourseHomeContextServiceTest {
     }
 
     private CourseHomeContext.Candidate candidate(CourseHomeWelcomeCase type, long id, Instant due) {
-        return new CourseHomeContext.Candidate(type, new CourseHomeTargetDTO(CourseHomeTargetDTO.Kind.EXERCISE, id, null, null), "Exercise", due, NOW, true);
+        return new CourseHomeContext.Candidate(type, new CourseHomeTargetDTO(CourseHomeTargetKind.EXERCISE, id, null, null), "Exercise", due, NOW, true);
     }
 }

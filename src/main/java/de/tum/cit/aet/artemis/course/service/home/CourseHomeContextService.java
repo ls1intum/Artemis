@@ -19,8 +19,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.course.domain.CourseHomeTargetKind;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO;
-import de.tum.cit.aet.artemis.course.dto.home.CourseHomeTargetDTO;
 
 /** Selects a useful next step without making claims about grades or mastery. */
 @Service
@@ -69,12 +69,12 @@ public class CourseHomeContextService {
         return new CourseHomeContext.Candidate(hours.compareTo(Duration.ofHours(24)) <= 0 ? DEADLINE_TODAY : DEADLINE_SOON, c.target(), c.title(), c.dueAt(), c.activityAt(), true);
     }
 
-    private CourseHomeDTO.Item reviewItem(CourseHomeContext context) {
-        return context.candidates().stream().filter(c -> c.target().kind() == CourseHomeTargetDTO.Kind.LECTURE || c.welcomeCase() == NEW_FEEDBACK)
+    private CourseHomeDTO.ItemDTO reviewItem(CourseHomeContext context) {
+        return context.candidates().stream().filter(c -> c.target().kind() == CourseHomeTargetKind.LECTURE || c.welcomeCase() == NEW_FEEDBACK)
                 .sorted(Comparator.comparingLong(c -> c.target().id())).map(this::item).findFirst().orElse(null);
     }
 
-    private CourseHomeDTO.Item item(CourseHomeContext.Candidate c) {
-        return new CourseHomeDTO.Item(c.title(), c.target(), c.activityAt(), c.dueAt(), c.welcomeCase().name());
+    private CourseHomeDTO.ItemDTO item(CourseHomeContext.Candidate c) {
+        return new CourseHomeDTO.ItemDTO(c.title(), c.target(), c.activityAt(), c.dueAt(), c.welcomeCase().name());
     }
 }

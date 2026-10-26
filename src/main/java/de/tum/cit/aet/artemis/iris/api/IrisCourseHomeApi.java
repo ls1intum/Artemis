@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO.SectionStatus;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeSectionStatus;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseHomeSessionsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -45,11 +45,11 @@ public class IrisCourseHomeApi extends AbstractIrisApi {
         if (!authorization.isAtLeastStudentInCourse(courseId))
             throw new AccessForbiddenException("course", courseId);
         if (!preferences.hasOptedIntoLlmUsage(user.getId()) || !settings.isEnabledForCourse(courseId))
-            return new IrisCourseHomeSessionsDTO(SectionStatus.DISABLED, List.of());
+            return new IrisCourseHomeSessionsDTO(CourseHomeSectionStatus.DISABLED, List.of());
         var items = sessions.findForCourseHome(courseId, user.getId(), ZonedDateTime.ofInstant(asOf, ZoneOffset.UTC), PageRequest.of(0, 3)).stream()
-                .map(row -> new IrisCourseHomeSessionsDTO.Item(row.getId(), row.getTitle(), row.getMode().name(), row.getEntityId(), row.getEntityName(),
+                .map(row -> new IrisCourseHomeSessionsDTO.ItemDTO(row.getId(), row.getTitle(), row.getMode().name(), row.getEntityId(), row.getEntityName(),
                         row.getLastActivity().toInstant()))
                 .toList();
-        return new IrisCourseHomeSessionsDTO(SectionStatus.AVAILABLE, items);
+        return new IrisCourseHomeSessionsDTO(CourseHomeSectionStatus.AVAILABLE, items);
     }
 }

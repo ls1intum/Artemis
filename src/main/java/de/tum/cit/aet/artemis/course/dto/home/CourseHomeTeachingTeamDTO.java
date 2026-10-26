@@ -7,9 +7,9 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseHomeTeachingTeamDTO(List<Member> items, boolean hasMore, int page) {
+public record CourseHomeTeachingTeamDTO(List<MemberDTO> items, boolean hasMore, int page) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record Member(long id, String name, @Nullable String imageUrl, String role) {
+    public record MemberDTO(long id, String name, @Nullable String imageUrl, String role) {
     }
 }

@@ -33,7 +33,7 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
              AND (COALESCE(e.course.onlineCourse, FALSE) = FALSE OR EXISTS (
                  SELECT l.id FROM LtiResourceLaunch l WHERE l.exercise = e AND l.user.id = :userId))
              AND (e.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL OR EXISTS (
-                 SELECT t.id FROM Team t JOIN t.students member WHERE t.exercise = e AND member.id = :userId))
+                 SELECT t.id FROM Team t JOIN t.students enrolledStudent WHERE t.exercise = e AND enrolledStudent.id = :userId))
             """;
 
     String OWNED = """

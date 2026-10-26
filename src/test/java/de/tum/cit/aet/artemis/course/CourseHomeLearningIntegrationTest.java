@@ -61,7 +61,7 @@ class CourseHomeLearningIntegrationTest extends AbstractSpringIntegrationIndepen
     private de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService variantGroups;
 
     @Autowired
-    private de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository quizzes;
+    private de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository quizzes;
 
     @Autowired
     private de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService configurations;

@@ -13,8 +13,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamCourseHomeApi;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -27,7 +27,7 @@ class ExamCourseHomeApiTest extends AbstractSpringIntegrationIndependentTest {
     private ExamCourseHomeApi home;
 
     @Autowired
-    private ExamRepository exams;
+    private ExamTestRepository exams;
 
     @Autowired
     private ExamUserRepository registrations;
