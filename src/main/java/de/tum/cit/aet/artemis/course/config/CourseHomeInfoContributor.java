@@ -4,8 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 /** Exposes consent options without constructing the optional model client or exposing provider credentials. */
@@ -14,10 +16,10 @@ import org.springframework.stereotype.Component;
 @Profile(PROFILE_CORE)
 public class CourseHomeInfoContributor implements InfoContributor {
 
-    private final CourseHomeAiProperties properties;
+    private final Environment environment;
 
-    public CourseHomeInfoContributor(CourseHomeAiProperties properties) {
-        this.properties = properties;
+    public CourseHomeInfoContributor(Environment environment) {
+        this.environment = environment;
     }
 
     /**
@@ -27,10 +29,12 @@ public class CourseHomeInfoContributor implements InfoContributor {
      */
     @Override
     public void contribute(Info.Builder builder) {
-        boolean available = properties.isConfigured();
+        var configuration = Binder.get(environment).bind("artemis.course-home.ai", CourseHomeAiProperties.class)
+                .orElseGet(() -> new CourseHomeAiProperties(false, null, null, null, null));
+        boolean available = configuration.isConfigured();
         builder.withDetail("courseHomeAiAvailable", available);
         if (available) {
-            builder.withDetail("courseHomeAiLocation", properties.providerLocation());
+            builder.withDetail("courseHomeAiLocation", configuration.providerLocation());
         }
     }
 }

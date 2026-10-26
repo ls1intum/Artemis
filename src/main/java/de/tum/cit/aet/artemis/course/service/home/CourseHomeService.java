@@ -13,18 +13,13 @@ import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.communication.dto.CourseHomeCommunicationDTO;
-import de.tum.cit.aet.artemis.communication.dto.CourseHomeQuestionsDTO;
-import de.tum.cit.aet.artemis.communication.service.CourseHomeCommunicationService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -39,12 +34,6 @@ import de.tum.cit.aet.artemis.course.dto.home.CourseHomeWelcomeDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseHomeRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
-import de.tum.cit.aet.artemis.exam.api.ExamCourseHomeApi;
-import de.tum.cit.aet.artemis.exam.dto.ExamCourseHomeDTO;
-import de.tum.cit.aet.artemis.iris.api.IrisCourseHomeApi;
-import de.tum.cit.aet.artemis.iris.dto.IrisCourseHomeSessionsDTO;
-import de.tum.cit.aet.artemis.lecture.api.LectureCourseHomeApi;
-import de.tum.cit.aet.artemis.lecture.dto.LectureCourseHomeDTO;
 
 /** Assembles one authorized, bounded snapshot. Reading it does not acknowledge a visit or invoke AI. */
 @Service
@@ -62,39 +51,29 @@ public class CourseHomeService {
 
     private final CourseHomeTeachingTeamService team;
 
-    private final CourseHomeCommunicationService communication;
-
     private final CourseAvailableTabsService tabs;
 
     private final CourseHomeContextService context;
 
     private final AuthorizationCheckService authorization;
 
-    private final Optional<LectureCourseHomeApi> lectureApi;
-
-    private final Optional<ExamCourseHomeApi> examApi;
-
-    private final Optional<IrisCourseHomeApi> irisApi;
+    private final CourseHomeSectionsService optionalSections;
 
     private final CourseHomeAiPolicyService aiPolicy;
 
     public CourseHomeService(CourseHomeRepository courses, CourseConfigurationRepository configurations, CourseHomeVisitService visits, CourseHomeLearningService learning,
-            CourseHomeTeachingTeamService team, CourseHomeCommunicationService communication, CourseAvailableTabsService tabs, CourseHomeContextService context,
-            AuthorizationCheckService authorization, Optional<LectureCourseHomeApi> lectureApi, Optional<ExamCourseHomeApi> examApi, Optional<IrisCourseHomeApi> irisApi,
-            CourseHomeAiPolicyService aiPolicy) {
+            CourseHomeTeachingTeamService team, CourseAvailableTabsService tabs, CourseHomeContextService context, AuthorizationCheckService authorization,
+            CourseHomeSectionsService optionalSections, CourseHomeAiPolicyService aiPolicy) {
         this.courses = courses;
         this.configurations = configurations;
         this.visits = visits;
         this.learning = learning;
         this.team = team;
-        this.communication = communication;
         this.tabs = tabs;
         this.context = context;
         this.authorization = authorization;
-        this.lectureApi = lectureApi;
-        this.examApi = examApi;
-        this.irisApi = irisApi;
         this.aiPolicy = aiPolicy;
+        this.optionalSections = optionalSections;
     }
 
     public void checkAccess(long courseId) {
@@ -132,10 +111,10 @@ public class CourseHomeService {
         var capabilities = tabs.getAvailableTabs(courseId, user, header.getCourseInformationSharingConfiguration(), header.getLearningPathsEnabled());
         var work = learning.load(courseId, user, snapshot, since);
         var staff = team.load(courseId, 0, 3);
-        var lectures = lectures(courseId, user, snapshot, since);
-        var exams = exams(courseId, user, snapshot, since);
-        var discussions = discussions(courseId, user, snapshot, since);
-        var chats = chats(courseId, user, snapshot, since, capabilities.iris());
+        var lectures = optionalSections.lectures(courseId, user, snapshot, since);
+        var exams = optionalSections.exams(courseId, user, snapshot, since);
+        var discussions = optionalSections.discussions(courseId, user, snapshot, since);
+        var chats = optionalSections.chats(courseId, user, snapshot, since, capabilities.iris());
         List<CourseHomeContext.Candidate> candidates = new ArrayList<>();
         work.candidates().forEach(c -> candidates.add(candidate(c.welcomeCase(), c.item(), c.actionable())));
         lectures.items().forEach(i -> candidates.add(candidate(CourseHomeWelcomeCase.NEW_LECTURE, i, "NEW_LECTURE".equals(i.reason()))));
@@ -163,7 +142,7 @@ public class CourseHomeService {
         lectures.items().stream().filter(i -> "NEW_LECTURE".equals(i.reason())).forEach(updates::add);
         var boundedUpdates = updates.stream().sorted(Comparator.comparing(CourseHomeDTO.ItemDTO::updatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(i -> i.target().kind()).thenComparingLong(i -> i.target().id())).limit(6).toList();
-        var nextRefreshAt = nextRefresh(snapshot, info, candidates);
+        var nextRefreshAt = nextRefresh(snapshot, info, candidates, work.nextRefreshAt(), lectures.nextRefreshAt(), exams.nextRefreshAt());
         return new CourseHomeDTO(snapshot, new CourseHomeDTO.VisitDTO(previous == null, previous, snapshot, visit.variantCursor(), since), info, capabilities, work.progress(),
                 welcome, selection.nextStep(), boundedUpdates, discussions.announcement(), discussions.faqs(), staff, discussions.questions(), chats, sections, nextRefreshAt);
     }
@@ -172,57 +151,14 @@ public class CourseHomeService {
         return new CourseHomeContext.Candidate(reason, item.target(), item.title(), item.dueAt(), item.updatedAt(), actionable);
     }
 
-    private LectureCourseHomeDTO lectures(long courseId, User user, Instant now, Instant since) {
-        if (lectureApi.isEmpty()) {
-            return new LectureCourseHomeDTO(CourseHomeSectionStatus.DISABLED, List.of());
-        }
-        try {
-            return lectureApi.get().load(courseId, user, now, since);
-        }
-        catch (DataAccessException ex) {
-            return new LectureCourseHomeDTO(CourseHomeSectionStatus.UNAVAILABLE, List.of());
-        }
-    }
-
-    private ExamCourseHomeDTO exams(long courseId, User user, Instant now, Instant since) {
-        if (examApi.isEmpty()) {
-            return new ExamCourseHomeDTO(CourseHomeSectionStatus.DISABLED, List.of());
-        }
-        try {
-            return examApi.get().load(courseId, user, now, since);
-        }
-        catch (DataAccessException ex) {
-            return new ExamCourseHomeDTO(CourseHomeSectionStatus.UNAVAILABLE, List.of());
-        }
-    }
-
-    private CourseHomeCommunicationDTO discussions(long courseId, User user, Instant now, Instant since) {
-        try {
-            return communication.load(courseId, user, now, since);
-        }
-        catch (DataAccessException ex) {
-            return new CourseHomeCommunicationDTO(new CourseHomeQuestionsDTO(CourseHomeSectionStatus.UNAVAILABLE, List.of()), null, List.of());
-        }
-    }
-
-    private IrisCourseHomeSessionsDTO chats(long courseId, User user, Instant now, Instant since, boolean enabled) {
-        if (irisApi.isEmpty() || !enabled) {
-            return new IrisCourseHomeSessionsDTO(CourseHomeSectionStatus.DISABLED, List.of());
-        }
-        try {
-            return irisApi.get().load(courseId, user, now, since);
-        }
-        catch (DataAccessException ex) {
-            return new IrisCourseHomeSessionsDTO(CourseHomeSectionStatus.UNAVAILABLE, List.of());
-        }
-    }
-
     private @Nullable Instant instant(@Nullable ZonedDateTime date) {
         return date == null ? null : date.toInstant();
     }
 
-    private @Nullable Instant nextRefresh(Instant now, CourseHomeDTO.CourseInfoDTO course, List<CourseHomeContext.Candidate> candidates) {
+    private @Nullable Instant nextRefresh(Instant now, CourseHomeDTO.CourseInfoDTO course, List<CourseHomeContext.Candidate> candidates, @Nullable Instant learningRefresh,
+            @Nullable Instant lectureRefresh, @Nullable Instant examRefresh) {
         List<Instant> boundaries = new ArrayList<>();
+        java.util.stream.Stream.of(learningRefresh, lectureRefresh, examRefresh).filter(java.util.Objects::nonNull).forEach(boundaries::add);
         if (course.startDate() != null) {
             boundaries.add(course.startDate());
         }

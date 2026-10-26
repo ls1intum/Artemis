@@ -84,6 +84,24 @@ class CourseHomeLearningIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
+    void futureReleaseAndStartBecomeEligibleAtTheReturnedBoundary() {
+        var release = base.plusMinutes(1);
+        var exercise = exercise(release, base.plusDays(3));
+        exercise.setStartDate(release.plusMinutes(1));
+        exerciseRepository.saveAndFlush(exercise);
+        var initial = learning.load(course.getId(), student, base.toInstant(), base.minusDays(7).toInstant());
+        assertThat(initial.progress().releasedExercises()).isZero();
+        assertThat(initial.candidates()).isEmpty();
+        assertThat(initial.nextRefreshAt()).isEqualTo(release.toInstant());
+        var published = learning.load(course.getId(), student, initial.nextRefreshAt(), base.minusDays(7).toInstant());
+        assertThat(published.progress().releasedExercises()).isOne();
+        assertThat(published.candidates()).isEmpty();
+        assertThat(published.nextRefreshAt()).isEqualTo(exercise.getStartDate().toInstant());
+        var opened = learning.load(course.getId(), student, published.nextRefreshAt(), base.minusDays(7).toInstant());
+        assertThat(opened.candidates()).anyMatch(candidate -> candidate.item().target().id() == exercise.getId());
+    }
+
+    @Test
     void countsOnlyReleasedEligibleWorkAndOwnedSubmissions() {
         var submitted = exercise(base.minusHours(1), base.plusDays(2));
         submit(submitted, student, true);
@@ -193,6 +211,9 @@ class CourseHomeLearningIntegrationTest extends AbstractSpringIntegrationIndepen
         resultRepository.saveAndFlush(feedback);
         var hidden = learning.load(course.getId(), student, Instant.now(), base.minusHours(1).toInstant());
         assertThat(hidden.candidates()).noneMatch(c -> c.welcomeCase() == CourseHomeWelcomeCase.NEW_FEEDBACK);
+        assertThat(hidden.nextRefreshAt()).isEqualTo(exercise.getAssessmentDueDate().toInstant());
+        var scheduled = learning.load(course.getId(), student, hidden.nextRefreshAt(), base.minusHours(1).toInstant());
+        assertThat(scheduled.candidates()).anyMatch(c -> c.welcomeCase() == CourseHomeWelcomeCase.NEW_FEEDBACK);
         exercise.setAssessmentDueDate(base.minusMinutes(1));
         exerciseRepository.saveAndFlush(exercise);
         var released = learning.load(course.getId(), student, Instant.now(), base.minusHours(1).toInstant());

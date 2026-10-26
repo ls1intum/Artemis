@@ -134,6 +134,19 @@ class CourseHomeServiceTest {
     }
 
     @Test
+    void schedulesFutureEligibilityIndependentlyOfDisplayedCandidates() {
+        var firstChange = NOW.plusSeconds(30);
+        when(learning.load(anyLong(), any(), any(), any())).thenReturn(new CourseHomeLearningDTO(new CourseHomeDTO.ProgressDTO(0, 0, 0, 0), List.of(), List.of(), firstChange));
+        var lectures = mock(LectureCourseHomeApi.class);
+        when(lectures.load(anyLong(), any(), any(), any()))
+                .thenReturn(new de.tum.cit.aet.artemis.lecture.dto.LectureCourseHomeDTO(CourseHomeSectionStatus.AVAILABLE, List.of(), NOW.plusSeconds(60)));
+        var result = service(Optional.of(lectures)).load(COURSE, user, new CourseHomeQueryDTO(null), NOW);
+        assertThat(result.nextRefreshAt()).isEqualTo(firstChange);
+        assertThat(result.updates()).isEmpty();
+        assertThat(result.nextStep()).isNull();
+    }
+
+    @Test
     void fingerprintFramesEachCourseFieldSeparately() {
         var header = courses.findHeaderById(COURSE).orElseThrow();
         when(header.getTitle()).thenReturn("Alpha, description=Beta");
@@ -154,7 +167,7 @@ class CourseHomeServiceTest {
     }
 
     private CourseHomeService service(Optional<LectureCourseHomeApi> lectures) {
-        return new CourseHomeService(courses, configurations, visits, learning, team, communication, tabs, new CourseHomeContextService(), authorization, lectures,
-                Optional.empty(), Optional.empty(), mock(CourseHomeAiPolicyService.class));
+        return new CourseHomeService(courses, configurations, visits, learning, team, tabs, new CourseHomeContextService(), authorization,
+                new CourseHomeSectionsService(communication, lectures, Optional.empty(), Optional.empty()), mock(CourseHomeAiPolicyService.class));
     }
 }

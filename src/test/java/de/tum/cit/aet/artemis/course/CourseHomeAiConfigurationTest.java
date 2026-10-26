@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.course.config.CourseHomeAiConfiguration;
 import de.tum.cit.aet.artemis.course.config.CourseHomeAiProperties;
+import de.tum.cit.aet.artemis.course.config.CourseHomeInfoContributor;
 import de.tum.cit.aet.artemis.course.service.home.CourseHomeAiClient;
 import de.tum.cit.aet.artemis.course.service.home.CourseHomeAiPolicyService;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -35,6 +36,20 @@ class CourseHomeAiConfigurationTest {
     void defaultsAndIncompleteConfigurationHaveNoAdapter() {
         runner.run(c -> assertThat(c).doesNotHaveBean(CourseHomeAiClient.class));
         runner.withPropertyValues("artemis.course-home.ai.enabled=true", "artemis.course-home.ai.location=LOCAL").run(c -> assertThat(c).doesNotHaveBean(CourseHomeAiClient.class));
+    }
+
+    @Test
+    void optionalPropertiesStayLazyEvenWhenTheInfoContributorIsInstantiated() {
+        runner.withUserConfiguration(CourseHomeInfoContributor.class).run(context -> {
+            var names = context.getBeanFactory().getBeanNamesForType(CourseHomeAiProperties.class, false, false);
+            assertThat(names).hasSize(1);
+            assertThat(context.getBeanFactory().containsSingleton(names[0])).isFalse();
+            var contributor = context.getBean(CourseHomeInfoContributor.class);
+            assertThat(context.getBeanFactory().containsSingleton(names[0])).isFalse();
+            var builder = new org.springframework.boot.actuate.info.Info.Builder();
+            contributor.contribute(builder);
+            assertThat(builder.build().getDetails()).containsEntry("courseHomeAiAvailable", false);
+        });
     }
 
     @Test

@@ -38,7 +38,21 @@ class LectureCourseHomeApiTest extends AbstractSpringIntegrationIndependentTest 
     void setup() {
         userUtilService.addUsers(PREFIX, 1, 0, 0, 1);
         course = courseUtilService.createEnrolledCourse(PREFIX);
-        base = ZonedDateTime.now();
+        base = ZonedDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS);
+    }
+
+    @Test
+    void aFutureUnitSchedulesARefreshWithoutExposingItsLecture() {
+        var lecture = lectures.createLecture(course);
+        var unit = lectures.createTextUnit(lecture);
+        unit.setReleaseDate(base.plusMinutes(1));
+        units.saveAndFlush(unit);
+        var user = userUtilService.getUserByLogin(PREFIX + "student1");
+        var initial = home.load(course.getId(), user, base.toInstant(), base.minusDays(7).toInstant());
+        assertThat(initial.items()).isEmpty();
+        assertThat(initial.nextRefreshAt()).isEqualTo(base.plusMinutes(1).toInstant());
+        var released = home.load(course.getId(), user, initial.nextRefreshAt(), base.minusDays(7).toInstant());
+        assertThat(released.items()).extracting(item -> item.target().id()).containsExactly(lecture.getId());
     }
 
     @Test

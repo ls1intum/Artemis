@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.exam.api;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -48,8 +50,12 @@ public class ExamCourseHomeApi extends AbstractExamApi {
             throw new AccessForbiddenException("course", courseId);
         }
         var now = ZonedDateTime.ofInstant(asOf, ZoneOffset.UTC);
+        var changes = exams.findChanges(courseId, user.getId(), now, now.plusHours(24));
+        var nextRefresh = Stream.of(changes.getVisibleAt(), changes.getFutureStart() == null ? null : changes.getFutureStart().minusHours(24)).filter(Objects::nonNull)
+                .map(ZonedDateTime::toInstant).filter(date -> date.isAfter(asOf)).min(Instant::compareTo).orElse(null);
         return new ExamCourseHomeDTO(CourseHomeSectionStatus.AVAILABLE,
                 exams.findUpcoming(courseId, user.getId(), now, now.plusHours(24), PageRequest.of(0, 1)).stream().map(row -> new CourseHomeDTO.ItemDTO(row.getTitle(),
-                        new CourseHomeTargetDTO(CourseHomeTargetKind.EXAM, row.getId(), null, null), null, row.getStartDate().toInstant(), "EXAM_SOON")).toList());
+                        new CourseHomeTargetDTO(CourseHomeTargetKind.EXAM, row.getId(), null, null), null, row.getStartDate().toInstant(), "EXAM_SOON")).toList(),
+                nextRefresh);
     }
 }
