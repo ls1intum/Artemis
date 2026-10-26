@@ -17,7 +17,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 interface SuggestedRelationDTO {
     tail_id: string;
     head_id: string;
-    relation_type: string; // "MATCHES" | "EXTENDS" | "REQUIRES"
+    relation_type: string; // "MATCHES" | "EXTENDS" | "REQUIRES"; only CompetencyRelationType values are kept on load
 }
 
 @Component({
@@ -51,14 +51,14 @@ export class CourseCompetencyRelationFormComponent {
     readonly relationAlreadyExists = computed(() => this.getRelation(this.headCompetencyId(), this.tailCompetencyId()) !== undefined);
     readonly exactRelationAlreadyExists = computed(() => this.getExactRelation(this.headCompetencyId(), this.tailCompetencyId(), this.relationType()) !== undefined);
 
-    private readonly selectableTailCourseCompetencyIds = computed(() => {
-        if (this.headCompetencyId() && this.relationType()) {
-            return this.getSelectableTailCompetencyIds(this.headCompetencyId()!, this.relationType()!);
+    private readonly selectableHeadCourseCompetencyIds = computed(() => {
+        if (this.tailCompetencyId() && this.relationType()) {
+            return this.getSelectableHeadCompetencyIds(this.tailCompetencyId()!, this.relationType()!);
         }
         return this.courseCompetencies().map(({ id }) => id!);
     });
 
-    readonly showCircularDependencyError = computed(() => this.tailCompetencyId() && !this.selectableTailCourseCompetencyIds().includes(this.tailCompetencyId()!));
+    readonly showCircularDependencyError = computed(() => this.headCompetencyId() && !this.selectableHeadCourseCompetencyIds().includes(this.headCompetencyId()!));
 
     readonly suggestedRelations = signal<SuggestedRelationDTO[]>([]);
     readonly isLoadingSuggestions = signal<boolean>(false);
@@ -79,9 +79,12 @@ export class CourseCompetencyRelationFormComponent {
         try {
             this.isLoadingSuggestions.set(true);
             const response = await this.courseCompetencyApiService.getSuggestedCompetencyRelations(courseId);
-            this.suggestedRelations.set(response.relations ?? []);
+            // Drops AtlasML's REQUIRES ("the tail is a prerequisite of the head", the converse of ASSUMES) and unknown types.
+            // REQUIRES always comes with the mirrored EXTENDS for the same pair, so dropping it loses nothing.
+            const relations = (response.relations ?? []).filter((relation) => relation.relation_type in CompetencyRelationType);
+            this.suggestedRelations.set(relations);
             // Auto-select all suggestions when fetched, but exclude existing relations
-            const allIndices = new Set((response.relations ?? []).map((_, index) => index).filter((index) => !this.doesSuggestionAlreadyExist(response.relations[index])));
+            const allIndices = new Set(relations.map((_, index) => index).filter((index) => !this.doesSuggestionAlreadyExist(relations[index])));
             this.selectedSuggestions.set(allIndices);
         } catch (error) {
             // Non-blocking: show toast but keep UI working
@@ -92,13 +95,8 @@ export class CourseCompetencyRelationFormComponent {
     }
 
     protected getUiRelationTypeKey(s: SuggestedRelationDTO): keyof typeof CompetencyRelationType {
-        // Map server "REQUIRES" to client enum key "ASSUMES"
-        const key = s.relation_type === 'REQUIRES' ? 'ASSUMES' : s.relation_type;
-        // Fallback safety
-        if (key in CompetencyRelationType) {
-            return key as keyof typeof CompetencyRelationType;
-        }
-        return 'ASSUMES';
+        // loadSuggestedRelations only keeps known relation types
+        return s.relation_type as keyof typeof CompetencyRelationType;
     }
 
     protected applySuggestion(s: SuggestedRelationDTO) {
@@ -173,7 +171,7 @@ export class CourseCompetencyRelationFormComponent {
                         createdRelations.push(courseCompetencyRelation);
                     } catch (error) {
                         // Continue with other suggestions even if one fails
-                        this.alertService.error(`Failed to create relation: ${this.getCompetencyTitleById(headId)} → ${this.getCompetencyTitleById(tailId)}`);
+                        this.alertService.error(`Failed to create relation: ${this.getCompetencyTitleById(tailId)} → ${this.getCompetencyTitleById(headId)}`);
                     }
                 }
             }
@@ -202,7 +200,7 @@ export class CourseCompetencyRelationFormComponent {
     }
 
     protected isCourseCompetencySelectable(courseCompetencyId: number): boolean {
-        return this.selectableTailCourseCompetencyIds().includes(courseCompetencyId);
+        return this.selectableHeadCourseCompetencyIds().includes(courseCompetencyId);
     }
 
     private selectRelation(relationId?: number): void {
@@ -215,23 +213,23 @@ export class CourseCompetencyRelationFormComponent {
     }
 
     public selectCourseCompetency(courseCompetencyId: number): void {
-        if (!this.headCompetencyId()) {
-            this.selectHeadCourseCompetency(courseCompetencyId);
-        } else if (!this.tailCompetencyId()) {
+        if (!this.tailCompetencyId()) {
             this.selectTailCourseCompetency(courseCompetencyId);
-        } else {
+        } else if (!this.headCompetencyId()) {
             this.selectHeadCourseCompetency(courseCompetencyId);
+        } else {
+            this.selectTailCourseCompetency(courseCompetencyId);
         }
-    }
-
-    protected selectHeadCourseCompetency(headId: number) {
-        this.headCompetencyId.set(headId);
-        this.tailCompetencyId.set(undefined);
-        this.selectedRelationId.set(undefined);
     }
 
     protected selectTailCourseCompetency(tailId: number) {
         this.tailCompetencyId.set(tailId);
+        this.headCompetencyId.set(undefined);
+        this.selectedRelationId.set(undefined);
+    }
+
+    protected selectHeadCourseCompetency(headId: number) {
+        this.headCompetencyId.set(headId);
         const existingRelation = this.getRelation(this.headCompetencyId(), this.tailCompetencyId());
         if (existingRelation) {
             this.selectedRelationId.set(existingRelation.id);
@@ -311,22 +309,22 @@ export class CourseCompetencyRelationFormComponent {
     }
 
     /**
-     * Function to get the selectable tail competency ids for the given head
+     * Function to get the selectable head competency ids for the given tail
      * competency and relation type without creating a cyclic dependency
      */
-    private getSelectableTailCompetencyIds(headCompetencyId: number, relationType: CompetencyRelationType): number[] {
+    private getSelectableHeadCompetencyIds(tailCompetencyId: number, relationType: CompetencyRelationType): number[] {
         return this.courseCompetencies()
             .map(({ id }) => id!)
-            .filter((id) => id !== headCompetencyId)
+            .filter((id) => id !== tailCompetencyId)
             .filter((id) => {
                 let relations = this.relations();
-                const existingRelation = this.getRelation(headCompetencyId, id);
+                const existingRelation = this.getRelation(id, tailCompetencyId);
                 if (existingRelation) {
                     relations = relations.filter((relation) => relation.id !== existingRelation.id);
                 }
                 const potentialRelation: CompetencyRelationDTO = {
-                    headCompetencyId: headCompetencyId,
-                    tailCompetencyId: id,
+                    headCompetencyId: id,
+                    tailCompetencyId: tailCompetencyId,
                     relationType: relationType,
                 };
                 return !this.detectCycleInRelations(relations.concat(potentialRelation), this.courseCompetencies().length);

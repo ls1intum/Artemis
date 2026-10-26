@@ -106,10 +106,11 @@ test.describe('Competency relation graph (in-house DAG graph)', { tag: '@fast' }
         const isRelationsRequest = (method: string) => (response: { url(): string; request(): { method(): string } }) =>
             response.url().includes(`/courses/${course.id}/course-competencies/relations`) && response.request().method() === method;
 
-        // Create "Functions MATCHES Loops": two sibling competencies with no path between them, so the
+        // Create "Loops MATCHES Functions": two sibling competencies with no path between them, so the
         // client's circular-dependency guard never blocks the button (a deterministic, non-cyclic relation).
-        await page.selectOption('#head', { label: 'Functions' });
+        // The form reads "tail <type> head", so the tail is picked first; picking a tail resets the head.
         await page.selectOption('#tail', { label: 'Loops' });
+        await page.selectOption('#head', { label: 'Functions' });
         await page.selectOption('#type', 'MATCHES');
         const createButton = page.getByRole('button', { name: 'Create Relation' });
         // The button stays disabled until all three signals are set; waiting for it removes the select→click race.
@@ -121,9 +122,9 @@ test.describe('Competency relation graph (in-house DAG graph)', { tag: '@fast' }
         // The graph reacts to the new relation: a fourth edge appears.
         await expect(edges).toHaveCount(4);
 
-        // Selecting the same head/tail surfaces the existing relation; deleting it removes the edge again.
-        await page.selectOption('#head', { label: 'Functions' });
+        // Selecting the same tail/head surfaces the existing relation; deleting it removes the edge again.
         await page.selectOption('#tail', { label: 'Loops' });
+        await page.selectOption('#head', { label: 'Functions' });
         const deleteButton = page.getByRole('button', { name: 'Delete relation' });
         await expect(deleteButton).toBeVisible();
         const deleteResponse = page.waitForResponse(isRelationsRequest('DELETE'));
