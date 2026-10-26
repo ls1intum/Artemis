@@ -84,9 +84,13 @@ test.describe('Student course Home', { tag: '@fast' }, () => {
         await login(studentOne, `/courses/${course.id}/home`);
         const questions = page.getByTestId('home-questions');
         await expect(questions).toContainText('1 unread replies');
-        await questions.getByRole('link', { name: /How can I explain coupling/ }).click();
-        await expect(page).toHaveURL(new RegExp(`conversationId=${channel.id}.*messageId=${question.id}.*focusReplyId=${reply.id}`));
-        await expect(page.getByText('Try comparing two modules that share implementation details.', { exact: true })).toBeVisible();
+        const questionLink = questions.getByRole('link', { name: /How can I explain coupling/ });
+        await expect(questionLink).toHaveAttribute('href', new RegExp(`conversationId=${channel.id}.*messageId=${question.id}.*focusReplyId=${reply.id}`));
+        await questionLink.click();
+        // Communication consumes the one-shot focus parameter while opening the thread.
+        await expect(page).toHaveURL(new RegExp(`conversationId=${channel.id}.*messageId=${question.id}`));
+        await expect(page.locator(`#item-${reply.id}`)).toContainText('Try comparing two modules that share implementation details.');
+        await expect(page.locator(`#item-${reply.id}`)).toBeVisible();
         await page.locator('#home-tab').click();
         await expect(page.getByTestId('home-questions')).not.toContainText('unread replies');
     });
