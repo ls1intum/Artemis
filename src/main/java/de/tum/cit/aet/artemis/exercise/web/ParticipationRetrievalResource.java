@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.dto.DetailedParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.DetailedSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -174,13 +173,16 @@ public class ParticipationRetrievalResource {
     /**
      * GET /exercises/:exerciseId/participations/page : get paginated participations for the participation management view.
      *
-     * @param exerciseId the exercise to query
-     * @param search     search parameters including pagination, sorting, search term, and filter
+     * @param exerciseId      the exercise to query
+     * @param search          search parameters including pagination, sorting, search term, and filter
+     * @param scoreRangeLower the optional lower bound of the score range in percent
+     * @param scoreRangeUpper the optional upper bound of the score range in percent
      * @return a paginated list of ParticipationManagementDTO with pagination headers
      */
     @GetMapping("exercises/{exerciseId}/participations/page")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid PagedSearchDTO search) {
+    public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid PagedSearchDTO search,
+            @RequestParam(required = false) Integer scoreRangeLower, @RequestParam(required = false) Integer scoreRangeUpper) {
         log.debug("REST request to get paged Participations for Exercise {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -192,7 +194,7 @@ public class ParticipationRetrievalResource {
         }
 
         boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
-        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search);
+        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search, scoreRangeLower, scoreRangeUpper);
         if (hideParticipant) {
             page = page.map(ParticipationManagementDTO::withoutParticipantInformation);
         }
@@ -217,39 +219,6 @@ public class ParticipationRetrievalResource {
 
         List<ParticipationNameExportDTO> result = participationService.getParticipationNamesForExport(exercise);
         return ResponseEntity.ok(result);
-    }
-
-    /**
-     * GET /exercises/:exerciseId/participations/scores : get paginated participation scores for the exercise scores view.
-     *
-     * @param exerciseId      the exercise to query
-     * @param search          search parameters including pagination, sorting, search term, and filter
-     * @param scoreRangeLower the optional lower bound of the score range in percent
-     * @param scoreRangeUpper the optional upper bound of the score range in percent
-     * @return a paginated list of ParticipationScoreDTO with pagination headers
-     */
-    @GetMapping("exercises/{exerciseId}/participations/scores")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<ParticipationScoreDTO>> getParticipationScores(@PathVariable Long exerciseId, @Valid PagedSearchDTO search,
-            @RequestParam(required = false) Integer scoreRangeLower, @RequestParam(required = false) Integer scoreRangeUpper) {
-        log.debug("REST request to search Participations for Exercise {}", exerciseId);
-
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (exercise.isCourseExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        }
-        else if (exercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        }
-
-        boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
-        Page<ParticipationScoreDTO> page = participationService.findParticipationScoresForExercise(exercise, search, scoreRangeLower, scoreRangeUpper);
-        if (hideParticipant) {
-            page = page.map(ParticipationScoreDTO::withoutParticipantInformation);
-        }
-
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 
     private boolean canSeeParticipant(StudentParticipation participation) {

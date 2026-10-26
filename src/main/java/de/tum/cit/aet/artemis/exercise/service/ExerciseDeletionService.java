@@ -151,6 +151,19 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
+        if (!(exercise instanceof ProgrammingExercise)) {
+            deleteExercise(exercise, deleteBaseReposBuildPlans);
+            return;
+        }
+        // Include student participation cleanup as well as the final template/solution cleanup and exercise removal.
+        // A processor admitted before the marker must finish its writes before any of these deletion steps can run.
+        try (var permit = programmingExerciseDeletionService.beginDeletionAndAwaitResults(exerciseId)) {
+            deleteExercise(exercise, deleteBaseReposBuildPlans);
+        }
+    }
+
+    private void deleteExercise(Exercise exercise, boolean deleteBaseReposBuildPlans) {
+        long exerciseId = exercise.getId();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 

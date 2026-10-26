@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.globalsearch.api.SearchableEntityPrefetchApi;
 import de.tum.cit.aet.artemis.globalsearch.dto.SearchableEntityCandidateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
+import de.tum.cit.aet.artemis.iris.service.IrisSearchScopeService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
@@ -80,7 +81,7 @@ class IrisGlobalSearchResourceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         resource = new IrisGlobalSearchResource(pyrisConnectorService, pyrisJobService, userRepository, userAiPreferenceService, irisAccessContextService,
-                Optional.of(searchableEntityPrefetchApi), irisSettingsService);
+                Optional.of(searchableEntityPrefetchApi), new IrisSearchScopeService(irisSettingsService));
 
         testUser = new User();
         testUser.setId(1L);
@@ -88,7 +89,7 @@ class IrisGlobalSearchResourceTest {
         when(userRepository.getUserWithCourseRolesAndAuthorities()).thenReturn(testUser);
         when(userAiPreferenceService.findDecision(1L)).thenReturn(AiSelectionDecision.CLOUD_AI);
         // Unrestricted, matching an unscoped request's "no ceiling to narrow" path through
-        // lectureSearchScope — resolveAccessContext never legitimately returns null in production.
+        // IrisSearchScopeService.resolveScope — resolveAccessContext never legitimately returns null in production.
         when(irisAccessContextService.resolveAccessContext(testUser)).thenReturn(new PyrisAccessContextDTO(null, null, null, null, null, null, true));
     }
 
@@ -141,7 +142,7 @@ class IrisGlobalSearchResourceTest {
     @Test
     void ask_whenNoPrefetchApiIsConfigured_answersFromLectureContentOnly() {
         resource = new IrisGlobalSearchResource(pyrisConnectorService, pyrisJobService, userRepository, userAiPreferenceService, irisAccessContextService, Optional.empty(),
-                irisSettingsService);
+                new IrisSearchScopeService(irisSettingsService));
 
         var requestDTO = new GlobalSearchAskRequestDTO("what is backpropagation", 5, UUID.randomUUID());
         ResponseEntity<Void> response = resource.ask(requestDTO, principal);

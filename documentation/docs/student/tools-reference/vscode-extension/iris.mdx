@@ -1,0 +1,120 @@
+---
+id: iris
+title: Iris in VS Code
+sidebar_label: Iris in VS Code
+---
+
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../../src/components/Image/Image";
+
+import irisChat from '../../assets/vscode-extension/iris-chat.png';
+import irisContext from '../../assets/vscode-extension/iris-context.png';
+import irisConversations from '../../assets/vscode-extension/iris-conversations.png';
+import irisProactiveMore from '../../assets/vscode-extension/iris-proactive-more.png';
+import irisProactiveInline from '../../assets/vscode-extension/iris-proactive-inline.png';
+import irisProactiveLess from '../../assets/vscode-extension/iris-proactive-less.png';
+
+Iris, the AI tutor of Artemis, has its own view in the extension: **Iris Chat** in the activity bar. It is the same
+tutor as in the browser and follows the same rules, and a conversation you start in VS Code can be continued in
+Artemis and the other way round. In the editor, Iris can also read code you have not submitted yet and offer help on
+its own while you work.
+
+<Callout variant={CalloutVariant.info}>
+
+  Iris only answers if you have chosen in Artemis to use AI. If you have not made that choice yet, or chose not to use
+  AI, the chat says so and offers **Open Artemis settings**, which opens the page for the choice. Once you have chosen
+  to use AI there, select **Retry** in the chat. You can change the choice at any time; see
+  [Choosing Whether to Use AI](/student/learning-content/iris#choosing-whether-to-use-ai).
+
+</Callout>
+
+## Asking Iris
+
+**Ask** on the **Ask Iris** card of an exercise opens the chat with that exercise as its topic. If you open
+**Iris Chat** directly, the topic is the exercise whose repository is open in your workspace. Without one, the chat
+asks you to choose a course first.
+
+<Image src={irisChat} alt="The Iris chat in the VS Code sidebar, with a question about failing tests and Iris's answer" size={ImageSize.medium} caption="A question about the current exercise, and Iris's answer" />
+
+Type your question and press Enter; Shift+Enter starts a new line. While Iris works, the chat lists what it is
+reading, such as your submission, its feedback or your code. The thumbs under each answer rate it as **Helpful** or
+**Not helpful**.
+
+### Your Uncommitted Code
+
+Unlike in the browser, Iris in VS Code also sees the changes you have not submitted yet, so you can ask about the
+code as it is right now. After you send a message, the line above the message box says how many files were
+referenced. Expand it to see which files were sent and why others were left out, for example because they are too
+large or are not source files.
+
+If you do not want this, turn off `artemis.iris.sendUncommittedChanges`; the **configurable** link under the message
+box opens that setting. Iris then sees only what you have submitted.
+
+### Topics and Courses
+
+The chip above the message box is the topic, either the exercise Iris answers about or the whole course. The **+**
+next to it picks another topic. **Course chat** is for general questions about the course; below it are the course's
+exercises, with the one open in your workspace marked **Workspace**.
+
+<Image src={irisContext} alt="The topic picker in the Iris chat, offering Course chat and the exercise marked Workspace" size={ImageSize.medium} caption="Choosing what Iris answers about" />
+
+To switch to another course, select the course name at the top of the chat.
+
+### Earlier Conversations
+
+The clock icon at the top lists your earlier conversations, grouped by date and searchable. Select one to continue
+it. The plus icon next to it starts a new conversation. Start one when you move on to a different question, so the
+earlier discussion does not influence the answer.
+
+<Image src={irisConversations} alt="The list of earlier conversations in the Iris chat" size={ImageSize.medium} caption="Earlier conversations" />
+
+### When Iris Is Not Available
+
+If Iris is switched off for a course, the chat says so and asks you to contact your instructor. A file named `.noai`
+in your repository turns off Iris for that repository, including the chat. When you have used up the messages your
+course allows, Iris tells you that you have reached your message limit.
+
+## Proactive Help
+
+With proactive help, Iris offers a hint on its own when you seem stuck on a programming exercise. It is only
+available in VS Code from the Marketplace; the Open VSX version and EduIDE do not have it.
+
+### Turning It On
+
+Proactive help needs your consent to let Iris read your code, and it stays off until you give it. Until then, the
+**Proactive help** section on the **Ask Iris** card of an exercise says that consent is missing. **Enable in Settings**
+opens the setting `artemis.iris.proactiveCodeEgress`; set it to `enabled`.
+
+With your consent, the extension observes on your computer how you work on the exercise, for example how fast you
+type and how long you pause. It sends your exercise code to Iris only when it concludes that you might be stuck. Setting `artemis.iris.proactiveCodeEgress` to `disabled` stops both at any time. Your instructor can
+also switch proactive help off for a course; the card then says **Proactive help is disabled for this course.**
+
+### Off, Less and More
+
+The three levels on the **Ask Iris** card set how much Iris steps in. The level applies to every exercise, including
+the ones where you did not set it.
+
+**Off** means Iris only helps when you ask.
+
+With **More**, Iris brings the hint to you. If the chat is closed, a banner at the bottom of the **Artemis** view
+asks whether you want a pointer. **Show me** opens the chat with the hint, **Not now** dismisses it, and after a few
+seconds it disappears on its own. The hint appears in the chat under **Iris reached out**, and the Iris Chat icon
+shows a badge until you open the chat.
+
+<Image src={irisProactiveMore} alt="The banner at the bottom of the Artemis view offering a hint, with Show me and Not now" size={ImageSize.medium} caption="More: Iris offers a hint while the chat is closed" />
+
+When a hint is about a particular line, the editor shows it right after that line, and an entry in the status bar
+jumps there.
+
+<Image src={irisProactiveInline} alt="A Java file with Iris's hint shown after the line it refers to" size={ImageSize.large} caption="A hint shown next to the line it is about" />
+
+With **Less**, the hint waits until you look for it. There is no banner. Instead, **Iris has a hint** appears in
+the status bar, the Iris Chat icon shows a badge, and the Iris icon marks the line in the editor margin. Select the
+status bar entry to read the hint in the chat.
+
+<Image src={irisProactiveLess} alt="A Java file with the Iris icon in the editor margin next to a line" size={ImageSize.large} caption="Less: a quiet mark in the margin" />
+
+A hint stays in the chat as part of the conversation. **Solved it** closes it once you are past the problem, and
+**Dismiss** hides it. If you are still stuck later, Iris may offer another hint: at most once per problem with
+**Less**, and up to three times with **More**.

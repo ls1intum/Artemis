@@ -42,7 +42,7 @@ class PyrisStatusUpdateServiceChatTest {
     @Test
     void partialChatStatusUpdateIsRelayedWithoutUpdatingJob() {
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, "partial", 4, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, "partial", 4, null, null);
         when(irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate)).thenReturn(true);
 
         service.handleStatusUpdate(job, statusUpdate);
@@ -55,7 +55,7 @@ class PyrisStatusUpdateServiceChatTest {
     @Test
     void nonPartialChatStatusUpdateUsesNormalResultPath() {
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO("result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null);
         when(irisChatSessionService.handleStatusUpdate(job, statusUpdate)).thenReturn(job);
 
         service.handleStatusUpdate(job, statusUpdate);

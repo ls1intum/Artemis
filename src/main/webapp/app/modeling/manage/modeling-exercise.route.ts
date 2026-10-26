@@ -1,3 +1,4 @@
+import { modelingExerciseUpdateRoute } from 'app/modeling/manage/modeling-exercise-update.route';
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
@@ -6,42 +7,9 @@ import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
 
 export const routes: Routes = [
-    {
-        path: 'modeling-exercises/new',
-        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
-        resolve: {
-            modelingExercise: ModelingExerciseResolver,
-        },
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'modeling-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
-        resolve: {
-            modelingExercise: ModelingExerciseResolver,
-        },
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'modeling-exercises/:exerciseId/import',
-        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
-        resolve: {
-            modelingExercise: ModelingExerciseResolver,
-        },
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.modelingExercise.home.importLabel',
-        },
-        canActivate: [UserRouteAccessService],
-    },
+    modelingExerciseUpdateRoute('modeling-exercises/new'),
+    modelingExerciseUpdateRoute('modeling-exercises/:exerciseId/edit'),
+    modelingExerciseUpdateRoute('modeling-exercises/:exerciseId/import', 'artemisApp.modelingExercise.home.importLabel'),
     {
         path: 'modeling-exercises/:exerciseId',
         loadComponent: () => import('./detail/modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),

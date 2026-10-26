@@ -55,3 +55,6 @@ export type IrisDashboardTimeSpan = 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER';
 export type IrisDashboardMetric = 'SESSIONS' | 'MESSAGES' | 'NO_RESPONSE_RATE' | 'RESPONSE_TIME' | 'RATINGS' | 'TOKEN_COST' | 'ENGAGEMENT';
 
 export type IrisDashboardBreakdownDimension = 'CHAT_MODE' | 'COURSE' | 'MODEL';
+
+/** Restricts the dashboard to users by their current AI selection. ALL applies no filter. */
+export type IrisDashboardAiSelection = 'ALL' | 'CLOUD' | 'LOCAL';
