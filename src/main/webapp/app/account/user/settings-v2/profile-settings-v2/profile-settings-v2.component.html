@@ -1,0 +1,15 @@
+<div class="flex flex-col gap-6">
+    <section>
+        <jhi-account-information />
+    </section>
+
+    <section>
+        <jhi-email-notifications-settings />
+    </section>
+
+    @if (isDataSharingAvailable) {
+        <section>
+            <jhi-science-settings />
+        </section>
+    }
+</div>

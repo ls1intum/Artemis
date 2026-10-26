@@ -19,7 +19,7 @@ export const routes: Routes = [
             },
             {
                 path: 'profile',
-                loadComponent: () => import('./user-settings-v2-placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
+                loadComponent: () => import('./profile-settings-v2/profile-settings-v2.component').then((m) => m.ProfileSettingsV2Component),
                 data: {
                     pageTitle: 'artemisApp.userSettings.navigation.profile',
                 },
