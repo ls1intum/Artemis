@@ -105,17 +105,20 @@ peerDependencyRules:
 # transitive packages to CVE-patched versions and force the current Angular major
 # across the ng-mocks subtree (its peer range trails the Angular release train).
 #
-# Do NOT add a `vite` override here, and do not reintroduce one when
+# Do NOT add a global `vite` override here, and do not reintroduce one when
 # `supporting_scripts/check_client_override_version_updates.sh` reports a newer release.
-# `@angular/build` depends on one exact vite version and configures the dev server's
-# dependency pre-bundling in a format only that version understands (22.1 moved the plugin
+# `@angular/build` pins Vite and configures the dev server's dependency pre-bundling
+# through version-specific APIs (22.1 moved the plugin
 # that runs the Angular linker to `optimizeDeps.rolldownOptions`, which Vite 7 silently
-# ignores). An override that resolves to anything else leaves pre-bundled Angular libraries
+# ignores). An incompatible override leaves pre-bundled Angular libraries
 # unlinked, and `pnpm start` serves a blank page with "The injectable '_PlatformLocation'
 # needs to be compiled using the JIT compiler" — while the production build stays green,
-# because it never uses Vite. Without an override, @angular/build's own exact pin governs
-# and the mismatch cannot happen. `pnpm run check:vite-override` fails the build if it does.
+# because it never uses Vite. The single reviewed security exception below stays on Vite 8.3
+# and is scoped to builder 22.2.3. `pnpm run check:vite-override` rejects all other mismatches.
 overrides:
+  # Vite 8.3.0 has six advisories, including GHSA-vfpm-58rq-9qcg; 8.3.3 fixes them.
+  # Remove this exception (and its guard allowance) when the builder pins a patched Vite.
+  '@angular/build@22.2.3>vite': '8.3.3'
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
   'ng-mocks>@angular/forms': '^22.0.0'

@@ -1,6 +1,5 @@
 /**
- * Guards against `vite` resolving to anything other than the exact version `@angular/build`
- * depends on — the situation that silently breaks the Angular dev server.
+ * Guards against unreviewed Vite overrides that can silently break the Angular dev server.
  *
  * The Angular dev server configures Vite's dependency pre-bundling through options tied to a
  * specific Vite version. Angular 22.1 moved that configuration from esbuild
@@ -16,17 +15,16 @@
  * dependency optimizer, so only `pnpm start` and the E2E suites that run against it break. This
  * check turns that silent breakage into an actionable error at build time.
  *
- * Today no `vite` override exists, so `@angular/build`'s own exact pin governs and the mismatch
- * cannot occur. The check stays as a tripwire for the next dependency sweep that considers adding
- * one back.
+ * One narrowly scoped security exception replaces builder 22.2.3's Vite 8.3.0 with 8.3.3.
+ * All other combinations must still match the builder's exact pin; this does not allow arbitrary
+ * patch upgrades, minor upgrades, or Vite 7 downgrades.
  */
 import { createRequire } from 'node:module';
 
 const EXACT_VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
 /**
- * Verifies that the `vite` resolved for `@angular/build` is the exact version `@angular/build`
- * asks for.
+ * Verifies that Vite matches the builder's exact pin or the reviewed security exception.
  *
  * @param {object} [options]
  * @param {string} [options.resolveFrom] Directory to resolve `@angular/build` from. Defaults to
@@ -46,7 +44,8 @@ export function checkViteOverride({ resolveFrom } = {}) {
         return { checked: false, reason: '@angular/build is not installed' };
     }
 
-    const expected = require(manifestPath).dependencies?.vite;
+    const angularBuild = require(manifestPath);
+    const expected = angularBuild.dependencies?.vite;
     if (!expected) {
         return { checked: false, reason: '@angular/build no longer declares a vite dependency' };
     }
@@ -65,12 +64,14 @@ export function checkViteOverride({ resolveFrom } = {}) {
         return { checked: false, reason: 'vite could not be resolved from @angular/build' };
     }
 
-    if (actual !== expected) {
+    // GHSA-vfpm-58rq-9qcg and the other Vite 8.3.0 advisories are fixed in this same-minor patch.
+    // Keep the exception tied to the reviewed builder, declared pin, and installed version.
+    const reviewedSecurityPatch = angularBuild.version === '22.2.3' && expected === '8.3.0' && actual === '8.3.3';
+    if (actual !== expected && !reviewedSecurityPatch) {
         throw new Error(
             `vite ${actual} is installed for @angular/build, which depends on vite ${expected}.\n` +
-                `The Angular dev server passes its dependency pre-bundling options (including the Angular linker plugin)\n` +
-                `in a format tied to that vite version. On a mismatch vite ignores them and the pre-bundled Angular\n` +
-                `libraries are served unlinked, so "pnpm start" renders a blank page.\n` +
+                `This combination has not been reviewed. Incompatible Vite overrides can disable the Angular linker\n` +
+                `during dependency pre-bundling, so "pnpm start" renders a blank page even if the production build passes.\n` +
                 `Fix: remove the vite override from pnpm-workspace.yaml (or set it to '${expected}'), then run "pnpm install".`,
         );
     }
@@ -94,7 +95,7 @@ export function runViteOverrideCheck(options) {
         process.exit(1);
         return;
     }
-    console.log(result.checked ? 'vite matches the version required by @angular/build.' : `Skipped vite override check: ${result.reason}.`);
+    console.log(result.checked ? 'vite matches the required or reviewed security-patched version for @angular/build.' : `Skipped vite override check: ${result.reason}.`);
 }
 
 // Also runnable standalone: `pnpm run check:vite-override`.
