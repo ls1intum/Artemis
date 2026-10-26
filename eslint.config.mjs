@@ -774,6 +774,7 @@ export default tseslint.config(
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
             'src/main/webapp/app/course/manage/update/**/*.html',
+            'src/main/webapp/app/course/overview/course-home/**/*.html',
             'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
             'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
             'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
@@ -815,6 +816,7 @@ export default tseslint.config(
         // See client-development.mdx (### Styling).
         files: [
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
+            'src/main/webapp/app/course/overview/course-home/**/*.html',
             'src/main/webapp/app/course/manage/athena-settings-update/**/*.html',
             'src/main/webapp/app/course/manage/control-center/about-athena-modal/**/*.html',
             ...migratedFolders('html'),
