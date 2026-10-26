@@ -8,13 +8,13 @@ import { checkViteOverride, runViteOverrideCheck } from './check-vite-override.m
  * Builds a throwaway directory with a synthetic `node_modules` tree so the check can be pointed at
  * a controlled resolution root instead of the repo's real install.
  *
- * @param {{angularBuildVite?: string | null, installedVite?: string | null, hideVitePackageJson?: boolean}} tree
+ * @param {{angularBuildVersion?: string, angularBuildVite?: string | null, installedVite?: string | null, hideVitePackageJson?: boolean}} tree
  *     `angularBuildVite` is what `@angular/build` declares (null omits the package entirely);
  *     `installedVite` is the version actually installed; `hideVitePackageJson` gives that package an
  *     `exports` map without `./package.json`, the way `vite-tsconfig-paths` already ships.
  * @returns {string} The directory to pass as `resolveFrom`.
  */
-function createTree({ angularBuildVite, installedVite, hideVitePackageJson = false }) {
+function createTree({ angularBuildVersion = '22.1.1', angularBuildVite, installedVite, hideVitePackageJson = false }) {
     const root = mkdtempSync(join(tmpdir(), 'vite-override-check-'));
     createdRoots.push(root);
 
@@ -22,7 +22,7 @@ function createTree({ angularBuildVite, installedVite, hideVitePackageJson = fal
         const angularBuild = join(root, 'node_modules', '@angular', 'build');
         mkdirSync(angularBuild, { recursive: true });
         const dependencies = angularBuildVite === undefined ? {} : { vite: angularBuildVite };
-        writeFileSync(join(angularBuild, 'package.json'), JSON.stringify({ name: '@angular/build', version: '22.1.1', dependencies }));
+        writeFileSync(join(angularBuild, 'package.json'), JSON.stringify({ name: '@angular/build', version: angularBuildVersion, dependencies }));
     }
 
     const vite = join(root, 'node_modules', 'vite');
@@ -54,8 +54,25 @@ describe('checkViteOverride', () => {
 
     it('passes against this repository, so a bad override fails the test suite too', () => {
         // No `resolveFrom`: this exercises the default resolution used by prebuild.mjs and asserts
-        // the committed lockfile really does give @angular/build the vite version it depends on.
+        // the committed lockfile gives @angular/build its exact Vite pin or the reviewed security patch.
         expect(checkViteOverride()).toEqual({ checked: true });
+    });
+
+    it('allows the reviewed Vite security patch for Angular builder 22.2.3', () => {
+        const root = createTree({ angularBuildVersion: '22.2.3', angularBuildVite: '8.3.0', installedVite: '8.3.3' });
+
+        expect(checkViteOverride({ resolveFrom: root })).toEqual({ checked: true });
+    });
+
+    it.each([
+        { angularBuildVersion: '22.2.4', angularBuildVite: '8.3.0', installedVite: '8.3.3' },
+        { angularBuildVersion: '22.2.3', angularBuildVite: '8.3.1', installedVite: '8.3.3' },
+        { angularBuildVersion: '22.2.3', angularBuildVite: '8.3.0', installedVite: '8.3.4' },
+        { angularBuildVersion: '22.2.3', angularBuildVite: '8.3.0', installedVite: '8.4.0' },
+    ])('rejects an unreviewed builder/Vite combination: $angularBuildVersion / $angularBuildVite / $installedVite', (tree) => {
+        const root = createTree(tree);
+
+        expect(() => checkViteOverride({ resolveFrom: root })).toThrow(/is installed for @angular\/build/);
     });
 
     it('throws with an actionable message when an override downgrades vite', () => {
@@ -118,7 +135,7 @@ describe('runViteOverrideCheck', () => {
 
         runViteOverrideCheck({ resolveFrom: root });
 
-        expect(log).toHaveBeenCalledWith('vite matches the version required by @angular/build.');
+        expect(log).toHaveBeenCalledWith('vite matches the required or reviewed security-patched version for @angular/build.');
         expect(exit).not.toHaveBeenCalled();
     });
 
