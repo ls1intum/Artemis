@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.test_repository;
 
 import java.time.Instant;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,9 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 
+@Lazy
 @Repository
 @Primary
-public interface CourseHomeFaqTestRepository extends FaqRepository {
+public interface FaqTestRepository extends FaqRepository {
 
     @Transactional
     @Modifying

@@ -4,10 +4,9 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseHomeGeneratedWelcomeDTO(String contextFingerprint, @Nullable String message, Source source) {
+import de.tum.cit.aet.artemis.course.domain.CourseHomeWelcomeSource;
 
-    public enum Source {
-        AI, FALLBACK
-    }
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record CourseHomeGeneratedWelcomeDTO(String contextFingerprint, @Nullable String message, CourseHomeWelcomeSource source) {
+
 }

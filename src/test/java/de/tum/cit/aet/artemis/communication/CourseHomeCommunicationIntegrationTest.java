@@ -13,18 +13,18 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.CourseHomeQuestionState;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.dto.CourseHomeQuestionsDTO.State;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.CourseHomeCommunicationService;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -40,16 +40,16 @@ class CourseHomeCommunicationIntegrationTest extends AbstractSpringIntegrationIn
     private ChannelRepository channels;
 
     @Autowired
-    private PostRepository posts;
+    private PostTestRepository posts;
 
     @Autowired
     private AnswerPostRepository answers;
 
     @Autowired
-    private ConversationParticipantRepository participants;
+    private ConversationParticipantTestRepository participants;
 
     @Autowired
-    private FaqRepository faqs;
+    private FaqTestRepository faqs;
 
     private Course course;
 
@@ -82,7 +82,7 @@ class CourseHomeCommunicationIntegrationTest extends AbstractSpringIntegrationIn
         answer(root, student, baseline.plusMinutes(1));
         var result = load();
         assertThat(result.questions().items()).singleElement().satisfies(i -> {
-            assertThat(i.state()).isEqualTo(State.AWAITING_REPLY);
+            assertThat(i.state()).isEqualTo(CourseHomeQuestionState.AWAITING_REPLY);
             assertThat(i.totalReplies()).isEqualTo(1);
             assertThat(i.unreadReplies()).isZero();
         });
@@ -95,7 +95,7 @@ class CourseHomeCommunicationIntegrationTest extends AbstractSpringIntegrationIn
         posts.saveAndFlush(root);
         var reply = answer(root, other, baseline.plusMinutes(1));
         assertThat(load().questions().items()).singleElement().satisfies(i -> {
-            assertThat(i.state()).isEqualTo(State.RESOLVED);
+            assertThat(i.state()).isEqualTo(CourseHomeQuestionState.RESOLVED);
             assertThat(i.unreadReplies()).isEqualTo(1);
             assertThat(i.focusReplyId()).isEqualTo(reply.getId());
         });
@@ -175,13 +175,13 @@ class CourseHomeCommunicationIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Autowired
-    private de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository directChats;
+    private de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository directChats;
 
     @Autowired
     private de.tum.cit.aet.artemis.text.util.TextExerciseUtilService exercises;
 
     @Autowired
-    private de.tum.cit.aet.artemis.communication.test_repository.CourseHomeFaqTestRepository faqDates;
+    private de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository faqDates;
 
     @Test
     void directMessagesAndUnreleasedChannelsStayOutOfHome() {
@@ -205,7 +205,7 @@ class CourseHomeCommunicationIntegrationTest extends AbstractSpringIntegrationIn
         reply.setVerified(false);
         answers.saveAndFlush(reply);
         var item = load().questions().items().getFirst();
-        assertThat(item.state()).isEqualTo(State.AWAITING_REPLY);
+        assertThat(item.state()).isEqualTo(CourseHomeQuestionState.AWAITING_REPLY);
         assertThat(item.unreadReplies()).isZero();
         assertThat(item.totalReplies()).isZero();
     }

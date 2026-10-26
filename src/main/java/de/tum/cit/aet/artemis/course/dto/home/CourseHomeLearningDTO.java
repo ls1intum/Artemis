@@ -7,9 +7,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.course.domain.CourseHomeWelcomeCase;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseHomeLearningDTO(CourseHomeDTO.Progress progress, List<Candidate> candidates, List<CourseHomeDTO.Item> updates) {
+public record CourseHomeLearningDTO(CourseHomeDTO.ProgressDTO progress, List<CandidateDTO> candidates, List<CourseHomeDTO.ItemDTO> updates) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record Candidate(CourseHomeWelcomeCase welcomeCase, CourseHomeDTO.Item item, boolean actionable) {
+    public record CandidateDTO(CourseHomeWelcomeCase welcomeCase, CourseHomeDTO.ItemDTO item, boolean actionable) {
     }
 }

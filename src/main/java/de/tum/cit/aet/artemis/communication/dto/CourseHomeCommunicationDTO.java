@@ -9,5 +9,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseHomeCommunicationDTO(CourseHomeQuestionsDTO questions, CourseHomeDTO.@Nullable Item announcement, List<CourseHomeDTO.Item> faqs) {
+public record CourseHomeCommunicationDTO(CourseHomeQuestionsDTO questions, CourseHomeDTO.@Nullable ItemDTO announcement, List<CourseHomeDTO.ItemDTO> faqs) {
 }

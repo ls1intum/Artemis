@@ -8,12 +8,14 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /** A successful course Home render, independent of communication read state. */
 @Entity
 @Table(name = "course_home_visit", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "course_id" }))
 public class CourseHomeVisit extends DomainObject {
 
+    @Parent
     @Column(name = "user_id", nullable = false)
     private long userId;
 

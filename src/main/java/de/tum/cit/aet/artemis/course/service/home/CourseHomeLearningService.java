@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeTargetKind;
 import de.tum.cit.aet.artemis.course.domain.CourseHomeWelcomeCase;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO;
 import de.tum.cit.aet.artemis.course.dto.home.CourseHomeLearningDTO;
@@ -45,7 +46,7 @@ public class CourseHomeLearningService {
         var baseline = ZonedDateTime.ofInstant(since, ZoneOffset.UTC);
         var counts = exercises.countForHome(courseId, user.getId(), now, now.plusHours(72));
         var one = PageRequest.of(0, 1);
-        List<CourseHomeLearningDTO.Candidate> candidates = new ArrayList<>();
+        List<CourseHomeLearningDTO.CandidateDTO> candidates = new ArrayList<>();
         add(candidates, exercises.findDeadline(courseId, user.getId(), now, now.plusHours(72), one), CourseHomeWelcomeCase.DEADLINE_SOON);
         add(candidates, exercises.findInProgress(courseId, user.getId(), now, one), CourseHomeWelcomeCase.IN_PROGRESS);
         add(candidates, exercises.findFeedback(courseId, user.getId(), now, baseline, one), CourseHomeWelcomeCase.NEW_FEEDBACK);
@@ -53,15 +54,16 @@ public class CourseHomeLearningService {
         add(candidates, exercises.findAvailableAction(courseId, user.getId(), now, one), CourseHomeWelcomeCase.CAUGHT_UP);
         var updates = exercises.findUpdates(courseId, user.getId(), now, baseline, PageRequest.of(0, 3)).stream().map(row -> item(row, CourseHomeWelcomeCase.NEW_EXERCISE))
                 .toList();
-        return new CourseHomeLearningDTO(new CourseHomeDTO.Progress(counts.getReleased(), counts.getSubmitted(), counts.getDue(), counts.getDueSubmitted()), candidates, updates);
+        return new CourseHomeLearningDTO(new CourseHomeDTO.ProgressDTO(counts.getReleased(), counts.getSubmitted(), counts.getDue(), counts.getDueSubmitted()), candidates,
+                updates);
     }
 
-    private void add(List<CourseHomeLearningDTO.Candidate> candidates, List<ExerciseHomeRepository.Item> rows, CourseHomeWelcomeCase reason) {
-        rows.forEach(row -> candidates.add(new CourseHomeLearningDTO.Candidate(reason, item(row, reason), true)));
+    private void add(List<CourseHomeLearningDTO.CandidateDTO> candidates, List<ExerciseHomeRepository.Item> rows, CourseHomeWelcomeCase reason) {
+        rows.forEach(row -> candidates.add(new CourseHomeLearningDTO.CandidateDTO(reason, item(row, reason), true)));
     }
 
-    private CourseHomeDTO.Item item(ExerciseHomeRepository.Item row, CourseHomeWelcomeCase reason) {
-        return new CourseHomeDTO.Item(row.getTitle(), new CourseHomeTargetDTO(CourseHomeTargetDTO.Kind.EXERCISE, row.getId(), null, null),
+    private CourseHomeDTO.ItemDTO item(ExerciseHomeRepository.Item row, CourseHomeWelcomeCase reason) {
+        return new CourseHomeDTO.ItemDTO(row.getTitle(), new CourseHomeTargetDTO(CourseHomeTargetKind.EXERCISE, row.getId(), null, null),
                 row.getActivityAt() == null ? null : row.getActivityAt().toInstant(), row.getDueDate() == null ? null : row.getDueDate().toInstant(), reason.name());
     }
 }
