@@ -3,6 +3,7 @@ import { EnvironmentProviders, InjectionToken, Signal, Type, makeEnvironmentProv
 export type TumAetUiTranslationParams = Readonly<Record<string, number | string>>;
 
 export const TUM_AET_UI_DEFAULT_TRANSLATIONS = {
+    'tumAetUi.avatar.unknown': 'Unknown person',
     'tumAetUi.autocomplete.empty': 'No results found',
     'tumAetUi.autocomplete.remove': 'Remove',
     'tumAetUi.chip.remove': 'Remove',
