@@ -543,6 +543,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         verify(scheduleService, after(NEVER_VERIFY_DELAY_MS).never()).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class), any());
         verify(scheduleService, timeout(VERIFY_TIMEOUT_MS)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.RELEASE);
+        verify(scheduleService, timeout(VERIFY_TIMEOUT_MS)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.START);
         verify(scheduleService, timeout(VERIFY_TIMEOUT_MS)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.DUE);
         verify(scheduleService, timeout(VERIFY_TIMEOUT_MS)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         verify(scheduleService, timeout(VERIFY_TIMEOUT_MS)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.ASSESSMENT_DUE);

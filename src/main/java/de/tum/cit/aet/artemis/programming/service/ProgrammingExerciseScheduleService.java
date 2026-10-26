@@ -194,6 +194,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
             return true;
         }
+        // Exercises that allow repository access before a start date in the future build the changes pushed until then at the start date
+        if (exercise.isAllowRepositoryAccessBeforeStartDate() && exercise.getStartDate() != null && now.isBefore(exercise.getStartDate())) {
+            return true;
+        }
         // If tests are run after due date and that due date lies in the future, we need to schedule that as well
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             return true;
@@ -214,6 +218,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     /**
      * Cancel all scheduled tasks for a programming exercise and its participations.
      * - Release
+     * - Start
      * - Due
      * - Build & Test after due date
      * - Assessment due date
@@ -222,6 +227,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     public void cancelAllScheduledTasks(Long exerciseId) {
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.RELEASE);
+        scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.START);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.DUE);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.ASSESSMENT_DUE);
@@ -246,6 +252,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         final ZonedDateTime now = TimeUtil.now();
 
+        scheduleBuildOfChangesBeforeStartDate(exercise, now);
+
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && now.isBefore(exercise.getDueDate())) {
             scheduleScoreUpdate(exercise);
@@ -263,6 +271,43 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         scheduleParticipationTasks(exercise, now);
+    }
+
+    /**
+     * Schedules the build of the repositories students pushed to before the start date, for an exercise that allows repository access before it.
+     * <p>
+     * If the start date has already passed while the exercise can still be worked on, the build is triggered right away instead. This catches up on a start date that
+     * passed while no node was running, or that an instructor moved into the past. The trigger skips every participation that already has a submission, so this is safe
+     * to repeat.
+     *
+     * @param exercise the course exercise to schedule
+     * @param now      the current time
+     */
+    private void scheduleBuildOfChangesBeforeStartDate(ProgrammingExercise exercise, ZonedDateTime now) {
+        final ZonedDateTime startDate = exercise.getStartDate();
+        if (!exercise.isAllowRepositoryAccessBeforeStartDate() || startDate == null) {
+            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.START);
+            return;
+        }
+        if (now.isBefore(startDate)) {
+            scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.START, buildChangesBeforeStartDateRunnable(exercise.getId()),
+                    "build changes pushed before the start date");
+            log.debug("Scheduled the build of changes pushed before the start date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), startDate);
+            return;
+        }
+        scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.START);
+        if (exercise.getDueDate() == null || now.isBefore(exercise.getDueDate())) {
+            programmingTriggerService.triggerBuildsForChangesBeforeStartDate(exercise.getId());
+        }
+    }
+
+    @NonNull
+    private Runnable buildChangesBeforeStartDateRunnable(long exerciseId) {
+        // Handed to a scheduler, so this lambda is its own entry point on a pooled thread. The trigger reloads the exercise and checks the option and the start date again.
+        return () -> SecurityUtils.runAsSystem(() -> {
+            log.info("Invoking scheduled build of changes pushed before the start date of programming exercise with id {}.", exerciseId);
+            programmingTriggerService.triggerBuildsForChangesBeforeStartDate(exerciseId);
+        });
     }
 
     private void scheduleScoreUpdate(ProgrammingExercise exercise) {

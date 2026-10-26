@@ -470,6 +470,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE pe.releaseDate > :now
                 OR pe.buildAndTestStudentSubmissionsAfterDueDate > :now
                 OR pe.dueDate > :now
+                OR (pe.allowRepositoryAccessBeforeStartDate = TRUE AND pe.startDate > :now AND pe.exerciseGroup IS NULL)
             """)
     Set<Long> findAllExerciseIdsToBeScheduledByExerciseDates(@Param("now") ZonedDateTime now);
 

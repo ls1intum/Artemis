@@ -103,6 +103,7 @@ class ProgrammingExerciseScheduleServiceTest {
 
     private void assertEverySchedulingWasCancelled() {
         verify(scheduleService).cancelScheduledTaskForLifecycle(EXERCISE_ID, ExerciseLifecycle.RELEASE);
+        verify(scheduleService).cancelScheduledTaskForLifecycle(EXERCISE_ID, ExerciseLifecycle.START);
         verify(scheduleService).cancelScheduledTaskForLifecycle(EXERCISE_ID, ExerciseLifecycle.DUE);
         verify(scheduleService).cancelScheduledTaskForLifecycle(EXERCISE_ID, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         verify(scheduleService).cancelScheduledTaskForLifecycle(EXERCISE_ID, ExerciseLifecycle.ASSESSMENT_DUE);
@@ -346,6 +347,72 @@ class ProgrammingExerciseScheduleServiceTest {
         runScheduledExerciseTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
 
         verify(programmingTriggerService).triggerInstructorBuildForExercise(EXERCISE_ID);
+    }
+
+    /**
+     * An exercise that lets students work on their repository before a start date in the future, released already and otherwise needing no scheduling.
+     */
+    private ProgrammingExercise exerciseWithRepositoryAccessBeforeStartDate(ZonedDateTime startDate, ZonedDateTime dueDate) {
+        var exercise = exerciseThatNeedsNoScheduling();
+        exercise.setAllowRepositoryAccessBeforeStartDate(true);
+        exercise.setReleaseDate(startDate.minusDays(1));
+        exercise.setStartDate(startDate);
+        exercise.setDueDate(dueDate);
+        return exercise;
+    }
+
+    @Test
+    void anExerciseWithRepositoryAccessBeforeAFutureStartDateGetsTheBuildAtTheStartDateScheduled() {
+        // The pushes before the start date created no submission, so without this task they would never be built.
+        var exercise = exerciseWithRepositoryAccessBeforeStartDate(ZonedDateTime.now().plusDays(1), null);
+
+        scheduleServiceUnderTest.updateScheduling(exercise);
+
+        verify(scheduleService).scheduleExerciseTask(eq(exercise), eq(ExerciseLifecycle.START), any(Runnable.class), any());
+        verify(programmingTriggerService, never()).triggerBuildsForChangesBeforeStartDate(anyLong());
+    }
+
+    @Test
+    void theBuildAtTheStartDateBuildsTheChangesPushedBeforeIt() {
+        var exercise = exerciseWithRepositoryAccessBeforeStartDate(ZonedDateTime.now().plusDays(1), null);
+        scheduleServiceUnderTest.updateScheduling(exercise);
+
+        runScheduledExerciseTask(exercise, ExerciseLifecycle.START);
+
+        verify(programmingTriggerService).triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
+    }
+
+    @Test
+    void anExerciseWithoutRepositoryAccessBeforeTheStartDateHasTheBuildAtTheStartDateCancelled() {
+        // The option was switched off, so a task scheduled while it was on must not stay behind.
+        var exercise = exerciseWithRepositoryAccessBeforeStartDate(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        exercise.setAllowRepositoryAccessBeforeStartDate(false);
+
+        scheduleServiceUnderTest.updateScheduling(exercise);
+
+        verify(scheduleService).cancelScheduledTaskForLifecycle(EXERCISE_ID, ExerciseLifecycle.START);
+        verify(scheduleService, never()).scheduleExerciseTask(eq(exercise), eq(ExerciseLifecycle.START), any(Runnable.class), any());
+    }
+
+    @Test
+    void anExerciseWhoseStartDateHasPassedWhileItIsStillOpenCatchesUpOnTheBuildRightAway() {
+        // The start date passed while no node was running, or an instructor moved it into the past: the task will never fire, so the build runs now.
+        var exercise = exerciseWithRepositoryAccessBeforeStartDate(ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().plusDays(2));
+
+        scheduleServiceUnderTest.updateScheduling(exercise);
+
+        verify(scheduleService).cancelScheduledTaskForLifecycle(EXERCISE_ID, ExerciseLifecycle.START);
+        verify(programmingTriggerService).triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
+    }
+
+    @Test
+    void anExerciseWhoseDueDateHasPassedDoesNotCatchUpOnTheBuildAtTheStartDate() {
+        var exercise = exerciseWithRepositoryAccessBeforeStartDate(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1));
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        scheduleServiceUnderTest.updateScheduling(exercise);
+
+        verify(programmingTriggerService, never()).triggerBuildsForChangesBeforeStartDate(anyLong());
     }
 
     @Test
