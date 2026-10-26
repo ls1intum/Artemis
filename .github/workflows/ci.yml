@@ -169,7 +169,6 @@ jobs:
               - '.github/workflows/ci-test.yml'
               - 'build.gradle'
               - 'gradle/**'
-              - 'deployment/docker/aiworker/**'
               - 'deployment/docker/hyperion/**'
               - 'src/main/java/de/tum/cit/aet/artemis/aiworker/**'
               - 'src/test/java/de/tum/cit/aet/artemis/aiworker/**'

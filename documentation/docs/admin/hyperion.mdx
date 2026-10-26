@@ -413,10 +413,10 @@ imports. Hyperion supplies `HyperionWorkloadService`, which validates and decode
 bounded assignment, selects a qualified toolchain and returns typed generation evidence.
 The generic transport does not interpret briefs, tests, quality findings or exercise IDs.
 
-Configure `artemis.aiworker.workload=hyperion-generation`, `workload-version=1` and
-`profile=java-gradle`, with the qualified offline sandbox image. The profile name predates
-Maven support; the same profile and image serve Java exercises built with Gradle or Maven,
-and the brief names the build tool. Only Java is qualified; naming another profile does not add a language implementation. Core admission
+The worker selects workload `hyperion-generation`, schema `1`, profile `java-gradle` by default;
+configure only the qualified offline sandbox image. The profile name predates Maven support:
+the same profile and image serve Java exercises built with Gradle or Maven, and the brief names
+the build tool. Only Java is qualified; naming another profile does not add a language implementation. Core admission
 and returned evidence must agree on the workload schema, profile, image and execution.
 See [AI Worker operations](/admin/aiworker) for infrastructure configuration.
 
