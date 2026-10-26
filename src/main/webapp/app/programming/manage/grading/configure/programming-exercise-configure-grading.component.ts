@@ -295,7 +295,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe((params) => {
             this.isLoading.set(true);
             const exerciseId = Number(params['exerciseId']);
-            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => {
+            this.courseManagementService.findForManagement(params['courseId']).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
             });
 

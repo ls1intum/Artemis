@@ -208,7 +208,7 @@ describe('Course Exam Archive Button Component', () => {
             const alertService = TestBed.inject(AlertService);
             const alertServiceSpy = vi.spyOn(alertService, 'success');
 
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
+            vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
@@ -221,7 +221,7 @@ describe('Course Exam Archive Button Component', () => {
         it('should display warning and reload course on archive complete with warnings', () => {
             const dialogService = TestBed.inject(DialogService);
 
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
+            vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
             const openDialogSpy = vi.spyOn(dialogService, 'open');
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED_WITH_WARNINGS', message: 'warning 1\nwarning 2' };

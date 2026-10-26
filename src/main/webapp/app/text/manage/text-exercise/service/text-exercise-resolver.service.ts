@@ -39,7 +39,7 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
                     map((exerciseGroup: HttpResponse<ExerciseGroup>) => new TextExercise(undefined, exerciseGroup.body || undefined)),
                 );
             } else {
-                return this.courseService.find(route.params['courseId']).pipe(
+                return this.courseService.findForManagement(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
                     map((course: HttpResponse<Course>) => new TextExercise(course.body || undefined, undefined)),
                 );

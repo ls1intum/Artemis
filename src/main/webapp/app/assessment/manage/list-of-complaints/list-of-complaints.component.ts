@@ -167,7 +167,7 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         this.mineScopeSubscription?.unsubscribe();
         this.mineScopeSubscription = this.subscribeToComplaintResponse(complaintResponse, 'mine');
-        this.courseManagementService.find(this.courseId).subscribe((response) => {
+        this.courseManagementService.findForManagement(this.courseId).subscribe((response) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.course.set(response?.body!);
         });

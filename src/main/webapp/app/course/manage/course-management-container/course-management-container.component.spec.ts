@@ -178,7 +178,7 @@ describe('CourseManagementContainerComponent', () => {
         websocketService = TestBed.inject(WebsocketService);
 
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(EMPTY);
-        findSpy = vi.spyOn(courseService, 'find').mockReturnValue(
+        findSpy = vi.spyOn(courseService, 'findForManagement').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course1,
@@ -271,7 +271,7 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature) =>
             feature === FeatureToggle.PresentationAssessments ? presentationToggle : of(true),
         );
-        vi.spyOn(courseService, 'find').mockReturnValue(
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(
             of(
                 new HttpResponse({
                     body: { ...course1, presentationAssessmentsEnabled: true },

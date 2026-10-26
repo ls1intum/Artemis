@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
@@ -167,16 +166,41 @@ public class TutorialGroupResource {
      */
     @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
     @GetMapping("courses/{courseId}/tutorial-groups")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<TutorialGroupSummaryDTO>> getTutorialGroupsForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
+        return ResponseEntity.ok(loadTutorialGroupsForCourse(courseId, false, false));
+    }
+
+    /**
+     * Returns the tutor overview, keeping private fields only for the current tutor's assigned groups.
+     *
+     * @param courseId the course containing the tutorial groups
+     * @return the fixed tutor projection
+     */
+    @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
+    @GetMapping("courses/{courseId}/tutorial-groups/for-tutor")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<TutorialGroupSummaryDTO>> getTutorialGroupsForCourseForTutor(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadTutorialGroupsForCourse(courseId, false, true));
+    }
+
+    /**
+     * Returns the instructor overview with private fields for every tutorial group.
+     *
+     * @param courseId the course containing the tutorial groups
+     * @return the fixed instructor projection
+     */
+    @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
+    @GetMapping("courses/{courseId}/tutorial-groups/for-instructor")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<TutorialGroupSummaryDTO>> getTutorialGroupsForCourseForInstructor(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadTutorialGroupsForCourse(courseId, true, true));
+    }
+
+    private List<TutorialGroupSummaryDTO> loadTutorialGroupsForCourse(Long courseId, boolean instructorProjection, boolean staffOverview) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        boolean isAdminOrInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        boolean isAtLeastTutor = isAdminOrInstructor || authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor, isAtLeastTutor);
-        return ResponseEntity.ok(tutorialGroups.stream().map(TutorialGroupSummaryDTO::from).toList());
+        return tutorialGroupService.findAllForCourse(course, user, instructorProjection, staffOverview).stream().map(TutorialGroupSummaryDTO::from).toList();
     }
 
     /**

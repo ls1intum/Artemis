@@ -176,6 +176,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             var course = courseRepository.findByIdElseThrow(exampleCourseId);
             userCourseRoleRepository.save(new UserCourseRole(firstCourseTutor1, course, CourseRole.STUDENT));
             userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(firstCourseTutor1.getId(), exampleCourseId, CourseRole.TEACHING_ASSISTANT);
+            request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/for-tutor", HttpStatus.FORBIDDEN, TutorialGroupSummaryDTO.class);
 
             var tutorialGroups = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
 
@@ -219,7 +220,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "USER")
         void getTutorialGroupsForCourse_asEditor_shouldHidePrivateInformationExceptTutorNameAndRegistrationCount() throws Exception {
-            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
+            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/for-tutor", HttpStatus.OK,
+                    TutorialGroupSummaryDTO.class);
             assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroupSummaryDTO::id).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
                     firstCourseTutorialGroup2.getId());
             for (var tutorialGroup : tutorialGroupsOfCourse) {
@@ -230,7 +232,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "USER")
         void getTutorialGroupsForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroupAndOverviewForOthers() throws Exception {
-            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
+            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/for-tutor", HttpStatus.OK,
+                    TutorialGroupSummaryDTO.class);
             assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroupSummaryDTO::id).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
                     firstCourseTutorialGroup2.getId());
             var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.id().equals(firstCourseTutorialGroup1.getId())).findFirst().orElseThrow();
@@ -244,7 +247,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "USER")
         void getTutorialGroupsForCourse_asInstructorOfCourse_shouldShowPrivateInformation() throws Exception {
-            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
+            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/for-instructor", HttpStatus.OK,
+                    TutorialGroupSummaryDTO.class);
             assertThat(tutorialGroupsOfCourse).hasSize(2);
             assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroupSummaryDTO::id).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
                     firstCourseTutorialGroup2.getId());
@@ -252,6 +256,57 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             verifyPrivateInformationIsShown(group1);
             var group2 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.id().equals(firstCourseTutorialGroup2.getId())).findFirst().orElseThrow();
             verifyPrivateInformationIsShown(group2);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "USER")
+        void baseProjectionStaysPrivateForInstructor() throws Exception {
+            var groups = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
+            assertThat(groups).hasSize(2);
+            groups.forEach(group -> {
+                verifyPrivateInformationIsHidden(group);
+                assertThat(group.isUserTutor()).isFalse();
+            });
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
+        void studentCannotReadStaffProjections() throws Exception {
+            request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/for-tutor", HttpStatus.FORBIDDEN, TutorialGroupSummaryDTO.class);
+            request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/for-instructor", HttpStatus.FORBIDDEN, TutorialGroupSummaryDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "USER")
+        void tutorCannotReadInstructorProjection() throws Exception {
+            request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/for-instructor", HttpStatus.FORBIDDEN, TutorialGroupSummaryDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "USER")
+        void baseProjectionStaysPrivateForAssignedTutor() throws Exception {
+            var groups = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
+            assertThat(groups).hasSize(2);
+            groups.forEach(group -> {
+                verifyPrivateInformationIsHidden(group);
+                assertThat(group.isUserTutor()).isFalse();
+            });
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "USER")
+        void tutorProjectionDoesNotGiveInstructorPrivateInformationForUnassignedGroups() throws Exception {
+            var groups = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/for-tutor", HttpStatus.OK, TutorialGroupSummaryDTO.class);
+            assertThat(groups).hasSize(2);
+            groups.forEach(this::verifyOnlyTutorNameAndRegistrationCountAreShown);
+        }
+
+        @Test
+        @WithMockUser(username = SECOND_COURSE_INSTRUCTOR1_LOGIN, roles = "USER")
+        void foreignCourseInstructorCannotReadAnyProjection() throws Exception {
+            for (String suffix : List.of("", "/for-tutor", "/for-instructor")) {
+                request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups" + suffix, HttpStatus.FORBIDDEN, TutorialGroupSummaryDTO.class);
+            }
         }
 
         private void verifyPrivateInformationIsHidden(TutorialGroupSummaryDTO tutorialGroup) {

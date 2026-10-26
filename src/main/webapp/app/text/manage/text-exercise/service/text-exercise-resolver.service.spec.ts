@@ -72,7 +72,7 @@ describe('TextExerciseResolver', () => {
     it('should resolve a TextExercise for a course without an exercise group', () => {
         const dummyCourse = { id: 1 } as Course;
         const courseService = TestBed.inject(CourseManagementService);
-        vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyCourse })));
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: dummyCourse })));
 
         route.params = { courseId: '1' };
 
@@ -84,7 +84,7 @@ describe('TextExerciseResolver', () => {
             );
         });
 
-        expect(courseService.find).toHaveBeenCalledWith('1');
+        expect(courseService.findForManagement).toHaveBeenCalledWith('1');
     });
     it('should resolve exam details from an ancestor with the same options', () => {
         const detailService = TestBed.inject(TextExerciseService);

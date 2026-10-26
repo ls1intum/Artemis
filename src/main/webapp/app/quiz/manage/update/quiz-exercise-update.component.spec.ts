@@ -199,7 +199,7 @@ describe('QuizExerciseUpdateComponent', () => {
         let initStub: any;
         const configureStubs = () => {
             quizExerciseServiceStub = vi.spyOn(quizExerciseService, comp['route'].snapshot.pathFromRoot.some((ancestor) => !!ancestor.params['examId']) ? 'findForExam' : 'find');
-            courseManagementServiceStub = vi.spyOn(courseManagementService, 'find');
+            courseManagementServiceStub = vi.spyOn(courseManagementService, 'findForManagement');
             exerciseGroupServiceStub = vi.spyOn(exerciseGroupService, 'find');
             initStub = vi.spyOn(comp, 'init');
             quizExerciseServiceStub.mockReturnValue(of(quizExercise));
@@ -228,7 +228,7 @@ describe('QuizExerciseUpdateComponent', () => {
             vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
             await configureTestBed({ snapshot, queryParams: of(snapshot.queryParams) } as ActivatedRoute);
             configureFixtureAndServices();
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: new ExerciseGroup() })));
             vi.spyOn(comp, 'init').mockImplementation(() => {});
             const courseFind = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));

@@ -42,7 +42,7 @@ export class FileUploadExerciseManagementResolve implements Resolve<FileUploadEx
                     }),
                 );
             } else {
-                return this.courseService.find(route.params['courseId']).pipe(
+                return this.courseService.findForManagement(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
                     map((course: HttpResponse<Course>) => {
                         const fileUploadExercise = new FileUploadExercise(course.body!, undefined);

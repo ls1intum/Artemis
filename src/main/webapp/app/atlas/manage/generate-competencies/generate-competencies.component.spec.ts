@@ -86,7 +86,7 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should initialize the form with the course description', async () => {
         const courseDescription = 'Course Description';
-        vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: { description: courseDescription } })));
+        vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockReturnValue(of(new HttpResponse({ body: { description: courseDescription } })));
         fixture.detectChanges();
         await fixture.whenStable();
         expect(comp.courseDescriptionForm().courseDescriptionControl.value).toBe(courseDescription);
@@ -244,7 +244,7 @@ describe('GenerateCompetenciesComponent', () => {
             b = new Subject<GenerationUpdate>();
             const streams: Record<string, Subject<GenerationUpdate>> = { '/user/topic/iris/competencies/1': a, '/user/topic/iris/competencies/2': b };
             vi.spyOn(TestBed.inject(WebsocketService), 'subscribe').mockImplementation((destination) => streams[destination]);
-            vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockImplementation((id) => of(new HttpResponse({ body: { id, description: `Course ${id}` } })));
+            vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockImplementation((id) => of(new HttpResponse({ body: { id, description: `Course ${id}` } })));
             vi.spyOn(TestBed.inject(CourseCompetencyService), 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
             vi.spyOn(TestBed.inject(CourseCompetencyService), 'generateCompetenciesFromCourseDescription').mockReturnValue(of(new HttpResponse<void>()));
         });
@@ -291,7 +291,7 @@ describe('GenerateCompetenciesComponent', () => {
         it('ignores a stale description response after navigation', async () => {
             const oldDescription = new Subject<HttpResponse<Course>>();
             const newDescription = new Subject<HttpResponse<Course>>();
-            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
+            vi.mocked(TestBed.inject(CourseManagementService).findForInstructor).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
             fixture.detectChanges();
             route.setParameters({ courseId: 2 });
             newDescription.next(new HttpResponse({ body: { description: 'B' } }));
@@ -306,7 +306,7 @@ describe('GenerateCompetenciesComponent', () => {
             const descriptionB = 'B'.repeat(150);
             const oldDescription = new Subject<HttpResponse<Course>>();
             const newDescription = new Subject<HttpResponse<Course>>();
-            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
+            vi.mocked(TestBed.inject(CourseManagementService).findForInstructor).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
             const generateButton = () => fixture.debugElement.query(By.css('#generateButton button')).nativeElement as HTMLButtonElement;
             fixture.detectChanges();
             expect(generateButton().disabled).toBe(true);
@@ -330,7 +330,7 @@ describe('GenerateCompetenciesComponent', () => {
 
         it('clears a loaded description as soon as the component is reused for another course', async () => {
             const newDescription = new Subject<HttpResponse<Course>>();
-            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) =>
+            vi.mocked(TestBed.inject(CourseManagementService).findForInstructor).mockImplementation((id) =>
                 id === 1 ? of(new HttpResponse({ body: { description: 'A'.repeat(150) } })) : newDescription,
             );
             const generateButton = () => fixture.debugElement.query(By.css('#generateButton button')).nativeElement as HTMLButtonElement;

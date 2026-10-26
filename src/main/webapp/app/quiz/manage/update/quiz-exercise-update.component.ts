@@ -319,7 +319,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         /** Query the courseService for the participationId given by the params */
         if (this.courseId()) {
-            this.courseService.find(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
+            this.courseService.findForManagement(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body!;
                 // Load exerciseGroup and set exam mode
                 if (this.isExamMode()) {
