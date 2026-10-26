@@ -347,8 +347,8 @@ public class SecurityFrameworkService {
             treeWalk.addTree(tree);
             treeWalk.setRecursive(true);
             while (treeWalk.next()) {
-                if (SecurityPolicyRepositoryFiles.isJavaSourcePath(treeWalk.getPathString())
-                        && SecurityPolicyRepositoryFiles.containsDeactivatedPolicyAnnotation(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8))) {
+                if (SecurityPolicyRepositoryFiles.isJavaSourcePath(treeWalk.getPathString()) && SecurityPolicyRepositoryFiles
+                        .containsDeactivatedPolicyAnnotation(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8))) {
                     return true;
                 }
             }

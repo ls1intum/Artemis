@@ -270,8 +270,8 @@ class SecurityFrameworkServiceTest {
         Path checkout = newDirectory("instructor-");
         try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
             Path testFile = checkout.resolve("test/de/example/SortingTest.java");
-            FileUtils.writeStringToFile(testFile.toFile(), Files.readString(testFile).replace(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION, SecurityPolicyRepositoryFiles.INACTIVE_ANNOTATION),
-                    StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(testFile.toFile(),
+                    Files.readString(testFile).replace(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION, SecurityPolicyRepositoryFiles.INACTIVE_ANNOTATION), StandardCharsets.UTF_8);
             git.add().addFilepattern(".").call();
             GitService.commit(git).setMessage("Switch the policy off by hand").setAuthor("Instructor", "instructor@example.org").call();
             git.push().call();

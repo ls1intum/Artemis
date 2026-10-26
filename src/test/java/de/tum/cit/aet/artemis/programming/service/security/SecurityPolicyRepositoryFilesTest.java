@@ -62,8 +62,8 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")", "@de.tum.cit.ase.ares.api.Policy(value = \"custom.yaml\", withinPath = \"src, test\")",
-            "@de.tum.cit.ase.ares.api.Policy" })
+    @ValueSource(strings = { "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")",
+            "@de.tum.cit.ase.ares.api.Policy(value = \"custom.yaml\", withinPath = \"src, test\")", "@de.tum.cit.ase.ares.api.Policy" })
     void aDeactivateActivateCycleRestoresTheAnnotationExactly(String annotation) throws IOException {
         Path testFile = root.resolve("test/de/example/SortingTest.java");
         String original = "package de.example;\n\n" + annotation + "\nclass SortingTest {\n}\n";
