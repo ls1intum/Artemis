@@ -54,7 +54,7 @@ export class CourseIrisComponent implements SidebarView {
         this.irisChatService.llmOptedOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const id = this.courseId();
             if (id !== undefined) {
-                void this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
+                void this.router.navigate(['/courses', id, CourseOverviewRoutePath.HOME]);
             }
         });
     }

@@ -120,7 +120,8 @@
                 "gradingSystem": "Grading System",
                 "faq": "FAQ",
                 "settings": "Settings",
-                "calendar": "Calendar"
+                "calendar": "Calendar",
+                "home": "Home"
             },
             "exerciseFilter": {
                 "modalTitle": "Filter Exercises",
