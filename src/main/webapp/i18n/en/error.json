@@ -78,6 +78,7 @@
         "internalServerError": "Internal server error",
         "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",
+        "Email": "Field {{ fieldName }} must be a valid email address!",
         "NotBlank": "Field {{ fieldName }} cannot be blank!",
         "NotNull": "Field {{ fieldName }} cannot be empty!",
         "Size": "Field {{ fieldName }} does not meet min/max size requirements!",
