@@ -81,7 +81,22 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @GetMapping("file-upload-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadResultDTO> getFileUploadAssessmentBySubmissionId(@PathVariable Long submissionId) {
-        var response = super.getAssessmentBySubmissionId(submissionId);
+        var response = super.getAssessmentBySubmissionId(submissionId, false);
+        return toFileUploadResultResponse(response.getStatusCode(), response.getHeaders(), response.getBody());
+    }
+
+    /**
+     * Get the result of a file upload submission using the existing instructor eligibility policy.
+     *
+     * @param submissionId the submission owning the result
+     * @return the instructor result projection
+     */
+    @FeatureUsage(UserFeature.EXERCISE_FEEDBACK)
+    @GetMapping("file-upload-submissions/{submissionId}/result/for-instructor")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<FileUploadResultDTO> getFileUploadAssessmentBySubmissionIdForInstructor(@PathVariable Long submissionId) {
+        var response = super.getAssessmentBySubmissionId(submissionId, true);
         return toFileUploadResultResponse(response.getStatusCode(), response.getHeaders(), response.getBody());
     }
 

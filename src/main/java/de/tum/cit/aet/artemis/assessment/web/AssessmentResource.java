@@ -61,30 +61,35 @@ public abstract class AssessmentResource {
     protected abstract String getEntityName();
 
     /**
-     * Get the result of the submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
-     * to retrieve the assessment if they are not a student of the corresponding course, the submission is not their submission, the result is not finished or the assessment due
-     * date of the corresponding exercise is in the future (or not set).
+     * Get the latest result using an endpoint-selected owner or instructor audience. Owner reads require current course access, ownership and a published, finished result.
+     * Instructor reads retain the existing result eligibility and test-run exception.
      *
-     * @param submissionId the id of the submission that should be sent to the client
+     * @param submissionId   the id of the submission that should be sent to the client
+     * @param instructorView whether the endpoint selects the instructor audience
      * @return the assessment of the given id
      */
-    public ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId) {
+    protected ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId, boolean instructorView) {
         log.debug("REST request to get assessment for submission with id {}", submissionId);
         Submission submission = loadSubmissionForAssessment(submissionId);
-        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+        if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+            throw new AccessForbiddenException();
+        }
         Exercise exercise = participation.getExercise();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(instructorView ? Role.INSTRUCTOR : Role.STUDENT, exercise, null);
+        if (!instructorView && !authCheckService.isOwnerOfParticipation(participation)) {
+            throw new AccessForbiddenException();
+        }
 
         Result result = submission.getLatestResult();
         if (result == null) {
             throw new EntityNotFoundException("Result with submission", submissionId);
         }
 
-        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result, instructorView)) {
             throw new AccessForbiddenException();
         }
 
-        // remove sensitive information for students
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!instructorView) {
             exercise.filterSensitiveInformation();
             result.filterSensitiveInformation();
         }
