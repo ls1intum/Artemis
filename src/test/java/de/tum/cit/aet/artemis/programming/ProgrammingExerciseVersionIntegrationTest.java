@@ -154,7 +154,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
                 ExerciseType.PROGRAMMING);
         ProgrammingExerciseSnapshotDTO originalSnapshot = originalVersion.getExerciseSnapshot().programmingData();
-        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/reset";
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + (deleteParticipationsSubmissionsAndResults ? "/reset-participations" : "/reset");
         ProgrammingExerciseResetOptionsDTO resetOptions = new ProgrammingExerciseResetOptionsDTO(deleteParticipationsSubmissionsAndResults, recreateBuildPlans);
         request.putWithResponseBody(path, resetOptions, String.class, HttpStatus.OK);
 

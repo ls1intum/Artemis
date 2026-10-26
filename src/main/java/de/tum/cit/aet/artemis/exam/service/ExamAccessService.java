@@ -352,6 +352,26 @@ public class ExamAccessService {
     }
 
     /**
+     * Checks the fixed student example-solution audience without a staff enrollment exemption.
+     *
+     * @param exercise the exam exercise
+     */
+    public void checkStudentExampleSolutionAccessElseThrow(Exercise exercise) {
+        if (!exercise.isExamExercise()) {
+            throw new ConflictException("Given exercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+        Exam exam = exercise.getExerciseGroup().getExam();
+        User user = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, exam.getCourse(), user);
+        if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(exam.getCourse().getId(), exam.getId(), user.getId())) {
+            throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+        if (!exercise.isExampleSolutionPublished()) {
+            throw new AccessForbiddenException("Example solution for exam is not published yet!");
+        }
+    }
+
+    /**
      * Checks if the current user is eligible to access the example solutions for the given exercise and
      * if the example solution is published.
      * Eligibility conditions vary based on user roles.

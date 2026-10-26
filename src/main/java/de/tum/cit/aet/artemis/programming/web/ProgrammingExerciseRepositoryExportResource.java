@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -163,10 +165,36 @@ public class ProgrammingExerciseRepositoryExportResource {
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
         if (programmingExercise.isExamExercise()) {
             ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
-            api.checkExamExerciseForExampleSolutionAccessElseThrow(programmingExercise);
+            api.checkStudentExampleSolutionAccessElseThrow(programmingExercise);
         }
-        Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
+        if (!programmingExercise.isExampleSolutionPublished()) {
+            throw new AccessForbiddenException("Example solution is not published yet");
+        }
+        return exportSolutionSnapshot(programmingExercise, includeTests);
+    }
+
+    /**
+     * Exports the same solution snapshot for staff, including before publication in courses.
+     * Exam example solutions still require publication, as on the student-requested operation.
+     *
+     * @param exerciseId   the programming exercise
+     * @param includeTests whether to include the released tests
+     * @return the solution snapshot without git metadata
+     * @throws IOException if the archive cannot be read
+     */
+    @GetMapping("programming-exercises/{exerciseId}/export-student-requested-repository/for-staff")
+    @EnforceAtLeastTutorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportSolutionSnapshotForStaff(@PathVariable long exerciseId, @RequestParam boolean includeTests) throws IOException {
+        var exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+        if (exercise.isExamExercise()) {
+            examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class)).checkExamExerciseForExampleSolutionAccessElseThrow(exercise);
+        }
+        return exportSolutionSnapshot(exercise, includeTests);
+    }
+
+    private ResponseEntity<Resource> exportSolutionSnapshot(ProgrammingExercise programmingExercise, boolean includeTests) throws IOException {
         if (includeTests && !programmingExercise.isReleaseTestsWithExampleSolution()) {
             throw new AccessForbiddenException(RepositoryType.TESTS.getName(), programmingExercise.getId());
         }
@@ -211,18 +239,57 @@ public class ProgrammingExerciseRepositoryExportResource {
     @EnforceAtLeastStudentInExercise(resourceIdFieldName = "exerciseId")
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @RequestParam(name = "participationId") long participationId) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-        var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
-                .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("No student participation with id " + participationId + " was found for programming exercise " + exerciseId));
-        boolean isOwner = authCheckService.isOwnerOfParticipation(studentParticipation);
-        if (!isOwner) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+        var exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+        var participation = findStudentParticipation(exercise, participationId);
+        if (!authCheckService.isOwnerOfParticipation(participation)) {
+            throw new AccessForbiddenException("Only the repository owner may use this operation");
         }
+        return exportStudentSnapshot(exercise, participation, false);
+    }
+
+    /**
+     * Exports a student's repository snapshot for staff, retaining tutor anonymity.
+     *
+     * @param exerciseId      the programming exercise
+     * @param participationId the student participation belonging to the exercise
+     * @return the repository snapshot without git metadata
+     * @throws IOException if the archive cannot be read
+     */
+    @GetMapping("programming-exercises/{exerciseId}/export-student-repository/for-staff")
+    @EnforceAtLeastTutorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportStudentRepositoryForStaff(@PathVariable long exerciseId, @RequestParam long participationId) throws IOException {
+        var exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+        return exportStudentSnapshot(exercise, findStudentParticipation(exercise, participationId), true);
+    }
+
+    /**
+     * Exports the identified student snapshot for instructor management.
+     *
+     * @param exerciseId      the programming exercise
+     * @param participationId the student participation belonging to the exercise
+     * @return the identified repository snapshot without git metadata
+     * @throws IOException if the archive cannot be read
+     */
+    @GetMapping("programming-exercises/{exerciseId}/export-student-repository/for-instructor")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportIdentifiedStudentRepository(@PathVariable long exerciseId, @RequestParam long participationId) throws IOException {
+        var exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+        return exportStudentSnapshot(exercise, findStudentParticipation(exercise, participationId), false);
+    }
+
+    private ProgrammingExerciseStudentParticipation findStudentParticipation(ProgrammingExercise exercise, long participationId) {
+        return exercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId)).map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("No student participation with id " + participationId + " was found for programming exercise " + exercise.getId()));
+    }
+
+    private ResponseEntity<Resource> exportStudentSnapshot(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation studentParticipation,
+            boolean hideStudentName) throws IOException {
+        long participationId = studentParticipation.getId();
         var exportErrors = new ArrayList<String>();
         long start = System.nanoTime();
 
-        boolean hideStudentName = !isOwner && !authCheckService.isAtLeastInstructorForExercise(programmingExercise, null);
         InputStreamResource resource = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, studentParticipation, hideStudentName, exportErrors);
 
         if (resource == null) {

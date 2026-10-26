@@ -780,6 +780,15 @@ describe('ExamResultSummaryComponent', () => {
             expect(toggleShowSampleSolutionSpy).toHaveBeenCalled();
         });
     });
+    it.each([false, true])('passes explicit management purpose %s to the example-solution download', (instructorView) => {
+        fixture.componentRef.setInput('studentExam', { ...studentExam, exam: { ...exam, exampleSolutionPublicationDate: dayjs().subtract(1, 'hour') } });
+        fixture.componentRef.setInput('instructorView', instructorView);
+        fixture.detectChanges();
+        const download = fixture.debugElement.query(By.directive(ProgrammingExerciseExampleSolutionRepoDownloadComponent));
+        expect(download).not.toBeNull();
+        expect(download.componentInstance.forStaff()).toBe(instructorView);
+    });
+
     it.each([
         { testRun: false, instructorView: false, purpose: 'owner' },
         { testRun: true, instructorView: false, purpose: 'staff-preview' },

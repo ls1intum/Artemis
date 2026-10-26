@@ -846,6 +846,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.http.post<object>(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
     }
 
+    public triggerInstructorBuild(exerciseId: number, participationId: number, baseRepository: boolean): Observable<object> {
+        const command = baseRepository ? 'trigger-editor-build' : 'trigger-instructor-build';
+        return this.http.post<object>(`${this.PROGRAMMING_EXERCISE_RESOURCE_URL}${exerciseId}/participations/${participationId}/${command}`, {});
+    }
+
     public triggerFailedBuild(participationId: number, lastGraded: boolean) {
         const params = new HttpParams().set('lastGraded', lastGraded.toString());
         return this.http.post(`api/programming/participations/${participationId}/trigger-failed-build`, {}, { params, observe: 'response' });

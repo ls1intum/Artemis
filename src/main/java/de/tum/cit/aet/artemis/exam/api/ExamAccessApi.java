@@ -63,6 +63,15 @@ public class ExamAccessApi extends AbstractExamApi {
     }
 
     /**
+     * Checks actual student-exam enrollment and publication for the fixed student snapshot operation.
+     *
+     * @param exercise the exam exercise
+     */
+    public void checkStudentExampleSolutionAccessElseThrow(Exercise exercise) {
+        examAccessService.checkStudentExampleSolutionAccessElseThrow(exercise);
+    }
+
+    /**
      * Checks if the user is allowed to see the exam result.
      * Otherwise, throws a {@link AccessForbiddenException}.
      *

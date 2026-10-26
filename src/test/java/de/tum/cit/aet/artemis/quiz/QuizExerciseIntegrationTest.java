@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertQuizExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.byLessThan;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
@@ -87,6 +89,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -106,6 +109,7 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
+import de.tum.cit.aet.artemis.quiz.web.QuizExerciseResource;
 
 class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
@@ -1417,6 +1421,34 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         // whose id is null) would slip through the child-id-preservation check.
         assertThat(startNowResponse.startDate()).as("START_NOW must persist a batch startTime").isNotNull();
         assertThat(ChronoUnit.MILLIS.between(startNowResponse.startDate(), ZonedDateTime.now())).isCloseTo(0L, byLessThan(2000L));
+    }
+
+    @Autowired
+    private QuizExerciseResource quizLifecycleResource;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void genericLifecycleDispatcherRejectsEndNowWithoutChangingDates() {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
+                QuizMode.BATCHED);
+        var dueDate = quizExerciseTestRepository.findByIdElseThrow(quizExercise.getId()).getDueDate().toInstant();
+        assertThatThrownBy(() -> quizLifecycleResource.performActionForQuizExercise(quizExercise.getId(), QuizAction.END_NOW)).isInstanceOf(BadRequestAlertException.class);
+        assertThat(quizExerciseTestRepository.findByIdElseThrow(quizExercise.getId()).getDueDate().toInstant()).isEqualTo(dueDate);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "tutor1", "editor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testPerformEndNowRequiresInstructorWithoutMutation(String login) throws Exception {
+        QuizExercise quiz = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), QuizMode.BATCHED);
+        var dueDate = quizExerciseTestRepository.findByIdElseThrow(quiz.getId()).getDueDate().toInstant();
+        long submissions = quizSubmissionTestRepository.count();
+        long results = resultRepository.count();
+        userUtilService.changeUser(TEST_PREFIX + login);
+        request.put("/api/quiz/quiz-exercises/" + quiz.getId() + "/end-now", null, FORBIDDEN);
+        assertThat(quizExerciseTestRepository.findByIdElseThrow(quiz.getId()).getDueDate().toInstant()).isEqualTo(dueDate);
+        assertThat(quizSubmissionTestRepository.count()).isEqualTo(submissions);
+        assertThat(resultRepository.count()).isEqualTo(results);
     }
 
     @Test

@@ -449,7 +449,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesAtCommitWithRepositoryTypeAllowedForEditor() throws Exception {
         String markerFileName = commitFileOnlyInTestRepository();
 
-        var files = request.getMap(filesContentBaseUrl + "HEAD&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/repository-files-content/TESTS?commitId=HEAD&participationId=" + participation.getId(),
+                HttpStatus.OK, String.class, String.class);
 
         assertThat(files).containsEntry(markerFileName, testRepositoryOnlyContent);
     }
@@ -459,9 +461,25 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesAtCommitWithRepositoryTypeAllowedForInstructor() throws Exception {
         String markerFileName = commitFileOnlyInTestRepository();
 
-        var files = request.getMap(filesContentBaseUrl + "HEAD&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/repository-files-content/TESTS?commitId=HEAD&participationId=" + participation.getId(),
+                HttpStatus.OK, String.class, String.class);
 
         assertThat(files).containsEntry(markerFileName, testRepositoryOnlyContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void editorRepositoryContentRetainsSourceParticipationAndExerciseBindings() throws Exception {
+        var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        String source = "?commitId=HEAD&participationId=" + participation.getId();
+        request.getMap("/api/programming/programming-exercises/" + otherExercise.getId() + "/repository-files-content/TESTS" + source, HttpStatus.FORBIDDEN, String.class,
+                String.class);
+        String url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/repository-files-content/";
+        request.getMap(url + "USER" + source, HttpStatus.BAD_REQUEST, String.class, String.class);
+        request.getMap(url + "TESTS?commitId=HEAD", HttpStatus.BAD_REQUEST, String.class, String.class);
+        request.getMap(filesContentBaseUrl + "HEAD&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.FORBIDDEN, String.class, String.class);
     }
 
     /**

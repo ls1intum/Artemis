@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -445,24 +446,38 @@ public class ProgrammingExerciseExportImportResource {
      * @throws IOException if submissions can't be zippedRequestBody
      */
     @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastTutorInExercise
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
-
         if (repositoryExportOptions.exportAllParticipants()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+            throw new AccessForbiddenException("Exporting all participants requires the instructor export operation");
         }
+        return exportSelectedSubmissions(exerciseId, participationIds, repositoryExportOptions.copyWithAnonymizeRepository(true));
+    }
 
-        // Only instructors or higher may override the anonymization setting
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
-            repositoryExportOptions = repositoryExportOptions.copyWithAnonymizeRepository(true);
+    /**
+     * Exports selected repositories with instructor identity options, keeping participation IDs as the selector.
+     *
+     * @param exerciseId              the programming exercise
+     * @param participationIds        selected participation IDs
+     * @param repositoryExportOptions archive and content options
+     * @return the repository archive
+     * @throws IOException if the archive cannot be read
+     */
+    @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}/for-instructor")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportSelectedSubmissionsForInstructor(@PathVariable long exerciseId, @PathVariable String participationIds,
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+        if (repositoryExportOptions.exportAllParticipants()) {
+            throw new AccessForbiddenException("Use the instructor participant identifiers operation to export all participants");
         }
+        return exportSelectedSubmissions(exerciseId, participationIds, repositoryExportOptions);
+    }
 
+    private ResponseEntity<Resource> exportSelectedSubmissions(long exerciseId, String participationIds, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         if (repositoryExportOptions.filterLateSubmissionsDate() == null) {
             repositoryExportOptions = repositoryExportOptions.copyWith(true, programmingExercise.getDueDate());
         }

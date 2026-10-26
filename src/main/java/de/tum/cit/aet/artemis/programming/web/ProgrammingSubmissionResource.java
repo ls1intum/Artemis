@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckSe
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -162,14 +164,52 @@ public class ProgrammingSubmissionResource {
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        // The editor is allowed to trigger an instructor build for template and solution participations,
-        // but not for student participations. The instructor however, might trigger student participations.
-        if (submissionType == SubmissionType.INSTRUCTOR && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise())
-                && !(authCheckService.isAtLeastEditorForExercise(participation.getExercise())
-                        && (participation instanceof TemplateProgrammingExerciseParticipation || participation instanceof SolutionProgrammingExerciseParticipation))) {
-            throw new AccessForbiddenException();
+        if (submissionType != SubmissionType.MANUAL) {
+            throw new AccessForbiddenException("The ordinary build operation only accepts manual submissions");
         }
+        return triggerSingleBuild(programmingExerciseParticipation, SubmissionType.MANUAL);
+    }
 
+    /**
+     * Triggers an instructor submission for one student participation, preserving the single-build response and notifications.
+     *
+     * @param exerciseId      the owning exercise
+     * @param participationId the student participation
+     * @return an empty successful response once the submission has been handed to the build service
+     */
+    @PostMapping("programming-exercises/{exerciseId}/participations/{participationId}/trigger-instructor-build")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> triggerSingleStudentInstructorBuild(@PathVariable long exerciseId, @PathVariable long participationId) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation student) || !participation.getExercise().getId().equals(exerciseId)) {
+            throw new AccessForbiddenException("Select a student participation belonging to this exercise");
+        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        return triggerSingleBuild(student, SubmissionType.INSTRUCTOR);
+    }
+
+    /**
+     * Triggers an instructor submission for an editor's template or solution participation.
+     *
+     * @param exerciseId      the owning exercise
+     * @param participationId the template or solution participation
+     * @return an empty successful response once the submission has been handed to the build service
+     */
+    @PostMapping("programming-exercises/{exerciseId}/participations/{participationId}/trigger-editor-build")
+    @EnforceAtLeastEditorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> triggerSingleEditorBuild(@PathVariable long exerciseId, @PathVariable long participationId) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        if (!(participation instanceof TemplateProgrammingExerciseParticipation || participation instanceof SolutionProgrammingExerciseParticipation)
+                || !participation.getExercise().getId().equals(exerciseId)) {
+            throw new AccessForbiddenException("Select a template or solution participation belonging to this exercise");
+        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        return triggerSingleBuild((ProgrammingExerciseParticipation) participation, SubmissionType.INSTRUCTOR);
+    }
+
+    private ResponseEntity<Void> triggerSingleBuild(ProgrammingExerciseParticipation programmingExerciseParticipation, SubmissionType submissionType) {
         try {
             var submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
             programmingTriggerService.triggerBuildAndNotifyUser(submission);

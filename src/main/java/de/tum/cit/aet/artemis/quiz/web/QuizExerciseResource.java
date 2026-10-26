@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -139,6 +140,25 @@ public class QuizExerciseResource {
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId,
             @Parameter(schema = @Schema(type = "string", allowableValues = { "start-now", "end-now", "set-visible" })) @PathVariable QuizAction action) {
+        if (action == QuizAction.END_NOW) {
+            throw new BadRequestAlertException("Ending a quiz requires the dedicated instructor operation", ENTITY_NAME, "invalidAction");
+        }
+        return performQuizAction(quizExerciseId, action);
+    }
+
+    /**
+     * Ends a quiz immediately and calculates the results.
+     *
+     * @param quizExerciseId the quiz exercise
+     * @return the updated quiz dates
+     */
+    @PutMapping("quiz-exercises/{quizExerciseId}/end-now")
+    @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<QuizExerciseDatesDTO> endQuizExercise(@PathVariable Long quizExerciseId) {
+        return performQuizAction(quizExerciseId, QuizAction.END_NOW);
+    }
+
+    private ResponseEntity<QuizExerciseDatesDTO> performQuizAction(Long quizExerciseId, QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithAuthorities();

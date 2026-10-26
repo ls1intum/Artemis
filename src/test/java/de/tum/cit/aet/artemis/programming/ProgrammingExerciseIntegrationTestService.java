@@ -2081,7 +2081,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testResetExerciseNotFound() throws Exception {
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
-        request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
+        request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.FORBIDDEN);
     }
 
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
@@ -2094,7 +2094,7 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
-        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
+        request.put(defaultResetEndpoint(programmingExercise.getId()) + "-participations", resetOptions, HttpStatus.OK);
 
         // No participations exist after reset
         assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).isEmpty();

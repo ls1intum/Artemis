@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -125,19 +125,39 @@ public class ProgrammingExerciseDeletionResource {
      * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the reset was successful.
      */
     @PutMapping("programming-exercises/{exerciseId}/reset")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastEditorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
+        if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
+            throw new AccessForbiddenException("Deleting participations requires the instructor reset operation");
+        }
+        return executeReset(exerciseId, programmingExerciseResetOptionsDTO);
+    }
+
+    /**
+     * Resets student participations, submissions and results, optionally recreating the base build plans.
+     *
+     * @param exerciseId the programming exercise
+     * @param options    the explicitly selected reset actions
+     * @return an empty successful response
+     */
+    @PutMapping("programming-exercises/{exerciseId}/reset-participations")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> resetParticipations(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO options) {
+        if (!options.deleteParticipationsSubmissionsAndResults()) {
+            throw new BadRequestAlertException("Select participation deletion for this operation", ENTITY_NAME, "missingResetAction");
+        }
+        return executeReset(exerciseId, options);
+    }
+
+    private ResponseEntity<Void> executeReset(Long exerciseId, ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
         log.debug("REST request to reset programming exercise {} with options {}", exerciseId, programmingExerciseResetOptionsDTO);
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         final var user = userRepository.getUserWithAuthorities();
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
 
-        if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-        }
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             if (lease.coordinated()) {
                 programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);

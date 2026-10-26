@@ -9,6 +9,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -170,8 +171,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
                 false);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
-        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK,
-                new HttpHeaders());
+        request.postWithoutLocation("/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/trigger-instructor-build", null,
+                HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(submissions).hasSize(1);
@@ -184,8 +185,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
 
         // Trigger the call again and make sure that the submission shouldn't be recreated
-        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK,
-                new HttpHeaders());
+        request.postWithoutLocation("/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/trigger-instructor-build", null,
+                HttpStatus.OK, new HttpHeaders());
         var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.getFirst().getId()).isEqualTo(submission.getId());
@@ -203,8 +204,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
                 false);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
-        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.NOT_FOUND,
-                new HttpHeaders());
+        request.postWithoutLocation("/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/trigger-instructor-build", null,
+                HttpStatus.NOT_FOUND, new HttpHeaders());
     }
 
     @Test
@@ -225,6 +226,87 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         String url = "/api/programming/participations/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ordinaryBuildRejectsInstructorCommandWithoutCreatingASubmission() throws Exception {
+        var participation = programmingExerciseStudentParticipation;
+        long submissions = submissionRepository.count();
+        long results = resultRepository.count();
+        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.FORBIDDEN,
+                new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(submissions);
+        assertThat(resultRepository.count()).isEqualTo(results);
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(ProgrammingExerciseParticipation.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "tutor1", "editor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void studentInstructorBuildRequiresInstructorWithoutCreatingSubmission(String login) throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + login);
+        long submissions = submissionRepository.count();
+        long results = resultRepository.count();
+        request.postWithoutLocation(
+                "/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + programmingExerciseStudentParticipation.getId() + "/trigger-instructor-build",
+                null, HttpStatus.FORBIDDEN, new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(submissions);
+        assertThat(resultRepository.count()).isEqualTo(results);
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(ProgrammingExerciseParticipation.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void editorBuildRejectsStudentParticipationWithoutCreatingSubmission() throws Exception {
+        long submissions = submissionRepository.count();
+        long results = resultRepository.count();
+        request.postWithoutLocation(
+                "/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + programmingExerciseStudentParticipation.getId() + "/trigger-editor-build", null,
+                HttpStatus.FORBIDDEN, new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(submissions);
+        assertThat(resultRepository.count()).isEqualTo(results);
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(ProgrammingExerciseParticipation.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorBuildRejectsBaseKindAndForeignExerciseWithoutCreatingSubmission() throws Exception {
+        long submissions = submissionRepository.count();
+        String url = "/api/programming/programming-exercises/" + exercise.getId() + "/participations/";
+        request.postWithoutLocation(url + exercise.getTemplateParticipation().getId() + "/trigger-instructor-build", null, HttpStatus.FORBIDDEN, new HttpHeaders());
+        var other = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        long exerciseId = ExerciseUtilService.getFirstExerciseWithType(other, ProgrammingExercise.class).getId();
+        request.postWithoutLocation(
+                "/api/programming/programming-exercises/" + exerciseId + "/participations/" + programmingExerciseStudentParticipation.getId() + "/trigger-instructor-build", null,
+                HttpStatus.FORBIDDEN, new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(submissions);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void editorCanTriggerBaseInstructorSubmission(boolean template) throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+        var participation = template ? exercise.getTemplateParticipation() : exercise.getSolutionParticipation();
+        jenkinsRequestMockProvider.mockTriggerBuild(exercise.getProjectKey(), participation.getBuildPlanId(), false);
+        request.postWithoutLocation("/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/trigger-editor-build", null,
+                HttpStatus.OK, new HttpHeaders());
+        assertThat(submissionRepository.findAllByParticipationIdWithResults(participation.getId())).isNotEmpty()
+                .allSatisfy(submission -> assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "tutor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void editorBuildRequiresEditorWithoutCreatingOrQueuingSubmission(String login) throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + login);
+        long before = submissionRepository.count();
+        request.postWithoutLocation(
+                "/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + exercise.getTemplateParticipation().getId() + "/trigger-editor-build", null,
+                HttpStatus.FORBIDDEN, new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(before);
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(ProgrammingExerciseParticipation.class));
     }
 
     @Test

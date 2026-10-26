@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -568,30 +569,58 @@ public class ProgrammingExerciseParticipationResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @RequestParam(name = "commitId") String commitId,
             @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) {
+        if (participationId == null || repositoryType != null) {
+            throw new BadRequestAlertException("Provide a participationId; editor repositories use the editor content operation", ENTITY_NAME, "invalidParameters");
+        }
         try {
-            if (participationId != null) {
-                Participation participation = participationRepository.findByIdElseThrow(participationId);
-                ProgrammingExerciseParticipation programmingExerciseParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId,
-                        participation, ENTITY_NAME);
-                ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
-                participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-                checkParticipantRepositoryVisibilityElseThrow(participation);
-                // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
-                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation, null));
-            }
-            else if (repositoryType != null) {
-                ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-                var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
-                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation, null));
-            }
-            else {
-                throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
-            }
+            Participation participation = participationRepository.findByIdElseThrow(participationId);
+            ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
+                    ENTITY_NAME);
+            participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+            checkParticipantRepositoryVisibilityElseThrow(participation);
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, null));
         }
         catch (IOException e) {
             log.error("Could not read files at commit {} for exercise {}", commitId, exerciseId, e);
             throw new InternalServerErrorAlertException("Could not read files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
+        }
+    }
+
+    /**
+     * Reads an exercise repository for the editor commit details view.
+     *
+     * @param exerciseId     the owning exercise
+     * @param commitId       the requested commit
+     * @param repositoryType the explicit editor repository kind
+     * @param repositoryId   the auxiliary repository ID, required for auxiliary repositories
+     * @return repository text files at the commit
+     */
+    @GetMapping("programming-exercises/{exerciseId}/files-content-commit-details/for-editor")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<Map<String, String>> getEditorRepositoryFilesAtCommit(@PathVariable long exerciseId, @RequestParam String commitId,
+            @RequestParam RepositoryType repositoryType, @RequestParam(required = false) Long repositoryId) {
+        var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+        var repositoryUri = switch (repositoryType) {
+            case TEMPLATE -> exercise.getVcsTemplateRepositoryUri();
+            case SOLUTION -> exercise.getVcsSolutionRepositoryUri();
+            case TESTS -> exercise.getVcsTestRepositoryUri();
+            case AUXILIARY -> {
+                if (repositoryId == null) {
+                    throw new BadRequestAlertException("Select an auxiliary repository", ENTITY_NAME, "missingRepositoryId");
+                }
+                var auxiliary = auxiliaryRepositoryRepository.findByIdElseThrow(repositoryId);
+                if (!auxiliary.getExercise().getId().equals(exerciseId)) {
+                    throw new BadRequestAlertException("Invalid repository id", ENTITY_NAME, "invalidRepositoryId");
+                }
+                yield auxiliary.getVcsRepositoryUri();
+            }
+            default -> throw new BadRequestAlertException("Select an exercise repository", ENTITY_NAME, "invalidRepositoryType");
+        };
+        try {
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(repositoryUri, commitId, null));
+        }
+        catch (IOException e) {
+            throw new InternalServerErrorAlertException("Could not read editor repository files at commit " + commitId, ENTITY_NAME, "fileReadError");
         }
     }
 
@@ -609,6 +638,27 @@ public class ProgrammingExerciseParticipationResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getSelectedParticipationRepositoryFilesAtCommit(@PathVariable long exerciseId, @RequestParam String commitId,
             @RequestParam long participationId, @RequestBody Set<String> filePaths) {
+        Set<String> validFilePaths = validateSelectedFilePaths(filePaths);
+
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
+                ENTITY_NAME);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        // Only a recorded submission of this participation is an assessment snapshot; a full hash alone can also name unsubmitted code.
+        if (!ObjectId.isId(commitId) || !submissionService.isCommitSubmitted(participationId, commitId)) {
+            checkParticipantRepositoryVisibilityElseThrow(participation);
+        }
+        try {
+            return ResponseEntity
+                    .ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, validFilePaths));
+        }
+        catch (IOException e) {
+            log.error("Could not read selected files at commit {} for exercise {}", commitId, exerciseId, e);
+            throw new InternalServerErrorAlertException("Could not read selected files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
+        }
+    }
+
+    private Set<String> validateSelectedFilePaths(Set<String> filePaths) {
         if (filePaths != null && filePaths.size() > MAX_SELECTED_FILE_PATHS) {
             throw new BadRequestAlertException("Too many selected file paths", ENTITY_NAME, "tooManySelectedFilePaths");
         }
@@ -630,22 +680,7 @@ public class ProgrammingExerciseParticipationResource {
             }
         }
 
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-        ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
-                ENTITY_NAME);
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        // Only a recorded submission of this participation is an assessment snapshot; a full hash alone can also name unsubmitted code.
-        if (!ObjectId.isId(commitId) || !submissionService.isCommitSubmitted(participationId, commitId)) {
-            checkParticipantRepositoryVisibilityElseThrow(participation);
-        }
-        try {
-            return ResponseEntity
-                    .ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, validFilePaths));
-        }
-        catch (IOException e) {
-            log.error("Could not read selected files at commit {} for exercise {}", commitId, exerciseId, e);
-            throw new InternalServerErrorAlertException("Could not read selected files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
-        }
+        return validFilePaths;
     }
 
     /**

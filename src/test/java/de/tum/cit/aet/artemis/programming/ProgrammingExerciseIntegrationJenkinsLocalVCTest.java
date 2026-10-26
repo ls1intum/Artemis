@@ -755,6 +755,12 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testResetOnlyRecreateBuildPlansAsEditorSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansSuccess();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
         programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansSuccess();

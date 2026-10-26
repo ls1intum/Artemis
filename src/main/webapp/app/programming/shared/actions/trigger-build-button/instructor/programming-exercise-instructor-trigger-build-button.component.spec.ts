@@ -10,11 +10,12 @@ import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/pr
 import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { Subject, of } from 'rxjs';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { DialogService } from 'primeng/dynamicdialog';
 
@@ -42,6 +43,7 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
@@ -59,9 +61,33 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         vi.restoreAllMocks();
     });
 
+    it.each([
+        [ParticipationType.PROGRAMMING, 'trigger-instructor-build'],
+        [ParticipationType.TEMPLATE, 'trigger-editor-build'],
+        [ParticipationType.SOLUTION, 'trigger-editor-build'],
+    ])('uses the explicit command for known participation kind %s', (type, command) => {
+        fixture.componentRef.setInput('participation', { id: 567, type });
+        comp.lastResultIsManual.set(false);
+        comp.triggerBuild(new MouseEvent('click'));
+        const http = TestBed.inject(HttpTestingController);
+        const req = http.expectOne({ method: 'POST', url: `api/programming/programming-exercises/456/participations/567/${command}` });
+        expect(req.request.body).toEqual({});
+        req.flush({});
+        http.verify();
+    });
+
+    it('keeps an explicitly manual operation on the ordinary participation build route', () => {
+        comp.triggerWithType(SubmissionType.MANUAL).subscribe();
+        const http = TestBed.inject(HttpTestingController);
+        const req = http.expectOne({ method: 'POST', url: 'api/programming/participations/567/trigger-build?submissionType=MANUAL' });
+        expect(req.request.body).toEqual({});
+        req.flush({});
+        http.verify();
+    });
+
     it('should trigger build', () => {
         vi.spyOn(dialogService, 'open');
-        vi.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
+        vi.spyOn(submissionService, 'triggerInstructorBuild').mockReturnValue(of());
 
         comp.triggerBuild({ stopPropagation: vi.fn() } as unknown as MouseEvent);
 
@@ -78,7 +104,7 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
 
         dialogClose.next({ confirmed: true });
 
-        expect(submissionService.triggerBuild).toHaveBeenCalledOnce();
-        expect(submissionService.triggerBuild).toHaveBeenCalledWith(participation.id, SubmissionType.INSTRUCTOR);
+        expect(submissionService.triggerInstructorBuild).toHaveBeenCalledOnce();
+        expect(submissionService.triggerInstructorBuild).toHaveBeenCalledWith(456, participation.id, false);
     });
 });

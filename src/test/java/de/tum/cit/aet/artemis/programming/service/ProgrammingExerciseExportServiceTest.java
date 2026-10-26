@@ -44,6 +44,8 @@ import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -56,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -107,6 +110,12 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private AuxiliaryRepositoryService auxiliaryRepositoryService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExamTestRepository examTestRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -615,30 +624,203 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportStudentSnapshot_asTutor_hidesParticipantInFilename() throws Exception {
-        File archive = exportStudentSnapshot();
+        File archive = exportStudentSnapshot("/for-staff");
         assertThat(archive.getName()).doesNotContain(TEST_PREFIX + "student1").endsWith("-student-submission.git.zip");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void exportStudentSnapshot_asOwner_keepsParticipantInFilename() throws Exception {
-        assertThat(exportStudentSnapshot().getName()).contains(TEST_PREFIX + "student1");
+        assertThat(exportStudentSnapshot("").getName()).contains(TEST_PREFIX + "student1");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportStudentSnapshot_asInstructor_keepsParticipantInFilename() throws Exception {
-        assertThat(exportStudentSnapshot().getName()).contains(TEST_PREFIX + "student1");
+        assertThat(exportStudentSnapshot("/for-instructor").getName()).contains(TEST_PREFIX + "student1");
     }
 
-    private File exportStudentSnapshot() throws Exception {
+    private File exportStudentSnapshot(String audience) throws Exception {
         var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
         File archive = request.getFile(
-                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository?participationId=" + participation.getId(), HttpStatus.OK);
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository" + audience + "?participationId=" + participation.getId(),
+                HttpStatus.OK);
         byte[] zip = Files.readAllBytes(archive.toPath());
         assertThat(ZipTestUtil.readEntryAsString(zip, "src/Main.java")).isEqualTo("public class Main {}");
         assertThat(ZipTestUtil.listEntryNames(zip)).noneMatch(name -> name.contains(".git/"));
         return archive;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportByParticipationIds_asInstructor_stillAnonymizesTheTutorOperation() throws Exception {
+        var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
+        var options = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
+        File archive = request.postWithResponseBodyFile(exportByParticipationIdsUrl(programmingExercise, participation), options, HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.listEntryNames(zip)).noneMatch(name -> name.contains(TEST_PREFIX + "student1"));
+        assertThat(ZipTestUtil.readEntryAsString(zip, "-student-submission.git/src/Main.java")).isEqualTo("public class Main {}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportByParticipationIds_asInstructor_cannotSelectAllThroughTutorOperation() throws Exception {
+        var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
+        request.post(exportByParticipationIdsUrl(programmingExercise, participation), ARCHIVAL_OPTIONS, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportStudentSnapshot_asInstructor_cannotUseOwnerOperationForAnotherStudent() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository?participationId=" + participation.getId(),
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportSolutionSnapshot_asInstructor_cannotUseUnpublishedStudentOperation() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=false", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void editorResetRejectsDestructiveOptionEvenForInstructorWithoutDeletingParticipations() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        long before = studentParticipationTestRepository.count();
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/reset", new ProgrammingExerciseResetOptionsDTO(true, false), HttpStatus.FORBIDDEN);
+        assertThat(studentParticipationTestRepository.count()).isEqualTo(before);
+        assertThat(studentParticipationTestRepository.existsById(participation.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void studentExamSnapshotRequiresAnAttemptEvenForInstructor() throws Exception {
+        createExamSnapshotFixture();
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=false", HttpStatus.FORBIDDEN);
+    }
+
+    private void createExamSnapshotFixture() throws Exception {
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusDays(1));
+        examTestRepository.save(exam);
+        createAndSeedBaseRepositories();
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void tutorStudentSnapshotRemainsAnonymousEvenForInstructor() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        var archive = request.getFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository/for-staff?participationId=" + participation.getId(),
+                HttpStatus.OK);
+        assertThat(archive.getName()).doesNotContain(TEST_PREFIX + "student1");
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, "src/Main.java")).isEqualTo("public class Main {}");
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(zip);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorSelectedExportKeepsIdentifiedHistoryAndRejectsForeignParticipation() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        var options = new RepositoryExportOptionsDTO();
+        var archive = request.postWithResponseBodyFile(exportByParticipationIdsUrl(programmingExercise, participation) + "/for-instructor", options, HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, TEST_PREFIX + "student1/src/Main.java")).isEqualTo("public class Main {}");
+        assertThat(ZipTestUtil.readEntryAsString(zip, TEST_PREFIX + "student1/.git/HEAD")).isNotBlank();
+        var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var other = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        request.post(exportByParticipationIdsUrl(other, participation) + "/for-instructor", options, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void tutorCannotUseIdentifiedSingleOrSelectedExport() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        request.post(exportByParticipationIdsUrl(programmingExercise, participation) + "/for-instructor", new RepositoryExportOptionsDTO(), HttpStatus.FORBIDDEN);
+        request.getFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository/for-instructor?participationId=" + participation.getId(),
+                HttpStatus.FORBIDDEN);
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository?participationId=" + participation.getId(),
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorAllExportKeepsEverySelectedAndUnselectedParticipant() throws Exception {
+        seedStudentParticipations(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        File archive = request.postWithResponseBodyFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/ALL",
+                ARCHIVAL_OPTIONS, HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, TEST_PREFIX + "student1/src/Main.java")).isEqualTo("public class Main {}");
+        assertThat(ZipTestUtil.readEntryAsString(zip, TEST_PREFIX + "student2/src/Main.java")).isEqualTo("public class Main {}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void fixedStudentExamSnapshotAllowsAnEnrolledInstructorAndRetainsPublicationAndTestsRules() throws Exception {
+        assertEnrolledExamSnapshot(TEST_PREFIX + "instructor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void fixedStudentExamSnapshotAllowsAnEnrolledStudentAndRetainsPublicationAndTestsRules() throws Exception {
+        assertEnrolledExamSnapshot(TEST_PREFIX + "student1");
+    }
+
+    private void assertEnrolledExamSnapshot(String login) throws Exception {
+        createExamSnapshotFixture();
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        examUtilService.addStudentExamWithUser(exam, login);
+        String url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=";
+        byte[] zip = Files.readAllBytes(request.getFile(url + "false", HttpStatus.OK).toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, "src/Main.java")).isEqualTo("public class Main { int solved; }");
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(zip);
+        request.getFile(url + "true", HttpStatus.FORBIDDEN);
+        programmingExercise.setReleaseTestsWithExampleSolution(true);
+        programmingExerciseRepository.save(programmingExercise);
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(Files.readAllBytes(request.getFile(url + "true", HttpStatus.OK).toPath()));
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        examTestRepository.save(exam);
+        request.getFile(url + "false", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void staffSolutionSnapshotKeepsCoursePrepublicationFormatButCannotBypassExamPublication() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        String suffix = "/export-student-requested-repository/for-staff?includeTests=false";
+        var archive = request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + suffix, HttpStatus.OK);
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(Files.readAllBytes(archive.toPath()));
+        createExamSnapshotFixture();
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        examTestRepository.save(exam);
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + suffix, HttpStatus.FORBIDDEN);
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusDays(1));
+        examTestRepository.save(exam);
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + suffix, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void editorCannotDeleteParticipationsThroughEitherResetOperation() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        long before = studentParticipationTestRepository.count();
+        var options = new ProgrammingExerciseResetOptionsDTO(true, false);
+        String url = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        request.put(url + "/reset", options, HttpStatus.FORBIDDEN);
+        request.put(url + "/reset-participations", options, HttpStatus.FORBIDDEN);
+        assertThat(studentParticipationTestRepository.count()).isEqualTo(before);
+        assertThat(studentParticipationTestRepository.existsById(participation.getId())).isTrue();
     }
 
     private String exportByParticipationIdsUrl(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {

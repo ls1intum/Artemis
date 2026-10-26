@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -237,12 +238,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     /**
      * GET /repository-files-content : Gets the files of the repository with the given participationId at the given commitId.
-     * Reading the participation repository requires read access to that participation. Selecting a different repository via {@code repositoryType} is an editor-level
-     * operation and therefore additionally requires at least editor rights for the exercise.
+     * Reading the participation repository requires read access to that participation. Editor repository selectors use the explicit editor content operation.
      *
      * @param participationId the participationId of the repository we want to get the files from
      * @param commitId        the commitId of the repository we want to get the files from
-     * @param repositoryType  the type of the repository (template, solution, tests); requires at least editor rights for the exercise
+     * @param repositoryType  legacy selector, rejected in favor of the explicit editor content operation
      * @return a map with the file path as key and the file content as value
      */
     @FeatureUsage(UserFeature.PROGRAMMING_REPOSITORY_HISTORY)
@@ -259,11 +259,37 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         User user = userRepository.getUserWithAuthorities();
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, programmingExercise, RepositoryActionType.READ);
         if (repositoryType != null) {
-            // The check above only authorizes the participation repository itself. Selecting a different repository via repositoryType is an editor-level operation.
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+            throw new AccessForbiddenException("Editor repositories require the explicit editor content operation");
         }
 
         return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation, null)));
+    }
+
+    /**
+     * Reads an editor repository while retaining access to the source participation required by the repository history workflow.
+     *
+     * @param exerciseId      the owning exercise
+     * @param participationId the source participation, whose repository must be accessible
+     * @param repositoryType  the editor repository kind
+     * @param commitId        the requested commit
+     * @return repository text files at the requested commit
+     */
+    @GetMapping("programming-exercises/{exerciseId}/repository-files-content/{repositoryType}")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<Map<String, String>> getEditorFilesAtCommit(@PathVariable long exerciseId, @RequestParam long participationId,
+            @PathVariable RepositoryType repositoryType, @RequestParam String commitId) {
+        var source = getProgrammingExerciseParticipation(participationId);
+        var exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(source);
+        if (!exercise.getId().equals(exerciseId)) {
+            throw new AccessForbiddenException("The source participation does not belong to the requested exercise");
+        }
+        repositoryAccessService.checkAccessRepositoryElseThrow(source, userRepository.getUserWithAuthorities(), exercise, RepositoryActionType.READ);
+        if (repositoryType != RepositoryType.TEMPLATE && repositoryType != RepositoryType.SOLUTION && repositoryType != RepositoryType.TESTS) {
+            throw new BadRequestAlertException("Select a template, solution or tests repository", "repository", "invalidRepositoryType");
+        }
+        var loadedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+        var target = repositoryType == RepositoryType.TEMPLATE ? loadedExercise.getTemplateParticipation() : loadedExercise.getSolutionParticipation();
+        return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(loadedExercise, commitId, repositoryType, target, null)));
     }
 
     /**

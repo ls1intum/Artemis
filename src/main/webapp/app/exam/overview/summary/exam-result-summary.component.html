@@ -125,6 +125,7 @@
                                     [exerciseId]="exercise.id!"
                                     [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
                                     [displayedOnExamSummary]="true"
+                                    [forStaff]="instructorView()"
                                 />
                                 @if (exerciseInfos()[exercise.id!].releaseTestsWithExampleSolution) {
                                     <jhi-programming-exercise-example-solution-repo-download
@@ -133,6 +134,7 @@
                                         [includeTests]="true"
                                         [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
                                         [displayedOnExamSummary]="true"
+                                        [forStaff]="instructorView()"
                                         [tumAetUiTooltip]="'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate"
                                     />
                                 }
