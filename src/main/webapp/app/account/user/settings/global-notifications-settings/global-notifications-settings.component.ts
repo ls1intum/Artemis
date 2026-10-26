@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { GlobalNotificationSettingsService } from './global-notifications-settings.service';
+import { GlobalNotificationSettingApi } from 'app/openapi/api/global-notification-setting-api';
+import { GlobalNotificationSetting } from 'app/openapi/model/global-notification-setting';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +15,8 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+type GlobalNotificationType = GlobalNotificationSetting['notificationType'];
+
 export const GLOBAL_NOTIFICATION_TYPES = {
     NEW_LOGIN: 'NEW_LOGIN',
     NEW_PASSKEY_ADDED: 'NEW_PASSKEY_ADDED',
@@ -23,9 +26,7 @@ export const GLOBAL_NOTIFICATION_TYPES = {
     MAVEN_CENTRAL_RATE_LIMIT: 'MAVEN_CENTRAL_RATE_LIMIT',
     PASSWORD_CHANGED: 'PASSWORD_CHANGED',
     CREDENTIALS_REVOKED: 'CREDENTIALS_REVOKED',
-} as const;
-
-export type GlobalNotificationType = keyof typeof GLOBAL_NOTIFICATION_TYPES;
+} as const satisfies Record<GlobalNotificationType, GlobalNotificationType>;
 
 interface NotificationTypeLink {
     type: GlobalNotificationType;
@@ -40,7 +41,7 @@ interface NotificationTypeLink {
     styleUrls: ['../user-settings.scss'],
 })
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
-    private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
+    private globalNotificationSettingApi = inject(GlobalNotificationSettingApi);
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
 
@@ -90,8 +91,8 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
      */
     loadSettings(): void {
         this.getAllSub?.unsubscribe();
-        this.getAllSub = this.globalNotificationSettingsService.getAll().subscribe({
-            next: (settings: { [key: string]: boolean } | undefined) => {
+        this.getAllSub = this.globalNotificationSettingApi.getGlobalNotificationSettings().subscribe({
+            next: (settings) => {
                 this.notificationSettings.set(settings);
             },
             error: (error) => {
@@ -107,7 +108,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
      */
     updateSetting(type: GlobalNotificationType, enabled: boolean): void {
         this.updateSub?.unsubscribe();
-        this.updateSub = this.globalNotificationSettingsService.update(type, enabled).subscribe({
+        this.updateSub = this.globalNotificationSettingApi.updateGlobalNotificationSetting(type, { enabled }).subscribe({
             next: () => {
                 const current = this.notificationSettings();
                 if (current) {

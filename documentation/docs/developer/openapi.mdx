@@ -9,12 +9,14 @@ import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 We migrate the Artemis server to an API-driven development approach using OpenAPI specifications. This especially helps us with client generation to avoid subtle bugs that are often unnoticed in code reviews.
 
-Currently, the OpenAPI specs are generated for the `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, and `quiz` modules. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
+Currently, the OpenAPI specs are generated for the `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, and `quiz` modules, plus notification global settings. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
 
 <Callout variant={CalloutVariant.info}>
     If you want to make use of the OpenAPI specs, you need to ensure that the endpoint you are working on is a DTO-only endpoint. This means that the endpoint should not return or
     expect any domain objects, but only Data Transfer Objects (DTOs) or primitives.
 </Callout>
+
+The schema customizer marks primitive record components as required by default. For an input whose omitted value is deliberately accepted, declare `@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)` on that component and document its default and null handling. The customizer respects this explicit override; it does not change request validation or Jackson defaults.
 
 ## Generating OpenAPI Specs and Client Files
 

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { firstValueFrom } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { GLOBAL_NOTIFICATION_TYPES, GlobalNotificationsSettingsComponent } from './global-notifications-settings.component';
-import { GlobalNotificationSettingsService } from './global-notifications-settings.service';
+import { GlobalNotificationSettingApi } from 'app/openapi/api/global-notification-setting-api';
+import { GlobalNotificationSetting } from 'app/openapi/model/global-notification-setting';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -23,15 +23,17 @@ describe('GlobalNotificationsSettingsComponent', () => {
     let alertService: AlertService;
 
     const mockService = {
-        getAll: vi.fn(),
-        update: vi.fn(),
+        getGlobalNotificationSettings: vi.fn<GlobalNotificationSettingApi['getGlobalNotificationSettings']>(),
+        updateGlobalNotificationSetting: vi.fn<GlobalNotificationSettingApi['updateGlobalNotificationSetting']>(),
     };
 
     beforeEach(async () => {
+        mockService.getGlobalNotificationSettings.mockReset();
+        mockService.updateGlobalNotificationSetting.mockReset();
         await TestBed.configureTestingModule({
             imports: [FormsModule, GlobalNotificationsSettingsComponent, MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe), MockDirective(RouterLink)],
             providers: [
-                { provide: GlobalNotificationSettingsService, useValue: mockService },
+                { provide: GlobalNotificationSettingApi, useValue: mockService },
                 MockProvider(ProfileService, { isModuleFeatureActive: vi.fn().mockReturnValue(true) }),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -56,25 +58,94 @@ describe('GlobalNotificationsSettingsComponent', () => {
         [GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED]: false,
     };
 
-    it('should load notification settings on init', async () => {
-        mockService.getAll.mockReturnValue(of(mockSettings));
+    const updatedSetting: GlobalNotificationSetting = { id: 1, userId: 2, notificationType: 'NEW_LOGIN', enabled: false };
+
+    it('should leave settings undefined until a response arrives', () => {
+        const pending = new Subject<Record<string, boolean>>();
+        mockService.getGlobalNotificationSettings.mockReturnValue(pending);
 
         component.ngOnInit();
-        await firstValueFrom(mockService.getAll());
 
-        expect(mockService.getAll).toHaveBeenCalled();
+        expect(component.notificationSettings()).toBeUndefined();
+        pending.next(mockSettings);
         expect(component.notificationSettings()).toEqual(mockSettings);
     });
 
-    it('should update a notification setting', async () => {
-        mockService.update.mockReturnValue(of({}));
+    it('should cancel a superseded load and ignore its response', () => {
+        const first = new Subject<Record<string, boolean>>();
+        const second = new Subject<Record<string, boolean>>();
+        mockService.getGlobalNotificationSettings.mockReturnValueOnce(first).mockReturnValueOnce(second);
+
+        component.loadSettings();
+        component.loadSettings();
+        first.next({ NEW_LOGIN: false });
+
+        expect(first.observed).toBe(false);
+        expect(component.notificationSettings()).toBeUndefined();
+        second.next(mockSettings);
+        expect(component.notificationSettings()).toEqual(mockSettings);
+    });
+
+    it('should cancel an earlier save without applying its result', () => {
+        const first = new Subject<GlobalNotificationSetting>();
+        const second = new Subject<GlobalNotificationSetting>();
+        mockService.updateGlobalNotificationSetting.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        component.notificationSettings.set(mockSettings);
+
+        component.updateSetting('NEW_LOGIN', false);
+        component.updateSetting('NEW_LOGIN', true);
+        first.next(updatedSetting);
+
+        expect(first.observed).toBe(false);
+        expect(alertService.success).not.toHaveBeenCalled();
+        second.next({ ...updatedSetting, enabled: true });
+        expect(component.notificationSettings()?.NEW_LOGIN).toBe(true);
+        expect(alertService.success).toHaveBeenCalledExactlyOnceWith('artemisApp.userSettings.globalNotificationSettings.updateSuccess');
+    });
+
+    it('should cancel pending loads and saves when destroyed', () => {
+        const load = new Subject<Record<string, boolean>>();
+        const save = new Subject<GlobalNotificationSetting>();
+        mockService.getGlobalNotificationSettings.mockReturnValue(load);
+        mockService.updateGlobalNotificationSetting.mockReturnValue(save);
+        component.loadSettings();
+        component.updateSetting('NEW_LOGIN', false);
+
+        component.ngOnDestroy();
+
+        expect(load.observed).toBe(false);
+        expect(save.observed).toBe(false);
+    });
+
+    it('should hide the passkey setting when the module feature is disabled', () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(false);
+        mockService.getGlobalNotificationSettings.mockReturnValue(of(mockSettings));
+
+        component.ngOnInit();
+
+        expect(component['filteredNotificationTypes']()).not.toContain('NEW_PASSKEY_ADDED');
+        expect(component['filteredNotificationTypes']()).toHaveLength(7);
+    });
+
+    it('should load notification settings on init', () => {
+        mockService.getGlobalNotificationSettings.mockReturnValue(of(mockSettings));
+
+        component.ngOnInit();
+
+        expect(mockService.getGlobalNotificationSettings).toHaveBeenCalled();
+        expect(component.notificationSettings()).toEqual(mockSettings);
+    });
+
+    it('should update a notification setting', () => {
+        mockService.updateGlobalNotificationSetting.mockReturnValue(of(updatedSetting));
         component.notificationSettings.set({ ...mockSettings });
 
         component.updateSetting(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN, false);
-        await firstValueFrom(mockService.update());
 
-        expect(mockService.update).toHaveBeenCalledWith(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN, false);
-        expect(component.notificationSettings()?.[GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN]).toBeFalsy();
+        expect(mockService.updateGlobalNotificationSetting).toHaveBeenCalledWith(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN, { enabled: false });
+        expect(component.notificationSettings()?.[GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN]).toBe(false);
+        expect(mockSettings.NEW_LOGIN).toBe(true);
+        expect(alertService.success).toHaveBeenCalledExactlyOnceWith('artemisApp.userSettings.globalNotificationSettings.updateSuccess');
     });
 
     it('should generate the correct i18n label key', () => {
@@ -85,7 +156,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
     it('should handle error when loading settings', () => {
         const error = new Error('Failed to load');
         vi.spyOn(globalUtils, 'onError');
-        mockService.getAll.mockReturnValue(throwError(() => error));
+        mockService.getGlobalNotificationSettings.mockReturnValue(throwError(() => error));
 
         component.loadSettings();
 
@@ -95,13 +166,15 @@ describe('GlobalNotificationsSettingsComponent', () => {
     it('should handle error when updating setting', async () => {
         const error = new Error('Update failed');
         vi.spyOn(globalUtils, 'onError');
-        mockService.update.mockReturnValue(throwError(() => error));
+        mockService.updateGlobalNotificationSetting.mockReturnValue(throwError(() => error));
 
         component.notificationSettings.set({ ...mockSettings });
         component.updateSetting(GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED, false);
         await vi.waitFor(() => {
             expect(globalUtils.onError).toHaveBeenCalledWith(alertService, error);
         });
+        expect(component.notificationSettings()).toEqual(mockSettings);
+        expect(alertService.success).not.toHaveBeenCalled();
     });
 
     describe('isSettingAvailable', () => {
@@ -142,11 +215,10 @@ describe('GlobalNotificationsSettingsComponent', () => {
             expect(sshKeyLink?.translationKey).toBe('artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings');
         });
 
-        it('should render correct links for special notification types', async () => {
-            mockService.getAll.mockReturnValue(of(mockSettings));
+        it('should render correct links for special notification types', () => {
+            mockService.getGlobalNotificationSettings.mockReturnValue(of(mockSettings));
 
             component.ngOnInit();
-            await firstValueFrom(mockService.getAll());
             fixture.detectChanges();
 
             const anchorElements = fixture.debugElement.queryAll(By.directive(RouterLink));

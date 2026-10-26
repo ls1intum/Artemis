@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for returning a persisted global notification setting.
@@ -14,7 +15,8 @@ import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
  * @param enabled          whether notifications of this type are enabled for the user
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GlobalNotificationSettingDTO(Long id, Long userId, GlobalNotificationType notificationType, boolean enabled) {
+public record GlobalNotificationSettingDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long userId,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) GlobalNotificationType notificationType, boolean enabled) {
 
     /**
      * Creates a response DTO from a global notification setting entity.

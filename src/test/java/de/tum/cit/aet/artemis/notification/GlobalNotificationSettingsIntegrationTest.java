@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.notification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,7 +13,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
@@ -49,7 +54,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         deleteSettingsOfTheUsersOfThisClass();
     }
@@ -62,6 +67,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     private void deleteSettingsOfTheUsersOfThisClass() {
         globalNotificationSettingRepository.deleteAllByUserId(testUser.getId());
+        userTestRepository.findOneByLogin(TEST_PREFIX + "student2").ifPresent(user -> globalNotificationSettingRepository.deleteAllByUserId(user.getId()));
         userTestRepository.findOneByLogin(TEST_ACCOUNT_LOGIN).ifPresent(testAccount -> globalNotificationSettingRepository.deleteAllByUserId(testAccount.getId()));
     }
 
@@ -117,6 +123,50 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
         assertThat(response.userId()).isEqualTo(testUser.getId());
         assertThat(response.notificationType()).isEqualTo(GlobalNotificationType.NEW_LOGIN);
         assertThat(response.enabled()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDefaultAnOmittedEnabledPropertyToFalse() throws Exception {
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/global-notification-settings/NEW_LOGIN").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.enabled").value(false)).andExpect(jsonPath("$.userId").value(testUser.getId()))
+                .andExpect(jsonPath("$.notificationType").value("NEW_LOGIN"));
+
+        assertThat(globalNotificationSettingService.isNotificationEnabled(testUser, GlobalNotificationType.NEW_LOGIN)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDefaultANullEnabledPropertyToFalse() throws Exception {
+        request.performMvcRequest(
+                MockMvcRequestBuilders.put("/api/notification/global-notification-settings/NEW_LOGIN").contentType(MediaType.APPLICATION_JSON).content("{\"enabled\":null}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.enabled").value(false));
+
+        assertThat(globalNotificationSettingService.isNotificationEnabled(testUser, GlobalNotificationType.NEW_LOGIN)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReadAndUpdateOnlyTheCurrentUsersSettings() throws Exception {
+        User otherUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        globalNotificationSettingService.createOrUpdateSetting(otherUser, GlobalNotificationType.NEW_LOGIN, false);
+
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/global-notification-settings")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.NEW_LOGIN").value(true));
+
+        GlobalNotificationSettingDTO response = request.putWithResponseBody("/api/notification/global-notification-settings/NEW_LOGIN", Map.of("enabled", true),
+                GlobalNotificationSettingDTO.class, HttpStatus.OK);
+
+        assertThat(response.userId()).isEqualTo(testUser.getId());
+        assertThat(response.enabled()).isTrue();
+        assertThat(globalNotificationSettingService.isNotificationEnabled(otherUser, GlobalNotificationType.NEW_LOGIN)).isFalse();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void shouldRejectAnonymousSettingsRequests() throws Exception {
+        request.get("/api/notification/global-notification-settings", HttpStatus.UNAUTHORIZED, Map.class);
+        request.put("/api/notification/global-notification-settings/NEW_LOGIN", Map.of("enabled", false), HttpStatus.UNAUTHORIZED);
     }
 
     @Test

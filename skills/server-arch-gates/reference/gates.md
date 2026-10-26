@@ -187,6 +187,11 @@ answer is: do not cache. Full rationale and history:
 so a test helper placed there must also satisfy the naming rule. And the architecture thresholds
 count violations, not DTOs, so the number in the test does not correspond to a DTO count.
 
+For OpenAPI, primitive record components are marked required unless their accessor carries an explicit
+`@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)`. Use that override only for a request input
+that already accepts an omitted value, and document its default/null handling. It describes the existing
+wire contract; it must not change validation or Jackson defaults. See the OpenAPI developer guide.
+
 ## Module boundaries
 
 **Rule.** Modules are packages within one source set, enforced only by ArchUnit. Reach an optional
