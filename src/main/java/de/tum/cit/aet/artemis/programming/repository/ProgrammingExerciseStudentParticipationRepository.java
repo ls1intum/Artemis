@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
+import de.tum.cit.aet.artemis.programming.dto.StartDateBuildCandidateDTO;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -302,24 +303,33 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     Set<ProgrammingExerciseStudentParticipation> findByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
-     * Returns the graded participations of the exercise that do not have any submission yet, which are the candidates for the build at the start date of an exercise that
-     * allows repository access before it.
+     * Returns what the build at the start date of an exercise that allows repository access before it reads off every graded participation of the exercise: its
+     * repository and the commit of its newest submission, if it has any.
+     * <p>
+     * A participation whose newest submission is dated at or after the start date is left out: a push after the start date creates its own submission, and this build
+     * dates the submissions it creates at the start date, so such a participation holds no work from before the start date that was not built. That keeps an exercise
+     * without a due date, which is caught up on at every startup and update, from reading the head of every repository each time. A participation without a submission or
+     * with an older one is a candidate, which includes one whose only submission came from a tutor or an instructor who pushed before the start date: the student's pushes
+     * after it still have to be built. Newest means the highest id, as in {@link #findBuildTriggerDataByExerciseId}. A projection, because the caller compares the commit
+     * with the head of the repository and loads only the few participations that differ.
      *
      * @param exerciseId the id of the programming exercise
-     * @return the graded participations of the exercise without any submission
+     * @param startDate  the start date of the exercise
+     * @return one entry per graded participation of the exercise without a submission from the start date on
      */
     @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
-            WHERE p.exercise.id = :exerciseId
-                AND (p.testRun IS NULL OR p.testRun = FALSE)
-                AND NOT EXISTS (
-                    SELECT s.id
-                    FROM Submission s
-                    WHERE s.participation.id = p.id
-                )
+            SELECT new de.tum.cit.aet.artemis.programming.dto.StartDateBuildCandidateDTO(participation.id, participation.repositoryUri, participation.branch, submission.commitHash)
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN TREAT (participation.submissions AS ProgrammingSubmission) submission
+            WHERE participation.exercise.id = :exerciseId
+                AND (participation.testRun IS NULL OR participation.testRun = FALSE)
+                AND (submission.id IS NULL
+                    OR (submission.id = (SELECT MAX(s2.id)
+                                         FROM participation.submissions s2)
+                        AND submission.submissionDate < :startDate))
+            ORDER BY participation.id
             """)
-    List<ProgrammingExerciseStudentParticipation> findGradedWithoutSubmissionsByExerciseId(@Param("exerciseId") long exerciseId);
+    List<StartDateBuildCandidateDTO> findStartDateBuildCandidatesByExerciseId(@Param("exerciseId") long exerciseId, @Param("startDate") ZonedDateTime startDate);
 
     @Query("""
             SELECT p

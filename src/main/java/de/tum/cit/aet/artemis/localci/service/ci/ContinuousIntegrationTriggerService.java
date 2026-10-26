@@ -91,4 +91,22 @@ public interface ContinuousIntegrationTriggerService {
     default void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll, SharedBuildTriggerData sharedData) throws ContinuousIntegrationException {
         triggerBuild(participation, triggerAll);
     }
+
+    /**
+     * Triggers a build of the given commit, reusing inputs the caller already resolved for the whole exercise.
+     * <p>
+     * Unlike {@link #triggerBuild(ProgrammingExerciseParticipation, boolean, SharedBuildTriggerData)}, this does not read the head of the repository at the time of the
+     * trigger, so a caller that already created a submission for a commit gets exactly that commit built even if the repository received another push in the meantime.
+     *
+     * @param participation     the participation with the id of the build plan that should be triggered
+     * @param commitHash        the commit to build
+     * @param triggeredByPushTo type of the repository the commit belongs to
+     * @param triggerAll        true if this build was triggered as part of a bulk run. Currently only used for Local CI.
+     * @param sharedData        inputs shared by every participation of the exercise, resolved once by the caller
+     * @throws ContinuousIntegrationException if the request to the CI failed.
+     */
+    default void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo, boolean triggerAll,
+            SharedBuildTriggerData sharedData) throws ContinuousIntegrationException {
+        triggerBuild(participation, commitHash, triggeredByPushTo);
+    }
 }

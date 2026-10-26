@@ -193,6 +193,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         triggerBuild(participation, null, null, triggerAll, 0, sharedData);
     }
 
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo, boolean triggerAll,
+            SharedBuildTriggerData sharedData) throws LocalCIException {
+        triggerBuild(participation, commitHash, triggeredByPushTo, triggerAll, 0, sharedData);
+    }
+
     /**
      * Resolves the head commit of the exercise's test repository and the exercise's build statistics, which every
      * participation of this exercise would otherwise resolve for itself.

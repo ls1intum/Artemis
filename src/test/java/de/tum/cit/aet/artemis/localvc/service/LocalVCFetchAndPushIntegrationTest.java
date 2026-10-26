@@ -805,6 +805,47 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testPush_studentRepository_beforeStartDate_afterAnInstructorPush_isBuiltAtTheStartDate() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-early-access-helped");
+            String projectKey = exercise.getProjectKey();
+            allowRepositoryAccessBeforeStartDate(exercise.getId(), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusHours(1));
+
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            mockDockerClientForStudentBuild();
+            StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
+
+            // An instructor's push is built right away and creates a submission ...
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, student1RepoSlug)) {
+                commitFile(git, "instructor-help.txt");
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, student1RepoSlug);
+            }
+            await().untilAsserted(() -> assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.id())).hasSize(1));
+
+            // ... and the student's push after it is deferred
+            String studentCommitHash;
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                commitFile(git, "early-work.txt");
+                studentCommitHash = git.getRepository().resolve("HEAD").name();
+                testPushSuccessful(git, student1.getLogin(), projectKey, student1RepoSlug);
+            }
+            assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.id())).noneMatch(s -> studentCommitHash.equals(s.getCommitHash()));
+
+            // The submission of the instructor does not keep the student's commit from being built at the start date
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+            ProgrammingExercise started = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+            // the start date follows the instructor's push, as it does when it is reached rather than moved into the past
+            started.setStartDate(ZonedDateTime.now());
+            programmingExerciseRepository.save(started);
+            programmingTriggerService.triggerBuildsForChangesBeforeStartDate(exercise.getId());
+
+            await().untilAsserted(() -> assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.id()))
+                    .anyMatch(submission -> studentCommitHash.equals(submission.getCommitHash())));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testOnlineEditorCommit_beforeStartDate_withRepositoryAccessBeforeStartDate_isNotSubmitted() throws Exception {
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-early-access-editor");
             allowRepositoryAccessBeforeStartDate(exercise.getId(), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusHours(1));

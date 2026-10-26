@@ -5,12 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TRIGGER_INSTRUCTOR_BU
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
+import de.tum.cit.aet.artemis.programming.dto.StartDateBuildCandidateDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -96,6 +97,11 @@ public class ProgrammingTriggerService {
     private final SelectedBuildRunStatusService selectedBuildRunStatusService;
 
     private final BareGitRepositoryService bareGitRepositoryService;
+
+    /**
+     * The exercises whose build of the changes pushed before the start date is running on this node, see {@link #triggerBuildsForChangesBeforeStartDate(long)}.
+     */
+    private final Set<Long> exercisesWithRunningStartDateBuild = ConcurrentHashMap.newKeySet();
 
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
@@ -157,9 +163,9 @@ public class ProgrammingTriggerService {
     /**
      * Builds the repositories students pushed to before the start date of an exercise that allows repository access before it.
      * <p>
-     * Pushes in that phase create no submission and trigger no build. At the start date, every graded participation whose repository received such a push gets a
-     * submission for its head commit, and that commit is built. A participation that already has a submission is skipped, so the method can be called again, e.g. to
-     * catch up after a restart, without building anything twice.
+     * Pushes in that phase create no submission and trigger no build. At the start date, every graded participation whose repository head moved past the setup commit and
+     * has no submission for that commit yet gets one, and exactly that commit is built. A participation whose head already has a submission is skipped, so the method can
+     * be called again, e.g. to catch up after a restart, without building anything twice.
      * <p>
      * The method is async because it pauses between batches and waits for room in the build queue.
      *
@@ -169,6 +175,22 @@ public class ProgrammingTriggerService {
     public void triggerBuildsForChangesBeforeStartDate(long exerciseId) {
         // The caller's context reaches this thread when there is one; this stands in for the paths that have none.
         SecurityUtils.setAuthorizationObject();
+        // The task at the start date and a catch-up after an update of the exercise can overlap. Both are started by the node with the scheduling profile, so a second
+        // run for the same exercise leaves the work to the one in progress instead of walking the same participations in lockstep with it, where the check before each
+        // insert below could pass for both.
+        if (!exercisesWithRunningStartDateBuild.add(exerciseId)) {
+            log.info("Not building the changes before the start date of exercise {}: a run for it is already in progress", exerciseId);
+            return;
+        }
+        try {
+            buildChangesBeforeStartDate(exerciseId);
+        }
+        finally {
+            exercisesWithRunningStartDateBuild.remove(exerciseId);
+        }
+    }
+
+    private void buildChangesBeforeStartDate(long exerciseId) {
         var exercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId).orElse(null);
         if (exercise == null) {
             log.warn("Not building the changes before the start date of exercise {}: it no longer exists", exerciseId);
@@ -180,7 +202,7 @@ public class ProgrammingTriggerService {
             return;
         }
 
-        var candidates = programmingExerciseStudentParticipationRepository.findGradedWithoutSubmissionsByExerciseId(exerciseId);
+        var candidates = programmingExerciseStudentParticipationRepository.findStartDateBuildCandidatesByExerciseId(exerciseId, startDate);
         if (candidates.isEmpty()) {
             return;
         }
@@ -188,31 +210,46 @@ public class ProgrammingTriggerService {
         SharedBuildTriggerData sharedData = prepareSharedTriggerDataOrNone(exercise);
         BulkTriggerThrottle throttle = continuousIntegrationTriggerService.map(ContinuousIntegrationTriggerService::createBulkTriggerThrottle).orElse(BulkTriggerThrottle.NONE);
         int index = 0;
-        for (var participation : candidates) {
+        for (var candidate : candidates) {
             try {
-                LocalVCRepositoryUri repositoryUri = participation.getVcsRepositoryUri();
-                if (repositoryUri == null) {
+                Optional<String> changedHead = findHeadCommitHashIfChangedSinceSetup(candidate);
+                if (changedHead.isEmpty() || changedHead.get().equals(candidate.latestCommitHash())) {
                     continue;
                 }
-                String branch = participation.getBranch() != null ? participation.getBranch() : defaultBranch;
-                Optional<String> commitHash = bareGitRepositoryService.findHeadCommitHashIfChangedSinceSetup(repositoryUri, branch);
+                pauseBetweenBatches(index, candidate.participationId());
+                throttle.awaitCapacity();
+                // The waits above can take minutes, during which the student may have pushed after the start date, which creates a submission of its own, or another
+                // path may have built the head. So the head is read again and checked against the database right before the insert, and that commit is the one built.
+                Optional<String> commitHash = findHeadCommitHashIfChangedSinceSetup(candidate)
+                        .filter(head -> !programmingSubmissionRepository.existsByParticipationIdAndCommitHash(candidate.participationId(), head));
                 if (commitHash.isEmpty()) {
                     continue;
                 }
-                pauseBetweenBatches(index, participation.getId());
-                throttle.awaitCapacity();
-                ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash.get(), SubmissionType.MANUAL);
+                var participation = programmingExerciseStudentParticipationRepository.findById(candidate.participationId()).orElse(null);
+                if (participation == null) {
+                    continue;
+                }
+                // The commit was pushed before the start date, so it is dated then: a run that waited past the due date must not turn the result into an unrated one.
+                ZonedDateTime now = ZonedDateTime.now();
+                ZonedDateTime submissionDate = startDate.isAfter(now) ? now : startDate;
+                ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash.get(), SubmissionType.MANUAL, submissionDate);
                 participation.setProgrammingExercise(exercise);
-                // the participation was loaded without its submissions, and the one just created is the only one it has
-                participation.setSubmissions(new HashSet<>(Set.of(submission)));
-                triggerBuild(participation, sharedData);
+                triggerBuild(participation, submission, commitHash.get(), sharedData);
                 index++;
             }
             catch (Exception e) {
-                log.error("Could not build the changes before the start date of participation {} of exercise {}", participation.getId(), exerciseId, e);
+                log.error("Could not build the changes before the start date of participation {} of exercise {}", candidate.participationId(), exerciseId, e);
             }
         }
         log.info("Triggered {} builds for changes pushed before the start date of exercise {}", index, exerciseId);
+    }
+
+    private Optional<String> findHeadCommitHashIfChangedSinceSetup(StartDateBuildCandidateDTO candidate) {
+        if (candidate.repositoryUri() == null) {
+            return Optional.empty();
+        }
+        String branch = candidate.branch() != null ? candidate.branch() : defaultBranch;
+        return bareGitRepositoryService.findHeadCommitHashIfChangedSinceSetup(new LocalVCRepositoryUri(candidate.repositoryUri()), branch);
     }
 
     /**
@@ -478,7 +515,12 @@ public class ProgrammingTriggerService {
     private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, String commitHash,
             SubmissionType submissionType) {
         // Make sure that the new submission has the submission date of now
-        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash).submitted(true).submissionDate(ZonedDateTime.now())
+        return createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType, ZonedDateTime.now());
+    }
+
+    private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType,
+            ZonedDateTime submissionDate) {
+        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash).submitted(true).submissionDate(submissionDate)
                 .type(submissionType);
         newSubmission.setParticipation((Participation) participation);
         return programmingSubmissionRepository.saveAndFlush(newSubmission);
@@ -506,25 +548,41 @@ public class ProgrammingTriggerService {
     public void triggerBuild(ProgrammingExerciseStudentParticipation participation, SharedBuildTriggerData sharedData) {
         Optional<ProgrammingSubmission> optionalSubmission = participation.findLatestSubmission();
         // we only need to trigger the build if the student actually already made a submission, otherwise this is not needed
-        if (optionalSubmission.isPresent()) {
-            var submission = optionalSubmission.get();
-            try {
-                // Make sure the relation is set correctly to avoid issues with lazy-loading until participation is used for notifying students
-                submission.setParticipation(participation);
-                if (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-                    // in this case, we first have to resume the exercise: this includes that we again set up the build plan properly before we trigger it
-                    participationService.resumeProgrammingExercise(participation);
-                    // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
-                }
-                continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, true, sharedData);
-                // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
-                programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
+        optionalSubmission.ifPresent(submission -> triggerBuild(participation, submission, null, sharedData));
+    }
+
+    /**
+     * Triggers a CI build for the given submission of the participation and notifies its owner.
+     *
+     * @param participation the participation to build
+     * @param submission    the submission the build belongs to
+     * @param commitHash    the commit to build, or null to build the head of the repository at the time of the trigger
+     * @param sharedData    the trigger inputs shared by every participation of the exercise
+     */
+    private void triggerBuild(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission submission, @Nullable String commitHash,
+            SharedBuildTriggerData sharedData) {
+        try {
+            // Make sure the relation is set correctly to avoid issues with lazy-loading until participation is used for notifying students
+            submission.setParticipation(participation);
+            if (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
+                // in this case, we first have to resume the exercise: this includes that we again set up the build plan properly before we trigger it
+                participationService.resumeProgrammingExercise(participation);
+                // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
-            catch (Exception e) {
-                log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
-                BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
-                programmingSubmissionMessagingService.notifyUserAboutSubmissionError(participation, error);
+            var triggerService = continuousIntegrationTriggerService.orElseThrow();
+            if (commitHash == null) {
+                triggerService.triggerBuild(participation, true, sharedData);
             }
+            else {
+                triggerService.triggerBuild(participation, commitHash, RepositoryType.USER, true, sharedData);
+            }
+            // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
+            programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
+        }
+        catch (Exception e) {
+            log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
+            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
+            programmingSubmissionMessagingService.notifyUserAboutSubmissionError(participation, error);
         }
     }
 
