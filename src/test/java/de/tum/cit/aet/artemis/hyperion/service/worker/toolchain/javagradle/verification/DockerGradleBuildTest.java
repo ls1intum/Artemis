@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import com.github.dockerjava.api.DockerClient;
@@ -270,12 +271,16 @@ class DockerGradleBuildTest {
         assertThat(erased.testFailedNames()).doesNotContain("testMethods[RoastProfile]");
     }
 
-    @Test
-    void specificationDerivedGenericGraderRejectsErasedApiAndAcceptsRenamedTypeParameter() throws IOException {
+    // Both build tools must report the seeded dynamic check by its display name; surefire names flat dynamic tests genericApi()[n].
+    @ParameterizedTest
+    @EnumSource(GenerationBuildTool.class)
+    void specificationDerivedGenericGraderRejectsErasedApiAndAcceptsRenamedTypeParameter(GenerationBuildTool buildTool) throws IOException {
+        boolean maven = buildTool == GenerationBuildTool.MAVEN;
+        var input = maven ? new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), buildTool) : exercise;
         String session = sandbox.createSession();
-        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        workspace.seedWorkspace(sandbox, session, input, Mode.ADAPT, maven ? mavenSnapshot("java/test/maven/projectTemplate/pom.xml") : snapshot(), true);
         sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
-                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(input)), Map.of()));
         ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
         specifications.approve(session, """
                 ## Design
@@ -291,7 +296,7 @@ class DockerGradleBuildTest {
                 }
                 ```
                 """);
-        SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, exercise);
+        SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, input);
         assertThat(seeded.testNames()).contains("testClass[GenericApi:Box]");
         String path = "solution/src/de/tum/cit/aet/reference/Box.java";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """

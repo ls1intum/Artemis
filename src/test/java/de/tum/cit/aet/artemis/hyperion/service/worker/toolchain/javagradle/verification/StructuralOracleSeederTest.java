@@ -23,6 +23,7 @@ import javax.tools.ToolProvider;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -344,8 +345,7 @@ class StructuralOracleSeederTest {
             constructor.setAccessible(true);
             var factory = provider.getDeclaredMethod("genericApi");
             factory.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            List<DynamicTest> tests = (List<DynamicTest>) factory.invoke(constructor.newInstance());
+            List<DynamicTest> tests = ((DynamicContainer) factory.invoke(constructor.newInstance())).getChildren().map(DynamicTest.class::cast).toList();
             assertThat(tests).singleElement().extracting(DynamicTest::getDisplayName).isEqualTo("testClass[GenericApi:Box]");
             assertThat(loader.loadClass(classPrefix + "Box").getTypeParameters()).isEmpty();
             tests.getFirst().getExecutable().execute();
