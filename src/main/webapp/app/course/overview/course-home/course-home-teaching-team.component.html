@@ -1,0 +1,36 @@
+<section aria-labelledby="home-team-heading" data-testid="home-team">
+    <h2 id="home-team-heading" class="text-lg font-semibold mb-4!">{{ 'artemisApp.courseHome.team' | artemisTranslate }}</h2>
+    <ul id="home-team-members" class="list-none p-0! m-0! flex flex-col gap-4!">
+        @for (member of team().items ?? []; track member.id) {
+            <li class="flex items-center gap-3! min-w-0">
+                <tumaet-ui-avatar [name]="member.name" [imageUrl]="member.imageUrl ? image(member.imageUrl) : undefined" [decorative]="true" />
+                <div class="min-w-0">
+                    <span class="block font-medium wrap-anywhere">{{ member.name }}</span
+                    ><span class="text-sm text-muted-color">{{ 'artemisApp.courseHome.' + member.role | artemisTranslate }}</span>
+                </div>
+            </li>
+        } @empty {
+            <li class="text-muted-color">{{ 'artemisApp.courseHome.noTeam' | artemisTranslate }}</li>
+        }
+    </ul>
+    @if (team().hasMore) {
+        <button
+            tumAetUiButton
+            severity="secondary"
+            variant="text"
+            size="small"
+            type="button"
+            class="mt-4!"
+            [disabled]="loading()"
+            [attr.aria-expanded]="team().page >= 0"
+            aria-controls="home-team-members"
+            (click)="loadMore.emit()"
+            data-testid="home-team-more"
+        >
+            {{ 'artemisApp.courseHome.moreTeam' | artemisTranslate }}
+        </button>
+    }
+    @if (failed()) {
+        <p role="status" class="text-state-danger mt-2!">{{ 'artemisApp.courseHome.teamError' | artemisTranslate }}</p>
+    }
+</section>

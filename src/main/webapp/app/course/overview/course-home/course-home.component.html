@@ -1,0 +1,146 @@
+<div class="course-home mx-auto w-full max-w-7xl p-4! md:p-6!" data-testid="course-home" [attr.aria-busy]="loading()">
+    @if (loading()) {
+        <p role="status" class="text-muted-color py-8!">{{ 'artemisApp.courseHome.loading' | artemisTranslate }}</p>
+    } @else if (failed()) {
+        <tumaet-ui-message severity="error" [text]="'artemisApp.courseHome.error' | artemisTranslate" />
+        <button tumAetUiButton type="button" class="mt-4!" (click)="refresh()">{{ 'artemisApp.courseHome.retry' | artemisTranslate }}</button>
+    } @else if (home(); as data) {
+        <header class="flex flex-wrap justify-between items-start gap-4! mb-6!">
+            <div class="min-w-0">
+                <h1 class="text-2xl font-semibold m-0! wrap-anywhere">{{ data.course.title }}</h1>
+                @if (data.course.startDate || data.course.endDate) {
+                    <p class="text-sm text-muted-color mt-2! mb-0!">
+                        {{ data.course.startDate | date: 'mediumDate' : undefined : locale() }}
+                        @if (data.course.startDate && data.course.endDate) {
+                            <span aria-hidden="true">–</span>
+                        }
+                        {{ data.course.endDate | date: 'mediumDate' : undefined : locale() }}
+                    </p>
+                }
+            </div>
+            <button tumAetUiButton type="button" severity="secondary" variant="text" size="small" (click)="refresh()" data-testid="home-refresh">
+                {{ 'artemisApp.courseHome.refresh' | artemisTranslate }}
+            </button>
+        </header>
+        @if (refreshFailed()) {
+            <tumaet-ui-message severity="warn" class="block mb-4!" [text]="'artemisApp.courseHome.refreshError' | artemisTranslate" />
+        }
+        <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(17rem,1fr)] gap-6!">
+            <div class="min-w-0 flex flex-col gap-6!">
+                <tumaet-ui-card data-testid="home-welcome">
+                    <h2 class="text-xl font-semibold mb-3!">{{ welcomeKeys()?.title | artemisTranslate: welcomeParams() }}</h2>
+                    <p class="leading-relaxed max-w-prose mb-0!" data-testid="home-welcome-body">{{ aiMessage() || (welcomeKeys()?.body | artemisTranslate: welcomeParams()) }}</p>
+                    @if (aiMessage()) {
+                        <p class="text-xs text-muted-color mt-2! mb-0!">{{ 'artemisApp.courseHome.aiSource' | artemisTranslate }}</p>
+                    }
+                    @if (data.nextStep; as next) {
+                        @let destination = target(data.course.id, next.target);
+                        <div class="mt-5! pt-5! border-t border-border" data-testid="home-next-step">
+                            <div class="flex flex-wrap items-center gap-2 mb-2!">
+                                <h3 class="text-base font-semibold m-0!">{{ 'artemisApp.courseHome.nextStep' | artemisTranslate }}</h3>
+                                <tumaet-ui-tag [value]="'artemisApp.courseHome.' + next.reason | artemisTranslate" size="sm" severity="info" />
+                            </div>
+                            <a class="block text-lg font-semibold wrap-anywhere" [routerLink]="destination.commands" [queryParams]="destination.queryParams">{{ next.title }}</a>
+                            @if (next.dueAt) {
+                                <p class="text-sm text-muted-color mt-2! mb-0!">
+                                    {{ 'artemisApp.courseHome.due' | artemisTranslate }}:
+                                    <time [attr.datetime]="next.dueAt">{{ next.dueAt | date: 'medium' : undefined : locale() }}</time>
+                                </p>
+                            }
+                        </div>
+                    }
+                </tumaet-ui-card>
+                @if (data.visit.firstVisit && (data.course.studentWelcomeContext || data.course.description)) {
+                    <section aria-labelledby="home-approach-heading" class="px-1!">
+                        <h2 id="home-approach-heading" class="text-lg font-semibold mb-3!">
+                            {{ (data.course.studentWelcomeContext ? 'artemisApp.courseHome.approach' : 'artemisApp.courseHome.about') | artemisTranslate }}
+                        </h2>
+                        <p class="whitespace-pre-line leading-relaxed max-w-prose mb-0!">{{ data.course.studentWelcomeContext || data.course.description }}</p>
+                    </section>
+                }
+                @if (data.announcement; as announcement) {
+                    @let destination = target(data.course.id, announcement.target);
+                    <tumaet-ui-message severity="info"
+                        ><div>
+                            <h2 class="text-base font-semibold mb-2!">{{ 'artemisApp.courseHome.announcement' | artemisTranslate }}</h2>
+                            <a [routerLink]="destination.commands" [queryParams]="destination.queryParams" class="font-medium wrap-anywhere">{{ announcement.title }}</a>
+                        </div></tumaet-ui-message
+                    >
+                }
+                <section aria-labelledby="home-updates-heading" class="px-1!">
+                    <div class="flex flex-wrap justify-between items-baseline gap-2 mb-4!">
+                        <h2 id="home-updates-heading" class="text-lg font-semibold m-0!">{{ 'artemisApp.courseHome.updates' | artemisTranslate }}</h2>
+                        <a [routerLink]="['/courses', data.course.id, 'exercises']" class="text-sm">{{ 'artemisApp.courseHome.viewExercises' | artemisTranslate }}</a>
+                    </div>
+                    <ul class="list-none p-0! m-0! divide-y divide-border">
+                        @for (item of data.updates ?? []; track item.target.kind + ':' + item.target.id) {
+                            @let destination = target(data.course.id, item.target);
+                            <li class="flex flex-wrap justify-between items-baseline gap-x-4! gap-y-1 py-3! first:pt-0! last:pb-0! min-w-0">
+                                <div class="min-w-0">
+                                    <a [routerLink]="destination.commands" [queryParams]="destination.queryParams" class="font-medium wrap-anywhere">{{ item.title }}</a>
+                                    <p class="text-sm text-muted-color mt-1! mb-0!">{{ 'artemisApp.courseHome.' + item.reason | artemisTranslate }}</p>
+                                </div>
+                                @if (item.updatedAt) {
+                                    <time [attr.datetime]="item.updatedAt" class="text-sm text-muted-color">{{ item.updatedAt | date: 'mediumDate' : undefined : locale() }}</time>
+                                }
+                            </li>
+                        } @empty {
+                            <li class="text-muted-color">{{ 'artemisApp.courseHome.noUpdates' | artemisTranslate }}</li>
+                        }
+                    </ul>
+                    @if (data.sections.lectures === 'UNAVAILABLE') {
+                        <p class="text-sm text-muted-color mt-3!">
+                            {{ 'artemisApp.courseHome.viewLectures' | artemisTranslate }}: {{ 'artemisApp.courseHome.unavailable' | artemisTranslate }}
+                        </p>
+                    }
+                </section>
+                @if ((data.faqs?.length ?? 0) > 0 || data.sections.faq === 'UNAVAILABLE') {
+                    <section aria-labelledby="home-faq-heading" class="px-1!">
+                        <div class="flex justify-between items-baseline gap-2 mb-4!">
+                            <h2 id="home-faq-heading" class="text-lg font-semibold m-0!">{{ 'artemisApp.courseHome.faq' | artemisTranslate }}</h2>
+                            <a [routerLink]="['/courses', data.course.id, 'faq']" class="text-sm">{{ 'artemisApp.courseHome.viewFaq' | artemisTranslate }}</a>
+                        </div>
+                        @if (data.sections.faq === 'UNAVAILABLE') {
+                            <p class="text-muted-color">{{ 'artemisApp.courseHome.unavailable' | artemisTranslate }}</p>
+                        }
+                        <ul class="list-none p-0! m-0! flex flex-col gap-3!">
+                            @for (item of data.faqs ?? []; track item.target.id) {
+                                @let destination = target(data.course.id, item.target);
+                                <li>
+                                    <a [routerLink]="destination.commands" [queryParams]="destination.queryParams" class="wrap-anywhere">{{ item.title }}</a>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+                <div class="border-t border-border pt-6! px-1!"><jhi-course-home-questions [courseId]="data.course.id" [questions]="data.questions" /></div>
+                @if (allowIris() && data.irisSessions.status !== 'DISABLED') {
+                    <div class="border-t border-border pt-6! px-1!"><jhi-course-home-iris-history [courseId]="data.course.id" [sessions]="data.irisSessions" /></div>
+                }
+            </div>
+            <aside class="min-w-0 flex flex-col gap-6!">
+                <tumaet-ui-card><jhi-course-home-teaching-team [team]="team()" [loading]="teamLoading()" [failed]="teamFailed()" (loadMore)="loadMoreTeam()" /></tumaet-ui-card>
+                <section aria-labelledby="home-progress-heading" class="px-1!">
+                    <h2 id="home-progress-heading" class="text-lg font-semibold mb-3!">{{ 'artemisApp.courseHome.progress' | artemisTranslate }}</h2>
+                    @if (data.progress.releasedExercises > 0) {
+                        <p class="mb-3! tabular-nums">
+                            {{ 'artemisApp.courseHome.progressCount' | artemisTranslate: { submitted: data.progress.submittedExercises, total: data.progress.releasedExercises } }}
+                        </p>
+                        <tumaet-ui-progress-bar [value]="progressPercent()" [showValue]="false" size="small" [ariaLabel]="'artemisApp.courseHome.progress' | artemisTranslate" />
+                        @if (data.progress.currentlyDueExercises > 0) {
+                            <p class="text-sm mt-3! mb-0! tabular-nums">
+                                {{
+                                    'artemisApp.courseHome.dueProgress'
+                                        | artemisTranslate: { submitted: data.progress.currentlyDueSubmitted, total: data.progress.currentlyDueExercises }
+                                }}
+                            </p>
+                        }
+                        <p class="text-xs text-muted-color mt-3! mb-0!">{{ 'artemisApp.courseHome.progressHint' | artemisTranslate }}</p>
+                    } @else {
+                        <p class="text-muted-color">{{ 'artemisApp.courseHome.noExercises' | artemisTranslate }}</p>
+                    }
+                </section>
+            </aside>
+        </div>
+    }
+</div>

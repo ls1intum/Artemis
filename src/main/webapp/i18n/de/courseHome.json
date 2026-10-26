@@ -1,0 +1,277 @@
+{
+    "artemisApp": {
+        "courseHome": {
+            "title": "Startseite",
+            "loading": "Dein Kursüberblick wird geladen…",
+            "error": "Dein Kursüberblick konnte nicht geladen werden. Bitte versuche es erneut.",
+            "retry": "Erneut versuchen",
+            "refresh": "Aktualisieren",
+            "refreshError": "Neuigkeiten konnten nicht geladen werden. Du siehst weiterhin den bisherigen Überblick.",
+            "aiSource": "KI-generierte Ermutigung",
+            "nextStep": "Dein nächster Schritt",
+            "open": "Öffnen",
+            "due": "Abgabe",
+            "updates": "Neu in deinem Kurs",
+            "noUpdates": "Keine neuen Kursmaterialien in diesem Überblick.",
+            "viewExercises": "Alle Übungen",
+            "viewLectures": "Alle Vorlesungen",
+            "announcement": "Von deinem Kursteam",
+            "faq": "Neue FAQs",
+            "viewFaq": "Alle FAQs",
+            "progress": "Deine abgegebenen Aufgaben",
+            "progressCount": "{{submitted}} von {{total}} verfügbaren Übungen abgegeben",
+            "dueProgress": "{{submitted}} von {{total}} innerhalb von 72 Stunden fälligen Übungen abgegeben",
+            "noExercises": "Für dich sind noch keine Übungen verfügbar.",
+            "progressHint": "Alternative Übungsvarianten zählen als eine Aufgabe. Abgaben messen nicht die Beherrschung des Stoffs.",
+            "team": "Dein Kursteam",
+            "moreTeam": "Weitere Teammitglieder anzeigen",
+            "lessTeam": "Weniger Teammitglieder anzeigen",
+            "teamError": "Weitere Teammitglieder konnten nicht geladen werden. Versuche es erneut.",
+            "noTeam": "Das Kursteam erscheint hier, sobald es verfügbar ist.",
+            "about": "Über diesen Kurs",
+            "approach": "So lernen wir in diesem Kurs",
+            "questions": "Meine letzten Fragen",
+            "allQuestions": "Kommunikation öffnen",
+            "noQuestions": "Hier erscheinen deine letzten Fragen.",
+            "AWAITING_REPLY": "Antwort ausstehend",
+            "ANSWERED": "Beantwortet",
+            "RESOLVED": "Geklärt",
+            "unread": "{{count}} ungelesene Antworten",
+            "replies": "{{count}} Antworten",
+            "iris": "Meine letzten Iris-Gespräche",
+            "openIris": "Iris öffnen",
+            "noIris": "Hier erscheinen deine letzten Kursgespräche mit Iris.",
+            "untitledIris": "Kursgespräch",
+            "unavailable": "Dieser Bereich ist vorübergehend nicht verfügbar.",
+            "INSTRUCTOR": "Lehrperson",
+            "EDITOR": "Editorin oder Editor",
+            "TEACHING_ASSISTANT": "Tutorin oder Tutor",
+            "REVIEW": "Wiederholen",
+            "NEW_EXERCISE": "Neue Übung",
+            "NEW_LECTURE": "Neues Vorlesungsmaterial",
+            "NEW_FAQ": "Neue FAQ",
+            "NEW_FEEDBACK": "Neues Feedback",
+            "DEADLINE_TODAY": "Innerhalb von 24 Stunden fällig",
+            "DEADLINE_SOON": "Innerhalb von 72 Stunden fällig",
+            "IN_PROGRESS": "Weiterarbeiten",
+            "EXAM_SOON": "Bevorstehende Prüfung",
+            "UNREAD_REPLY": "Ungelesene Antwort",
+            "IMPORTANT_ANNOUNCEMENT": "Wichtige Ankündigung",
+            "IRIS_SESSION": "Mit Iris fortsetzen",
+            "AVAILABLE": "Verfügbar",
+            "welcome": {
+                "BEFORE_START": {
+                    "v0": {
+                        "title": "Komm in Ruhe an{{nameSuffix}}.",
+                        "body": "Lerne das Kursteam kennen und verschaffe dir einen Überblick über den Kurs. So kannst du dich später auf die ersten Lernschritte konzentrieren."
+                    },
+                    "v1": {
+                        "title": "Willkommen in {{courseTitle}}.",
+                        "body": "Lerne die Menschen und Ideen hinter diesem Kurs kennen. Sobald der Kurs beginnt, findest du hier deine nächsten Schritte."
+                    },
+                    "v2": {
+                        "title": "Ein neuer Anfang{{nameSuffix}}.",
+                        "body": "Starte neugierig. Die Kurseinführung und das Lehrteam helfen dir, die Themen und Unterstützungsangebote kennenzulernen."
+                    }
+                },
+                "FIRST_VISIT": {
+                    "v0": {
+                        "title": "Schön, dass du da bist{{nameSuffix}}.",
+                        "body": "Entdecke den Kursansatz, lerne dein Lehrteam kennen und wähle einen überschaubaren ersten Schritt. Ausprobieren und Fragen helfen dir beim Verstehen."
+                    },
+                    "v1": {
+                        "title": "Hier beginnt dein Lernen.",
+                        "body": "Du musst nicht alles auf einmal verstehen. Orientiere dich im Kurs und nutze dann den vorgeschlagenen nächsten Schritt als Einstieg."
+                    },
+                    "v2": {
+                        "title": "Willkommen im Kurs{{nameSuffix}}.",
+                        "body": "Verschaffe dir einen Überblick, lerne deine Ansprechpersonen kennen und probiere eine erste Aufgabe aus. Jede Frage kann ein guter Ausgangspunkt sein."
+                    }
+                },
+                "DEADLINE_TODAY": {
+                    "v0": {
+                        "title": "Ein klarer nächster Schritt{{nameSuffix}}.",
+                        "body": "Eine bevorstehende Abgabe braucht deine Aufmerksamkeit. Öffne die Aufgabe, prüfe die offenen Punkte und nimm dir einen überschaubaren nächsten Schritt vor."
+                    },
+                    "v1": {
+                        "title": "Führe deine Arbeit zusammen.",
+                        "body": "Plane die verbleibenden Schritte anhand der angezeigten Abgabefrist. Prüfe die Anforderungen und reiche ein, was deinen Lernstand zeigt."
+                    },
+                    "v2": {
+                        "title": "Bleib beim nächsten Schritt.",
+                        "body": "Wenn eine Frist näher rückt, hilft Klarheit. Sieh dir die hervorgehobene Aufgabe an und gehe den wichtigsten noch offenen Schritt an."
+                    }
+                },
+                "DEADLINE_SOON": {
+                    "v0": {
+                        "title": "Schaffe Raum für die nächste Idee.",
+                        "body": "Eine Abgabefrist rückt näher. Wenn du mit einem kleinen Teil beginnst, bleibt Raum, dein Verständnis zu prüfen und Fragen zu stellen."
+                    },
+                    "v1": {
+                        "title": "Ein wenig Planung hilft.",
+                        "body": "Prüfe die hervorgehobene Frist und entscheide, womit du beginnst. Kleine Teilschritte machen deinen Fortschritt greifbar."
+                    },
+                    "v2": {
+                        "title": "Komm ins Arbeiten{{nameSuffix}}.",
+                        "body": "Öffne die vorgeschlagene Aufgabe und suche dir einen guten Einstieg. Ein erster Versuch zeigt oft, welche Ideen du noch vertiefen möchtest."
+                    }
+                },
+                "IMPORTANT_ANNOUNCEMENT": {
+                    "v0": {
+                        "title": "Bleib auf dem Laufenden{{nameSuffix}}.",
+                        "body": "Dein Kursteam hat eine wichtige Ankündigung veröffentlicht. Lies sie, bevor du deine nächsten Lernschritte planst."
+                    },
+                    "v1": {
+                        "title": "Eine Neuigkeit aus deinem Kurs.",
+                        "body": "Sieh dir die hervorgehobene Ankündigung an. Wenn du weißt, was sich geändert hat, kannst du deine Arbeit besser planen."
+                    },
+                    "v2": {
+                        "title": "Zeit für eine wichtige Information.",
+                        "body": "Das Lehrteam hat etwas Wichtiges geteilt. Lies die Ankündigung und widme dich dann wieder deinem nächsten Lernschritt."
+                    }
+                },
+                "UNREAD_REPLY": {
+                    "v0": {
+                        "title": "Es gibt eine neue Antwort auf deine Frage.",
+                        "body": "Jemand hat auf eine deiner Fragen geantwortet. Lies den Beitrag und nutze den Austausch, um dein Verständnis weiterzuentwickeln."
+                    },
+                    "v1": {
+                        "title": "Setze den Austausch fort.",
+                        "body": "In deiner Kursdiskussion wartet eine ungelesene Antwort. Vielleicht liefert sie eine hilfreiche Erklärung oder eine neue Perspektive."
+                    },
+                    "v2": {
+                        "title": "Eine neue Perspektive{{nameSuffix}}.",
+                        "body": "Kehre zu deiner Frage zurück und lies die neueste Antwort. Wenn etwas unklar bleibt, kannst du im selben Gespräch nachfragen."
+                    }
+                },
+                "EXAM_SOON": {
+                    "v0": {
+                        "title": "Bereite dich gezielt vor{{nameSuffix}}.",
+                        "body": "Deine angemeldete Prüfung steht bevor. Prüfe die Details und nutze deine Kursarbeit, um wichtige Themen noch einmal aufzugreifen."
+                    },
+                    "v1": {
+                        "title": "Verbinde dein Wissen.",
+                        "body": "Lies die Prüfungsinformationen und übe, zentrale Ideen in eigenen Worten zu erklären. Offene Fragen können deine Vorbereitung lenken."
+                    },
+                    "v2": {
+                        "title": "Verschaffe dir vor der Prüfung Klarheit.",
+                        "body": "Prüfe die Prüfungsdetails und wähle ein Thema zum Wiederholen. Ein bekanntes Beispiel hilft dir, Lücken zu erkennen und Sicherheit zu gewinnen."
+                    }
+                },
+                "NEW_FEEDBACK": {
+                    "v0": {
+                        "title": "Mach aus Feedback einen nächsten Schritt.",
+                        "body": "Zu deiner Arbeit gibt es Feedback. Suche nach einer Erkenntnis, die du bei einem weiteren Versuch oder einer künftigen Aufgabe nutzen kannst."
+                    },
+                    "v1": {
+                        "title": "Betrachte deine Arbeit aus einem neuen Blickwinkel.",
+                        "body": "Lies das Feedback zu deiner Abgabe. Der Vergleich mit deinem Vorgehen kann dir zeigen, was hinter der Aufgabe steckt."
+                    },
+                    "v2": {
+                        "title": "Hier kannst du anknüpfen{{nameSuffix}}.",
+                        "body": "Dein Feedback ist verfügbar. Schau dir an, was funktioniert hat, und wähle einen konkreten Punkt, den du besser verstehen möchtest."
+                    }
+                },
+                "RETURNING": {
+                    "v0": {
+                        "title": "Willkommen zurück{{nameSuffix}}.",
+                        "body": "Verschaffe dir einen neuen Überblick. Beginne mit dem hervorgehobenen Schritt und den aktuellen Neuigkeiten und finde wieder in den Kurs hinein."
+                    },
+                    "v1": {
+                        "title": "Knüpfe wieder an.",
+                        "body": "Ein kleiner Schritt erleichtert den Wiedereinstieg. Sieh dir die verfügbaren Inhalte an und wähle etwas, das du verstehen oder abschließen möchtest."
+                    },
+                    "v2": {
+                        "title": "Hier kannst du wieder einsteigen.",
+                        "body": "Beginne mit dem, was jetzt vor dir liegt. Der nächste Schritt und die Kursneuigkeiten helfen dir zu entscheiden, worauf du dich konzentrieren möchtest."
+                    }
+                },
+                "IN_PROGRESS": {
+                    "v0": {
+                        "title": "Bleib an deinen Ideen dran{{nameSuffix}}.",
+                        "body": "Du kannst an einer Aufgabe weiterarbeiten. Prüfe dein Vorgehen, probiere einen nächsten Teilschritt aus und lass dich von deinen Fragen leiten."
+                    },
+                    "v1": {
+                        "title": "Baue auf deinem ersten Versuch auf.",
+                        "body": "Kehre zur vorgeschlagenen Aufgabe zurück und entwickle deinen Ansatz weiter. Oft hilft es, eine Idee nach der anderen zu prüfen."
+                    },
+                    "v2": {
+                        "title": "Bleib neugierig.",
+                        "body": "Arbeite an der Aufgabe unten weiter. Wenn du feststeckst, hilft eine klare Beschreibung des Problems beim nächsten Ansatz oder bei einer hilfreichen Frage."
+                    }
+                },
+                "NEW_EXERCISE": {
+                    "v0": {
+                        "title": "Eine neue Idee zum Ausprobieren{{nameSuffix}}.",
+                        "body": "Eine neue Übung ist verfügbar. Lies die Aufgabe, verbinde sie mit dem Kursmaterial und probiere einen ersten Ansatz aus."
+                    },
+                    "v1": {
+                        "title": "Wende dein Verständnis an.",
+                        "body": "Entdecke die neue Übung. Ein kleiner Versuch zeigt dir, welche Konzepte schon klar sind und welche du noch einmal ansehen möchtest."
+                    },
+                    "v2": {
+                        "title": "Deine nächste Aufgabe wartet.",
+                        "body": "Öffne die neue Aufgabe und suche dir einen überschaubaren Einstieg. Beim Bearbeiten kannst du dein Verständnis Schritt für Schritt vertiefen."
+                    }
+                },
+                "NEW_LECTURE": {
+                    "v0": {
+                        "title": "Eine neue Perspektive wartet.",
+                        "body": "Neues Kursmaterial ist verfügbar. Sieh es dir an und suche eine Verbindung zu etwas, das du schon ausprobiert hast."
+                    },
+                    "v1": {
+                        "title": "Entdecke eine neue Verbindung{{nameSuffix}}.",
+                        "body": "Sieh dir das aktuelle Vorlesungsmaterial an. Eine eigene Frage oder ein Beispiel hilft dir, dich mit den Ideen auseinanderzusetzen."
+                    },
+                    "v2": {
+                        "title": "Entdecke den nächsten Teil des Kurses.",
+                        "body": "Es gibt neues Material im Kurs. Nimm dir Raum zum Lesen und Nachdenken und verbinde die Inhalte mit deiner Arbeit."
+                    }
+                },
+                "NEW_FAQ": {
+                    "v0": {
+                        "title": "Eine hilfreiche Antwort zum Entdecken.",
+                        "body": "Die Kurs-FAQ wurde ergänzt. Vielleicht klärt sie eine offene Frage oder hilft dir bei deiner nächsten Aufgabe."
+                    },
+                    "v1": {
+                        "title": "Lerne aus gemeinsamen Fragen.",
+                        "body": "Lies die aktuelle FAQ. Fragen aus dem Kurs machen oft hilfreiche Details und andere Sichtweisen auf den Stoff sichtbar."
+                    },
+                    "v2": {
+                        "title": "Ein Stück mehr Klarheit.",
+                        "body": "Eine neue FAQ ist verfügbar. Lies die Erklärung und prüfe, wie sie mit deiner aktuellen Arbeit zusammenhängt."
+                    }
+                },
+                "CAUGHT_UP": {
+                    "v0": {
+                        "title": "Wähle deinen nächsten Lernschritt{{nameSuffix}}.",
+                        "body": "Denke kurz über dein Lernen nach. Du kannst eine Idee wiederholen, verfügbare Aufgaben entdecken oder dein Verständnis im Austausch vertiefen."
+                    },
+                    "v1": {
+                        "title": "Gib deinem Verständnis Raum.",
+                        "body": "Wähle im Kursüberblick einen hilfreichen nächsten Schritt. Wenn du ein Konzept erklärst oder ein Beispiel wiederholst, entdeckst du vielleicht neue Zusammenhänge."
+                    },
+                    "v2": {
+                        "title": "Bleib weiter neugierig.",
+                        "body": "Lernen hat viele Wege. Sieh dir deine Arbeit noch einmal an, greife eine Frage auf oder entdecke die nächsten verfügbaren Kursinhalte."
+                    }
+                },
+                "COURSE_ENDED": {
+                    "v0": {
+                        "title": "Nimm dein Wissen mit{{nameSuffix}}.",
+                        "body": "Der Kurs ist beendet. Denke über deine abgegebene Arbeit und die Ideen nach, die du weiterentwickeln möchtest. Verfügbare Materialien und Feedback helfen dir beim Rückblick."
+                    },
+                    "v1": {
+                        "title": "Blicke neugierig zurück.",
+                        "body": "Schau auf deine Kurserfahrung und darauf, wie sich dein Denken verändert hat. Deine Abgaben sind ein Teil davon; manche Ideen möchtest du vielleicht noch vertiefen."
+                    },
+                    "v2": {
+                        "title": "Eine Grundlage für das, was folgt.",
+                        "body": "Die Kurszeit ist vorbei und dein Lernen kann weitergehen. Nutze verfügbare Inhalte, um deinen Fortschritt zu reflektieren und ein Thema zum Weiterüben zu finden."
+                    }
+                }
+            },
+            "CAUGHT_UP": "Deinen Kurs entdecken"
+        }
+    }
+}

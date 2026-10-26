@@ -89,6 +89,12 @@ export const courseRoutes: Routes = [
         canActivate: [UserRouteAccessService],
         children: [
             {
+                path: 'home',
+                loadComponent: () => import('app/course/overview/course-home/course-home.component').then((m) => m.CourseHomeComponent),
+                data: { authorities: IS_AT_LEAST_STUDENT, pageTitle: 'artemisApp.courseHome.title', hasSidebar: false },
+                canActivate: [UserRouteAccessService],
+            },
+            {
                 path: 'exercises/:exerciseId/teams/:teamId',
                 loadComponent: () => import('app/exercise/team/team.component').then((m) => m.TeamComponent),
                 data: {
