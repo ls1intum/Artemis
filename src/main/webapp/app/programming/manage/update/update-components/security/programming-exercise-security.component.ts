@@ -15,6 +15,7 @@ import {
     SecurityActivationStatus,
     SecurityFrameworkConfig,
     SecurityFrameworkVersionOption,
+    SecurityFrameworkVersions,
     SecurityStagedChoice,
     TRANSIENT_SECURITY_STATUSES,
     isSecurityActive,
@@ -86,20 +87,31 @@ export class ProgrammingExerciseSecurityComponent {
     /** Whether the card is shown at all. */
     readonly isAvailable = computed(() => this.isSupportedLanguage() && this.isSupportedProjectType());
 
-    /** The Ares versions the server supports, newest first. */
-    readonly supportedVersions = signal<string[]>([]);
-    /** The newest supported version, which a new exercise and a version-less activation use. */
-    readonly defaultVersion = computed(() => this.supportedVersions()[0]);
+    /** The versions the server offers, or undefined while they load (or if loading failed). */
+    readonly versions = signal<SecurityFrameworkVersions | undefined>(undefined);
+    /** The Ares versions an instructor can pin, newest first. */
+    readonly selectableVersions = computed(() => this.versions()?.selectableVersions ?? []);
+    /** The newest selectable version, labeled "(latest)". */
+    readonly latestVersion = computed(() => this.selectableVersions()[0]);
+    /**
+     * The version the tests repository template of the selected project type pins. A new exercise is created with exactly this version, so the create form
+     * shows it until the instructor picks another one.
+     */
+    readonly defaultVersion = computed(() => {
+        const templateVersions = this.versions()?.templateVersions ?? {};
+        const projectType = this.selectedProjectType() ?? this.programmingExercise().projectType;
+        return (projectType ? templateVersions[projectType] : undefined) ?? Object.values(templateVersions)[0] ?? this.latestVersion();
+    });
 
-    /** Dropdown options: the supported versions, plus the version the exercise currently pins if it is no longer supported. */
+    /** Dropdown options: the selectable versions, plus the version the exercise currently pins if it is no longer selectable. */
     readonly frameworkVersions = computed<SecurityFrameworkVersionOption[]>(() => {
-        const versions = [...this.supportedVersions()];
+        const versions = [...this.selectableVersions()];
         const current = this.config().frameworkVersion;
         if (current && !versions.includes(current)) {
             versions.push(current);
         }
         const latestSuffix = this.translateService.instant('artemisApp.programmingExercise.security.latestSuffix');
-        return versions.map((version) => ({ version, label: version === this.defaultVersion() ? `${version} ${latestSuffix}` : version }));
+        return versions.map((version) => ({ version, label: version === this.latestVersion() ? `${version} ${latestSuffix}` : version }));
     });
 
     /** The one source of truth. Every derived value below reads from this. A new Java exercise starts ACTIVE, as its template does. */
@@ -144,18 +156,24 @@ export class ProgrammingExerciseSecurityComponent {
     private pendingOperation?: { transientPatch: Partial<SecurityFrameworkConfig>; run: () => Observable<SecurityFrameworkConfig> };
 
     constructor() {
-        this.securityService.getSupportedVersions().subscribe({
-            next: (versions) => this.supportedVersions.set(versions),
+        this.securityService.getVersions().subscribe({
+            next: (versions) => this.versions.set(versions),
             // Without versions the selector stays disabled; activation still works with the version the exercise pins.
-            error: () => this.supportedVersions.set([]),
+            error: () => this.versions.set(undefined),
         });
 
-        // Create mode: show the default version once it is known, unless the instructor already chose one.
+        // Create mode: show the version the exercise will be created with, i.e. the template's version for the selected project type, until the
+        // instructor makes a choice. It follows a change of the project type, because the templates can pin different versions.
         effect(() => {
             const defaultVersion = this.defaultVersion();
-            if (defaultVersion && this.programmingExercise().id === undefined && !untracked(() => this.config().frameworkVersion)) {
-                untracked(() => this.patchConfig({ frameworkVersion: defaultVersion }));
+            if (!defaultVersion || this.programmingExercise().id !== undefined || this.stagedChoice()) {
+                return;
             }
+            untracked(() => {
+                if (this.config().frameworkVersion !== defaultVersion) {
+                    this.patchConfig({ frameworkVersion: defaultVersion });
+                }
+            });
         });
 
         // Seed once: an existing exercise loads its config from the server; a not-yet-created exercise keeps the
@@ -237,7 +255,9 @@ export class ProgrammingExerciseSecurityComponent {
             return;
         }
         if (checked) {
-            const version = this.config().frameworkVersion ?? this.defaultVersion();
+            // An exercise that pins a version which is no longer selectable is activated with the template's version, which the server accepts.
+            const current = this.config().frameworkVersion;
+            const version = current && this.selectableVersions().includes(current) ? current : this.defaultVersion();
             if (!version) {
                 return;
             }
@@ -250,6 +270,10 @@ export class ProgrammingExerciseSecurityComponent {
     /** Only an already-active exercise in edit mode has a repository to commit a version change to. */
     onFrameworkVersionChanged(version: unknown): void {
         const newVersion = String(version);
+        // Only selectable versions can be pinned; the version an exercise already pins is listed even if it no longer is, but cannot be chosen again.
+        if (!this.selectableVersions().includes(newVersion)) {
+            return;
+        }
         const exerciseId = this.programmingExercise().id;
         if (exerciseId === undefined || !this.isActive()) {
             this.patchConfig({ frameworkVersion: newVersion });

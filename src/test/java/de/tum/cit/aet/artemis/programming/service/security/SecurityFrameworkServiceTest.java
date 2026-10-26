@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -35,20 +36,25 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.core.io.FileSystemResource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkVersionsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 /**
@@ -57,6 +63,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
  * run for real and the assertions see exactly what an instructor would find in the repository.
  */
 class SecurityFrameworkServiceTest {
+
+    private static final Path MAIN_RESOURCES = Path.of("src", "main", "resources");
 
     private static final String PACKAGE_NAME = "de.example";
 
@@ -105,6 +113,12 @@ class SecurityFrameworkServiceTest {
     private GitService gitService;
 
     private BareGitRepositoryService bareGitRepositoryService;
+
+    private TempFileUtilService tempFileUtilService;
+
+    private ResourceLoaderService resourceLoaderService;
+
+    private LocalVCServletService localVCServletService;
 
     private SecurityFrameworkService securityFrameworkService;
 
@@ -158,14 +172,21 @@ class SecurityFrameworkServiceTest {
         when(bareGitRepositoryService.getBareRepository(any(LocalVCRepositoryUri.class), anyString(), anyBoolean()))
                 .thenAnswer(_ -> new Repository(new FileRepositoryBuilder().setGitDir(remote.toFile()).setBare().setup(), remote, mock(LocalVCRepositoryUri.class)));
 
-        TempFileUtilService tempFileUtilService = mock(TempFileUtilService.class);
+        tempFileUtilService = mock(TempFileUtilService.class);
         when(tempFileUtilService.createTempDirectory(anyString())).thenAnswer(call -> newDirectory(call.getArgument(0, String.class)));
 
+        resourceLoaderService = mock(ResourceLoaderService.class);
+        when(resourceLoaderService.getResource(any(Path.class))).thenAnswer(call -> new FileSystemResource(MAIN_RESOURCES.resolve(call.getArgument(0, Path.class))));
+        localVCServletService = mock(LocalVCServletService.class);
+
+        securityFrameworkService = createService("2.3.0", "2.2.1");
+    }
+
+    private SecurityFrameworkService createService(String... configuredVersions) {
         ProgrammingExerciseBuildConfigRepository buildConfigRepository = mock(ProgrammingExerciseBuildConfigRepository.class);
         when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(anyLong())).thenReturn(new ProgrammingExerciseBuildConfig());
-
-        securityFrameworkService = new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository, "main",
-                new String[] { "2.3.0", "2.2.1" });
+        return new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository, resourceLoaderService,
+                Optional.of(localVCServletService), "main", configuredVersions);
     }
 
     /**
@@ -242,6 +263,25 @@ class SecurityFrameworkServiceTest {
         assertThat(config.frameworkVersion()).isEqualTo("2.2.1");
         assertThat(config.lastCommitHash()).hasSize(7);
         assertThat(config.lastSyncedAt()).isNotBlank();
+    }
+
+    @Test
+    void aTestThatSwitchesItsPolicyOffMakesTheFrameworkInactive() throws Exception {
+        Path checkout = newDirectory("instructor-");
+        try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
+            Path testFile = checkout.resolve("test/de/example/SortingTest.java");
+            FileUtils.writeStringToFile(testFile.toFile(), Files.readString(testFile).replace(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION, SecurityPolicyRepositoryFiles.INACTIVE_ANNOTATION),
+                    StandardCharsets.UTF_8);
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("Switch the policy off by hand").setAuthor("Instructor", "instructor@example.org").call();
+            git.push().call();
+        }
+
+        assertThat(securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA)).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+
+        SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
     }
 
     @Test
@@ -352,13 +392,39 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
-    void defaultFrameworkVersionMatchesTheJavaTemplates() throws IOException {
-        Path templates = Path.of("src", "main", "resources", "templates", "java");
-        String expected = SecurityFrameworkService.DEFAULT_FRAMEWORK_VERSION;
-        assertThat(SecurityPolicyRepositoryFiles.readAresVersion(templates.resolve("test/gradle/projectTemplate"))).contains(expected);
-        assertThat(SecurityPolicyRepositoryFiles.readAresVersion(templates.resolve("test/maven/projectTemplate"))).contains(expected);
-        assertThat(SecurityPolicyRepositoryFiles.readAresVersion(templates.resolve("maven_maven/test/projectTemplate"))).contains(expected);
-        // Toggling relies on the annotation the template tests use.
-        assertThat(Files.readString(templates.resolve("test/testFiles/structural/ClassTest.java"))).contains(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION);
+    void templateVersionsAreReadFromTheTemplatesAndAlwaysSelectable() {
+        String gradleTemplateVersion = SecurityPolicyRepositoryFiles.readAresVersion(MAIN_RESOURCES.resolve("templates/java/test/gradle/projectTemplate")).orElseThrow();
+
+        SecurityFrameworkVersionsDTO versions = securityFrameworkService.getFrameworkVersions();
+
+        assertThat(versions.templateVersions()).containsOnlyKeys(ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN)
+                .containsEntry(ProjectType.PLAIN_GRADLE, gradleTemplateVersion);
+        // All Java templates start with the same version, otherwise a new exercise would show a version that depends on the build tool.
+        assertThat(versions.templateVersions().values()).containsOnly(gradleTemplateVersion);
+        assertThat(versions.selectableVersions()).startsWith("2.3.0").contains(gradleTemplateVersion).doesNotHaveDuplicates();
+        assertThat(createService().getFrameworkVersions().selectableVersions()).containsExactly(gradleTemplateVersion);
+    }
+
+    @Test
+    void theTemplateTestsUseTheAnnotationThatIsToggled() throws IOException {
+        assertThat(Files.readString(MAIN_RESOURCES.resolve("templates/java/test/testFiles/structural/ClassTest.java"))).contains(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION);
+    }
+
+    @Test
+    void aChangeRunsThePushProcessingOfTheTestsRepository() throws Exception {
+        securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user);
+
+        String pushedHead;
+        try (Git git = Git.open(remote.toFile())) {
+            pushedHead = git.getRepository().resolve("refs/heads/main").name();
+        }
+        verify(localVCServletService).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
+    }
+
+    @Test
+    void anUnchangedRepositoryIsNotProcessed() {
+        securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
+
+        verifyNoInteractions(localVCServletService);
     }
 }

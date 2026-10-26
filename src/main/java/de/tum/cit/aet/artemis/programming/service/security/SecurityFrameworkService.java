@@ -9,8 +9,13 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
@@ -33,15 +38,19 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkVersionsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyRepositoryFiles.BuildTool;
 
@@ -49,13 +58,14 @@ import de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyReposit
  * Activates and deactivates the Ares 2 Security Framework of a Java programming exercise by changing its exercise-tests repository.
  * <p>
  * The exercise-tests repository is the single source of truth, so there is neither a database column nor any server-side state: the Security Framework is
- * active exactly when the repository contains {@link SecurityPolicyRepositoryFiles#POLICY_FILE_NAME}, and its framework version is the Ares version pinned in
- * the build file. Because the Java templates ship with Ares enabled, a new exercise starts out active.
+ * active exactly when the repository contains {@link SecurityPolicyRepositoryFiles#POLICY_FILE_NAME} and no test switches its {@code @Policy} annotation off,
+ * and its framework version is the Ares version pinned in the build file. Because the Java templates ship with Ares enabled, a new exercise starts out active.
  * <ul>
  * <li>Activating restores the policy the exercise last had (so an instructor's permissions survive a deactivate/activate cycle), or generates a default
- * policy if the exercise never had one, switches the {@code @Policy} annotations of the tests on, and commits and pushes the change.</li>
- * <li>Deactivating deletes the policy file, switches every {@code @Policy} annotation to {@code activated = false} and commits and pushes the change, so the
- * student code is no longer sandboxed.</li>
+ * policy if the exercise never had one, switches the {@code @Policy} annotations of the tests back on, and commits and pushes the change. A restored policy
+ * lists the test classes it listed back then; test classes added while the framework was off have to be added to it, as with any new test class.</li>
+ * <li>Deactivating deletes the policy file, adds {@code activated = false} to every {@code @Policy} annotation while keeping its other arguments, and commits
+ * and pushes the change, so the student code is no longer sandboxed.</li>
  * <li>Changing the framework version pins another Ares version in the build file and commits and pushes it.</li>
  * </ul>
  * Each change is one commit authored by the acting user, so it is visible in the repository history and can be reverted there.
@@ -70,9 +80,11 @@ public class SecurityFrameworkService {
     public static final String ENTITY_NAME = "programmingExercise.securityFramework";
 
     /**
-     * The Ares version the Java exercise templates pin. {@code SecurityFrameworkServiceTest} keeps it in sync with the templates.
+     * The build file of the tests repository template for each supported project type. Exercises are created from these files, so the Ares version they pin
+     * is the version a new exercise starts with. They are read through the {@link ResourceLoaderService}, so an instance that overrides the templates gets
+     * its own versions.
      */
-    static final String DEFAULT_FRAMEWORK_VERSION = "2.2.1";
+    private static final Map<ProjectType, Path> TEMPLATE_BUILD_FILES = templateBuildFiles();
 
     private final GitService gitService;
 
@@ -84,24 +96,63 @@ public class SecurityFrameworkService {
 
     private final String defaultBranch;
 
-    private final List<String> supportedFrameworkVersions;
+    private final ResourceLoaderService resourceLoaderService;
+
+    private final Optional<LocalVCServletService> localVCServletService;
+
+    private final List<String> configuredFrameworkVersions;
 
     public SecurityFrameworkService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, TempFileUtilService tempFileUtilService,
-            ProgrammingExerciseBuildConfigRepository buildConfigRepository, @Value("${artemis.version-control.default-branch:main}") String defaultBranch,
-            @Value("${artemis.programming.security-framework.supported-versions:" + SecurityFrameworkService.DEFAULT_FRAMEWORK_VERSION + "}") String[] supportedFrameworkVersions) {
+            ProgrammingExerciseBuildConfigRepository buildConfigRepository, ResourceLoaderService resourceLoaderService, Optional<LocalVCServletService> localVCServletService,
+            @Value("${artemis.version-control.default-branch:main}") String defaultBranch,
+            @Value("${artemis.programming.security-framework.supported-versions:}") String[] configuredFrameworkVersions) {
         this.gitService = gitService;
         this.bareGitRepositoryService = bareGitRepositoryService;
         this.tempFileUtilService = tempFileUtilService;
         this.buildConfigRepository = buildConfigRepository;
+        this.resourceLoaderService = resourceLoaderService;
+        this.localVCServletService = localVCServletService;
         this.defaultBranch = defaultBranch;
-        this.supportedFrameworkVersions = Arrays.stream(supportedFrameworkVersions).map(String::trim).filter(version -> !version.isEmpty()).toList();
+        this.configuredFrameworkVersions = Arrays.stream(configuredFrameworkVersions).map(String::trim).filter(version -> !version.isEmpty()).distinct().toList();
+    }
+
+    private static Map<ProjectType, Path> templateBuildFiles() {
+        Map<ProjectType, Path> buildFiles = new EnumMap<>(ProjectType.class);
+        Path gradleBuildFile = Path.of("templates", "java", "test", "gradle", "projectTemplate", "build.gradle");
+        buildFiles.put(ProjectType.PLAIN_GRADLE, gradleBuildFile);
+        buildFiles.put(ProjectType.GRADLE_GRADLE, gradleBuildFile);
+        buildFiles.put(ProjectType.PLAIN_MAVEN, Path.of("templates", "java", "test", "maven", "projectTemplate", "pom.xml"));
+        buildFiles.put(ProjectType.MAVEN_MAVEN, Path.of("templates", "java", "maven_maven", "test", "projectTemplate", "pom.xml"));
+        return Collections.unmodifiableMap(buildFiles);
     }
 
     /**
-     * @return the Ares versions an instructor can pin, newest first. Configured via {@code artemis.programming.security-framework.supported-versions}.
+     * The versions an instructor can choose and the version each template starts with.
+     * <p>
+     * The selectable versions are the ones configured via {@code artemis.programming.security-framework.supported-versions} (newest first), followed by the
+     * template versions that are not configured, so the version a new exercise starts with can always be kept. Without a configuration, only the template
+     * versions are selectable.
+     *
+     * @return the selectable versions and the template version per project type
      */
-    public List<String> getSupportedFrameworkVersions() {
-        return supportedFrameworkVersions;
+    public SecurityFrameworkVersionsDTO getFrameworkVersions() {
+        Map<ProjectType, String> templateVersions = new EnumMap<>(ProjectType.class);
+        TEMPLATE_BUILD_FILES.forEach((projectType, buildFile) -> readTemplateAresVersion(buildFile).ifPresent(version -> templateVersions.put(projectType, version)));
+        Set<String> selectableVersions = new LinkedHashSet<>(configuredFrameworkVersions);
+        selectableVersions.addAll(templateVersions.values());
+        return new SecurityFrameworkVersionsDTO(List.copyOf(selectableVersions), templateVersions);
+    }
+
+    private Optional<String> readTemplateAresVersion(Path buildFile) {
+        try {
+            String content = resourceLoaderService.getResource(buildFile).getContentAsString(StandardCharsets.UTF_8);
+            boolean gradle = buildFile.getFileName().toString().endsWith(".gradle");
+            return SecurityPolicyRepositoryFiles.parseAresVersion(gradle ? content : null, gradle ? null : content);
+        }
+        catch (IOException e) {
+            log.warn("Could not read the Ares version of the template {}", buildFile, e);
+            return Optional.empty();
+        }
     }
 
     /**
@@ -125,7 +176,7 @@ public class SecurityFrameworkService {
             RevTree tree = revWalk.parseCommit(head).getTree();
             String frameworkVersion = SecurityPolicyRepositoryFiles
                     .parseAresVersion(readFile(repository, tree, "build.gradle").orElse(null), readFile(repository, tree, "pom.xml").orElse(null)).orElse(null);
-            if (readFile(repository, tree, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).isEmpty()) {
+            if (readFile(repository, tree, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).isEmpty() || hasDeactivatedPolicyAnnotation(repository, tree)) {
                 return inactiveConfig(frameworkVersion);
             }
             return activeConfig(frameworkVersion, lastCommitTouchingPolicy(repository, head));
@@ -218,6 +269,7 @@ public class SecurityFrameworkService {
             if (gitService.stageAllChanges(repository)) {
                 String commitHash = gitService.commitStagedChanges(repository, commitMessage, user);
                 gitService.pushCommitWithLease(repository, commitHash, branch, checkedOutHead);
+                processPushToTestRepository(testRepositoryUri, branch, commitHash, user);
             }
             return readConfig(repository);
         }
@@ -235,10 +287,23 @@ public class SecurityFrameworkService {
         }
     }
 
+    /**
+     * Runs the processing that follows every push to a tests repository, like a push through git or the online editor: it creates an exercise version,
+     * marks the existing results as outdated and triggers the template and solution builds, which now run with the changed sandbox. It needs the server-side
+     * repository, because it derives the exercise and the repository type from its location.
+     */
+    private void processPushToTestRepository(LocalVCRepositoryUri testRepositoryUri, String branch, String commitHash, User user) {
+        localVCServletService.ifPresent(servletService -> {
+            try (Repository serverRepository = bareGitRepositoryService.getBareRepository(testRepositoryUri, branch, false)) {
+                servletService.processNewPush(commitHash, serverRepository, user, Optional.empty(), Optional.empty(), Optional.empty());
+            }
+        });
+    }
+
     private SecurityFrameworkConfigDTO readConfig(Repository repository) {
         Path root = repository.getLocalPath();
         String frameworkVersion = SecurityPolicyRepositoryFiles.readAresVersion(root).orElse(null);
-        if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root)) {
+        if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root) || SecurityPolicyRepositoryFiles.hasDeactivatedPolicyAnnotation(root)) {
             return inactiveConfig(frameworkVersion);
         }
         try {
@@ -272,6 +337,23 @@ public class SecurityFrameworkService {
     private String repositoryBranch(ProgrammingExercise exercise) {
         String branch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
         return branch == null || branch.isBlank() ? defaultBranch : branch;
+    }
+
+    /**
+     * @return whether a test source in the given commit switches its {@code @Policy} annotation off
+     */
+    private static boolean hasDeactivatedPolicyAnnotation(Repository repository, RevTree tree) throws IOException {
+        try (TreeWalk treeWalk = new TreeWalk(repository)) {
+            treeWalk.addTree(tree);
+            treeWalk.setRecursive(true);
+            while (treeWalk.next()) {
+                if (SecurityPolicyRepositoryFiles.isJavaSourcePath(treeWalk.getPathString())
+                        && SecurityPolicyRepositoryFiles.containsDeactivatedPolicyAnnotation(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8))) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     private static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {
@@ -334,7 +416,7 @@ public class SecurityFrameworkService {
     }
 
     private void validateFrameworkVersion(String frameworkVersion) {
-        if (!supportedFrameworkVersions.contains(frameworkVersion)) {
+        if (!getFrameworkVersions().selectableVersions().contains(frameworkVersion)) {
             throw new BadRequestAlertException("Unsupported Security Framework version: " + frameworkVersion, ENTITY_NAME, "unsupportedFrameworkVersion");
         }
     }

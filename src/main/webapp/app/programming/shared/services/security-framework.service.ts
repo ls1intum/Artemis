@@ -2,7 +2,7 @@ import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { SecurityFrameworkConfig } from 'app/programming/shared/entities/security-framework-config.model';
+import { SecurityFrameworkConfig, SecurityFrameworkVersions } from 'app/programming/shared/entities/security-framework-config.model';
 
 /**
  * Client for the Security Framework (Ares 2) of a programming exercise.
@@ -19,9 +19,9 @@ export class SecurityFrameworkService {
         return `api/programming/programming-exercises/${exerciseId}/security-framework`;
     }
 
-    /** The Ares versions an instructor can pin, newest first. */
-    getSupportedVersions(): Observable<string[]> {
-        return this.http.get<string[]>('api/programming/security-framework/supported-versions');
+    /** The Ares versions an instructor can pin and the version each template starts with. */
+    getVersions(): Observable<SecurityFrameworkVersions> {
+        return this.http.get<SecurityFrameworkVersions>('api/programming/security-framework/versions');
     }
 
     /** Reads the config of an existing exercise from its tests repository. */

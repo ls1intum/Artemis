@@ -6,11 +6,19 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityStagedChoice } from 'app/programming/shared/entities/security-framework-config.model';
+import {
+    SecurityActivationStatus,
+    SecurityFrameworkConfig,
+    SecurityFrameworkVersions,
+    SecurityStagedChoice,
+} from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
 
-const VERSIONS = ['3.4.1', '3.3.0', '3.2.2'];
+const VERSIONS: SecurityFrameworkVersions = {
+    selectableVersions: ['3.4.1', '3.3.0', '3.2.2'],
+    templateVersions: { [ProjectType.PLAIN_GRADLE]: '3.2.2', [ProjectType.PLAIN_MAVEN]: '3.3.0' },
+};
 
 const inactiveConfig = (): SecurityFrameworkConfig => ({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '3.4.1' });
 const activeConfig = (version = '3.4.1', hash = 'abc1234'): SecurityFrameworkConfig => ({
@@ -30,7 +38,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseSecurityComponent>;
     let comp: ProgrammingExerciseSecurityComponent;
     let service: {
-        getSupportedVersions: ReturnType<typeof vi.fn>;
+        getVersions: ReturnType<typeof vi.fn>;
         getConfig: ReturnType<typeof vi.fn>;
         activate: ReturnType<typeof vi.fn>;
         deactivate: ReturnType<typeof vi.fn>;
@@ -39,7 +47,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
 
     beforeEach(() => {
         service = {
-            getSupportedVersions: vi.fn().mockReturnValue(of(VERSIONS)),
+            getVersions: vi.fn().mockReturnValue(of(VERSIONS)),
             getConfig: vi.fn().mockReturnValue(of(inactiveConfig())),
             activate: vi.fn(),
             deactivate: vi.fn(),
@@ -56,6 +64,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     function initCreate(language = ProgrammingLanguage.JAVA): void {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.programmingLanguage = language;
+        exercise.projectType = ProjectType.PLAIN_GRADLE;
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.componentRef.setInput('selectedProgrammingLanguage', language);
         fixture.detectChanges();
@@ -66,6 +75,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.id = 42;
         exercise.programmingLanguage = language;
+        exercise.projectType = ProjectType.PLAIN_GRADLE;
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.componentRef.setInput('selectedProgrammingLanguage', language);
         fixture.detectChanges();
@@ -128,7 +138,39 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         initCreate();
         expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
         expect(comp.isToggleOn()).toBe(true);
+        expect(comp.config().frameworkVersion).toBe('3.2.2');
+    });
+
+    it('shows the version of the template in create mode, not the newest selectable one, so nothing differs from what gets saved', () => {
+        initCreate();
+        expect(comp.latestVersion()).toBe('3.4.1');
+        expect(comp.config().frameworkVersion).toBe('3.2.2');
+    });
+
+    it('follows the template version of the selected project type until the instructor picks a version', () => {
+        initCreate();
+        fixture.componentRef.setInput('selectedProjectType', ProjectType.PLAIN_MAVEN);
+        fixture.detectChanges();
+        expect(comp.config().frameworkVersion).toBe('3.3.0');
+
+        comp.onFrameworkVersionChanged('3.4.1');
+        fixture.componentRef.setInput('stagedChoice', { active: true, frameworkVersion: '3.4.1' });
+        fixture.componentRef.setInput('selectedProjectType', ProjectType.PLAIN_GRADLE);
+        fixture.detectChanges();
         expect(comp.config().frameworkVersion).toBe('3.4.1');
+    });
+
+    it('ignores choosing a version that is not selectable', () => {
+        initEdit(activeConfig('2.0.0'));
+        comp.onFrameworkVersionChanged('2.0.0');
+        expect(service.updateFrameworkVersion).not.toHaveBeenCalled();
+    });
+
+    it('activates an exercise that pins a no longer selectable version with the template version', () => {
+        initEdit({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '2.0.0' });
+        service.activate.mockReturnValue(of(activeConfig('3.2.2')));
+        comp.onToggleChanged(true);
+        expect(service.activate).toHaveBeenCalledWith(42, '3.2.2');
     });
 
     it('labels the newest version and keeps a no longer supported version the exercise pins', () => {
@@ -139,7 +181,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     });
 
     it('disables the version selector when no versions are known', () => {
-        service.getSupportedVersions.mockReturnValue(throwError(() => new Error('LOAD_FAILED')));
+        service.getVersions.mockReturnValue(throwError(() => new Error('LOAD_FAILED')));
         // The versions are requested on construction, so re-create the component with the failing request.
         fixture.destroy();
         fixture = TestBed.createComponent(ProgrammingExerciseSecurityComponent);
@@ -316,9 +358,9 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         const emitted: SecurityStagedChoice[] = [];
         comp.stagedChoiceChange.subscribe((value) => emitted.push(value));
         comp.onToggleChanged(false);
-        expect(emitted.at(-1)).toEqual({ active: false, frameworkVersion: '3.4.1' });
+        expect(emitted.at(-1)).toEqual({ active: false, frameworkVersion: '3.2.2' });
         comp.onToggleChanged(true);
-        expect(emitted.at(-1)).toEqual({ active: true, frameworkVersion: '3.4.1' });
+        expect(emitted.at(-1)).toEqual({ active: true, frameworkVersion: '3.2.2' });
         comp.onFrameworkVersionChanged('3.3.0');
         expect(emitted.at(-1)).toEqual({ active: true, frameworkVersion: '3.3.0' });
     });
@@ -334,7 +376,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         initCreate();
         comp.onToggleChanged(false);
         // The parent mirrors the emitted choice back into the input.
-        fixture.componentRef.setInput('stagedChoice', { active: false, frameworkVersion: '3.4.1' });
+        fixture.componentRef.setInput('stagedChoice', { active: false, frameworkVersion: '3.2.2' });
         fixture.detectChanges();
         expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
 
@@ -345,6 +387,6 @@ describe('ProgrammingExerciseSecurityComponent', () => {
 
         expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
         expect(comp.isToggleOn()).toBe(true);
-        expect(comp.config().frameworkVersion).toBe('3.4.1');
+        expect(comp.config().frameworkVersion).toBe('3.2.2');
     });
 });

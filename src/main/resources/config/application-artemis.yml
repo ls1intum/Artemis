@@ -65,8 +65,9 @@ artemis:
     # the mirror instead of Maven Central. Leave it unset to keep resolving from Maven Central directly.
     # TUM-operated instances can use the mirror the Artemis team provides:
     # maven-central-mirror-url: https://reposilite.aet.cit.tum.de/releases
-    # Ares versions instructors can pin for the Security Framework of a Java exercise, newest first. Defaults to the
-    # version the Java templates use. Only list versions that are published, otherwise the exercise builds fail.
+    # Ares versions instructors can pin for the Security Framework of a Java exercise, newest first. The version the
+    # Java templates use is always selectable, and without this setting it is the only one. Only list versions that
+    # are published, otherwise the exercise builds fail.
     # security-framework:
     #   supported-versions: 2.2.1
   version-control:

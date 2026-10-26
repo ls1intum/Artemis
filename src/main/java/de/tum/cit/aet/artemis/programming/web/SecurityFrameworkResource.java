@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -26,6 +24,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkVersionsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
@@ -81,16 +80,16 @@ public class SecurityFrameworkResource {
     }
 
     /**
-     * GET security-framework/supported-versions : the Ares versions an instructor can pin, newest first. Not exercise-specific, so the create form can
-     * offer them before the exercise exists.
+     * GET security-framework/versions : the Ares versions an instructor can pin and the version each template starts with. Not exercise-specific, so the
+     * create form can show them before the exercise exists.
      *
-     * @return 200 (OK) with the supported framework versions in the body
+     * @return 200 (OK) with the versions in the body
      */
-    @GetMapping("security-framework/supported-versions")
+    @GetMapping("security-framework/versions")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getSupportedFrameworkVersions() {
-        log.debug("REST request to get the supported Security Framework versions");
-        return ResponseEntity.ok(securityFrameworkService.getSupportedFrameworkVersions());
+    public ResponseEntity<SecurityFrameworkVersionsDTO> getFrameworkVersions() {
+        log.debug("REST request to get the Security Framework versions");
+        return ResponseEntity.ok(securityFrameworkService.getFrameworkVersions());
     }
 
     /**

@@ -1,3 +1,5 @@
+import { ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+
 /**
  * Lifecycle status of the Security Framework sandbox for a single programming exercise, as shown to
  * instructors on the activation card. This enum is the single source of truth the whole card renders
@@ -25,6 +27,14 @@ export enum SecurityActivationStatus {
 
 /** Statuses that represent an in-progress background operation (spinner + disabled controls). */
 export const TRANSIENT_SECURITY_STATUSES: ReadonlySet<SecurityActivationStatus> = new Set([SecurityActivationStatus.GENERATING, SecurityActivationStatus.DELETING]);
+
+/** The Ares versions the server offers, mirroring the server's {@code SecurityFrameworkVersionsDTO}. */
+export interface SecurityFrameworkVersions {
+    /** The versions an instructor can pin, newest first. */
+    selectableVersions: string[];
+    /** The version the tests repository template of each project type pins, i.e. the version a new exercise starts with. */
+    templateVersions?: Partial<Record<ProjectType, string>>;
+}
 
 /** One selectable Ares release in the "Framework Version" dropdown. */
 export interface SecurityFrameworkVersionOption {

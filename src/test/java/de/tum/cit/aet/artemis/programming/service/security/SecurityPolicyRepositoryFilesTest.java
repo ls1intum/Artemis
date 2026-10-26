@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Tests which Java files {@link SecurityPolicyRepositoryFiles} treats as test sources of an exercise-tests repository.
@@ -57,6 +59,36 @@ class SecurityPolicyRepositoryFilesTest {
         writeTestClass("module/target/generated/de/example/ModuleGeneratedTest.java", "de.example", "ModuleGeneratedTest");
 
         assertThat(SecurityPolicyRepositoryFiles.findTestClasses(root)).containsExactly("de.example.SortingTest");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")", "@de.tum.cit.ase.ares.api.Policy(value = \"custom.yaml\", withinPath = \"src, test\")",
+            "@de.tum.cit.ase.ares.api.Policy" })
+    void aDeactivateActivateCycleRestoresTheAnnotationExactly(String annotation) throws IOException {
+        Path testFile = root.resolve("test/de/example/SortingTest.java");
+        String original = "package de.example;\n\n" + annotation + "\nclass SortingTest {\n}\n";
+        FileUtils.writeStringToFile(testFile.toFile(), original, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false)).isEqualTo(1);
+        assertThat(Files.readString(testFile)).contains("activated = false").contains(annotation.contains("custom.yaml") ? "value = \"custom.yaml\"" : "class SortingTest");
+        assertThat(SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false)).isZero();
+
+        assertThat(SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, true)).isEqualTo(1);
+        assertThat(Files.readString(testFile)).isEqualTo(original);
+        assertThat(SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, true)).isZero();
+    }
+
+    @Test
+    void keepsTheCustomPolicyOfAnImportedAnnotation() throws IOException {
+        Path testFile = root.resolve("test/de/example/SortingTest.java");
+        String original = "package de.example;\n\nimport de.tum.cit.ase.ares.api.Policy;\n\n@Policy(\"custom.yaml\")\nclass SortingTest {\n}\n";
+        FileUtils.writeStringToFile(testFile.toFile(), original, StandardCharsets.UTF_8);
+
+        SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
+        assertThat(Files.readString(testFile)).contains("@Policy(value = \"custom.yaml\", activated = false)");
+
+        SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, true);
+        assertThat(Files.readString(testFile)).contains("@Policy(value = \"custom.yaml\")");
     }
 
     @Test
