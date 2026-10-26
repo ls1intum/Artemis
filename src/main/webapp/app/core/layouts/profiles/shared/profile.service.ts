@@ -41,7 +41,11 @@ export class ProfileService {
     }
 
     public isLLMDeploymentEnabled(): boolean {
-        return this.profileInfo.localLLMDeploymentEnabled ?? false;
+        return (this.profileInfo.localLLMDeploymentEnabled ?? false) || (this.isCourseHomeAiAvailable() && this.profileInfo.courseHomeAiLocation === 'LOCAL');
+    }
+
+    public isCourseHomeAiAvailable(): boolean {
+        return this.profileInfo.courseHomeAiAvailable === true;
     }
 
     public isGocastEnabled(): boolean {

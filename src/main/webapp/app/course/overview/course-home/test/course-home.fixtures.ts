@@ -104,6 +104,13 @@ export function createCourseHomeFixture(situation: CourseHomeSituation): CourseH
             items: first || minimal ? [] : [{ id: 31, title: 'Understanding coupling', mode: 'COURSE', entityId: 42, lastActivity: '2026-10-25T09:00:00Z' }],
         },
     };
+    if (situation === 'before') home.course.startDate = '2026-11-02T08:00:00Z';
+    if (!first) home.visit.previousVisitAt = situation === 'returning' ? '2026-10-01T10:00:00Z' : '2026-10-25T10:00:00Z';
+    if (situation === 'unread-replies')
+        home.nextStep = { title: home.questions.items![0].title, target: { kind: 'THREAD', id: 21, conversationId: 8, focusReplyId: 23 }, reason: 'UNREAD_REPLY' };
+    if (situation === 'new-content') home.nextStep = { title: 'Project presentations', target: { kind: 'THREAD', id: 29, conversationId: 8 }, reason: 'IMPORTANT_ANNOUNCEMENT' };
+    if (situation === 'caught-up') home.nextStep = { title: 'Understanding coupling', target: { kind: 'IRIS_SESSION', id: 31 }, reason: 'CAUGHT_UP' };
+    if (situation === 'finished' || situation === 'finished-partial') home.course.endDate = '2026-10-23T18:00:00Z';
     if (situation === 'exam') home.nextStep = { title: 'Final exam', target: { kind: 'EXAM', id: 55 }, reason: 'EXAM_SOON', dueAt: '2026-10-27T09:00:00Z' };
     if (situation === 'new-content')
         home.announcement = { title: 'Project presentations', target: { kind: 'THREAD', id: 29, conversationId: 8 }, reason: 'IMPORTANT_ANNOUNCEMENT' };

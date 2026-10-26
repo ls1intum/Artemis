@@ -322,7 +322,7 @@ class MailLoggingSafetyTest {
                 mock(DataExportExerciseCreationService.class), mock(DataExportExamCreationService.class), mock(DataExportCommunicationDataService.class),
                 mock(DataExportScienceEventService.class), mock(DataExportIrisService.class), mock(DataExportLearnerProfileService.class),
                 mock(DataExportCompetencyProgressService.class), mock(DataExportTutorialGroupService.class), mock(DataExportPresentationAssessmentService.class),
-                mock(ResourceLoaderService.class), mock(TempFileUtilService.class));
+                mock(ResourceLoaderService.class), mock(TempFileUtilService.class), mock(de.tum.cit.aet.artemis.admin.service.export.DataExportCourseHomeService.class));
         var user = new User();
         user.setLogin(LOGIN);
         user.setEmail(EMAIL);

@@ -18,4 +18,18 @@ describe('deterministic Home welcomes', () => {
             }
         }
     });
+    it('keeps all 45 welcome variants paired with identical parameters in both languages', () => {
+        expect(Object.keys(en.artemisApp.courseHome.welcome)).toHaveLength(15);
+        expect(Object.keys(de.artemisApp.courseHome.welcome)).toEqual(Object.keys(en.artemisApp.courseHome.welcome));
+        for (const situation of Object.keys(en.artemisApp.courseHome.welcome)) {
+            const english = en.artemisApp.courseHome.welcome[situation as keyof typeof en.artemisApp.courseHome.welcome];
+            const german = de.artemisApp.courseHome.welcome[situation as keyof typeof de.artemisApp.courseHome.welcome];
+            expect(Object.keys(english)).toHaveLength(3);
+            for (const variant of ['v0', 'v1', 'v2'] as const) {
+                for (const part of ['title', 'body'] as const) {
+                    expect(english[variant][part].match(/{{\w+}}/g) ?? []).toEqual(german[variant][part].match(/{{\w+}}/g) ?? []);
+                }
+            }
+        }
+    });
 });

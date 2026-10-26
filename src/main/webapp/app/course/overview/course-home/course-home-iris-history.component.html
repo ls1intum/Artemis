@@ -1,17 +1,17 @@
 @if (sessions().status !== 'DISABLED') {
     <section aria-labelledby="home-iris-heading" data-testid="home-iris">
         <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4!">
-            <h2 id="home-iris-heading" class="text-lg font-semibold m-0!">{{ 'artemisApp.courseHome.iris' | artemisTranslate }}</h2>
-            <a [routerLink]="['/courses', courseId(), 'iris']" class="text-sm">{{ 'artemisApp.courseHome.openIris' | artemisTranslate }}</a>
+            <h2 id="home-iris-heading" class="text-lg! font-semibold! m-0!">{{ 'artemisApp.courseHome.iris' | artemisTranslate }}</h2>
+            <a [routerLink]="['/courses', courseId(), 'iris']" class="text-(--tumaet-ui-primary-color)! text-sm">{{ 'artemisApp.courseHome.openIris' | artemisTranslate }}</a>
         </div>
         @if (sessions().status === 'UNAVAILABLE') {
             <p class="text-muted-color">{{ 'artemisApp.courseHome.unavailable' | artemisTranslate }}</p>
         } @else {
-            <ul class="list-none p-0! m-0! divide-y divide-border">
+            <ul class="list-none p-0! m-0! divide-y divide-(--tumaet-ui-border-color)">
                 @for (session of sessions().items ?? []; track session.id) {
                     @let destination = target(courseId(), { kind: 'IRIS_SESSION', id: session.id });
                     <li class="py-3! first:pt-0! last:pb-0!">
-                        <a [routerLink]="destination.commands" [queryParams]="destination.queryParams" class="block font-medium wrap-anywhere">{{
+                        <a [routerLink]="destination.commands" [queryParams]="destination.queryParams" class="text-(--tumaet-ui-primary-color)! block font-medium wrap-anywhere">{{
                             session.title || ('artemisApp.courseHome.untitledIris' | artemisTranslate)
                         }}</a>
                         @if (session.entityName) {

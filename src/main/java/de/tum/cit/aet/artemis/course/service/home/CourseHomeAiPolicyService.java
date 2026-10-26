@@ -30,9 +30,16 @@ public class CourseHomeAiPolicyService {
         this.client = client;
     }
 
+    /**
+     * Checks whether current consent permits this explicitly configured provider.
+     *
+     * @param userId the student identifier
+     * @return true when fresh consent allows the configured provider location
+     */
     public boolean canGenerate(long userId) {
-        if (client.isEmpty() || !properties.isConfigured())
+        if (client.isEmpty() || !properties.isConfigured()) {
             return false;
+        }
         de.tum.cit.aet.artemis.core.domain.AiSelectionDecision decision;
         try {
             decision = preferences.findDecision(userId);

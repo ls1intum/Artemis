@@ -35,6 +35,15 @@ public class CourseHomeVisitService {
                 .orElse(new VisitState(null, null, 0));
     }
 
+    /**
+     * Records a successfully rendered snapshot with a monotonic, idempotent cursor.
+     *
+     * @param courseId              the authorized course identifier
+     * @param userId                the student identifier
+     * @param snapshotAt            the timestamp of the rendered snapshot
+     * @param observedVariantCursor the cursor observed when rendering
+     * @param receivedAt            the server timestamp used to validate the acknowledgment
+     */
     public void acknowledge(long courseId, long userId, Instant snapshotAt, long observedVariantCursor, Instant receivedAt) {
         if (snapshotAt == null || observedVariantCursor < 0 || snapshotAt.isAfter(receivedAt.plusSeconds(5)) || snapshotAt.isBefore(receivedAt.minusSeconds(900))) {
             throw new BadRequestAlertException("Invalid Home visit acknowledgment", "courseHome", "invalidVisit");

@@ -22,6 +22,8 @@ import de.tum.cit.aet.artemis.course.domain.CourseHomeVisit;
 @Profile(PROFILE_CORE)
 public interface CourseHomeVisitRepository extends ArtemisJpaRepository<CourseHomeVisit, Long> {
 
+    java.util.List<CourseHomeVisit> findAllByUserIdOrderByCourseId(long userId);
+
     Optional<CourseHomeVisit> findByCourseIdAndUserId(long courseId, long userId);
 
     @Transactional

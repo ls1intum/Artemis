@@ -81,6 +81,14 @@
             ],
             "replacesModule": "exam",
             "audit": "Exact client files only. ExamUpdateComponent is routed solely by exam-management.route.ts. ExamManagementService active consumers are exam workflows, exam-context assessment/grading/user-import/archive branches, and the course quiz import-existing dialog (findAllExamsAccessibleToUser). Retain all exam workflows, explicit course/admin exam consumers and the full quiz spec group. CourseOverviewComponent uses ExamParticipationService, not this service. New/renamed client files and all other exam inputs retain the broad exam mapping; re-audit importers and routed consumers when extending this scope."
+        },
+        "course-home": {
+            "sourcePaths": [
+                "src/main/webapp/app/course/overview/course-home/",
+                "src/main/java/de/tum/cit/aet/artemis/course/service/home/",
+                "src/main/java/de/tum/cit/aet/artemis/course/dto/home/",
+                "packages/tum-aet-ui/src/lib/avatar/"
+            ]
         }
     },
     "alwaysRunTests": ["e2e/Login.spec.ts", "e2e/Logout.spec.ts", "e2e/SystemHealth.spec.ts"],
@@ -138,7 +146,8 @@
         "IrisSettingsService/IrisChatService are injected by lecture views, programming participation/editor, atlas learning-path views and communication tutor-suggestion/redirect components. Conservatively select these owner workflows for Iris changes, even when the current CI profile hides chat UI.",
         "CourseOverviewComponent (course/overview/course-overview/course-overview.component.ts) unconditionally subscribes to ExamParticipationService.examIsStarted$; its template uses the emitted state for sidebar visibility and layout. courses.route.ts mounts this parent for all student /courses/:courseId children. Specs visiting those routes directly or through audited course/programming/competency pageobjects are exam consumers; management-only routes do not inherit this parent.",
         "The opt-in exam-management-client exact-file mapping replaces only the broad exam mapping for its three audited files. Its consumers include the entire quiz UI group because quiz-question-list-edit-existing.component.ts actively loads accessible exams when shown. Passive service injection in course-only assessment/grading/user-import/archive branches does not subscribe to exam state or execute exam HTTP calls; their exam-context paths are covered by the exam group. Mixed scoped and broader exam inputs union both scopes. This is a maintained runtime contract, not a general guarantee for exam/manage/.",
-        "CourseManagementTumUi creates and deletes users, manages course membership, configures grading and team forms, and creates/submits/assesses a real modeling exercise. Conservatively retain course-management server/module consumers plus core account lifecycle and modeling/assessment. It does not consume the exact exam-management client override. Shared UI/package inputs keep the existing full-suite fallback."
+        "CourseManagementTumUi creates and deletes users, manages course membership, configures grading and team forms, and creates/submits/assesses a real modeling exercise. Conservatively retain course-management server/module consumers plus core account lifecycle and modeling/assessment. It does not consume the exact exam-management client override. Shared UI/package inputs keep the existing full-suite fallback.",
+        "Course Home and its single-load navigation contract mount CourseOverviewComponent, query the Home aggregate and exercise overview, and use the teaching-module queries represented by CourseTabs. Home additionally uses account consent/user setup, core account requests, communication replies and Iris sessions. Preserve these consumers plus the original course-home source group and its CourseTabs/IrisCourseTab consumers; package avatar changes still require the existing full-suite fallback."
     ],
     "specModules": {
         "e2e/Login.spec.ts": ["core"],
@@ -230,12 +239,32 @@
         "e2e/course/CourseMessageInteractions.spec.ts": ["communication", "course", "exam", "iris", "lecture"],
         "e2e/course/CourseNotificationLayout.spec.ts": ["communication", "core", "course", "exam", "iris", "lecture"],
         "e2e/course/CourseOnboarding.spec.ts": ["communication", "course", "iris", "lecture"],
-        "e2e/course/CourseOverviewSingleLoad.spec.ts": ["assessment", "course", "exam", "exercise", "fileupload", "modeling", "programming", "quiz", "text"],
+        "e2e/course/CourseOverviewSingleLoad.spec.ts": [
+            "account",
+            "assessment",
+            "atlas",
+            "communication",
+            "core",
+            "course",
+            "course-home",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text",
+            "tutorialgroup"
+        ],
         "e2e/course/CourseTabs.spec.ts": [
             "assessment",
             "atlas",
             "communication",
             "course",
+            "course-home",
             "exam",
             "exam-management-client",
             "exercise",
@@ -1176,7 +1205,21 @@
             "quiz",
             "text"
         ],
-        "e2e/iris/IrisCourseTab.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "fileupload", "iris", "lecture", "modeling", "programming", "quiz", "text"],
+        "e2e/iris/IrisCourseTab.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "course-home",
+            "exam",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
         "e2e/iris/IrisLectureChat.spec.ts": [
             "assessment",
             "communication",
@@ -1200,7 +1243,27 @@
         "e2e/tutorialgroup/TutorialGroupDetailLayout.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],
         "e2e/tutorialgroup/TutorialGroupEditing.spec.ts": ["communication", "course", "lecture", "tutorialgroup"],
         "e2e/tutorialgroup/TutorialGroupSidebarAttendance.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],
-        "e2e/tutorialgroup/TutorialGroupImportExport.spec.ts": ["account", "communication", "core", "course", "exam", "lecture", "tutorialgroup"]
+        "e2e/tutorialgroup/TutorialGroupImportExport.spec.ts": ["account", "communication", "core", "course", "exam", "lecture", "tutorialgroup"],
+        "e2e/course/CourseHome.spec.ts": [
+            "account",
+            "assessment",
+            "atlas",
+            "communication",
+            "core",
+            "course",
+            "course-home",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text",
+            "tutorialgroup"
+        ]
     },
     "ignoredPaths": ["documentation/", "src/test/javascript/", "README.md", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", ".github/PULL_REQUEST_TEMPLATE.md", ".agents/", "skills/"],
     "catalogModules": [

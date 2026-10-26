@@ -1,0 +1,40 @@
+---
+id: course-home-ai
+title: AI Welcomes on Course Home
+sidebar_label: Course Home AI
+---
+
+Course **Home** gives students a contextual next step, recent course updates, their questions, and their recent Iris conversations when those features are available. Its welcome works without AI: Artemis selects from 15 situations with three English and German variants each.
+
+## Enable a welcome provider
+
+Home uses its own OpenAI-compatible connection. Enabling Iris, Atlas or Hyperion does not supply this connection. The feature is disabled by default. Configure all provider fields to enable it:
+
+```yaml
+artemis:
+    course-home:
+        ai:
+            enabled: true
+            location: LOCAL
+            base-url: https://your-provider.example
+            api-key: ${COURSE_HOME_AI_API_KEY}
+            model: your-model
+```
+
+Set `location` to `LOCAL` only when inference takes place within the installation's approved local environment. Use `CLOUD` for an external provider. Students who selected local AI can receive welcomes only from a `LOCAL` provider. Students who selected cloud AI can use either location. Students who declined AI, have not selected a preference, or need to renew their consent receive deterministic welcomes.
+
+When the Home provider is configured, students can open **Account settings → AI experience**, even if no other AI module is enabled. A local provider also makes the local AI option available in the existing selection dialog. Iris interaction counts and deletion controls appear only when Iris is enabled.
+
+The base URL must be an HTTP or HTTPS origin without embedded credentials, query parameters or fragments. Keep API keys in deployment secrets. An incomplete configuration leaves the provider unavailable and deterministic welcomes continue to work.
+
+## Request limits and fallback
+
+The course overview loads independently of the model. Only an eligible welcome starts a separate request, with a three-second provider timeout, no retries, a 160-token output budget, and at most four simultaneous requests per application instance. Requests beyond that capacity fall back immediately. The client waits at most 3.5 seconds while continuing to show deterministic encouragement and usable course links.
+
+Artemis rebuilds the authorized context and checks the student's current consent before dispatch and after the response. The bounded prompt contains published course description, instructor-authored learning guidance, the current situation, and a nonprivate next action. It excludes student identity, grades, question text, Iris conversation titles and transcripts, and source code. Private actions are described generically. Generated text is limited to encouragement; dates, counts, answer states and links come from course data. Invalid or unavailable model output keeps the deterministic welcome.
+
+## Course guidance and stored visits
+
+Instructors can supply learning guidance in the [course configuration](/instructor/course-management/course-configuration#student-home). The [student guide](/student/getting-started/courses#course-home) describes the resulting page.
+
+Home records the first and most recent successfully displayed snapshot and a message variant cursor for each student and course. A read alone does not advance the visit. Course reset and permanent account deletion remove these records; personal data exports include them in `course_home_visits.json`. Home does not mark communication replies as read or create Iris conversations.
