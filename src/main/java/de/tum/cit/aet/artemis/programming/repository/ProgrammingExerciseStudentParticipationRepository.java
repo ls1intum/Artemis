@@ -337,4 +337,20 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             WHERE p.id IN :participationIds
             """)
     Set<ProgrammingExerciseStudentParticipation> findByIds(@Param("participationIds") Collection<Long> participationIds);
+
+    /**
+     * Returns the given participations together with their student or team in one query. Both are eager associations, so loading the participations alone would resolve
+     * them with one more query per participation.
+     *
+     * @param participationIds the participations to load
+     * @return the participations that still exist
+     */
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.team
+            WHERE p.id IN :participationIds
+            """)
+    List<ProgrammingExerciseStudentParticipation> findWithParticipantByIds(@Param("participationIds") Collection<Long> participationIds);
 }

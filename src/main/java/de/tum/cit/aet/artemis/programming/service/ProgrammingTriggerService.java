@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TRIGGER_INSTRUCTOR_BUILD;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
@@ -164,8 +166,9 @@ public class ProgrammingTriggerService {
      * Builds the repositories students pushed to before the start date of an exercise that allows repository access before it.
      * <p>
      * Pushes in that phase create no submission and trigger no build. At the start date, every graded participation whose repository head moved past the setup commit and
-     * has no submission for that commit yet gets one, and exactly that commit is built. A participation whose head already has a submission is skipped, so the method can
-     * be called again, e.g. to catch up after a restart, without building anything twice.
+     * has no submission for that commit yet gets one, and that commit is built: Local CI builds exactly it, a CI system that cannot pin a commit builds the head, and its
+     * result is matched to the submission of the commit it reports, see {@link ContinuousIntegrationTriggerService}. A participation whose head already has a submission
+     * is skipped, so the method can be called again, e.g. to catch up after a restart, without building anything twice.
      * <p>
      * The method is async because it pauses between batches and waits for room in the build queue.
      *
@@ -209,24 +212,39 @@ public class ProgrammingTriggerService {
         log.info("Checking {} participations of exercise {} for changes pushed before the start date", candidates.size(), exerciseId);
         SharedBuildTriggerData sharedData = prepareSharedTriggerDataOrNone(exercise);
         BulkTriggerThrottle throttle = continuousIntegrationTriggerService.map(ContinuousIntegrationTriggerService::createBulkTriggerThrottle).orElse(BulkTriggerThrottle.NONE);
-        int index = 0;
+        List<StartDateBuildCandidateDTO> changed = new ArrayList<>();
         for (var candidate : candidates) {
             try {
                 Optional<String> changedHead = findHeadCommitHashIfChangedSinceSetup(candidate);
-                if (changedHead.isEmpty() || changedHead.get().equals(candidate.latestCommitHash())) {
+                if (changedHead.isPresent() && !changedHead.get().equals(candidate.latestCommitHash())) {
+                    changed.add(candidate);
+                }
+            }
+            catch (Exception e) {
+                log.error("Could not read the repository of participation {} of exercise {}", candidate.participationId(), exerciseId, e);
+            }
+        }
+        if (changed.isEmpty()) {
+            return;
+        }
+        // One query for all participations to build, with the participant the notification is addressed to
+        Map<Long, ProgrammingExerciseStudentParticipation> participationsById = programmingExerciseStudentParticipationRepository
+                .findWithParticipantByIds(changed.stream().map(StartDateBuildCandidateDTO::participationId).toList()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseStudentParticipation::getId, Function.identity()));
+        int index = 0;
+        for (var candidate : changed) {
+            try {
+                var participation = participationsById.get(candidate.participationId());
+                if (participation == null) {
                     continue;
                 }
                 pauseBetweenBatches(index, candidate.participationId());
                 throttle.awaitCapacity();
                 // The waits above can take minutes, during which the student may have pushed after the start date, which creates a submission of its own, or another
-                // path may have built the head. So the head is read again and checked against the database right before the insert, and that commit is the one built.
+                // path may have built the head. So the head is read again and checked against the database right before the insert, and that commit is the one triggered.
                 Optional<String> commitHash = findHeadCommitHashIfChangedSinceSetup(candidate)
                         .filter(head -> !programmingSubmissionRepository.existsByParticipationIdAndCommitHash(candidate.participationId(), head));
                 if (commitHash.isEmpty()) {
-                    continue;
-                }
-                var participation = programmingExerciseStudentParticipationRepository.findById(candidate.participationId()).orElse(null);
-                if (participation == null) {
                     continue;
                 }
                 // The commit was pushed before the start date, so it is dated then: a run that waited past the due date must not turn the result into an unrated one.
@@ -556,7 +574,8 @@ public class ProgrammingTriggerService {
      *
      * @param participation the participation to build
      * @param submission    the submission the build belongs to
-     * @param commitHash    the commit to build, or null to build the head of the repository at the time of the trigger
+     * @param commitHash    the commit to build, or null to build the head of the repository at the time of the trigger. A CI system that cannot pin a commit
+     *                          builds the head either way.
      * @param sharedData    the trigger inputs shared by every participation of the exercise
      */
     private void triggerBuild(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission submission, @Nullable String commitHash,

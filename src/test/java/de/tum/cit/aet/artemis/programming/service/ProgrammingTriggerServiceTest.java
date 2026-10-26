@@ -543,10 +543,17 @@ class ProgrammingTriggerServiceTest {
     }
 
     /**
+     * Lets exactly the given participation be loaded, as the only one whose repository changed.
+     */
+    private void allowLoadingOf(ProgrammingExerciseStudentParticipation participation) {
+        when(programmingExerciseStudentParticipationRepository.findWithParticipantByIds(List.of(participation.getId()))).thenReturn(List.of(participation));
+    }
+
+    /**
      * Lets the given participation be loaded and a submission for it be saved, so the start date build can create one.
      */
     private void allowSubmissionFor(ProgrammingExerciseStudentParticipation participation) {
-        when(programmingExerciseStudentParticipationRepository.findById(participation.getId())).thenReturn(Optional.of(participation));
+        allowLoadingOf(participation);
         when(programmingSubmissionRepository.saveAndFlush(any(ProgrammingSubmission.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
@@ -575,6 +582,9 @@ class ProgrammingTriggerServiceTest {
         verify(programmingSubmissionMessagingService).notifyUserAboutSubmission(submission.getValue(), EXERCISE_ID);
         // a repository that still holds only the setup commit has nothing to build
         verify(continuousIntegrationTriggerService, never()).triggerBuild(eq(untouched), any(), any(), anyBoolean(), any());
+        // only the changed participation is loaded, in one query
+        verify(programmingExerciseStudentParticipationRepository).findWithParticipantByIds(List.of(pushed.getId()));
+        verify(programmingExerciseStudentParticipationRepository, never()).findById(anyLong());
     }
 
     @Test
@@ -606,6 +616,7 @@ class ProgrammingTriggerServiceTest {
         when(bareGitRepositoryService.findHeadCommitHashIfChangedSinceSetup(pushed.getVcsRepositoryUri(), "main")).thenReturn(Optional.of("cafebabe"));
         // a push after the start date or an overlapping run created the submission while this run waited
         when(programmingSubmissionRepository.existsByParticipationIdAndCommitHash(pushed.getId(), "cafebabe")).thenReturn(true);
+        allowLoadingOf(pushed);
 
         programmingTriggerService.triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
 
@@ -661,6 +672,20 @@ class ProgrammingTriggerServiceTest {
         verify(continuousIntegrationTriggerService).triggerBuild(eq(pushed), eq("cafebabe"), eq(RepositoryType.USER), eq(true), any());
         // a failed run does not keep the exercise blocked for the next one
         assertThat((Set<?>) ReflectionTestUtils.getField(programmingTriggerService, "exercisesWithRunningStartDateBuild")).isEmpty();
+    }
+
+    @Test
+    void triggerBuildsForChangesBeforeStartDate_withoutChangedRepositories_loadsNoParticipation() {
+        allowRepositoryAccessBeforeStartDate(ZonedDateTime.now().minusMinutes(1));
+        var untouched = participationWithRepository(1L, "student1");
+        when(programmingExerciseStudentParticipationRepository.findStartDateBuildCandidatesByExerciseId(EXERCISE_ID, exercise.getStartDate()))
+                .thenReturn(List.of(candidateOf(untouched, null)));
+        when(bareGitRepositoryService.findHeadCommitHashIfChangedSinceSetup(untouched.getVcsRepositoryUri(), "main")).thenReturn(Optional.empty());
+
+        programmingTriggerService.triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
+
+        verify(programmingExerciseStudentParticipationRepository, never()).findWithParticipantByIds(any());
+        verify(programmingSubmissionRepository, never()).saveAndFlush(any());
     }
 
     @Test
