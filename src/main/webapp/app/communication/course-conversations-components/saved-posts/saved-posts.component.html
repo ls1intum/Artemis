@@ -1,4 +1,4 @@
-<div class="saved-posts pt-2 px-2 d-flex flex-column h-100">
+<div class="saved-posts flex min-h-0 flex-1 flex-col px-2 pt-2">
     <div>
         <h4 class="mb-0 p-1 pb-0">
             <button type="button" class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
@@ -17,7 +17,7 @@
             <span jhiTranslate="artemisApp.communication.overview.deleteNoticeSavedPosts"></span>
         </div>
     }
-    <div class="saved-posts-post-container flex-grow">
+    <div class="saved-posts-post-container min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         @if (posts().length > 0 && posts().length !== hiddenPosts().length) {
             @for (post of posts(); track trackPostFunction($index, post)) {
                 @if (!hiddenPosts().includes(post.id!)) {

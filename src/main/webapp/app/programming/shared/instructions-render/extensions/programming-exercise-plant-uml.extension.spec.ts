@@ -362,6 +362,7 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
     });
 
     describe('testsColor', () => {
+        const normalizedParameterizedName = 'parameterizedContract (' + 'x'.repeat(166) + '-3f580033defa04b30340fd418c5c4495cabbe40431a2383d0e1944dfeb615e97)';
         const testCases = [
             { id: 1, testName: 'testBubbleSort' },
             { id: 2, testName: 'Test Attributes of Class' },
@@ -369,6 +370,8 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
             { id: 4, testName: 'Failing Test With Spaces' },
             { id: 5, testName: 'Adds items, preserves order' },
             { id: 6, testName: 'Fails to add, keeps order' },
+            { id: 7, testName: 'parameterizedContract (InsertMock, 1)' },
+            { id: 8, testName: normalizedParameterizedName },
         ] as ProgrammingExerciseTestCase[];
         const latestResult = {
             successful: false,
@@ -379,6 +382,8 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
                 { testCase: { id: 4 }, positive: false },
                 { testCase: { id: 5 }, positive: true },
                 { testCase: { id: 6 }, positive: false },
+                { testCase: { id: 7 }, positive: true },
+                { testCase: { id: 8 }, positive: false },
             ],
         } as Result;
 
@@ -415,5 +420,23 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
             const rendered = renderedPlantUml('class A #testsColor(Failing Test With Spaces)\nclass B #text:testsColor(Test Methods of Class(1, 2))');
             expect(rendered).toBe('@startuml\nclass A #red\nclass B #text:green\n@enduml');
         });
+
+        it.each([
+            ['parameterizedContract (InsertMock, 1)', 'green'],
+            [normalizedParameterizedName, 'red'],
+        ])('colors a parameterized test with a space before its arguments: %s', (name, color) => {
+            const rendered = renderedPlantUml(`class Contract #testsColor(${name})\n<color:testsColor(${name})>+ check()</color>`);
+
+            expect(rendered).toBe(`@startuml\nclass Contract #${color}\n<color:${color}>+ check()</color>\n@enduml`);
+        });
+
+        it.each(['', '   ', '(1, 2)', 'parameterizedContract (1, 2', 'parameterizedContract (1, (2))'])(
+            'leaves an empty or unbalanced test reference unchanged: %s',
+            (reference) => {
+                const diagram = `class Contract #testsColor(${reference})`;
+
+                expect(renderedPlantUml(diagram)).toBe(`@startuml\n${diagram}\n@enduml`);
+            },
+        );
     });
 });
