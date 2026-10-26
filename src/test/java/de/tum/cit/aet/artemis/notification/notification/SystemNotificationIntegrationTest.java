@@ -218,13 +218,14 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void maintenanceRecipientCountMatchesCurrentEligibleRecipients() throws Exception {
         String url = "/api/notification/admin/system-notifications/maintenance-recipients-count";
-        Long before = request.get(url, HttpStatus.OK, Long.class);
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 2);
         for (int index = 1; index <= 2; index++) {
             var instructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor" + index).orElseThrow();
             instructor.setTestUser(false);
             userTestRepository.saveAndFlush(instructor);
         }
+        // addUsers resets course memberships, so take the baseline after preparing the users.
+        Long before = request.get(url, HttpStatus.OK, Long.class);
         for (int index = 0; index < 2; index++) {
             var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
             course.setStartDate(ZonedDateTime.now().minusDays(1));

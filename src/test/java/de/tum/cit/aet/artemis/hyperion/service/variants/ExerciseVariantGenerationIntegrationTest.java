@@ -799,6 +799,11 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void saturatedVariantQueueFailsNewJobWithoutProvisioningClone() throws Exception {
+        var executor = variantExecutor.getThreadPoolExecutor();
+        await().untilAsserted(() -> {
+            assertThat(executor.getQueue()).isEmpty();
+            assertThat(variantExecutor.getActiveCount()).isZero();
+        });
         var release = new java.util.concurrent.CountDownLatch(1);
         var entered = new java.util.concurrent.CountDownLatch(variantExecutor.getMaxPoolSize());
         var oldIds = jobService.getJobsOfUser(EDITOR_LOGIN).stream().map(VariantJob::getJobId).collect(java.util.stream.Collectors.toSet());
@@ -814,11 +819,14 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
             }
         };
         try {
-            int capacity = variantExecutor.getMaxPoolSize() + variantExecutor.getThreadPoolExecutor().getQueue().remainingCapacity();
+            int capacity = variantExecutor.getMaxPoolSize() + executor.getQueue().remainingCapacity();
             for (int index = 0; index < capacity; index++) {
+                // Existing workers may still be waiting to dequeue their blockers.
+                await().until(() -> executor.getQueue().remainingCapacity() > 0 || executor.getPoolSize() < executor.getMaximumPoolSize());
                 variantExecutor.execute(blocker);
             }
             assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            assertThat(executor.getQueue().remainingCapacity()).isZero();
             request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/hyperion/exercises/{id}/generate-variant", sourceQuiz.getId())
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                     .content(request.getObjectMapper().writeValueAsBytes(domainChangeRequest(standalonePlacement()))))
