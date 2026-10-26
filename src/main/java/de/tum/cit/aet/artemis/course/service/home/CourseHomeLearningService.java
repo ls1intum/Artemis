@@ -38,6 +38,15 @@ public class CourseHomeLearningService {
         this.authorization = authorization;
     }
 
+    /**
+     * Loads the authorized, bounded Home summary without resource graphs or read-state writes.
+     *
+     * @param courseId the authorized course identifier
+     * @param user     the authenticated user
+     * @param asOf     the single server timestamp for this snapshot
+     * @param since    the preserved new-content baseline
+     * @return submission counts and bounded, currently eligible exercise candidates
+     */
     public CourseHomeLearningDTO load(long courseId, User user, Instant asOf, Instant since) {
         if (!authorization.isAtLeastStudentInCourse(courseId)) {
             throw new AccessForbiddenException("course", courseId);

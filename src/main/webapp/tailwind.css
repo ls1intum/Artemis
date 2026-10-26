@@ -243,6 +243,5 @@
     }
 }
 
-@source "./app/course/manage/update/course-home-welcome-context-form.component.html";
-
-@source "./app/course/overview/course-home/**/*.html";
+@source './app/course/manage/update/course-home-welcome-context-form.component.html';
+@source './app/course/overview/course-home';

@@ -73,7 +73,15 @@ public class CourseAvailableTabsService {
         return getAvailableTabs(course.getId(), user, course.getCourseInformationSharingConfiguration(), course.getLearningPathsEnabled());
     }
 
-    /** Computes the same capability policy without hydrating a course graph. */
+    /**
+     * Computes the same capability policy without hydrating a course graph.
+     *
+     * @param courseId             the authorized course identifier
+     * @param user                 the authenticated user
+     * @param config               the course communication configuration
+     * @param learningPathsEnabled whether learning paths are enabled for the course
+     * @return the course tabs currently available to this user
+     */
     public CourseAvailableTabsDTO getAvailableTabs(long courseId, User user, CourseInformationSharingConfiguration config, boolean learningPathsEnabled) {
 
         // One query answers whether the course has lectures, competencies, tutorial groups, accepted FAQs and

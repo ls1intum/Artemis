@@ -43,9 +43,19 @@ public class CourseHomeCommunicationService {
         this.authorization = authorization;
     }
 
+    /**
+     * Loads the authorized, bounded Home summary without resource graphs or read-state writes.
+     *
+     * @param courseId the authorized course identifier
+     * @param user     the authenticated user
+     * @param asOf     the single server timestamp for this snapshot
+     * @param since    the preserved new-content baseline
+     * @return bounded own questions, announcements and accepted FAQs
+     */
     public CourseHomeCommunicationDTO load(long courseId, User user, Instant asOf, Instant since) {
-        if (!authorization.isAtLeastStudentInCourse(courseId))
+        if (!authorization.isAtLeastStudentInCourse(courseId)) {
             throw new AccessForbiddenException("course", courseId);
+        }
         var now = ZonedDateTime.ofInstant(asOf, ZoneOffset.UTC);
         var baseline = ZonedDateTime.ofInstant(since, ZoneOffset.UTC);
         boolean enabled = courses.isCommunicationEnabled(courseId);

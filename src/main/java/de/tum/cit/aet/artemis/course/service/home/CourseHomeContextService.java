@@ -28,6 +28,12 @@ import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO;
 @Profile(PROFILE_CORE)
 public class CourseHomeContextService {
 
+    /**
+     * Selects the highest-priority actionable learning step for the current course phase.
+     *
+     * @param context the nullable instructor-authored learning guidance
+     * @return the selected welcome situation and optional next action
+     */
     public CourseHomeSelection select(CourseHomeContext context) {
         if (context.startDate() != null && context.startDate().isAfter(context.asOf())) {
             return new CourseHomeSelection(BEFORE_START, reviewItem(context));

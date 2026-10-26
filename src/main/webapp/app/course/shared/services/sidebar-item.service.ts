@@ -2,7 +2,6 @@ import { Service } from '@angular/core';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
-    faHouse,
     faBullseye,
     faCalendarDays,
     faChalkboardTeacher,
@@ -12,6 +11,7 @@ import {
     faComments,
     faDumbbell,
     faFileAlt,
+    faHouse,
     faList,
     faNetworkWired,
     faPersonChalkboard,

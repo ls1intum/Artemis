@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
-import { DOCUMENT, DatePipe } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiMessageComponen
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
@@ -27,7 +28,7 @@ import { CourseHomeTeachingTeamComponent } from './course-home-teaching-team.com
     styleUrl: './course-home.component.scss',
     imports: [
         RouterLink,
-        DatePipe,
+        ArtemisDatePipe,
         ArtemisTranslatePipe,
         TumAetUiButtonDirective,
         TumAetUiCardComponent,
@@ -100,10 +101,7 @@ export class CourseHomeComponent {
             const user = this.account.userIdentity();
             const courseId = this.courseId();
             const course = this.courses.currentCourse();
-            const member = user?.courseRoles?.some(
-                (entry) => entry.courseId === courseId && entry.roles.some((role) => ['STUDENT', 'TEACHING_ASSISTANT', 'EDITOR', 'INSTRUCTOR'].includes(role)),
-            );
-            const ready = user?.id && Number.isSafeInteger(courseId) && courseId > 0 && course?.id === courseId && (member || this.account.isAtLeastTutorInCourse(course));
+            const ready = user?.id && Number.isSafeInteger(courseId) && courseId > 0 && course?.id === courseId;
             const scope = ready ? `${user.id}:${courseId}` : undefined;
             if (scope !== this.scope)
                 untracked(() => {

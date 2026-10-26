@@ -27,11 +27,21 @@ public class CourseHomeTeachingTeamService {
         this.authorization = authorization;
     }
 
+    /**
+     * Loads the authorized, bounded Home summary without resource graphs or read-state writes.
+     *
+     * @param courseId the authorized course identifier
+     * @param page     the zero-based team page
+     * @param size     the bounded page size
+     * @return one page of public teaching-team identities
+     */
     public CourseHomeTeachingTeamDTO load(long courseId, int page, int size) {
-        if (!authorization.isAtLeastStudentInCourse(courseId))
+        if (!authorization.isAtLeastStudentInCourse(courseId)) {
             throw new AccessForbiddenException("course", courseId);
-        if (page < 0 || page > 10000 || (size != 3 && size != 6))
+        }
+        if (page < 0 || page > 10000 || (size != 3 && size != 6)) {
             throw new BadRequestAlertException("Invalid team page", "courseHome", "invalidPage");
+        }
         var result = courses.findStaff(courseId, PageRequest.of(page, size));
         return new CourseHomeTeachingTeamDTO(result.stream()
                 .map(row -> new CourseHomeTeachingTeamDTO.MemberDTO(row.getId(),

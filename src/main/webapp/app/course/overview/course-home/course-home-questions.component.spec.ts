@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { provideTranslateService, TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { CourseHomeQuestionsComponent } from './course-home-questions.component';
 import { createCourseHomeFixture } from './test/course-home.fixtures';
 import en from '../../../../i18n/en/courseHome.json';

@@ -89,6 +89,13 @@ public class CourseHomeResource {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Returns optional encouragement within the bounded request deadline.
+     *
+     * @param courseId the authorized course identifier
+     * @param request  the fingerprint and requested language
+     * @return generated encouragement or the deterministic fallback marker
+     */
     @PostMapping("courses/{courseId}/home/welcome")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseHomeGeneratedWelcomeDTO> welcome(@PathVariable long courseId, @Valid @RequestBody CourseHomeWelcomeRequestDTO request) {

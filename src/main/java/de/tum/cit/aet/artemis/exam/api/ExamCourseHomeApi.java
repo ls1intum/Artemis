@@ -34,9 +34,19 @@ public class ExamCourseHomeApi extends AbstractExamApi {
         this.authorization = authorization;
     }
 
+    /**
+     * Loads the authorized, bounded Home summary without resource graphs or read-state writes.
+     *
+     * @param courseId the authorized course identifier
+     * @param user     the authenticated user
+     * @param asOf     the single server timestamp for this snapshot
+     * @param since    the preserved new-content baseline
+     * @return the next eligible registered exam, when one exists
+     */
     public ExamCourseHomeDTO load(long courseId, User user, Instant asOf, Instant since) {
-        if (!authorization.isAtLeastStudentInCourse(courseId))
+        if (!authorization.isAtLeastStudentInCourse(courseId)) {
             throw new AccessForbiddenException("course", courseId);
+        }
         var now = ZonedDateTime.ofInstant(asOf, ZoneOffset.UTC);
         return new ExamCourseHomeDTO(CourseHomeSectionStatus.AVAILABLE,
                 exams.findUpcoming(courseId, user.getId(), now, now.plusHours(24), PageRequest.of(0, 1)).stream().map(row -> new CourseHomeDTO.ItemDTO(row.getTitle(),

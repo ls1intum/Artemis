@@ -18,6 +18,8 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ActivatedRoute } from '@angular/router';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('AiExperienceSettingsComponent', () => {
@@ -38,6 +40,8 @@ describe('AiExperienceSettingsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [AiExperienceSettingsComponent],
             providers: [
+                MockProvider(ProfileService, { isModuleFeatureActive: () => true }),
+                MockProvider(UserService),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisChatService),
                 MockProvider(TranslateService),
@@ -171,5 +175,31 @@ describe('AiExperienceSettingsComponent', () => {
 
         expect(updateConsentSpy).not.toHaveBeenCalled();
         expect(setDecisionSpy).not.toHaveBeenCalled();
+    });
+    it('saves a Home-only AI preference without initializing or requesting Iris', async () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(false);
+        const counts = vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount');
+        const userService = TestBed.inject(UserService);
+        const save = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        const iris = vi.spyOn(irisChatService, 'updateLLMUsageConsent');
+        vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
+        createComponent();
+        fixture.detectChanges();
+        expect(counts).not.toHaveBeenCalled();
+        await component.openSelectionModal();
+        expect(save).toHaveBeenCalledExactlyOnceWith(LLMSelectionDecision.LOCAL_AI);
+        expect(iris).not.toHaveBeenCalled();
+    });
+    it('keeps the previous preference and reports a failed Home-only save', async () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(false);
+        vi.spyOn(TestBed.inject(UserService), 'updateLLMSelectionDecision').mockReturnValue(throwError(() => new Error('offline')));
+        vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.NO_AI);
+        const account = vi.spyOn(accountService, 'setUserLLMSelectionDecision');
+        const error = vi.spyOn(alertService, 'error');
+        createComponent();
+        fixture.detectChanges();
+        await component.openSelectionModal();
+        expect(account).not.toHaveBeenCalled();
+        expect(error).toHaveBeenCalledExactlyOnceWith('artemisApp.userSettings.aiExperienceSettingsPage.updateFailure');
     });
 });

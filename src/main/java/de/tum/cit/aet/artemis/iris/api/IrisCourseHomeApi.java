@@ -41,11 +41,22 @@ public class IrisCourseHomeApi extends AbstractIrisApi {
         this.authorization = authorization;
     }
 
+    /**
+     * Loads the authorized, bounded Home summary without resource graphs or read-state writes.
+     *
+     * @param courseId the authorized course identifier
+     * @param user     the authenticated user
+     * @param asOf     the single server timestamp for this snapshot
+     * @param since    the preserved new-content baseline
+     * @return bounded metadata for the student's existing course conversations
+     */
     public IrisCourseHomeSessionsDTO load(long courseId, User user, Instant asOf, Instant since) {
-        if (!authorization.isAtLeastStudentInCourse(courseId))
+        if (!authorization.isAtLeastStudentInCourse(courseId)) {
             throw new AccessForbiddenException("course", courseId);
-        if (!preferences.hasOptedIntoLlmUsage(user.getId()) || !settings.isEnabledForCourse(courseId))
+        }
+        if (!preferences.hasOptedIntoLlmUsage(user.getId()) || !settings.isEnabledForCourse(courseId)) {
             return new IrisCourseHomeSessionsDTO(CourseHomeSectionStatus.DISABLED, List.of());
+        }
         var items = sessions.findForCourseHome(courseId, user.getId(), ZonedDateTime.ofInstant(asOf, ZoneOffset.UTC), PageRequest.of(0, 3)).stream()
                 .map(row -> new IrisCourseHomeSessionsDTO.ItemDTO(row.getId(), row.getTitle(), row.getMode().name(), row.getEntityId(), row.getEntityName(),
                         row.getLastActivity().toInstant()))

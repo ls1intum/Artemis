@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { registerLocaleData } from '@angular/common';
-import localeDe from '@angular/common/locales/de';
 import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
@@ -40,7 +38,6 @@ describe('CourseHomeComponent', () => {
         fixture.detectChanges();
     };
     beforeEach(async () => {
-        registerLocaleData(localeDe);
         loads = [];
         reselections = new Subject();
         notifications = new Subject();
@@ -244,5 +241,22 @@ describe('CourseHomeComponent', () => {
         expect(text()).toContain('Make this course your own');
         expect(text()).not.toContain('AI-generated encouragement');
         expect(api.acknowledgeVisit).toHaveBeenCalledOnce();
+    });
+    it('gives an untitled Iris next action an accessible localized link name', async () => {
+        const home = createCourseHomeFixture('iris-follow-up');
+        home.nextStep!.title = '';
+        await render(home);
+        expect(fixture.nativeElement.querySelector('[data-testid="home-next-step"] a').textContent.trim()).toBe('Course conversation');
+    });
+    it('opens an authorized course immediately after enrollment with a stale account role cache', async () => {
+        fixture.destroy();
+        api.load.mockClear();
+        loads = [];
+        user.update((value) => ({ ...value!, courseRoles: [] }));
+        fixture = TestBed.createComponent(CourseHomeComponent);
+        fixture.detectChanges();
+        expect(api.load).toHaveBeenCalledExactlyOnceWith(42, undefined);
+        await render(createCourseHomeFixture('first'));
+        expect(text()).toContain('Software Engineering');
     });
 });

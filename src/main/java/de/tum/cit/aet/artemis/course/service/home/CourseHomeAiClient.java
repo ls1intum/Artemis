@@ -9,8 +9,9 @@ public interface CourseHomeAiClient extends AutoCloseable {
     record Input(String systemPrompt, String userPrompt) {
 
         public Input {
-            if (systemPrompt.length() + userPrompt.length() > 8192)
+            if (systemPrompt.length() + userPrompt.length() > 8192) {
                 throw new IllegalArgumentException("Home welcome prompt exceeds its bound");
+            }
         }
     }
 

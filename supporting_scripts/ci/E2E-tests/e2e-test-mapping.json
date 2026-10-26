@@ -213,6 +213,20 @@
                 "src/main/webapp/app/shared/"
             ],
             "testPaths": []
+        },
+        "course-home": {
+            "sourcePaths": [
+                "src/main/webapp/app/course/overview/course-home/",
+                "src/main/java/de/tum/cit/aet/artemis/course/service/home/",
+                "src/main/java/de/tum/cit/aet/artemis/course/dto/home/",
+                "packages/tum-aet-ui/src/lib/avatar/"
+            ],
+            "testPaths": [
+                "e2e/course/CourseHome.spec.ts",
+                "e2e/course/CourseOverviewSingleLoad.spec.ts",
+                "e2e/course/CourseTabs.spec.ts",
+                "e2e/iris/IrisCourseTab.spec.ts"
+            ]
         }
     },
     "alwaysRunTests": [

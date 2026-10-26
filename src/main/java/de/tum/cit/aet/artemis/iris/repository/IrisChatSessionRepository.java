@@ -43,7 +43,15 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
         java.time.ZonedDateTime getLastActivity();
     }
 
-    /** Bounded metadata only; the latest assistant response counts as activity, but an empty chat never does. */
+    /**
+     * Bounded metadata only; the latest assistant response counts as activity, but an empty chat never does.
+     *
+     * @param courseId the authorized course identifier
+     * @param userId   the student identifier
+     * @param asOf     the single server timestamp for this snapshot
+     * @param pageable the fixed-size result boundary
+     * @return bounded own session metadata without message contents
+     */
     @Query("""
             SELECT s.id AS id, SUBSTRING(s.title, 1, 160) AS title, s.chatMode AS mode, s.entityId AS entityId,
                 CASE s.chatMode

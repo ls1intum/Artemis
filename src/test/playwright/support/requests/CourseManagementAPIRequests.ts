@@ -549,7 +549,7 @@ export class CourseManagementAPIRequests {
 }
 
 // Playwright runs this file under Node, which cannot resolve dayjs/esm; toCourseUpdateDTO pulls it in through date.utils, so the mapping stays local.
-function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUpdateDTO {
+export function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUpdateDTO {
     return {
         id: course.id,
         title: course.title,
@@ -585,6 +585,7 @@ function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUp
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone,
+        studentWelcomeContext: course.courseConfiguration?.studentWelcomeContext,
         gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
         dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
         autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,

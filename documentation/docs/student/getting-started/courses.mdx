@@ -6,6 +6,9 @@ sidebar_label: Courses
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 
+import homeOrientation from "./assets/course-home/home-orientation.png";
+import homeUpdates from "./assets/course-home/home-updates.png";
+
 import courseEnrollmentImg from "../assets/courses/course-enrollment-placeholder.png";
 
 Courses in Artemis contain exercises, exams, and lectures. As a student, you can enroll in courses, access learning materials, and track your progress.
@@ -31,11 +34,29 @@ You can **search** courses by title and **sort** them alphabetically. If you hav
 
 If you have an upcoming exam in any course, a prominent banner appears at the top of the page with the exam details.
 
+## Course Home
+
+Opening a course takes you to **Home**. On your first visit, you can meet the teaching team and read the course's learning guidance when your instructor has provided it. Later visits highlight a useful next step, newly available exercises and lecture material, important announcements, and new FAQs.
+
+<Image src={homeOrientation} alt="An example course Home with an introduction, teaching team and available work" size={ImageSize.large} caption="Home on a first visit to an example course" />
+
+**Your submitted work** counts the exercises available to you and the ones you have submitted. Alternative variants count as one task. This describes submissions, not how well you have mastered the material; use feedback and the course's learning objectives to reflect on your understanding. An ended course can still have unfinished work.
+
+When communication is enabled, **My latest questions** shows your recent questions and whether they await a reply, have an answer, or are resolved. Unread replies appear separately. Open a question to go directly to its thread and unread reply. Visiting Home does not mark replies as read.
+
+<Image src={homeUpdates} alt="An example Home with a next action and an answered question with unread replies" size={ImageSize.large} caption="Later visits bring course updates and your conversations into view" />
+
+When Iris is enabled and your AI preference permits it, **My recent Iris conversations** links to your existing course conversations. Opening a listed conversation resumes it without creating another chat. All Home actions open the existing course pages.
+
+The welcome changes with your situation and subsequent visits. If the installation offers AI welcomes and your preference permits them, AI can supply encouragement. Otherwise, including during an AI outage, you receive a contextual welcome without AI. The next action, deadlines, counts and links always come from course data. Select **Refresh** or the **Home** tab again to check for updates.
+
+See [Course Configuration](/instructor/course-management/course-configuration#student-home) for the instructor's learning guidance.
+
 ## Course Sidebar
 
 Once you open a course, the left sidebar provides navigation to all course content. The available items depend on your course's configuration and may include:
 
-- **Dashboard:** Shows your overall performance with a progress bar of achieved vs. reachable points, a chart comparing your exercise scores to the class average, and a visualization of how early or late you submitted relative to other students.
+- **Home:** Shows your next step, recent updates, teaching team, submitted work, questions, and Iris conversations when enabled.
 - **Exercises:** Lists all course exercises organized by time period (future, due soon, current, past). Click on an exercise to view its problem statement, submit your solution, and review feedback.
 - **Lectures:** Access lecture slides, videos, and attachments. Lecture units can be linked to competencies so you can see how they connect to the course learning objectives.
 - **Exams:** View upcoming and past exams. From here you can participate in exams during the exam window and review your results and grades after the exam has been assessed.
