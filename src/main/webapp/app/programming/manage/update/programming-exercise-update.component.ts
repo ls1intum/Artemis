@@ -483,6 +483,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     set selectedProjectType(type: ProjectType) {
         // update the (selected) project type
         this.updateProjectTypeSettings(type);
+        // The black-box template has no Ares setup, so a staged Security Framework choice cannot be applied to it.
+        if (type === ProjectType.MAVEN_BLACKBOX) {
+            this.stagedSecurityChoice.set(undefined);
+        }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
@@ -1034,7 +1038,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private commitStagedSecurityThenNavigate(exercise: ProgrammingExercise, navigate: () => void) {
         const staged = this.stagedSecurityChoice();
         let apply: Observable<SecurityFrameworkConfig> | undefined;
-        if (staged && exercise.id !== undefined && exercise.programmingLanguage === ProgrammingLanguage.JAVA) {
+        if (staged && exercise.id !== undefined && exercise.programmingLanguage === ProgrammingLanguage.JAVA && exercise.projectType !== ProjectType.MAVEN_BLACKBOX) {
             if (!staged.active) {
                 apply = this.securityFrameworkService.deactivate(exercise.id);
             } else if (staged.frameworkVersion) {

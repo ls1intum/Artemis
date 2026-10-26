@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import {
     SecurityActivationStatus,
     SecurityFrameworkConfig,
@@ -67,6 +67,8 @@ export class ProgrammingExerciseSecurityComponent {
      * place, which a read through the exercise input alone would not pick up in a zoneless app).
      */
     readonly selectedProgrammingLanguage = input<ProgrammingLanguage | undefined>(undefined);
+    /** Selected project type, passed explicitly for the same reason as the language. */
+    readonly selectedProjectType = input<ProjectType | undefined>(undefined);
     /** Create-mode choice the parent form holds, passed back in so it survives this card being re-created. */
     readonly stagedChoice = input<SecurityStagedChoice | undefined>(undefined);
     /** Emits the create-mode choice so the parent can apply it once the exercise has been created. */
@@ -79,6 +81,10 @@ export class ProgrammingExerciseSecurityComponent {
         const language = this.selectedProgrammingLanguage() ?? this.programmingExercise().programmingLanguage;
         return language !== undefined && ProgrammingExerciseSecurityComponent.SUPPORTED_LANGUAGES.has(language);
     });
+    /** The black-box template runs its tests without Ares, so there is nothing to activate. */
+    readonly isSupportedProjectType = computed(() => (this.selectedProjectType() ?? this.programmingExercise().projectType) !== ProjectType.MAVEN_BLACKBOX);
+    /** Whether the card is shown at all. */
+    readonly isAvailable = computed(() => this.isSupportedLanguage() && this.isSupportedProjectType());
 
     /** The Ares versions the server supports, newest first. */
     readonly supportedVersions = signal<string[]>([]);

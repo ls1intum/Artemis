@@ -11,11 +11,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -28,6 +33,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -35,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyRepositoryFiles.BuildTool;
 
 /**
@@ -62,17 +70,30 @@ public class SecurityFrameworkService {
     public static final String ENTITY_NAME = "programmingExercise.securityFramework";
 
     /**
-     * The Ares version the Java exercise templates pin. {@code SecurityFrameworkTemplateTest} keeps it in sync with the templates.
+     * The Ares version the Java exercise templates pin. {@code SecurityFrameworkServiceTest} keeps it in sync with the templates.
      */
     static final String DEFAULT_FRAMEWORK_VERSION = "2.2.1";
 
     private final GitService gitService;
 
+    private final BareGitRepositoryService bareGitRepositoryService;
+
+    private final TempFileUtilService tempFileUtilService;
+
+    private final ProgrammingExerciseBuildConfigRepository buildConfigRepository;
+
+    private final String defaultBranch;
+
     private final List<String> supportedFrameworkVersions;
 
-    public SecurityFrameworkService(GitService gitService,
+    public SecurityFrameworkService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, TempFileUtilService tempFileUtilService,
+            ProgrammingExerciseBuildConfigRepository buildConfigRepository, @Value("${artemis.version-control.default-branch:main}") String defaultBranch,
             @Value("${artemis.programming.security-framework.supported-versions:" + SecurityFrameworkService.DEFAULT_FRAMEWORK_VERSION + "}") String[] supportedFrameworkVersions) {
         this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
+        this.tempFileUtilService = tempFileUtilService;
+        this.buildConfigRepository = buildConfigRepository;
+        this.defaultBranch = defaultBranch;
         this.supportedFrameworkVersions = Arrays.stream(supportedFrameworkVersions).map(String::trim).filter(version -> !version.isEmpty()).toList();
     }
 
@@ -84,7 +105,8 @@ public class SecurityFrameworkService {
     }
 
     /**
-     * Reads the Security Framework state of an exercise from its exercise-tests repository.
+     * Reads the Security Framework state of an exercise from the pushed state of its exercise-tests repository. It reads the bare repository directly, so it
+     * never touches a working copy and cannot discard changes someone else has not pushed yet.
      *
      * @param exercise the programming exercise
      * @return the current state
@@ -93,8 +115,25 @@ public class SecurityFrameworkService {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return inactiveConfig(null);
         }
-        Repository repository = checkoutTestRepository(exercise, false);
-        return readConfig(repository);
+        LocalVCRepositoryUri testRepositoryUri = testRepositoryUri(exercise);
+        String branch = repositoryBranch(exercise);
+        try (Repository repository = bareGitRepositoryService.getBareRepository(testRepositoryUri, branch, false); RevWalk revWalk = new RevWalk(repository)) {
+            ObjectId head = repository.resolve(Constants.R_HEADS + branch);
+            if (head == null) {
+                return inactiveConfig(null);
+            }
+            RevTree tree = revWalk.parseCommit(head).getTree();
+            String frameworkVersion = SecurityPolicyRepositoryFiles
+                    .parseAresVersion(readFile(repository, tree, "build.gradle").orElse(null), readFile(repository, tree, "pom.xml").orElse(null)).orElse(null);
+            if (readFile(repository, tree, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).isEmpty()) {
+                return inactiveConfig(frameworkVersion);
+            }
+            return activeConfig(frameworkVersion, lastCommitTouchingPolicy(repository, head));
+        }
+        catch (IOException e) {
+            log.error("Could not read the tests repository of exercise {}", exercise.getId(), e);
+            throw new InternalServerErrorAlertException("Could not read the tests repository.", ENTITY_NAME, "securityFrameworkReadFailed");
+        }
     }
 
     /**
@@ -109,21 +148,18 @@ public class SecurityFrameworkService {
     public SecurityFrameworkConfigDTO activate(ProgrammingExercise exercise, String frameworkVersion, User user) {
         validateJavaExercise(exercise);
         validateFrameworkVersion(frameworkVersion);
-        Repository repository = checkoutTestRepository(exercise, true);
-        Path root = repository.getLocalPath();
-        BuildTool buildTool = SecurityPolicyRepositoryFiles.detectBuildTool(root)
-                .orElseThrow(() -> new BadRequestAlertException("The Security Framework requires a Gradle or Maven test repository that uses Ares.", ENTITY_NAME,
-                        "securityFrameworkUnsupportedProject"));
-
-        if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root)) {
-            String policy = findPreviousPolicy(repository).orElseGet(() -> SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, buildTool, packageName(exercise)));
-            SecurityPolicyRepositoryFiles.writePolicy(root, policy);
-        }
-        SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, true);
-        SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
-        commitAndPushIfChanged(repository, "Activate the Ares security policy", user);
-        log.debug("Activated the Security Framework for exercise {} with Ares {}", exercise.getId(), frameworkVersion);
-        return readConfig(repository);
+        return changeTestRepository(exercise, user, "Activate the Ares security policy", repository -> {
+            Path root = repository.getLocalPath();
+            BuildTool buildTool = SecurityPolicyRepositoryFiles.detectBuildTool(root)
+                    .orElseThrow(() -> new BadRequestAlertException("The Security Framework requires a Gradle or Maven test repository that uses Ares.", ENTITY_NAME,
+                            "securityFrameworkUnsupportedProject"));
+            if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root)) {
+                String policy = findPreviousPolicy(repository).orElseGet(() -> SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, buildTool, packageName(exercise)));
+                SecurityPolicyRepositoryFiles.writePolicy(root, policy);
+            }
+            SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, true);
+            SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
+        });
     }
 
     /**
@@ -136,13 +172,11 @@ public class SecurityFrameworkService {
      */
     public SecurityFrameworkConfigDTO deactivate(ProgrammingExercise exercise, User user) {
         validateJavaExercise(exercise);
-        Repository repository = checkoutTestRepository(exercise, true);
-        Path root = repository.getLocalPath();
-        SecurityPolicyRepositoryFiles.deletePolicy(root);
-        SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
-        commitAndPushIfChanged(repository, "Deactivate the Ares security policy", user);
-        log.debug("Deactivated the Security Framework for exercise {}", exercise.getId());
-        return readConfig(repository);
+        return changeTestRepository(exercise, user, "Deactivate the Ares security policy", repository -> {
+            Path root = repository.getLocalPath();
+            SecurityPolicyRepositoryFiles.deletePolicy(root);
+            SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
+        });
     }
 
     /**
@@ -156,16 +190,45 @@ public class SecurityFrameworkService {
     public SecurityFrameworkConfigDTO updateFrameworkVersion(ProgrammingExercise exercise, String frameworkVersion, User user) {
         validateJavaExercise(exercise);
         validateFrameworkVersion(frameworkVersion);
-        Repository repository = checkoutTestRepository(exercise, true);
-        Path root = repository.getLocalPath();
-        if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root)) {
-            throw new BadRequestAlertException("The framework version cannot be changed because the Security Framework is not active for this exercise.", ENTITY_NAME,
-                    "securityFrameworkNotActive");
+        return changeTestRepository(exercise, user, "Use Ares " + frameworkVersion + " for the security policy", repository -> {
+            Path root = repository.getLocalPath();
+            if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root)) {
+                throw new BadRequestAlertException("The framework version cannot be changed because the Security Framework is not active for this exercise.", ENTITY_NAME,
+                        "securityFrameworkNotActive");
+            }
+            SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
+        });
+    }
+
+    /**
+     * Applies a change in a private checkout of the tests repository and pushes it. The shared working copy that the online editor uses is never touched,
+     * so neither side can reset or commit the other's files. If someone pushes in between, the push is rejected as non-fast-forward and nothing is lost.
+     */
+    private SecurityFrameworkConfigDTO changeTestRepository(ProgrammingExercise exercise, User user, String commitMessage, Consumer<Repository> change) {
+        LocalVCRepositoryUri testRepositoryUri = testRepositoryUri(exercise);
+        Repository repository = null;
+        Path temporaryCheckout = null;
+        try {
+            temporaryCheckout = tempFileUtilService.createTempDirectory("security-framework-");
+            repository = gitService.getOrCheckoutRepositoryOnBranch(testRepositoryUri, temporaryCheckout.resolve("repository"), repositoryBranch(exercise));
+            change.accept(repository);
+            if (gitService.stageAllChanges(repository)) {
+                gitService.commitAndPush(repository, commitMessage, false, user);
+            }
+            return readConfig(repository);
         }
-        SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
-        commitAndPushIfChanged(repository, "Use Ares " + frameworkVersion + " for the security policy", user);
-        log.debug("Changed the Security Framework of exercise {} to Ares {}", exercise.getId(), frameworkVersion);
-        return readConfig(repository);
+        catch (GitAPIException | IOException e) {
+            log.error("Could not apply the Security Framework change to the tests repository of exercise {}", exercise.getId(), e);
+            throw new InternalServerErrorAlertException("Could not push the Security Framework change to the tests repository.", ENTITY_NAME, "securityFrameworkPushFailed");
+        }
+        finally {
+            if (repository != null) {
+                repository.closeBeforeDelete();
+            }
+            if (temporaryCheckout != null && !FileUtils.deleteQuietly(temporaryCheckout.toFile())) {
+                log.warn("Could not delete the temporary Security Framework checkout {}", temporaryCheckout);
+            }
+        }
     }
 
     private SecurityFrameworkConfigDTO readConfig(Repository repository) {
@@ -174,7 +237,17 @@ public class SecurityFrameworkService {
         if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root)) {
             return inactiveConfig(frameworkVersion);
         }
-        Optional<RevCommit> lastPolicyCommit = lastCommitTouchingPolicy(repository);
+        try {
+            ObjectId head = repository.resolve(Constants.HEAD);
+            return activeConfig(frameworkVersion, head == null ? Optional.empty() : lastCommitTouchingPolicy(repository, head));
+        }
+        catch (IOException e) {
+            log.warn("Could not resolve the head of {}", repository.getLocalPath(), e);
+            return activeConfig(frameworkVersion, Optional.empty());
+        }
+    }
+
+    private SecurityFrameworkConfigDTO activeConfig(@Nullable String frameworkVersion, Optional<RevCommit> lastPolicyCommit) {
         return new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion,
                 lastPolicyCommit.map(commit -> commit.getId().abbreviate(7).name()).orElse(null),
                 lastPolicyCommit.map(commit -> Instant.ofEpochSecond(commit.getCommitTime()).toString()).orElse(null));
@@ -184,35 +257,25 @@ public class SecurityFrameworkService {
         return new SecurityFrameworkConfigDTO(SecurityActivationStatus.INACTIVE.name(), frameworkVersion, null, null);
     }
 
-    private Repository checkoutTestRepository(ProgrammingExercise exercise, boolean writeAccess) {
+    private LocalVCRepositoryUri testRepositoryUri(ProgrammingExercise exercise) {
         LocalVCRepositoryUri testRepositoryUri = exercise.getVcsTestRepositoryUri();
         if (testRepositoryUri == null) {
             throw new BadRequestAlertException("The exercise has no tests repository.", ENTITY_NAME, "securityFrameworkNoTestRepository");
         }
-        try {
-            Repository repository = gitService.getOrCheckoutRepository(testRepositoryUri, true, writeAccess);
-            // The working copy is shared with the online editor, so start from the pushed state and never commit someone else's uncommitted changes.
-            gitService.resetToOriginHead(repository);
-            gitService.pullIgnoreConflicts(repository);
-            return repository;
-        }
-        catch (GitAPIException e) {
-            log.error("Could not check out the tests repository of exercise {}", exercise.getId(), e);
-            throw new InternalServerErrorAlertException("Could not check out the tests repository.", ENTITY_NAME, "securityFrameworkCheckoutFailed");
-        }
+        return testRepositoryUri;
     }
 
-    private void commitAndPushIfChanged(Repository repository, String message, User user) {
-        try {
-            if (gitService.stageAllChanges(repository)) {
-                gitService.commitAndPush(repository, message, false, user);
+    private String repositoryBranch(ProgrammingExercise exercise) {
+        String branch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
+        return branch == null || branch.isBlank() ? defaultBranch : branch;
+    }
+
+    private static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {
+        try (TreeWalk treeWalk = TreeWalk.forPath(repository, path, tree)) {
+            if (treeWalk == null) {
+                return Optional.empty();
             }
-        }
-        catch (GitAPIException e) {
-            log.error("Could not commit the Security Framework change to {}", repository.getLocalPath(), e);
-            // Do not leave a half-applied change in the shared working copy.
-            gitService.resetToOriginHead(repository);
-            throw new InternalServerErrorAlertException("Could not push the Security Framework change to the tests repository.", ENTITY_NAME, "securityFrameworkPushFailed");
+            return Optional.of(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8));
         }
     }
 
@@ -222,11 +285,9 @@ public class SecurityFrameworkService {
     private Optional<String> findPreviousPolicy(Repository repository) {
         try (Git git = new Git(repository)) {
             for (RevCommit commit : git.log().addPath(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).call()) {
-                try (TreeWalk treeWalk = TreeWalk.forPath(repository, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, commit.getTree())) {
-                    if (treeWalk != null) {
-                        ObjectId blobId = treeWalk.getObjectId(0);
-                        return Optional.of(new String(repository.open(blobId).getBytes(), StandardCharsets.UTF_8));
-                    }
+                Optional<String> policy = readFile(repository, commit.getTree(), SecurityPolicyRepositoryFiles.POLICY_FILE_NAME);
+                if (policy.isPresent()) {
+                    return policy;
                 }
             }
             return Optional.empty();
@@ -240,13 +301,13 @@ public class SecurityFrameworkService {
         }
     }
 
-    private Optional<RevCommit> lastCommitTouchingPolicy(Repository repository) {
+    private Optional<RevCommit> lastCommitTouchingPolicy(Repository repository, ObjectId head) {
         try (Git git = new Git(repository)) {
             List<RevCommit> commits = new ArrayList<>();
-            git.log().addPath(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).setMaxCount(1).call().forEach(commits::add);
+            git.log().add(head).addPath(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).setMaxCount(1).call().forEach(commits::add);
             return commits.stream().findFirst();
         }
-        catch (GitAPIException e) {
+        catch (GitAPIException | IOException e) {
             log.warn("Could not read the policy history of {}", repository.getLocalPath(), e);
             return Optional.empty();
         }

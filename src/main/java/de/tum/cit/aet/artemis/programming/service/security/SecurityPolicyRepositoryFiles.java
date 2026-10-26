@@ -14,6 +14,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
+
 /**
  * Reads and rewrites the Ares 2 security setup inside a checked-out exercise-tests repository.
  * <p>
@@ -60,8 +63,18 @@ public final class SecurityPolicyRepositoryFiles {
 
     static final String INACTIVE_ANNOTATION = "@de.tum.cit.ase.ares.api.Policy(activated = false)";
 
-    /** Directories of a checked-out repository that never contain test sources of the exercise. */
-    private static final Set<String> IGNORED_DIRECTORIES = Set.of(".git", "build", "target", ".gradle", ".idea", "node_modules");
+    /** Directories that never contain test sources of the exercise, wherever they appear. */
+    private static final Set<String> IGNORED_DIRECTORIES = Set.of(".git", ".gradle", ".idea", "node_modules");
+
+    /**
+     * Build output directories. They are only skipped next to a build file, i.e. at the root of a (sub)project, so a source package that happens to be
+     * called {@code build} or {@code target} is still scanned.
+     */
+    private static final Set<String> BUILD_OUTPUT_DIRECTORIES = Set.of("build", "target");
+
+    private static final Set<String> BUILD_FILES = Set.of(GRADLE_BUILD_FILE, "build.gradle.kts", MAVEN_BUILD_FILE);
+
+    private static final Pattern JAVA_FILE_SUFFIX = Pattern.compile("\\.java$");
 
     /** The build tool of the exercise-tests repository, which selects the Ares language configuration of a generated policy. */
     public enum BuildTool {
@@ -92,10 +105,19 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the build tool of the repository, if it has a Gradle or Maven build file that pins an Ares version
      */
     public static Optional<BuildTool> detectBuildTool(Path repositoryRoot) {
-        if (readFileIfPresent(repositoryRoot.resolve(GRADLE_BUILD_FILE)).map(content -> GRADLE_ARES_VERSION.matcher(content).find()).orElse(false)) {
+        return detectBuildTool(readFileIfPresent(repositoryRoot.resolve(GRADLE_BUILD_FILE)).orElse(null), readFileIfPresent(repositoryRoot.resolve(MAVEN_BUILD_FILE)).orElse(null));
+    }
+
+    /**
+     * @param gradleBuild content of {@code build.gradle}, if the repository has one
+     * @param mavenPom    content of {@code pom.xml}, if the repository has one
+     * @return the build tool whose build file pins an Ares version
+     */
+    static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
+        if (gradleBuild != null && GRADLE_ARES_VERSION.matcher(gradleBuild).find()) {
             return Optional.of(BuildTool.GRADLE);
         }
-        if (readFileIfPresent(repositoryRoot.resolve(MAVEN_BUILD_FILE)).map(content -> MAVEN_ARES_VERSION.matcher(content).find()).orElse(false)) {
+        if (mavenPom != null && MAVEN_ARES_VERSION.matcher(mavenPom).find()) {
             return Optional.of(BuildTool.MAVEN);
         }
         return Optional.empty();
@@ -106,10 +128,21 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the Ares version pinned in the build file, if any
      */
     public static Optional<String> readAresVersion(Path repositoryRoot) {
-        return detectBuildTool(repositoryRoot).flatMap(buildTool -> readFileIfPresent(buildFile(repositoryRoot, buildTool)).map(content -> {
-            Matcher matcher = versionPattern(buildTool).matcher(content);
+        return parseAresVersion(readFileIfPresent(repositoryRoot.resolve(GRADLE_BUILD_FILE)).orElse(null), readFileIfPresent(repositoryRoot.resolve(MAVEN_BUILD_FILE)).orElse(null));
+    }
+
+    /**
+     * Reads the Ares version from build file contents, e.g. as stored in a commit, without needing a working copy.
+     *
+     * @param gradleBuild content of {@code build.gradle}, if the repository has one
+     * @param mavenPom    content of {@code pom.xml}, if the repository has one
+     * @return the Ares version pinned in the build file, if any
+     */
+    public static Optional<String> parseAresVersion(@Nullable String gradleBuild, @Nullable String mavenPom) {
+        return detectBuildTool(gradleBuild, mavenPom).map(buildTool -> {
+            Matcher matcher = versionPattern(buildTool).matcher(buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom);
             return matcher.find() ? matcher.group(2).trim() : null;
-        }));
+        });
     }
 
     /**
@@ -232,7 +265,7 @@ public final class SecurityPolicyRepositoryFiles {
             if (!TEST_CLASS_MARKER.matcher(content).find()) {
                 continue;
             }
-            String simpleName = javaFile.getFileName().toString().replaceFirst("\\.java$", "");
+            String simpleName = JAVA_FILE_SUFFIX.matcher(javaFile.getFileName().toString()).replaceFirst("");
             Matcher packageMatcher = PACKAGE_DECLARATION.matcher(content);
             testClasses.add(packageMatcher.find() ? packageMatcher.group(1) + "." + simpleName : simpleName);
         }
@@ -242,21 +275,35 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static List<Path> javaFiles(Path repositoryRoot) {
         try (Stream<Path> files = Files.walk(repositoryRoot)) {
-            return files.filter(path -> repositoryRoot.relativize(path).toString().isEmpty() || isNotInIgnoredDirectory(repositoryRoot, path))
-                    .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".java")).sorted().toList();
+            return files.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".java") && isScannedSource(repositoryRoot, path)).sorted()
+                    .toList();
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private static boolean isNotInIgnoredDirectory(Path repositoryRoot, Path path) {
-        for (Path segment : repositoryRoot.relativize(path)) {
-            if (IGNORED_DIRECTORIES.contains(segment.toString())) {
+    /**
+     * @return false if the file lies below a directory that holds tool or build output instead of sources
+     */
+    private static boolean isScannedSource(Path repositoryRoot, Path file) {
+        Path directory = repositoryRoot;
+        Path relativeDirectory = repositoryRoot.relativize(file.getParent());
+        for (Path segment : relativeDirectory) {
+            String name = segment.toString();
+            if (name.isEmpty()) {
+                continue;
+            }
+            if (IGNORED_DIRECTORIES.contains(name) || (BUILD_OUTPUT_DIRECTORIES.contains(name) && containsBuildFile(directory))) {
                 return false;
             }
+            directory = directory.resolve(name);
         }
         return true;
+    }
+
+    private static boolean containsBuildFile(Path directory) {
+        return BUILD_FILES.stream().anyMatch(buildFile -> Files.isRegularFile(directory.resolve(buildFile)));
     }
 
     private static Path buildFile(Path repositoryRoot, BuildTool buildTool) {
@@ -285,7 +332,7 @@ public final class SecurityPolicyRepositoryFiles {
             return false;
         }
         try {
-            Files.writeString(file, newContent, StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(file.toFile(), newContent, StandardCharsets.UTF_8);
             return true;
         }
         catch (IOException e) {

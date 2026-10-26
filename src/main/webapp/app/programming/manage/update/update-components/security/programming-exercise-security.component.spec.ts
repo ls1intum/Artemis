@@ -5,7 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityStagedChoice } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
@@ -74,6 +74,17 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     it('shows the card only for supported languages (Java)', () => {
         initCreate(ProgrammingLanguage.JAVA);
         expect(comp.isSupportedLanguage()).toBe(true);
+    });
+
+    it('hides the card for the black-box project type, which runs its tests without Ares', () => {
+        initCreate(ProgrammingLanguage.JAVA);
+        fixture.componentRef.setInput('selectedProjectType', ProjectType.MAVEN_BLACKBOX);
+        fixture.detectChanges();
+        expect(comp.isAvailable()).toBe(false);
+
+        fixture.componentRef.setInput('selectedProjectType', ProjectType.PLAIN_GRADLE);
+        fixture.detectChanges();
+        expect(comp.isAvailable()).toBe(true);
     });
 
     it('hides the card for unsupported languages', () => {

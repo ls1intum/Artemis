@@ -307,6 +307,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(comp.isSaving()).toBe(false);
             });
 
+            it('does not apply a choice to a black-box exercise', () => {
+                comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+                const entity = new ProgrammingExercise(undefined, undefined);
+                entity.releaseDate = dayjs();
+                entity.programmingLanguage = ProgrammingLanguage.JAVA;
+                entity.projectType = ProjectType.MAVEN_BLACKBOX;
+                vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
+                comp.programmingExercise = entity;
+                comp.backupExercise = {} as ProgrammingExercise;
+                comp.programmingExercise.course = course;
+
+                comp.save();
+
+                expect(securityFrameworkService.deactivate).not.toHaveBeenCalled();
+            });
+
             it('pins the chosen version after creation when it stays on', () => {
                 comp.stagedSecurityChoice.set({ active: true, frameworkVersion: '2.3.0' });
 
@@ -709,6 +725,16 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+        });
+
+        it('should drop a staged Security Framework choice when switching to the black-box project type', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+
+            comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
+
+            expect(comp.stagedSecurityChoice()).toBeUndefined();
         });
 
         it('should drop a staged Security Framework choice when the language changes away from Java', () => {

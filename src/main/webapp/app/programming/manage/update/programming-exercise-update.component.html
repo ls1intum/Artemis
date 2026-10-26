@@ -48,6 +48,7 @@
                 <jhi-programming-exercise-security
                     [programmingExercise]="programmingExercise"
                     [selectedProgrammingLanguage]="getProgrammingExerciseCreationConfig().selectedProgrammingLanguage"
+                    [selectedProjectType]="selectedProjectType"
                     [stagedChoice]="stagedSecurityChoice()"
                     (stagedChoiceChange)="stagedSecurityChoice.set($event)"
                     [isSaving]="isSaving()"

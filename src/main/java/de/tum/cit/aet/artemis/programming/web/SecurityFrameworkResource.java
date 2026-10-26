@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 
 /**
@@ -53,12 +54,15 @@ public class SecurityFrameworkResource {
 
     private final UserRepository userRepository;
 
+    private final ProgrammingExerciseMutationGuardService mutationGuard;
+
     public SecurityFrameworkResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authorizationCheckService,
-            SecurityFrameworkService securityFrameworkService, UserRepository userRepository) {
+            SecurityFrameworkService securityFrameworkService, UserRepository userRepository, ProgrammingExerciseMutationGuardService mutationGuard) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.securityFrameworkService = securityFrameworkService;
         this.userRepository = userRepository;
+        this.mutationGuard = mutationGuard;
     }
 
     /**
@@ -103,7 +107,10 @@ public class SecurityFrameworkResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
-        return ResponseEntity.ok(securityFrameworkService.activate(exercise, frameworkVersion, user));
+        // Coordinates with live saves and generation runs that change the same repositories.
+        try (var _ = mutationGuard.claimExternalMutation(exerciseId)) {
+            return ResponseEntity.ok(securityFrameworkService.activate(exercise, frameworkVersion, user));
+        }
     }
 
     /**
@@ -119,7 +126,10 @@ public class SecurityFrameworkResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
-        return ResponseEntity.ok(securityFrameworkService.deactivate(exercise, user));
+        // Coordinates with live saves and generation runs that change the same repositories.
+        try (var _ = mutationGuard.claimExternalMutation(exerciseId)) {
+            return ResponseEntity.ok(securityFrameworkService.deactivate(exercise, user));
+        }
     }
 
     /**
@@ -136,6 +146,9 @@ public class SecurityFrameworkResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
-        return ResponseEntity.ok(securityFrameworkService.updateFrameworkVersion(exercise, frameworkVersion, user));
+        // Coordinates with live saves and generation runs that change the same repositories.
+        try (var _ = mutationGuard.claimExternalMutation(exerciseId)) {
+            return ResponseEntity.ok(securityFrameworkService.updateFrameworkVersion(exercise, frameworkVersion, user));
+        }
     }
 }
