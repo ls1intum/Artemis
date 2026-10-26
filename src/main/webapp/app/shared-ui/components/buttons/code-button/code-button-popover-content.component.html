@@ -26,7 +26,15 @@
         }
         @if (selectedMethodData.authenticationMethod === RepositoryAuthenticationMethod.Password && alternativeAuthenticationMethodAvailable()) {
             <tumaet-ui-message severity="warn">
-                <span class="text-sm" jhiTranslate="artemisApp.exerciseActions.passwordAuthenticationWarning"></span>
+                <span class="flex w-full items-center gap-2 text-sm">
+                    <span jhiTranslate="artemisApp.exerciseActions.passwordAuthenticationWarning"></span>
+                    <fa-icon
+                        class="ms-auto text-muted-color"
+                        [icon]="faQuestionCircle"
+                        [tumAetUiTooltip]="'artemisApp.exerciseActions.passwordAuthenticationWarningTooltip' | artemisTranslate"
+                        tumAetUiTooltipPlacement="left"
+                    />
+                </span>
             </tumaet-ui-message>
         }
 
@@ -34,7 +42,7 @@
             <div class="flex min-w-0 flex-1">
                 <button
                     type="button"
-                    class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
+                    class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-2.5 text-(--tumaet-ui-primary-contrast-color)"
                     [tumAetUiMenuTrigger]="authenticationMenu"
                     data-testid="authentication-method-menu-trigger"
                 >

@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular';
+import { TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -287,6 +287,10 @@ describe('CodeButtonPopoverContentComponent', () => {
         ])('should render the password warning when $description is available', ({ alternativeAuthenticationMethodData }) => {
             renderComponent([passwordAuthenticationMethodData, alternativeAuthenticationMethodData]);
             expect(translatedElement('artemisApp.exerciseActions.passwordAuthenticationWarning')).not.toBeNull();
+            const tooltipElement = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective));
+            const tooltip = tooltipElement.injector.get(TumAetUiTooltipDirective);
+            expect(tooltip.content()).toBe('artemisApp.exerciseActions.passwordAuthenticationWarningTooltip');
+            expect(tooltip.placement()).toBe('left');
         });
 
         it('should render no password warning when no alternative authentication method is available', () => {
