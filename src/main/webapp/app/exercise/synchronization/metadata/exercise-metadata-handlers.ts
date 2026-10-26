@@ -355,10 +355,11 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         {
             key: 'programmingData.allowRepositoryAccessBeforeStartDate',
             labelKey: 'artemisApp.programmingExercise.timeline.allowRepositoryAccessBeforeStartDate',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate,
-            getIncomingValue: (snapshot) => snapshot.programmingData?.allowRepositoryAccessBeforeStartDate,
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate = value),
+            // The snapshot omits the option when disabled, so absent values are normalized to false
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate ?? false,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate ?? false,
+            getIncomingValue: (snapshot) => snapshot.programmingData?.allowRepositoryAccessBeforeStartDate ?? false,
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).allowRepositoryAccessBeforeStartDate = value ?? false),
         } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
         {
             key: 'programmingData.buildConfig',

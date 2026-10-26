@@ -174,6 +174,19 @@ describe('ExerciseMetadataHandlers', () => {
         expect((currentBuildTest as dayjs.Dayjs).toISOString()).toBe('2026-04-01T08:00:00.000Z');
     });
 
+    it('treats a disabled and an absent early repository access option as equal', () => {
+        const handler = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING).find((h) => h.key === 'programmingData.allowRepositoryAccessBeforeStartDate')!;
+        const exercise = { type: ExerciseType.PROGRAMMING, allowRepositoryAccessBeforeStartDate: false } as ProgrammingExercise;
+        const incoming = handler.getIncomingValue({ programmingData: {} } as ExerciseSnapshotDTO);
+
+        expect(incoming).toBe(false);
+        expect(handler.getCurrentValue(exercise)).toBe(incoming);
+        expect(handler.getBaselineValue({ type: ExerciseType.PROGRAMMING } as ProgrammingExercise)).toBe(incoming);
+
+        handler.applyValue(exercise, undefined as any);
+        expect(exercise.allowRepositoryAccessBeforeStartDate).toBe(false);
+    });
+
     it('returns undefined for absent date fields via getCurrentValue', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         const handlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
