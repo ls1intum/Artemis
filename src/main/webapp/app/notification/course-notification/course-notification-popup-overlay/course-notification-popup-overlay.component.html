@@ -2,17 +2,19 @@
      Notification links and close actions must keep their own semantics and are ignored by the delegated handler. -->
 <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
 <div
-    [ngClass]="{ 'is-expanded': isExpanded(), 'is-expandable': notifications().length > 1, hidden: notifications().length === 0 }"
-    [style.height]="isExpanded() ? 5 + notifications().length * 7 + 'rem' : null"
+    [ngClass]="{ 'is-expanded': isExpanded(), 'is-expandable': notifications().length > 1, 'is-communication': isCommunicationView(), hidden: notifications().length === 0 }"
+    [style.height]="isExpanded() && !isCommunicationView() ? 5 + notifications().length * 7 + 'rem' : null"
     class="course-notification-popup-overlay"
+    data-testid="notification-popup-overlay"
     (click)="overlayClicked($event)"
 >
     @for (notification of notifications(); track notification.notificationId) {
         <div
             class="notification-animation-wrapper"
+            data-testid="notification-popup-card"
             animate.enter="notification-entering"
             animate.leave="notification-leaving"
-            [style.bottom]="isExpanded() ? (notifications().length - $index - 1) * 7 + 5 + 'rem' : null"
+            [style.bottom]="isExpanded() && !isCommunicationView() ? (notifications().length - $index - 1) * 7 + 5 + 'rem' : null"
         >
             <div class="course-notification-popup-overlay-notification">
                 <jhi-course-notification
@@ -20,6 +22,7 @@
                     [isShowClose]="true"
                     [isHideTime]="true"
                     [isRedirectToUrl]="isExpanded() || notifications().length === 1"
+                    [fluid]="isCommunicationView()"
                     [displayTimeInMilliseconds]="popupTimeInMilliseconds - 500"
                     (onCloseClicked)="closeClicked(notification)"
                 />
@@ -49,6 +52,7 @@
             variant="outlined"
             size="small"
             class="notification-popup-clear rounded-full!"
+            data-testid="notification-popup-clear"
             [attr.tabindex]="isExpanded() ? 0 : -1"
             (click)="clearAllNotifications()"
         >
