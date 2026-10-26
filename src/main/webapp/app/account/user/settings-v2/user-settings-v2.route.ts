@@ -28,7 +28,7 @@ export const routes: Routes = [
             },
             {
                 path: 'credentials',
-                loadComponent: () => import('./navigation/placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
+                loadComponent: () => import('./credentials/credentials-settings-v2.component').then((m) => m.CredentialsSettingsV2Component),
                 data: {
                     pageTitle: 'artemisApp.userSettings.navigation.credentials',
                 },

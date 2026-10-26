@@ -21,7 +21,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 
 @Component({
-    selector: 'jhi-account-information',
+    selector: 'jhi-vcs-access-tokens-settings',
     templateUrl: './vcs-access-tokens-settings.component.html',
     styleUrls: ['../user-settings.scss'],
     imports: [

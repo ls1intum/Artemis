@@ -27,7 +27,7 @@ import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/s
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
-    selector: 'jhi-account-information',
+    selector: 'jhi-ssh-user-settings',
     templateUrl: './ssh-user-settings.component.html',
     styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
     imports: [

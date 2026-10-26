@@ -36,9 +36,7 @@ export class UserSettingsContainerComponent implements OnInit {
     readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
 
     readonly isPasskeyEnabled = signal(false);
-    // Derived for the same reason: isAtLeastTutor reads userIdentity, so the computed re-evaluates
-    // whenever the identity changes.
-    readonly isAtLeastTutor = computed(() => this.accountService.isAtLeastTutor());
+    readonly isAtLeastTutor = this.accountService.isAtLeastTutor;
     readonly isAiEnabled = signal(false);
     // The science settings live in the atlas module (server-side ScienceSettingsResource is @Conditional(AtlasEnabled)).
     // When atlas is disabled the science-settings endpoint does not exist, so the tab must be hidden instead of opening
