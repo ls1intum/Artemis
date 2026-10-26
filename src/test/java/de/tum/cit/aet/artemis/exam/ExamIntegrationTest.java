@@ -1984,8 +1984,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStatistics() throws Exception {
         ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, true);
-        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
-                ExamChecklistDTO.class);
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics/for-instructor",
+                HttpStatus.OK, ExamChecklistDTO.class);
         assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.allExamExercisesAllStudentsPrepared());
         assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.allExamExercisesAllStudentsPrepared());
         assertThat(returnedStatistics.numberOfAllComplaints()).isEqualTo(actualStatistics.numberOfAllComplaints());
@@ -1998,6 +1998,38 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(returnedStatistics.numberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.numberOfTotalParticipationsForAssessment());
         assertThat(returnedStatistics.existsUnassessedQuizzes()).isEqualTo(actualStatistics.existsUnassessedQuizzes());
         assertThat(returnedStatistics.existsUnsubmittedExercises()).isEqualTo(actualStatistics.existsUnsubmittedExercises());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void tutorStatisticsDoNotExecuteInstructorCountQueries() throws Exception {
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/statistics";
+        ExerciseGroup group = exam2.getExerciseGroups().getFirst();
+        textExerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(group));
+        queryInterceptor.startQueryCount();
+        request.get(path, HttpStatus.OK, ExamChecklistDTO.class);
+        assertThat(queryInterceptor.getStatements()).noneMatch(sql -> sql.contains("count(") && sql.contains("initialization_state"));
+        assertThat(queryInterceptor.getStatements()).noneMatch(sql -> sql.contains("count(") && sql.contains(" from student_exam "));
+        queryInterceptor.startQueryCount();
+        request.get(path + "/for-instructor", HttpStatus.OK, ExamChecklistDTO.class);
+        assertThat(queryInterceptor.getStatements()).anyMatch(sql -> sql.contains("count(") && sql.contains("initialization_state"));
+        assertThat(queryInterceptor.getStatements()).anyMatch(sql -> sql.contains("count(") && sql.contains(" from student_exam "));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void tutorStatisticsRemainLimitedForInstructorCaller() throws Exception {
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/statistics";
+        var tutor = request.get(path, HttpStatus.OK, ExamChecklistDTO.class);
+        assertThat(tutor.numberOfGeneratedStudentExams()).isNull();
+        assertThat(tutor.numberOfTestRuns()).isNull();
+        assertThat(tutor.numberOfExamsStarted()).isNull();
+        assertThat(tutor.numberOfExamsSubmitted()).isNull();
+        assertThat(tutor.allExamExercisesAllStudentsPrepared()).isFalse();
+        var instructor = request.get(path + "/for-instructor", HttpStatus.OK, ExamChecklistDTO.class);
+        assertThat(instructor.numberOfGeneratedStudentExams()).isNotNull();
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        request.get(path + "/for-instructor", HttpStatus.FORBIDDEN, ExamChecklistDTO.class);
     }
 
     @Test
@@ -2033,8 +2065,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(textExercise.getId(), false)).isOne();
         assertThat(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(textExercise.getId(), exam2.getId())).isZero();
 
-        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/statistics", HttpStatus.OK,
-                ExamChecklistDTO.class);
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/statistics/for-instructor",
+                HttpStatus.OK, ExamChecklistDTO.class);
 
         assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isOne();
         assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isFalse();

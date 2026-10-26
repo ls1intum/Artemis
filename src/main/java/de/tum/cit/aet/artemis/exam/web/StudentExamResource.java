@@ -1,19 +1,14 @@
 package de.tum.cit.aet.artemis.exam.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.BadRequestException;
 
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +16,6 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,39 +26,31 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
-import de.tum.cit.aet.artemis.exam.dto.conduction.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
@@ -75,17 +61,15 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
+import de.tum.cit.aet.artemis.exam.service.ExamReadAudience;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
-import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAthenaFeedbackService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
 /**
- * REST controller for managing ExerciseGroup.
+ * REST controller for student exam management and owner summaries.
  */
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -114,24 +98,15 @@ public class StudentExamResource {
 
     private final ExamDateService examDateService;
 
-    private final ExamSessionService examSessionService;
-
     private final ExamRepository examRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
 
     private final ExamService examService;
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final SubmissionPolicyRepository submissionPolicyRepository;
-
     private final ExamLiveEventRepository examLiveEventRepository;
 
     private final StudentExamLiveEventService studentExamLiveEventService;
-
-    @Value("${info.studentExamStoreSessionData:#{true}}")
-    private boolean storeSessionDataInStudentExamSession;
 
     private static final String ENTITY_NAME = "studentExam";
 
@@ -142,10 +117,9 @@ public class StudentExamResource {
 
     public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
             StudentExamAthenaFeedbackService studentExamAthenaFeedbackService, StudentExamAccessService studentExamAccessService, UserRepository userRepository,
-            AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
-            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService,
-            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamRepository examRepository,
+            ExamService examService, WebsocketMessagingService websocketMessagingService, ExamLiveEventRepository examLiveEventRepository,
+            StudentExamLiveEventService studentExamLiveEventService, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
@@ -156,12 +130,9 @@ public class StudentExamResource {
         this.auditEventRepository = auditEventRepository;
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
-        this.examSessionService = examSessionService;
         this.examRepository = examRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.websocketMessagingService = websocketMessagingService;
-        this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventRepository = examLiveEventRepository;
         this.studentExamLiveEventService = studentExamLiveEventService;
     }
@@ -177,8 +148,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
@@ -288,7 +258,7 @@ public class StudentExamResource {
         if (!Objects.equals(currentUser.getLogin(), currentUserLogin)) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        validateExamRequestParametersElseThrow(existingStudentExam, examId, courseId);
+        studentExamAccessService.validateExamRequestParametersElseThrow(existingStudentExam, examId, courseId);
 
         if (Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             log.error("Student exam with id {} for user {} is already submitted.", studentExamFromClient.id(), currentUser.getLogin());
@@ -330,7 +300,7 @@ public class StudentExamResource {
         log.debug("REST request to trigger Athena feedback for student exam {}", studentExamId);
         User currentUser = userRepository.getUser();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        validateExamRequestParametersElseThrow(studentExam, examId, courseId);
+        studentExamAccessService.validateExamRequestParametersElseThrow(studentExam, examId, courseId);
         if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
@@ -356,7 +326,7 @@ public class StudentExamResource {
         // The user is needed for the test-run course access check below, which resolves the course roles of this very user.
         User currentUser = userRepository.getUser();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        validateExamRequestParametersElseThrow(studentExam, examId, courseId);
+        studentExamAccessService.validateExamRequestParametersElseThrow(studentExam, examId, courseId);
         if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
@@ -378,137 +348,6 @@ public class StudentExamResource {
         if (studentExam.isTestRun()) {
             studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
         }
-    }
-
-    /**
-     * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction : Find the specified student exam for the user.
-     * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
-     * and with the student participation and with the submissions.
-     * NOTE: when this is called it will also mark the student exam as started
-     *
-     * @param courseId      the course to which the student exam belongs to
-     * @param examId        the exam to which the student exam belongs to
-     * @param studentExamId the studentExam which should be loaded
-     * @param request       the http request, used to extract headers
-     * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
-     */
-    @FeatureUsage(UserFeature.EXAM_TAKE)
-    @UsageInteraction(FeatureInteraction.ACTION)
-    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
-    @EnforceAtLeastStudent
-    public ResponseEntity<StudentExamForConductionDTO> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
-            HttpServletRequest request) {
-        long start = System.currentTimeMillis();
-        // Course roles are loaded with the user so the instructor checks below (and the one in
-        // ExamService#fetchParticipationsSubmissionsAndResultsForExam) resolve in memory instead of each issuing its own query.
-        User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
-        log.debug("REST request to get the student exam of user {} for exam {} for conduction", currentUser.getLogin(), examId);
-
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-
-        if (!currentUser.equals(studentExam.getUser())) {
-            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
-        }
-
-        if (studentExam.isTestRun()) {
-            // this check is quite expensive, so we only so it for test runs
-            studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
-        }
-        else {
-            // those checks are good enough and less expensive, because they do not involve additional database queries
-            validateExamRequestParametersElseThrow(studentExam, examId, courseId);
-        }
-
-        // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
-        if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
-            throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
-        }
-
-        // If the instructor delayed the submission overview (examSummaryPublicationDate), a student who already submitted must not be able to re-fetch the exam content via
-        // the conduction endpoint either, otherwise the summary gate could be bypassed to leak the exam content (relevant for staggered/multi-shift exams). Instructors and
-        // test runs always have access. Students who have not submitted yet are unaffected, so an ongoing conduction (incl. reload) keeps working.
-        // The instructor check is evaluated last and only when the gate could actually close: currentUser is loaded without its
-        // course roles, so isAtLeastInstructorInCourse costs an extra query, which the common conduction path must not pay.
-        if (Boolean.TRUE.equals(studentExam.isSubmitted()) && !studentExam.getExam().isExamSummaryPublished()) {
-            boolean conductionAccessAlwaysAllowed = studentExam.isTestRun()
-                    || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
-            if (!conductionAccessAlwaysAllowed) {
-                throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
-            }
-        }
-
-        if (!Boolean.TRUE.equals(studentExam.isStarted())) {
-            websocketMessagingService.sendMessage(ExamWebsocketTopics.EXAM_STARTED.at(examId), "");
-        }
-
-        prepareStudentExamForConduction(request, currentUser, studentExam);
-
-        log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
-                currentUser.getLogin());
-        return ResponseEntity.ok(StudentExamForConductionDTO.of(studentExam));
-    }
-
-    private void validateExamRequestParametersElseThrow(StudentExam studentExam, Long examId, Long courseId) {
-        var exam = studentExam.getExam();
-        if (!Objects.equals(exam.getId(), examId)) {
-            log.error("examId of studentExam {} does not match the path variable {}", studentExam.getExam().getId(), examId);
-            throw new ConflictException("The student exam does not belong to the exam", "StudentExam", "studentExamExamConflict");
-        }
-        if (!Objects.equals(exam.getCourse().getId(), courseId)) {
-            throw new ConflictException("The exam does not belong to the course", "Exam", "examCourseConflict");
-        }
-    }
-
-    /**
-     * GET /courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction : Find a specific test run for conduction.
-     * This will be used for the actual conduction of the test run. The test run will be returned with the exercises
-     * and with the student participation and with the submissions.
-     * NOTE: when this is called it will also mark the test run as started
-     *
-     * @param courseId  the course to which the test run belongs to
-     * @param examId    the exam to which the test run belongs to
-     * @param request   the http request, used to extract headers
-     * @param testRunId the id of the student exam of the test run
-     * @return the ResponseEntity with status 200 (OK) and with the found test run as body
-     */
-    // TODO: use the same REST call as for real exams and test exams
-    @UsageInteraction(FeatureInteraction.ACTION)
-    @GetMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction")
-    @EnforceAtLeastStudent
-    @ManualConfig
-    public ResponseEntity<StudentExamForConductionDTO> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId,
-            HttpServletRequest request) {
-        // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
-        long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithAuthorities();
-        log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
-
-        // 1st: load the testRun with all associated exercises
-        StudentExam testRun = studentExamRepository.findWithExercisesById(testRunId).orElseThrow(() -> new EntityNotFoundException("StudentExam", testRunId));
-        // the conduction response reports whether the student may request AI feedback, and the query above no longer
-        // drags the configuration along with every course it touches
-        courseAthenaConfigRepository.attachTo(testRun.getExam().getCourse());
-
-        if (!currentUser.equals(testRun.getUser())) {
-            throw new ConflictException("Current user is not the user of the test run", "StudentExam", "userMismatch");
-        }
-
-        if (!testRun.isTestRun() || !examId.equals(testRun.getExam().getId())) {
-            throw new AccessForbiddenException("The requested student exam is not a test run of this exam");
-        }
-
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
-        prepareStudentExamForConduction(request, currentUser, testRun);
-
-        log.info("getTestRunForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, testRun.getExercises().size(), currentUser.getLogin());
-        return ResponseEntity.ok(StudentExamForConductionDTO.of(testRun));
-    }
-
-    @NonNull
-    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, Long studentExamId) {
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
-        return studentExam;
     }
 
     /**
@@ -546,8 +385,7 @@ public class StudentExamResource {
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamForSummaryDTO> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         long start = System.currentTimeMillis();
-        // Course roles are loaded with the user: this request runs three course-role checks on the same user and course
-        // (the access service, the summary publication gate, and the participation filter), which would otherwise be three queries.
+        // Load current membership once for the course access check; the payload is always the student projection.
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
@@ -560,6 +398,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
+        studentExamAccessService.validateExamRequestParametersElseThrow(studentExam, examId, courseId);
 
         // 3rd: check that the studentExam has been submitted, otherwise /student-exams/{studentExamId}/conduction should be used
         if (!studentExam.isSubmitted()) {
@@ -567,8 +406,8 @@ public class StudentExamResource {
         }
 
         // 3.5th: if the instructor configured a summary publication date, students may only access the summary (incl. exam questions and the PDF export)
-        // from that date onwards. This protects staggered/multi-shift exams from early submitters leaking the exam content. Instructors and test runs always have access.
-        boolean summaryAccessAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
+        // from that date onwards. Genuine test runs retain immediate access.
+        boolean summaryAccessAlwaysAllowed = studentExam.isTestRun();
         if (!summaryAccessAlwaysAllowed && !studentExam.getExam().isExamSummaryPublished()) {
             throw new AccessForbiddenException("The summary of this student exam is not available yet");
         }
@@ -577,7 +416,7 @@ public class StudentExamResource {
         examService.loadQuizExercisesForStudentExam(studentExam);
 
         // 5th fetch participations, submissions and results and connect them to the studentExam
-        examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
+        examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, ExamReadAudience.STUDENT);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         // Only a test exam or test run summary offers the AI feedback request - the client hides the button for anything else and
@@ -591,8 +430,7 @@ public class StudentExamResource {
 
     /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary : Return student exam result, aggregate points, assessment result
-     * for a student exam and grade calculations if the exam is assessed. Only instructors can use userId parameter to get exam results of other users,
-     * if the caller is a student, userId should either be the user id of the caller or empty.
+     * for the authenticated owner's student exam and grade calculations if the exam is assessed.
      * <p>
      * Does not return the student exam itself to save bandwidth.
      * <p>
@@ -601,35 +439,20 @@ public class StudentExamResource {
      * @param courseId      the course to which the student exam belongs to
      * @param examId        the exam to which the student exam belongs to
      * @param studentExamId the id of the student exam whose grade summary is requested
-     * @param userId        the user id of the student whose grade summary is requested
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
     @FeatureUsage(UserFeature.EXAM_RESULTS)
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable long courseId, @PathVariable long examId, @PathVariable long studentExamId,
-            @RequestParam(required = false) Long userId) {
-        long start = System.currentTimeMillis();
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable long courseId, @PathVariable long examId, @PathVariable long studentExamId) {
         User currentUser = userRepository.getUserWithAuthorities();
-        log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
-        User targetUser = userId == null ? currentUser : userRepository.findByIdWithAuthoritiesElseThrow(userId);
-        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, studentExamId);
-        // The student exam is addressed by its id, so it has to belong to the user whose grades are requested and to the exam of the path
-        if (studentExam.getUser() == null || !Objects.equals(studentExam.getUser().getId(), targetUser.getId())) {
-            throw new AccessForbiddenException("The student exam does not belong to the user whose grade info is requested");
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        if (!currentUser.equals(studentExam.getUser())) {
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        validateExamRequestParametersElseThrow(studentExam, examId, courseId);
-
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
-        if (!isAtLeastInstructor && !currentUser.getId().equals(targetUser.getId())) {
-            throw new AccessForbiddenException("Current user cannot access grade info for target user");
-        }
-
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.getStudentExamGradesForSummary(targetUser, studentExam, isAtLeastInstructor);
-
-        log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
-                studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
-        return ResponseEntity.ok(studentExamWithGradeDTO);
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
+        studentExamAccessService.validateExamRequestParametersElseThrow(studentExam, examId, courseId);
+        return ResponseEntity.ok(examService.getStudentExamGradesForOwnerSummary(studentExam));
     }
 
     /**
@@ -820,83 +643,6 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         return ResponseEntity.ok(studentExamService.getExerciseStartStatusOfExam(examId).orElse(null));
-    }
-
-    /**
-     * Sets the started flag and initial started date.
-     * Calls {@link ExamService#fetchParticipationsSubmissionsAndResultsForExam} to set up the exercises.
-     * Starts an exam session for the request
-     * Filters out unnecessary attributes.
-     *
-     * @param request     the http request for the conduction
-     * @param currentUser the current user
-     * @param studentExam the student exam to be prepared
-     */
-    private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
-
-        // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
-        // Test runs are already prepared when they are created.
-        if (studentExam.isTestExam() && !studentExam.isTestRun()) {
-            boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
-            if (setupTestExamNeeded) {
-
-                // Set up new participations for the Exercises
-                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
-            }
-        }
-
-        if (!Boolean.TRUE.equals(studentExam.isStarted()) || studentExam.getStartedDate() == null) {
-            // Mark the student exam as started with now as the start date if it was not started before
-            var startDate = studentExam.getStartedDate() != null ? studentExam.getStartedDate() : now();
-            studentExam.setStartedAndStartDate(startDate);
-            // send those changes in a modifying query to the database
-            studentExamRepository.startStudentExam(studentExam.getId(), startDate);
-        }
-
-        var programmingExercises = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).map(exercise -> (ProgrammingExercise) exercise)
-                .collect(Collectors.toSet());
-        if (!programmingExercises.isEmpty()) {
-            // Load all potential submission policies from the database
-            var submissionPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet()));
-            // Add the policy to their respective programming exercise
-            if (!submissionPolicies.isEmpty()) {
-                for (var programmingExercise : programmingExercises) {
-                    programmingExercise.setSubmissionPolicy(
-                            submissionPolicies.stream().filter(policy -> policy.getProgrammingExercise().getId().equals(programmingExercise.getId())).findFirst().orElse(null));
-                }
-            }
-        }
-
-        // remove build script and config information from the student exam
-        for (var programmingExercise : programmingExercises) {
-            programmingExercise.filterSensitiveInformation();
-        }
-
-        // Load quizzes from database, because they include lazy relationships
-        examService.loadQuizExercisesForStudentExam(studentExam);
-
-        // Fetch participations, submissions and results and connect them to the studentExam
-        examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, currentUser);
-
-        // Create new exam session
-        createNewExamSession(request, studentExam);
-    }
-
-    /**
-     * Creates a new Exam Session
-     *
-     * @param request     the http request for the conduction
-     * @param studentExam the student exam to be prepared
-     */
-    private void createNewExamSession(HttpServletRequest request, StudentExam studentExam) {
-        final var ipAddress = !storeSessionDataInStudentExamSession ? null : HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
-        final String browserFingerprint = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Fingerprint");
-        final String instanceId = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Instance-ID");
-        final String userAgent = !storeSessionDataInStudentExamSession ? null : request.getHeader(HttpHeaders.USER_AGENT);
-        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
-        examSession.hideDetails();
-        examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));
-        studentExam.setExamSessions(Set.of(examSession));
     }
 
     /**

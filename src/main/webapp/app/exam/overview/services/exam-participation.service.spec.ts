@@ -42,6 +42,15 @@ describe('ExamParticipationService', () => {
         studentExam.exercises = [];
     });
 
+    it('should request explicit instructor-owner conduction with normal conversion', () => {
+        let result: StudentExam | undefined;
+        service.loadStudentExamWithExercisesForConduction(1, 2, 3, 'instructor-owner').subscribe((value) => (result = value));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush({ id: 3, exercises: [], exam: { startDate: '2026-10-25T08:00:00Z' } });
+        expect(req.request.url).toBe('api/exam/courses/1/exams/2/student-exams/3/conduction/for-instructor');
+        expect(dayjs.isDayjs(result?.exam?.startDate)).toBe(true);
+    });
+
     it('should load a StudentExam with exercises for conduction', async () => {
         const returnedFromService = Object.assign({ started: true }, studentExam);
         service

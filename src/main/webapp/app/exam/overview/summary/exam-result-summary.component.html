@@ -48,6 +48,7 @@
     <div class="mb-6!" data-testid="exam-summary-result-overview">
         <jhi-exam-result-overview
             [studentExamWithGrade]="studentExamGradeInfoDTO()!"
+            [gradingKeyPurpose]="instructorView() || isTestRun() ? 'management' : 'student'"
             [isGradingKeyCollapsed]="isGradingKeyCollapsed()"
             [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed()"
             [exerciseInfos]="exerciseInfos()"

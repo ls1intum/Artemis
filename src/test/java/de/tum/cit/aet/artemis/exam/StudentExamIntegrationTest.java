@@ -50,6 +50,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -73,9 +75,11 @@ import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.util.BonusFactory;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -179,6 +183,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Autowired
     private ExamSessionRepository examSessionRepository;
+
+    @Autowired
+    private TokenProvider tokenProvider;
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
@@ -316,6 +323,124 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         for (var repo : studentRepos) {
             repo.deleteWorkingCopy();
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerSummaryKeepsNestedStudentProjectionAfterPromotion() throws Exception {
+        StudentExam attempt = createStudentExamWithResultsAndAssessments(true, 1);
+        Exam exam = attempt.getExam();
+        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(exam);
+        userUtilService.enrollUserInCourse(attempt.getUser(), exam.getCourse(), CourseRole.INSTRUCTOR);
+        userUtilService.changeUser(attempt.getUser().getLogin());
+        String path = "/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/student-exams/" + attempt.getId();
+        StudentExam summary = request.get(path + "/summary", HttpStatus.OK, StudentExam.class);
+        var text = ExerciseUtilService.getFirstExerciseWithType(summary, TextExercise.class);
+        assertThat(text.getStudentParticipations()).isNotEmpty();
+        assertThat(text.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow().getResults()).isEmpty();
+        assertThat(text.getExerciseGroup().getExam()).isNull();
+        JsonNode summaryWire = request.get(path + "/summary", HttpStatus.OK, JsonNode.class);
+        assertExerciseWireMasksQuizSolutions(summaryWire.get("exercises"), "instructor choosing owner summary");
+        request.get(path + "/grade-summary", HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
+    }
+
+    @Test
+    void instructorOwnerConductionUsesCurrentMembershipWithSameJwt() throws Exception {
+        var owner = student1;
+        String token = tokenProvider.createToken(new UsernamePasswordAuthenticationToken(owner.getLogin(), "password", List.of(new SimpleGrantedAuthority("ROLE_USER"))), false);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/conduction/for-instructor";
+        TestSecurityContextHolder.clearContext();
+        request.get(path, HttpStatus.FORBIDDEN, StudentExam.class, headers);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId())).isZero();
+        userUtilService.enrollUserInCourse(owner, course1, CourseRole.INSTRUCTOR);
+        TestSecurityContextHolder.clearContext();
+        request.get(path, HttpStatus.OK, StudentExam.class, headers);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId())).isOne();
+        userUtilService.unenrollUserFromCourseByRole(owner, course1, CourseRole.INSTRUCTOR);
+        TestSecurityContextHolder.clearContext();
+        request.get(path, HttpStatus.FORBIDDEN, StudentExam.class, headers);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId())).isOne();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorRealConductionRetainsEarlyWindowAndBindsAllIdsWithoutSideEffects() throws Exception {
+        studentExam1.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        studentExamRepository.save(studentExam1);
+        exam1.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam1.setEndDate(ZonedDateTime.now().plusHours(4));
+        examRepository.save(exam1);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/";
+        String attempt = "/student-exams/" + studentExam1.getId();
+        request.get(base + exam1.getId() + attempt + "/conduction/for-instructor", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get(base + exam1.getId() + "/test-runs/" + studentExam1.getId() + "/conduction", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get(base + exam2.getId() + attempt + "/conduction/for-instructor", HttpStatus.CONFLICT, StudentExam.class);
+        Course otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        request.get("/api/exam/courses/" + otherCourse.getId() + "/exams/" + exam1.getId() + attempt + "/conduction/for-instructor", HttpStatus.CONFLICT, StudentExam.class);
+        assertThat(studentExamRepository.findByIdElseThrow(studentExam1.getId()).isStarted()).isNotEqualTo(true);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId())).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ownerSummaryAndGradeBindAttemptToExamBeforeReading() throws Exception {
+        studentExam1.setSubmitted(true);
+        studentExamRepository.save(studentExam1);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam1.getId();
+        request.get(path + "/summary", HttpStatus.CONFLICT, StudentExam.class);
+        request.get(path + "/grade-summary", HttpStatus.CONFLICT, StudentExamWithGradeDTO.class);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId())).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerStudentReadsDoNotBypassPublicationForInstructor() throws Exception {
+        studentExam1.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        studentExam1.setSubmitted(true);
+        studentExamRepository.save(studentExam1);
+        exam1.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam1.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(exam1);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId();
+        long sessions = examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId());
+        request.get(path + "/conduction", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get(path + "/summary", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get(path + "/grade-summary", HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
+        request.get(path, HttpStatus.OK, StudentExamWithGradeDTO.class);
+        assertThat(studentExamRepository.findByIdElseThrow(studentExam1.getId()).isStarted()).isNotEqualTo(true);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId())).isEqualTo(sessions);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorOwnerConductionRetainsStartAndSessionEffects() throws Exception {
+        studentExam1.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        studentExam1.setSubmitted(true);
+        studentExamRepository.save(studentExam1);
+        exam1.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(exam1);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId();
+        long sessions = examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId());
+        request.get(path + "/conduction/for-instructor", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamRepository.findByIdElseThrow(studentExam1.getId()).isStarted()).isTrue();
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId())).isEqualTo(sessions + 1);
+        userUtilService.changeUser(TEST_PREFIX + "instructor2");
+        request.get(path + "/conduction/for-instructor", HttpStatus.FORBIDDEN, StudentExam.class);
+        assertThat(examSessionRepository.findExamSessionCountByStudentExamId(studentExam1.getId())).isEqualTo(sessions + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void gradeSummaryCannotSelectAnotherOwnerEvenForInstructor() throws Exception {
+        studentExam1.setSubmitted(true);
+        studentExamRepository.save(studentExam1);
+        exam1.setPublishResultsDate(ZonedDateTime.now().minusDays(1));
+        examRepository.save(exam1);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId();
+        request.get(path + "/grade-summary?userId=" + student1.getId(), HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
     }
 
     @Test
@@ -2489,6 +2614,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
 
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRun.getId();
+        var ownerSummary = request.get(path + "/summary", HttpStatus.OK, StudentExam.class);
+        assertThat(ownerSummary.getExercises()).doesNotContainNull();
+        var ownerGrades = request.get(path + "/grade-summary", HttpStatus.OK, StudentExamWithGradeDTO.class);
+        assertThat(ownerGrades.studentExam().exercises()).doesNotContainNull();
+        var management = request.get(path, HttpStatus.OK, StudentExamWithGradeDTO.class);
+        assertThat(management.studentExam().exercises()).doesNotContainNull();
+
         assertThat(studentExamRepository.findById(testRun.getId()).orElseThrow().isSubmitted()).isTrue();
         var quizParticipations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsAndFeedbacks(quizExercise.getId(),
                 userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getId());
@@ -3014,7 +3147,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         userUtilService.changeUser(student1.getLogin());
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         // Note: student1 cannot see the grade summary for student2
-        request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam1.getId() + "/grade-summary?userId=" + student2.getId(),
+        request.get(
+                "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/"
+                        + studentExamRepository.findOneByExamIdAndUserIdElseThrow(exam2.getId(), student2.getId()).getId() + "/grade-summary",
                 HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
     }
 
@@ -3027,8 +3162,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
-        var studentExamGradeInfoFromServer = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId()
-                + "/grade-summary?userId=" + studentExam.getUser().getId(), HttpStatus.OK, StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId(),
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -3096,18 +3231,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         Exam finalExam = configureFinalExamWithBonusExam(finalStudentExam, bonusStudentExam, bonusStrategy);
 
-        String queryParam = "";
+        String summarySuffix = asStudent ? "/grade-summary" : "";
         if (asStudent) {
             // users tries to access exam summary after results are published
             userUtilService.changeUser(finalStudentExam.getUser().getLogin());
         }
-        else {
-            queryParam = "?userId=" + finalStudentExam.getUser().getId();
-        }
 
         var studentExamGradeInfoFromServer = request.get(
-                "/api/exam/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/" + finalStudentExam.getId() + "/grade-summary" + queryParam,
-                HttpStatus.OK, StudentExamWithGradeDTO.class);
+                "/api/exam/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/" + finalStudentExam.getId() + summarySuffix, HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -3595,6 +3727,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSubmitTestRun() throws Exception {
         var testRun = createTestRun();
+        testRunExam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(testRunExam);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
@@ -3624,6 +3758,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         Instant afterInitialEvaluation = Instant.now();
         testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRunResponse.getId() + "/summary",
                 HttpStatus.OK, StudentExam.class);
+
+        QuizExercise summaryQuiz = ExerciseUtilService.getFirstExerciseWithType(testRunResponse, QuizExercise.class);
+        QuizSubmission summarySubmission = (QuizSubmission) summaryQuiz.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+        assertThat(summarySubmission.getScoreInPoints()).as("a genuine test run keeps evaluated scores before real result publication").isEqualTo(4D);
+        assertThat(summarySubmission.getLatestResult()).as("a genuine test run keeps its completed result on the owner summary").isNotNull();
+        assertThat(summarySubmission.getLatestResult().getScore()).isEqualTo(44.4);
+        assertThat(summarySubmission.getSubmittedAnswers()).hasSize(3);
+        assertThat(summarySubmission.getSubmittedAnswers()).allSatisfy(answer -> assertThat(answer.getScoreInPoints()).isNotNull());
 
         Result initialResult = checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
         assertThat(initialResult.getCompletionDate().toInstant()).isBetween(beforeInitialEvaluation, afterInitialEvaluation).isNotEqualTo(oldSubmissionDate.toInstant());

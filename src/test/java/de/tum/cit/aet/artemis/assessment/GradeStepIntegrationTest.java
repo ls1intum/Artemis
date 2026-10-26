@@ -120,6 +120,33 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(gradeStepsDTO.gradeSteps()).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
     }
 
+    @ParameterizedTest
+    @CsvSource({ "grade-steps", "match-grade-step?gradePercentage=50" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorMustUseManagementScaleBeforePublication(String endpoint) throws Exception {
+        GradeStep step = new GradeStep();
+        step.setGradeName("Pass");
+        step.setLowerBoundPercentage(0);
+        step.setUpperBoundPercentage(100);
+        step.setUpperBoundInclusive(true);
+        step.setGradingScale(examGradingScale);
+        examGradingScale.setGradeType(GradeType.GRADE);
+        examGradingScale.setGradeSteps(Set.of(step));
+        gradingScaleRepository.save(examGradingScale);
+        String path = "/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale";
+        request.get(path + "/" + endpoint, HttpStatus.FORBIDDEN, Void.class);
+        request.get(path, HttpStatus.OK, de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void absentExamScaleKeepsAllAndMatchNullContractsBeforePublication() throws Exception {
+        String path = "/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale";
+        request.get(path + "/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
+        assertThat(request.get(path + "/match-grade-step?gradePercentage=50", HttpStatus.OK, GradeDTO.class)).isNull();
+        assertThat(request.get(path, HttpStatus.OK, de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO.class)).isNull();
+    }
+
     private void createGradeScale() {
         GradeStep gradeStep1 = new GradeStep();
         GradeStep gradeStep2 = new GradeStep();

@@ -67,6 +67,13 @@ describe('Exam Management Service Tests', () => {
         httpMock.verify();
     });
 
+    it('should choose instructor statistics explicitly before requesting', () => {
+        service.getExamStatistics(1, 2, 'instructor').subscribe();
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush({ numberOfGeneratedStudentExams: 3 });
+        expect(req.request.url).toBe('api/exam/courses/1/exams/2/statistics/for-instructor');
+    });
+
     it('should create an exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };

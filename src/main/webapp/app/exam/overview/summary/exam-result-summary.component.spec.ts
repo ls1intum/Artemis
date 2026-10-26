@@ -47,13 +47,14 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
-import { provideHttpClient } from '@angular/common/http';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -172,7 +173,7 @@ const gradeInfo: StudentExamWithGradeDTO = {
     },
 };
 
-function sharedSetup(url: string[]) {
+function sharedSetup(url: string[], renderScoreHeaders = false) {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExamResultSummaryComponent],
@@ -222,8 +223,8 @@ function sharedSetup(url: string[]) {
                         MockComponent(CourseSidebarToggleButtonComponent),
                         MockComponent(ExamGeneralInformationComponent),
                         MockComponent(ExamResultOverviewComponent),
-                        MockComponent(CollapsibleCardComponent),
-                        MockComponent(ExamResultSummaryExerciseCardHeaderComponent),
+                        renderScoreHeaders ? CollapsibleCardComponent : MockComponent(CollapsibleCardComponent),
+                        renderScoreHeaders ? ExamResultSummaryExerciseCardHeaderComponent : MockComponent(ExamResultSummaryExerciseCardHeaderComponent),
                         MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
                         MockComponent(ExampleSolutionComponent),
                         MockComponent(TextExamSummaryComponent),
@@ -276,6 +277,27 @@ describe('ExamResultSummaryComponent', () => {
         printStub.mockRestore();
     });
 
+    it('should use supplied management grade info without a second request', () => {
+        fixture.componentRef.setInput('instructorView', true);
+        fixture.componentRef.setInput('managementGradeInfo', { ...gradeInfo });
+        const management = vi.spyOn(TestBed.inject(StudentExamService), 'find');
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        expect(management).not.toHaveBeenCalled();
+        expect(owner).not.toHaveBeenCalled();
+        expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
+    });
+
+    it('should load management grades through the existing instructor detail API', () => {
+        fixture.componentRef.setInput('instructorView', true);
+        const management = vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...gradeInfo } })));
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        expect(management).toHaveBeenCalledWith(1, studentExam.exam!.id, studentExam.id);
+        expect(owner).not.toHaveBeenCalled();
+        expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
+    });
+
     it('should retrieve grade info correctly', () => {
         const serviceSpy = vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
 
@@ -284,7 +306,7 @@ describe('ExamResultSummaryComponent', () => {
         const courseId = 1;
         expect(component.studentExam()).toEqual(studentExam);
         expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id, studentExam.user!.id);
+        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id);
         expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
     });
 
@@ -781,5 +803,56 @@ describe('ExamResultSummaryComponent', () => {
             const editor = fixture.debugElement.query(By.directive(editorType)).componentInstance;
             expect(editor.viewingPurpose()).toBe(purpose);
         }
+    });
+});
+
+describe.each([
+    { name: 'published real exam', url: ['', ''], testRun: false },
+    { name: 'genuine test run before real publication', url: ['', 'test-runs', '', 'summary'], testRun: true },
+])('ExamResultSummary supplied management scores: $name', ({ url, testRun }) => {
+    sharedSetup(url, true);
+
+    function setScoredAttempt() {
+        const scoredAttempt: StudentExam = {
+            ...studentExam,
+            testRun,
+            exam: { ...exam, publishResultsDate: testRun ? dayjs().add(1, 'day') : publishResultsDate },
+            exercises: [{ ...textExercise, maxPoints: 10 }],
+        };
+        fixture.componentRef.setInput('studentExam', scoredAttempt);
+        fixture.componentRef.setInput('instructorView', true);
+        return { ...gradeInfo, achievedPointsPerExercise: { 1: 6 } };
+    }
+
+    function expectEarnedScore() {
+        expect.soft(component.exerciseInfos()[1].achievedPoints).toBe(6);
+        expect.soft(component.exerciseInfos()[1].achievedPercentage).toBe(60);
+        const score = fixture.nativeElement.querySelector('[data-testid="exercise-result-score"]') as HTMLElement;
+        expect(score).not.toBeNull();
+        expect.soft(score.textContent).toContain('[6 / 10');
+        expect.soft(score.querySelector('[data-testid="achieved-percentage"]')?.textContent ?? '').toContain('60%');
+    }
+
+    it('keeps supplied nonzero points in final state and the real rendered score header without another request', () => {
+        const supplied = setScoredAttempt();
+        fixture.componentRef.setInput('managementGradeInfo', supplied);
+        const management = vi.spyOn(TestBed.inject(StudentExamService), 'find');
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        expect(management).not.toHaveBeenCalled();
+        expect(owner).not.toHaveBeenCalled();
+        expectEarnedScore();
+    });
+
+    it('retains asynchronously loaded management scores in the real header', () => {
+        const supplied = setScoredAttempt();
+        const response = new Subject<HttpResponse<StudentExamWithGradeDTO>>();
+        vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(response);
+        fixture.detectChanges();
+        expect(component.exerciseInfos()[1].achievedPoints).toBeUndefined();
+        response.next(new HttpResponse({ body: supplied }));
+        fixture.detectChanges();
+        expectEarnedScore();
+        response.complete();
     });
 });

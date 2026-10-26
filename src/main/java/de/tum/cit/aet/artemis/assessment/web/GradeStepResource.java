@@ -126,8 +126,7 @@ public class GradeStepResource {
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
-        if (!isInstructor && !exam.resultsPublished()) {
+        if (!exam.resultsPublished()) {
             throw new AccessForbiddenException();
         }
         GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getExamMaxPoints(), exam.getTitle());
@@ -253,11 +252,10 @@ public class GradeStepResource {
             throw new AccessForbiddenException("The exam does not belong to the course");
         }
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
-        boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (gradingScale.isEmpty()) {
             return ResponseEntity.ok(null);
         }
-        else if (!isInstructor && !exam.resultsPublished()) {
+        else if (!exam.resultsPublished()) {
             throw new AccessForbiddenException();
         }
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get());

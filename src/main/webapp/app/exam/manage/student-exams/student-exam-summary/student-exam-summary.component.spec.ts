@@ -99,5 +99,6 @@ describe('StudentExamSummaryComponent', () => {
         fixture.detectChanges();
         expect(component.summaryComponent()?.instructorView()).toBe(true);
         expect(component.summaryComponent()?.studentExam()).toEqual(studentExamValue);
+        expect(component.summaryComponent()?.managementGradeInfo()).toEqual({ studentExam: studentExamValue });
     });
 });

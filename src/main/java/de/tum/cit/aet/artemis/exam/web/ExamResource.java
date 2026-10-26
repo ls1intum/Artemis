@@ -886,20 +886,30 @@ public class ExamResource {
      */
     @FeatureUsage(UserFeature.EXAM_SCORES)
     @GetMapping("courses/{courseId}/exams/{examId}/statistics")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<ExamChecklistDTO> getExamStatistics(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.debug("REST request to get exam statistics: {}", examId);
-
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
+        return getExamStatistics(examId, false);
+    }
 
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var isInstructorInCourse = authCheckService.isAtLeastInstructorInCourse(course, null);
+    /**
+     * Returns the full management checklist, including preparation and conduction counts.
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId   the exam whose checklist is requested
+     * @return the instructor checklist statistics
+     */
+    @FeatureUsage(UserFeature.EXAM_SCORES)
+    @GetMapping("courses/{courseId}/exams/{examId}/statistics/for-instructor")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<ExamChecklistDTO> getExamStatisticsForInstructor(@PathVariable Long courseId, @PathVariable Long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        return getExamStatistics(examId, true);
+    }
 
+    private ResponseEntity<ExamChecklistDTO> getExamStatistics(Long examId, boolean instructorAudience) {
         Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
-        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, isInstructorInCourse);
-
-        return ResponseEntity.ok(examChecklistDTO);
+        return ResponseEntity.ok(examService.getStatsForChecklist(exam, instructorAudience));
     }
 
     /**
