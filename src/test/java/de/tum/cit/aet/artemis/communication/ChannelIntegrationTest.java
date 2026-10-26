@@ -840,7 +840,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         userUtilService.changeUser(testPrefix + "instructor2");
-        var channels = request.getList("/api/communication/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
+        var channels = request.getList("/api/communication/courses/" + exampleCourseId + "/channels/overview/for-instructor", HttpStatus.OK, ChannelDTO.class);
         assertThat(channels.stream().map(ChannelDTO::getId).toList()).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
                 privateChannelWhereMember.getId(), privateChannelWhereNotMember.getId());
 
@@ -883,6 +883,53 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(courseWideChannelWhereMember.getId());
         conversationRepository.deleteById(courseWideChannelWhereNotMember.getId());
         conversationRepository.deleteById(visibleLectureChannel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void overviewAudiencesPreservePrivateMembershipFacts() throws Exception {
+        var publicChannel = createChannel(true, TEST_PREFIX + "audience-public");
+        var privateMember = createChannel(false, TEST_PREFIX + "audience-member");
+        var privateOther = createChannel(false, TEST_PREFIX + "audience-other");
+        addUsersToConversation(privateMember.getId(), "tutor1", "instructor2");
+        String base = "/api/communication/courses/" + exampleCourseId + "/channels/overview";
+        for (String login : List.of("tutor1", "instructor2")) {
+            userUtilService.changeUser(TEST_PREFIX + login);
+            for (String suffix : List.of("", "/for-staff")) {
+                var channels = request.getList(base + suffix, HttpStatus.OK, ChannelDTO.class);
+                assertThat(channels).extracting(ChannelDTO::getId).contains(publicChannel.getId(), privateMember.getId()).doesNotContain(privateOther.getId());
+                assertThat(channels).filteredOn(dto -> dto.getId().equals(privateMember.getId())).singleElement().satisfies(dto -> assertThat(dto.getIsMember()).isTrue());
+                assertThat(channels).filteredOn(dto -> dto.getId().equals(publicChannel.getId())).singleElement().satisfies(dto -> assertThat(dto.getIsMember()).isFalse());
+            }
+        }
+        var instructorChannels = request.getList(base + "/for-instructor", HttpStatus.OK, ChannelDTO.class);
+        assertThat(instructorChannels).extracting(ChannelDTO::getId).contains(privateOther.getId());
+        assertThat(instructorChannels).filteredOn(dto -> dto.getId().equals(privateOther.getId())).singleElement().satisfies(dto -> assertThat(dto.getIsMember()).isFalse());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void overviewAudiencesPreserveVisibilityOfFutureLectures() throws Exception {
+        var hidden = lectureUtilService.addLectureChannel(lectureUtilService.createLecture(exampleCourse, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2)));
+        var visible = lectureUtilService.addLectureChannel(lectureUtilService.createLecture(exampleCourse, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(2)));
+        String base = "/api/communication/courses/" + exampleCourseId + "/channels/overview";
+        assertThat(request.getList(base, HttpStatus.OK, ChannelDTO.class)).extracting(ChannelDTO::getId).contains(hidden.getId(), visible.getId());
+        assertThat(request.getList(base + "/for-staff", HttpStatus.OK, ChannelDTO.class)).extracting(ChannelDTO::getId).contains(hidden.getId(), visible.getId());
+        assertThat(request.getList(base + "/for-instructor", HttpStatus.OK, ChannelDTO.class)).extracting(ChannelDTO::getId).contains(hidden.getId(), visible.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void allOverviewAudiencesRequireCourseMembershipAndCommunication() throws Exception {
+        String base = "/api/communication/courses/" + exampleCourseId + "/channels/overview";
+        var foreignCourse = courseUtilService.createCourse();
+        for (String suffix : List.of("", "/for-staff", "/for-instructor")) {
+            request.getList("/api/communication/courses/" + foreignCourse.getId() + "/channels/overview" + suffix, HttpStatus.FORBIDDEN, ChannelDTO.class);
+        }
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+        for (String suffix : List.of("", "/for-staff", "/for-instructor")) {
+            request.getList(base + suffix, HttpStatus.FORBIDDEN, ChannelDTO.class);
+        }
     }
 
     @Test

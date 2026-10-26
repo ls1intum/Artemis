@@ -14,6 +14,8 @@ import jakarta.validation.Validator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -68,6 +70,72 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
         irisRequestMockProvider.enableMockingOfRequests();
 
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "tutor1", "instructor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void studentFaqAudienceIsFixedForEveryCourseRole(String login) throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + login);
+        var accepted = faqRepository.save(FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "accepted", "accepted answer"));
+        var rejected = faqRepository.save(FaqFactory.generateFaq(course1, FaqState.REJECTED, "rejected answer", "rejected"));
+        accepted.setCategories(Set.of("accepted-category"));
+        rejected.setCategories(Set.of("rejected-category"));
+        faq.setCategories(Set.of("proposed-category"));
+        faqRepository.saveAll(List.of(accepted, rejected, faq));
+        String base = "/api/communication/courses/" + course1.getId();
+        var result = request.getList(base + "/faqs", HttpStatus.OK, FaqDTO.class);
+        assertThat(result).extracting(FaqDTO::id).containsExactly(accepted.getId());
+        assertThat(request.get(base + "/faqs/" + accepted.getId(), HttpStatus.OK, FaqDTO.class).questionAnswer()).isEqualTo("accepted answer");
+        assertThat(request.getList(base + "/faq-state/ACCEPTED", HttpStatus.OK, FaqDTO.class)).extracting(FaqDTO::id).containsExactly(accepted.getId());
+        assertThat(request.get(base + "/faq-categories/ACCEPTED", HttpStatus.OK, Set.class)).containsExactlyInAnyOrderElementsOf(accepted.getCategories());
+        request.get(base + "/faqs/" + Long.MAX_VALUE, HttpStatus.NOT_FOUND, FaqDTO.class);
+        for (var hidden : List.of(faq, rejected)) {
+            request.get(base + "/faqs/" + hidden.getId(), HttpStatus.FORBIDDEN, FaqDTO.class);
+            request.getList(base + "/faq-state/" + hidden.getFaqState(), HttpStatus.FORBIDDEN, FaqDTO.class);
+            request.get(base + "/faq-categories/" + hidden.getFaqState(), HttpStatus.FORBIDDEN, Set.class);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void managementFaqAudienceReturnsAllStatesAndPreservesBindings() throws Exception {
+        var accepted = faqRepository.save(FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "accepted", "accepted"));
+        var rejected = FaqFactory.generateFaq(course1, FaqState.REJECTED, "rejected", "rejected");
+        rejected.setCategories(Set.of("rejected-category"));
+        rejected = faqRepository.save(rejected);
+        String base = "/api/communication/courses/" + course1.getId();
+        assertThat(request.getList(base + "/faqs/for-management", HttpStatus.OK, FaqDTO.class)).extracting(FaqDTO::id).containsExactly(rejected.getId(), accepted.getId(),
+                faq.getId());
+        for (var expected : List.of(faq, accepted, rejected)) {
+            assertThat(request.getList(base + "/faqs/for-management?faqState=" + expected.getFaqState(), HttpStatus.OK, FaqDTO.class)).extracting(FaqDTO::id)
+                    .containsExactly(expected.getId());
+            assertThat(request.get(base + "/faqs/" + expected.getId() + "/for-management", HttpStatus.OK, FaqDTO.class).faqState()).isEqualTo(expected.getFaqState());
+            assertThat(request.get(base + "/faq-categories/for-management?faqState=" + expected.getFaqState(), HttpStatus.OK, Set.class))
+                    .containsExactlyInAnyOrderElementsOf(expected.getCategories());
+        }
+        assertThat(request.get(base + "/faq-categories/for-management", HttpStatus.OK, Set.class)).contains("rejected-category");
+        request.get("/api/communication/courses/" + course2.getId() + "/faqs/" + faq.getId() + "/for-management", HttpStatus.BAD_REQUEST, FaqDTO.class);
+        request.get(base + "/faqs/" + Long.MAX_VALUE + "/for-management", HttpStatus.NOT_FOUND, FaqDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentCannotReadManagementFaqAudience() throws Exception {
+        String base = "/api/communication/courses/" + course1.getId();
+        request.getList(base + "/faqs/for-management", HttpStatus.FORBIDDEN, FaqDTO.class);
+        request.get(base + "/faqs/" + faq.getId() + "/for-management", HttpStatus.FORBIDDEN, FaqDTO.class);
+        request.get(base + "/faq-categories/for-management", HttpStatus.FORBIDDEN, Set.class);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void foreignCourseUserCannotReadAnyFaqAudience() throws Exception {
+        String base = "/api/communication/courses/" + course1.getId();
+        for (String suffix : List.of("/faqs", "/faqs/for-management", "/faqs/" + faq.getId(), "/faqs/" + faq.getId() + "/for-management", "/faq-state/ACCEPTED",
+                "/faq-categories/ACCEPTED", "/faq-categories/for-management", "/faq-categories")) {
+            request.get(base + suffix, HttpStatus.FORBIDDEN, Object.class);
+        }
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -177,7 +245,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFaqByFaqId() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
-        Faq returnedFaq = request.get("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), HttpStatus.OK, Faq.class);
+        Faq returnedFaq = request.get("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId() + "/for-management", HttpStatus.OK, Faq.class);
         assertThat(faq).isEqualTo(returnedFaq);
     }
 
@@ -211,7 +279,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getFaq_InstructorsShouldGetAllFaqByCourseId() throws Exception {
         List<Faq> faqs = faqRepository.findAllByCourseIdOrderByCreatedDateDesc(this.course1.getId());
-        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, FaqDTO.class);
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs/for-management", HttpStatus.OK, FaqDTO.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
     }
 
@@ -229,7 +297,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getFaq_ShouldGetFaqByCourseId() throws Exception {
         List<Faq> faqs = faqRepository.findAllByCourseIdOrderByCreatedDateDesc(this.course1.getId());
-        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, FaqDTO.class);
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs/for-management", HttpStatus.OK, FaqDTO.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
     }
 
@@ -237,7 +305,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getFaq_shouldGetFaqByCourseIdAndState() throws Exception {
         List<Faq> faqs = faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(this.course1.getId(), FaqState.PROPOSED);
-        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faq-state/" + "PROPOSED", HttpStatus.OK, FaqDTO.class);
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs/for-management?faqState=PROPOSED", HttpStatus.OK, FaqDTO.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
     }
 
@@ -264,7 +332,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq faq3 = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "SortTest3", "answer3");
         faqRepository.save(faq3);
 
-        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, FaqDTO.class);
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs/for-management", HttpStatus.OK, FaqDTO.class);
 
         List<FaqDTO> createdFaqs = returnedFaqs.stream().filter(faq -> faq.questionTitle().startsWith("SortTest")).toList();
 

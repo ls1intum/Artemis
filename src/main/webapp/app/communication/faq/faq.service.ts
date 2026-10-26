@@ -40,6 +40,24 @@ export class FaqService {
             .pipe(map((res: EntityResponseType) => FaqService.convertFaqCategoriesFromServer(res)));
     }
 
+    findForManagement(courseId: number, faqId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Faq>(`${this.resourceUrl}/${courseId}/faqs/${faqId}/for-management`, { observe: 'response' })
+            .pipe(map((res) => FaqService.convertFaqCategoriesFromServer(res)));
+    }
+
+    findAllForManagement(courseId: number, faqState?: FaqState): Observable<EntityArrayResponseType> {
+        const params = faqState ? new HttpParams().set('faqState', faqState) : new HttpParams();
+        return this.http
+            .get<Faq[]>(`${this.resourceUrl}/${courseId}/faqs/for-management`, { observe: 'response', params })
+            .pipe(map((res) => FaqService.convertFaqCategoryArrayFromServer(res)));
+    }
+
+    findAllCategoriesForManagement(courseId: number, faqState?: FaqState): Observable<HttpResponse<string[]>> {
+        const params = faqState ? new HttpParams().set('faqState', faqState) : new HttpParams();
+        return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories/for-management`, { observe: 'response', params });
+    }
+
     /**
      * Searches visible FAQs outside the target course without loading every source course.
      * @param courseId target course, excluded from the results

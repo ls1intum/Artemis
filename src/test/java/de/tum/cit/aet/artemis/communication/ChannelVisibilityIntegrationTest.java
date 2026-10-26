@@ -359,6 +359,32 @@ class ChannelVisibilityIntegrationTest extends AbstractConversationTest {
         assertThat(response.conversation().id()).isEqualTo(channel.getId());
     }
 
+    @ParameterizedTest
+    @EnumSource(value = ChannelSubType.class, names = { "EXERCISE", "EXAM" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void overviewStudentProjectionHidesUnreleasedChannelsEvenForInstructor(ChannelSubType type) throws Exception {
+        Channel hidden = createChannel(type, ZonedDateTime.now().plusDays(1));
+        Channel visible = createChannel(type, ZonedDateTime.now().minusHours(1));
+        String base = "/api/communication/courses/" + exampleCourseId + "/channels/overview";
+        assertThat(request.getList(base, HttpStatus.OK, ChannelDTO.class)).extracting(ChannelDTO::getId).contains(visible.getId()).doesNotContain(hidden.getId());
+        assertThat(request.getList(base + "/for-staff", HttpStatus.OK, ChannelDTO.class)).extracting(ChannelDTO::getId).contains(hidden.getId(), visible.getId());
+        assertThat(request.getList(base + "/for-instructor", HttpStatus.OK, ChannelDTO.class)).extracting(ChannelDTO::getId).contains(hidden.getId(), visible.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void overviewStudentCannotSelectStaffAudiences() throws Exception {
+        String base = "/api/communication/courses/" + exampleCourseId + "/channels/overview";
+        request.getList(base + "/for-staff", HttpStatus.FORBIDDEN, ChannelDTO.class);
+        request.getList(base + "/for-instructor", HttpStatus.FORBIDDEN, ChannelDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void overviewTutorCannotSelectInstructorAudience() throws Exception {
+        request.getList("/api/communication/courses/" + exampleCourseId + "/channels/overview/for-instructor", HttpStatus.FORBIDDEN, ChannelDTO.class);
+    }
+
     private Channel createChannel(ChannelSubType type, ZonedDateTime visibleDate) {
         return switch (type) {
             case EXERCISE -> conversationUtilService
