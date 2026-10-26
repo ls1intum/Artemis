@@ -252,6 +252,9 @@ public class SubmissionResource {
 
     private Course findCourseFromSubmission(Submission submission) {
         Participation participation = submission.getParticipation();
+        if (participation == null) {
+            throw new EntityNotFoundException("Course", "of submission " + submission.getId());
+        }
         Course course = participation.getExercise() != null ? participation.getExercise().getCourseViaExerciseGroupOrCourseMember() : null;
         if (course == null) {
             course = studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
