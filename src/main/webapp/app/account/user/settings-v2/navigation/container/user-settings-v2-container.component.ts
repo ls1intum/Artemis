@@ -2,8 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterOutlet } from '@angular/router';
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
 import { learnerProfileAvailable } from 'app/account/user/settings/learner-profile/learner-profile-availability';
-import { UserSettingsV2SidebarComponent } from 'app/account/user/settings-v2/user-settings-v2-sidebar/user-settings-v2-sidebar.component';
-import { UserSettingsV2TitleBarComponent } from 'app/account/user/settings-v2/user-settings-v2-title-bar/user-settings-v2-title-bar.component';
+import { UserSettingsV2SidebarComponent } from 'app/account/user/settings-v2/navigation/sidebar/user-settings-v2-sidebar.component';
+import { UserSettingsV2TitleBarComponent } from 'app/account/user/settings-v2/navigation/title-bar/user-settings-v2-title-bar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({

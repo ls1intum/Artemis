@@ -5,7 +5,7 @@ import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constant
 export const routes: Routes = [
     {
         path: 'user-settings-v2',
-        loadComponent: () => import('./user-settings-v2-container/user-settings-v2-container.component').then((m) => m.UserSettingsV2ContainerComponent),
+        loadComponent: () => import('./navigation/container/user-settings-v2-container.component').then((m) => m.UserSettingsV2ContainerComponent),
         canActivate: [UserRouteAccessService],
         data: {
             authorities: IS_AT_LEAST_STUDENT,
@@ -19,35 +19,35 @@ export const routes: Routes = [
             },
             {
                 path: 'profile',
-                loadComponent: () => import('./profile-settings-v2/profile-settings-v2.component').then((m) => m.ProfileSettingsV2Component),
+                loadComponent: () => import('./profile/profile-settings-v2.component').then((m) => m.ProfileSettingsV2Component),
                 data: {
                     pageTitle: 'artemisApp.userSettings.navigation.profile',
                 },
             },
             {
                 path: 'credentials',
-                loadComponent: () => import('./user-settings-v2-placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
+                loadComponent: () => import('./navigation/placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.navigation.credentials',
                 },
             },
             {
                 path: 'learning',
-                loadComponent: () => import('./user-settings-v2-placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
+                loadComponent: () => import('./navigation/placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.navigation.learning',
                 },
             },
             {
                 path: 'ai-experience',
-                loadComponent: () => import('./user-settings-v2-placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
+                loadComponent: () => import('./navigation/placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.aiExperience',
                 },
             },
             {
                 path: 'exercises',
-                loadComponent: () => import('./exercise-settings-v2/exercise-settings-v2.component').then((m) => m.ExerciseSettingsV2Component),
+                loadComponent: () => import('./exercises/exercise-settings-v2.component').then((m) => m.ExerciseSettingsV2Component),
                 data: {
                     pageTitle: 'artemisApp.userSettings.navigation.exercises',
                 },
