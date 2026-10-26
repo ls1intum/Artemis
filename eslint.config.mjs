@@ -756,6 +756,7 @@ export default tseslint.config(
             'src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.html',
             'src/main/webapp/app/plagiarism/shared/case-header/**/*.html',
             'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
+            'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
             'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
         ],

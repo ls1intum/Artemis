@@ -117,11 +117,11 @@ public class MailRetryQueueService {
         }
 
         /**
-         * Leaves the rendered body and the address out, so that a mail that ends up in a log does not write its content or its recipient there.
+         * Leaves the rendered subject, body and address out, since each can identify the recipient when this mail is logged.
          */
         @Override
         public String toString() {
-            return "PendingMail[subject=" + subject + ", priority=" + priority + ", attempts=" + attempts + ", nextAttemptAt=" + nextAttemptAt + ']';
+            return "PendingMail[priority=" + priority + ", attempts=" + attempts + ", nextAttemptAt=" + nextAttemptAt + ']';
         }
     }
 
@@ -247,7 +247,7 @@ public class MailRetryQueueService {
             if (mail.isExpired(now)) {
                 iterator.remove();
                 record(Outcome.EXPIRED);
-                log.warn("Email with subject '{}' was dropped after {} failed attempts, because it is too old to be sent", mail.subject(), mail.attempts());
+                log.warn("Email with priority {} was dropped after {} failed attempts, because it is too old to be sent", mail.priority(), mail.attempts());
                 removed++;
             }
         }
