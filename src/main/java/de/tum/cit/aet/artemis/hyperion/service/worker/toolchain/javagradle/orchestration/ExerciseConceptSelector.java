@@ -191,8 +191,7 @@ public class ExerciseConceptSelector {
 
     /**
      * Keeps the better of the incumbent fallback and this batch's least-rejected candidate, ranked by {@link SpecFidelityCritic.ConceptFallback#LEAST_REJECTED}; an incumbent
-     * is kept on a tie so the earliest
-     * batch is preferred. Every objection this review raised travels with the candidate, whichever way the comparison goes.
+     * is kept on a tie so the earliest batch is preferred. Every objection this review raised travels with the candidate, whichever way the comparison goes.
      */
     private static @Nullable ConceptFallback better(@Nullable ConceptFallback incumbent, SpecFidelityCritic.ConceptSelectionReview review, Map<Integer, String> candidates) {
         SpecFidelityCritic.ConceptFallback reviewed = review.fallback();
