@@ -538,7 +538,7 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
                                 super.onError(throwable);
                             }
                         });
-                try {
+                runCopyOperation(sessionId, "into", callback, () -> {
                     if (!callback.awaitCompletion(COPY_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
                         throw new SandboxUnavailableException("Timed out while copying files into sandbox session " + sessionId);
                     }
@@ -551,20 +551,8 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
                             throw new SandboxUnavailableException("Could not extract files into sandbox session " + sessionId + ": " + stderr.snapshot());
                         }
                     }
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    SandboxUnavailableException failure = new SandboxUnavailableException("Interrupted while copying files into sandbox session " + sessionId, e);
-                    invalidateSessionAfterOperationFailure(sessionId, callback, failure);
-                    throw failure;
-                }
-                catch (RuntimeException failure) {
-                    invalidateSessionAfterOperationFailure(sessionId, callback, failure);
-                    throw failure;
-                }
-                finally {
-                    closeQuietly(callback);
-                }
+                    return null;
+                });
             }
         }
     }
@@ -640,8 +628,7 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
                         latch.countDown();
                     }
                 });
-                Long exitCode;
-                try {
+                Long exitCode = runCopyOperation(sessionId, "from", callback, () -> {
                     if (!latch.await(COPY_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
                         throw new SandboxUnavailableException("Timed out while copying files from sandbox session " + sessionId);
                     }
@@ -649,25 +636,13 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
                         throw new SandboxUnavailableException("Could not copy files from sandbox session " + sessionId, errorRef.get());
                     }
                     try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
-                        exitCode = inspectCommand.exec().getExitCodeLong();
-                        if (exitCode == null) {
+                        Long inspectedExitCode = inspectCommand.exec().getExitCodeLong();
+                        if (inspectedExitCode == null) {
                             throw new SandboxUnavailableException("Could not archive files from sandbox session " + sessionId + ": " + stderr.snapshot());
                         }
+                        return inspectedExitCode;
                     }
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    SandboxUnavailableException failure = new SandboxUnavailableException("Interrupted while copying files from sandbox session " + sessionId, e);
-                    invalidateSessionAfterOperationFailure(sessionId, callback, failure);
-                    throw failure;
-                }
-                catch (RuntimeException failure) {
-                    invalidateSessionAfterOperationFailure(sessionId, callback, failure);
-                    throw failure;
-                }
-                finally {
-                    closeQuietly(callback);
-                }
+                });
                 if (oversized.get()) {
                     throw new SandboxUnavailableException("Sandbox copy-out archive exceeds the " + MAX_ARCHIVE_BYTES + " byte transfer limit.");
                 }
@@ -783,6 +758,31 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
         }
         catch (IOException e) {
             log.debug("Failed to close sandbox stream: {}", e.getMessage());
+        }
+    }
+
+    @FunctionalInterface
+    private interface CopyOperation<T> {
+
+        T execute() throws InterruptedException;
+    }
+
+    private <T> T runCopyOperation(String sessionId, String direction, Closeable callback, CopyOperation<T> operation) {
+        try {
+            return operation.execute();
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            SandboxUnavailableException failure = new SandboxUnavailableException("Interrupted while copying files " + direction + " sandbox session " + sessionId, e);
+            invalidateSessionAfterOperationFailure(sessionId, callback, failure);
+            throw failure;
+        }
+        catch (RuntimeException failure) {
+            invalidateSessionAfterOperationFailure(sessionId, callback, failure);
+            throw failure;
+        }
+        finally {
+            closeQuietly(callback);
         }
     }
 

@@ -64,7 +64,23 @@ these structures:
 | `features` | Contains runtime feature-toggle changes made by an administrator. |
 | `pyris-job-map` | Tracks in-flight Iris jobs and their remaining expiry time. |
 
-Other distributed structures start empty in the new namespace. They contain reconstructible or transient state such as
+`deferredBuildResultQueue` was introduced after schema `1`. It holds results awaiting exercise result-processing admission;
+future schema migrations must preserve it alongside `buildResultQueue`. Deferred results remain visible in the admin
+result-queue listing and are retried every five seconds without queue-listener events. The admin clear operation
+clears both result queues. Before downgrading to a release without deferred-result support, let the current release
+drain both queues; the older release cannot process the deferred queue.
+
+Result writers share 256 named permits per exercise across the cluster. Deletion closes admission, cancels builds and
+waits for every permit before removing exercise data; ordinary results can otherwise be graded concurrently. A deletion
+that cannot drain writers within one 60-second acquisition deadline returns HTTP 503 before cleanup starts. Retry it
+after active processing finishes. Deferred results and follow-ups resume after a failed deletion if the exercise remains.
+The permits use the configured provider's ordinary AP locks and inherit their partition limitations.
+
+Do not mix this permit protocol with an earlier release that used one result-processing mutex: stop all old core
+processes before starting replacements, including any core that can process results or delete exercises. Keep admission
+closed during the transition. Neither the retained result queues nor the distributed-data schema needs to be cleared.
+
+Other distributed structures start empty in the initial schema `0` to `1` migration. They contain reconstructible or transient state such as
 build-agent registrations, websocket presence, caches, and topic messages. A user whose short-lived operation was in
 progress, for example an LTI launch, may need to retry it after the maintenance window.
 

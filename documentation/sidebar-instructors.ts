@@ -123,6 +123,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'analytics/learning-analytics',
                 'analytics/adaptive-learning',
+                'analytics/atlas-agent',
             ],
         },
         {
@@ -136,6 +137,7 @@ const sidebars: SidebarsConfig = {
                 'integrations/integrated-code-lifecycle',
                 'integrations/sharing',
                 'integrations/lti-configuration',
+                'integrations/tum-live-course-connection',
                 'integrations/deimos',
             ],
         },

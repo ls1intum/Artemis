@@ -30,9 +30,11 @@
             <div class="question-card-header-inputs">
                 <div class="question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                    <p-inputnumber
+                    <jhi-points-input
                         inputId="score"
-                        styleClass="score-input"
+                        class="score-input"
+                        [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                        fluid
                         [(ngModel)]="shortAnswerQuestion.points"
                         (ngModelChange)="questionUpdated.emit()"
                         [min]="0"
@@ -95,35 +97,7 @@
             <div class="question-type">
                 <h3 class="mb-0"><span class="badge bg-success align-text-top" style="width: 60px">SA</span></h3>
             </div>
-            <div class="question-reevaluation-actions">
-                <button
-                    id="move-up-button"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="moveUp()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveUp' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faChevronUp" />
-                </button>
-                <button
-                    id="move-down-button"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="moveDown()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveDown' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faChevronDown" />
-                </button>
-                <button
-                    id="reset-button"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="resetQuestion()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestion' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faUndo" />
-                </button>
-            </div>
+            <div jhi-question-reevaluation-actions class="question-reevaluation-actions" (moveUp)="moveUp()" (moveDown)="moveDown()" (resetQuestion)="resetQuestion()"></div>
         </div>
     }
     <div class="question-card-body" [ngbCollapse]="isQuestionCollapsed()" id="collapseQuestion{{ questionIndex() }}">
@@ -197,14 +171,12 @@
                 <div class="col-12 col-md-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                        <input
-                            [attr.aria-label]="'artemisApp.quizQuestion.score' | artemisTranslate"
-                            class="form-control point-input"
-                            title="score"
-                            type="number"
-                            [value]="shortAnswerQuestion.points"
-                            disabled
-                            style="width: 100%"
+                        <jhi-points-input
+                            [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                            fluid
+                            [ngModel]="shortAnswerQuestion.points"
+                            [ngModelOptions]="{ standalone: true }"
+                            [disabled]="true"
                         />
                     </div>
                 </div>

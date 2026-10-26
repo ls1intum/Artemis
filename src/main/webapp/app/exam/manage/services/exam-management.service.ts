@@ -16,12 +16,12 @@ import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
-import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
+import { ExamUpdateDTO, toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
@@ -543,35 +543,11 @@ export class ExamManagementService {
      * @param courseId The target course id
      */
     public static convertExamToImportDTO(exam: Exam, courseId: number): ExamImportDTO {
-        return {
-            title: exam.title,
-            testExam: exam.testExam ?? false,
-            examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
-            visibleDate: convertDateFromClient(exam.visibleDate),
-            startDate: convertDateFromClient(exam.startDate),
-            endDate: convertDateFromClient(exam.endDate),
-            publishResultsDate: convertDateFromClient(exam.publishResultsDate),
-            examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
-            examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
-            gracePeriod: exam.gracePeriod,
-            workingTime: exam.workingTime ?? 0,
-            startText: exam.startText,
-            endText: exam.endText,
-            confirmationStartText: exam.confirmationStartText,
-            confirmationEndText: exam.confirmationEndText,
-            examMaxPoints: exam.examMaxPoints,
-            randomizeExerciseOrder: exam.randomizeExerciseOrder,
-            numberOfExercisesInExam: exam.numberOfExercisesInExam,
-            numberOfCorrectionRoundsInExam: exam.numberOfCorrectionRoundsInExam,
-            examiner: exam.examiner,
-            moduleNumber: exam.moduleNumber,
-            courseName: exam.courseName,
-            exampleSolutionPublicationDate: convertDateFromClient(exam.exampleSolutionPublicationDate),
-            examSummaryPublicationDate: convertDateFromClient(exam.examSummaryPublicationDate),
-            channelName: exam.channelName,
-            courseId: courseId,
+        const { id, ...editableFields } = toExamUpdateDTO(exam);
+        return cloneWith(editableFields, {
+            courseId,
             exerciseGroups: exam.exerciseGroups && ExamManagementService.convertExerciseGroupsToImportDTOs(exam.exerciseGroups),
-        };
+        });
     }
 
     /**
@@ -703,32 +679,8 @@ interface ExerciseGroupImportDTO {
     exercises?: ExerciseImportDTO[];
 }
 
-interface ExamImportDTO {
+interface ExamImportDTO extends Omit<ExamUpdateDTO, 'id' | 'title'> {
     title?: string;
-    testExam: boolean;
-    examWithAttendanceCheck: boolean;
-    visibleDate?: string;
-    startDate?: string;
-    endDate?: string;
-    publishResultsDate?: string;
-    examStudentReviewStart?: string;
-    examStudentReviewEnd?: string;
-    gracePeriod?: number;
-    workingTime: number;
-    startText?: string;
-    endText?: string;
-    confirmationStartText?: string;
-    confirmationEndText?: string;
-    examMaxPoints?: number;
-    randomizeExerciseOrder?: boolean;
-    numberOfExercisesInExam?: number;
-    numberOfCorrectionRoundsInExam?: number;
-    examiner?: string;
-    moduleNumber?: string;
-    courseName?: string;
-    exampleSolutionPublicationDate?: string;
-    examSummaryPublicationDate?: string;
-    channelName?: string;
     courseId: number;
     exerciseGroups?: ExerciseGroupImportDTO[];
 }

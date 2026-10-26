@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseMetadataDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
@@ -31,7 +32,7 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
         Boolean secondCorrectionEnabled, String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
         ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, Long courseId, Long exerciseGroupId, ExerciseMode mode, TeamAssignmentConfigDTO teamAssignmentConfig,
         Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig)
-        implements CompetencyLinksHolderDTO {
+        implements CompetencyLinksHolderDTO, ExerciseMetadataDTO {
 
     /**
      * Creates an UpdateTextExerciseDTO from the given TextExercise domain object.
