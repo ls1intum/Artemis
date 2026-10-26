@@ -53,6 +53,12 @@ const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean }
     },
 });
 
+/** Wait for CDK's asynchronous Handset observer to mount the composer for the current viewport. */
+async function waitForResponsiveComposer(page: Page) {
+    const handset = await page.evaluate(() => matchMedia('(max-width: 599.98px) and (orientation: portrait), (max-width: 959.98px) and (orientation: landscape)').matches);
+    await expect(page.locator('#scrollableDiv').getByTestId('formatted-message-input')).toHaveCount(handset ? 1 : 0);
+}
+
 /** Set a real browser selection, including across formatting elements, without changing its DOM. */
 async function selectText(editor: Locator, start: number, end: number, expectedText = '') {
     await editor.evaluate(
@@ -425,6 +431,70 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             const reopened = await reopen(page, saved);
             await expect(reopened.editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
             await expect(reopened.editor.locator(':scope > p')).toHaveText('after');
+        });
+    }
+
+    test('keeps an empty line typed with Shift+Enter in the sent message and when it is edited again', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('first');
+        await editor.press('Shift+Enter');
+        await editor.press('Shift+Enter');
+        await editor.pressSequentially('second');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('first\n\nsecond');
+        await expect(postContent(page, saved.id!).locator('p')).toHaveText(['first', 'second']);
+        const { posting } = await reopen(page, saved);
+        const edited = await saveEdited(page, composer, posting, saved);
+        expect(edited.content).toBe('first\n\nsecond');
+    });
+
+    test('keeps each further empty line typed with Shift+Enter as a blank paragraph that survives editing', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('first');
+        for (let emptyLine = 0; emptyLine < 3; emptyLine++) {
+            await editor.press('Shift+Enter');
+        }
+        await editor.pressSequentially('second');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('first\n\n&nbsp;\n\nsecond');
+        await expect(postContent(page, saved.id!).locator('p')).toHaveCount(3);
+        const { posting } = await reopen(page, saved);
+        const edited = await saveEdited(page, composer, posting, saved);
+        expect(edited.content).toBe('first\n\n&nbsp;\n\nsecond');
+    });
+
+    test('keeps a single line break a line break and sends nothing for empty lines only', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('first');
+        await editor.press('Shift+Enter');
+        await editor.pressSequentially('second');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('first\nsecond');
+        await expect(postContent(page, saved.id!).locator('p')).toHaveCount(1);
+
+        for (let emptyLine = 0; emptyLine < 3; emptyLine++) {
+            await editor.press('Shift+Enter');
+        }
+        await expect(page.getByTestId('send-formatted-message')).toBeDisabled();
+    });
+
+    for (const list of ['ul', 'ol']) {
+        test(`Backspace at the start of the ${list} on the first line removes the list and keeps its text`, async ({ page, composer }) => {
+            const { editor } = composer;
+            await editor.click();
+            await page.getByTestId(`message-block-${list}`).click();
+            await editor.pressSequentially('first');
+            await editor.press('Shift+Enter');
+            await editor.pressSequentially('second');
+            await expect(editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
+            await selectText(editor, 0, 0);
+            await editor.press('Backspace');
+            // only the first item leaves the list, the other one stays in it
+            await expect(editor.locator(`${list} > li`)).toHaveText(['second']);
+            await expect(editor.locator(':scope > p').first()).toHaveText('first');
+            const saved = await send(page, composer);
+            // like with the list button, an ordered list keeps the number of the item that stays in it
+            expect(saved.content).toBe(list === 'ul' ? 'first\n\n- second' : 'first\n\n2. second');
         });
     }
 
@@ -1487,6 +1557,7 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             await page.keyboard.type(`Later line ${line}`);
         }
         await forEachViewport(page, async () => {
+            await waitForResponsiveComposer(page);
             await editor.scrollIntoViewIfNeeded();
             await selectText(editor, 0, 0);
             await page.keyboard.type(`@${studentOne.username}`);
@@ -1663,15 +1734,35 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
 test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
     test.use({ expandedToolbar: false });
 
-    test('shows basic controls by default and expands inline or wraps to fit each viewport', async ({ page, composer }) => {
+    test('keeps the toolbar on one line at every viewport and shows the controls that do not fit in a bar above the editor', async ({ page, composer }) => {
         const host = page.locator('jhi-message-editor').filter({ has: composer.editor });
         const toggle = host.getByTestId('message-toolbar-toggle');
         const advanced = host.getByTestId('message-advanced-toolbar');
+        const line = host.getByTestId('message-toolbar-line');
         await forEachViewport(page, async (viewport) => {
+            await waitForResponsiveComposer(page);
             await host.scrollIntoViewIfNeeded();
             await expect(toggle).toHaveAttribute('aria-expanded', 'false');
             await expect(toggle).toHaveAccessibleName('More options');
             await expect(advanced).toBeHidden();
+            await expect(host.getByTestId('message-emoji-button')).toBeVisible();
+            await expect(host.getByTestId('message-format-strong')).toBeVisible();
+            await expect(host.getByTestId('message-attachment-button')).toBeHidden();
+            // Every button of the line is next to the others: the emoji button never takes a line of its own.
+            const lineButtons = await line.getByRole('button').all();
+            expect(lineButtons.length).toBeGreaterThanOrEqual(3);
+            await expectAligned(lineButtons, 'top', { name: `the toolbar is one line at ${viewport.width}px` });
+            for (const button of lineButtons) {
+                await expectWithinViewport(button, ['left', 'right'], { name: `toolbar button at ${viewport.width}px` });
+            }
+            const editorTop = (await composer.editor.boundingBox())!.y;
+            const { y: toolbarTop, height: toolbarHeight } = (await host.getByTestId('message-editor-toolbar').boundingBox())!;
+
+            await toggle.click();
+            await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+            await expect(toggle).toHaveAccessibleName('Fewer options');
+            await expect(toggle).toHaveAttribute('aria-controls', (await advanced.getAttribute('id'))!);
+            // Wherever it sits, each control is reachable: on the line or in the bar, and none is wider than the screen.
             for (const id of [
                 'message-format-strong',
                 'message-format-em',
@@ -1681,20 +1772,6 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
                 'message-link-button',
                 'message-mention-button',
                 'message-reference-button',
-                'message-emoji-button',
-            ]) {
-                await expect(host.getByTestId(id)).toBeVisible();
-                await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
-            }
-            await expect(host.getByTestId('message-attachment-button')).toBeHidden();
-            await toggle.click();
-            await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-            await expect(toggle).toHaveAccessibleName('Fewer options');
-            await expect(toggle).toHaveAttribute('aria-controls', (await advanced.getAttribute('id'))!);
-            for (const id of [
-                'message-format-ins',
-                'message-format-s',
-                'message-format-code',
                 'message-block-ul',
                 'message-block-ol',
                 'message-block-blockquote',
@@ -1707,16 +1784,15 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
                 await expect(host.getByTestId(id)).toBeVisible();
                 await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
             }
-            if (viewport.width === 1728) {
-                await expectAligned(await host.getByTestId('message-editor-toolbar').getByRole('button').all(), 'top', {
-                    name: 'all expanded formatting and resource controls share the basic toolbar row when space permits',
-                });
-            }
-            if (viewport.width === 480) {
-                await expectBelow([host.getByTestId('message-block-ul'), host.getByTestId('message-attachment-button')], toggle, {
-                    name: 'expanded controls wrap below the basic toolbar on a narrow screen',
-                });
-            }
+            // The bar floats above the toolbar, so opening it neither moves the editor nor adds a line to the toolbar.
+            // The buttons of the bar wrap one by one, not group by group, so it needs at most two rows at these widths.
+            const barRows = new Set(await advanced.getByRole('button').evaluateAll((buttons) => buttons.map((button) => Math.round(button.getBoundingClientRect().top))));
+            expect(barRows.size, `rows of the bar at ${viewport.width}px`).toBeLessThanOrEqual(2);
+            const bar = (await advanced.boundingBox())!;
+            expect(bar.y + bar.height, `the bar ends above the toolbar at ${viewport.width}px`).toBeLessThanOrEqual(toolbarTop + 1);
+            expect((await composer.editor.boundingBox())!.y).toBe(editorTop);
+            expect((await host.getByTestId('message-editor-toolbar').boundingBox())!.y).toBe(toolbarTop);
+            expect((await host.getByTestId('message-editor-toolbar').boundingBox())!.height, `toolbar height with the bar open at ${viewport.width}px`).toBe(toolbarHeight);
             await expectNoHorizontalOverflow(page, [host], { name: 'expanded message composer' });
             await expectNoHorizontalScrollAround(host, { name: 'expanded message composer' });
             await toggle.click();
@@ -1724,6 +1800,42 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
             await expectNoHorizontalOverflow(page, [host], { name: 'compact message composer' });
             await expectNoHorizontalScrollAround(host, { name: 'compact message composer' });
         });
+    });
+
+    test('shortens the hint below the editor to at most two lines and keeps the full text in a tooltip', async ({ page, composer }) => {
+        const host = page.locator('jhi-message-editor').filter({ has: composer.editor });
+        const hint = host.getByTestId('message-editor-hint');
+        await forEachViewport(page, async (viewport) => {
+            await waitForResponsiveComposer(page);
+            await host.scrollIntoViewIfNeeded();
+            await expect(hint).toBeVisible();
+            await expect(hint).not.toContainText('Ctrl+Enter');
+            await expect(hint).toContainText('Enter sends');
+            const { height, lineHeight } = await hint.evaluate((element) => ({
+                height:
+                    element.getBoundingClientRect().height - Number.parseFloat(getComputedStyle(element).paddingTop) - Number.parseFloat(getComputedStyle(element).paddingBottom),
+                lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+            }));
+            expect(Math.round(height / lineHeight), `hint lines at ${viewport.width}px`).toBeLessThanOrEqual(2);
+            await expectNoHorizontalOverflow(page, [host], { name: 'message editor hint' });
+        });
+        await host.getByTestId('message-editor-help').hover();
+        await expect(page.getByRole('tooltip')).toContainText('Shift+Enter adds a new line or the next list item');
+        await expect(page.getByRole('tooltip')).not.toContainText('Ctrl+Enter');
+    });
+
+    test('names the conversation in light grey while the editor is empty', async ({ page, composer }) => {
+        const placeholder = page.getByTestId('message-editor-placeholder');
+        await expect(placeholder).toHaveText(`Message ${composer.channel.name}`);
+        await composer.editor.pressSequentially('Hi');
+        await expect(placeholder).toBeHidden();
+        await composer.editor.press('ControlOrMeta+a');
+        await composer.editor.press('Backspace');
+        await expect(placeholder).toBeVisible();
+        // The hint is not a part of the message and does not take the pointer from the editor.
+        await expectText(composer.editor, '');
+        await placeholder.click({ force: true });
+        await expect(composer.editor).toBeFocused();
     });
 
     test('keeps the toolbar toggle clickable beneath a hoverable quote tooltip', async ({ page, composer }) => {

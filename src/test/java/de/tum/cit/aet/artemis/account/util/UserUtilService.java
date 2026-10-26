@@ -809,9 +809,8 @@ public class UserUtilService {
         if (user.getId() == null) {
             return;
         }
-        // Only when the account has no preference row at all, so a row a test saved on purpose without a decision is left
-        // alone.
-        if (!userAiPreferenceService.hasPreferenceRow(user.getId())) {
+        // Only when the account has not decided yet, so a decision a test recorded on purpose is kept.
+        if (userAiPreferenceService.findDecision(user.getId()) == null) {
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
         }
     }

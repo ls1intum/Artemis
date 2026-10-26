@@ -4,6 +4,7 @@
             <jhi-posting-markdown-editor
                 formControlName="content"
                 [draftIdentity]="'reply:' + posting()?.post?.id + ':' + (posting()?.id ?? 'new')"
+                [isReply]="true"
                 [maxContentLength]="maxContentLength"
                 [isInputLengthDisplayed]="false"
                 (keydown.enter)="confirm()"

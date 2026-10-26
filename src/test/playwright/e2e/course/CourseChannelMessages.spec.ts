@@ -265,6 +265,38 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             await courseMessages.deleteMessage(message.id!);
             await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible();
         });
+
+        test('Student should be able to delete a message by clicking next to the icon of the delete button in the toolbar', async ({
+            login,
+            page,
+            courseMessages,
+            communicationAPIRequests,
+        }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${channel.id}`);
+            const messageText = 'Student Toolbar Click Message';
+            const message = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', messageText);
+            await courseMessages.checkMessage(message.id!, messageText);
+            const post = courseMessages.getSinglePost(message.id!);
+            await post.hover();
+
+            const deleteButton = post.getByTestId('posting-reaction-delete');
+            const button = deleteButton.getByRole('button');
+            await expect(button).toBeVisible();
+            const initialLabel = await button.getAttribute('aria-label');
+            const pill = (await deleteButton.boundingBox())!;
+            const icon = (await deleteButton.locator('fa-icon').boundingBox())!;
+            // The button is larger than its icon, and all of it is clickable like the other buttons of the toolbar
+            expect(icon.x - pill.x).toBeGreaterThanOrEqual(4);
+            expect(pill.x + pill.width - (icon.x + icon.width)).toBeGreaterThanOrEqual(4);
+
+            // The first click on the edge of the button asks for the confirmation, which changes what the button announces
+            await page.mouse.click(pill.x + 2, pill.y + pill.height / 2);
+            await expect(button).not.toHaveAttribute('aria-label', initialLabel!);
+            await expect(post).toBeVisible();
+            // and the second click on the opposite edge confirms it
+            await page.mouse.click(pill.x + pill.width - 2, pill.y + pill.height / 2);
+            await expect(post).not.toBeVisible();
+        });
     });
 
     test.describe('Unread conversation navigation', () => {

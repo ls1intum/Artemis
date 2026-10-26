@@ -414,6 +414,21 @@ describe('CourseLectureDetailsComponent', () => {
         expect(downloadStreamStub).toHaveBeenCalledWith(null, 'application/pdf', 'Test lecture');
     });
 
+    it.each([404, 500])('should show a localized alert when the merged PDF download fails with %s', (status) => {
+        courseLecturesDetailsComponent.lectureId = 1;
+        const fileService = TestBed.inject(FileService);
+        vi.spyOn(fileService, 'downloadMergedFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        const downloadSpy = vi.spyOn(DownloadUtils, 'downloadStream').mockImplementation(() => {});
+        const reloadSpy = vi.spyOn(courseLecturesDetailsComponent, 'loadData');
+
+        courseLecturesDetailsComponent.downloadMergedFiles();
+
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.courseOverview.lectureDetails.downloadMergedPdfError');
+        expect(downloadSpy).not.toHaveBeenCalled();
+        expect(reloadSpy).not.toHaveBeenCalled();
+    });
+
     it('should set lecture unit as completed and publish a new unit reference so the card reacts', async () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
