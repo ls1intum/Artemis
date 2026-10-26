@@ -2,13 +2,14 @@ import dayjs from 'dayjs/esm';
 import { describe, expect, it } from 'vitest';
 
 import {
-    convertTutorialGroupArrayDatesFromServer,
     convertTutorialGroupDatesFromServer,
     convertTutorialGroupFreePeriodDatesFromServer,
     convertTutorialGroupSessionDatesFromServer,
+    convertTutorialGroupSummariesFromServer,
     convertTutorialGroupsConfigurationDatesFromServer,
 } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
@@ -123,18 +124,13 @@ describe('convertTutorialGroupEntityDates', () => {
         expect(dayjs.isDayjs(result.course?.tutorialGroupsConfiguration?.tutorialPeriodEndInclusive)).toBe(true);
     });
 
-    it('should convert tutorial group arrays from the server', () => {
-        const tutorialGroups = [
-            {
-                nextSession: {
-                    start: rawServerDate(START),
-                    end: rawServerDate(END),
-                } as LegacyTutorialGroupSession,
-            } as TutorialGroup,
-        ];
+    it('should read tutorial group summaries from the server as entities', () => {
+        const summaries: TutorialGroupSummary[] = [{ id: 1, nextSession: { start: START, end: END } }];
 
-        const result = convertTutorialGroupArrayDatesFromServer(tutorialGroups);
+        const result = convertTutorialGroupSummariesFromServer(summaries);
 
+        expect(result[0]).toBeInstanceOf(TutorialGroup);
+        expect(result[0].id).toBe(1);
         expect(dayjs.isDayjs(result[0].nextSession?.start)).toBe(true);
         expect(dayjs.isDayjs(result[0].nextSession?.end)).toBe(true);
     });

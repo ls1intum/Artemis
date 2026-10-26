@@ -137,7 +137,7 @@ public class TutorialGroupResource {
      */
     @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
-    @GetMapping("tutorial-groups/{tutorialGroupId}/title")
+    @GetMapping(value = "tutorial-groups/{tutorialGroupId}/title", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
         log.debug("REST request to get title of TutorialGroup : {}", tutorialGroupId);
