@@ -257,7 +257,8 @@ class ProgrammingExerciseTaskServiceTest {
 
     private static Stream<String> parameterizedTestNames() {
         return Stream.of("testInsert(InsertMock, 1)", "testInsert(" + "InsertMock, ".repeat(25) + "1)", "Test Attributes of Class(" + "parameter, ".repeat(30) + "İ)",
-                "testInsert(" + "a".repeat(177) + "😀" + "b".repeat(80) + ")", "a".repeat(189) + "(" + "x".repeat(100) + ")", "a".repeat(190) + "(" + "x".repeat(100) + ")");
+                "testInsert(" + "a".repeat(177) + "😀" + "b".repeat(80) + ")", "a".repeat(189) + "(" + "x".repeat(100) + ")", "a".repeat(190) + "(" + "x".repeat(100) + ")",
+                "parameterizedContract (InsertMock, 1)", "parameterizedContract (" + "InsertMock, ".repeat(30) + "alpha)");
     }
 
     @ParameterizedTest
@@ -286,6 +287,21 @@ class ProgrammingExerciseTaskServiceTest {
             assertThat(task.getTaskName()).isEqualTo("Contract");
             assertThat(task.getTestCases()).containsExactlyInAnyOrder(linkedTest, otherTest);
         });
+    }
+
+    private static Stream<String> malformedParameterizedTestReferences() {
+        return Stream.of("", "   ", "(1, 2)", "parameterizedContract (1, 2", "parameterizedContract (1, (2))");
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedParameterizedTestReferences")
+    void replacingDiagramReferences_keepsMalformedReferencesWithoutConsumingTheNextValidReference(String reference) {
+        String diagram = "@startuml\nclass Contract #testsColor(" + reference + ")\nclass Other #testsColor(testOther())\n@enduml";
+        var realExercise = exerciseWith(diagram, testCase(8L, "testOther()"));
+
+        taskService.replaceTestNamesWithIds(realExercise);
+
+        assertThat(realExercise.getProblemStatement()).isEqualTo("@startuml\nclass Contract #testsColor(" + reference + ")\nclass Other #testsColor(<testid>8</testid>)\n@enduml");
     }
 
     /**
