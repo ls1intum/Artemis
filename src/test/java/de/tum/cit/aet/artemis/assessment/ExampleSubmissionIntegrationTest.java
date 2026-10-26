@@ -419,7 +419,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         final TextExampleResultDTO exampleResult = request.get(
-                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result/for-instructor", HttpStatus.OK,
                 TextExampleResultDTO.class);
         final List<TextBlockDTO> blocks = exampleResult.submission().blocks();
         assertThat(blocks).hasSize(2);
@@ -457,8 +457,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         String exerciseDetailJson = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, String.class);
         String exampleSubmissionJson = request.get("/api/assessment/example-submissions/" + created.id(), HttpStatus.OK, String.class);
         // The result exactly as the page loads it: the migrated example-result endpoint's wire shape.
-        String exampleResultJson = request.get("/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.submission().id() + "/example-result", HttpStatus.OK,
-                String.class);
+        String exampleResultJson = request.get("/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.submission().id() + "/example-result/for-instructor",
+                HttpStatus.OK, String.class);
 
         JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
@@ -492,8 +492,9 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", exampleSubmission,
                 ExampleSubmissionDetailDTO.class, HttpStatus.OK);
         participationUtilService.addResultToSubmission(submissionOf(created), AssessmentType.MANUAL, textExercise.getId());
-        final TextExampleResultDTO exampleResult = request.get("/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.submission().id() + "/example-result",
-                HttpStatus.OK, TextExampleResultDTO.class);
+        final TextExampleResultDTO exampleResult = request.get(
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.submission().id() + "/example-result/for-instructor", HttpStatus.OK,
+                TextExampleResultDTO.class);
         List<Feedback> feedbacks = List
                 .of(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1").reference(exampleResult.submission().blocks().iterator().next().id()));
         var assessmentDto = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null);
@@ -526,7 +527,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         final TextExampleResultDTO exampleResult = request.get(
-                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result/for-instructor", HttpStatus.OK,
                 TextExampleResultDTO.class);
         final List<TextBlockDTO> blocks = exampleResult.submission().blocks();
         assertThat(blocks).hasSize(2);
@@ -545,7 +546,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         final TextExampleResultDTO exampleResult = request.get(
-                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result/for-instructor", HttpStatus.OK,
                 TextExampleResultDTO.class);
         final List<TextBlockDTO> blocks = exampleResult.submission().blocks();
         assertThat(blocks).hasSize(2);

@@ -835,7 +835,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         if (!this.exercise()?.type || !submissionId) {
             return;
         }
-        const route = `/course-management/${this.courseId()}/${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
+        const group = this.exercise().exerciseGroup;
+        const sourcePath = group ? `exams/${group.exam!.id}/exercise-groups/${group.id}/` : '';
+        const route = `/course-management/${this.courseId()}/${sourcePath}${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
         const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {

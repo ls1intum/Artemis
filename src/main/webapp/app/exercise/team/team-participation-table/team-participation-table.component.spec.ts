@@ -172,6 +172,19 @@ describe('TeamParticipationTableComponent', () => {
         router = TestBed.inject(Router);
     });
 
+    it('should request the explicit staff overview rather than infer it from instructor flags', () => {
+        fixture.componentRef.setInput('overviewPurpose', 'staff');
+        const find = vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } })));
+        comp.loadAll();
+        expect(find).toHaveBeenCalledWith(comp.course(), comp.team(), 'staff');
+    });
+
+    it('should keep the student overview for an instructor using the default student view', () => {
+        const find = vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } })));
+        comp.loadAll();
+        expect(find).toHaveBeenCalledWith(comp.course(), comp.team(), 'student');
+    });
+
     afterEach(() => {
         vi.restoreAllMocks();
     });

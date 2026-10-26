@@ -757,6 +757,22 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(navigateSpy).not.toHaveBeenCalled();
         });
 
+        it('should carry the known exam source into the training route', () => {
+            comp.exercise.set({ ...exercise, type: ExerciseType.TEXT, exerciseGroup: { id: 8, exam: { id: 9, course: { id: courseId } } } });
+            comp.courseId.set(courseId);
+            comp.openExampleSubmission(12, false, true);
+            expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/exams/9/exercise-groups/8/text-exercises/${exercise.id}/example-submissions/12`], {
+                queryParams: { toComplete: true },
+            });
+        });
+
+        it('should preserve the course source for course training', () => {
+            comp.exercise.set({ ...exercise, type: ExerciseType.TEXT, exerciseGroup: undefined });
+            comp.courseId.set(courseId);
+            comp.openExampleSubmission(12, true, false);
+            expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/text-exercises/${exercise.id}/example-submissions/12`], { queryParams: { readOnly: true } });
+        });
+
         it('should openExampleSubmission', () => {
             comp.exercise.set(exercise);
             comp.exercise().type = ExerciseType.PROGRAMMING;
@@ -764,9 +780,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.exercise.set(exercise);
             const submission = { id: 8 };
             comp.openExampleSubmission(submission!.id, true, true);
-            expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`], {
-                queryParams: { readOnly: true, toComplete: true },
-            });
+            expect(navigateSpy).toHaveBeenCalledWith(
+                [
+                    `/course-management/${courseId}/exams/${exerciseGroup.exam!.id}/exercise-groups/${exerciseGroup.id}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`,
+                ],
+                {
+                    queryParams: { readOnly: true, toComplete: true },
+                },
+            );
         });
     });
 

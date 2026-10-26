@@ -57,7 +57,7 @@ class LtiExerciseTitleIntegrationTest extends AbstractLtiIntegrationTest {
         TextExercise released = createExercise(course, "released", now.minusDays(2));
         TextExercise unreleased = createExercise(course, "unreleased", now.plusDays(2));
 
-        Set<ExerciseTitleDTO> titles = getExerciseTitles(course);
+        Set<ExerciseTitleDTO> titles = request.getSet("/api/exercise/courses/" + course.getId() + "/exercise-titles/for-staff", HttpStatus.OK, ExerciseTitleDTO.class);
 
         assertThat(titles).as("teaching assistants can select every course exercise without an LTI launch").containsExactlyInAnyOrder(
                 new ExerciseTitleDTO(released.getId(), released.getTitle(), ExerciseType.TEXT), new ExerciseTitleDTO(unreleased.getId(), unreleased.getTitle(), ExerciseType.TEXT));

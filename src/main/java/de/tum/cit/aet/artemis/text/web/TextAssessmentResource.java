@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -493,7 +494,23 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/example-result")
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<TextExampleResultDTO> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        User user = userRepository.getUserWithAuthorities();
+        return getExampleResult(exerciseId, submissionId, false);
+    }
+
+    /**
+     * Returns the complete bundled text example assessment for instructor management.
+     *
+     * @param exerciseId   the exercise the example belongs to
+     * @param submissionId the text example submission to load
+     * @return the complete example result with its text, language and blocks, or an empty body without a result
+     */
+    @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/example-result/for-instructor")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<TextExampleResultDTO> getExampleResultForInstructor(@PathVariable long exerciseId, @PathVariable long submissionId) {
+        return getExampleResult(exerciseId, submissionId, true);
+    }
+
+    private ResponseEntity<TextExampleResultDTO> getExampleResult(long exerciseId, long submissionId, boolean instructor) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         final var textExercise = exampleSubmission.getExercise();
@@ -527,7 +544,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final List<Feedback> assessments = feedbackRepository.findByResult(result);
         result.setFeedbacks(assessments);
 
-        if (Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+        if (Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) && !instructor) {
             // Restricted result: the id is null so the client knows it is restricted, and only id/reference/type of the
             // (non-general, referenced) feedbacks are exposed; the submission text/blocks are still included so the tutor can assess.
             final List<FeedbackDTO> maskedFeedbacks = result.getFeedbacks().stream()

@@ -112,6 +112,35 @@ describe('Exercise Service', () => {
         expect(received?.map(({ id, title, type }) => ({ id, title, type }))).toEqual(titles);
     });
 
+    it.each([
+        ['findForStaff', 'for-staff'],
+        ['findForExamAssessment', 'for-exam-assessment'],
+        ['findForExamManagement', 'for-exam-management'],
+    ] as const)('should use the explicit %s route and preserve conversion', (method, suffix) => {
+        let received: Exercise | undefined;
+        service[method](42).subscribe((response) => (received = response.body ?? undefined));
+        const request = httpMock.expectOne({ method: 'GET', url: `api/exercise/exercises/42/${suffix}` });
+        request.flush({
+            id: 42,
+            type: ExerciseType.TEXT,
+            releaseDate: '2026-01-01T10:00:00Z',
+            categories: [JSON.stringify({ category: 'staff', color: '#123456' })],
+            gradingInstructions: 'grading',
+        });
+        expect(dayjs.isDayjs(received?.releaseDate)).toBe(true);
+        expect(received?.gradingInstructions).toBe('grading');
+        expect(received?.categories).toEqual([new ExerciseCategory('staff', '#123456')]);
+    });
+
+    it.each([false, true])('should select accessible course titles from known course membership: staff=%s', (staff) => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAtLeastTutorInCourseWithId').mockReturnValue(staff);
+        let received: ExerciseTitle[] | undefined;
+        service.getTitlesForAccessibleCourse(7).subscribe((titles) => (received = titles));
+        const request = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/7/exercise-titles${staff ? '/for-staff' : ''}` });
+        request.flush([{ id: 1, title: 'Title', type: ExerciseType.TEXT }]);
+        expect(received?.[0].title).toBe('Title');
+    });
+
     it('should reject equal dates', () => {
         // Set flags to opposite of what is expected so we know they are changed.
         exercise.startDateError = false;

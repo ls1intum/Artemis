@@ -16,6 +16,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
@@ -233,6 +235,17 @@ describe('Participation Service', () => {
             sortedColumn: 'participationId',
             searchTerm: '',
         };
+
+        it('should use the exam page route with the same filters and conversion', () => {
+            let result: PageableResult<ParticipationManagementDTO> | undefined;
+            service.searchParticipations(42, baseSearch, 'exam').subscribe((page) => (result = page));
+            const request = httpMock.expectOne((r) => r.method === 'GET');
+            expect(request.request.params.get('pageSize')).toBe('50');
+            request.flush([{ participationId: 1, completionDate: '2026-01-01T10:00:00Z' }], { headers: { 'X-Total-Count': '7' } });
+            expect(request.request.url).toBe('api/exercise/exercises/42/participations/page/for-exam');
+            expect(result?.totalElements).toBe(7);
+            expect(dayjs.isDayjs(result?.content[0].completionDate)).toBe(true);
+        });
 
         it('should GET paginated participations and convert date fields', () => {
             const isoDate = '2024-06-01T10:00:00Z';

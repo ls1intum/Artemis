@@ -1041,6 +1041,61 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participation.submissions().getLast().results()).hasSize(2);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorTrainingReadRemainsMaskedAndManagementReadReturnsFullBundle() throws Exception {
+        var example = participationUtilService
+                .addExampleSubmission(participationUtilService.generateExampleSubmission("First sentence. Second sentence.", textExercise, true, true));
+        participationUtilService.addResultToSubmission(example.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
+        String url = "/api/text/exercises/" + textExercise.getId() + "/submissions/" + example.getSubmission().getId() + "/example-result";
+        var training = request.get(url, HttpStatus.OK, TextExampleResultDTO.class);
+        assertThat(training.id()).isNull();
+        assertThat(training.submission().text()).isEqualTo("First sentence. Second sentence.");
+        assertThat(training.submission().blocks()).hasSize(2);
+        var storedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultRepository.findDistinctBySubmissionId(example.getSubmission().getId()).orElseThrow().getId());
+        storedResult.addFeedbacks(
+                List.of(new Feedback().type(FeedbackType.MANUAL).reference(training.submission().blocks().getFirst().id()).credits(2.0).detailText("private solution"),
+                        new Feedback().type(FeedbackType.MANUAL_UNREFERENCED).credits(1.0).detailText("general solution")));
+        resultRepository.save(storedResult);
+        training = request.get(url, HttpStatus.OK, TextExampleResultDTO.class);
+        assertThat(training.id()).isNull();
+        assertThat(training.feedbacks()).singleElement().satisfies(feedback -> {
+            assertThat(feedback.id()).isNotNull();
+            assertThat(feedback.reference()).isNotBlank();
+            assertThat(feedback.type()).isEqualTo(FeedbackType.MANUAL);
+            assertThat(feedback.credits()).isNull();
+            assertThat(feedback.detailText()).isNull();
+        });
+        var management = request.get(url + "/for-instructor", HttpStatus.OK, TextExampleResultDTO.class);
+        assertThat(management.id()).isNotNull();
+        assertThat(management.submission()).isEqualTo(training.submission());
+        assertThat(management.feedbacks()).extracting(FeedbackDTO::detailText).containsExactlyInAnyOrder("private solution", "general solution");
+        assertThat(management.feedbacks()).extracting(FeedbackDTO::credits).containsExactlyInAnyOrder(2.0, 1.0);
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.unenrollUserFromCourseByRole(user, textExercise.getCourseViaExerciseGroupOrCourseMember(), CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(user, textExercise.getCourseViaExerciseGroupOrCourseMember(), CourseRole.TEACHING_ASSISTANT);
+        request.get(url + "/for-instructor", HttpStatus.FORBIDDEN, TextExampleResultDTO.class);
+        request.get(url, HttpStatus.OK, TextExampleResultDTO.class);
+        example = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(example.getId());
+        example.setUsedForTutorial(false);
+        exampleSubmissionRepository.save(example);
+        var nonTutorial = request.get(url, HttpStatus.OK, TextExampleResultDTO.class);
+        assertThat(nonTutorial.id()).isEqualTo(management.id());
+        assertThat(nonTutorial.feedbacks()).extracting(FeedbackDTO::detailText).containsExactlyInAnyOrder("private solution", "general solution");
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void bothExampleResultAudiencesPreserveNullWithoutCreatingAnAssessment() throws Exception {
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Unassessed example.", textExercise, true, true));
+        long count = resultRepository.count();
+        String url = "/api/text/exercises/" + textExercise.getId() + "/submissions/" + example.getSubmission().getId() + "/example-result";
+        assertThat(request.getNullable(url, HttpStatus.OK, TextExampleResultDTO.class)).isNull();
+        assertThat(request.getNullable(url + "/for-instructor", HttpStatus.OK, TextExampleResultDTO.class)).isNull();
+        assertThat(resultRepository.count()).isEqualTo(count);
+    }
+
     private void getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(isExample);

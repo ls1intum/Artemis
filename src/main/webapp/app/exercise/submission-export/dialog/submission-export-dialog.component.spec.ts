@@ -66,7 +66,7 @@ describe('Submission Export Dialog Component', () => {
     });
 
     it('should initialize', () => {
-        const findSpy = vi.spyOn(exerciseService, 'find');
+        const findSpy = vi.spyOn(exerciseService, 'findForStaff');
         component.ngOnInit();
 
         expect(component.isLoading()).toBe(false);
@@ -75,6 +75,16 @@ describe('Submission Export Dialog Component', () => {
         expect(component.exercise()).toEqual({ id: exerciseId } as Exercise);
         expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(exerciseId);
+    });
+
+    it('should select exam management before loading the export exercise', () => {
+        fixture.componentRef.setInput('examExercise', true);
+        const exam = vi.spyOn(exerciseService, 'findForExamManagement');
+        const course = vi.spyOn(exerciseService, 'findForStaff');
+        component.ngOnInit();
+        expect(exam).toHaveBeenCalledExactlyOnceWith(exerciseId);
+        expect(course).not.toHaveBeenCalled();
+        expect(component.exercise()?.id).toBe(exerciseId);
     });
 
     it('should handle export response', () => {

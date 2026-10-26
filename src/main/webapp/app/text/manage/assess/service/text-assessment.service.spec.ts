@@ -86,6 +86,16 @@ describe('TextAssessment Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
+    it('should fetch the complete example bundle only for explicit instructor management', () => {
+        service.getExampleResult(7, 8, 'instructor').subscribe((result) => {
+            expect(result.id).toBe(3);
+            expect(result.submission?.id).toBe(8);
+        });
+        const request = httpMock.expectOne((r) => r.method === 'GET');
+        request.flush({ id: 3, feedbacks: [{ id: 4, credits: 2 }], submission: { id: 8, text: 'Example', blocks: [] } });
+        expect(request.request.url).toBe('api/text/exercises/7/submissions/8/example-result/for-instructor');
+    });
+
     it('should save an assessment', async () => {
         const participationId = 1;
 

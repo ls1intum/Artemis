@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
@@ -2238,6 +2239,32 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
 
         assertThat(participations).as("the practice work of a teammate is private").extracting(StudentParticipation::getId).containsExactly(teamParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void participationPagesBindCourseAndExamKinds() throws Exception {
+        var examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        var courseExercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX).getExercises().iterator().next();
+        String examUrl = "/api/exercise/exercises/" + examExercise.getId() + "/participations/page";
+        String courseUrl = "/api/exercise/exercises/" + courseExercise.getId() + "/participations/page";
+        request.getList(examUrl, HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
+                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+        request.getList(examUrl + "/for-exam", HttpStatus.OK, ParticipationManagementDTO.class,
+                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+        request.getList(courseUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+        request.getList(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
+                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.unenrollUserFromCourseByRole(user, examExercise.getExam().getCourse(), CourseRole.INSTRUCTOR);
+        request.getList(examUrl + "/for-exam", HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
+                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+        userUtilService.enrollUserInCourse(user, examExercise.getExam().getCourse(), CourseRole.TEACHING_ASSISTANT);
+        request.getList(examUrl, HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
+                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+        request.getList(examUrl + "/for-exam", HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
+                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
     }
 
     /**

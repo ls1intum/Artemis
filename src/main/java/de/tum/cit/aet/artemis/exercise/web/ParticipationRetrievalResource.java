@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -178,20 +179,28 @@ public class ParticipationRetrievalResource {
      * @return a paginated list of ParticipationManagementDTO with pagination headers
      */
     @GetMapping("exercises/{exerciseId}/participations/page")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid ParticipationSearchDTO search) {
-        log.debug("REST request to get paged Participations for Exercise {}", exerciseId);
+        return getParticipationsPageForKind(exerciseId, search, false);
+    }
 
+    /**
+     * Returns the exam participation management page, which requires an instructor.
+     *
+     * @param exerciseId the exam exercise whose participations to load
+     * @param search     the filtering, sorting and pagination parameters
+     * @return the participation page with pagination headers
+     */
+    @GetMapping("exercises/{exerciseId}/participations/page/for-exam")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<List<ParticipationManagementDTO>> getExamParticipationsPage(@PathVariable Long exerciseId, @Valid ParticipationSearchDTO search) {
+        return getParticipationsPageForKind(exerciseId, search, true);
+    }
+
+    private ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPageForKind(Long exerciseId, ParticipationSearchDTO search, boolean examExercise) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (exercise.isCourseExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        }
-        else if (exercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        }
-        else {
-            throw new AccessForbiddenException("The exercise belongs to neither a course nor an exam");
+        if (examExercise ? !exercise.isExamExercise() : !exercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
         }
 
         boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());

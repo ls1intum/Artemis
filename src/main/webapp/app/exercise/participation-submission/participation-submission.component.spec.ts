@@ -297,7 +297,7 @@ describe('ParticipationSubmissionComponent', () => {
             vi.spyOn(buildService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(states);
             vi.spyOn(buildService, 'fetchQueueReleaseDateEstimationByParticipationId').mockReturnValue(of(dayjs().add(30, 'seconds')));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: { id: 1, type: ParticipationType.PROGRAMMING } })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({}));
             findAllSubmissionsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: [pendingSubmission, completedSubmission] })));
         });
@@ -670,7 +670,7 @@ describe('ParticipationSubmissionComponent', () => {
         });
 
         it('does not subscribe to build state for non-programming exercises', () => {
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: textExercise })));
             fixture.detectChanges();
             expect(buildService.getLatestPendingSubmissionByParticipationId).not.toHaveBeenCalled();
             expect(progress()).toHaveLength(0);
@@ -694,7 +694,7 @@ describe('ParticipationSubmissionComponent', () => {
         ] as TextSubmission[];
         const exercise = { type: ExerciseType.TEXT } as Exercise;
         exercise.isAtLeastInstructor = true;
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: exercise })));
         findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: submissions }));
         vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
 
@@ -785,7 +785,7 @@ describe('ParticipationSubmissionComponent', () => {
             const { submission, participation } = createSubmissionFixture(77);
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             comp.ngOnInit();
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
@@ -797,7 +797,7 @@ describe('ParticipationSubmissionComponent', () => {
             const { submission, participation } = createSubmissionFixture(77);
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             comp.ngOnInit();
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
@@ -809,7 +809,7 @@ describe('ParticipationSubmissionComponent', () => {
             const { submission, participation } = createSubmissionFixture(77);
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             comp.ngOnInit();
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
@@ -821,7 +821,7 @@ describe('ParticipationSubmissionComponent', () => {
             const { submission, participation } = createSubmissionFixture(77);
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: textExercise })));
             comp.ngOnInit();
             expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
@@ -866,7 +866,7 @@ describe('ParticipationSubmissionComponent', () => {
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             const error2 = { message: '403 error', error: { message: 'error.badAuthentication' } } as HttpErrorResponse;
             vi.spyOn(fileUploadAssessmentService, 'deleteAssessment').mockReturnValue(throwError(() => error2));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             comp.ngOnInit();
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
@@ -878,7 +878,7 @@ describe('ParticipationSubmissionComponent', () => {
             const { submission, participation } = createSubmissionFixture(78);
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             comp.ngOnInit();
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
@@ -890,7 +890,7 @@ describe('ParticipationSubmissionComponent', () => {
             const { submission, participation } = createSubmissionFixture(78);
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             comp.ngOnInit();
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
@@ -902,7 +902,7 @@ describe('ParticipationSubmissionComponent', () => {
             const { submission, participation } = createSubmissionFixture(78);
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             comp.ngOnInit();
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
@@ -914,7 +914,7 @@ describe('ParticipationSubmissionComponent', () => {
             const { submission, participation } = createSubmissionFixture(78);
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: textExercise })));
             comp.ngOnInit();
             expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);

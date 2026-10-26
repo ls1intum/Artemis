@@ -496,10 +496,27 @@ public class TeamResource {
     @GetMapping("courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
     @EnforceAtLeastStudent
     public ResponseEntity<CourseWithTeamExercisesDTO> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
+        return getTeamCourseOverview(courseId, teamShortName, false);
+    }
+
+    /**
+     * Returns all matching team exercises for course staff, retaining team owner result restrictions.
+     *
+     * @param courseId      the course whose team exercises to load
+     * @param teamShortName the short name shared by the matching team instances
+     * @return the course with matching team exercises and permitted participation details
+     */
+    @GetMapping("courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations/for-staff")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<CourseWithTeamExercisesDTO> getCourseWithExercisesAndParticipationsForTeamForStaff(@PathVariable Long courseId, @PathVariable String teamShortName) {
+        return getTeamCourseOverview(courseId, teamShortName, true);
+    }
+
+    private ResponseEntity<CourseWithTeamExercisesDTO> getTeamCourseOverview(Long courseId, String teamShortName, boolean staff) {
         log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithAuthorities();
-        if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
+        if (!staff && !authCheckService.isStudentInTeam(course, teamShortName, user)) {
             throw new AccessForbiddenException();
         }
 
@@ -512,7 +529,7 @@ public class TeamResource {
         exercises = exercises.stream().filter(exercise -> exerciseTeamMap.containsKey(exercise.getId())).collect(Collectors.toSet());
 
         // For students: Filter course exercises by their visibility to students
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (!staff) {
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
         }
 
@@ -521,7 +538,7 @@ public class TeamResource {
 
         // Fetch participations for team
         List<StudentParticipation> participations;
-        if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals)) {
+        if (staff && (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals))) {
             // fetch including submissions and results for team tutor and instructors
             participations = studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
             submissionService.reduceParticipationSubmissionsToLatest(participations, false);

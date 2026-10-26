@@ -5,7 +5,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TeamService } from 'app/exercise/team/team.service';
+import { TeamOverviewPurpose, TeamService } from 'app/exercise/team/team.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -52,6 +52,7 @@ export class TeamParticipationTableComponent implements OnInit {
     private router = inject(Router);
     private accountService = inject(AccountService);
 
+    readonly overviewPurpose = input<TeamOverviewPurpose>('student');
     readonly team = input.required<Team>();
     readonly course = input.required<Course>();
     readonly exercise = input.required<Exercise>();
@@ -165,7 +166,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     loadAll() {
         this.isLoading.set(true);
-        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team()).subscribe({
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team(), this.overviewPurpose()).subscribe({
             next: (courseResponse) => {
                 const exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
                     return cloneWith(exercise, {
