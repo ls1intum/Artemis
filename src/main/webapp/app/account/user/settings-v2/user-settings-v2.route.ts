@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
+import { DataGuard } from 'app/account/user/settings/data-guard.service';
+import { learnerProfileGuard } from 'app/account/user/settings/learner-profile/learner-profile.guard';
 
 export const routes: Routes = [
     {
@@ -33,17 +35,19 @@ export const routes: Routes = [
             },
             {
                 path: 'learning',
-                loadComponent: () => import('./navigation/placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
+                loadComponent: () => import('app/account/user/settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.navigation.learning',
                 },
+                canActivate: [learnerProfileGuard],
             },
             {
                 path: 'ai-experience',
-                loadComponent: () => import('./navigation/placeholder/user-settings-v2-placeholder.component').then((m) => m.UserSettingsV2PlaceholderComponent),
+                loadComponent: () => import('app/account/user/settings/ai-experience-settings/ai-experience-settings.component').then((m) => m.AiExperienceSettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.aiExperience',
                 },
+                canActivate: [DataGuard],
             },
             {
                 path: 'exercises',
