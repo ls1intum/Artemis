@@ -87,6 +87,23 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.isAvailable()).toBe(true);
     });
 
+    it('does not load the config while the card is hidden, and loads it once the card becomes available', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 42;
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        exercise.projectType = ProjectType.MAVEN_BLACKBOX;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+        fixture.componentRef.setInput('selectedProjectType', ProjectType.MAVEN_BLACKBOX);
+        fixture.detectChanges();
+        expect(service.getConfig).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('selectedProjectType', ProjectType.PLAIN_GRADLE);
+        fixture.detectChanges();
+        expect(service.getConfig).toHaveBeenCalledOnce();
+        expect(service.getConfig).toHaveBeenCalledWith(42);
+    });
+
     it('hides the card for unsupported languages', () => {
         initCreate(ProgrammingLanguage.C);
         expect(comp.isSupportedLanguage()).toBe(false);

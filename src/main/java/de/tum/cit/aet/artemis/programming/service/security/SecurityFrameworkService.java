@@ -202,18 +202,22 @@ public class SecurityFrameworkService {
 
     /**
      * Applies a change in a private checkout of the tests repository and pushes it. The shared working copy that the online editor uses is never touched,
-     * so neither side can reset or commit the other's files. If someone pushes in between, the push is rejected as non-fast-forward and nothing is lost.
+     * so neither side can reset or commit the other's files. The push is leased on the commit the checkout started from: if someone pushed in between, it is
+     * rejected, the request fails and nothing is overwritten.
      */
     private SecurityFrameworkConfigDTO changeTestRepository(ProgrammingExercise exercise, User user, String commitMessage, Consumer<Repository> change) {
         LocalVCRepositoryUri testRepositoryUri = testRepositoryUri(exercise);
+        String branch = repositoryBranch(exercise);
         Repository repository = null;
         Path temporaryCheckout = null;
         try {
             temporaryCheckout = tempFileUtilService.createTempDirectory("security-framework-");
-            repository = gitService.getOrCheckoutRepositoryOnBranch(testRepositoryUri, temporaryCheckout.resolve("repository"), repositoryBranch(exercise));
+            repository = gitService.getOrCheckoutRepositoryOnBranch(testRepositoryUri, temporaryCheckout.resolve("repository"), branch);
+            String checkedOutHead = gitService.getLocalHeadHash(repository);
             change.accept(repository);
             if (gitService.stageAllChanges(repository)) {
-                gitService.commitAndPush(repository, commitMessage, false, user);
+                String commitHash = gitService.commitStagedChanges(repository, commitMessage, user);
+                gitService.pushCommitWithLease(repository, commitHash, branch, checkedOutHead);
             }
             return readConfig(repository);
         }

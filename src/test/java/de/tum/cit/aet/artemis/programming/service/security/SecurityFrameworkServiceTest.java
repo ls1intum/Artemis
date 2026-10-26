@@ -23,9 +23,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RefLeaseSpec;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +38,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -93,6 +99,9 @@ class SecurityFrameworkServiceTest {
 
     private final AtomicInteger directoryCounter = new AtomicInteger();
 
+    /** Simulates someone else, e.g. the online editor, pushing to the tests repository while a change is being prepared. */
+    private boolean pushConcurrentlyAfterCheckout;
+
     private GitService gitService;
 
     private BareGitRepositoryService bareGitRepositoryService;
@@ -110,6 +119,9 @@ class SecurityFrameworkServiceTest {
         when(gitService.getOrCheckoutRepositoryOnBranch(any(LocalVCRepositoryUri.class), any(Path.class), anyString())).thenAnswer(call -> {
             Path localPath = call.getArgument(1, Path.class);
             Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(localPath.toFile()).setBranch(call.getArgument(2, String.class)).call().close();
+            if (pushConcurrentlyAfterCheckout) {
+                pushUnrelatedCommit();
+            }
             return new Repository(new FileRepositoryBuilder().setGitDir(localPath.resolve(".git").toFile()).setWorkTree(localPath.toFile()).setup(), localPath,
                     mock(LocalVCRepositoryUri.class));
         });
@@ -121,13 +133,26 @@ class SecurityFrameworkServiceTest {
                 return !status.isClean();
             }
         }).when(gitService).stageAllChanges(any(Repository.class));
-        doAnswer(call -> {
+        when(gitService.getLocalHeadHash(any(Repository.class))).thenAnswer(call -> call.getArgument(0, Repository.class).resolve("HEAD").name());
+        when(gitService.commitStagedChanges(any(Repository.class), anyString(), any())).thenAnswer(call -> {
             try (Git git = new Git(call.getArgument(0, Repository.class))) {
-                String commit = GitService.commit(git).setMessage(call.getArgument(1, String.class)).setAuthor("Instructor", "instructor@example.org").call().getName();
-                git.push().call();
-                return commit;
+                return GitService.commit(git).setMessage(call.getArgument(1, String.class)).setAuthor("Instructor", "instructor@example.org").call().getName();
             }
-        }).when(gitService).commitAndPush(any(Repository.class), anyString(), anyBoolean(), any());
+        });
+        doAnswer(call -> {
+            String remoteRef = "refs/heads/" + call.getArgument(2, String.class);
+            try (Git git = new Git(call.getArgument(0, Repository.class))) {
+                for (PushResult result : git.push().setRefSpecs(new RefSpec(call.getArgument(1, String.class) + ":" + remoteRef))
+                        .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, call.getArgument(3, String.class))).call()) {
+                    for (RemoteRefUpdate update : result.getRemoteUpdates()) {
+                        if (update.getStatus() != RemoteRefUpdate.Status.OK && update.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
+                            throw new TransportException("Push rejected: " + update.getStatus());
+                        }
+                    }
+                }
+            }
+            return null;
+        }).when(gitService).pushCommitWithLease(any(Repository.class), anyString(), anyString(), anyString());
 
         bareGitRepositoryService = mock(BareGitRepositoryService.class);
         when(bareGitRepositoryService.getBareRepository(any(LocalVCRepositoryUri.class), anyString(), anyBoolean()))
@@ -166,6 +191,16 @@ class SecurityFrameworkServiceTest {
         }
         FileUtils.deleteDirectory(remote.toFile());
         Git.cloneRepository().setURI(seed.toUri().toString()).setDirectory(remote.toFile()).setBare(true).call().close();
+    }
+
+    private void pushUnrelatedCommit() throws Exception {
+        Path otherCheckout = newDirectory("other-");
+        try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(otherCheckout.toFile()).call()) {
+            FileUtils.writeStringToFile(otherCheckout.resolve("README.md").toFile(), "Edited in the online editor", StandardCharsets.UTF_8);
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("Concurrent change").setAuthor("Editor", "editor@example.org").call();
+            git.push().call();
+        }
     }
 
     private static ProgrammingExercise exercise(ProgrammingLanguage language) {
@@ -258,7 +293,17 @@ class SecurityFrameworkServiceTest {
         securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
 
         assertThat(pushedCommitCount()).isEqualTo(1);
-        verify(gitService, never()).commitAndPush(any(Repository.class), anyString(), anyBoolean(), any());
+        verify(gitService, never()).pushCommitWithLease(any(Repository.class), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void aConcurrentPushIsNeitherOverwrittenNorReportedAsApplied() throws Exception {
+        pushConcurrentlyAfterCheckout = true;
+
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user))
+                .matches(exception -> "securityFrameworkPushFailed".equals(exception.getErrorKey()));
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
+        assertThat(readPushed("README.md")).contains("Edited in the online editor");
     }
 
     @Test

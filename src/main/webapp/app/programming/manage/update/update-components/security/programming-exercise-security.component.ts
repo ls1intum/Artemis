@@ -162,7 +162,8 @@ export class ProgrammingExerciseSecurityComponent {
         // template default (ACTIVE). The parent applies a create-mode choice once the exercise has been created.
         effect(() => {
             const exerciseId = this.programmingExercise().id;
-            if (this.hasSeededInitialConfig) {
+            // Wait until the card is shown: a hidden card (another language, the black-box project type) must not read the repository.
+            if (this.hasSeededInitialConfig || !this.isAvailable()) {
                 return;
             }
             this.hasSeededInitialConfig = true;
