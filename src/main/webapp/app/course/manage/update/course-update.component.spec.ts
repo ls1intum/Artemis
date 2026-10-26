@@ -143,7 +143,7 @@ describe('Course Management Update Component', () => {
 
     it('loads instructor welcome context and saves an intentional clear without dropping course configuration', () => {
         course.courseConfiguration = { studentWelcomeContext: 'Learn through practice.', gradeRelevant: false, dataRetentionHold: true };
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as ProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ ...profileService.getProfileInfo(), activeProfiles: [], activeModuleFeatures: [] });
         vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
         comp.ngOnInit();
         fixture.detectChanges();
