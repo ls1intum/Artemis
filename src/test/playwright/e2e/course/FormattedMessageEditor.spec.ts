@@ -174,6 +174,53 @@ async function saveEdited(page: Page, composer: Composer, posting: Locator, orig
 }
 
 test.describe('Formatted message editor native editing', { tag: '@fast' }, () => {
+    test('retains a live message when the initial HTTP page snapshot arrives later', async ({ page, composer, communicationAPIRequests }) => {
+        let captureSnapshot!: () => void;
+        let releaseSnapshot!: () => void;
+        const captured = new Promise<void>((resolve) => (captureSnapshot = resolve));
+        const released = new Promise<void>((resolve) => (releaseSnapshot = resolve));
+        let pageRequests = 0;
+        const matcher = `**/api/communication/courses/${composer.course.id}/messages?**`;
+        await page.route(matcher, async (route) => {
+            const url = new URL(route.request().url());
+            if (url.searchParams.get('conversationIds') !== String(composer.channel.id) || url.searchParams.get('pagingEnabled') !== 'true') {
+                await route.continue();
+                return;
+            }
+            pageRequests++;
+            const snapshot = await route.fetch();
+            expect(snapshot.ok()).toBe(true);
+            expect(await snapshot.json()).toEqual([]);
+            captureSnapshot();
+            await released;
+            await route.fulfill({ response: snapshot });
+        });
+        try {
+            await page.reload();
+            await captured;
+            await expect(composer.editor).toBeVisible();
+            const saved = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'Live arrival survives an older snapshot');
+            const posting = page.locator(`#item-${saved.id}`);
+            await expect(posting).toBeVisible();
+            const initialRequests = pageRequests;
+            const response = page.waitForResponse((result) => {
+                const url = new URL(result.url());
+                return url.pathname === `/api/communication/courses/${composer.course.id}/messages` && url.searchParams.get('pagingEnabled') === 'true';
+            });
+            releaseSnapshot();
+            await response;
+            // Let the response and Angular's next paint settle before checking that the live row survives.
+            await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+            await expect(postContent(page, saved.id!)).toHaveText(saved.content!);
+            expect(pageRequests).toBe(initialRequests);
+            const reopened = await reopen(page, saved);
+            await expectText(reopened.editor, saved.content!);
+        } finally {
+            releaseSnapshot();
+            await page.unroute(matcher);
+        }
+    });
+
     test('literal dollars stay text through keyboard sending, reopening and saving without a Markdown editor', async ({ page, composer }) => {
         await composer.editor.fill('$x^2$');
         await expect(page.locator('jhi-markdown-editor-monaco')).toHaveCount(0);
@@ -1425,8 +1472,13 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             await expect(postContent(page, saved.id!)).toContainText(label.slice(1));
         } finally {
             await login(admin);
-            for (const username of users) {
-                expect((await userManagementAPIRequests.deleteUser(username)).ok()).toBe(true);
+            // Each account is independent. Bound cleanup concurrency so these twenty requests do not consume
+            // the keyboard-navigation test's remaining budget one round trip at a time.
+            for (let offset = 0; offset < users.length; offset += 3) {
+                const results = await Promise.allSettled(
+                    users.slice(offset, offset + 3).map(async (username) => expect((await userManagementAPIRequests.deleteUser(username)).ok()).toBe(true)),
+                );
+                for (const result of results) expect(result.status, result.status === 'rejected' ? String(result.reason) : undefined).toBe('fulfilled');
             }
         }
     });
