@@ -91,7 +91,7 @@ Use a deployment-managed shared secret. For the service-side module layout and d
 
 ### Local AI for Athena
 
-Athena applies the AI Experience of the user who triggers a feedback request: the student for preliminary feedback, and the tutor or instructor for grading suggestions. Users who chose Cloud AI, or have no recorded choice, get Athena's default model. Users who chose Local AI get a local model, but only if the Athena modules have one configured in their `LLM_LOCAL_MODEL` environment variable. Without it, Athena answers these requests with an error (HTTP 503) and no feedback is generated.
+Athena applies the AI Experience of the user who triggers a feedback request: the student for preliminary feedback, and the tutor or instructor for grading suggestions. Users who chose Cloud AI get Athena's default model, as do tutors and instructors with no recorded choice. Artemis rejects preliminary feedback requests from students without an accepted AI choice, so no feedback is generated for them. Users who chose Local AI get a local model, but only if the Athena modules have one configured in their `LLM_LOCAL_MODEL` environment variable. Without it, Athena answers these requests with an error (HTTP 503) and no feedback is generated.
 
 Artemis does not ask Athena whether a local model exists. The AI Experience dialog offers On-premise whenever `info.localLLMDeploymentEnabled` is `true`, a deployment-wide setting that also covers the other AI services. If you enable it for those, also set `LLM_LOCAL_MODEL` for the Athena modules, or users who choose On-premise will not receive Athena feedback.
 
