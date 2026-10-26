@@ -156,7 +156,7 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void modelingAssessmentEditorCarriesTheAthenaFlags() throws Exception {
         ModelingSubmission submission = assessableModelingSubmission();
-        JsonNode response = request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.OK, JsonNode.class);
+        JsonNode response = request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK, JsonNode.class);
         assertBothFlagsPresent(response.get("participation").get("exercise").get("course"));
     }
 

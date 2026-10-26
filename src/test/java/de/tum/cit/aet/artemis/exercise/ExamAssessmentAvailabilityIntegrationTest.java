@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -121,7 +122,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     private String assessmentUrl(Exercise exercise, Submission submission) {
         return switch (exercise) {
             case TextExercise ignored -> "/api/text/text-submissions/" + submission.getId() + "/for-assessment";
-            case ModelingExercise ignored -> "/api/modeling/modeling-submissions/" + submission.getId();
+            case ModelingExercise ignored -> "/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment";
             case FileUploadExercise ignored -> "/api/fileupload/file-upload-submissions/" + submission.getId();
             case ProgrammingExercise ignored -> "/api/programming/programming-submissions/" + submission.getId() + "/lock";
             default -> throw new IllegalArgumentException("Unsupported exercise type " + exercise.getClass());
@@ -215,7 +216,12 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
             participation.setTestRun(true);
             studentParticipationRepository.save(participation);
 
-            request.performMvcRequest(get(assessmentUrl(exercise, submission))).andExpect(status().isOk());
+            JsonNode response = request.get(assessmentUrl(exercise, submission), HttpStatus.OK, JsonNode.class);
+            if (exercise instanceof ModelingExercise) {
+                assertThat(response.path("id").asLong()).isEqualTo(submission.getId());
+                assertThat(response.path("participation").path("id").asLong()).isEqualTo(participation.getId());
+                assertThat(response.path("participation").path("exercise").path("id").asLong()).isEqualTo(exercise.getId());
+            }
         }
     }
 
