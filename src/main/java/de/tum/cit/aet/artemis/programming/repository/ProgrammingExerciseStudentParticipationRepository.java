@@ -301,6 +301,26 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Set<ProgrammingExerciseStudentParticipation> findByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Returns the graded participations of the exercise that do not have any submission yet, which are the candidates for the build at the start date of an exercise that
+     * allows repository access before it.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the graded participations of the exercise without any submission
+     */
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND (p.testRun IS NULL OR p.testRun = FALSE)
+                AND NOT EXISTS (
+                    SELECT s.id
+                    FROM Submission s
+                    WHERE s.participation.id = p.id
+                )
+            """)
+    List<ProgrammingExerciseStudentParticipation> findGradedWithoutSubmissionsByExerciseId(@Param("exerciseId") long exerciseId);
+
     @Query("""
             SELECT p
             FROM ProgrammingExerciseStudentParticipation p

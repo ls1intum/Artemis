@@ -13,6 +13,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -179,6 +180,37 @@ public class BareGitRepositoryService extends AbstractGitService {
         }
         catch (IOException | RuntimeException e) {
             throw new GitException("Could not check the health of the bare repository at " + localPath, e);
+        }
+    }
+
+    /**
+     * Returns the head commit of the given branch if it was pushed after the repository was set up.
+     * <p>
+     * A student repository is created by {@link #copyBareRepositoryWithoutHistory} as a single commit without parents, so a head commit that has parents can only come
+     * from a later push.
+     *
+     * @param repositoryUri the URI of the bare repository
+     * @param branch        the branch to inspect
+     * @return the hash of the head commit, or empty if the repository or the branch does not exist or the branch still points to the setup commit
+     * @throws GitException if the repository could not be read
+     */
+    public Optional<String> findHeadCommitHashIfChangedSinceSetup(LocalVCRepositoryUri repositoryUri, String branch) {
+        var localPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        builder.setBare().setGitDir(localPath.toFile()).setMustExist(true);
+        try (org.eclipse.jgit.lib.Repository repository = builder.build(); RevWalk walk = new RevWalk(repository)) {
+            ObjectId headId = repository.resolve(Constants.R_HEADS + branch);
+            if (headId == null) {
+                return Optional.empty();
+            }
+            RevCommit headCommit = walk.parseCommit(headId);
+            return headCommit.getParentCount() > 0 ? Optional.of(headCommit.getName()) : Optional.empty();
+        }
+        catch (RepositoryNotFoundException e) {
+            return Optional.empty();
+        }
+        catch (IOException e) {
+            throw new GitException("Could not read the head commit of the bare repository at " + localPath, e);
         }
     }
 

@@ -5,10 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TRIGGER_INSTRUCTOR_BU
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
@@ -35,6 +37,8 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.localci.service.ci.BulkTriggerThrottle;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localci.service.ci.SharedBuildTriggerData;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -62,6 +66,9 @@ public class ProgrammingTriggerService {
     @Value("${artemis.external-system-request.batch-waiting-time}")
     private int externalSystemRequestBatchWaitingTime;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
@@ -88,6 +95,8 @@ public class ProgrammingTriggerService {
 
     private final SelectedBuildRunStatusService selectedBuildRunStatusService;
 
+    private final BareGitRepositoryService bareGitRepositoryService;
+
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository,
@@ -95,7 +104,7 @@ public class ProgrammingTriggerService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService,
-            SelectedBuildRunStatusService selectedBuildRunStatusService) {
+            SelectedBuildRunStatusService selectedBuildRunStatusService, BareGitRepositoryService bareGitRepositoryService) {
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -109,6 +118,7 @@ public class ProgrammingTriggerService {
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
         this.selectedBuildRunStatusService = selectedBuildRunStatusService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
     }
 
     /**
@@ -142,6 +152,67 @@ public class ProgrammingTriggerService {
         programmingExerciseTestCaseChangedService.setTestCasesChanged(exerciseId, false);
         // Let the instructor know that the build run is finished.
         programmingMessagingService.notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
+    }
+
+    /**
+     * Builds the repositories students pushed to before the start date of an exercise that allows repository access before it.
+     * <p>
+     * Pushes in that phase create no submission and trigger no build. At the start date, every graded participation whose repository received such a push gets a
+     * submission for its head commit, and that commit is built. A participation that already has a submission is skipped, so the method can be called again, e.g. to
+     * catch up after a restart, without building anything twice.
+     * <p>
+     * The method is async because it pauses between batches and waits for room in the build queue.
+     *
+     * @param exerciseId the id of the programming exercise
+     */
+    @Async("bulkBuildTriggerExecutor")
+    public void triggerBuildsForChangesBeforeStartDate(long exerciseId) {
+        // The caller's context reaches this thread when there is one; this stands in for the paths that have none.
+        SecurityUtils.setAuthorizationObject();
+        var exercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId).orElse(null);
+        if (exercise == null) {
+            log.warn("Not building the changes before the start date of exercise {}: it no longer exists", exerciseId);
+            return;
+        }
+        ZonedDateTime startDate = exercise.getStartDate();
+        if (exercise.isExamExercise() || !exercise.isAllowRepositoryAccessBeforeStartDate() || startDate == null || startDate.isAfter(ZonedDateTime.now())) {
+            log.debug("Not building the changes before the start date of exercise {}: it has not started or does not allow repository access before it", exerciseId);
+            return;
+        }
+
+        var candidates = programmingExerciseStudentParticipationRepository.findGradedWithoutSubmissionsByExerciseId(exerciseId);
+        if (candidates.isEmpty()) {
+            return;
+        }
+        log.info("Checking {} participations of exercise {} for changes pushed before the start date", candidates.size(), exerciseId);
+        SharedBuildTriggerData sharedData = prepareSharedTriggerDataOrNone(exercise);
+        BulkTriggerThrottle throttle = continuousIntegrationTriggerService.map(ContinuousIntegrationTriggerService::createBulkTriggerThrottle).orElse(BulkTriggerThrottle.NONE);
+        int index = 0;
+        for (var participation : candidates) {
+            try {
+                LocalVCRepositoryUri repositoryUri = participation.getVcsRepositoryUri();
+                if (repositoryUri == null) {
+                    continue;
+                }
+                String branch = participation.getBranch() != null ? participation.getBranch() : defaultBranch;
+                Optional<String> commitHash = bareGitRepositoryService.findHeadCommitHashIfChangedSinceSetup(repositoryUri, branch);
+                if (commitHash.isEmpty()) {
+                    continue;
+                }
+                pauseBetweenBatches(index, participation.getId());
+                throttle.awaitCapacity();
+                ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash.get(), SubmissionType.MANUAL);
+                participation.setProgrammingExercise(exercise);
+                // the participation was loaded without its submissions, and the one just created is the only one it has
+                participation.setSubmissions(new HashSet<>(Set.of(submission)));
+                triggerBuild(participation, sharedData);
+                index++;
+            }
+            catch (Exception e) {
+                log.error("Could not build the changes before the start date of participation {} of exercise {}", participation.getId(), exerciseId, e);
+            }
+        }
+        log.info("Triggered {} builds for changes pushed before the start date of exercise {}", index, exerciseId);
     }
 
     /**

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,12 +30,14 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.localci.service.ci.BulkTriggerThrottle;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localci.service.ci.SharedBuildTriggerData;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -101,6 +105,9 @@ class ProgrammingTriggerServiceTest {
     @Mock
     private ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
+    @Mock
+    private BareGitRepositoryService bareGitRepositoryService;
+
     private ProgrammingTriggerService programmingTriggerService;
 
     private ProgrammingExercise exercise;
@@ -110,11 +117,12 @@ class ProgrammingTriggerServiceTest {
         programmingTriggerService = new ProgrammingTriggerService(programmingSubmissionRepository, programmingExerciseRepository, Optional.of(continuousIntegrationTriggerService),
                 participationService, programmingExerciseParticipationService, auditEventRepository, programmingExerciseStudentParticipationRepository, programmingMessagingService,
                 templateProgrammingExerciseParticipationRepository, solutionProgrammingExerciseParticipationRepository, programmingExerciseTestCaseChangedService,
-                programmingSubmissionMessagingService, selectedBuildRunStatusService);
+                programmingSubmissionMessagingService, selectedBuildRunStatusService, bareGitRepositoryService);
         // Batching is configured from properties, which a plain unit test does not read; without a size the batch pause
         // divides by zero. A large batch keeps every test below the point where the service would sleep.
         ReflectionTestUtils.setField(programmingTriggerService, "externalSystemRequestBatchSize", 100);
         ReflectionTestUtils.setField(programmingTriggerService, "externalSystemRequestBatchWaitingTime", 0);
+        ReflectionTestUtils.setField(programmingTriggerService, "defaultBranch", "main");
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
     }
@@ -511,5 +519,88 @@ class ProgrammingTriggerServiceTest {
         programmingTriggerService.triggerTemplateAndSolutionBuild(EXERCISE_ID);
 
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any());
+    }
+
+    private ProgrammingExerciseStudentParticipation participationWithRepository(long id, String login) {
+        ProgrammingExerciseStudentParticipation participation = studentParticipation("plan-" + id, InitializationState.INITIALIZED);
+        participation.setId(id);
+        participation.setRepositoryUri("http://localhost:8080/git/PROJ/proj-" + login + ".git");
+        participation.setBranch("main");
+        return participation;
+    }
+
+    private void allowRepositoryAccessBeforeStartDate(ZonedDateTime startDate) {
+        exercise.setAllowRepositoryAccessBeforeStartDate(true);
+        exercise.setReleaseDate(startDate.minusDays(1));
+        exercise.setStartDate(startDate);
+        when(programmingExerciseRepository.findWithAuxiliaryRepositoriesById(EXERCISE_ID)).thenReturn(Optional.of(exercise));
+    }
+
+    @Test
+    void triggerBuildsForChangesBeforeStartDate_buildsTheHeadOfEveryRepositoryThatReceivedAPush() {
+        allowRepositoryAccessBeforeStartDate(ZonedDateTime.now().minusMinutes(1));
+        var pushed = participationWithRepository(1L, "student1");
+        var untouched = participationWithRepository(2L, "student2");
+        when(programmingExerciseStudentParticipationRepository.findGradedWithoutSubmissionsByExerciseId(EXERCISE_ID)).thenReturn(List.of(pushed, untouched));
+        when(bareGitRepositoryService.findHeadCommitHashIfChangedSinceSetup(pushed.getVcsRepositoryUri(), "main")).thenReturn(Optional.of("cafebabe"));
+        when(bareGitRepositoryService.findHeadCommitHashIfChangedSinceSetup(untouched.getVcsRepositoryUri(), "main")).thenReturn(Optional.empty());
+        when(programmingSubmissionRepository.saveAndFlush(any(ProgrammingSubmission.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        programmingTriggerService.triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
+
+        ArgumentCaptor<ProgrammingSubmission> submission = ArgumentCaptor.captor();
+        verify(programmingSubmissionRepository).saveAndFlush(submission.capture());
+        assertThat(submission.getValue().getCommitHash()).isEqualTo("cafebabe");
+        assertThat(submission.getValue().getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(submission.getValue().getParticipation()).isEqualTo(pushed);
+        verify(continuousIntegrationTriggerService).triggerBuild(eq(pushed), eq(true), any());
+        verify(programmingSubmissionMessagingService).notifyUserAboutSubmission(submission.getValue(), EXERCISE_ID);
+        // a repository that still holds only the setup commit has nothing to build
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(eq(untouched), anyBoolean(), any());
+    }
+
+    @Test
+    void triggerBuildsForChangesBeforeStartDate_carriesOnAfterAParticipationFails() {
+        allowRepositoryAccessBeforeStartDate(ZonedDateTime.now().minusMinutes(1));
+        var broken = participationWithRepository(1L, "student1");
+        var pushed = participationWithRepository(2L, "student2");
+        when(programmingExerciseStudentParticipationRepository.findGradedWithoutSubmissionsByExerciseId(EXERCISE_ID)).thenReturn(List.of(broken, pushed));
+        when(bareGitRepositoryService.findHeadCommitHashIfChangedSinceSetup(broken.getVcsRepositoryUri(), "main")).thenThrow(new IllegalStateException("unreadable"));
+        when(bareGitRepositoryService.findHeadCommitHashIfChangedSinceSetup(pushed.getVcsRepositoryUri(), "main")).thenReturn(Optional.of("cafebabe"));
+        when(programmingSubmissionRepository.saveAndFlush(any(ProgrammingSubmission.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        programmingTriggerService.triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
+
+        verify(continuousIntegrationTriggerService).triggerBuild(eq(pushed), eq(true), any());
+    }
+
+    @Test
+    void triggerBuildsForChangesBeforeStartDate_beforeTheStartDate_buildsNothing() {
+        allowRepositoryAccessBeforeStartDate(ZonedDateTime.now().plusHours(1));
+
+        programmingTriggerService.triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
+
+        verify(programmingExerciseStudentParticipationRepository, never()).findGradedWithoutSubmissionsByExerciseId(anyLong());
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyBoolean(), any());
+    }
+
+    @Test
+    void triggerBuildsForChangesBeforeStartDate_withoutTheOption_buildsNothing() {
+        allowRepositoryAccessBeforeStartDate(ZonedDateTime.now().minusMinutes(1));
+        exercise.setAllowRepositoryAccessBeforeStartDate(false);
+
+        programmingTriggerService.triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
+
+        verify(programmingExerciseStudentParticipationRepository, never()).findGradedWithoutSubmissionsByExerciseId(anyLong());
+    }
+
+    @Test
+    void triggerBuildsForChangesBeforeStartDate_forAnExamExercise_buildsNothing() {
+        allowRepositoryAccessBeforeStartDate(ZonedDateTime.now().minusMinutes(1));
+        exercise.setExerciseGroup(new ExerciseGroup());
+
+        programmingTriggerService.triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
+
+        verify(programmingExerciseStudentParticipationRepository, never()).findGradedWithoutSubmissionsByExerciseId(anyLong());
     }
 }
