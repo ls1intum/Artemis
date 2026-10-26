@@ -848,8 +848,14 @@ export class CommunicationService implements OnDestroy {
 
         switch (postDTO.action) {
             case CommunicationCrudAction.CREATE:
+                const isAuthorFilterActive = this.currentPostContextFilter.authorIds && this.currentPostContextFilter.authorIds?.length > 0;
+                const doesNotMatchAuthorFilter = isAuthorFilterActive && postDTO.post.author?.id && !this.currentPostContextFilter.authorIds?.includes(postDTO.post.author?.id);
                 const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
-                if (this.isPostExcludedByAuthorOrSearch(postDTO.post) || doesNotMatchReactedFilter) {
+                const doesNotMatchSearchString =
+                    this.currentPostContextFilter.searchText?.length &&
+                    !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
+
+                if (doesNotMatchAuthorFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
                     break;
                 }
                 // we can add the received conversation message to the cached messages without violating the current context filter setting
@@ -1072,25 +1078,13 @@ export class CommunicationService implements OnDestroy {
         );
     }
 
-    /** An unloaded deletion cannot prove a count delta; retain only known exclusions and already observed deletions. */
+    /** Replies also affect server filters, so only an already observed deletion has a known count delta. */
     private invalidatePostCountForUnloadedDeletion(post: Post): void {
-        if (
-            this.isPostExcludedByAuthorOrSearch(post) ||
-            this.pendingPostUpdates?.some((update) => update.action === CommunicationCrudAction.DELETE && update.post.id === post.id)
-        ) {
+        if (this.pendingPostUpdates?.some((update) => update.action === CommunicationCrudAction.DELETE && update.post.id === post.id)) {
             return;
         }
         this.pendingPostCountHistory = undefined;
         this.cachedPostCountContext = undefined;
-    }
-
-    /** Identifies posts whose author or content proves they do not belong to the current filtered total. */
-    private isPostExcludedByAuthorOrSearch(post: Post): boolean {
-        const { authorIds, searchText } = this.currentPostContextFilter;
-        return !!(
-            (authorIds?.length && post.author?.id && !authorIds.includes(post.author.id)) ||
-            (searchText?.length && !post.content?.toLowerCase().includes(searchText.toLowerCase().trim()))
-        );
     }
 
     /** Records actual membership changes after callers deduplicate HTTP and WebSocket updates by post id. */

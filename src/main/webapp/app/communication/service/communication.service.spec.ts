@@ -763,7 +763,7 @@ describe('CommunicationService', () => {
                 { name: 'author', filter: { authorIds: [communicationUser1.id!] }, deleted: { author: { ...communicationUser1, id: communicationUser1.id! + 1 } } },
                 { name: 'search', filter: { searchText: 'original' }, deleted: { content: 'unrelated' } },
             ].flatMap((entry) => [100, 101].map((serverTotal) => ({ ...entry, serverTotal }))),
-        )('keeps the creation count for a deletion outside the $name filter with serverTotal=$serverTotal', ({ filter, deleted, serverTotal }) => {
+        )('uses the authoritative total for an unloaded deletion with the $name filter and serverTotal=$serverTotal', ({ filter, deleted, serverTotal }) => {
             vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
             const oldPost = { ...original, id: 710, author: communicationUser1 };
             const createdPost = { ...original, author: communicationUser1 };
@@ -784,7 +784,45 @@ describe('CommunicationService', () => {
             pending.next(new HttpResponse({ body: [oldPost, createdPost], headers: new HttpHeaders({ 'X-Total-Count': String(serverTotal) }) }));
             pending.complete();
 
-            expect(totals).toHaveBeenLastCalledWith(101);
+            // Parent fields do not reveal whether an unloaded reply matched the server's filter.
+            expect(totals).toHaveBeenLastCalledWith(serverTotal);
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([oldPost.id, createdPost.id]);
+            expect(requests).toHaveBeenCalledTimes(2);
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { name: 'reply content', filter: { searchText: 'original' }, answers: [{ content: 'original', author: communicationUser1 }] },
+            { name: 'reply author', filter: { authorIds: [communicationUser1.id!] }, answers: [{ content: 'reply', author: communicationUser1 }] },
+            {
+                name: 'same reply content and author',
+                filter: { searchText: 'original', authorIds: [communicationUser1.id!] },
+                answers: [{ content: 'original', author: communicationUser1 }],
+            },
+            { name: 'omitted replies under search', filter: { searchText: 'original' }, answers: undefined },
+            { name: 'omitted replies under author filtering', filter: { authorIds: [communicationUser1.id!] }, answers: undefined },
+        ])('does not infer exclusion from parent fields for $name', ({ filter, answers }) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710, author: communicationUser1 };
+            const createdPost = { ...original, author: communicationUser1 };
+            const unloadedPost: Post = { ...original, id: 712, content: 'unrelated', author: { ...communicationUser1, id: communicationUser1.id! + 1 }, answers };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            const requests = vi
+                .spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const context = { courseId: course.id, conversationIds: [conversation.id!], ...filter };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(context, true, conversation);
+            communicationService.getFilteredPosts(context, true, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: createdPost });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: unloadedPost });
+
+            pending.next(new HttpResponse({ body: [oldPost, createdPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+            pending.complete();
+
+            expect(totals).toHaveBeenLastCalledWith(100);
             expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([oldPost.id, createdPost.id]);
             expect(requests).toHaveBeenCalledTimes(2);
             subscription.unsubscribe();
