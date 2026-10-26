@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupsConfigurationTestRepository;
 
 /**
  * Pins what reading a course costs.
@@ -65,7 +65,7 @@ class CourseConfigurationLoadProfileTest extends AbstractSpringIntegrationIndepe
     private CourseConfigurationRepository courseConfigurationRepository;
 
     @Autowired
-    private TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
+    private TutorialGroupsConfigurationTestRepository tutorialGroupsConfigurationRepository;
 
     private long courseId;
 
