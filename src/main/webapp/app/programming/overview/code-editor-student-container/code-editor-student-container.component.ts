@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
@@ -33,6 +33,8 @@ import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/progr
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
@@ -61,7 +63,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
 
     readonly participationId = input<number>();
     readonly lightweight = signal(false);
-    readonly inEarlyRepositoryAccessPhase = computed(() => !!this.exercise() && isInEarlyRepositoryAccessPhase(this.exercise()));
+    // Bumped when the start date is reached so that time-dependent state is re-evaluated
+    private readonly now = signal(Date.now());
+    readonly inEarlyRepositoryAccessPhase = computed(() => {
+        this.now();
+        return !!this.exercise() && isInEarlyRepositoryAccessPhase(this.exercise());
+    });
     readonly SubmissionPolicyType = SubmissionPolicyType;
 
     ButtonSize = ButtonSize;
@@ -83,6 +90,21 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     readonly latestResult = signal<Result | undefined>(undefined);
     readonly hasTutorAssessment = signal(false);
     readonly numberOfSubmissionsForSubmissionPolicy = signal<number | undefined>(undefined);
+
+    constructor() {
+        // Re-evaluate the early repository access phase once the start date is reached while the editor stays open
+        effect((onCleanup) => {
+            this.now();
+            const startDate = this.exercise()?.startDate;
+            if (!this.inEarlyRepositoryAccessPhase() || !startDate) {
+                return;
+            }
+            const delay = Math.max(0, startDate.valueOf() - Date.now());
+            // setTimeout cannot handle delays above 2^31-1 ms; the effect reschedules after the clamped timeout fires
+            const timeout = setTimeout(() => this.now.set(Date.now()), Math.min(delay, MAX_TIMEOUT_MS));
+            onCleanup(() => clearTimeout(timeout));
+        });
+    }
 
     // Icons
     faCircleNotch = faCircleNotch;

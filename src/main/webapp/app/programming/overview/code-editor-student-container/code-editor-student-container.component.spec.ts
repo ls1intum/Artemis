@@ -12,6 +12,9 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
@@ -40,6 +43,8 @@ describe('CodeEditorStudentContainerComponent', () => {
                 MockProvider(AlertService),
             ],
         });
+        // The template is not under test here; an empty one keeps change detection from instantiating the full editor
+        TestBed.overrideComponent(CodeEditorStudentContainerComponent, { set: { template: '', imports: [] } });
         fixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
         comp = fixture.componentInstance;
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
@@ -73,4 +78,67 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(getParticipationSubmissionCountSpy).not.toHaveBeenCalled();
         },
     );
+
+    describe('early repository access phase', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        const earlyExercise = (startInMs: number) =>
+            ({
+                id: 42,
+                type: ExerciseType.PROGRAMMING,
+                allowRepositoryAccessBeforeStartDate: true,
+                releaseDate: dayjs().subtract(1, 'hour'),
+                startDate: dayjs().add(startInMs, 'millisecond'),
+            }) as ProgrammingExercise;
+
+        const loadExercise = (exercise: ProgrammingExercise) => {
+            const participation = { id: 21, exercise } as ProgrammingExerciseStudentParticipation;
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(participation));
+            vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+            comp.ngOnInit();
+        };
+
+        it('should stop reporting the phase once the start date is reached', () => {
+            loadExercise(earlyExercise(60_000));
+            TestBed.tick();
+            expect(comp.inEarlyRepositoryAccessPhase()).toBe(true);
+
+            vi.advanceTimersByTime(59_000);
+            TestBed.tick();
+            expect(comp.inEarlyRepositoryAccessPhase()).toBe(true);
+
+            vi.advanceTimersByTime(2_000);
+            TestBed.tick();
+            expect(comp.inEarlyRepositoryAccessPhase()).toBe(false);
+        });
+
+        it('should reschedule when the start date exceeds the maximum timeout', () => {
+            const maxTimeout = 2 ** 31 - 1;
+            loadExercise(earlyExercise(maxTimeout + 60_000));
+            TestBed.tick();
+
+            vi.advanceTimersByTime(maxTimeout + 1);
+            TestBed.tick();
+            expect(comp.inEarlyRepositoryAccessPhase()).toBe(true);
+
+            vi.advanceTimersByTime(60_000);
+            TestBed.tick();
+            expect(comp.inEarlyRepositoryAccessPhase()).toBe(false);
+        });
+
+        it('should clear the timer on destroy', () => {
+            loadExercise(earlyExercise(60_000));
+            TestBed.tick();
+            expect(vi.getTimerCount()).toBe(1);
+
+            fixture.destroy();
+            expect(vi.getTimerCount()).toBe(0);
+        });
+    });
 });
