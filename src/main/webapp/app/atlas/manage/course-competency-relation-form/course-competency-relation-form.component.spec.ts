@@ -493,7 +493,12 @@ describe('CourseCompetencyRelationFormComponent', () => {
             const kept = { tail_id: '3', head_id: '2', relation_type: 'EXTENDS' };
             // AtlasML's REQUIRES means "tail is a prerequisite of head", the converse of ASSUMES
             getSuggestedCompetencyRelationsSpy.mockResolvedValue({
-                relations: [{ tail_id: '2', head_id: '3', relation_type: 'REQUIRES' }, kept, { tail_id: '1', head_id: '3', relation_type: 'UNKNOWN' }],
+                relations: [
+                    { tail_id: '2', head_id: '3', relation_type: 'REQUIRES' },
+                    kept,
+                    { tail_id: '1', head_id: '3', relation_type: 'UNKNOWN' },
+                    { tail_id: '1', head_id: '2', relation_type: 'toString' },
+                ],
             });
 
             await component.fetchSuggestions();

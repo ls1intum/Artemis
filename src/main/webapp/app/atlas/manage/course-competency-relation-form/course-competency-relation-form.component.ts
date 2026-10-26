@@ -81,7 +81,7 @@ export class CourseCompetencyRelationFormComponent {
             const response = await this.courseCompetencyApiService.getSuggestedCompetencyRelations(courseId);
             // Drops AtlasML's REQUIRES ("the tail is a prerequisite of the head", the converse of ASSUMES) and unknown types.
             // REQUIRES always comes with the mirrored EXTENDS for the same pair, so dropping it loses nothing.
-            const relations = (response.relations ?? []).filter((relation) => relation.relation_type in CompetencyRelationType);
+            const relations = (response.relations ?? []).filter((relation) => Object.hasOwn(CompetencyRelationType, relation.relation_type));
             this.suggestedRelations.set(relations);
             // Auto-select all suggestions when fetched, but exclude existing relations
             const allIndices = new Set(relations.map((_, index) => index).filter((index) => !this.doesSuggestionAlreadyExist(relations[index])));
