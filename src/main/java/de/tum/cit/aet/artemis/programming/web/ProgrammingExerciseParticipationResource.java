@@ -267,7 +267,9 @@ public class ProgrammingExerciseParticipationResource {
             throw new AccessForbiddenException();
         }
         // check if the exercise is released. This also checks if the user can see an exam exercise
-        if (!participation.getProgrammingExercise().isReleased()) {
+        // An exercise that allows repository access before its start date may already be worked on between the release and the start date.
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        if (!programmingExercise.isReleased() && !programmingExercise.isInEarlyRepositoryAccessPhase()) {
             throw new AccessForbiddenException("exercise", participation.getProgrammingExercise().getId());
         }
 
@@ -702,7 +704,9 @@ public class ProgrammingExerciseParticipationResource {
         ZonedDateTime exerciseStartDate = participation.getExercise().getParticipationStartDate();
         if (exerciseStartDate != null) {
             boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
-            boolean exerciseNotStarted = exerciseStartDate.isAfter(ZonedDateTime.now());
+            // An exercise that allows repository access before its start date may already be worked on between the release and the start date.
+            boolean exerciseNotStarted = exerciseStartDate.isAfter(ZonedDateTime.now())
+                    && !(participation.getExercise() instanceof ProgrammingExercise programmingExercise && programmingExercise.isInEarlyRepositoryAccessPhase());
             if (isStudent && exerciseNotStarted) {
                 throw new AccessForbiddenException("Participation not yet started");
             }

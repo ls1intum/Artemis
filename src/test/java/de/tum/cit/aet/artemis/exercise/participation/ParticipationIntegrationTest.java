@@ -641,6 +641,35 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInProgrammingExercise_beforeStartDate_withRepositoryAccessBeforeStartDate() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setStartDate(ZonedDateTime.now().plusHours(2));
+        programmingExercise.setAllowRepositoryAccessBeforeStartDate(true);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        prepareMocksForProgrammingExercise();
+        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
+
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
+        assertThat(participation.student().getId()).isEqualTo(user.getId());
+        assertThat(participation.repositoryUri()).isNotBlank();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInProgrammingExercise_beforeStartDate_withoutRepositoryAccessBeforeStartDate() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setStartDate(ZonedDateTime.now().plusHours(2));
+        programmingExercise.setAllowRepositoryAccessBeforeStartDate(false);
+        exerciseRepository.save(programmingExercise);
+
+        request.post("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void practiceProgrammingTeamExercise_successful() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise.setMode(ExerciseMode.TEAM);

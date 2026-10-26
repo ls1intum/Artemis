@@ -172,7 +172,8 @@ public class RepositoryAccessService {
     private boolean hasAccessToOwnStudentParticipation(GitRepositoryAccessDTO exercise, RepositoryActionType repositoryActionType,
             ProgrammingExerciseStudentParticipation studentParticipation, boolean isTeachingAssistant) {
         ZonedDateTime participationStart = exercise.participationStartDate();
-        boolean hasStarted = participationStart == null || participationStart.isBefore(ZonedDateTime.now());
+        // Between the release and the start date students may already work on their repository if the exercise allows it.
+        boolean hasStarted = participationStart == null || participationStart.isBefore(ZonedDateTime.now()) || exercise.isInEarlyRepositoryAccessPhase();
 
         if (!hasStarted) {
             // Only teaching assistants have access to the repository before the exercise has started.
@@ -215,7 +216,8 @@ public class RepositoryAccessService {
      */
     private boolean hasAccessToOwnStudentParticipation(ProgrammingExercise programmingExercise, RepositoryActionType repositoryActionType,
             ProgrammingExerciseStudentParticipation studentParticipation, boolean isTeachingAssistant) {
-        boolean hasStarted = exerciseDateService.hasExerciseStarted(programmingExercise);
+        // Between the release and the start date students may already work on their repository if the exercise allows it.
+        boolean hasStarted = exerciseDateService.hasExerciseStarted(programmingExercise) || programmingExercise.isInEarlyRepositoryAccessPhase();
 
         if (!hasStarted) {
             // Only teaching assistants have access to the repository before the exercise has started.

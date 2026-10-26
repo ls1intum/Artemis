@@ -42,7 +42,7 @@ class ParticipationLockPolicyTest {
         when(exercise.isExamExercise()).thenReturn(true);
         when(exercise.isTestExamExercise()).thenReturn(true);
         assertThat(service.isLocked(participation, exercise)).isFalse();
-        var projection = new GitRepositoryAccessDTO(34L, 56L, ExerciseMode.INDIVIDUAL, true, null, null, null, null, 78L, null, true);
+        var projection = new GitRepositoryAccessDTO(34L, 56L, ExerciseMode.INDIVIDUAL, true, null, null, null, null, 78L, null, true, false);
         assertThat(service.isLocked(participation, projection)).isFalse();
         verify(api, times(2)).isSubmitted(12L);
         verify(exercise, never()).getExam();
@@ -72,7 +72,7 @@ class ParticipationLockPolicyTest {
         var exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(34L);
         assertThat(service.isLocked(participation, exercise)).isTrue();
-        var projection = new GitRepositoryAccessDTO(34L, 56L, ExerciseMode.INDIVIDUAL, true, null, null, null, null, null, null, null);
+        var projection = new GitRepositoryAccessDTO(34L, 56L, ExerciseMode.INDIVIDUAL, true, null, null, null, null, null, null, null, false);
         assertThat(service.isLocked(participation, projection)).isTrue();
     }
 

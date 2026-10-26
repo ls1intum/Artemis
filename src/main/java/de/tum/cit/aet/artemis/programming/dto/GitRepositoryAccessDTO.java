@@ -23,23 +23,24 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * The course is represented by its id alone because that is all the role checks read: they answer from the user's
  * course roles and otherwise from a membership query keyed by that id.
  *
- * @param exerciseId      the exercise behind the project key
- * @param courseId        the course the exercise belongs to, directly or through its exam
- * @param mode            whether participations are per team or per student
- * @param allowOfflineIde whether students may use git outside the online editor, {@code null} when never set
- * @param startDate       when participation opens, for a course exercise
- * @param releaseDate     the fallback for {@code startDate}, for a course exercise
- * @param dueDate         when submissions close, for a course exercise
- * @param assessmentType  whether the exercise requires manual assessment
- * @param examId          the exam, or {@code null} for a course exercise
- * @param examStartDate   when the exam starts, or {@code null} for a course exercise
- * @param testExam        whether the exam may be taken repeatedly, {@code null} for a course exercise, since the
- *                            exam side of the join is then absent
+ * @param exerciseId                           the exercise behind the project key
+ * @param courseId                             the course the exercise belongs to, directly or through its exam
+ * @param mode                                 whether participations are per team or per student
+ * @param allowOfflineIde                      whether students may use git outside the online editor, {@code null} when never set
+ * @param startDate                            when participation opens, for a course exercise
+ * @param releaseDate                          the fallback for {@code startDate}, for a course exercise
+ * @param dueDate                              when submissions close, for a course exercise
+ * @param assessmentType                       whether the exercise requires manual assessment
+ * @param examId                               the exam, or {@code null} for a course exercise
+ * @param examStartDate                        when the exam starts, or {@code null} for a course exercise
+ * @param testExam                             whether the exam may be taken repeatedly, {@code null} for a course exercise, since the
+ *                                                 exam side of the join is then absent
+ * @param allowRepositoryAccessBeforeStartDate whether students may work on their repository between the release and the start date
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMode mode, @Nullable Boolean allowOfflineIde, @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime dueDate, @Nullable AssessmentType assessmentType, @Nullable Long examId, @Nullable ZonedDateTime examStartDate,
-        @Nullable Boolean testExam) {
+        @Nullable Boolean testExam, boolean allowRepositoryAccessBeforeStartDate) {
 
     /**
      * Builds the projection from an exercise that is already loaded.
@@ -60,7 +61,7 @@ public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMod
         }
         return new GitRepositoryAccessDTO(exercise.getId(), course.getId(), exercise.getMode(), exercise.isAllowOfflineIde(), exercise.getStartDate(), exercise.getReleaseDate(),
                 exercise.getDueDate(), exercise.getAssessmentType(), exam == null ? null : exam.getId(), exam == null ? null : exam.getStartDate(),
-                exam == null ? null : exam.isTestExam());
+                exam == null ? null : exam.isTestExam(), exercise.isAllowRepositoryAccessBeforeStartDate());
     }
 
     /**
@@ -107,5 +108,15 @@ public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMod
             return examStartDate;
         }
         return startDate != null ? startDate : releaseDate;
+    }
+
+    /**
+     * Mirrors {@code ProgrammingExercise#isInEarlyRepositoryAccessPhase()}: students may already work on their repository, but the exercise has not started yet.
+     *
+     * @return whether the exercise is released, has a start date in the future and allows repository access before it
+     */
+    public boolean isInEarlyRepositoryAccessPhase() {
+        ZonedDateTime now = ZonedDateTime.now();
+        return allowRepositoryAccessBeforeStartDate && !isExamExercise() && startDate != null && now.isBefore(startDate) && (releaseDate == null || !releaseDate.isAfter(now));
     }
 }

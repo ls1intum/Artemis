@@ -338,7 +338,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 pe.assessmentType,
                 e.id,
                 e.startDate,
-                e.testExam)
+                e.testExam,
+                pe.allowRepositoryAccessBeforeStartDate)
             FROM ProgrammingExercise pe
                 LEFT JOIN pe.course c
                 LEFT JOIN pe.exerciseGroup eg

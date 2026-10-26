@@ -367,8 +367,10 @@ public class ParticipationResource {
      */
     private void checkIfParticipationCanBeStartedElseThrow(Exercise exercise, User user) {
         // 1) Don't allow student to start before the start and release date
+        // A programming exercise may allow its students to start between the release and the start date.
         ZonedDateTime releaseOrStartDate = exercise.getParticipationStartDate();
-        if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now())) {
+        boolean earlyRepositoryAccess = exercise instanceof ProgrammingExercise programmingExercise && programmingExercise.isInEarlyRepositoryAccessPhase();
+        if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now()) && !earlyRepositoryAccess) {
             if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user)) {
                 throw new AccessForbiddenException("Students cannot start an exercise before the release date");
             }
