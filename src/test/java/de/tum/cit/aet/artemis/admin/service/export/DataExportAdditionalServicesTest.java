@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
@@ -464,6 +465,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             var assessment = new PresentationAssessment();
             assessment.setCourse(testCourse);
             assessment.setTitle(title);
+            assessment.setGradingMethod(PresentationGradingMethod.SCORE);
             assessment.setMaxPoints(20.0);
             assessment = presentationAssessmentRepository.save(assessment);
             createdAssessments.add(assessment);

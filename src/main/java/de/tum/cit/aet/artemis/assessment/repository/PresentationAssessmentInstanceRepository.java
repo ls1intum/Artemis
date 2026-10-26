@@ -65,7 +65,7 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
      *
      * @param courseId         the owning course id
      * @param assessmentId     the presentation assessment id, or null for no filter
-     * @param assessed         whether result points are assigned, or null for no filter
+     * @param assessed         whether a result is assigned, or null for no filter
      * @param linkedToExercise whether the presentation is linked to an exercise, or null for no filter
      * @param searchPattern    the prepared lower-case LIKE pattern, or null for no filter
      * @param pageable         pagination and sorting information
@@ -88,9 +88,9 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO(
-                assessment.id, assessment.title, assessment.description, assessment.maxPoints,
+                assessment.id, assessment.title, assessment.description, assessment.gradingMethod, assessment.maxPoints,
                 assessment.course.id, exercise.id, exercise.title,
-                instance.id, instance.presentationDate, instance.resultPoints,
+                instance.id, instance.presentationDate, instance.resultPoints, instance.passed, instance.rubricScore,
                 instance.language, instance.mode, instance.location, instance.meetingLink, instance.remark,
                 student.login, student.firstName, student.lastName, student.email)
             FROM PresentationAssessmentInstance instance
@@ -109,7 +109,7 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO(
-                COUNT(instance), COUNT(instance.resultPoints))
+                COUNT(instance), COUNT(instance.resultPoints) + COUNT(instance.passed) + COUNT(instance.rubricScore))
             FROM PresentationAssessmentInstance instance
             WHERE instance.presentationAssessment.course.id = :courseId
             """)

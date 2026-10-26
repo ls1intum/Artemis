@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
@@ -108,12 +109,12 @@ public class PresentationAssessmentService {
      *
      * @param courseId         the owning course id
      * @param assessmentId     the presentation assessment id, or null for no filter
-     * @param assessed         whether result points are assigned, or null for no filter
+     * @param assessed         whether a result is assigned, or null for no filter
      * @param linkedToExercise whether the presentation is linked to an exercise, or null for no filter
      * @param searchTerm       text to search in student login, email, full name, or presentation title; null or blank disables searching
      * @param page             zero-based page index
      * @param size             page size between 1 and 100
-     * @param sortField        studentLogin, presentationTitle, presentationDate, or resultPoints
+     * @param sortField        studentLogin, presentationTitle, or presentationDate
      * @param direction        sorting direction
      * @return the matching rows in the requested order, including the total number of matches
      */
@@ -146,7 +147,6 @@ public class PresentationAssessmentService {
             case "studentLogin" -> "student.login";
             case "presentationTitle" -> "presentationAssessment.title";
             case "presentationDate" -> "presentationDate";
-            case "resultPoints" -> "resultPoints";
             default -> throw new BadRequestAlertException("Unsupported sort field", PresentationAssessmentInstance.ENTITY_NAME, "invalidSortField");
         };
         return PageRequest.of(page, size, Sort.by(direction, property).and(Sort.by("id")));
@@ -165,11 +165,11 @@ public class PresentationAssessmentService {
         }
         PresentationAssessment presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(courseRepository.getReferenceById(courseId));
+        presentationAssessment.setGradingMethod(dto.gradingMethod());
         ExerciseIdAndTitleDTO exercise = applyDto(presentationAssessment, dto);
         PresentationAssessment savedAssessment = presentationAssessmentRepository.save(presentationAssessment);
 
-        return new PresentationAssessmentDTO(savedAssessment.getId(), savedAssessment.getTitle(), savedAssessment.getDescription(), savedAssessment.getMaxPoints(), courseId,
-                exercise != null ? exercise.id() : null, exercise != null ? exercise.title() : null);
+        return toDto(savedAssessment, courseId, exercise);
     }
 
     /**
@@ -188,13 +188,19 @@ public class PresentationAssessmentService {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessment.ENTITY_NAME, "idMismatch");
         }
         PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
-        long expectedVersion = presentationAssessment.getVersion();
-
-        double highestResultPoints = presentationAssessmentInstanceRepository.findHighestResultPointsByPresentationAssessmentId(assessmentId).orElse(0.0);
-        if (dto.maxPoints() < highestResultPoints) {
-            throw new BadRequestAlertException("The maximum points cannot be lower than an existing result", PresentationAssessment.ENTITY_NAME, "maxPointsBelowExistingResult");
+        if (dto.gradingMethod() != presentationAssessment.getGradingMethod()) {
+            throw new BadRequestAlertException("The grading method of a presentation cannot be changed", PresentationAssessment.ENTITY_NAME, "gradingMethodImmutable");
         }
+        long expectedVersion = presentationAssessment.getVersion();
         ExerciseIdAndTitleDTO exercise = applyDto(presentationAssessment, dto);
+
+        if (presentationAssessment.getGradingMethod() == PresentationGradingMethod.SCORE) {
+            double highestResultPoints = presentationAssessmentInstanceRepository.findHighestResultPointsByPresentationAssessmentId(assessmentId).orElse(0.0);
+            if (presentationAssessment.getMaxPoints() < highestResultPoints) {
+                throw new BadRequestAlertException("The maximum points cannot be lower than an existing result", PresentationAssessment.ENTITY_NAME,
+                        "maxPointsBelowExistingResult");
+            }
+        }
 
         int updated = presentationAssessmentRepository.updateIfVersionMatches(assessmentId, courseId, expectedVersion, presentationAssessment.getTitle(),
                 presentationAssessment.getDescription(), presentationAssessment.getMaxPoints(), presentationAssessment.getExercise());
@@ -204,8 +210,13 @@ public class PresentationAssessmentService {
                     PresentationAssessment.ENTITY_NAME, "concurrentModification");
         }
 
+        return toDto(presentationAssessment, courseId, exercise);
+    }
+
+    private static PresentationAssessmentDTO toDto(PresentationAssessment presentationAssessment, long courseId, ExerciseIdAndTitleDTO exercise) {
         return new PresentationAssessmentDTO(presentationAssessment.getId(), presentationAssessment.getTitle(), presentationAssessment.getDescription(),
-                presentationAssessment.getMaxPoints(), courseId, exercise != null ? exercise.id() : null, exercise != null ? exercise.title() : null);
+                presentationAssessment.getGradingMethod(), presentationAssessment.getMaxPoints(), courseId, exercise != null ? exercise.id() : null,
+                exercise != null ? exercise.title() : null);
     }
 
     /**
@@ -315,20 +326,51 @@ public class PresentationAssessmentService {
     }
 
     private void applyInstanceData(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto) {
-        if (dto.resultPoints() != null && dto.resultPoints() > assessment.getMaxPoints()) {
-            throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessmentInstance.ENTITY_NAME,
-                    "resultPointsExceedMaxPoints");
-        }
         if (dto.presentationDate().toLocalDate().isBefore(EARLIEST_PRESENTATION_DATE)) {
             throw new BadRequestAlertException("The presentation date cannot be before 1970-01-01", PresentationAssessmentInstance.ENTITY_NAME, "presentationDateBeforeUnixEpoch");
         }
+        applyResult(assessment, instance, dto);
         instance.setPresentationDate(dto.presentationDate());
-        instance.setResultPoints(dto.resultPoints());
         instance.setLanguage(dto.language());
         instance.setMode(dto.mode());
         instance.setLocation(dto.mode() == PresentationAssessmentMode.IN_PERSON ? dto.location() : null);
         instance.setMeetingLink(dto.mode() == PresentationAssessmentMode.ONLINE ? dto.meetingLink() : null);
         instance.setRemark(dto.remark());
+    }
+
+    private void applyResult(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto) {
+        boolean hadResult = instance.getResultPoints() != null || instance.getPassed() != null || instance.getRubricScore() != null;
+        switch (assessment.getGradingMethod()) {
+            case PASS_FAIL -> {
+                rejectResultOfOtherMethod(dto.resultPoints() != null);
+                rejectRemovedResult(hadResult, dto.passed() != null);
+                instance.setPassed(dto.passed());
+            }
+            case SCORE -> {
+                rejectResultOfOtherMethod(dto.passed() != null);
+                rejectRemovedResult(hadResult, dto.resultPoints() != null);
+                if (dto.resultPoints() != null && dto.resultPoints() > assessment.getMaxPoints()) {
+                    throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessmentInstance.ENTITY_NAME,
+                            "resultPointsExceedMaxPoints");
+                }
+                instance.setResultPoints(dto.resultPoints());
+            }
+            // the rubric score is calculated from the ratings, which a later change adds
+            case RUBRIC -> rejectResultOfOtherMethod(dto.passed() != null || dto.resultPoints() != null);
+        }
+    }
+
+    private static void rejectResultOfOtherMethod(boolean hasResultOfOtherMethod) {
+        if (hasResultOfOtherMethod) {
+            throw new BadRequestAlertException("The result does not match the grading method of the presentation", PresentationAssessmentInstance.ENTITY_NAME,
+                    "resultDoesNotMatchGradingMethod");
+        }
+    }
+
+    private static void rejectRemovedResult(boolean hadResult, boolean hasResult) {
+        if (hadResult && !hasResult) {
+            throw new BadRequestAlertException("An assigned result cannot be removed", PresentationAssessmentInstance.ENTITY_NAME, "resultCannotBeRemoved");
+        }
     }
 
     private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student) {
@@ -340,6 +382,13 @@ public class PresentationAssessmentService {
     }
 
     private ExerciseIdAndTitleDTO applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {
+        boolean gradedByScore = presentationAssessment.getGradingMethod() == PresentationGradingMethod.SCORE;
+        if (gradedByScore && dto.maxPoints() == null) {
+            throw new BadRequestAlertException("A presentation graded by score needs maximum points", PresentationAssessment.ENTITY_NAME, "maxPointsRequired");
+        }
+        if (!gradedByScore && dto.maxPoints() != null) {
+            throw new BadRequestAlertException("Only a presentation graded by score has maximum points", PresentationAssessment.ENTITY_NAME, "maxPointsNotAllowed");
+        }
         ExerciseIdAndTitleDTO exercise = findCourseExercise(presentationAssessment.getCourse().getId(), dto.exerciseId());
 
         presentationAssessment.setTitle(dto.title().trim());

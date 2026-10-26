@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PresentationAssessmentInstanceRequestDTO(Long id, @NotNull ZonedDateTime presentationDate,
-        @PositiveOrZero @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double resultPoints, @NotBlank String studentLogin, @NotBlank @Size(max = 10) String language,
-        @NotNull PresentationAssessmentMode mode, @Size(max = 255) String location,
+        @PositiveOrZero @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double resultPoints, Boolean passed, @NotBlank String studentLogin,
+        @NotBlank @Size(max = 10) String language, @NotNull PresentationAssessmentMode mode, @Size(max = 255) String location,
         @Size(max = 1000) @Pattern(regexp = "^https?://\\S+$", flags = Pattern.Flag.CASE_INSENSITIVE) String meetingLink, @Size(max = 1000) String remark) {
 }

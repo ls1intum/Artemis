@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceRequestDTO;
@@ -102,6 +103,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         presentationAssessment.setCourse(course);
         presentationAssessment.setTitle("Initial presentation");
         presentationAssessment.setDescription("Initial description");
+        presentationAssessment.setGradingMethod(PresentationGradingMethod.SCORE);
         presentationAssessment.setMaxPoints(20.0);
         presentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
     }
@@ -130,7 +132,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_shouldCreatePresentationAssessment() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.125, null, null, null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", PresentationGradingMethod.SCORE, 30.125,
+                null, null, null);
 
         PresentationAssessmentDTO result = request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.CREATED);
 
@@ -146,7 +149,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_withCourseExercise_shouldLinkExercise() throws Exception {
         var exercise = textExerciseUtilService.createIndividualTextExercise(course, FIXED_DATE.minusDays(1), FIXED_DATE.plusDays(7), FIXED_DATE.plusDays(14));
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exercise presentation", "Presentation for an exercise", 30.0, course.getId(), exercise.getId(), null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exercise presentation", "Presentation for an exercise", PresentationGradingMethod.SCORE, 30.0,
+                course.getId(), exercise.getId(), null);
 
         PresentationAssessmentDTO result = request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.CREATED);
 
@@ -159,7 +163,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createPresentationAssessment_asStudent_shouldReturnForbidden() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, null, null, null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", PresentationGradingMethod.SCORE, 30.0,
+                null, null, null);
 
         request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -167,13 +172,14 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_withInvalidRequestData_shouldReturnBadRequest() throws Exception {
-        request.postWithResponseBody(getBaseUrl(course), new PresentationAssessmentDTO(null, " ", "Course-level presentation assessment", 30.0, null, null, null),
-                PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
-        request.postWithResponseBody(getBaseUrl(course), new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 0.0, null, null, null),
+        request.postWithResponseBody(getBaseUrl(course),
+                new PresentationAssessmentDTO(null, " ", "Course-level presentation assessment", PresentationGradingMethod.SCORE, 30.0, null, null, null),
                 PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
         request.postWithResponseBody(getBaseUrl(course),
-                new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, otherCourse.getId(), null, null),
+                new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", PresentationGradingMethod.SCORE, 0.0, null, null, null),
                 PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getBaseUrl(course), new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment",
+                PresentationGradingMethod.SCORE, 30.0, otherCourse.getId(), null, null), PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -181,7 +187,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     void createPresentationAssessment_withExerciseOfAnotherCourse_shouldReturnBadRequest() throws Exception {
         var otherCourseExercise = textExerciseUtilService.createIndividualTextExercise(otherCourse, FIXED_DATE.minusDays(1), FIXED_DATE.plusDays(7), FIXED_DATE.plusDays(14));
         long assessmentsBeforeRequest = presentationAssessmentRepository.count();
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exercise presentation", null, 30.0, course.getId(), otherCourseExercise.getId(), null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exercise presentation", null, PresentationGradingMethod.SCORE, 30.0, course.getId(),
+                otherCourseExercise.getId(), null);
 
         request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
 
@@ -194,7 +201,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         var examExercise = textExerciseUtilService.createTextExerciseForExam(exam.getExerciseGroups().getFirst());
         long assessmentsBeforeRequest = presentationAssessmentRepository.count();
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exam presentation", null, 30.0, course.getId(), examExercise.getId(), null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exam presentation", null, PresentationGradingMethod.SCORE, 30.0, course.getId(), examExercise.getId(),
+                null);
 
         request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
 
@@ -205,7 +213,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_withNonExistingExercise_shouldReturnNotFound() throws Exception {
         long assessmentsBeforeRequest = presentationAssessmentRepository.count();
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exercise presentation", null, 30.0, course.getId(), Long.MAX_VALUE, null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exercise presentation", null, PresentationGradingMethod.SCORE, 30.0, course.getId(), Long.MAX_VALUE,
+                null);
 
         request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.NOT_FOUND);
 
@@ -218,6 +227,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         PresentationAssessment otherPresentationAssessment = new PresentationAssessment();
         otherPresentationAssessment.setCourse(otherCourse);
         otherPresentationAssessment.setTitle("Other presentation");
+        otherPresentationAssessment.setGradingMethod(PresentationGradingMethod.SCORE);
         otherPresentationAssessment.setMaxPoints(10.0);
         presentationAssessmentRepository.save(otherPresentationAssessment);
 
@@ -248,7 +258,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getPresentationAssessmentStudentRows_shouldReturnDistinctPagesWithTotalCount() throws Exception {
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null,
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null, null,
                 List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
         request.postListWithResponseBody(getInstancesUrl(course, presentationAssessment), dto, PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
 
@@ -288,7 +298,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "email", "student.login", "id" })
+    @ValueSource(strings = { "email", "student.login", "id", "resultPoints" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getPresentationAssessmentStudentRows_withUnsupportedSortField_shouldReturnBadRequest(String sortField) throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.get(getBaseUrl(course) + "/student-rows").param("sortField", sortField)).andExpect(status().isBadRequest());
@@ -309,8 +319,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         instance.setMode(PresentationAssessmentMode.IN_PERSON);
         instance.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         instance = presentationAssessmentInstanceRepository.save(instance);
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.5, course.getId(),
-                replacementExercise.getId(), null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description",
+                PresentationGradingMethod.SCORE, 25.5, course.getId(), replacementExercise.getId(), null);
 
         PresentationAssessmentDTO response = request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.OK);
 
@@ -333,8 +343,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessment_withMismatchedId_shouldReturnBadRequest() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId() + 1, "Updated presentation", "Updated description", 25.0, course.getId(), null,
-                null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId() + 1, "Updated presentation", "Updated description",
+                PresentationGradingMethod.SCORE, 25.0, course.getId(), null, null);
 
         request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -555,8 +565,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         instance.setMode(PresentationAssessmentMode.IN_PERSON);
         instance.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         presentationAssessmentInstanceRepository.save(instance);
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 10.0, course.getId(), null,
-                null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description",
+                PresentationGradingMethod.SCORE, 10.0, course.getId(), null, null);
 
         request.put(getAssessmentUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
 
@@ -568,8 +578,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessment_withMismatchedCourseId_shouldReturnBadRequest() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, otherCourse.getId(),
-                null, null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description",
+                PresentationGradingMethod.SCORE, 25.0, otherCourse.getId(), null, null);
 
         request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -577,8 +587,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessment_viaUrlOfAnotherCourse_shouldReturnNotFound() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, otherCourse.getId(),
-                null, null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description",
+                PresentationGradingMethod.SCORE, 25.0, otherCourse.getId(), null, null);
 
         request.putWithResponseBody(getAssessmentUrl(otherCourse, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.NOT_FOUND);
 
@@ -696,8 +706,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void presentationAssessmentWriteRequests_asStudent_shouldReturnForbidden() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, course.getId(), null,
-                null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description",
+                PresentationGradingMethod.SCORE, 25.0, course.getId(), null, null);
 
         request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.FORBIDDEN);
         request.delete(getAssessmentUrl(course, presentationAssessment), HttpStatus.FORBIDDEN);
@@ -727,7 +737,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void assignAndGradeStudent_asTutor_shouldSucceed() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", null);
-        PresentationAssessmentInstanceRequestDTO gradeDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), instance.presentationDate(), 15.0,
+        PresentationAssessmentInstanceRequestDTO gradeDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), instance.presentationDate(), 15.0, null,
                 instance.student().login(), instance.language(), instance.mode(), instance.location(), null, "Graded by a tutor");
 
         PresentationAssessmentInstanceDTO graded = request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.id(), gradeDto,
@@ -742,8 +752,10 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void presentationChanges_asTutor_shouldReturnForbidden() throws Exception {
-        PresentationAssessmentDTO newAssessment = new PresentationAssessmentDTO(null, "Tutor presentation", null, 10.0, course.getId(), null, null);
-        PresentationAssessmentDTO changedAssessment = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", null, 25.0, course.getId(), null, null);
+        PresentationAssessmentDTO newAssessment = new PresentationAssessmentDTO(null, "Tutor presentation", null, PresentationGradingMethod.SCORE, 10.0, course.getId(), null,
+                null);
+        PresentationAssessmentDTO changedAssessment = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", null, PresentationGradingMethod.SCORE,
+                25.0, course.getId(), null, null);
         long assessmentsBeforeRequests = presentationAssessmentRepository.count();
 
         request.postWithResponseBody(getBaseUrl(course), newAssessment, PresentationAssessmentDTO.class, HttpStatus.FORBIDDEN);
@@ -768,9 +780,11 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void presentationChanges_asEditor_shouldSucceed() throws Exception {
         PresentationAssessmentDTO created = request.postWithResponseBody(getBaseUrl(course),
-                new PresentationAssessmentDTO(null, "Editor presentation", null, 10.0, course.getId(), null, null), PresentationAssessmentDTO.class, HttpStatus.CREATED);
+                new PresentationAssessmentDTO(null, "Editor presentation", null, PresentationGradingMethod.SCORE, 10.0, course.getId(), null, null),
+                PresentationAssessmentDTO.class, HttpStatus.CREATED);
         PresentationAssessmentDTO updated = request.putWithResponseBody(getBaseUrl(course) + "/" + created.id(),
-                new PresentationAssessmentDTO(created.id(), "Renamed presentation", null, 12.0, course.getId(), null, null), PresentationAssessmentDTO.class, HttpStatus.OK);
+                new PresentationAssessmentDTO(created.id(), "Renamed presentation", null, PresentationGradingMethod.SCORE, 12.0, course.getId(), null, null),
+                PresentationAssessmentDTO.class, HttpStatus.OK);
 
         assertThat(updated.title()).isEqualTo("Renamed presentation");
         assertThat(presentationAssessmentRepository.findByIdElseThrow(created.id()).getMaxPoints()).isEqualTo(12.0);
@@ -798,7 +812,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessmentInstance_withoutStudentLogin_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null, List.of(" "), "en",
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null, null, List.of(" "), "en",
                 PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
         request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
@@ -810,10 +824,10 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessmentInstance_withInvalidRequestData_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
-        request.post(getInstancesUrl(course, presentationAssessment), new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null,
+        request.post(getInstancesUrl(course, presentationAssessment), new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null, null,
                 List.of(TEST_PREFIX + "student1"), "", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null), HttpStatus.BAD_REQUEST);
         request.post(getInstancesUrl(course, presentationAssessment),
-                new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null, List.of(TEST_PREFIX + "student1"), "en", null, "Room 1", null, null),
+                new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null, null, List.of(TEST_PREFIX + "student1"), "en", null, "Room 1", null, null),
                 HttpStatus.BAD_REQUEST);
 
         assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest);
@@ -825,7 +839,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         List<PresentationAssessmentInstanceDTO> instancesBeforeRequest = request
                 .getList(getBaseUrl(course) + "/student-rows?assessmentId=" + presentationAssessment.getId(), HttpStatus.OK, PresentationAssessmentStudentRowDTO.class).stream()
                 .map(PresentationAssessmentStudentRowDTO::instance).toList();
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.5,
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.5, null,
                 List.of(TEST_PREFIX + "student1", " " + TEST_PREFIX + "student1 "), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
         List<PresentationAssessmentInstanceDTO> results = request.postListWithResponseBody(getInstancesUrl(course, presentationAssessment), dto,
@@ -851,7 +865,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessmentInstance_shouldUpdateIndividualResult() throws Exception {
         PresentationAssessmentInstanceDTO individual = createSearchInstance(presentationAssessment, "student1", null);
-        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), 12.5,
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), 12.5, null,
                 individual.student().login(), individual.language(), PresentationAssessmentMode.ONLINE, individual.location(), "https://example.org/presentation",
                 "Updated result");
 
@@ -879,7 +893,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     void updatePresentationAssessmentInstance_afterStudentLeftCourse_shouldStillRecordResult() throws Exception {
         PresentationAssessmentInstanceDTO individual = createSearchInstance(presentationAssessment, "student1", null);
         userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), course);
-        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), 9.0,
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), 9.0, null,
                 individual.student().login(), individual.language(), individual.mode(), individual.location(), null, "Graded after the student left");
 
         PresentationAssessmentInstanceDTO updated = request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + individual.id(), updateDto,
@@ -897,7 +911,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     void updatePresentationAssessmentInstance_toStudentOutsideCourse_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentInstanceDTO individual = createSearchInstance(presentationAssessment, "student1", null);
         userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "student2"), course);
-        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), null,
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), null, null,
                 TEST_PREFIX + "student2", individual.language(), individual.mode(), individual.location(), null, null);
 
         request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + individual.id(), updateDto, PresentationAssessmentInstanceDTO.class,
@@ -936,7 +950,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     void updatePresentationAssessmentInstance_withWrongAssessment_shouldReturnNotFound() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", 5.0);
         PresentationAssessment otherAssessment = createSearchAssessment("Other presentation", false);
-        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), instance.presentationDate(), 10.0,
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), instance.presentationDate(), 10.0, null,
                 instance.student().login(), instance.language(), instance.mode(), instance.location(), null, null);
 
         request.putWithResponseBody(getInstancesUrl(course, otherAssessment) + "/" + instance.id(), updateDto, PresentationAssessmentInstanceDTO.class, HttpStatus.NOT_FOUND);
@@ -949,7 +963,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     void updatePresentationAssessmentInstance_withPointsAboveMaximum_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", 5.0);
         PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), instance.presentationDate(),
-                presentationAssessment.getMaxPoints() + 1, instance.student().login(), instance.language(), instance.mode(), instance.location(), null, null);
+                presentationAssessment.getMaxPoints() + 1, null, instance.student().login(), instance.language(), instance.mode(), instance.location(), null, null);
 
         request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.id(), updateDto, PresentationAssessmentInstanceDTO.class,
                 HttpStatus.BAD_REQUEST);
@@ -961,7 +975,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_withDateBefore1970_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(ZonedDateTime.parse("1969-12-31T12:00:00Z"), null,
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(ZonedDateTime.parse("1969-12-31T12:00:00Z"), null, null,
                 List.of(TEST_PREFIX + "student1"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
         request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
@@ -973,7 +987,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessmentInstance_withDateBefore1970_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", null);
-        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), ZonedDateTime.parse("1969-12-31T12:00:00Z"), null,
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), ZonedDateTime.parse("1969-12-31T12:00:00Z"), null, null,
                 instance.student().login(), instance.language(), instance.mode(), instance.location(), null, null);
 
         request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.id(), updateDto, PresentationAssessmentInstanceDTO.class,
@@ -998,7 +1012,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_withPointsAboveMaximum_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, presentationAssessment.getMaxPoints() + 1,
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, presentationAssessment.getMaxPoints() + 1, null,
                 List.of(TEST_PREFIX + "student1"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
         request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
@@ -1010,7 +1024,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_withStudentWhoAlreadyHasAnInstance_shouldRejectTheWholeRequest() throws Exception {
         createSearchInstance(presentationAssessment, "student1", null);
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null,
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null, null,
                 List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
         request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
@@ -1036,8 +1050,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     void updatePresentationAssessmentInstance_toStudentWhoAlreadyHasAnInstance_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentInstanceDTO first = createSearchInstance(presentationAssessment, "student1", null);
         createSearchInstance(presentationAssessment, "student2", null);
-        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(first.id(), first.presentationDate(), null, TEST_PREFIX + "student2",
-                first.language(), first.mode(), first.location(), null, null);
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(first.id(), first.presentationDate(), null, null,
+                TEST_PREFIX + "student2", first.language(), first.mode(), first.location(), null, null);
 
         request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + first.id(), updateDto, PresentationAssessmentInstanceDTO.class, HttpStatus.BAD_REQUEST);
 
@@ -1064,7 +1078,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @ValueSource(strings = { "zoom.example.org/j/1", "/j/1", "javascript:alert(1)", "https://", "https://exa mple.org" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_withMeetingLinkWithoutHttpScheme_shouldReturnBadRequest(String meetingLink) throws Exception {
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null, List.of(TEST_PREFIX + "student1"), "en",
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null, null, List.of(TEST_PREFIX + "student1"), "en",
                 PresentationAssessmentMode.ONLINE, null, meetingLink, null);
 
         request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
@@ -1074,8 +1088,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_withTooManyStudents_shouldReturnBadRequest() throws Exception {
         List<String> logins = IntStream.range(0, 501).mapToObj(index -> TEST_PREFIX + "student" + index).toList();
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null, logins, "en", PresentationAssessmentMode.IN_PERSON,
-                "Room 1", null, null);
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null, null, logins, "en",
+                PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
         request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
     }
@@ -1083,7 +1097,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_shouldCreateOneInstancePerStudent() throws Exception {
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.125,
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.125, null,
                 List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, "Good presentation");
 
         List<PresentationAssessmentInstanceDTO> result = request.postListWithResponseBody(getInstancesUrl(course, presentationAssessment), dto,
@@ -1103,7 +1117,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_withInvalidStudent_shouldNotPersistPartialResults() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.5,
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.5, null,
                 List.of(TEST_PREFIX + "student1", "unknown-student"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
         request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
@@ -1115,7 +1129,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_withEmptyStudentList_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
-        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.5, List.of(), "en",
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.5, null, List.of(), "en",
                 PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
         request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
@@ -1126,13 +1140,13 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessmentInstance_shouldNotChangeAnotherStudentsResult() throws Exception {
-        PresentationAssessmentInstancesBatchCreateDTO createDto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null,
+        PresentationAssessmentInstancesBatchCreateDTO createDto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null, null,
                 List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
         List<PresentationAssessmentInstanceDTO> created = request.postListWithResponseBody(getInstancesUrl(course, presentationAssessment), createDto,
                 PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
         PresentationAssessmentInstanceDTO individual = created.stream().filter(instance -> (TEST_PREFIX + "student1").equals(instance.student().login())).findFirst().orElseThrow();
 
-        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), 18.5,
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), 18.5, null,
                 individual.student().login(), individual.language(), individual.mode(), individual.location(), individual.meetingLink(), "Assessed");
         request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + individual.id(), updateDto, PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
 
@@ -1232,6 +1246,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         var assessment = new PresentationAssessment();
         assessment.setCourse(course);
         assessment.setTitle(title);
+        assessment.setGradingMethod(PresentationGradingMethod.SCORE);
         assessment.setMaxPoints(20.0);
         if (linkedToExercise) {
             assessment.setExercise(textExerciseUtilService.createIndividualTextExercise(course, FIXED_DATE.minusDays(1), FIXED_DATE.plusDays(7), FIXED_DATE.plusDays(14)));
@@ -1240,8 +1255,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     private PresentationAssessmentInstanceDTO createSearchInstance(PresentationAssessment assessment, String studentSuffix, Double points) throws Exception {
-        var dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, points, List.of(TEST_PREFIX + studentSuffix), "en", PresentationAssessmentMode.IN_PERSON, "Room 1",
-                null, null);
+        var dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, points, null, List.of(TEST_PREFIX + studentSuffix), "en", PresentationAssessmentMode.IN_PERSON,
+                "Room 1", null, null);
         return request.postListWithResponseBody(getInstancesUrl(course, assessment), dto, PresentationAssessmentInstanceDTO.class, HttpStatus.OK).getFirst();
     }
 

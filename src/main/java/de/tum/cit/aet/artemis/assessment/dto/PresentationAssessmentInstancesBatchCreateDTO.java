@@ -21,11 +21,12 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PresentationAssessmentInstancesBatchCreateDTO(@NotNull ZonedDateTime presentationDate,
-        @PositiveOrZero @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double resultPoints, @NotEmpty @Size(max = 500) List<@NotBlank String> studentLogins,
-        @NotBlank @Size(max = 10) String language, @NotNull PresentationAssessmentMode mode, @Size(max = 255) String location,
-        @Size(max = 1000) @Pattern(regexp = "^https?://\\S+$", flags = Pattern.Flag.CASE_INSENSITIVE) String meetingLink, @Size(max = 1000) String remark) {
+        @PositiveOrZero @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double resultPoints, Boolean passed,
+        @NotEmpty @Size(max = 500) List<@NotBlank String> studentLogins, @NotBlank @Size(max = 10) String language, @NotNull PresentationAssessmentMode mode,
+        @Size(max = 255) String location, @Size(max = 1000) @Pattern(regexp = "^https?://\\S+$", flags = Pattern.Flag.CASE_INSENSITIVE) String meetingLink,
+        @Size(max = 1000) String remark) {
 
     public PresentationAssessmentInstanceRequestDTO forStudent(String studentLogin) {
-        return new PresentationAssessmentInstanceRequestDTO(null, presentationDate, resultPoints, studentLogin, language, mode, location, meetingLink, remark);
+        return new PresentationAssessmentInstanceRequestDTO(null, presentationDate, resultPoints, passed, studentLogin, language, mode, location, meetingLink, remark);
     }
 }

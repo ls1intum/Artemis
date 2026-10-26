@@ -34,7 +34,7 @@ public interface PresentationAssessmentRepository extends ArtemisJpaRepository<P
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO(
-                assessment.id, assessment.title, assessment.description, assessment.maxPoints,
+                assessment.id, assessment.title, assessment.description, assessment.gradingMethod, assessment.maxPoints,
                 assessment.course.id, exercise.id, exercise.title)
             FROM PresentationAssessment assessment
             LEFT JOIN assessment.exercise exercise
