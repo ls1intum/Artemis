@@ -162,6 +162,30 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void triggerFailedBuildStudent_beforeStartDate_withRepositoryAccessBeforeStartDate_isForbidden() throws Exception {
+        ProgrammingExercise earlyAccessExercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+        earlyAccessExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        earlyAccessExercise.setStartDate(ZonedDateTime.now().plusHours(1));
+        earlyAccessExercise.setAllowRepositoryAccessBeforeStartDate(true);
+        programmingExerciseRepository.save(earlyAccessExercise);
+        // e.g. from an instructor's push, which would otherwise make the failed build retriggerable
+        var submission = new ProgrammingSubmission();
+        submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
+        submission.setSubmitted(true);
+        submission.setCommitHash(participationCommitHashes.get(programmingExerciseStudentParticipation.getParticipantIdentifier()));
+        submission.setType(SubmissionType.MANUAL);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student2");
+
+        // Retriggering a failed build is a build as well, and the changes of students are only built at the start date
+        String url = "/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/trigger-failed-build";
+        request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
+
+        assertThat(submissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).extracting(ProgrammingSubmission::getId)
+                .containsExactly(submission.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildStudentSubmissionNotFound() throws Exception {
         String login = TEST_PREFIX + "student1";

@@ -173,12 +173,7 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException();
         }
 
-        // Before the start date of an exercise that allows repository access before it, the changes of students are only built at the start date.
-        if (participation instanceof ProgrammingExerciseStudentParticipation && participation.getExercise() instanceof ProgrammingExercise programmingExercise
-                && programmingExercise.isInEarlyRepositoryAccessPhase()
-                && authCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null)) {
-            throw new AccessForbiddenAlertException("Builds start at the start date of the exercise.", "programmingExercise", "buildsStartAtStartDate");
-        }
+        checkStudentBuildAllowedBeforeStartDateElseThrow(participation);
 
         try {
             var submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
@@ -209,6 +204,7 @@ public class ProgrammingSubmissionResource {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseParticipation);
+        checkStudentBuildAllowedBeforeStartDateElseThrow(participation);
 
         ProgrammingSubmission submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded)
                 .orElseThrow(() -> new EntityNotFoundException("No latest pending programming submission found for participationId " + participationId));
@@ -232,6 +228,21 @@ public class ProgrammingSubmissionResource {
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
         programmingTriggerService.triggerBuildAndNotifyUser(submission);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Before the start date of an exercise that allows repository access before it, the changes of students are only built at the start date, so a student may not
+     * trigger a build of their participation then. Tutors and instructors may.
+     *
+     * @param participation the participation whose build is requested
+     * @throws AccessForbiddenAlertException if a student requests a build of their participation before the start date
+     */
+    private void checkStudentBuildAllowedBeforeStartDateElseThrow(Participation participation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation && participation.getExercise() instanceof ProgrammingExercise programmingExercise
+                && programmingExercise.isInEarlyRepositoryAccessPhase()
+                && authCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null)) {
+            throw new AccessForbiddenAlertException("Builds start at the start date of the exercise.", "programmingExercise", "buildsStartAtStartDate");
+        }
     }
 
     /**
