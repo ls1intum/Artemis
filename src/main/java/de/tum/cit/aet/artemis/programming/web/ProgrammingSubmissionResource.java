@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckSe
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -169,6 +171,13 @@ public class ProgrammingSubmissionResource {
                 && !(authCheckService.isAtLeastEditorForExercise(participation.getExercise())
                         && (participation instanceof TemplateProgrammingExerciseParticipation || participation instanceof SolutionProgrammingExerciseParticipation))) {
             throw new AccessForbiddenException();
+        }
+
+        // Before the start date of an exercise that allows repository access before it, the changes of students are only built at the start date.
+        if (participation instanceof ProgrammingExerciseStudentParticipation && participation.getExercise() instanceof ProgrammingExercise programmingExercise
+                && programmingExercise.isInEarlyRepositoryAccessPhase()
+                && authCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null)) {
+            throw new AccessForbiddenAlertException("Builds start at the start date of the exercise.", "programmingExercise", "buildsStartAtStartDate");
         }
 
         try {

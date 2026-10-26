@@ -145,6 +145,23 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void triggerBuildStudent_beforeStartDate_withRepositoryAccessBeforeStartDate_isForbidden() throws Exception {
+        // re-read without the participations, so saving it cannot drop the ones added after it was loaded
+        ProgrammingExercise earlyAccessExercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+        earlyAccessExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        earlyAccessExercise.setStartDate(ZonedDateTime.now().plusHours(1));
+        earlyAccessExercise.setAllowRepositoryAccessBeforeStartDate(true);
+        programmingExerciseRepository.save(earlyAccessExercise);
+
+        // The changes of students are only built at the start date
+        String url = "/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/trigger-build";
+        request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
+
+        assertThat(submissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildStudentSubmissionNotFound() throws Exception {
         String login = TEST_PREFIX + "student1";

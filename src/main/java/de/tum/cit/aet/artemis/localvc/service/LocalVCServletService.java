@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -1399,13 +1400,14 @@ public class LocalVCServletService {
      * @param cachedExercise      the exercise which is potentially already loaded
      * @param cachedParticipation the participation which is potentially already loaded
      * @param vcsAccessLog        the vcsAccessLog which is potentially already loaded
+     * @return whether the push was processed or its build was deferred until the start date of the exercise
      * @throws ContinuousIntegrationException if something goes wrong with the CI configuration.
      * @throws VersionControlException        if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
      */
-    public void processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
+    public PushProcessingOutcome processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
             Optional<ProgrammingExerciseParticipation> cachedParticipation, Optional<VcsAccessLog> vcsAccessLog) {
         // A git push knows the id it pushed, so it is also the commit that triggered this call
-        processNewPush(commitHash, repository, user, cachedExercise, cachedParticipation, vcsAccessLog, commitHash);
+        return processNewPush(commitHash, repository, user, cachedExercise, cachedParticipation, vcsAccessLog, commitHash);
     }
 
     /**
@@ -1422,14 +1424,16 @@ public class LocalVCServletService {
      * @param cachedParticipation  the participation which is potentially already loaded
      * @param vcsAccessLog         the vcsAccessLog which is potentially already loaded
      * @param triggeringCommitHash the id of the commit this request created, or null when the caller does not know it
+     * @return whether the push was processed or its build was deferred until the start date of the exercise
      */
-    public void processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
+    public PushProcessingOutcome processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
             Optional<ProgrammingExerciseParticipation> cachedParticipation, Optional<VcsAccessLog> vcsAccessLog, @Nullable String triggeringCommitHash) {
         long timeNanoStart = System.nanoTime();
 
         Path repositoryFolderPath = repository.getDirectory().toPath();
 
         LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repositoryFolderPath);
+        PushProcessingOutcome outcome;
 
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         String projectKey = localVCRepositoryUri.getProjectKey();
@@ -1466,13 +1470,13 @@ public class LocalVCServletService {
 
             if (repositoryType.equals(RepositoryType.TESTS)) {
                 processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
-                return;
+                return PushProcessingOutcome.PROCESSED;
             }
 
             if (repositoryType.equals(RepositoryType.AUXILIARY)) {
                 // Don't provide a commit hash because we want the latest test repo commit to be used
                 processNewPushToTestOrAuxRepository(exercise, null, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
-                return;
+                return PushProcessingOutcome.PROCESSED;
             }
 
             if (commitHash == null) {
@@ -1483,7 +1487,7 @@ public class LocalVCServletService {
 
             // Process push to any repository other than the test repository. The repository type is passed on so the build
             // trigger can reuse the hash this push already carries instead of reading it back off the repository.
-            processNewPushToRepository(participation, commit, user, repositoryType);
+            outcome = processNewPushToRepository(exercise, participation, commit, user, repositoryType);
 
             // For push the correct commitHash is only available here, therefore the preliminary value is overwritten
             String finalCommitHash = commitHash;
@@ -1503,8 +1507,9 @@ public class LocalVCServletService {
                     "Could not process new push to repository " + localVCRepositoryUri.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
         }
 
-        log.debug("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
-                TimeLogUtil.formatDurationFrom(timeNanoStart));
+        log.debug("New push processed to repository {} for commit {} in {}. Outcome: {}.", localVCRepositoryUri.getURI(), commitHash, TimeLogUtil.formatDurationFrom(timeNanoStart),
+                outcome);
+        return outcome;
     }
 
     private ProgrammingExerciseParticipation retrieveSolutionParticipation(ProgrammingExercise exercise) {
@@ -1668,16 +1673,31 @@ public class LocalVCServletService {
     /**
      * TODO: this could be done asynchronously to shorten the duration of the push operation
      * Process a new push to a student's repository or to the template or solution repository of the exercise.
+     * <p>
+     * A student's push before the start date of an exercise that allows repository access before it is only stored: it creates no submission and triggers no build. The
+     * changes are built at the start date instead.
      *
+     * @param exercise      the exercise of the repository
      * @param participation the participation for which the push was made
      * @param commit        the commit that was pushed
      * @param user          the user who pushed the commit, used for logging and access control
+     * @return whether the push was processed or its build was deferred until the start date of the exercise
      * @throws VersionControlException if the commit belongs to the wrong branch (i.e. not the default branch of the participation)
      */
-    private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit, User user, RepositoryType pushedRepositoryType) {
+    private PushProcessingOutcome processNewPushToRepository(ProgrammingExercise exercise, ProgrammingExerciseParticipation participation, Commit commit, User user,
+            RepositoryType pushedRepositoryType) {
         // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
         // Therefore, a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && isBuildDeferredUntilStartDate(exercise, user)) {
+            // The same branch rule as for a submission, so a push to another branch is rejected before and after the start date alike
+            if (commit.branch() != null && !commit.branch().equalsIgnoreCase(studentParticipation.getBranch())) {
+                throw new VersionControlException(
+                        "Submission for participation id " + participation.getId() + " in branch " + commit.branch() + " will be ignored! Only the default branch is considered");
+            }
+            log.debug("Deferred the build of commit {} for participation {} until the start date of exercise {}", commit.commitHash(), participation.getId(), exercise.getId());
+            return PushProcessingOutcome.DEFERRED_UNTIL_START_DATE;
+        }
         ProgrammingSubmission submission;
         try {
             submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit, user, pushedRepositoryType);
@@ -1689,6 +1709,23 @@ public class LocalVCServletService {
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
         programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
+        return PushProcessingOutcome.PROCESSED;
+    }
+
+    /**
+     * Whether a push is only stored and built at the start date: the exercise is in its early repository access phase and the user pushing is a student. Pushes of
+     * teaching assistants and instructors are built right away, and so is a push without a known user.
+     *
+     * @param exercise the exercise of the repository
+     * @param user     the user who pushed, may be null
+     * @return true if the push must not create a submission or trigger a build
+     */
+    private boolean isBuildDeferredUntilStartDate(ProgrammingExercise exercise, @Nullable User user) {
+        if (user == null || !exercise.isInEarlyRepositoryAccessPhase()) {
+            return false;
+        }
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return course != null && authorizationCheckService.isOnlyStudentInCourse(course.getId(), user);
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException, VersionControlException {

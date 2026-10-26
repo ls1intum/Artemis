@@ -86,8 +86,11 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         Repository repository = receivePack.getRepository();
 
         try {
-            localVCServletService.processNewPush(commitHash, repository, user, Optional.ofNullable(exercise), Optional.ofNullable(participation),
+            PushProcessingOutcome outcome = localVCServletService.processNewPush(commitHash, repository, user, Optional.ofNullable(exercise), Optional.ofNullable(participation),
                     Optional.ofNullable(vcsAccessLog));
+            if (outcome == PushProcessingOutcome.DEFERRED_UNTIL_START_DATE) {
+                receivePack.sendMessage("Your changes were saved. They will be built and tested automatically at the start date of the exercise.");
+            }
         }
         catch (LocalCIException e) {
             // Return an error message to the user.

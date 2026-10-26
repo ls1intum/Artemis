@@ -29,6 +29,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
@@ -62,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
@@ -85,6 +87,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private ProgrammingTriggerService programmingTriggerService;
 
     private Course course;
 
@@ -743,6 +748,120 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 commitFile(git, "instructor-file.txt");
                 testPushSuccessful(git, instructor1.getLogin(), projectKey, student1RepoSlug);
             }
+        }
+
+        private void allowRepositoryAccessBeforeStartDate(long exerciseId, ZonedDateTime releaseDate, ZonedDateTime startDate) {
+            ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            exercise.setReleaseDate(releaseDate);
+            exercise.setStartDate(startDate);
+            exercise.setAllowRepositoryAccessBeforeStartDate(true);
+            programmingExerciseRepository.save(exercise);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testFetchPush_studentRepository_beforeStartDate_withRepositoryAccessBeforeStartDate() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-early-access");
+            String projectKey = exercise.getProjectKey();
+            allowRepositoryAccessBeforeStartDate(exercise.getId(), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusHours(1));
+
+            // Student1 may start the exercise before its start date
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            mockDockerClientForStudentBuild();
+            StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
+
+            // ... and fetch and push, but the push is neither submitted nor built
+            String pushedCommitHash;
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), projectKey, student1RepoSlug);
+                commitFile(git, "early-work.txt");
+                pushedCommitHash = git.getRepository().resolve("HEAD").name();
+                Iterable<PushResult> results = git.push().setRemote(buildRepositoryUri(student1.getLogin(), projectKey, student1RepoSlug))
+                        .setRefSpecs(new RefSpec("HEAD:refs/heads/main")).call();
+                PushResult result = results.iterator().next();
+                assertThat(result.getRemoteUpdate("refs/heads/main").getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+                assertThat(result.getMessages()).contains("built and tested automatically at the start date");
+            }
+            assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.id())).isEmpty();
+
+            // Student2 still cannot access the repository of student1
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchReturnsForbidden(git, student2.getLogin(), projectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student2.getLogin(), projectKey, student1RepoSlug);
+            }
+
+            // At the start date, the pushed commit is submitted and built
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+            ProgrammingExercise started = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+            started.setStartDate(ZonedDateTime.now().minusSeconds(1));
+            programmingExerciseRepository.save(started);
+            programmingTriggerService.triggerBuildsForChangesBeforeStartDate(exercise.getId());
+
+            await().untilAsserted(() -> assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.id()))
+                    .anyMatch(submission -> pushedCommitHash.equals(submission.getCommitHash())));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testOnlineEditorCommit_beforeStartDate_withRepositoryAccessBeforeStartDate_isNotSubmitted() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-early-access-editor");
+            allowRepositoryAccessBeforeStartDate(exercise.getId(), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusHours(1));
+
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            mockDockerClientForStudentBuild();
+            StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+
+            // The online editor saves and commits as usual, but the commit is built at the start date only
+            var params = new org.springframework.util.LinkedMultiValueMap<String, String>();
+            params.add("file", "early-editor-work.txt");
+            request.postWithoutResponseBody("/api/programming/participations/" + participation.id() + "/repository/file", HttpStatus.OK, params);
+            request.postWithoutLocation("/api/programming/participations/" + participation.id() + "/repository/commit", null, HttpStatus.OK, null);
+
+            assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.id())).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testFetchPush_studentRepository_beforeReleaseDate_withRepositoryAccessBeforeStartDate() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-early-access-unreleased");
+            String projectKey = exercise.getProjectKey();
+            allowRepositoryAccessBeforeStartDate(exercise.getId(), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2));
+
+            // The option opens the exercise between the release and the start date, not before the release date
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            request.post("/api/exercise/exercises/" + exercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+            participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseRepository.findByIdElseThrow(exercise.getId()), student1.getLogin());
+            String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, student1RepoSlug);
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testFetchPush_teachingAssistantRepository_beforeStartDate_withRepositoryAccessBeforeStartDate_isBuilt() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-early-access-tutor");
+            String projectKey = exercise.getProjectKey();
+            allowRepositoryAccessBeforeStartDate(exercise.getId(), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusHours(1));
+
+            userUtilService.changeUser(TEST_PREFIX + "tutor1");
+            mockDockerClientForStudentBuild();
+            StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            String tutorRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + tutor1.getLogin();
+
+            // Only the pushes of students wait for the start date
+            try (Git git = cloneRepository(tutor1.getLogin(), projectKey, tutorRepoSlug)) {
+                commitFile(git, "tutor-work.txt");
+                testPushSuccessful(git, tutor1.getLogin(), projectKey, tutorRepoSlug);
+            }
+            await().untilAsserted(() -> assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.id())).isNotEmpty());
         }
     }
 
