@@ -419,7 +419,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     private de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository submissionPolicyRepository;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository exerciseVersionRepository;
+    private de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository exerciseVersionRepository;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")

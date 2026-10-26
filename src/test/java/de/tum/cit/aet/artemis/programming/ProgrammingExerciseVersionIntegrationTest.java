@@ -655,7 +655,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Autowired
-    private de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    private de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")

@@ -69,7 +69,7 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportByParticipationIds_happyPath() throws Exception {
         var participationIds = programmingExerciseStudentParticipationTestRepository.findByExerciseId(exercise.getId()).stream().map(p -> p.getId().toString()).toList();
-        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
+        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds) + "/for-instructor";
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
         var file = request.postWithResponseBodyFile(url, exportOptions, HttpStatus.OK);
         assertThat(file).exists();

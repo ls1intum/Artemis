@@ -265,7 +265,7 @@ class RepositoryServiceFileOperationsTest {
         FileUtils.writeStringToFile((workingTree.resolve("message.txt")).toFile(), "exact committed contents", StandardCharsets.UTF_8);
         var git = org.eclipse.jgit.api.Git.wrap(repository);
         git.add().addFilepattern("message.txt").call();
-        var commit = git.commit().setMessage("Commit raw text").setAuthor("Fixture", "fixture@example.com").call();
+        var commit = GitService.commit(git).setMessage("Commit raw text").setAuthor("Fixture", "fixture@example.com").call();
         assertThat(repositoryService.getFileContentFromBareRepository(repository, commit.getName(), "message.txt")).contains("exact committed contents");
         assertThat(repositoryService.getFileContentFromBareRepository(repository, commit.getName(), "absent.txt")).isEmpty();
         assertThat(repositoryService.getFileContentFromBareRepository(repository, commit.getName(), " ")).isEmpty();
@@ -284,7 +284,7 @@ class RepositoryServiceFileOperationsTest {
         FileUtils.writeStringToFile((workingTree.resolve("nested/source.txt")).toFile(), "tracked source", StandardCharsets.UTF_8);
         var git = org.eclipse.jgit.api.Git.wrap(repository);
         git.add().addFilepattern(".").call();
-        var commit = git.commit().setMessage("Commit source").setAuthor("Fixture", "fixture@example.com").call();
+        var commit = GitService.commit(git).setMessage("Commit source").setAuthor("Fixture", "fixture@example.com").call();
         repositoryService.deleteAllContentInRepository(repository);
         assertThat(workingTree.resolve("nested")).doesNotExist();
         assertThat(workingTree.resolve(".git")).isDirectory();
@@ -296,7 +296,7 @@ class RepositoryServiceFileOperationsTest {
         FileUtils.writeStringToFile((workingTree.resolve("cached.txt")).toFile(), "cached committed contents", StandardCharsets.UTF_8);
         var git = org.eclipse.jgit.api.Git.wrap(repository);
         git.add().addFilepattern(".").call();
-        git.commit().setMessage("Commit cached source").setAuthor("Fixture", "fixture@example.com").call();
+        GitService.commit(git).setMessage("Commit cached source").setAuthor("Fixture", "fixture@example.com").call();
         var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
         var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
         var checkout = org.mockito.Mockito.mock(GitService.class);
