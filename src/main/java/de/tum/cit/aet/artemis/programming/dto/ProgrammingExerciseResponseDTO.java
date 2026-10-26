@@ -207,7 +207,7 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         List<GradingCriterionDTO> gradingCriteria = null;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriteria = criteria.stream().map(GradingCriterionDTO::of).toList();
+            gradingCriteria = GradingCriterionDTO.ofAll(criteria);
         }
 
         Set<CompetencyLinkDTO> competencyLinks = null;

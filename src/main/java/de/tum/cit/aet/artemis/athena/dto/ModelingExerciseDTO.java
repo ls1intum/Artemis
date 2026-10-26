@@ -25,8 +25,7 @@ public record ModelingExerciseDTO(long id, String title, double maxPoints, doubl
     public static ModelingExerciseDTO of(@NotNull ModelingExercise exercise) {
         var gradingCriteria = exercise.getGradingCriteria();
         return new ModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
-                gradingCriteria == null ? List.of() : gradingCriteria.stream().map(GradingCriterionDTO::of).toList(), exercise.getProblemStatement(),
-                exercise.getExampleSolutionModel());
+                gradingCriteria == null ? List.of() : GradingCriterionDTO.ofAll(gradingCriteria), exercise.getProblemStatement(), exercise.getExampleSolutionModel());
     }
 
     /**
