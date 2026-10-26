@@ -15,7 +15,7 @@ import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
-/** A criterion prepared for display: alphabetically sorted instructions plus its live "applied" counter. */
+/** A criterion prepared for display in instructor order, together with its live "applied" counter. */
 export interface SortedGradingCriterion {
     title: string;
     instructions: GradingInstruction[];
@@ -52,16 +52,13 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
 
     /**
-     * Criteria and their instructions in alphabetical order, so a tutor can find an instruction by its wording
-     * instead of by the (arbitrary) order in which the instructor happened to create them.
+     * Preserve the instructor's rubric order in the assessment editor.
      */
     readonly sortedCriteria = computed<SortedGradingCriterion[]>(() =>
-        [...(this.criteria() ?? [])]
-            .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-            .map((criterion) => ({
-                title: criterion.title,
-                instructions: [...(criterion.structuredGradingInstructions ?? [])].sort((a, b) => (a.instructionDescription ?? '').localeCompare(b.instructionDescription ?? '')),
-            })),
+        (this.criteria() ?? []).map((criterion) => ({
+            title: criterion.title,
+            instructions: criterion.structuredGradingInstructions ?? [],
+        })),
     );
 
     readonly selectable = computed(() => !this.readonly() && this.selectionService.isSelectable());
