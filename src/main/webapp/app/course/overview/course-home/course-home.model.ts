@@ -60,6 +60,8 @@ export interface CourseHomeGeneratedWelcome {
 }
 export interface CourseHome {
     asOf: string;
+    nextRefreshAt?: string;
+    sections: Record<'lectures' | 'exams' | 'faq', CourseHomeSectionStatus>;
     visit: { firstVisit: boolean; previousVisitAt?: string; snapshotAt: string; variantCursor: number; newSince: string };
     course: { id: number; title: string; description?: string; language?: string; startDate?: string; endDate?: string; studentWelcomeContext?: string };
     capabilities: CourseAvailableTabs;

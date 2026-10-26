@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCourseHomeSessionsDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseHomeDTO(Instant asOf, Visit visit, CourseInfo course, CourseAvailableTabsDTO capabilities, Progress progress, CourseHomeWelcomeDTO welcome,
         @Nullable Item nextStep, List<Item> updates, @Nullable Item announcement, List<Item> faqs, CourseHomeTeachingTeamDTO teachingTeam, CourseHomeQuestionsDTO questions,
-        IrisCourseHomeSessionsDTO irisSessions) {
+        IrisCourseHomeSessionsDTO irisSessions, java.util.Map<String, SectionStatus> sections, @Nullable Instant nextRefreshAt) {
 
     public enum SectionStatus {
         AVAILABLE, DISABLED, UNAVAILABLE
