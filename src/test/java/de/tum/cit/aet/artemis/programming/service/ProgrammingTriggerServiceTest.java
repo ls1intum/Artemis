@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
@@ -27,6 +31,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.localci.service.ci.BulkTriggerThrottle;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localci.service.ci.SharedBuildTriggerData;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -82,6 +87,9 @@ class ProgrammingTriggerServiceTest {
     private ProgrammingMessagingService programmingMessagingService;
 
     @Mock
+    private SelectedBuildRunStatusService selectedBuildRunStatusService;
+
+    @Mock
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
     @Mock
@@ -102,7 +110,7 @@ class ProgrammingTriggerServiceTest {
         programmingTriggerService = new ProgrammingTriggerService(programmingSubmissionRepository, programmingExerciseRepository, Optional.of(continuousIntegrationTriggerService),
                 participationService, programmingExerciseParticipationService, auditEventRepository, programmingExerciseStudentParticipationRepository, programmingMessagingService,
                 templateProgrammingExerciseParticipationRepository, solutionProgrammingExerciseParticipationRepository, programmingExerciseTestCaseChangedService,
-                programmingSubmissionMessagingService);
+                programmingSubmissionMessagingService, selectedBuildRunStatusService);
         // Batching is configured from properties, which a plain unit test does not read; without a size the batch pause
         // divides by zero. A large batch keeps every test below the point where the service would sleep.
         ReflectionTestUtils.setField(programmingTriggerService, "externalSystemRequestBatchSize", 100);
@@ -404,6 +412,95 @@ class ProgrammingTriggerServiceTest {
         ArgumentCaptor<ProgrammingExerciseStudentParticipation> triggered = ArgumentCaptor.captor();
         verify(continuousIntegrationTriggerService).triggerBuild(triggered.capture(), anyBoolean(), any(SharedBuildTriggerData.class));
         assertThat(triggered.getValue().getId()).isEqualTo(2L);
+    }
+
+    @Test
+    void triggerBuildForParticipationData_waitsForRoomInTheBuildQueueBeforeEveryBuild() {
+        // A bulk run that queues everything at once buries the build agents, so it asks for room before each build, not
+        // once per run: the room another run or a student's push used up in the meantime must be noticed.
+        BulkTriggerThrottle throttle = mock(BulkTriggerThrottle.class);
+        when(continuousIntegrationTriggerService.createBulkTriggerThrottle()).thenReturn(throttle);
+
+        programmingTriggerService.triggerBuildForParticipationData(List.of(triggerData(1L, false), triggerData(2L, false)), exercise);
+
+        InOrder inOrder = inOrder(throttle, continuousIntegrationTriggerService);
+        for (long participationId : new long[] { 1L, 2L }) {
+            inOrder.verify(throttle).awaitCapacity();
+            inOrder.verify(continuousIntegrationTriggerService).triggerBuild(argThat(triggered -> triggered.getId() == participationId), anyBoolean(),
+                    any(SharedBuildTriggerData.class));
+        }
+    }
+
+    @Test
+    void triggerBuildForParticipationData_doesNotWaitForAParticipationThatHasNothingToBuild() {
+        // Waiting for room in the queue for a build that is never queued only delays the participations behind it.
+        BulkTriggerThrottle throttle = mock(BulkTriggerThrottle.class);
+        when(continuousIntegrationTriggerService.createBulkTriggerThrottle()).thenReturn(throttle);
+        var withoutSubmission = new ProgrammingExerciseStudentParticipation();
+        withoutSubmission.setId(1L);
+        withoutSubmission.setBuildPlanId(null);
+        when(programmingExerciseStudentParticipationRepository.findWithSubmissionsById(1L)).thenReturn(Optional.of(withoutSubmission));
+
+        programmingTriggerService.triggerBuildForParticipationData(List.of(triggerData(1L, true)), exercise);
+
+        verify(throttle, never()).awaitCapacity();
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
+    }
+
+    @Test
+    void triggerBuildForParticipations_neverWaitsForRoomInTheBuildQueue() {
+        // This path also queues the builds at the start and the end of a student exam. They have to be queued at once, so
+        // they do not take part in the wait that only a bulk run by an instructor accepts.
+        programmingTriggerService.triggerBuildForParticipations(List.of(participationWithSubmission(1L, exercise), participationWithSubmission(2L, exercise)));
+
+        verify(continuousIntegrationTriggerService, never()).createBulkTriggerThrottle();
+        verify(continuousIntegrationTriggerService, times(2)).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
+    }
+
+    @Test
+    void triggerInstructorBuildForParticipations_triggersEveryGivenParticipation() {
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false), triggerData(2L, false)), exercise, "run-1");
+
+        ArgumentCaptor<ProgrammingExerciseStudentParticipation> triggered = ArgumentCaptor.captor();
+        verify(continuousIntegrationTriggerService, times(2)).triggerBuild(triggered.capture(), anyBoolean(), any(SharedBuildTriggerData.class));
+        assertThat(triggered.getAllValues()).extracting(ProgrammingExerciseStudentParticipation::getId).containsExactly(1L, 2L);
+    }
+
+    @Test
+    void triggerInstructorBuildForParticipations_tellsTheClientsWhichRunIsDoneOnceItQueuedItsBuilds() {
+        // The retry action of the client stays busy until its own run has queued the last build, which it learns from this message.
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1");
+
+        // The end is recorded before the message, so a client that gets the message and asks for the status finds the run ended.
+        InOrder inOrder = inOrder(programmingMessagingService, continuousIntegrationTriggerService, selectedBuildRunStatusService);
+        inOrder.verify(continuousIntegrationTriggerService).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
+        inOrder.verify(selectedBuildRunStatusService).markEnded("run-1");
+        inOrder.verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
+        // The run of all builds sends the notification to the instructors, a rebuild of a few participations does not.
+        verify(programmingMessagingService, never()).notifyInstructorAboutStartedExerciseBuildRun(any());
+        verify(programmingMessagingService, never()).notifyInstructorAboutCompletedExerciseBuildRun(any());
+    }
+
+    @Test
+    void triggerInstructorBuildForParticipations_namesEachRunInItsOwnMessage() {
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1");
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(2L, false)), exercise, "run-2");
+
+        verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
+        verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-2");
+    }
+
+    @Test
+    void triggerInstructorBuildForParticipations_tellsTheClientsThatTheRunIsDoneAlsoWhenItFails() {
+        BulkTriggerThrottle throttle = mock(BulkTriggerThrottle.class);
+        when(continuousIntegrationTriggerService.createBulkTriggerThrottle()).thenReturn(throttle);
+        doThrow(new IllegalStateException("the queue cannot be read")).when(throttle).awaitCapacity();
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1"));
+
+        verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
+        verify(selectedBuildRunStatusService).markEnded("run-1");
     }
 
     @Test

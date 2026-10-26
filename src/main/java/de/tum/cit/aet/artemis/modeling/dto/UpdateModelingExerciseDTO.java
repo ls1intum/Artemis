@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseMetadataDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
@@ -31,7 +32,7 @@ public record UpdateModelingExerciseDTO(Long id, String title, String channelNam
         Boolean secondCorrectionEnabled, String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
         ZonedDateTime exampleSolutionPublicationDate, DiagramType diagramType, String exampleSolutionModel, String exampleSolutionExplanation, Long courseId, Long exerciseGroupId,
         ExerciseMode mode, TeamAssignmentConfigDTO teamAssignmentConfig, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, List<GradingCriterionDTO> gradingCriteria,
-        Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO, ExerciseMetadataDTO {
 
     /**
      * Creates a DTO from a ModelingExercise entity.

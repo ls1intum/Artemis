@@ -128,9 +128,10 @@ describe('ExerciseActionsComponent', () => {
             expect(component.mainActions().map((a) => a.id)).not.toContain('teams');
         });
 
-        it('always includes participations and scores', () => {
+        it('always includes participations, which also hold the scores', () => {
             const ids = component.mainActions().map((a) => a.id);
-            expect(ids).toEqual(expect.arrayContaining(['participations', 'scores']));
+            expect(ids).toContain('participations');
+            expect(ids).not.toContain('scores');
         });
 
         it('adds quiz-specific actions, including re-evaluate only when ended and instructor', () => {

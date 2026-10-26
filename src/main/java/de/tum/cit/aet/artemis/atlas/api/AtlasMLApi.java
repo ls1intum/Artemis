@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.atlas.api;
 import java.util.List;
 
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -24,6 +26,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Controller
 @Lazy
 public class AtlasMLApi extends AbstractAtlasApi {
+
+    private static final Logger log = LoggerFactory.getLogger(AtlasMLApi.class);
 
     private final AtlasMLService atlasMLService;
 
@@ -61,6 +65,20 @@ public class AtlasMLApi extends AbstractAtlasApi {
      */
     public boolean saveExerciseWithCompetencies(Exercise exercise) {
         return atlasMLService.saveExerciseWithCompetencies(exercise, OperationTypeDTO.UPDATE);
+    }
+
+    /**
+     * Notifies AtlasML after a successful exercise update. AtlasML failure must not fail the completed database update.
+     *
+     * @param exercise the updated exercise
+     */
+    public void notifyExerciseUpdated(Exercise exercise) {
+        try {
+            saveExerciseWithCompetencies(exercise, OperationTypeDTO.UPDATE);
+        }
+        catch (Exception exception) {
+            log.warn("Failed to notify AtlasML about exercise update: {}", exception.getMessage());
+        }
     }
 
     /**

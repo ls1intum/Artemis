@@ -303,9 +303,27 @@
                         </div>
                     }
                 }
-                @if (mode() !== 'practice' && quizExercise()?.quizMode === QuizMode.SYNCHRONIZED && !waitingForQuizStart() && !showingResult() && submission().submitted) {
-                    <div class="quiz-submitted-overlay alert alert-success">
+                @if (
+                    mode() !== 'practice' &&
+                    quizExercise()?.quizMode === QuizMode.SYNCHRONIZED &&
+                    !waitingForQuizStart() &&
+                    !showingResult() &&
+                    submission().submitted &&
+                    !submissionConfirmationDismissed()
+                ) {
+                    <div class="quiz-submitted-overlay alert alert-success" role="status" data-testid="quiz-submission-confirmation">
                         <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            size="small"
+                            severity="secondary"
+                            variant="text"
+                            data-testid="dismiss-quiz-submission-confirmation"
+                            (click)="submissionConfirmationDismissed.set(true)"
+                        >
+                            {{ 'entity.action.close' | artemisTranslate }}
+                        </button>
                     </div>
                 }
             </div>
@@ -319,7 +337,7 @@
                                 <span jhiTranslate="artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart"></span>
                                 <span class="text-bold">{{ timeUntilStart() }}</span>
                                 <br />
-                                <span>({{ quizExercise().releaseDate!.format('LT') }})</span>
+                                <span data-testid="quiz-planned-start-time">({{ startDate()!.format('LT') }})</span>
                             </div>
                         }
                     }

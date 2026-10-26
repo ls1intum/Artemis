@@ -253,7 +253,7 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
     private void sendStatus(String jobId, String result) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, PyrisRunState.FINISHED, null, null, null, null, null, null), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(result, PyrisRunState.FINISHED, null, null, null, null), HttpStatus.OK, headers);
     }
 
     private static String messagesUrl(IrisChatSession session) {

@@ -92,7 +92,6 @@
                     [showCourseId]="true"
                     [isAdminView]="true"
                     (cancelJob)="cancelBuildJob($event)"
-                    (cancelAll)="cancelAllBuildJobs()"
                     (jobClick)="navigateToJobDetail($event)"
                 />
             </div>
@@ -115,21 +114,7 @@
                         <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
                         <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
                     </h4>
-                    <div class="flex items-center gap-2">
-                        <input
-                            [attr.aria-label]="'artemisApp.buildQueue.filter.search.title' | artemisTranslate"
-                            tumAetUiInput
-                            type="text"
-                            name="searchTerm"
-                            id="field_searchTerm"
-                            [(ngModel)]="searchTerm"
-                            (focusout)="triggerLoadFinishedJobs()"
-                        />
-                        <jhi-help-icon text="artemisApp.buildQueue.filter.search.tooltip" />
-                        <tumaet-ui-button size="small" (clicked)="triggerLoadFinishedJobs()">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.search.title"></span>
-                        </tumaet-ui-button>
-                    </div>
+                    <div jhi-build-job-search class="flex items-center gap-2" [(searchTerm)]="searchTerm" (searchRequested)="triggerLoadFinishedJobs()"></div>
                     <tumaet-ui-button size="small" (clicked)="loadFinishedBuildJobs()">
                         <fa-icon [icon]="faSync" />
                         <span jhiTranslate="metrics.refresh.button"></span>

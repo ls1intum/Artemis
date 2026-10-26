@@ -4,7 +4,6 @@ title: Communication
 sidebar_label: Communication
 ---
 
-import React from "react";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
@@ -23,6 +22,9 @@ import tutorRoleImg from "../assets/communication/user-authorities/tutor-role.pn
 import studentRoleImg from "../assets/communication/user-authorities/student-role.png";
 
 import messageReferencesImg from "../assets/communication/references.png";
+import formattedMessageEditorImg from "../assets/communication/formatted-message-editor.png";
+import compactMessageToolbarImg from "../assets/communication/formatted-message-toolbar-collapsed.png";
+import expandedMessageToolbarImg from "../assets/communication/formatted-message-toolbar-expanded.png";
 import slideMenuImg from "../assets/communication/slide-menu-view.png";
 import slidePreviewImg from "../assets/communication/slide-preview-message.png";
 import slideViewImg from "../assets/communication/slide-open.png";
@@ -32,36 +34,6 @@ import forwardMessageDialogImg from "../assets/communication/forward-dialog.png"
 import forwardedMessageImg from "../assets/communication/forward-view.png";
 import saveMessagesImg from "../assets/communication/save-message.png";
 import expandedThreadImg from "../assets/communication/expanded.png";
-
-export const AVAILABLE = () => (
-  <span style={{ backgroundColor: "#28a745", padding: "3px 6px", borderRadius: "8px", color: "white", fontWeight: "bold", display: "inline-block", width: "150px", textAlign: "center" }}>
-    AVAILABLE
-  </span>
-);
-
-export const UNAVAILABLE = () => (
-  <span style={{ backgroundColor: "#dc3545", padding: "3px 6px", borderRadius: "8px", color: "white", fontWeight: "bold", display: "inline-block", width: "150px", textAlign: "center" }}>
-    UNAVAILABLE
-  </span>
-);
-
-export const PLANNED = () => (
-  <span style={{ backgroundColor: "#007bff", padding: "3px 6px", borderRadius: "8px", color: "white", fontWeight: "bold", display: "inline-block", width: "150px", textAlign: "center" }}>
-    PLANNED
-  </span>
-);
-
-export const WIP = () => (
-  <span style={{ backgroundColor: "#ffc107", padding: "3px 6px", borderRadius: "8px", color: "black", fontWeight: "bold", display: "inline-block", width: "150px", textAlign: "center" }}>
-    WIP
-  </span>
-);
-
-export const NOT_PLANNED = () => (
-  <span style={{ backgroundColor: "#6c757d", padding: "3px 6px", borderRadius: "8px", color: "white", fontWeight: "bold", display: "inline-block", width: "150px", textAlign: "center" }}>
-    NOT PLANNED
-  </span>
-);
 
 Artemis enables students, tutors, and instructors to actively participate with its communication capabilities.
 Various communication features allow students to engage with peers and ask all kinds of questions whereas moderators
@@ -108,7 +80,13 @@ with them. Private communication is only available if the course instructor enab
 
 If the recipient is browsing another conversation when they receive a new message, an icon with an unread-messages counter is displayed in their
 conversation sidebar, next to the affiliated conversation that the new message was sent to. This way, users become aware of the new message
-within that discussion.
+within that discussion. A reply in a thread raises the counter for the author of the message and for everyone who replied in that thread
+before, but not for the other members of the conversation. Muting a conversation switches this off.
+
+When you open a conversation that received messages since your last visit, Artemis scrolls to the first of them and marks where they
+start with a "New" line. If more messages arrived than fit on the first loaded page, the conversation opens where you left it instead,
+and the "Jump to first unread message" button takes you to the new messages.
+If there are no unread messages, the conversation opens at the newest message.
 
 The authorities of tutors and instructors are more restricted in the Messages Page compared to the Course Communication
 Overview. Messages of a conversation are exclusive to its participants and are only editable or deletable by their respective
@@ -130,117 +108,21 @@ The preview will be removed.
 
 <Image src={linkPreviewViewImg} alt={"link-preview-view"} size={ImageSize.medium} />
 
-<a id="communication-features-availability-list"></a>
+<a id="communication-features-availability-list" style={{display: "block", scrollMarginTop: "var(--ifm-navbar-height)"}}></a>
 
 ## Communication Features Availability
 
-The following table represents the currently available communication features of Artemis on the different platforms. Note that not all
-features are available to every user, which is why **Actor restrictions** have been added. The following sections will explore this in more
-detail.
+For the differences between the Android and iOS apps, see the
+[mobile communication feature comparison](/student/getting-started/mobile-applications#communication-features).
+The [full mobile feature comparison](/student/getting-started/mobile-applications#feature-comparison) also covers sign-in,
+courses, exercises, lectures, Iris, and notifications.
 
-### Status explained
+<a id="status-explained"></a>
+<a id="available-features-on-each-platform"></a>
 
-| Status | Meaning |
-|---|---|
-| <AVAILABLE /> | This feature has been released to production. |
-| <UNAVAILABLE /> | This feature is currently not available and not planned yet. |
-| <PLANNED /> | This feature is planned and implemented within the next 2-4 months. |
-| <WIP /> | This feature is currently being worked on and will be released soon. |
-| <NOT_PLANNED /> | This feature will not be implemented due to platform restrictions, or it does not make sense to implement it. |
-
-### Available features on each platform
-
-| Feature | Actor Restrictions | Web App | iOS | Android |
-|---|---|---|---|---|
-| **General** |  |  |  |  |
-| Send Messages |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Receive Messages |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-|  |  |  |  |  |
-| **Post Actions** |  |  |  |  |
-| React to Messages |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Reply in Thread |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| See who reacted to a post |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Copy Text |  | <NOT_PLANNED /> | <AVAILABLE /> | <AVAILABLE /> |
-| Pin Messages | Groups: group creators<br/>Channels: moderators<br/>DM: members of DM | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Delete Message | Moderators and authors | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Edit Message | Authors only | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Save Message for later |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Forward Messages |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Resolve Messages | At least tutor and authors | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Post action bar (thread view) |  | <NOT_PLANNED /> | <AVAILABLE /> | <AVAILABLE /> |
-| Get tutor suggestion (thread view) | At least tutor | <AVAILABLE /> | <UNAVAILABLE /> | <UNAVAILABLE /> |
-|  |  |  |  |  |
-| **Markdown Text field Options** |  |  |  |  |
-| Tag other users |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Reference channels, lectures and exercises |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Tag FAQ |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Basic formatting (underline, bold, italic) |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Strikethrough formatting |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Preview |  | <AVAILABLE /> | <UNAVAILABLE /> | <AVAILABLE /> |
-| Code Block and inline code formatting |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Reference formatting |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Link formatting |  | <AVAILABLE /> | <AVAILABLE /> | <PLANNED /> |
-|  |  |  |  |  |
-| **Messages** |  |  |  |  |
-| Profile pictures |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Show if message was edited, resolved or pinned |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Render links to exercises, lectures, other chats, lecture-units and slides with correct icon |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Render FAQ links |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Mark unread messages |  | <UNAVAILABLE /> | <UNAVAILABLE /> | <UNAVAILABLE /> |
-| Render images |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Show link previews |  | <AVAILABLE /> | <UNAVAILABLE /> | <AVAILABLE /> |
-| Render links to uploaded files |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Filter messages (unresolved, own, reacted) |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Sort messages (ascending, descending) |  | <AVAILABLE /> | <NOT_PLANNED /> | <NOT_PLANNED /> |
-| Search for messages in a specific chat |  | <AVAILABLE /> | <UNAVAILABLE /> | <AVAILABLE /> |
-| Search for messages across all chats |  | <AVAILABLE /> | <PLANNED /> | <UNAVAILABLE /> |
-| Apply filters while searching across all chats |  | <AVAILABLE /> | <PLANNED /> | <UNAVAILABLE /> |
-| Open Profile info by clicking profile picture |  | <PLANNED /> | <AVAILABLE /> | <AVAILABLE /> |
-| Start a conversation from Profile |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Draft messages |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-|  |  |  |  |  |
-| **Link/Attachment Handling** |  |  |  |  |
-| Open lecture, exercise, chat links correctly in the appropriate view |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Open sent images full-screen |  | <AVAILABLE /> | <AVAILABLE /> | <PLANNED /> |
-| Download sent images |  | <AVAILABLE /> | <AVAILABLE /> | <UNAVAILABLE /> |
-| View and download attachments |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-|  |  |  |  |  |
-| **Conversation Management** |  |  |  |  |
-| Search for chats |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Filter chats (all, unread, favorites) |  | <UNAVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Mark unread chats |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Mute, hide, favorite chat |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Edit Chat information (name, topic, description) |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Archive Chat |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Delete Chat |  | <AVAILABLE /> | <AVAILABLE /> | <PLANNED /> |
-| View Members |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Search Members |  | <AVAILABLE /> | <UNAVAILABLE /> | <AVAILABLE /> |
-| Filter Members (All Members, Instructors, Tutors, Students, Moderators) |  | <AVAILABLE /> | <UNAVAILABLE /> | <UNAVAILABLE /> |
-| Add Members to existing chat | Group: members of group<br/>Channel: at least instructor or moderator<br/>DM: not possible | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Filter Members while adding (Students, Tutors, Instructors) |  | <AVAILABLE /> | <UNAVAILABLE /> | <AVAILABLE /> |
-| Add whole groups (All Students, All Tutors, All Instructors) |  | <AVAILABLE /> | <PLANNED /> | <UNAVAILABLE /> |
-| Grant moderator roles in channels / revoke moderation roles | Moderators only | <AVAILABLE /> | <UNAVAILABLE /> | <AVAILABLE /> |
-| Create direct chat | Everyone | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Create channel (public/private, announcement/unrestricted) | At least teaching assistant | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Update channel information (name, topic, description) | Moderators | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Create group chat | Everyone | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Remove users from group chat | Members of group chat | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Browse channels |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Show info in chat overview (created by, created on) |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Leave chat | For groups only | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Delete channel | Creators with moderation rights and instructors | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-| Archive channel | Moderators | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-|  |  |  |  |  |
-| **Notifications** |  |  |  |  |
-| Notification overview for past course specific notifications |  | <AVAILABLE /> | <AVAILABLE /> | <UNAVAILABLE /> |
-| Notification settings (unsubscribe/subscribe to various course specific notification types) |  | <AVAILABLE /> | <AVAILABLE /> | <AVAILABLE /> |
-
-> **Note**
-> - Leave chat option is available on the web app for groups only, on iOS for groups and non course-wide channels, and on Android for channels, groups, and DMs.
-> - Creating a group chat on iOS and Android can be achieved via the 'Create Chat' option. It becomes a group when more than one user is added.
-> - Starting a conversation on the web app from a profile is available when clicking on the user's name in the chat.
-> - Downloading sent images in the chat is only available through the browser option on the web app.
-> - Seeing who reacted to a post is available when hovering over a reaction on the web app.
+The following sections describe communication in the web application. Available actions depend on the course's
+communication settings, the conversation type, and your role. The mobile comparison states which of these actions
+are also supported in each app; it does not make commitments about future releases.
 
 ## Features for Users
 
@@ -309,6 +191,61 @@ Student Authority
 To foster interaction between users, we integrate the well-known emoji reaction bar.
 Each user in the course can react on any message by making use of the emoji selection button.
 The ➕ emoji serves as the up-voting reaction, which influences the display order of messages.
+
+### Formatted Message Editor
+
+In the web app, messages and replies open with their formatting visible.
+The toolbar always stays on one line. It shows bold, italic, underline, strikethrough, inline code, links, person mentions, course references, emojis and **More options**.
+On a narrow screen, the formatting buttons that do not fit move into the bar that **More options** opens.
+Select text or choose **More options** to show a bar above the editor with lists, quotes, code blocks, attachments, slides and FAQs, and with the formatting buttons that did not fit the toolbar. **Fewer options** closes the bar again.
+The bar floats above the editor, so opening it does not move the text you are writing.
+Controls opened by selecting text close when the selection is cleared. Controls opened with **More options** stay open until you choose **Fewer options**.
+Keyboard shortcuts and pasting or dropping files also work while these options are hidden.
+An empty editor names where your message goes, for example _Message Katja_ in a direct message or _Message general_ in a channel, and _Reply…_ in a thread.
+The hint below the editor lists only the essentials on a narrow screen. The help button next to it shows all typing tips on hover or focus.
+
+<Image src={compactMessageToolbarImg} alt={"The compact message toolbar with text formatting, links, mentions, references, emojis and More options"} size={ImageSize.large} />
+
+<Image src={expandedMessageToolbarImg} alt={"The message toolbar with the bar of further options above the editor, showing lists, quote, code block, attachments, slides and FAQs; Fewer options closes the bar"} size={ImageSize.large} />
+
+Type a list marker (`-`, `*`, `+`, `1.` or `1)`) followed by a space to start a list.
+At the beginning or end of a quote or code block, use the up or down arrow key to move to normal text outside it.
+
+Use the toolbar to format selected text or add a link. Bare hostnames such as `example.org` become HTTPS links; explicit relative destinations stay relative. Select the link toolbar button again to close its popup. Select an existing link to change its text or destination.
+**Remove link** keeps the text and removes its destination.
+Keep references such as `#123` outside links; link text and destinations containing numeric message references are rejected.
+Select text to change its formatting, or choose a format at the cursor to apply it to the text you type next.
+Choose the same format again to turn it off. Toolbar buttons show which formats are active at the cursor.
+
+<Image src={formattedMessageEditorImg} alt={"A formatted draft listing MIT Introduction to Algorithms lecture and recitation materials with a link to MIT OpenCourseWare"} size={ImageSize.large} />
+
+The course material titles shown in these screenshots are from [MIT OpenCourseWare: 6.006 Introduction to Algorithms (Fall 2011)](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/).
+
+Type `@` to search for people, `#` to search for channels, exercises and lectures in the current course,
+or `:` followed by an emoji name to search for an emoji.
+Suggestions open beside the text you are completing. Use the arrow keys to choose a result and Enter to insert it. Enter accepts the result without sending the message;
+Escape closes the suggestions. Numeric references such as `#123` remain available for linking to messages.
+
+Pressing Backspace immediately after a reference or link selects only that item, including when the cursor follows its automatic separating space.
+Press Backspace again to delete it. The surrounding text stays unchanged.
+Use Ctrl+Z or Command+Z to undo edits, formatting and reference insertions.
+Enter sends a message, including inside lists, quotes and code blocks. Ctrl+Enter or Command+Enter also sends, even when suggestions are open.
+Shift+Enter inserts a line break without sending. In a list, it starts the next item; on an empty item, it returns to normal text. Use the arrow keys at a quote or code block boundary to return to normal text.
+Press Backspace on an empty list item to return to normal text on the same line.
+
+The toolbar also lets you attach images or PDFs, search lecture attachments and individual slides, reference a published FAQ, or search for an emoji.
+Images have a thumbnail in the editor, and PDFs appear as links. You can also paste or drop files into the message.
+Pasting retains supported text formatting, links, lists, quotes and code. Source fonts and colours are replaced by the editor’s styling; tables fall back to plain text. Pasting into code keeps the clipboard text literal. Use your browser’s paste-as-plain-text command to discard formatting.
+Copying or cutting references and attachments within Artemis keeps their targets when you paste into another message editor. Cut and paste remain undoable. Content copied from other applications still passes through the supported-format checks.
+Uploads use the conversation file types and size limits. Wait for an upload to finish before sending or saving.
+Resource pickers insert at the cursor position you selected before opening them. Slide numbers stay visible beside the title.
+Hover over a slide or select it with the arrow keys to preview it before inserting.
+The compact emoji picker closes when you click outside it or press Escape.
+
+Communication supports the messaging formats shown in the toolbar. Tables, mathematical formulas and arbitrary HTML belong in exercise problem statements.
+Existing messages with unsupported formatting cannot be edited here; their saved content remains unchanged.
+For an unsent draft with unsupported formatting, select **Discard draft** to start a new message.
+The formatted editor is an exploration for the web app; the iOS app continues to use its existing editor.
 
 ### Reference Course Entities
 
@@ -392,8 +329,10 @@ It also highlights the correct answer for other students that have a similar pro
 Users can forward any message to another conversation within the same course. In the forward message dialog, they can add
 additional content using the input field. At the top of the dialog, users can search for channels or users by typing into
 the input bar and selecting from the auto-suggestions. They can select multiple conversations at once to forward the message
-to several destinations simultaneously. On the forwarded message view, users can navigate to the exact location of the original
-message by clicking the *View Conversation* button.
+to several destinations simultaneously. Recipients can read the forwarded message even if they cannot access the original
+conversation. They can also forward the received message onward within the same course. Forwarding shares that message,
+including its author, but does not share the rest of the original conversation or its replies. Users who also have access
+to the original conversation can navigate to the original message by clicking the *View Conversation* button.
 
 Forward Message Dialog
 

@@ -16,6 +16,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import englishNotification from 'src/main/webapp/i18n/en/notification.json';
+import germanNotification from 'src/main/webapp/i18n/de/notification.json';
 
 describe('CourseNotificationComponent', () => {
     let component: CourseNotificationComponent;
@@ -181,6 +182,26 @@ describe('CourseNotificationComponent', () => {
         expect(profilePicture).not.toBeNull();
     });
 
+    it('should use the reply author profile and decode navigation query parameters', () => {
+        const notification = createMockNotification(7, 101, 'newAnswerNotification', {
+            replyAuthorName: 'Ada Lovelace',
+            replyAuthorId: 42,
+            replyImageUrl: '/public/ada.png',
+            replyIsBot: true,
+        });
+        notification.relativeWebAppUrl = '/courses/101/messages?messageId=42&search=sorting%20algorithms&empty';
+        fixture.componentRef.setInput('courseNotification', notification);
+        fixture.detectChanges();
+
+        expect(component['authorName']()).toBe('Ada Lovelace');
+        expect(component['authorId']()).toBe(42);
+        expect(component['authorImageUrl']()).toBe('/public/ada.png');
+        expect(component['isAuthorBot']()).toBe(true);
+        expect(component['isShowProfilePicture']()).toBe(true);
+        expect(component['notificationUrl']()).toEqual({ link: ['/courses/101/messages'], queryParams: { messageId: '42', search: 'sorting algorithms', empty: '' } });
+        expect(fixture.debugElement.query(By.directive(ProfilePictureComponent))).not.toBeNull();
+    });
+
     it('should show icon when author details are not present', () => {
         const notificationWithoutAuthor = createMockNotification(1, 101);
 
@@ -251,10 +272,10 @@ describe('CourseNotificationComponent', () => {
     });
 });
 
-describe('CourseNotificationComponent rendering the message of an editor', () => {
+describe('CourseNotificationComponent rendering translated content', () => {
     let fixture: ComponentFixture<CourseNotificationComponent>;
 
-    const renderContent = (notificationType: string, payload: Record<string, unknown>): HTMLElement => {
+    const renderContent = async (notificationType: string, payload: Record<string, unknown>): Promise<HTMLElement> => {
         const notification = new CourseNotification(
             1,
             101,
@@ -269,6 +290,10 @@ describe('CourseNotificationComponent rendering the message of an editor', () =>
         );
         fixture.componentRef.setInput('courseNotification', notification);
         fixture.detectChanges();
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.course-notification-content')).not.toBeNull();
+        });
         return fixture.nativeElement.querySelector('.course-notification-content');
     };
 
@@ -290,18 +315,19 @@ describe('CourseNotificationComponent rendering the message of an editor', () =>
         // The real English translations, so a missing or misspelled key fails here instead of showing up as a key in the app.
         const translateService = TestBed.inject(TranslateService);
         translateService.setTranslation('en', englishNotification);
+        translateService.setTranslation('de', germanNotification);
         translateService.use('en');
         fixture = TestBed.createComponent(CourseNotificationComponent);
     });
 
-    it('should show the message an editor wrote about an exercise update, next to the exercise', () => {
-        const content = renderContent('exerciseUpdatedNotification', { exerciseTitle: 'Essay on sorting', notificationText: 'Task 2 now asks for 300 words' });
+    it('should show the message an editor wrote about an exercise update, next to the exercise', async () => {
+        const content = await renderContent('exerciseUpdatedNotification', { exerciseTitle: 'Essay on sorting', notificationText: 'Task 2 now asks for 300 words' });
 
         expect(content.textContent).toBe('Essay on sorting: Task 2 now asks for 300 words');
     });
 
-    it('should show the message an editor wrote about an attachment as text, never as markup', () => {
-        const content = renderContent('attachmentChangedNotification', {
+    it('should show the message an editor wrote about an attachment as text, never as markup', async () => {
+        const content = await renderContent('attachmentChangedNotification', {
             unitName: 'Sorting algorithms',
             notificationText: 'Slide 4 was <b>corrected</b> & <img src=x onerror="alert(1)">',
         });
@@ -310,8 +336,78 @@ describe('CourseNotificationComponent rendering the message of an editor', () =>
         expect(content.querySelector('b, img')).toBeNull();
     });
 
-    it('should show the generic content of notifications stored without a message', () => {
-        expect(renderContent('exerciseUpdatedNotification', { exerciseTitle: 'Essay on sorting' }).textContent).toBe('Essay on sorting was updated.');
-        expect(renderContent('attachmentChangedNotification', { unitName: 'Sorting algorithms' }).textContent).toBe('An attachment in Sorting algorithms changed.');
+    it('should show the generic content of notifications stored without a message', async () => {
+        expect((await renderContent('exerciseUpdatedNotification', { exerciseTitle: 'Essay on sorting' })).textContent).toBe('Essay on sorting was updated.');
+        expect((await renderContent('attachmentChangedNotification', { unitName: 'Sorting algorithms' })).textContent).toBe('An attachment in Sorting algorithms changed.');
+    });
+    // The course title reaches the translation as courseName for every notification type. The channel notifications once used courseTitle,
+    // which nothing supplies, so the user saw the placeholder itself.
+    it.each([
+        ['addedToChannelNotification', 'You were added to general in Test Course.'],
+        ['removedFromChannelNotification', 'You were removed from general in Test Course.'],
+        ['channelDeletedNotification', 'general was deleted in Test Course.'],
+    ])('should show the course title in the English content of %s', async (notificationType, expectedContent) => {
+        const content = await renderContent(notificationType, { channelName: 'general' });
+
+        expect(content.textContent).toBe(expectedContent);
+    });
+
+    it.each([
+        ['addedToChannelNotification', 'Du bist general in Test Course beigetreten.'],
+        ['removedFromChannelNotification', 'Du wurdest aus general in Test Course entfernt.'],
+        ['channelDeletedNotification', 'general wurde in Test Course gelöscht.'],
+    ])('should show the course title in the German content of %s', async (notificationType, expectedContent) => {
+        TestBed.inject(TranslateService).use('de');
+
+        const content = await renderContent(notificationType, { channelName: 'general' });
+
+        expect(content.textContent).toBe(expectedContent);
+    });
+
+    it.each([
+        'newPostNotification',
+        'newAnswerNotification',
+        'irisResponseNeedsReviewNotification',
+        'newMentionNotification',
+        'newAnnouncementNotification',
+        'newCpcPlagiarismCaseNotification',
+        'newPlagiarismCaseNotification',
+    ])('should show a fallback when %s has no message preview', async (notificationType) => {
+        const content = await renderContent(notificationType, {});
+
+        expect(content.textContent).toBe('No message preview available.');
+    });
+
+    it.each([undefined, null, '', '   ', '![Screenshot](/public/image.png)'])('should handle an empty or non-text post preview (%s)', async (postMarkdownContent) => {
+        const content = await renderContent('newPostNotification', { postMarkdownContent });
+
+        expect(content.textContent).toBe('No message preview available.');
+    });
+
+    it('should keep rendering the message text when a preview is available', async () => {
+        const content = await renderContent('newPostNotification', { postMarkdownContent: '**Please** check the build log.' });
+
+        expect(content.textContent).toBe('Please check the build log.');
+    });
+
+    it('should use the reply preview for a thread answer even when the parent message has no preview', async () => {
+        const content = await renderContent('newAnswerNotification', { replyMarkdownContent: 'The build is fixed.' });
+
+        expect(content.textContent).toBe('The build is fixed.');
+    });
+
+    it('should not use the parent message as a substitute for a missing reply preview', async () => {
+        const content = await renderContent('newAnswerNotification', { postMarkdownContent: 'Original message' });
+
+        expect(content.textContent).toBe('No message preview available.');
+    });
+
+    it('should update the fallback when the language changes', async () => {
+        const content = await renderContent('newPostNotification', {});
+        TestBed.inject(TranslateService).use('de');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(content.textContent).toBe('Keine Nachrichtenvorschau verfügbar.');
     });
 });

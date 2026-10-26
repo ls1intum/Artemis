@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * Validates URLs used to retrieve link previews.
  */
-final class LinkPreviewUrlValidator {
+public final class LinkPreviewUrlValidator {
 
     private static final Pattern DOMAIN_LABEL_PATTERN = Pattern.compile("[a-zA-Z0-9-]{1,63}");
 
@@ -72,7 +72,13 @@ final class LinkPreviewUrlValidator {
                 && !isIpAddress(host) && isValidDomain(host);
     }
 
-    private boolean isIpAddress(String host) {
+    /**
+     * Recognizes IP literals without resolving hostnames or contacting a network.
+     *
+     * @param host host part of the URL
+     * @return whether the host is a bracketed IP literal or a valid dotted IPv4 address
+     */
+    public static boolean isIpAddress(String host) {
         if (host.startsWith("[") && host.endsWith("]")) {
             return true;
         }
