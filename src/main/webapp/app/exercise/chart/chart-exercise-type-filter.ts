@@ -1,10 +1,7 @@
 import { Service } from '@angular/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ChartFilter } from 'app/exercise/chart/chart-filter';
-import { ExerciseScoresDTO } from 'app/exercise/shared/entities/exercise/exercise-scores.model';
 import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
-
-type TypeFilterOperatingType = ExerciseScoresDTO | CourseManagementStatisticsModel;
 
 @Service()
 export class ChartExerciseTypeFilter extends ChartFilter {
@@ -15,7 +12,7 @@ export class ChartExerciseTypeFilter extends ChartFilter {
      * @param exerciseScores the score objects containing an exercise type a filter should
      * be provided for
      */
-    initializeFilterOptions(exerciseScores: TypeFilterOperatingType[]): void {
+    initializeFilterOptions(exerciseScores: CourseManagementStatisticsModel[]): void {
         this.typeSet = new Set(exerciseScores.map((score) => score.exerciseType));
         this.typeSet.forEach((type) => {
             this.filterMap.set(ChartExerciseTypeFilter.convertToMapKey(type), true);
@@ -29,7 +26,7 @@ export class ChartExerciseTypeFilter extends ChartFilter {
      * @param exerciseScores the score objects the updated filter should be applied against
      * @returns the exerciseScores filtered against the current state of the chart filter
      */
-    toggleExerciseType<E extends TypeFilterOperatingType>(type: ExerciseType, exerciseScores: TypeFilterOperatingType[]): Array<E> {
+    toggleExerciseType<E extends CourseManagementStatisticsModel>(type: ExerciseType, exerciseScores: CourseManagementStatisticsModel[]): Array<E> {
         const convertedType = ChartExerciseTypeFilter.convertToMapKey(type);
         const isIncluded = this.filterMap.get(convertedType);
         this.filterMap.set(convertedType, !isIncluded);
@@ -42,7 +39,7 @@ export class ChartExerciseTypeFilter extends ChartFilter {
      * @param exerciseScores the exercise scores that should be filtered against the current filter setting
      * @returns exerciseScores filtered against the current filter setting
      */
-    applyCurrentFilter<E extends TypeFilterOperatingType>(exerciseScores: TypeFilterOperatingType[]): Array<E> {
+    applyCurrentFilter<E extends CourseManagementStatisticsModel>(exerciseScores: CourseManagementStatisticsModel[]): Array<E> {
         return exerciseScores.filter((score) => this.filterMap.get(ChartExerciseTypeFilter.convertToMapKey(score.exerciseType))) as Array<E>;
     }
 

@@ -37,11 +37,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 
-/**
- * Service to efficiently calculate the statistics for the exercise-scores-chart.component.ts in the client
- * <p>
- * This services uses the participant scores tables for performance reason
- */
+/** Computes legacy and similar-student exercise statistics from maintained participant scores. */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service

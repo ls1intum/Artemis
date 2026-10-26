@@ -4,22 +4,37 @@ title: Learning Analytics
 sidebar_label: Learning Analytics
 ---
 
+import Image, { ImageSize } from '../../../src/components/Image/Image';
+import overview from '../assets/learning-analytics/student-statistics-overview.png';
+import darkOverview from '../assets/learning-analytics/student-statistics-dark.png';
+import mobileOverview from '../assets/learning-analytics/student-statistics-mobile.png';
+import cappedScore from '../assets/learning-analytics/student-statistics-capped.png';
+import exerciseResults from '../assets/learning-analytics/student-statistics-results.png';
+
 ## Overview
 
 The **Statistics** page shows your course results, participation, and completion of available learning content.
 Open a course and choose **Statistics** in the sidebar.
+The screenshots follow Anna Weber in an example **Introduction to Programming** course.
 
-![Course statistics with the score ring, submitted exercises, learning content, and performance chart](../assets/learning-analytics/student-statistics-overview.png)
+<Image
+    src={overview}
+    alt="Course statistics with the score ring, submitted exercises, learning content, and performance chart"
+    size={ImageSize.large}
+    caption="Anna's results and learning progress in Introduction to Programming"
+/>
 
 <details>
 <summary>Dark theme and phone display</summary>
 
-![Course statistics in dark theme](../assets/learning-analytics/student-statistics-dark.png)
+<Image src={darkOverview} alt="Course statistics in dark theme" size={ImageSize.large} caption="The same course statistics in dark theme" />
 
-<img
-    src={require('../assets/learning-analytics/student-statistics-mobile.png').default}
+<Image
+    src={mobileOverview}
     alt="Overall course points on a phone, with the score centered inside the Artemis ring"
-    width="390"
+    size={ImageSize.medium}
+    style={{ maxWidth: '390px' }}
+    caption="The Artemis score ring on a phone"
 />
 
 </details>
@@ -39,7 +54,12 @@ In that case, the circle shows credited course points and missing attainable poi
 <details>
 <summary>Score ring when a limit applies across exercise types</summary>
 
-![The course score ring uses credited points after a shared variant limit, with the independent type totals explained](../assets/learning-analytics/student-statistics-capped.png)
+<Image
+    src={cappedScore}
+    alt="The course score ring uses credited points after a shared variant limit, with the independent type totals explained"
+    size={ImageSize.large}
+    caption="Credited course points when a variant limit applies across exercise types"
+/>
 
 </details>
 A configured grading key is available next to your grade or bonus.
@@ -71,9 +91,14 @@ A whole-course average is not substituted.
 Use the visible exercise-type and assessment-status buttons and **Search exercises or categories** to narrow the list.
 Results are ordered by due date and paginated in groups of twenty.
 
-![Linked exercise results with visible type and assessment-status filters, including a recorded zero](../assets/learning-analytics/student-statistics-results.png)
-**Awaiting assessment** and **Not submitted** distinguish submitted work from exercises with no recorded submission.
-Labels identify bonus exercises, exercises excluded from the course score, and variant-group point limits.
+<Image
+    src={exerciseResults}
+    alt="Linked exercise results with visible type and assessment-status filters, including a recorded zero"
+    size={ImageSize.large}
+    caption="Exercise results for Week 01, including an assessed zero"
+/>
+**Awaiting assessment** and **Not submitted** distinguish submitted work from exercises with no recorded submission. Labels identify bonus exercises, exercises excluded from the
+course score, and variant-group point limits.
 
 The course's category filters affect the exercise list and performance chart.
 They do not change course point totals or learning-material completion.

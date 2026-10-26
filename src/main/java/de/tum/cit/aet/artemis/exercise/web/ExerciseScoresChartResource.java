@@ -31,9 +31,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseScoresChartService;
 
-/**
- * Controller to provides endpoints to query the necessary data for the exercise-scores-chart.component.ts in the client
- */
+/** Read-only course exercise statistics, including similar-student comparisons and the legacy score API. */
 @Profile(PROFILE_CORE)
 @Lazy
 @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
@@ -65,15 +63,18 @@ public class ExerciseScoresChartResource {
     /**
      * GET /courses/:courseId/charts/exercise-scores
      * <p>
-     * This call returns the information used for the exercise-scores-chart. It will get the score of
-     * the requesting user,the average score and the best score in course exercises
+     * Preserves the published legacy response with the requesting student's score, course average and best score.
+     * The redesigned statistics page uses {@link #getPeerComparison(Long)} instead.
      * <p>
      * Note: Only released course exercises with assessment due date over are considered!
      * <p>
      *
      * @param courseId id of the course for which to get the exercise scores
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
+     * @deprecated New clients should migrate to {@link #getPeerComparison(Long)} for anonymous similar-student comparisons.
+     *             The response formats differ; this operation remains available for API compatibility.
      */
+    @Deprecated(since = "10.5")
     @GetMapping("courses/{courseId}/charts/exercise-scores")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
