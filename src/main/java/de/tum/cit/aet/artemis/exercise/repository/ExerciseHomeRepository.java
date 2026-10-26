@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.QUIZ_GRACE_PERIOD_IN_SECONDS;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -42,10 +43,27 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
                OR EXISTS (SELECT t.id FROM Team t JOIN t.students m WHERE t = p.team AND m.id = :userId))
             """;
 
-    String DUE = """
+    String COURSE_DUE = """
             COALESCE((SELECT MAX(p.individualDueDate) FROM StudentParticipation p
                 WHERE p.exercise = e AND p.testRun = FALSE AND
             """ + OWNED + "), e.dueDate)";
+
+    String JOINED_BATCH = """
+            EXISTS (SELECT qs.id FROM QuizSubmission qs JOIN TREAT(qs.participation AS StudentParticipation) qp
+                WHERE qs.quizBatch = b.id AND qp.exercise = e AND qp.testRun = FALSE AND qp.student.id = :userId)
+            """;
+
+    String RELEVANT_BATCH = "(q.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED OR " + JOINED_BATCH + ")";
+
+    String BATCH_DUE = "CAST((SELECT MAX(FUNCTION('timestampadd', SECOND, q.duration, b.startTime)) FROM QuizBatch b WHERE b.quizExercise = q AND " + RELEVANT_BATCH
+            + ") AS ZonedDateTime)";
+
+    String DUE = "COALESCE(" + BATCH_DUE + ", " + COURSE_DUE + ")";
+
+    String BATCH_CLOSES = "(SELECT MAX(FUNCTION('timestampadd', SECOND, q.duration + " + QUIZ_GRACE_PERIOD_IN_SECONDS
+            + ", b.startTime)) FROM QuizBatch b WHERE b.quizExercise = q AND " + RELEVANT_BATCH + ")";
+
+    String CLOSES = "COALESCE(" + BATCH_CLOSES + ", " + COURSE_DUE + ")";
 
     String PUBLICATION = """
             CASE WHEN e.releaseDate IS NULL THEN e.createdDate
@@ -64,22 +82,19 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
                 WHERE p.exercise = e AND p.testRun = FALSE AND
             """ + OWNED + ")";
 
-    String OPEN = " AND (e.startDate IS NULL OR e.startDate <= :asOf) AND (" + DUE + " IS NULL OR " + DUE + " > :asOf) " + """
-             AND (q.id IS NULL OR q.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.INDIVIDUAL OR EXISTS (
-                 SELECT b.id FROM QuizBatch b WHERE b.quizExercise = q AND b.startTime <= :asOf
-                 AND FUNCTION('timestampadd', SECOND, q.duration, b.startTime) > :asOf
-                 AND (q.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED OR EXISTS (
-                     SELECT qs.id FROM QuizSubmission qs JOIN TREAT(qs.participation AS StudentParticipation) qp
-                     WHERE qs.quizBatch = b.id AND qp.student.id = :userId))))
-            """;
+    String OPEN = " AND (e.startDate IS NULL OR e.startDate <= :asOf) AND (" + CLOSES + " IS NULL OR " + CLOSES + " > :asOf) "
+            + " AND (q.id IS NULL OR (q.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.INDIVIDUAL AND " + BATCH_DUE + " IS NULL) OR EXISTS ("
+            + "SELECT b.id FROM QuizBatch b WHERE b.quizExercise = q AND b.startTime <= :asOf AND FUNCTION('timestampadd', SECOND, q.duration + " + QUIZ_GRACE_PERIOD_IN_SECONDS
+            + ", b.startTime) > :asOf AND " + RELEVANT_BATCH + "))";
 
     String FEEDBACK = """
-            (SELECT MAX(CASE WHEN TYPE(e) = ProgrammingExercise AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC THEN r.completionDate
+            (SELECT MAX(CASE WHEN TYPE(e) = QuizExercise THEN CASE WHEN e.dueDate > r.completionDate THEN e.dueDate ELSE r.completionDate END
+                 WHEN TYPE(e) = ProgrammingExercise AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC THEN r.completionDate
                  WHEN e.assessmentDueDate > r.completionDate THEN e.assessmentDueDate ELSE r.completionDate END)
              FROM Result r JOIN r.submission s JOIN TREAT(s.participation AS StudentParticipation) p
              WHERE p.exercise = e AND p.testRun = FALSE AND r.rated = TRUE AND r.completionDate IS NOT NULL AND r.completionDate <= :asOf
                AND (TYPE(e) <> QuizExercise OR e.dueDate <= :asOf)
-               AND ((TYPE(e) = ProgrammingExercise AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC)
+               AND (TYPE(e) = QuizExercise OR (TYPE(e) = ProgrammingExercise AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC)
                     OR e.assessmentDueDate IS NULL OR e.assessmentDueDate <= :asOf)
                AND
             """ + OWNED + ")";
@@ -129,24 +144,33 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
 
         @Nullable
         ZonedDateTime getFeedbackDate();
+
+        @Nullable
+        ZonedDateTime getQuizFeedbackDate();
     }
 
     @Query("SELECT MIN(CASE WHEN e.releaseDate > :asOf THEN e.releaseDate END) AS releaseDate, "
             + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND e.startDate > :asOf THEN e.startDate END) AS startDate, "
             + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND " + DUE + " > :asOf THEN " + DUE + " END) AS dueDate, "
             + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND " + DUE + " > :dueSoon THEN " + DUE + " END) AS dueOutsideWindow, "
-            + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND e.assessmentDueDate > :asOf AND EXISTS ("
+            + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND q.id IS NULL AND e.assessmentDueDate > :asOf AND EXISTS ("
             + "SELECT r.id FROM Result r JOIN r.submission s JOIN TREAT(s.participation AS StudentParticipation) p "
             + "WHERE p.exercise=e AND p.testRun=FALSE AND r.rated=TRUE AND r.completionDate IS NOT NULL AND r.completionDate <= :asOf AND " + OWNED
             + " AND NOT (TYPE(e)=ProgrammingExercise AND r.assessmentType=de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC)) "
-            + "THEN e.assessmentDueDate END) AS feedbackDate " + FROM + ACCESSIBLE)
+            + "THEN e.assessmentDueDate END) AS feedbackDate, "
+            + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND q.id IS NOT NULL AND e.dueDate > :asOf THEN e.dueDate END) AS quizFeedbackDate " + FROM
+            + ACCESSIBLE)
     Changes findChanges(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, @Param("dueSoon") ZonedDateTime dueSoon);
 
-    @Query("SELECT MIN(b.startTime) " + FROM + " JOIN QuizBatch b ON b.quizExercise=q " + VISIBLE + " AND b.startTime > :asOf AND "
-            + "(q.quizMode=de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED OR EXISTS ("
-            + "SELECT qs.id FROM QuizSubmission qs JOIN TREAT(qs.participation AS StudentParticipation) qp WHERE qs.quizBatch=b.id AND qp.student.id=:userId))")
+    @Query("SELECT MIN(b.startTime) " + FROM + " JOIN QuizBatch b ON b.quizExercise=q " + VISIBLE + " AND b.startTime > :asOf AND " + RELEVANT_BATCH)
     @Nullable
     ZonedDateTime findNextQuizBatchStart(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf);
+
+    @Query("SELECT CAST(MIN(FUNCTION('timestampadd', SECOND, q.duration + " + QUIZ_GRACE_PERIOD_IN_SECONDS + ", b.startTime)) AS ZonedDateTime) " + FROM
+            + " JOIN QuizBatch b ON b.quizExercise=q " + VISIBLE + " AND FUNCTION('timestampadd', SECOND, q.duration + " + QUIZ_GRACE_PERIOD_IN_SECONDS
+            + ", b.startTime) > :asOf AND " + RELEVANT_BATCH)
+    @Nullable
+    ZonedDateTime findNextQuizBatchEnd(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf);
 
     @Query("SELECT COUNT(DISTINCT COALESCE(g.id, -e.id)) AS released, COUNT(DISTINCT CASE WHEN " + SUBMITTED + " THEN COALESCE(g.id, -e.id) END) AS submitted, "
             + "COUNT(DISTINCT CASE WHEN " + DUE + " > :asOf AND " + DUE + " <= :dueSoon THEN COALESCE(g.id, -e.id) END) AS due, " + "COUNT(DISTINCT CASE WHEN " + DUE

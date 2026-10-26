@@ -1,7 +1,8 @@
 import { expect } from '@playwright/test';
+import { randomInt, randomUUID } from 'node:crypto';
 import { test } from '../../support/fixtures';
 import { enableIrisForCourse, loginWithoutIrisTour } from '../../support/irisSetup';
-import { admin, studentOne } from '../../support/users';
+import { admin, studentOne, UserRole } from '../../support/users';
 import { Course } from 'app/course/shared/entities/course.model';
 import { createCourseHomeFixture, COURSE_HOME_SITUATIONS } from 'app/course/overview/course-home/test/course-home.fixtures';
 import { courseUpdateDTOFromManagementDTO } from '../../support/requests/CourseManagementAPIRequests';
@@ -45,7 +46,7 @@ test.describe('Student course Home', { tag: '@fast' }, () => {
         await page.locator('#home-tab').click();
         await expect(page.getByTestId('home-welcome')).toBeVisible();
     });
-    test('opens Home directly after self-enrollment without reloading the account', async ({ page, login, courseManagementAPIRequests }) => {
+    test('opens Home directly after self-enrollment without reloading the account', async ({ page, login, courseManagementAPIRequests, userManagementAPIRequests }) => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
         course = await courseManagementAPIRequests.createCourse({ courseName: 'Self-enrollment into Course Home' });
         const management = await page.request.get(`api/course/courses/${course.id}`);
@@ -60,17 +61,26 @@ test.describe('Student course Home', { tag: '@fast' }, () => {
                 })
             ).ok(),
         ).toBeTruthy();
-        const homeRequests: string[] = [];
-        page.on('request', (request) => {
-            if (request.url().endsWith(`/courses/${course.id}/home`)) homeRequests.push(request.url());
-        });
-        await login(studentOne, `/courses/${course.id}/register`);
-        const enroll = page.getByRole('button', { name: 'Enroll', exact: true });
-        await expect(enroll).toBeVisible();
-        expect(homeRequests).toEqual([]);
-        await enroll.click();
-        await expect(page).toHaveURL(new RegExp(`/courses/${course.id}/home$`));
-        await expect(page.getByTestId('home-welcome')).toBeVisible();
+        // Use a fresh account matching the installation's TUM enrollment rule, not a pre-enrolled seed login.
+        const letters = Array.from({ length: 5 }, () => String.fromCharCode(97 + randomInt(26)));
+        const student = { username: `${letters.slice(0, 2).join('')}${randomInt(100).toString().padStart(2, '0')}${letters.slice(2).join('')}`, password: randomUUID() };
+        expect((await userManagementAPIRequests.createUser(student.username, student.password, UserRole.Student)).status()).toBe(201);
+        try {
+            const homeRequests: string[] = [];
+            page.on('request', (request) => {
+                if (request.url().endsWith(`/courses/${course.id}/home`)) homeRequests.push(request.url());
+            });
+            await login(student, `/courses/${course.id}/register`);
+            const enroll = page.getByRole('button', { name: 'Enroll', exact: true });
+            await expect(enroll).toBeVisible();
+            expect(homeRequests).toEqual([]);
+            await enroll.click();
+            await expect(page).toHaveURL(new RegExp(`/courses/${course.id}/home$`));
+            await expect(page.getByTestId('home-welcome')).toBeVisible();
+        } finally {
+            await login(admin);
+            expect((await userManagementAPIRequests.deleteUser(student.username)).ok()).toBeTruthy();
+        }
     });
 
     test('opens the original question at its unread reply and refreshes its read state', async ({ page, login, communicationAPIRequests }) => {
@@ -182,6 +192,11 @@ test.describe('Student course Home', { tag: '@fast' }, () => {
 
     test('renders the approved sixteen-situation visual matrix using the shipped page', async ({ page, login }, testInfo) => {
         let snapshot = createCourseHomeFixture('first');
+        // These are illustrative UI states; grant consent only in this browser's fixture account.
+        await page.route('**/api/core/public/account', async (route) => {
+            const response = await route.fetch();
+            await route.fulfill({ response, json: { ...(await response.json()), selectedLLMUsage: 'CLOUD_AI' } });
+        });
         await page.route(`**/api/course/courses/${course.id}/home`, (route) => route.fulfill({ json: snapshot }));
         await page.route(`**/api/course/courses/${course.id}/home/visits`, (route) => route.fulfill({ status: 204 }));
         await login(studentOne, `/courses/${course.id}/home`);
@@ -195,6 +210,7 @@ test.describe('Student course Home', { tag: '@fast' }, () => {
             const overflow = await page.getByTestId('course-home').evaluate((element) => element.scrollWidth > element.clientWidth + 1);
             expect(overflow, `${situation} must fit the content area`).toBe(false);
             expect(await page.locator('#home-updates-heading').evaluate((element) => parseFloat(getComputedStyle(element).fontSize))).toBeLessThanOrEqual(20);
+            if (situation === 'iris-follow-up') await expect(page.getByTestId('home-next-step').getByRole('link', { name: 'Continue with Iris', exact: true })).toBeVisible();
             await page.getByTestId('course-home').screenshot({ path: testInfo.outputPath(`${situation}.png`) });
         }
     });

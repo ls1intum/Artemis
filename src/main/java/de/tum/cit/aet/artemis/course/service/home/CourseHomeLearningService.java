@@ -68,8 +68,8 @@ public class CourseHomeLearningService {
         var changes = exercises.findChanges(courseId, user.getId(), now, now.plusHours(72));
         var nextRefresh = Stream
                 .of(changes.getReleaseDate(), changes.getStartDate(), changes.getDueDate(),
-                        changes.getDueOutsideWindow() == null ? null : changes.getDueOutsideWindow().minusHours(72), changes.getFeedbackDate(),
-                        exercises.findNextQuizBatchStart(courseId, user.getId(), now))
+                        changes.getDueOutsideWindow() == null ? null : changes.getDueOutsideWindow().minusHours(72), changes.getFeedbackDate(), changes.getQuizFeedbackDate(),
+                        exercises.findNextQuizBatchStart(courseId, user.getId(), now), exercises.findNextQuizBatchEnd(courseId, user.getId(), now))
                 .filter(Objects::nonNull).map(ZonedDateTime::toInstant).filter(date -> date.isAfter(asOf)).min(Instant::compareTo).orElse(null);
         return new CourseHomeLearningDTO(new CourseHomeDTO.ProgressDTO(counts.getReleased(), counts.getSubmitted(), counts.getDue(), counts.getDueSubmitted()), candidates, updates,
                 nextRefresh);

@@ -67,6 +67,18 @@ class CourseHomeContextServiceTest {
         assertThat(selection.nextStep()).isNull();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = CourseHomeWelcomeCase.class, names = { "BEFORE_START", "COURSE_ENDED" })
+    void oldLectureFallbackIsLabeledForReview(CourseHomeWelcomeCase phase) {
+        var lecture = new CourseHomeContext.Candidate(CourseHomeWelcomeCase.NEW_LECTURE, new CourseHomeTargetDTO(CourseHomeTargetKind.LECTURE, 7, null, null), "Existing lecture",
+                null, NOW.minus(Duration.ofDays(20)), false);
+        var selected = service.select(
+                new CourseHomeContext(NOW, phase == BEFORE_START ? NOW.plusSeconds(60) : null, phase == COURSE_ENDED ? NOW : null, false, NOW.minusSeconds(60), List.of(lecture)));
+        assertThat(selected.welcomeCase()).isEqualTo(phase);
+        assertThat(selected.nextStep().reason()).isEqualTo("REVIEW");
+        assertThat(selected.nextStep().target()).isEqualTo(lecture.target());
+    }
+
     private CourseHomeSelection selectDeadline(Duration duration) {
         return service.select(new CourseHomeContext(NOW, null, null, false, NOW, List.of(candidate(DEADLINE_SOON, 42, NOW.plus(duration)))));
     }

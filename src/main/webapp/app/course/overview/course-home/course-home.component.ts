@@ -131,6 +131,13 @@ export class CourseHomeComponent {
             untracked(() => {
                 this.cancelWelcome();
                 this.aiMessage.set(undefined);
+                const snapshot = this.home();
+                if (snapshot && !this.allowIris()) {
+                    const hadIris = snapshot.nextStep?.target.kind === 'IRIS_SESSION' || !!snapshot.irisSessions.items?.length;
+                    this.home.set(this.applyIrisConsent(snapshot));
+                    if (this.rendered) this.rendered = this.applyIrisConsent(this.rendered);
+                    if (hadIris) this.refresh();
+                }
             });
         });
         this.tabs
@@ -166,6 +173,7 @@ export class CourseHomeComponent {
         this.loadSubscription = this.api.load(this.scopedCourseId, this.baseline).subscribe({
             next: (snapshot) => {
                 if (this.scope !== scope || this.generation !== generation) return;
+                snapshot = this.applyIrisConsent(snapshot);
                 const previous = this.home();
                 this.baseline ??= snapshot.visit.newSince;
                 if (previous && previous.welcome.contextFingerprint === snapshot.welcome.contextFingerprint) {
@@ -237,6 +245,14 @@ export class CourseHomeComponent {
                     this.teamFailed.set(true);
                 }
             },
+        });
+    }
+
+    private applyIrisConsent(snapshot: CourseHome): CourseHome {
+        if (this.allowIris()) return snapshot;
+        return cloneWith(snapshot, {
+            nextStep: snapshot.nextStep?.target.kind === 'IRIS_SESSION' ? undefined : snapshot.nextStep,
+            irisSessions: { status: 'DISABLED', items: [] },
         });
     }
 
