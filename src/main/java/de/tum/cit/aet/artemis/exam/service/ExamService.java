@@ -938,7 +938,9 @@ public class ExamService {
             if (latestSubmission != null) {
                 relevantResult = latestSubmission.getLatestCompletedResult();
             }
-            double resultScore = (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
+            // Instructor quiz results can have a score before their completion timestamp is set. Use the same
+            // authoritative grade for the percentage and points instead of displaying 0% beside earned points.
+            double resultScore = studentExam.isTestRun() ? examGrade.score() : (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                     new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }

@@ -45,6 +45,7 @@
                     jhi-exercise-action-button
                     [buttonIcon]="faPaperPlane"
                     [buttonLabel]="'entity.action.submit' | artemisTranslate"
+                    [forceDisabled]="hasPendingAthenaFeedback()"
                     [smallButton]="smallButtons()"
                     (click)="submitAndShowPopover()"
                 ></button>
@@ -56,7 +57,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faPaperPlane"
                 [buttonLabel]="(exercise().type === ExerciseType.QUIZ ? submitLabel() : 'entity.action.submit') | artemisTranslate"
-                [forceDisabled]="exercise().type === ExerciseType.QUIZ && submitDisabled()"
+                [forceDisabled]="hasPendingAthenaFeedback() || (exercise().type === ExerciseType.QUIZ && submitDisabled())"
                 [smallButton]="smallButtons()"
                 (click)="onSubmitExercise()!()"
             ></button>
