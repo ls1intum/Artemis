@@ -62,18 +62,22 @@ class CourseHomeLoadProfileTest extends AbstractSpringIntegrationIndependentTest
         stats.setStatisticsEnabled(true);
         get();
         stats.clear();
+        queryInterceptor.startQueryCount();
         get();
-        long smallQueries = stats.getPrepareStatementCount();
+        long smallQueries = queryInterceptor.getQueryCount();
         for (int i = 0; i < 990; i++)
             addExercise();
         get();
         stats.clear();
+        // Scheduled jobs can query on other threads even when the test class is isolated.
+        queryInterceptor.startQueryCount();
         var large = get();
-        long largeQueries = stats.getPrepareStatementCount();
+        long largeQueries = queryInterceptor.getQueryCount();
         assertThat(large.progress().releasedExercises()).isEqualTo(1000);
         assertThat(large.updates()).hasSizeLessThanOrEqualTo(6);
         assertThat(large.teachingTeam().items()).hasSizeLessThanOrEqualTo(3);
-        assertThat(largeQueries).isLessThanOrEqualTo(smallQueries + 3).isLessThanOrEqualTo(40);
+        assertThat(smallQueries).isPositive();
+        assertThat(largeQueries).isPositive().isLessThanOrEqualTo(smallQueries + 3).isLessThanOrEqualTo(40);
         for (Class<?> entity : java.util.List.of(Exercise.class, Submission.class, LectureUnit.class, IrisMessage.class, Course.class))
             assertThat(stats.getEntityStatistics(entity.getName()).getLoadCount()).as(entity.getSimpleName()).isZero();
         String wire = request.getObjectMapper().writeValueAsString(large);
