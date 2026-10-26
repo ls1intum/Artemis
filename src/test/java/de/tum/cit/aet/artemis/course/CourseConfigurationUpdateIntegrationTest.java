@@ -89,7 +89,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         configuration.setPresentationAssessmentsEnabled(!enabled);
         courseConfigurationRepository.save(configuration);
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         ObjectNode update = request.getObjectMapper().valueToTree(loaded);
         update.put("presentationAssessmentsEnabled", enabled);
 
@@ -105,7 +105,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         configuration.setPresentationAssessmentsEnabled(enabled);
         courseConfigurationRepository.save(configuration);
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         ObjectNode update = request.getObjectMapper().valueToTree(loaded);
         update.remove("presentationAssessmentsEnabled");
         update.put("description", "Unrelated change preserving presentation settings");
@@ -118,7 +118,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getCourse_asInstructor_shouldExposePersistedDataPrivacySettings() throws Exception {
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         CourseConfigurationResponseDTO configuration = loaded.courseConfiguration();
 
         // The settings form reads course.courseConfiguration to initialize its controls, so an absent configuration
@@ -134,7 +134,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         long configurationId = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
 
         // Reopen the course the way the settings form does, then save an unrelated field.
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         CourseConfigurationResponseDTO configuration = loaded.courseConfiguration();
         assertThat(configuration).isNotNull();
         ObjectNode update = request.getObjectMapper().valueToTree(loaded);
@@ -162,7 +162,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_missingConfigurationRow_shouldRepairItInsteadOfFailing() throws Exception {
         // The form is opened while the course is complete, then the row goes missing like after a creation that failed half-way.
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         assertThat(loaded.courseConfiguration()).isNotNull();
         ObjectNode update = request.getObjectMapper().valueToTree(loaded);
         update.put("description", "Edited after the repair");

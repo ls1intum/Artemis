@@ -132,7 +132,7 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void courseManagementDetailCarriesTheAthenaFlags() throws Exception {
-        JsonNode response = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, JsonNode.class);
+        JsonNode response = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, JsonNode.class);
         assertBothFlagsPresent(response);
     }
 

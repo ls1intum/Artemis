@@ -643,7 +643,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCourse_asTutor_shouldTellThatPresentationAssessmentsAreEnabled() throws Exception {
-        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId() + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class);
 
         assertThat(loadedCourse.presentationAssessmentsEnabled()).isTrue();
         assertThat(loadedCourse.courseConfiguration()).isNull();
@@ -652,7 +652,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getCourse_asEditor_shouldTellThatPresentationAssessmentsAreEnabled() throws Exception {
-        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId() + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class);
 
         assertThat(loadedCourse.presentationAssessmentsEnabled()).isTrue();
         assertThat(loadedCourse.courseConfiguration()).isNull();
@@ -663,7 +663,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     void getCourse_asTutor_shouldTellThatPresentationAssessmentsAreDisabled() throws Exception {
         setPresentationAssessmentsEnabled(course, false);
 
-        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId() + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class);
 
         assertThat(loadedCourse.presentationAssessmentsEnabled()).isFalse();
     }

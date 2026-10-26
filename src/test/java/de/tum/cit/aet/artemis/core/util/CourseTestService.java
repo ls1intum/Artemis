@@ -2114,7 +2114,7 @@ public class CourseTestService {
         List<Course> testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
         for (Course testCourse : testCourses) {
             CourseWithExercisesDTO courseWithExercises = request.get("/api/course/courses/" + testCourse.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class);
-            CourseManagementDTO courseOnly = request.get("/api/course/courses/" + testCourse.getId(), HttpStatus.OK, CourseManagementDTO.class);
+            CourseManagementDTO courseOnly = request.get("/api/course/courses/" + testCourse.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
 
             // Check course properties on courseOnly
             assertThat(courseOnly.endDate()).as("End date is after start date").isAfter(courseOnly.startDate());
