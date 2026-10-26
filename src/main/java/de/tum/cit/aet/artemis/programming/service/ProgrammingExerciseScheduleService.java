@@ -194,8 +194,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
             return true;
         }
-        // Exercises that allow repository access before a start date in the future build the changes pushed until then at the start date
-        if (exercise.isAllowRepositoryAccessBeforeStartDate() && exercise.getStartDate() != null && now.isBefore(exercise.getStartDate())) {
+        // Exercises that allow repository access before their start date build the changes pushed until then at the start date. Without a due date, they stay scheduled
+        // after it as well, so that the catch-up of that build also runs for a start date that passed during a downtime or was moved into the past.
+        if (exercise.isAllowRepositoryAccessBeforeStartDate() && exercise.getStartDate() != null && (now.isBefore(exercise.getStartDate()) || exercise.getDueDate() == null)) {
             return true;
         }
         // If tests are run after due date and that due date lies in the future, we need to schedule that as well
@@ -277,8 +278,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Schedules the build of the repositories students pushed to before the start date, for an exercise that allows repository access before it.
      * <p>
      * If the start date has already passed while the exercise can still be worked on, the build is triggered right away instead. This catches up on a start date that
-     * passed while no node was running, or that an instructor moved into the past. The trigger skips every participation that already has a submission, so this is safe
-     * to repeat.
+     * passed while no node was running, or that an instructor moved into the past. The trigger skips every participation whose repository head already has a submission,
+     * so this is safe to repeat. An exercise without a due date repeats it on every startup and every update, at the cost of one read of the head of the repository of
+     * each graded participation that has no submission from the start date on.
      *
      * @param exercise the course exercise to schedule
      * @param now      the current time

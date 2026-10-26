@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -33,11 +34,15 @@ import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.StartDateBuildCandidateDTO;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 
 /**
  * Tests for {@link de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService}.
@@ -66,6 +71,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationLocalVCSamlTest {
 
     private static final String TEST_PREFIX = "programmingexercisescheduleservice";
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -526,6 +534,45 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         verify(scheduleService, timeout(VERIFY_TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
         verify(scheduleService, never()).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class), any());
+    }
+
+    @Test
+    void startupSchedulesAnOpenEndedExerciseWithRepositoryAccessBeforeItsPassedStartDate() {
+        // A start date that passed during a downtime is only caught up on if the exercise is scheduled at startup, and without a due date no other date keeps it there.
+        freezeTime();
+        programmingExercise.setAllowRepositoryAccessBeforeStartDate(true);
+        programmingExercise.setReleaseDate(frozenNow.minusDays(2));
+        programmingExercise.setStartDate(frozenNow.minusDays(1));
+        programmingExercise.setDueDate(null);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+
+        assertThat(programmingExerciseRepository.findAllExerciseIdsToBeScheduledByExerciseDates(frozenNow)).contains(programmingExercise.getId());
+
+        // once the due date has passed, there is nothing left to catch up on
+        programmingExercise.setDueDate(frozenNow.minusHours(1));
+        programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+
+        assertThat(programmingExerciseRepository.findAllExerciseIdsToBeScheduledByExerciseDates(frozenNow)).doesNotContain(programmingExercise.getId());
+    }
+
+    @Test
+    void theBuildAtTheStartDateOnlyConsidersParticipationsWithoutASubmissionFromTheStartDateOn() {
+        // A participation with a submission from the start date on holds no unbuilt work from before it, so its repository head is not even read.
+        ZonedDateTime startDate = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS).minusHours(1);
+        var submittedAfterStart = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("after").submitted(true).submissionDate(startDate.plusMinutes(1))
+                .type(SubmissionType.MANUAL);
+        var afterStart = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submittedAfterStart, TEST_PREFIX + "student1").getParticipation();
+        // e.g. an instructor's push before the start date, which the student may have pushed on top of
+        var submittedBeforeStart = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("before").submitted(true).submissionDate(startDate.minusMinutes(1))
+                .type(SubmissionType.MANUAL);
+        var beforeStart = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submittedBeforeStart, TEST_PREFIX + "student2").getParticipation();
+
+        var candidates = programmingExerciseStudentParticipationRepository.findStartDateBuildCandidatesByExerciseId(programmingExercise.getId(), startDate);
+
+        assertThat(candidates).extracting(StartDateBuildCandidateDTO::participationId).doesNotContain(afterStart.getId()).contains(beforeStart.getId()).hasSize(2);
+        assertThat(candidates).filteredOn(candidate -> candidate.participationId() == beforeStart.getId()).extracting(StartDateBuildCandidateDTO::latestCommitHash)
+                .containsExactly("before");
     }
 
     @Test

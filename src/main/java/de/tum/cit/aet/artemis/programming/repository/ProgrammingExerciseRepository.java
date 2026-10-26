@@ -460,6 +460,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     /**
      * Get all programming exercise IDs that need to be scheduled based on their own dates (not individual participation dates).
      * This is the first step in an optimized two-query approach.
+     * <p>
+     * A course exercise that allows repository access before its start date is included until the start date and, if it has no due date, also after it: scheduling it
+     * after the start date catches up on the build of the changes pushed before it, which a start date that passed during a downtime would otherwise never get. With a
+     * due date in the future it is already included by that date.
      *
      * @param now the current time
      * @return Set of exercise IDs that need scheduling based on exercise-level dates
@@ -470,7 +474,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE pe.releaseDate > :now
                 OR pe.buildAndTestStudentSubmissionsAfterDueDate > :now
                 OR pe.dueDate > :now
-                OR (pe.allowRepositoryAccessBeforeStartDate = TRUE AND pe.startDate > :now AND pe.exerciseGroup IS NULL)
+                OR (pe.allowRepositoryAccessBeforeStartDate = TRUE AND pe.exerciseGroup IS NULL
+                    AND (pe.startDate > :now OR (pe.startDate IS NOT NULL AND pe.dueDate IS NULL)))
             """)
     Set<Long> findAllExerciseIdsToBeScheduledByExerciseDates(@Param("now") ZonedDateTime now);
 

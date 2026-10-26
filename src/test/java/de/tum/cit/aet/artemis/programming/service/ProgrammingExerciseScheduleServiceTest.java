@@ -406,6 +406,17 @@ class ProgrammingExerciseScheduleServiceTest {
     }
 
     @Test
+    void anExerciseWithoutDueDateWhoseStartDateHasPassedStaysScheduledAndCatchesUpOnTheBuild() {
+        // Nothing else keeps an automatically assessed exercise without a due date scheduled, so without this the update would cancel everything and skip the catch-up.
+        var exercise = exerciseWithRepositoryAccessBeforeStartDate(ZonedDateTime.now().minusMinutes(5), null);
+
+        scheduleServiceUnderTest.updateScheduling(exercise);
+
+        verify(programmingTriggerService).triggerBuildsForChangesBeforeStartDate(EXERCISE_ID);
+        verify(scheduleService, never()).cancelScheduledTaskForLifecycle(EXERCISE_ID, ExerciseLifecycle.RELEASE);
+    }
+
+    @Test
     void anExerciseWhoseDueDateHasPassedDoesNotCatchUpOnTheBuildAtTheStartDate() {
         var exercise = exerciseWithRepositoryAccessBeforeStartDate(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1));
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
