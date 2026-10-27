@@ -184,6 +184,37 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         assertIndependentCards();
     });
 
+    it('focuses the new draft when the keyboard shortcut is used on a line with existing feedback', async () => {
+        fixture.componentRef.setInput('feedbacks', [
+            {
+                id: 10,
+                type: FeedbackType.MANUAL,
+                reference: 'file:file1.java_line:1',
+                text: 'Existing feedback',
+                detailText: 'Existing detail',
+                credits: 1,
+            } as Feedback,
+        ]);
+        await settle();
+
+        let keydown: ((event: IKeyboardEvent) => void) | undefined;
+        vi.spyOn(comp.editor(), 'onKeyDown').mockImplementation((listener) => {
+            keydown = listener;
+            return { dispose: vi.fn() };
+        });
+        vi.spyOn(comp.editor(), 'getPosition').mockReturnValue({ lineNumber: 2, column: 1 });
+        internals(comp).setupAddFeedbackShortcut();
+        keydown?.({
+            browserEvent: new KeyboardEvent('keydown', { key: '+', code: 'Equal', shiftKey: true }),
+            preventDefault: vi.fn(),
+        } as unknown as IKeyboardEvent);
+        await settle();
+
+        const draft = comp.inlineFeedbackComponents().find((component) => component.feedback() === undefined)!;
+        expect(overlays).toHaveProperty('size', 2);
+        expect(document.activeElement).toBe(draft.elementRef.nativeElement.querySelector('.unified-feedback-detail-input'));
+    });
+
     it('edits and deletes only the selected unsaved suggestion on a shared line', async () => {
         const [first, second] = suggestions();
         fixture.componentRef.setInput('feedbacks', [first, second]);

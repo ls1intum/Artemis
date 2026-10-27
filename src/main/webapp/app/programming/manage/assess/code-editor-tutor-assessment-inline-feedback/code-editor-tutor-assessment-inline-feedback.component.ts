@@ -190,7 +190,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
     }
 
     protected handleKeydown(event: KeyboardEvent): void {
-        // Keep card input and button keys away from Monaco’s editor shortcuts.
+        if (event.ctrlKey && (event.key.toLowerCase() === 's' || event.key === 'Enter' || (event.shiftKey && event.key === 'ArrowRight'))) {
+            return;
+        }
         event.stopPropagation();
     }
 }

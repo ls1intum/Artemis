@@ -4,7 +4,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { signal } from '@angular/core';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from './code-editor-tutor-assessment-inline-feedback.component';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+    FeedbackType,
+} from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -16,8 +22,10 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     let selection: GradingInstructionSelectionService;
+    let originalResizeObserver: typeof ResizeObserver;
 
     beforeEach(() => {
+        originalResizeObserver = global.ResizeObserver;
         TestBed.configureTestingModule({
             imports: [CodeEditorTutorAssessmentInlineFeedbackComponent],
             providers: [
@@ -32,7 +40,10 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.componentRef.setInput('codeLine', 1);
         selection = TestBed.inject(GradingInstructionSelectionService);
     });
-    afterEach(() => vi.restoreAllMocks());
+    afterEach(() => {
+        global.ResizeObserver = originalResizeObserver;
+        vi.restoreAllMocks();
+    });
 
     async function settle() {
         fixture.detectChanges();
@@ -158,6 +169,76 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(updated).not.toHaveBeenCalled();
         comp.cancelFeedback();
         expect(comp.currentFeedback()).toEqual(feedback);
+    });
+
+    it('keeps the suggestion title editor visible after clearing its title', async () => {
+        const feedback = savedFeedback();
+        feedback.text = `${FEEDBACK_SUGGESTION_IDENTIFIER}Suggestion title`;
+        await open(feedback);
+
+        const title = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
+        title.value = '';
+        title.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title-input')).not.toBeNull();
+
+        title.value = 'Replacement title';
+        title.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+        expect(comp.currentFeedback().text).toBe(`${FEEDBACK_SUGGESTION_IDENTIFIER}Replacement title`);
+    });
+
+    it('lets assessment shortcuts reach the assessment while stopping other card keys', async () => {
+        await open(savedFeedback());
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        const textarea = fixture.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
+        for (const init of [
+            { key: 's', ctrlKey: true },
+            { key: 'Enter', ctrlKey: true },
+            { key: 'ArrowRight', ctrlKey: true, shiftKey: true },
+        ]) {
+            textarea.dispatchEvent(new KeyboardEvent('keydown', { ...init, bubbles: true }));
+        }
+        expect(bubbled).toHaveBeenCalledTimes(3);
+
+        textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(bubbled).toHaveBeenCalledTimes(3);
+
+        const toolbarButton = fixture.nativeElement.querySelector('[data-testid="feedback-save"]') as HTMLButtonElement;
+        toolbarButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
+        expect(bubbled).toHaveBeenCalledTimes(4);
+        toolbarButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(bubbled).toHaveBeenCalledTimes(4);
+    });
+
+    it('observes the detail textarea when an existing card opens and its width shrinks', async () => {
+        let callback: ResizeObserverCallback | undefined;
+        const observed: Element[] = [];
+        class ResizeObserverMock {
+            constructor(observerCallback: ResizeObserverCallback) {
+                callback = observerCallback;
+            }
+            observe(element: Element) {
+                observed.push(element);
+            }
+            disconnect() {}
+        }
+        global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
+
+        const feedback = savedFeedback();
+        fixture.componentRef.setInput('feedback', feedback);
+        await settle();
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-detail"]')).toBeNull();
+        comp.editFeedback(1);
+        await settle();
+
+        const textarea = fixture.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
+        expect(observed).toContain(textarea);
+        const shared = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent)).componentInstance as UnifiedFeedbackComponent;
+        const autogrow = vi.spyOn(shared as unknown as { autogrowDetailTextarea: () => void }, 'autogrowDetailTextarea');
+        callback?.([{ target: textarea, contentRect: { width: 80 } } as unknown as ResizeObserverEntry], {} as ResizeObserver);
+        expect(autogrow).toHaveBeenCalledOnce();
     });
 
     it('keeps a new linked draft counted until it is canceled', async () => {

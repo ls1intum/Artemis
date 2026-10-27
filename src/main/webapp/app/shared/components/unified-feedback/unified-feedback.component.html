@@ -93,7 +93,7 @@
                     }
                     @if (editable() || (assessmentLayout() && !readOnly())) {
                         <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- This toolbar only isolates its nested controls from the feedback row. -->
-                        <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
+                        <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()" (keydown.enter)="stopToolbarEnterPropagation($event)">
                             <ng-content select="[unifiedFeedbackViewControls]" />
                             @if (editable() && !readOnly() && feedback()?.gradingInstruction) {
                                 <jhi-grading-instruction-link-icon [feedback]="feedback()!" (linkRemoved)="onInstructionUnlinked.emit()" />

@@ -116,6 +116,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     hasUnsavedInlineFeedback(): boolean {
         return this.newFeedbackLines().length > 0 || this.inlineFeedbackComponents().some((component) => component.hasUnsavedEdits());
     }
+
+    discardUnsavedInlineFeedback(): void {
+        this.inlineFeedbackComponents()
+            .filter((component) => component.hasUnsavedEdits())
+            .forEach((component) => component.cancelFeedback());
+        this.newFeedbackLines.set([]);
+    }
     readonly binaryFileSelected = signal<boolean>(false);
     readonly imagePreviewUrl = signal<string | undefined>(undefined);
     readonly imagePreviewError = signal<boolean>(false);
@@ -651,7 +658,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 if (focusLine !== undefined) {
                     // The inline feedback editor renders its description field through jhi-unified-feedback, which
                     // identifies the textarea by class rather than by a (non-reusable) id.
-                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.focus();
+                    const detailTextarea = this.inlineFeedbackComponents()
+                        .find((component) => component.codeLine() === focusLine && component.feedback() === undefined)
+                        ?.elementRef.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement | null;
+                    detailTextarea?.focus();
                 }
             },
             { injector: this.injector },

@@ -5,7 +5,7 @@
     [readOnly]="readOnly()"
     [feedback]="feedback"
     [title]="displayTitle()"
-    [showTitle]="!!displayTitle()"
+    [showTitle]="Feedback.isFeedbackSuggestion(feedback) || !!displayTitle()"
     [titleEditable]="Feedback.isFeedbackSuggestion(feedback)"
     [feedbackContent]="buildFeedbackTextForCodeEditor(feedback)"
     [points]="feedback.credits ?? 0"

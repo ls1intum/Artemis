@@ -171,6 +171,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         return this.isTutorAssessment() && (this.monacoEditor()?.hasUnsavedInlineFeedback() ?? false);
     }
 
+    discardUnsavedInlineFeedback(): void {
+        this.monacoEditor()?.discardUnsavedInlineFeedback();
+    }
+
     readonly canSwitchFile = (): boolean => {
         if (!this.hasUnsavedInlineFeedback()) {
             return true;

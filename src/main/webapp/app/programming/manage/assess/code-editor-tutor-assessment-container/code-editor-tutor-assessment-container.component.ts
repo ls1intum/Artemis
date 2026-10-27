@@ -596,7 +596,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.cancelBusy.set(true);
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel && this.exercise() && this.submission()) {
-            this.manualResultService.cancelAssessment(this.submission()!.id!, this.manualResult()?.id).subscribe(() => this.navigateBack());
+            this.manualResultService.cancelAssessment(this.submission()!.id!, this.manualResult()?.id).subscribe(() => {
+                this.codeEditorContainer()?.discardUnsavedInlineFeedback();
+                this.navigateBack();
+            });
         }
         this.cancelBusy.set(false);
         this.hasPendingChanges = false;
@@ -800,6 +803,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     readOnly() {
         return !isAllowedToModifyFeedback(this.isTestRun(), this.isAssessor(), this.hasAssessmentDueDatePassed(), this.manualResult(), this.complaint(), this.exercise());
+    }
+
+    inlineFeedbackReadOnly(): boolean {
+        return this.readOnly() || this.saveBusy() || this.submitBusy();
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {

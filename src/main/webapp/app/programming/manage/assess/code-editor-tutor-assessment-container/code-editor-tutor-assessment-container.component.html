@@ -85,7 +85,7 @@
                 [isTutorAssessment]="true"
                 [commitId]="submission()?.commitHash"
                 [highlightFileChanges]="true"
-                [readOnlyManualFeedback]="readOnly()"
+                [readOnlyManualFeedback]="inlineFeedbackReadOnly()"
                 [highlightDifferences]="highlightDifferences"
                 [course]="getCourseFromExercise(exercise())"
                 (onUpdateFeedback)="onUpdateFeedback($event)"

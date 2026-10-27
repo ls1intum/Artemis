@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -54,8 +54,10 @@ export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
     private destroyRef = inject(DestroyRef);
+    private textareaResizeObserver?: ResizeObserver;
 
     constructor() {
+        this.destroyRef.onDestroy(() => this.textareaResizeObserver?.disconnect());
         // afterRenderEffect (not effect): the textarea DOM read/write here must happen after the view -
         // and its viewChild query - is guaranteed to be resolved, which a plain effect() does not promise
         // on its first flush. A brand-new feedback item (e.g. an AI suggestion appended to the list) mounts
@@ -69,12 +71,8 @@ export class UnifiedFeedbackComponent {
             }
         });
 
-        // Re-measuring only on feedbackDetail/feedbackTitle changes misses the case where a textarea's own
-        // available width shrinks later (e.g. a modeling exercise's Apollon diagram finishes laying out after an
-        // AI feedback suggestion already landed) - the text then wraps into more lines than the height that was
-        // computed at mount time, with nothing left to trigger a re-measure. Watch width specifically (not
-        // the observed box as a whole) so our own height writes below don't retrigger this callback.
-        afterNextRender(() => {
+        // Watch each mounted textarea's width; viewChild changes when an assessment card opens or closes.
+        afterRenderEffect((onCleanup) => {
             const detailTextarea = this.detailTextarea()?.nativeElement;
             const titleTextarea = this.titleTextarea()?.nativeElement;
             if (!detailTextarea && !titleTextarea) {
@@ -100,7 +98,13 @@ export class UnifiedFeedbackComponent {
             if (titleTextarea) {
                 resizeObserver.observe(titleTextarea);
             }
-            this.destroyRef.onDestroy(() => resizeObserver.disconnect());
+            this.textareaResizeObserver = resizeObserver;
+            onCleanup(() => {
+                resizeObserver.disconnect();
+                if (this.textareaResizeObserver === resizeObserver) {
+                    this.textareaResizeObserver = undefined;
+                }
+            });
         });
     }
 
@@ -424,6 +428,12 @@ export class UnifiedFeedbackComponent {
             return;
         }
         autogrowTextarea(textarea);
+    }
+
+    stopToolbarEnterPropagation(event: Event): void {
+        if (!this.assessmentLayout() || !(event as KeyboardEvent).ctrlKey) {
+            event.stopPropagation();
+        }
     }
 
     private getReferencedFeedbackTitle(feedback: Feedback): string {
