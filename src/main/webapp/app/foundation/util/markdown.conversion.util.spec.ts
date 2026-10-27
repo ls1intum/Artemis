@@ -19,6 +19,18 @@ describe('markdown.conversion.util', () => {
             });
         });
 
+        it('isolates strict and legacy raw HTML settings in the renderer cache', () => {
+            const markdown = '<strong>course content</strong>';
+            for (const allowHtml of [true, false, true, false]) {
+                const html = htmlForMarkdown(markdown, [], undefined, undefined, false, allowHtml);
+                if (allowHtml) {
+                    expect(html).toContain('<strong>course content</strong>');
+                } else {
+                    expect(html).toContain('&lt;strong&gt;course content&lt;/strong&gt;');
+                }
+            }
+        });
+
         describe('basic markdown conversion', () => {
             it('should convert bold text', () => {
                 const result = htmlForMarkdown('**bold**');

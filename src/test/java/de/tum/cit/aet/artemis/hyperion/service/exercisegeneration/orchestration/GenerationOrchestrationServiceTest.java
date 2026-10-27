@@ -27,6 +27,8 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -101,7 +103,7 @@ class GenerationOrchestrationServiceTest {
         exercise.setShortName("stack");
         exercise.setPackageName("de.example.stack");
         user.setLogin("editor");
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(snapshot, Map.of(), new GradingContext(false, Set.of())));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(snapshot, Map.of(), new GradingContext(false, Set.of(), Set.of())));
         when(workers.claim("job", 42, GenerationToolchain.JAVA_GRADLE)).thenReturn(claim);
         when(workers.renew(claim)).thenReturn(true);
         when(jobs.isOwnedActiveJob(42, "job")).thenReturn(true);
@@ -132,6 +134,59 @@ class GenerationOrchestrationServiceTest {
         assertThat(assignment.brief().sourceBrief()).isEqualTo("original brief");
         assertThat(assignment.parameters().effortProfile()).isEqualTo("draft");
         verify(usage).markUncertain();
+    }
+
+    @ParameterizedTest
+    @EnumSource(GenerationMode.class)
+    void verifiesAndReturnsTheSameModeFilteredBinarySeed(GenerationMode mode) {
+        var harness = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1 }, false);
+        var oldSolution = new WorkspaceFile("solution/src/old.class", new byte[] { 0, 2 }, false);
+        var oldTest = new WorkspaceFile("tests/test/old.bin", new byte[] { 0, 3 }, false);
+        when(seeds.capture(exercise))
+                .thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(harness, oldSolution, oldTest)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
+        var candidateFiles = new ArrayList<>(List.of(harness, new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false)));
+        if (mode == GenerationMode.ADAPT) {
+            candidateFiles.addAll(List.of(oldSolution, oldTest));
+        }
+        var candidate = new WorkspaceSnapshot(candidateFiles);
+        var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, "draft");
+        deliveries.add(event(1, WorkerEvent.Type.FINISHED, output));
+
+        var outcome = service.generate(exercise, user, "brief", "job", mode, () -> false, progress, fileUpdates::add, usage, null, Instant.now().plusSeconds(300), settings);
+
+        assertThat(outcome.isMechanicallyVerified()).isTrue();
+        var commands = ArgumentCaptor.forClass(WorkerCommand.class);
+        verify(client, org.mockito.Mockito.atLeastOnce()).send(commands.capture());
+        var assigned = commands.getAllValues().stream().filter(command -> command.type() == WorkerCommand.Type.START).findFirst().orElseThrow().assignment();
+        assertThat(assigned.seed().files()).contains(harness);
+        assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.TESTS)).contains("gradle/wrapper/gradle-wrapper.jar");
+        if (mode == GenerationMode.GENERATE) {
+            assertThat(assigned.seed().files()).doesNotContain(oldSolution, oldTest);
+            assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.SOLUTION)).doesNotContain("src/old.class");
+            assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.TESTS)).doesNotContain("test/old.bin");
+        }
+        else {
+            assertThat(assigned.seed().files()).contains(oldSolution, oldTest);
+            assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.SOLUTION)).contains("src/old.class");
+            assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.TESTS)).contains("test/old.bin");
+        }
+    }
+
+    @Test
+    void rejectsRegeneratedOutputThatReintroducesAnExcludedBinary() {
+        var binary = new WorkspaceFile("solution/src/old.class", new byte[] { 0, 2 }, false);
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
+        var candidate = new WorkspaceSnapshot(List.of(binary));
+        var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, "draft");
+        deliveries.add(event(1, WorkerEvent.Type.FINISHED, output));
+
+        var outcome = run(() -> false);
+
+        assertThat(outcome.isMechanicallyVerified()).isFalse();
+        assertThat(outcome.hasCapturedArtifacts()).isFalse();
+        assertThat(outcome.errorMessage()).contains("rejected by core validation");
     }
 
     @Test
@@ -197,7 +252,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void failedStartStillReleasesClaimEvenWhenCleanupDeliveryFails() {
-        doThrow(new IllegalStateException("broker unavailable")).when(client).send(any());
+        doThrow(new IllegalStateException("provider unavailable")).when(client).send(any());
         assertThat(run(() -> false).isMechanicallyVerified()).isFalse();
         verify(workers).release(claim);
     }
@@ -260,7 +315,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void earlySpecificationFailurePreservesCompleteAccountingWithoutRepositoryCapture() {
         var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of())));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
         var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true);
         var status = mock(ExerciseGenerationStatusDTO.class);
         when(status.usage()).thenReturn(new ExerciseGenerationUsageDTO(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true));
