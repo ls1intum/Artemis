@@ -6,6 +6,9 @@ buildscript {
     // This is a build-time-only dependency (client code generation), not shipped in the WAR.
     configurations.classpath {
         resolutionStrategy {
+            // Plugin dependencies resolve independently of the application constraint below.
+            // Guava < 33.7.2 is affected by CVE-2026-102554 (deserialization memory exhaustion).
+            force "com.google.guava:guava:33.7.2-jre"
             force "com.github.jknack:handlebars:4.5.3"
             // Force the patched Apache HttpComponents onto the build-script / plugin classpath too. The
             // org.springframework.boot plugin drags in older httpclient5 / httpcore5 releases, which the GitHub
@@ -531,8 +534,12 @@ dependencies {
         // pulled in transitively, and the constraint forces a known-good version wherever it appears without
         // declaring a spurious direct dependency.
         implementation("com.google.guava:guava") {
-            version { strictly("33.6.0-jre") }
+            version { strictly("33.7.2-jre") }
             because("Force the newest guava across its many transitive users to avoid outdated-dependency CVEs")
+        }
+        checkstyle("com.google.guava:guava") {
+            version { strictly("33.7.2-jre") }
+            because("Checkstyle has a separate classpath; patch CVE-2026-102554 there as well")
         }
         implementation("org.apache.santuario:xmlsec") {
             version { strictly("4.0.4") }
