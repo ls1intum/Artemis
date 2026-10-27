@@ -596,7 +596,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     // a missing title becomes the points-based default, which follows the score on each emit because
                     // it is never written back into Apollon's title field.
                     feedback.text = this.titleOrDefault(assessment.title ?? '', assessment.score);
-                    feedback.detailText = assessment.feedback;
+                    // Always a string, so an empty description still marks `text` as a title (Feedback.isTextTitle).
+                    feedback.detailText = assessment.feedback ?? '';
                 }
                 if (instruction?.id) {
                     feedback.gradingInstruction = instruction;
@@ -612,7 +613,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     this.referenceTypeFor(assessment),
                     instruction ? { instruction } : undefined,
                 );
-                feedback.detailText = assessment.feedback;
+                feedback.detailText = assessment.feedback ?? '';
                 this.elementFeedback.set(assessment.modelElementId, feedback);
             }
         }

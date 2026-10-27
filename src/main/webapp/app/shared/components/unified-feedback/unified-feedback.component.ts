@@ -493,9 +493,12 @@ export class UnifiedFeedbackComponent {
         }
     }
 
-    /** The title is only ever written while the assessor can edit it, never for a read-only or displayed-only feedback. */
+    /**
+     * The title is only ever written while the assessor can edit it, never for a read-only or displayed-only feedback,
+     * nor when the parent generates the title (e.g. the file and line of programming inline feedback).
+     */
     private isTitleEditable(): boolean {
-        return this.editable() && !this.readOnly();
+        return this.editable() && this.titleEditable() && !this.readOnly();
     }
 
     private isDefaultTitle(title: string): boolean {
@@ -534,6 +537,8 @@ export class UnifiedFeedbackComponent {
         const normalized = this.normalizedCredits(this.feedbackCredits());
         if (normalized !== this.feedbackCredits()) {
             this.feedbackCredits.set(normalized);
+            // Snapping can change the sign the default title follows, e.g. 0.2 to 0.
+            this.refreshDefaultTitle();
         }
     }
 

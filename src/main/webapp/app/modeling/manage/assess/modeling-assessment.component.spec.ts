@@ -361,6 +361,37 @@ describe('ModelingAssessmentComponent', () => {
         expect(assessment.feedback).toBe('Consider extracting a common superclass.');
     });
 
+    it('should keep a custom title without a description a title when the assessment is reopened', () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.detectChanges();
+        const [saved] = comp.generateFeedbackFromAssessment([
+            { modelElementId: RELATIONSHIP_ID, elementType: 'Relationship', score: 1, title: 'Missing abstraction', feedback: undefined } as any,
+        ]);
+        // What the server returns for it on reload.
+        const reloaded: Feedback = { text: saved.text, detailText: saved.detailText, referenceId: RELATIONSHIP_ID, reference: 'reference', credits: saved.credits };
+
+        fixture.componentRef.setInput('resultFeedbacks', [reloaded]);
+        fixture.detectChanges();
+
+        const assessment = comp.apollonEditor!.model.assessments[RELATIONSHIP_ID];
+        expect(assessment.title).toBe('Missing abstraction');
+        expect(assessment.feedback).toBe('');
+        comp.generateFeedbackFromAssessment([assessment]);
+        expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.text).toBe('Missing abstraction');
+    });
+
+    it('should show the comment of feedback saved before Apollon had a title as its description', () => {
+        const legacy: Feedback = { text: 'Consider extracting a common superclass.', referenceId: RELATIONSHIP_ID, reference: 'reference', credits: 1 };
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.detectChanges();
+        fixture.componentRef.setInput('resultFeedbacks', [legacy]);
+        fixture.detectChanges();
+
+        const assessment = comp.apollonEditor!.model.assessments[RELATIONSHIP_ID];
+        expect(assessment.title).toBeUndefined();
+        expect(assessment.feedback).toBe('Consider extracting a common superclass.');
+    });
+
     it('should update element counts', async () => {
         const mockModel = makeMockModel();
         const v4Model = createV4ModelWithNodes();
