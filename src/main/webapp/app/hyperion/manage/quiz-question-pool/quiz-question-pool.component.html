@@ -2,10 +2,10 @@
     <jhi-course-title-bar-title title="artemisApp.hyperion.quizQuestionPool.title" />
     @if (isSettingsDirty()) {
         <span class="ms-3">
-            <p-tag severity="warn">
+            <tumaet-ui-tag severity="warn">
                 <fa-icon [icon]="faExclamationTriangle" class="me-1" />
                 <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.unsaved"></span>
-            </p-tag>
+            </tumaet-ui-tag>
         </span>
     }
 </div>
@@ -18,7 +18,12 @@
             <h6 class="pool-card-title" jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.title"></h6>
             @if (progress(); as progressValue) {
                 @if (progressValue.total > 0) {
-                    <p-progressbar [value]="progressPercent()" [showValue]="true" styleClass="pool-progress-bar" />
+                    <tumaet-ui-progress-bar
+                        class="pool-progress-bar block"
+                        [value]="progressPercent()"
+                        [showValue]="true"
+                        [ariaLabel]="'artemisApp.hyperion.quizQuestionPool.progress.title' | artemisTranslate"
+                    />
                     <ul class="pool-progress-counts">
                         <li
                             data-testid="pool-progress-total"
@@ -55,10 +60,10 @@
                 }
                 <p class="pool-run-state">
                     @if (isRunning()) {
-                        <p-tag severity="info" data-testid="pool-running">
+                        <tumaet-ui-tag severity="info" data-testid="pool-running">
                             <fa-icon [icon]="faRotate" class="me-1" animation="spin" />
                             <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.running"></span>
-                        </p-tag>
+                        </tumaet-ui-tag>
                     } @else {
                         <span class="text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.idle"></span>
                     }
@@ -66,12 +71,12 @@
             }
             <div class="pool-card-actions">
                 @if (isInstructor()) {
-                    <button pButton type="button" data-testid="pool-build-button" [disabled]="isStartingBuild() || isRunning()" (click)="startBuild()">
+                    <button tumAetUiButton type="button" data-testid="pool-build-button" [disabled]="isStartingBuild() || isRunning()" (click)="startBuild()">
                         <fa-icon [icon]="faPlay" class="me-1" />
                         <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.build"></span>
                     </button>
                 }
-                <button pButton type="button" severity="secondary" [outlined]="true" data-testid="pool-refresh-button" [disabled]="isLoading()" (click)="refresh()">
+                <button tumAetUiButton type="button" severity="secondary" variant="outlined" data-testid="pool-refresh-button" [disabled]="isLoading()" (click)="refresh()">
                     <fa-icon [icon]="faRotate" class="me-1" />
                     <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.refresh"></span>
                 </button>
@@ -83,7 +88,7 @@
                 <h6 class="pool-card-title" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.title"></h6>
                 <div class="pool-setting">
                     <label for="pool-questions" class="pool-setting-label" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.questionsPerLectureUnit"></label>
-                    <p-inputnumber
+                    <tumaet-ui-input-number
                         inputId="pool-questions"
                         [ngModel]="settingsValue.questionsPerLectureUnit"
                         (ngModelChange)="setQuestionsPerLectureUnit($event)"
@@ -93,12 +98,12 @@
                         [showButtons]="true"
                         [useGrouping]="false"
                         [step]="1"
-                        styleClass="w-100"
+                        [fluid]="true"
                     />
                     <small class="pool-card-hint" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.questionsHelp"></small>
                 </div>
                 <div class="pool-setting pool-setting-toggle">
-                    <p-toggleswitch
+                    <tumaet-ui-toggle-switch
                         inputId="pool-generation-enabled"
                         [ngModel]="settingsValue.poolGenerationEnabled"
                         (ngModelChange)="setPoolGenerationEnabled($event)"
@@ -112,7 +117,7 @@
                 </div>
                 <div class="pool-card-actions">
                     <button
-                        pButton
+                        tumAetUiButton
                         type="button"
                         data-testid="pool-save-settings-button"
                         [disabled]="!isSettingsDirty() || !isSettingsValid() || isSavingSettings()"
@@ -128,8 +133,9 @@
     @if (competencyOptions().length > 1) {
         <div class="pool-filter">
             <label for="pool-competency-filter" class="pool-setting-label" jhiTranslate="artemisApp.hyperion.quizQuestionPool.filter.competency"></label>
-            <p-select
+            <tumaet-ui-select
                 inputId="pool-competency-filter"
+                class="pool-competency-select"
                 [options]="competencyOptions()"
                 optionLabel="title"
                 optionValue="id"
@@ -137,8 +143,6 @@
                 (ngModelChange)="selectCompetency($event)"
                 [showClear]="true"
                 [placeholder]="'artemisApp.hyperion.quizQuestionPool.filter.allCompetencies' | artemisTranslate"
-                styleClass="pool-competency-select"
-                appendTo="body"
             />
         </div>
     }

@@ -1,8 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, ViewEncapsulation, computed, input, output, signal } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizAiGeneratedQuestionCardComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generated-question-card/quiz-ai-generated-question-card.component';
@@ -24,7 +22,15 @@ const IN_PROGRESS_STATES = new Set(['PENDING', 'GENERATING', 'GENERATED', 'FILTE
     templateUrl: './quiz-question-pool-item-list.component.html',
     styleUrl: './quiz-question-pool-item-list.component.scss',
     encapsulation: ViewEncapsulation.None,
-    imports: [NgTemplateOutlet, ButtonModule, TagModule, TooltipModule, TranslateDirective, ArtemisTranslatePipe, QuizAiGeneratedQuestionCardComponent],
+    imports: [
+        NgTemplateOutlet,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        QuizAiGeneratedQuestionCardComponent,
+    ],
 })
 export class QuizQuestionPoolItemListComponent {
     questions = input.required<PoolQuestion[]>();

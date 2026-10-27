@@ -1,17 +1,19 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiProgressBarComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTagComponent,
+    TumAetUiToggleSwitchComponent,
+} from '@tumaet/ui-angular';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faExclamationTriangle, faPlay, faRotate } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subscription, interval } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
-import { ButtonModule } from 'primeng/button';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { ProgressBarModule } from 'primeng/progressbar';
-import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -60,12 +62,12 @@ export const MAX_QUESTIONS_PER_LECTURE_UNIT = 60;
     imports: [
         FormsModule,
         FaIconComponent,
-        ButtonModule,
-        InputNumberModule,
-        ProgressBarModule,
-        SelectModule,
-        TagModule,
-        ToggleSwitchModule,
+        TumAetUiButtonDirective,
+        TumAetUiInputNumberComponent,
+        TumAetUiProgressBarComponent,
+        TumAetUiSelectComponent,
+        TumAetUiTagComponent,
+        TumAetUiToggleSwitchComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         CourseTitleBarTitleComponent,

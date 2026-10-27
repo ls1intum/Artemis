@@ -67,12 +67,12 @@
                 <span [jhiTranslate]="'artemisApp.hyperion.quizQuestionPool.list.difficulty.' + question.difficulty"></span>
             </span>
             @for (verdict of flaggedVerdicts(question.decision); track verdict.mode) {
-                <span class="verdict-badge" [class.verdict-badge-triggered]="verdict.triggered" [pTooltip]="verdict.justification" tooltipPosition="top" appendTo="body">
+                <span class="verdict-badge" [class.verdict-badge-triggered]="verdict.triggered" [tumAetUiTooltip]="verdict.justification ?? ''" tumAetUiTooltipPlacement="top">
                     <span [jhiTranslate]="getFailureModeLabelKey(verdict.mode)"></span>
                     <span class="verdict-severity">{{ asPercent(verdict.severity) }}</span>
                 </span>
             }
-            <button pButton type="button" severity="secondary" [text]="true" size="small" class="rationale-toggle" (click)="toggleRationale(question.id)">
+            <button tumAetUiButton type="button" severity="secondary" variant="text" size="small" class="rationale-toggle" (click)="toggleRationale(question.id)">
                 <span
                     [jhiTranslate]="isExpanded(question.id) ? 'artemisApp.hyperion.quizQuestionPool.list.hideRationale' : 'artemisApp.hyperion.quizQuestionPool.list.showRationale'"
                 ></span>
@@ -102,16 +102,16 @@
             </div>
         }
         <div class="pool-item-review">
-            <p-tag [severity]="getReviewStateSeverity(question.reviewState)" [attr.data-testid]="'pool-review-state-' + question.id">
+            <tumaet-ui-tag [severity]="getReviewStateSeverity(question.reviewState)" [attr.data-testid]="'pool-review-state-' + question.id">
                 <span [jhiTranslate]="getReviewStateLabelKey(question.reviewState)"></span>
-            </p-tag>
+            </tumaet-ui-tag>
             @if (canReview()) {
                 <button
-                    pButton
+                    tumAetUiButton
                     type="button"
                     size="small"
                     [severity]="question.reviewState === 'APPROVED' ? 'success' : 'secondary'"
-                    [outlined]="question.reviewState !== 'APPROVED'"
+                    [variant]="question.reviewState === 'APPROVED' ? 'solid' : 'outlined'"
                     [disabled]="isBusy(question.id)"
                     [attr.data-testid]="'pool-approve-' + question.id"
                     (click)="setReview(question, 'APPROVED')"
@@ -119,11 +119,11 @@
                     <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.approve"></span>
                 </button>
                 <button
-                    pButton
+                    tumAetUiButton
                     type="button"
                     size="small"
                     [severity]="question.reviewState === 'EXCLUDED' ? 'danger' : 'secondary'"
-                    [outlined]="question.reviewState !== 'EXCLUDED'"
+                    [variant]="question.reviewState === 'EXCLUDED' ? 'solid' : 'outlined'"
                     [disabled]="isBusy(question.id)"
                     [attr.data-testid]="'pool-exclude-' + question.id"
                     (click)="setReview(question, 'EXCLUDED')"
