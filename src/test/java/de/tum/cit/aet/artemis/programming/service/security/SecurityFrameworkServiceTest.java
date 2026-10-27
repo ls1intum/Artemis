@@ -61,8 +61,8 @@ import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkVersionsDTO;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
 /**
  * Tests {@link SecurityFrameworkService} against real git repositories: a bare repository stands in for the LocalVC tests repository, laid out like the
@@ -129,7 +129,7 @@ class SecurityFrameworkServiceTest {
 
     private LocalVCServletService localVCServletService;
 
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     private SecurityFrameworkService securityFrameworkService;
 
@@ -189,7 +189,7 @@ class SecurityFrameworkServiceTest {
         resourceLoaderService = mock(ResourceLoaderService.class);
         when(resourceLoaderService.getResource(any(Path.class))).thenAnswer(call -> new FileSystemResource(MAIN_RESOURCES.resolve(call.getArgument(0, Path.class))));
         localVCServletService = mock(LocalVCServletService.class);
-        programmingSubmissionRepository = mock(ProgrammingSubmissionRepository.class);
+        programmingSubmissionRepository = mock(ProgrammingSubmissionTestRepository.class);
 
         securityFrameworkService = createService("2.3.0", "2.2.1");
     }
@@ -437,8 +437,7 @@ class SecurityFrameworkServiceTest {
     @Test
     void aRetryResumesTheProcessingOfAChangeWhoseProcessingFailed() throws Exception {
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
-        doThrow(new VersionControlException("Build trigger failed")).when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(),
-                any());
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
 
         assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
                 .matches(exception -> "securityFrameworkProcessingFailed".equals(exception.getErrorKey()));
@@ -451,8 +450,7 @@ class SecurityFrameworkServiceTest {
 
         assertThat(config.status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
         assertThat(pushedHead()).isEqualTo(pushedHead);
-        verify(localVCServletService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()),
-                eq(Optional.empty()));
+        verify(localVCServletService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
     }
 
     @Test

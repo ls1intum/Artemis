@@ -8,8 +8,6 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jspecify.annotations.Nullable;
-
 /**
  * Finds and rewrites the Ares {@code @Policy} annotations of a Java source file.
  * <p>
