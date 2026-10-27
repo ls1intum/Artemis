@@ -55,6 +55,7 @@ import {
 } from 'app/exercise/util/exercise-validation.util';
 import { ExerciseFormState } from 'app/exercise/util/exercise-form-state';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -82,6 +83,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FeatureOverlayComponent,
         ExerciseTimelineComponent,
         ExerciseGroupDateNoticeComponent,
+        PointsInputComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit {
