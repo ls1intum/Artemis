@@ -47,11 +47,11 @@
                                 [translateValues]="{ count: progressValue.toGenerate + progressValue.toJudge }"
                             ></li>
                         }
-                        @if (progressValue.failed > 0) {
+                        @if (progressValue.rejected + progressValue.failed > 0) {
                             <li
                                 data-testid="pool-progress-failed"
                                 jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.failed"
-                                [translateValues]="{ count: progressValue.failed }"
+                                [translateValues]="{ count: progressValue.rejected + progressValue.failed }"
                             ></li>
                         }
                     </ul>
@@ -87,11 +87,15 @@
             <section class="pool-card" data-testid="pool-settings-card">
                 <h6 class="pool-card-title" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.title"></h6>
                 <div class="pool-setting">
-                    <label for="pool-questions" class="pool-setting-label" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.questionsPerLectureUnit"></label>
+                    <label
+                        for="pool-single-choice-questions"
+                        class="pool-setting-label"
+                        jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.singleChoiceQuestionsPerLectureUnit"
+                    ></label>
                     <tumaet-ui-input-number
-                        inputId="pool-questions"
-                        [ngModel]="settingsValue.questionsPerLectureUnit"
-                        (ngModelChange)="setQuestionsPerLectureUnit($event)"
+                        inputId="pool-single-choice-questions"
+                        [ngModel]="settingsValue.singleChoiceQuestionsPerLectureUnit"
+                        (ngModelChange)="setSingleChoiceQuestionsPerLectureUnit($event)"
                         [disabled]="isSavingSettings()"
                         [min]="minQuestionsPerLectureUnit"
                         [max]="maxQuestionsPerLectureUnit"
@@ -100,7 +104,100 @@
                         [step]="1"
                         [fluid]="true"
                     />
-                    <small class="pool-card-hint" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.questionsHelp"></small>
+                    <small class="pool-card-hint" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.singleChoiceHelp"></small>
+                </div>
+                <div class="pool-setting pool-setting-toggle">
+                    <tumaet-ui-toggle-switch
+                        inputId="pool-multiple-choice-enabled"
+                        [ngModel]="settingsValue.multipleChoiceEnabled"
+                        (ngModelChange)="setMultipleChoiceEnabled($event)"
+                        [disabled]="isSavingSettings()"
+                        [ariaLabel]="'artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceEnabled' | artemisTranslate"
+                    />
+                    <label for="pool-multiple-choice-enabled">
+                        <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceEnabled"></span>
+                        <small class="pool-card-hint block" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceHelp"></small>
+                    </label>
+                </div>
+                @if (settingsValue.multipleChoiceEnabled) {
+                    <div class="pool-setting">
+                        <label
+                            for="pool-multiple-choice-questions"
+                            class="pool-setting-label"
+                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceQuestionsPerLectureUnit"
+                        ></label>
+                        <tumaet-ui-input-number
+                            inputId="pool-multiple-choice-questions"
+                            [ngModel]="settingsValue.multipleChoiceQuestionsPerLectureUnit"
+                            (ngModelChange)="setMultipleChoiceQuestionsPerLectureUnit($event)"
+                            [disabled]="isSavingSettings()"
+                            [min]="minQuestionsPerLectureUnit"
+                            [max]="maxQuestionsPerLectureUnit"
+                            [showButtons]="true"
+                            [useGrouping]="false"
+                            [step]="1"
+                            [fluid]="true"
+                        />
+                    </div>
+                }
+                <div class="pool-setting">
+                    <span class="pool-setting-label" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.difficultyMix"></span>
+                    <div class="pool-setting-row">
+                        <div class="pool-setting-share">
+                            <label for="pool-easy-percent" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.easyPercent"></label>
+                            <tumaet-ui-input-number
+                                inputId="pool-easy-percent"
+                                [ngModel]="settingsValue.easyPercent"
+                                (ngModelChange)="setEasyPercent($event)"
+                                [disabled]="isSavingSettings()"
+                                [min]="minPercent"
+                                [max]="maxPercent"
+                                [showButtons]="true"
+                                [useGrouping]="false"
+                                [step]="5"
+                                [fluid]="true"
+                            />
+                        </div>
+                        <div class="pool-setting-share">
+                            <label for="pool-medium-percent" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.mediumPercent"></label>
+                            <tumaet-ui-input-number
+                                inputId="pool-medium-percent"
+                                [ngModel]="settingsValue.mediumPercent"
+                                (ngModelChange)="setMediumPercent($event)"
+                                [disabled]="isSavingSettings()"
+                                [min]="minPercent"
+                                [max]="maxPercent"
+                                [showButtons]="true"
+                                [useGrouping]="false"
+                                [step]="5"
+                                [fluid]="true"
+                            />
+                        </div>
+                        <div class="pool-setting-share">
+                            <label for="pool-hard-percent" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.hardPercent"></label>
+                            <tumaet-ui-input-number
+                                inputId="pool-hard-percent"
+                                [ngModel]="settingsValue.hardPercent"
+                                (ngModelChange)="setHardPercent($event)"
+                                [disabled]="isSavingSettings()"
+                                [min]="minPercent"
+                                [max]="maxPercent"
+                                [showButtons]="true"
+                                [useGrouping]="false"
+                                [step]="5"
+                                [fluid]="true"
+                            />
+                        </div>
+                    </div>
+                    <small class="pool-card-hint" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.difficultyMixHelp"></small>
+                    @if (difficultyPercentSum() !== 100) {
+                        <small
+                            class="pool-setting-error"
+                            data-testid="pool-difficulty-mix-error"
+                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.difficultyMixSum"
+                            [translateValues]="{ sum: difficultyPercentSum() }"
+                        ></small>
+                    }
                 </div>
                 <div class="pool-setting pool-setting-toggle">
                     <tumaet-ui-toggle-switch

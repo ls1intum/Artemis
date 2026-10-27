@@ -21,7 +21,15 @@ describe('QuizQuestionPoolComponent', () => {
     let alertService: AlertService;
 
     const progress: PoolProgress = { running: false, total: 10, toGenerate: 0, toJudge: 0, judged: 9, accepted: 7, rejected: 2, failed: 1 };
-    const settings: PoolSettings = { poolGenerationEnabled: false, questionsPerLectureUnit: 12 };
+    const settings: PoolSettings = {
+        poolGenerationEnabled: false,
+        singleChoiceQuestionsPerLectureUnit: 12,
+        multipleChoiceEnabled: false,
+        multipleChoiceQuestionsPerLectureUnit: 12,
+        easyPercent: 20,
+        mediumPercent: 50,
+        hardPercent: 30,
+    };
 
     function question(id: number, competencyId: number, title: string): PoolQuestion {
         return {
@@ -116,7 +124,7 @@ describe('QuizQuestionPoolComponent', () => {
         const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValue(of({ ...progress, running: true }));
         params.next({ courseId: '1' });
         component.selectCompetency(9);
-        component.setQuestionsPerLectureUnit(30);
+        component.setSingleChoiceQuestionsPerLectureUnit(30);
         expect(component.courseId()).toBe(1);
         expect(component.questions()).toHaveLength(3);
         expect(component.isRunning()).toBe(true);
@@ -147,14 +155,14 @@ describe('QuizQuestionPoolComponent', () => {
         vi.spyOn(poolService, 'startBuild').mockReturnValue(lateStart.asObservable());
         vi.spyOn(poolService, 'updateSettings').mockReturnValue(lateSave.asObservable());
         component.startBuild();
-        component.setQuestionsPerLectureUnit(30);
+        component.setSingleChoiceQuestionsPerLectureUnit(30);
         component.saveSettings();
 
         params.next({ courseId: '2' });
         const pollsOfFirstCourse = progressSpy.mock.calls.filter((call) => call[0] === 1).length;
         lateStart.next({ started: true, enqueued: 12 });
         lateStart.complete();
-        lateSave.next({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
+        lateSave.next({ ...settings, poolGenerationEnabled: true, singleChoiceQuestionsPerLectureUnit: 30 });
         lateSave.complete();
         vi.advanceTimersByTime(6000);
 
@@ -267,19 +275,20 @@ describe('QuizQuestionPoolComponent', () => {
 
     it('should track dirty settings and save them', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
-        const updateSpy = vi.spyOn(poolService, 'updateSettings').mockReturnValue(of({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 }));
+        const changed = { ...settings, poolGenerationEnabled: true, singleChoiceQuestionsPerLectureUnit: 30 };
+        const updateSpy = vi.spyOn(poolService, 'updateSettings').mockReturnValue(of(changed));
 
         expect(component.isSettingsDirty()).toBe(false);
         expect(component.canDeactivate()).toBe(true);
 
-        component.setQuestionsPerLectureUnit(30);
+        component.setSingleChoiceQuestionsPerLectureUnit(30);
         component.setPoolGenerationEnabled(true);
         expect(component.isSettingsDirty()).toBe(true);
         expect(component.canDeactivate()).toBe(false);
 
         component.saveSettings();
 
-        expect(updateSpy).toHaveBeenCalledWith(1, { poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
+        expect(updateSpy).toHaveBeenCalledWith(1, changed);
         expect(component.isSettingsDirty()).toBe(false);
         expect(component.canDeactivate()).toBe(true);
     });
@@ -288,11 +297,11 @@ describe('QuizQuestionPoolComponent', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         const pending = new Subject<PoolSettings>();
         vi.spyOn(poolService, 'updateSettings').mockReturnValue(pending.asObservable());
-        component.setQuestionsPerLectureUnit(30);
+        component.setSingleChoiceQuestionsPerLectureUnit(30);
         component.saveSettings();
         fixture.detectChanges();
 
-        const lockedInput = fixture.nativeElement.querySelector('#pool-questions') as HTMLInputElement;
+        const lockedInput = fixture.nativeElement.querySelector('#pool-single-choice-questions') as HTMLInputElement;
         const lockedToggle = fixture.nativeElement.querySelector('#pool-generation-enabled') as HTMLInputElement;
         expect({
             saving: component.isSavingSettings(),
@@ -308,23 +317,55 @@ describe('QuizQuestionPoolComponent', () => {
             toggleTag: 'INPUT',
         });
 
-        pending.next({ poolGenerationEnabled: false, questionsPerLectureUnit: 30 });
+        pending.next({ ...settings, singleChoiceQuestionsPerLectureUnit: 30 });
         pending.complete();
         fixture.detectChanges();
 
         expect(component.isSavingSettings()).toBe(false);
-        expect((fixture.nativeElement.querySelector('#pool-questions') as HTMLInputElement).disabled).toBe(false);
+        expect((fixture.nativeElement.querySelector('#pool-single-choice-questions') as HTMLInputElement).disabled).toBe(false);
     });
 
     it('should refuse to save settings outside the allowed range', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         const updateSpy = vi.spyOn(poolService, 'updateSettings');
 
-        component.setQuestionsPerLectureUnit(0);
+        component.setSingleChoiceQuestionsPerLectureUnit(0);
         expect(component.isSettingsValid()).toBe(false);
         component.saveSettings();
 
         expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should show the multiple-choice count only while multiple-choice questions are enabled', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        expect(fixture.nativeElement.querySelector('#pool-multiple-choice-questions')).toBeNull();
+
+        component.setMultipleChoiceEnabled(true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#pool-multiple-choice-questions')).not.toBeNull();
+        component.setMultipleChoiceQuestionsPerLectureUnit(61);
+        expect(component.isSettingsValid()).toBe(false);
+        component.setMultipleChoiceQuestionsPerLectureUnit(5);
+        expect(component.isSettingsValid()).toBe(true);
+    });
+
+    it('should refuse a difficulty mix that does not add up to 100 percent', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-difficulty-mix-error"]')).toBeNull();
+
+        component.setEasyPercent(30);
+        fixture.detectChanges();
+
+        expect(component.difficultyPercentSum()).toBe(110);
+        expect(component.isSettingsValid()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-difficulty-mix-error"]')).not.toBeNull();
+
+        component.setHardPercent(20);
+        fixture.detectChanges();
+
+        expect(component.isSettingsValid()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-difficulty-mix-error"]')).toBeNull();
     });
 
     it('should replace a question once its review decision is saved', () => {

@@ -97,17 +97,27 @@ describe('QuizQuestionPoolService', () => {
     });
 
     it('should read and update the settings', () => {
+        const stored: PoolSettings = {
+            poolGenerationEnabled: false,
+            singleChoiceQuestionsPerLectureUnit: 12,
+            multipleChoiceEnabled: false,
+            multipleChoiceQuestionsPerLectureUnit: 12,
+            easyPercent: 20,
+            mediumPercent: 50,
+            hardPercent: 30,
+        };
         let loaded: PoolSettings | undefined;
         service.getSettings(7).subscribe((settings) => (loaded = settings));
-        httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/hyperion/courses/7/quiz-question-pool/settings').flush({ questionsPerLectureUnit: 12 });
-        expect(loaded).toEqual({ poolGenerationEnabled: false, questionsPerLectureUnit: 12 });
+        httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/hyperion/courses/7/quiz-question-pool/settings').flush(stored);
+        expect(loaded).toEqual(stored);
 
-        let stored: PoolSettings | undefined;
-        service.updateSettings(7, { poolGenerationEnabled: true, questionsPerLectureUnit: 30 }).subscribe((settings) => (stored = settings));
+        const changed: PoolSettings = { ...stored, poolGenerationEnabled: true, singleChoiceQuestionsPerLectureUnit: 30, multipleChoiceEnabled: true, hardPercent: 30 };
+        let updated: PoolSettings | undefined;
+        service.updateSettings(7, changed).subscribe((settings) => (updated = settings));
         const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === '/api/hyperion/courses/7/quiz-question-pool/settings');
-        expect(req.request.body).toEqual({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
-        req.flush({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
-        expect(stored).toEqual({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
+        expect(req.request.body).toEqual(changed);
+        req.flush(changed);
+        expect(updated).toEqual(changed);
     });
 
     it('should send the review decision and map the updated item', () => {

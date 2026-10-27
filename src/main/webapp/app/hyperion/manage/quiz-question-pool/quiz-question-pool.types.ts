@@ -56,7 +56,12 @@ export interface PoolProgress {
 
 export interface PoolSettings {
     poolGenerationEnabled: boolean;
-    questionsPerLectureUnit: number;
+    singleChoiceQuestionsPerLectureUnit: number;
+    multipleChoiceEnabled: boolean;
+    multipleChoiceQuestionsPerLectureUnit: number;
+    easyPercent: number;
+    mediumPercent: number;
+    hardPercent: number;
 }
 
 export interface PoolBuildStart {

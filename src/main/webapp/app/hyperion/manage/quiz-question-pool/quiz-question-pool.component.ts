@@ -49,9 +49,12 @@ const POLL_INTERVAL_MS = 3000;
 /** How long a progress request may stay unanswered before the next poll tick replaces it. */
 const POLL_TIMEOUT_MS = 10000;
 
-/** Bounds of the questions-per-lecture-unit setting, matching the server's validation. */
+/** Bounds of the question counts per lecture unit, matching the server's validation. */
 export const MIN_QUESTIONS_PER_LECTURE_UNIT = 1;
 export const MAX_QUESTIONS_PER_LECTURE_UNIT = 60;
+/** Bounds of one difficulty share in percent. */
+export const MIN_PERCENT = 0;
+export const MAX_PERCENT = 100;
 
 /**
  * The per-course page of Hyperion's quiz question pool: progress and build trigger, the course's pool settings, and the pool's
@@ -90,6 +93,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly minQuestionsPerLectureUnit = MIN_QUESTIONS_PER_LECTURE_UNIT;
     readonly maxQuestionsPerLectureUnit = MAX_QUESTIONS_PER_LECTURE_UNIT;
+    readonly minPercent = MIN_PERCENT;
+    readonly maxPercent = MAX_PERCENT;
 
     readonly courseId = signal<number | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
@@ -151,11 +156,25 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
         if (!settings || !original) {
             return false;
         }
-        return settings.poolGenerationEnabled !== original.poolGenerationEnabled || settings.questionsPerLectureUnit !== original.questionsPerLectureUnit;
+        return (Object.keys(settings) as (keyof PoolSettings)[]).some((key) => settings[key] !== original[key]);
+    });
+    /** The difficulty shares added up; the settings are valid only when this is 100. */
+    readonly difficultyPercentSum = computed(() => {
+        const settings = this.settings();
+        return settings ? settings.easyPercent + settings.mediumPercent + settings.hardPercent : 0;
     });
     readonly isSettingsValid = computed(() => {
-        const questions = this.settings()?.questionsPerLectureUnit;
-        return questions !== undefined && questions >= MIN_QUESTIONS_PER_LECTURE_UNIT && questions <= MAX_QUESTIONS_PER_LECTURE_UNIT;
+        const settings = this.settings();
+        if (!settings) {
+            return false;
+        }
+        const counts = [settings.singleChoiceQuestionsPerLectureUnit, settings.multipleChoiceQuestionsPerLectureUnit];
+        const shares = [settings.easyPercent, settings.mediumPercent, settings.hardPercent];
+        return (
+            counts.every((count) => count >= MIN_QUESTIONS_PER_LECTURE_UNIT && count <= MAX_QUESTIONS_PER_LECTURE_UNIT) &&
+            shares.every((share) => share >= MIN_PERCENT && share <= MAX_PERCENT) &&
+            this.difficultyPercentSum() === 100
+        );
     });
 
     ngOnInit(): void {
@@ -353,11 +372,35 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
     }
 
     setPoolGenerationEnabled(enabled: boolean): void {
-        this.settings.update((settings) => (settings ? cloneWith(settings, { poolGenerationEnabled: enabled }) : settings));
+        this.changeSettings({ poolGenerationEnabled: enabled });
     }
 
-    setQuestionsPerLectureUnit(questions: number | undefined): void {
-        this.settings.update((settings) => (settings ? cloneWith(settings, { questionsPerLectureUnit: questions ?? 0 }) : settings));
+    setSingleChoiceQuestionsPerLectureUnit(questions: number | undefined): void {
+        this.changeSettings({ singleChoiceQuestionsPerLectureUnit: questions ?? 0 });
+    }
+
+    setMultipleChoiceEnabled(enabled: boolean): void {
+        this.changeSettings({ multipleChoiceEnabled: enabled });
+    }
+
+    setMultipleChoiceQuestionsPerLectureUnit(questions: number | undefined): void {
+        this.changeSettings({ multipleChoiceQuestionsPerLectureUnit: questions ?? 0 });
+    }
+
+    setEasyPercent(percent: number | undefined): void {
+        this.changeSettings({ easyPercent: percent ?? 0 });
+    }
+
+    setMediumPercent(percent: number | undefined): void {
+        this.changeSettings({ mediumPercent: percent ?? 0 });
+    }
+
+    setHardPercent(percent: number | undefined): void {
+        this.changeSettings({ hardPercent: percent ?? 0 });
+    }
+
+    private changeSettings(changes: Partial<PoolSettings>): void {
+        this.settings.update((settings) => (settings ? cloneWith(settings, changes) : settings));
     }
 
     selectCompetency(competencyId: number | undefined | null): void {

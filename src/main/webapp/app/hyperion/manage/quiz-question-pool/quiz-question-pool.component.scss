@@ -69,6 +69,29 @@
     font-weight: 600;
 }
 
+.quiz-question-pool .pool-setting-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.quiz-question-pool .pool-setting-share {
+    display: flex;
+    flex: 1 1 6rem;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.quiz-question-pool .pool-setting-share label {
+    color: var(--p-text-muted-color);
+    font-size: 0.85rem;
+}
+
+.quiz-question-pool .pool-setting-error {
+    color: var(--bs-danger-text-emphasis);
+    font-size: 0.85rem;
+}
+
 .quiz-question-pool .pool-setting-toggle {
     align-items: flex-start;
     flex-direction: row;

@@ -90,7 +90,15 @@ export class QuizQuestionPoolService {
     }
 
     private toSettings(settings: HyperionCourseSettings): PoolSettings {
-        return { poolGenerationEnabled: !!settings.poolGenerationEnabled, questionsPerLectureUnit: settings.questionsPerLectureUnit };
+        return {
+            poolGenerationEnabled: settings.poolGenerationEnabled,
+            singleChoiceQuestionsPerLectureUnit: settings.singleChoiceQuestionsPerLectureUnit,
+            multipleChoiceEnabled: settings.multipleChoiceEnabled,
+            multipleChoiceQuestionsPerLectureUnit: settings.multipleChoiceQuestionsPerLectureUnit,
+            easyPercent: settings.easyPercent,
+            mediumPercent: settings.mediumPercent,
+            hardPercent: settings.hardPercent,
+        };
     }
 
     private toPoolQuestion(item: QuizQuestionPoolItem): PoolQuestion {
