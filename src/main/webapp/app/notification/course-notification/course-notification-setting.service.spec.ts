@@ -7,7 +7,7 @@ import { CourseNotificationSettingInfo, CourseNotificationSettingService } from 
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import { CourseNotificationChannelSetting } from 'app/notification/shared/entities/course-notification/course-notification-channel-setting';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
+import { UserCourseNotificationSettingPreset as CourseNotificationSettingPreset } from 'app/openapi/model/user-course-notification-setting-preset';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
@@ -405,7 +405,7 @@ describe('CourseNotificationSettingService', () => {
             httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`).flush(null);
 
             // Another course customized from the same preset must still start from what the preset says.
-            expect(preset.presetMap['notification1'][CourseNotificationChannel.PUSH]).toBe(true);
+            expect(preset.presetMap?.['notification1'][CourseNotificationChannel.PUSH]).toBe(true);
         });
 
         it('should keep the channels that apply to the user when there is no preset to copy', () => {

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.notification.web;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnnoun
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationBroadcastService;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationRegistryService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationStatusTestRepository;
@@ -48,6 +50,9 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private CourseNotificationRegistryService registry;
 
     private User user;
 
@@ -150,7 +155,8 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnEmptyResultWhenNoNotificationsAreFound() throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(0));
+                .andExpect(jsonPath("$.totalElements").value(0)).andExpect(jsonPath("$.pageNumber").value(0)).andExpect(jsonPath("$.pageSize").value(20))
+                .andExpect(jsonPath("$.totalPages").value(0)).andExpect(jsonPath("$.content").doesNotExist());
     }
 
     @Test
@@ -181,4 +187,49 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
                         NotificationChannelOption.values()[1].name(), NotificationChannelOption.values()[2].name())))
                 .andExpect(jsonPath("$.notificationTypes").isNotEmpty());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldPreserveNullReconstructionResultAndPageTotals() throws Exception {
+        var notification = courseNotificationRepository.save(new CourseNotification(course, (short) 99, ZonedDateTime.now(), ZonedDateTime.now()));
+        userCourseNotificationStatusTestRepository.save(new UserCourseNotificationStatus(notification, user, UserCourseNotificationStatusType.UNSEEN));
+        // A known class whose constructor cannot instantiate reproduces the existing caught reflection failure.
+        Object types = ReflectionTestUtils.getField(registry, "notificationTypes");
+        Object previous = ReflectionTestUtils.invokeMethod(types, "put", (short) 99, de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification.class);
+        try {
+            request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId()).param("page", "0").param("size", "10")).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0]", nullValue())).andExpect(jsonPath("$.pageNumber").value(0))
+                    .andExpect(jsonPath("$.pageSize").value(10)).andExpect(jsonPath("$.totalElements").value(1)).andExpect(jsonPath("$.totalPages").value(1));
+        }
+        finally {
+            if (previous == null) {
+                ReflectionTestUtils.invokeMethod(types, "remove", (short) 99);
+            }
+            else {
+                ReflectionTestUtils.invokeMethod(types, "put", (short) 99, previous);
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldPreserveRequestedPageAndSortOrder() throws Exception {
+        var older = courseNotificationRepository.save(new CourseNotification(course, (short) 1, ZonedDateTime.parse("2026-01-01T00:00:00Z"), ZonedDateTime.now()));
+        var newer = courseNotificationRepository.save(new CourseNotification(course, (short) 1, ZonedDateTime.parse("2026-01-02T00:00:00Z"), ZonedDateTime.now()));
+        for (var notification : List.of(older, newer)) {
+            userCourseNotificationStatusTestRepository.save(new UserCourseNotificationStatus(notification, user, UserCourseNotificationStatusType.UNSEEN));
+        }
+        request.performMvcRequest(
+                MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId()).param("page", "1").param("size", "1").param("sort", "creationDate,desc"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].notificationId").value(older.getId())).andExpect(jsonPath("$.pageNumber").value(1))
+                .andExpect(jsonPath("$.pageSize").value(1)).andExpect(jsonPath("$.totalElements").value(2)).andExpect(jsonPath("$.totalPages").value(2));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDenyFeedForNonmember() throws Exception {
+        var otherCourse = courseUtilService.createCourse();
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + otherCourse.getId())).andExpect(status().isForbidden());
+    }
+
 }

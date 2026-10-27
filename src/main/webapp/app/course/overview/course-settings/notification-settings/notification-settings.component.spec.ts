@@ -5,9 +5,8 @@ import { CourseNotificationSettingInfo, CourseNotificationSettingService } from 
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Subject, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
+import { UserCourseNotificationSettingPreset as CourseNotificationSettingPreset } from 'app/openapi/model/user-course-notification-setting-preset';
+import { CourseNotificationInfo } from 'app/openapi/model/course-notification-info';
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import { By } from '@angular/platform-browser';
@@ -88,7 +87,7 @@ describe('NotificationSettingsComponent', () => {
 
     beforeEach(async () => {
         courseNotificationServiceMock = {
-            getInfo: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockInfo }))),
+            getInfo: vi.fn().mockReturnValue(of(mockInfo)),
             getIconFromType: vi.fn().mockReturnValue(undefined),
             getDateTranslationKey: vi.fn().mockReturnValue('artemisApp.courseNotification.temporal.now'),
             getDateTranslationParams: vi.fn().mockReturnValue({}),
@@ -163,7 +162,7 @@ describe('NotificationSettingsComponent', () => {
 
     it('waits for undefined settings to load and renders custom zero with all false flags', () => {
         const settings = new BehaviorSubject<CourseNotificationSettingInfo | undefined>(undefined);
-        const info = new Subject<HttpResponse<CourseNotificationInfo>>();
+        const info = new Subject<CourseNotificationInfo>();
         courseNotificationSettingServiceMock.getSettingInfo.mockReturnValue(settings);
         courseNotificationServiceMock.getInfo.mockReturnValue(info);
         component['settingInfo'] = undefined;
@@ -171,7 +170,7 @@ describe('NotificationSettingsComponent', () => {
         component['isLoading'].set(true);
         component.onCourseIdAvailable();
         expect(courseNotificationSettingServiceMock.getSettingInfo).toHaveBeenCalledWith(courseId, true);
-        info.next(new HttpResponse({ body: mockInfo }));
+        info.next(mockInfo);
         expect(component['isLoading']()).toBe(true);
         const flags = { EMAIL: false, PUSH: false, WEBAPP: false };
         settings.next({ selectedPreset: 0, notificationTypeChannels: { '1': flags } });

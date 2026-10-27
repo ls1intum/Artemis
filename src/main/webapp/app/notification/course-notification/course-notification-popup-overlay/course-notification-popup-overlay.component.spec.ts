@@ -4,7 +4,6 @@ import { CourseNotificationPopupOverlayComponent } from 'app/notification/course
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
-import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { BehaviorSubject, Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -61,33 +60,33 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     }
 
     const createMockNotification = (id: number, courseId: number, channelId: number | undefined): CourseNotification => {
-        return new CourseNotification(
-            id,
+        return CourseNotification.fromServer({
+            notificationId: id,
             courseId,
-            'newPostNotification',
-            CourseNotificationCategory.COMMUNICATION,
-            CourseNotificationViewingStatus.UNSEEN,
-            dayjs(),
-            'Test Course',
-            'test-icon-url',
-            { channelId: channelId },
-            '/',
-        );
+            notificationType: 'newPostNotification',
+            category: 'COMMUNICATION',
+            status: 'UNSEEN',
+            creationDate: dayjs().toISOString(),
+            courseTitle: 'Test Course',
+            courseIconUrl: 'test-icon-url',
+            payload: { channelId, authorIsBot: false },
+            relativeWebAppUrl: '/',
+        });
     };
 
     const createMockAnswerNotification = (id: number, courseId: number, channelId: number, postId: number): CourseNotification => {
-        return new CourseNotification(
-            id,
+        return CourseNotification.fromServer({
+            notificationId: id,
             courseId,
-            'newAnswerNotification',
-            CourseNotificationCategory.COMMUNICATION,
-            CourseNotificationViewingStatus.UNSEEN,
-            dayjs(),
-            'Test Course',
-            'test-icon-url',
-            { channelId: channelId, postId: postId },
-            '/',
-        );
+            notificationType: 'newAnswerNotification',
+            category: 'COMMUNICATION',
+            status: 'UNSEEN',
+            creationDate: dayjs().toISOString(),
+            courseTitle: 'Test Course',
+            courseIconUrl: 'test-icon-url',
+            payload: { channelId, postId, replyIsBot: false },
+            relativeWebAppUrl: '/',
+        });
     };
 
     afterEach(() => {

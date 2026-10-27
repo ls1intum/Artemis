@@ -29,12 +29,13 @@ public class CourseNotificationSettingOpenApiCustomizer implements OpenApiCustom
         }
         // Support either side of the shared DTO-suffix transformation without ordering assumptions.
         for (String name : List.of("CourseNotificationSettingInfoDTO", "CourseNotificationSettingInfo", "CourseNotificationSettingSpecificationRequestDTO",
-                "CourseNotificationSettingSpecificationRequest")) {
+                "CourseNotificationSettingSpecificationRequest", "UserCourseNotificationSettingPresetDTO", "UserCourseNotificationSettingPreset")) {
             Schema<?> schema = openApi.getComponents().getSchemas().get(name);
             if (schema != null && schema.getProperties() != null) {
-                Schema<?> settings = schema.getProperties().get("notificationTypeChannels");
+                boolean preset = name.startsWith("UserCourseNotificationSettingPreset");
+                Schema<?> settings = schema.getProperties().get(preset ? "presetMap" : "notificationTypeChannels");
                 if (settings != null) {
-                    boolean response = name.startsWith("CourseNotificationSettingInfo");
+                    boolean response = preset || name.startsWith("CourseNotificationSettingInfo");
                     var channels = new ObjectSchema();
                     channels.setAdditionalProperties(false);
                     channels.setDescription(response ? "All effective channel flags" : "Partial channel overrides; omitted or null values leave existing flags unchanged");
@@ -49,7 +50,7 @@ public class CourseNotificationSettingOpenApiCustomizer implements OpenApiCustom
                         }
                         channels.addProperty(option.name(), flag);
                     }
-                    settings.setDescription("Notification type ids (decimal Short values) as JSON object keys");
+                    settings.setDescription(preset ? "Readable notification type names as JSON object keys" : "Notification type ids (decimal Short values) as JSON object keys");
                     settings.setAdditionalProperties(channels);
                 }
             }

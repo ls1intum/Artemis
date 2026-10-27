@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { UserCourseNotificationSettingApi } from 'app/openapi/api/user-course-notification-setting-api';
 import { CourseNotificationSettingInfo as SettingInfoDto } from 'app/openapi/model/course-notification-setting-info';
 import { CourseNotificationSettingSpecificationRequest } from 'app/openapi/model/course-notification-setting-specification-request';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
+import { UserCourseNotificationSettingPreset as CourseNotificationSettingPreset } from 'app/openapi/model/user-course-notification-setting-preset';
 import { AccountService } from 'app/core/auth/account.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -100,7 +100,7 @@ export class CourseNotificationSettingService implements OnDestroy {
         if (currentValue) {
             if (copyPreset) {
                 // A copy: the preset is shared by every course, and the channels of this one are changed on their own afterwards.
-                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap);
+                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap ?? {});
             }
             const updatedValue = cloneWith(currentValue, { selectedPreset: presetTypeId });
             subject.next(updatedValue);
@@ -129,7 +129,7 @@ export class CourseNotificationSettingService implements OnDestroy {
             if (copyPreset) {
                 // Customizing starts from the chosen preset. Without one, the channels in the cache are the ones that apply to the user
                 // and stay as they are, so that changing one channel does not bring back what the effective settings leave out.
-                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap);
+                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap ?? {});
             }
             if (currentValue.notificationTypeChannels[notificationSettingSpecification.typeId]) {
                 currentValue.notificationTypeChannels[notificationSettingSpecification.typeId] = notificationSettingSpecification.channelSetting;

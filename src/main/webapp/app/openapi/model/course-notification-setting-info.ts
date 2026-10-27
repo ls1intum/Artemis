@@ -8,10 +8,10 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { CourseNotificationSettingInfoNotificationTypeChannelsValue } from './course-notification-setting-info-notification-type-channels-value';
+import type { UserCourseNotificationSettingPresetPresetMapValue } from './user-course-notification-setting-preset-preset-map-value';
 
 export interface CourseNotificationSettingInfo {
     selectedPreset: number;
     /** Notification type ids (decimal Short values) as JSON object keys */
-    notificationTypeChannels?: { [key: string]: CourseNotificationSettingInfoNotificationTypeChannelsValue; };
+    notificationTypeChannels?: { [key: string]: UserCourseNotificationSettingPresetPresetMapValue; };
 }

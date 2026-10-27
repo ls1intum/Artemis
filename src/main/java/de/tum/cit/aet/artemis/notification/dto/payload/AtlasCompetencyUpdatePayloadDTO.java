@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -21,6 +23,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param omittedCount    the number of applied changes left out of {@code changesMarkdown} to bound the e-mail
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasCompetencyUpdatePayloadDTO(String outcome, int exerciseCount, int appliedCount, int createdCount, int editedCount, int deletedCount, int assignedCount,
-        int unassignedCount, String changesMarkdown, int omittedCount) implements CourseNotificationPayloadDTO {
+public record AtlasCompetencyUpdatePayloadDTO(@Nullable String outcome, int exerciseCount, int appliedCount, int createdCount, int editedCount, int deletedCount, int assignedCount,
+        int unassignedCount, @Nullable String changesMarkdown, int omittedCount) implements CourseNotificationPayloadDTO {
 }
