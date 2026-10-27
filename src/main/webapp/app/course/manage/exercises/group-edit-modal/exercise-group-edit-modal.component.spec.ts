@@ -1,14 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiInputNumberComponent,
-    TumAetUiMessageComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
@@ -19,6 +12,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 
 describe('ExerciseGroupEditModalComponent', () => {
     let fixture: ComponentFixture<ExerciseGroupEditModalComponent>;
@@ -48,7 +43,7 @@ describe('ExerciseGroupEditModalComponent', () => {
                         FormsModule,
                         TumAetUiDialogComponent,
                         TumAetUiInputDirective,
-                        TumAetUiInputNumberComponent,
+                        PointsInputComponent,
                         TumAetUiButtonComponent,
                         TumAetUiMessageComponent,
                         TumAetUiTooltipDirective,
@@ -73,6 +68,24 @@ describe('ExerciseGroupEditModalComponent', () => {
         expect(component.draftMaxPoints()).toBe(10);
         expect(component.draftReleaseDate()?.isSame(dayjs('2026-01-01T00:00:00Z'))).toBe(true);
         expect(component.draftDueDate()?.isSame(dayjs('2026-01-10T00:00:00Z'))).toBe(true);
+    });
+
+    it('shows the max points of the group and takes typed points with up to three fraction digits', async () => {
+        fixture.componentRef.setInput('group', buildGroup());
+        fixture.componentRef.setInput('visible', true);
+        for (let round = 0; round < 3; round++) {
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+
+        const input = document.body.querySelector<HTMLInputElement>('input#group-edit-max-points')!;
+        expect(input.value).toBe('10');
+
+        typeIntoInputNumber(input, '7,125');
+        expect(component.draftMaxPoints()).toBe(7.125);
+
+        typeIntoInputNumber(input, '');
+        expect(component.draftMaxPoints()).toBeUndefined();
     });
 
     it('coerces dates that arrive as ISO strings into dayjs objects', () => {

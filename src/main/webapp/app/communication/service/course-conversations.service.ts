@@ -19,7 +19,7 @@ import dayjs from 'dayjs/esm';
 import { Params } from '@angular/router';
 import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadcast-dto.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 /** A superseded snapshot is cancellation, never evidence that a conversation is absent. */
 class SupersededUnreadSnapshot extends Error {}
@@ -70,11 +70,14 @@ export class CourseConversationsService implements OnDestroy {
     // All unread mutations invalidate in-flight list snapshots. Counts and timestamps come from the server;
     // no request-specific contributions are added to or subtracted from a refreshed count.
     private unreadStateVersion = 0;
+    // Badge checks also expire on arrivals and newer badge/list results, without starving list snapshots under traffic.
+    private unreadBadgeVersion = 0;
     private acceptedUnreadSnapshotVersion = 0;
     private readonly acceptedUnreadSnapshots$ = new Subject<void>();
     private manualUnreadRevisions = new Map<number, number>();
     private unreadRefresh?: Subscription;
     private unreadRefreshRequested = false;
+    private unreadRefreshRetryAvailable = true;
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -99,7 +102,7 @@ export class CourseConversationsService implements OnDestroy {
             const conversationTopic = `/topic/user/${this.userId}/notifications/conversations`;
             this.activeConversationSubscription = this.websocketService.subscribe<PostBroadcastDTO>(conversationTopic).subscribe((postDTO: PostBroadcastDTO) => {
                 if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post?.author?.id !== this.userId) {
-                    this.handleNewMessage(postDTO.post?.conversation?.id, postDTO.post?.conversation?.lastMessageDate);
+                    this.handleNewMessage(postDTO.post?.conversation?.id);
                 }
             });
         });
@@ -127,6 +130,17 @@ export class CourseConversationsService implements OnDestroy {
 
     get conversationsOfUser$(): Observable<ConversationDTO[]> {
         return this._conversationsOfUser$.asObservable();
+    }
+
+    /**
+     * Looks up one of the user's conversations in the cache, without a request. Views that show posts outside of a selected
+     * conversation (e.g. the course-wide search) use it to learn what the user may do in the conversation of a post.
+     *
+     * @param conversationId the id of the conversation
+     * @return the cached conversation, or undefined if the user has no such conversation
+     */
+    getCachedConversation(conversationId: number): ConversationDTO | undefined {
+        return this.conversationsOfUser.find((conversation) => conversation.id === conversationId);
     }
     get activeConversation$(): Observable<ConversationDTO | undefined> {
         return this._activeConversation$.asObservable();
@@ -281,7 +295,12 @@ export class CourseConversationsService implements OnDestroy {
         return this.currentUnreadSnapshot(() => {
             this.unreadRefreshRequested = false;
             return this.conversationService.getConversationsOfUser(this._courseId);
-        }, attempts).pipe(map((response) => response.body ?? []));
+        }, attempts).pipe(
+            map((response) => {
+                this.unreadRefreshRetryAvailable = true;
+                return response.body ?? [];
+            }),
+        );
     }
 
     /** Refresh server metadata while retaining the last known cache and selection on failure or cancellation. */
@@ -452,14 +471,16 @@ export class CourseConversationsService implements OnDestroy {
         );
     };
 
-    /** Update the course badge from a server check only if no intervening read or unread mutation superseded it. */
+    /** Update the course badge only if neither unread mutations nor newer badge/list state superseded the check. */
     checkForUnreadMessages = (course: Course) => {
         if (!course?.id) {
             return;
         }
 
+        const badgeVersion = ++this.unreadBadgeVersion;
         this.currentUnreadSnapshot(() => this.conversationService.checkForUnreadMessages(course.id!)).subscribe({
             next: (hasNewMessages) => {
+                if (badgeVersion !== this.unreadBadgeVersion) return;
                 if (hasNewMessages?.body !== this.hasUnreadMessages) {
                     this.hasUnreadMessages = hasNewMessages?.body ?? false;
                     this._hasUnreadMessages$.next(this.hasUnreadMessages);
@@ -507,6 +528,7 @@ export class CourseConversationsService implements OnDestroy {
 
     /** Derive the course badge from unmuted conversation counts, including unread thread replies. */
     private hasUnreadMessagesCheck = (): void => {
+        this.unreadBadgeVersion++;
         const hasNewMessages = this.conversationsOfUser.some((conversation) => {
             return conversation?.unreadMessagesCount && conversation.unreadMessagesCount > 0 && !conversation.isMuted;
         });
@@ -597,7 +619,8 @@ export class CourseConversationsService implements OnDestroy {
 
     /**
      * Batch read completions in a fixed one-second window, with only one timer or GET active. Traffic cannot
-     * postpone the window; changes during a GET queue another window. HTTP failures wait for a new intent.
+     * postpone the window; changes during a GET queue another window. Transient HTTP failures get one retry
+     * through the same window; only an accepted snapshot restores that retry budget.
      */
     private refreshUnreadState() {
         this.unreadRefreshRequested = true;
@@ -605,12 +628,19 @@ export class CourseConversationsService implements OnDestroy {
         this.unreadRefresh = timer(1000)
             .pipe(
                 switchMap(() => (this.unreadRefreshRequested ? this.refreshConversations(false, true, 1) : EMPTY)),
+                catchError((error: HttpErrorResponse | SupersededUnreadSnapshot) => {
+                    if (error instanceof HttpErrorResponse && (error.status === 0 || (error.status >= 500 && error.status < 600)) && this.unreadRefreshRetryAvailable) {
+                        this.unreadRefreshRetryAvailable = false;
+                        this.unreadRefreshRequested = true;
+                    }
+                    return EMPTY;
+                }),
                 finalize(() => {
                     this.unreadRefresh = undefined;
                     if (this.unreadRefreshRequested) this.refreshUnreadState();
                 }),
             )
-            .subscribe({ error: () => {} });
+            .subscribe();
     }
 
     /** Marks a live arrival read only while its conversation is visible and has no explicit unread mark. */
@@ -647,7 +677,7 @@ export class CourseConversationsService implements OnDestroy {
                 this.handleDeleteConversation(conversationDTO);
                 break;
             case CommunicationCrudAction.NEW_MESSAGE:
-                this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
+                this.handleNewMessage(conversationDTO.id);
                 break;
         }
         this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -669,16 +699,28 @@ export class CourseConversationsService implements OnDestroy {
             // conversation is not yet cached -> add it
             conversationsCopy.push(updatedOrNewConversation);
         } else {
-            // conversation is already cached -> update it
-            conversationsCopy[indexOfCachedConversation] = updatedOrNewConversation;
+            // Membership frames have no read-state version and can arrive after a newer list or read.
+            // Apply display metadata immediately, but reconcile unread state with an authoritative list.
+            const cachedConversation = conversationsCopy[indexOfCachedConversation];
+            const incomingMessageDate = updatedOrNewConversation.lastMessageDate;
+            // The first message makes an empty direct chat visible immediately; delayed frames cannot move it backwards.
+            const lastMessageDate =
+                incomingMessageDate && (!cachedConversation.lastMessageDate || incomingMessageDate.isAfter(cachedConversation.lastMessageDate))
+                    ? incomingMessageDate
+                    : cachedConversation.lastMessageDate;
+            conversationsCopy[indexOfCachedConversation] = cloneWith(updatedOrNewConversation, {
+                lastReadDate: cachedConversation.lastReadDate,
+                lastMessageDate,
+                unreadMessagesCount: cachedConversation.unreadMessagesCount,
+                hasUnreadMessage: cachedConversation.hasUnreadMessage,
+            });
         }
         this.conversationsOfUser = conversationsCopy;
         this.hasUnreadMessagesCheck();
+        this.refreshUnreadState();
 
-        // Note: We do not update the active conversation here because it would cause a UI refresh for all users whenever
-        // for example a new users joins.
-        // This would disrupt the user experience, because the user might be in the middle of writing a message.
-        // Therefore we live with a small inconsistency until the users opens the conversation again.
+        // Do not emit a new active selection when membership changes. Silent reconciliation retains its DTO identity
+        // so metadata updates do not interrupt the message draft or reset the message view.
     }
 
     private handleDeleteConversation(deletedConversation: ConversationDTO) {
@@ -690,6 +732,7 @@ export class CourseConversationsService implements OnDestroy {
             conversationsCopy.splice(indexOfCachedConversation, 1);
         }
         this.conversationsOfUser = conversationsCopy;
+        this.hasUnreadMessagesCheck();
 
         if (this.activeConversation?.id === deletedConversation.id) {
             this.selectConversation(undefined);
@@ -697,31 +740,22 @@ export class CourseConversationsService implements OnDestroy {
         }
     }
 
-    /** Apply arrivals only to this course's cache; startup arrivals queue a later authoritative reconciliation. */
-    handleNewMessage(conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined) {
+    /** Reconcile arrivals without counting a delayed or duplicate notification twice. */
+    handleNewMessage(conversationId: number | undefined) {
         if (!this.conversationsLoaded) {
             this.refreshUnreadState();
             return;
         }
         if (!this.conversationsOfUser.some((conversation) => conversation.id === conversationId)) return;
-        this.unreadStateVersion++;
+        this.unreadBadgeVersion++;
         if (this.isReadingConversation(conversationId) && !this.isMarkedAsUnread) {
             this.readNewMessage(conversationId);
             return;
         }
-        const conversationsCopy = [...this.conversationsOfUser];
-        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationId);
-        if (indexOfCachedConversation !== -1) {
-            conversationsCopy[indexOfCachedConversation].lastMessageDate = lastMessageDate;
-            conversationsCopy[indexOfCachedConversation].hasUnreadMessage = true;
-            conversationsCopy[indexOfCachedConversation].unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
-            if (this.activeConversation && this.activeConversation.id === conversationId) {
-                hydrate(this.activeConversation, conversationsCopy[indexOfCachedConversation]);
-            }
-        }
-        this.conversationsOfUser = conversationsCopy;
-        this.hasUnreadMessagesCheck();
-        this._conversationsOfUser$.next(this.conversationsOfUser);
+        // Replies can carry the parent's older top-level timestamp, or none while its update is pending.
+        // Neither timestamp nor delivery order proves whether a snapshot already includes this arrival.
+        // Queue another snapshot without rejecting the current one, so counts advance even while messages keep arriving.
+        this.refreshUnreadState();
     }
 
     static getQueryParamsForConversation(conversationId: number): Params {

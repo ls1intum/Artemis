@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.web;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import jakarta.validation.Valid;
 
@@ -22,8 +21,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
-import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
@@ -34,14 +31,13 @@ import de.tum.cit.aet.artemis.globalsearch.api.SearchableEntityPrefetchApi;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
+import de.tum.cit.aet.artemis.iris.service.IrisSearchScopeService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * REST controller for Iris global search.
@@ -60,8 +56,6 @@ public class IrisGlobalSearchResource {
 
     private static final Logger log = LoggerFactory.getLogger(IrisGlobalSearchResource.class);
 
-    private static final String ENTITY_NAME = "iris";
-
     private final PyrisConnectorService pyrisConnectorService;
 
     private final PyrisJobService pyrisJobService;
@@ -74,21 +68,21 @@ public class IrisGlobalSearchResource {
 
     private final Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi;
 
-    private final IrisSettingsService irisSettingsService;
+    private final IrisSearchScopeService irisSearchScopeService;
 
     /** Entity candidates handed to the answer pipeline; recall is deliberately deep, the reranker judges. */
     private static final int ENTITY_CANDIDATE_LIMIT = 25;
 
     public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository,
             UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService, Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi,
-            IrisSettingsService irisSettingsService) {
+            IrisSearchScopeService irisSearchScopeService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
         this.irisAccessContextService = irisAccessContextService;
         this.searchableEntityPrefetchApi = searchableEntityPrefetchApi;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSearchScopeService = irisSearchScopeService;
     }
 
     /**
@@ -111,82 +105,11 @@ public class IrisGlobalSearchResource {
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var accessContext = irisAccessContextService.resolveAccessContext(user);
-        var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
-        var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext, false);
+        var scope = irisSearchScopeService.resolveScope(requestDTO.courseIds(), requestDTO.excludeCourseIds(), accessContext, false);
         if (scope.searchesNothing()) {
             return ResponseEntity.ok(List.of());
         }
         return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), scope.courseIds(), scope.excludeCourseIds(), accessContext));
-    }
-
-    /**
-     * The resolved search scope: the courses to search, the exclusions Pyris still has to apply, and whether there is anything left to search at all.
-     *
-     * @param courseIds        the courses to search, or {@code null} to leave an unrestricted caller unscoped
-     * @param excludeCourseIds the courses Pyris has to hide itself, or {@code null} when Artemis already removed them from {@link #courseIds}
-     * @param searchesNothing  whether the caller's own exclusions left no course to search, which is answered without asking Pyris
-     */
-    private record LectureSearchScope(@Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds, boolean searchesNothing) {
-
-        static LectureSearchScope nothing() {
-            return new LectureSearchScope(null, null, true);
-        }
-
-        static LectureSearchScope of(@Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds) {
-            return new LectureSearchScope(courseIds, excludeCourseIds, false);
-        }
-    }
-
-    /**
-     * Narrows a search to the courses the caller asked for, minus the ones it asked to hide, and, for the Iris answer, to the courses whose Iris
-     * course settings are enabled.
-     * <p>
-     * The Iris answer is an interactive Iris feature, like the chat it can be continued in, so it must not draw on a course whose instructor
-     * switched Iris off. An unscoped request cannot be forwarded untouched for it: Pyris falls back to the access context when it receives no
-     * course list, and that context is built from course roles alone. Switching Iris off does not remove what was already ingested, and the
-     * content of such a course stays searchable, which is why the scope has to be narrowed here rather than relying on an empty index.
-     * <p>
-     * The narrowed scope is never forwarded empty: {@code PyrisLectureSearchRequestDTO} omits an empty list on the wire and
-     * Pyris reads an absent list as unscoped, so a caller whose courses all have Iris switched off is refused instead.
-     *
-     * @param requestedCourseIds the course IDs the client asked for, {@code null} or empty for an unscoped search
-     * @param excludedCourseIds  the course IDs the client asked to hide, empty when nothing is hidden
-     * @param accessContext      the caller's resolved access context
-     * @param onlyIrisEnabled    whether to keep only courses with Iris enabled, which the Iris answer needs and the content search does not
-     * @return the scope to search, see {@link LectureSearchScope}
-     */
-    private LectureSearchScope lectureSearchScope(@Nullable List<Long> requestedCourseIds, List<Long> excludedCourseIds, PyrisAccessContextDTO accessContext,
-            boolean onlyIrisEnabled) {
-        boolean isUnscoped = requestedCourseIds == null || requestedCourseIds.isEmpty();
-        if (isUnscoped && accessContext.unrestricted()) {
-            // An unrestricted caller carries no course list to narrow, so Pyris keeps its own no-ceiling behaviour. With no
-            // ceiling to subtract from, it is also the only caller whose exclusions have to be applied by the query itself,
-            // including the courses with Iris switched off when the Iris answer asks.
-            var hiddenCourseIds = onlyIrisEnabled ? Stream.concat(excludedCourseIds.stream(), irisSettingsService.findCourseIdsWithIrisDisabled().stream()).distinct().toList()
-                    : excludedCourseIds;
-            return LectureSearchScope.of(null, hiddenCourseIds.isEmpty() ? null : hiddenCourseIds);
-        }
-        // An unscoped request is narrowed from every course the caller can access, a scoped one from what it asked for.
-        var candidateCourseIds = isUnscoped ? accessContext.courseIds() : requestedCourseIds;
-        // Every other caller travels with a ceiling, so a hidden course is subtracted here and never named to Pyris.
-        var scopedCourseIds = candidateCourseIds.stream().filter(courseId -> !excludedCourseIds.contains(courseId)).toList();
-        if (scopedCourseIds.isEmpty() && !candidateCourseIds.isEmpty()) {
-            // The exclusions removed every course in scope. An empty list is dropped on the wire and read as unscoped, so
-            // answering here is what keeps "hide all of them" from searching all of them.
-            return LectureSearchScope.nothing();
-        }
-        if (!onlyIrisEnabled) {
-            // A caller without any course has nothing to narrow; its access context is empty too, so Pyris searches nothing.
-            return LectureSearchScope.of(scopedCourseIds, null);
-        }
-        var enabledCourseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(scopedCourseIds);
-        // A caller without any course has nothing to narrow; its access context is empty too, so Pyris searches nothing.
-        if (enabledCourseIds.isEmpty() && !scopedCourseIds.isEmpty()) {
-            // suppress the error alert with skipAlert: true so that the client can fall back to its standard metadata search
-            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for every course in the search scope", ENTITY_NAME, "iris.course_disabled",
-                    true);
-        }
-        return LectureSearchScope.of(enabledCourseIds, null);
     }
 
     /**
@@ -206,10 +129,9 @@ public class IrisGlobalSearchResource {
         var selectedLlmUsage = userAiPreferenceService.findDecision(user.getId());
         var accessContext = irisAccessContextService.resolveAccessContext(user);
         // Resolved BEFORE the job is registered: an all-courses-Iris-disabled request is a
-        // genuine rejection (AccessForbiddenAlertException from lectureSearchScope), not a transient
+        // genuine rejection (AccessForbiddenAlertException from resolveScope), not a transient
         // failure, and must never leave an orphaned job behind for that case.
-        var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
-        var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext, true);
+        var scope = irisSearchScopeService.resolveScope(requestDTO.courseIds(), requestDTO.excludeCourseIds(), accessContext, true);
         // Entity candidates are pre-fetched with the palette's access filtering, because channel
         // membership, exam registrations and role-dependent release rules only exist in the Artemis
         // database; Pyris renders them into cards and reranks them against the lecture content.
@@ -219,7 +141,7 @@ public class IrisGlobalSearchResource {
         // none of it may leave an orphaned job behind either. A genuine Weaviate hiccup is still
         // swallowed below rather than failing the whole answer, since the lecture-content-only
         // answer could still succeed.
-        // searchesNothing (every requested course excluded) still answers rather than short-circuiting
+        // searchesNothing (every requested course excluded or inaccessible) still answers rather than short-circuiting
         // like /lecture-search does, but "search nothing" means nothing: entity candidates are skipped
         // entirely rather than falling back to an unscoped candidate search (an empty, non-null
         // courseIds list is read as "unscoped" by the access filter, not "scoped to nothing").

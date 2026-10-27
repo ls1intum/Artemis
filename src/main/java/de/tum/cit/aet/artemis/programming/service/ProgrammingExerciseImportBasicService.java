@@ -280,6 +280,7 @@ public class ProgrammingExerciseImportBasicService {
             GradingCriterion criterionCopy = new GradingCriterion();
             criterionCopy.setId(null);
             criterionCopy.setTitle(sourceCriterion.getTitle());
+            criterionCopy.setSortOrder(sourceCriterion.getSortOrder());
             criterionCopy.setExercise(newExercise);
             for (GradingInstruction sourceInstruction : sourceCriterion.getStructuredGradingInstructions()) {
                 GradingInstruction instructionCopy = new GradingInstruction();
@@ -289,6 +290,7 @@ public class ProgrammingExerciseImportBasicService {
                 instructionCopy.setInstructionDescription(sourceInstruction.getInstructionDescription());
                 instructionCopy.setFeedback(sourceInstruction.getFeedback());
                 instructionCopy.setUsageCount(sourceInstruction.getUsageCount());
+                instructionCopy.setSortOrder(sourceInstruction.getSortOrder());
                 criterionCopy.addStructuredGradingInstruction(instructionCopy);
             }
             newExercise.getGradingCriteria().add(criterionCopy);

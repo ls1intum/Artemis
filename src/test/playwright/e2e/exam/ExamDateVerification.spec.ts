@@ -197,12 +197,12 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await expect(page.getByTestId('displayTime')).toHaveAttribute('data-critical', 'false');
 
             // The instructor side ends the exam shortly from now. The student learns about it through the working-time live event.
-            await adminExamAPIRequests.endExamIn(exam, 20);
+            await adminExamAPIRequests.endExamIn(exam, 10);
 
             const workingTimeDialog = new ModalDialogBox(page);
             await workingTimeDialog.checkDialogMessage('The working time of the exam has been changed.');
             await workingTimeDialog.closeDialog();
-            // Twenty seconds are left: the timer says so.
+            // Ten seconds are left: the timer says so.
             await expect(page.getByTestId('displayTime')).toHaveAttribute('data-critical', 'true');
 
             // The exam runs out on its own: the client leaves the exercise and asks the student to hand in.

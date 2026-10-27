@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,6 +48,16 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisGlobally();
     }
 
+    /**
+     * Enrolls the standard test student in the given courses. A requested course only reaches Pyris when the caller can access it.
+     */
+    private void enrollStudent1(Course... courses) {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        for (Course course : courses) {
+            userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
+        }
+    }
+
     // ==================== /api/iris/lecture-search (synchronous) ====================
 
     /**
@@ -65,6 +76,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnResults() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
         var results = List.of(
                 new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(5L, "Machine Learning"), new PyrisLectureSearchResultDTO.LectureDTO(10L, "Intro to ML"),
                         new PyrisLectureSearchResultDTO.LectureUnitDTO(1L, "Introduction Slide", "/link/1", 3, "lecture_unit_slide", Map.of("unit", 1L, "page", 3), "p. 3"),
@@ -86,6 +98,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnEmptyList() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
         irisRequestMockProvider.mockSearchLectures(List.of());
 
         var requestDTO = new GlobalSearchLectureRequestDTO("nonexistent topic", 5, null, null);
@@ -97,6 +110,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldForwardExactServerUrlAsInstanceIdentity() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
         AtomicReference<PyrisLectureSearchRequestDTO> sent = new AtomicReference<>();
         irisRequestMockProvider.mockSearchLectures(List.of(), sent::set);
 
@@ -115,6 +129,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void search_whenIrisIsDisabledForARequestedCourse_shouldStillSearchIt() throws Exception {
         var enabledCourse = courseUtilService.createCourse();
         var disabledCourse = courseUtilService.createCourse();
+        enrollStudent1(enabledCourse, disabledCourse);
         enableIrisFor(enabledCourse);
         disableIrisFor(disabledCourse);
         irisRequestMockProvider.mockSearchLectures(List.of(), List.of(enabledCourse.getId(), disabledCourse.getId()));
@@ -123,6 +138,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
 
         assertThat(response).isEmpty();
+        irisRequestMockProvider.verify();
     }
 
     @Test
@@ -154,6 +170,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ask_whenIrisIsDisabledForTheOnlyRequestedCourse_shouldNotReachPyris() throws Exception {
         var course = courseUtilService.createCourse();
+        enrollStudent1(course);
         disableIrisFor(course);
 
         var requestDTO = new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID(), List.of(course.getId()), null);
@@ -195,6 +212,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void search_whenARequestedCourseIsExcluded_shouldNotForwardThatCourse() throws Exception {
         var searchedCourse = courseUtilService.createCourse();
         var hiddenCourse = courseUtilService.createCourse();
+        enrollStudent1(searchedCourse, hiddenCourse);
 
         AtomicReference<PyrisLectureSearchRequestDTO> sent = new AtomicReference<>();
         irisRequestMockProvider.mockSearchLectures(List.of(), sent::set);
@@ -238,6 +256,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_whenEveryCourseInScopeIsExcluded_shouldNotReachPyris() throws Exception {
         var hiddenCourse = courseUtilService.createCourse();
+        enrollStudent1(hiddenCourse);
 
         var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(hiddenCourse.getId()), List.of(hiddenCourse.getId()));
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
@@ -312,10 +331,13 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_whenTheCourseHasNoIrisSettingsRow_shouldForwardTheCourse() throws Exception {
         var course = courseUtilService.createCourse();
+        enrollStudent1(course);
         irisRequestMockProvider.mockSearchLectures(List.of(), List.of(course.getId()));
 
         var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(course.getId()), null);
         request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        irisRequestMockProvider.verify();
     }
 
     /**
@@ -336,6 +358,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_whenPyrisFails_shouldReturnInternalServerError() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
         irisRequestMockProvider.mockSearchLecturesError(HttpStatus.INTERNAL_SERVER_ERROR);
 
         var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, null, null);
@@ -351,7 +374,9 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_withCourseIdFilter_shouldReturnFilteredResults() throws Exception {
-        var filteredCourseId = 42L;
+        var filteredCourse = courseUtilService.createCourse();
+        enrollStudent1(filteredCourse);
+        var filteredCourseId = filteredCourse.getId();
         var results = List.of(new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(filteredCourseId, "Filtered Course"),
                 new PyrisLectureSearchResultDTO.LectureDTO(10L, "Filtered Lecture"),
                 new PyrisLectureSearchResultDTO.LectureUnitDTO(1L, "Filtered Unit", "/link/1", 1, "lecture_unit_slide", Map.of("unit", 1L, "page", 1), "p. 1"),
@@ -364,6 +389,121 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(response).hasSize(1);
         assertThat(response.getFirst().course().id()).isEqualTo(filteredCourseId);
         assertThat(response.getFirst().snippet()).isEqualTo("filtered snippet");
+    }
+
+    /**
+     * The course filter is client input, so a requested course the caller cannot access is dropped before the request is built, and Pyris is
+     * never asked to search it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenARequestedCourseIsNotAccessible_shouldNotForwardThatCourse() throws Exception {
+        var accessibleCourse = courseUtilService.createCourse();
+        var inaccessibleCourse = courseUtilService.createCourse();
+        enrollStudent1(accessibleCourse);
+
+        AtomicReference<PyrisLectureSearchRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockSearchLectures(List.of(), sent::set);
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(accessibleCourse.getId(), inaccessibleCourse.getId()), null);
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        assertThat(sent.get().courseIds()).containsExactly(accessibleCourse.getId());
+    }
+
+    /**
+     * Dropping every requested course leaves nothing to search. An empty list is omitted on the wire and read by Pyris as unscoped, which would
+     * search every course the caller can access instead, so the answer is given here without asking Pyris.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenNoRequestedCourseIsAccessible_shouldNotReachPyris() throws Exception {
+        var accessibleCourse = courseUtilService.createCourse();
+        var inaccessibleCourse = courseUtilService.createCourse();
+        enrollStudent1(accessibleCourse);
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(inaccessibleCourse.getId()), null);
+        List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        assertThat(response).isEmpty();
+    }
+
+    /**
+     * A caller without any course has nothing to search. The empty list is not forwarded: it is omitted on the wire and Pyris would have to
+     * narrow the search itself.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenUnscopedAndTheCallerHasNoCourse_shouldNotReachPyris() throws Exception {
+        courseUtilService.createCourse();
+
+        List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search",
+                new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        assertThat(response).isEmpty();
+    }
+
+    /**
+     * The course lists are client input: an entry without an id is refused instead of failing while the lists are compared.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_withANullCourseId_shouldReturnBadRequest() throws Exception {
+        var courseIdsWithNull = Arrays.asList(1L, null);
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, courseIdsWithNull, null),
+                PyrisLectureSearchResultDTO.class, HttpStatus.BAD_REQUEST);
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, courseIdsWithNull),
+                PyrisLectureSearchResultDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course id that does not exist is just as inaccessible as one the caller is not enrolled in.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenARequestedCourseDoesNotExist_shouldNotReachPyris() throws Exception {
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(Long.MAX_VALUE), null);
+
+        List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        assertThat(response).isEmpty();
+    }
+
+    /**
+     * Every role keeps the courses it has access to: a teaching assistant and an instructor are not limited to the courses they study in.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "staff", roles = "USER")
+    void search_whenTheCallerIsStaffInTheRequestedCourses_shouldForwardThem() throws Exception {
+        var taCourse = courseUtilService.addEmptyCourse();
+        var instructorCourse = courseUtilService.addEmptyCourse();
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "staff");
+        userUtilService.enrollUserInCourse(user, taCourse, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(user, instructorCourse, CourseRole.INSTRUCTOR);
+        irisRequestMockProvider.mockSearchLectures(List.of(), List.of(taCourse.getId(), instructorCourse.getId()));
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(taCourse.getId(), instructorCourse.getId()), null);
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        irisRequestMockProvider.verify();
+    }
+
+    /**
+     * An unrestricted caller lists no courses in its access context, but it is not limited to any, so the courses it asked for are kept.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void search_asAdminWithRequestedCourses_shouldForwardThem() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX);
+        var firstCourse = courseUtilService.createCourse();
+        var secondCourse = courseUtilService.createCourse();
+        irisRequestMockProvider.mockSearchLectures(List.of(), List.of(firstCourse.getId(), secondCourse.getId()));
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(firstCourse.getId(), secondCourse.getId()), null);
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        irisRequestMockProvider.verify();
     }
 
     // ==================== /api/iris/search-answer (async, webhook-based) ====================
@@ -529,6 +669,47 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
                 HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * The Iris answer builds its scope with the same rules as the content search, so a requested course the caller cannot access is dropped from
+     * the course list sent to Pyris.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_whenARequestedCourseIsNotAccessible_shouldNotForwardThatCourse() throws Exception {
+        var accessibleCourse = courseUtilService.createCourse();
+        var inaccessibleCourse = courseUtilService.createCourse();
+        enrollStudent1(accessibleCourse);
+
+        AtomicReference<PyrisGlobalSearchAnswerRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(sent::set);
+
+        var requestDTO = new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID(), List.of(accessibleCourse.getId(), inaccessibleCourse.getId()), null);
+        request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        assertThat(sent.get().courseIds()).containsExactly(accessibleCourse.getId());
+        assertThat(sent.get().searchesNothing()).isFalse();
+    }
+
+    /**
+     * Nothing left to search is reported as such instead of an empty list, which Pyris would read as unscoped.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_whenNoRequestedCourseIsAccessible_shouldAskPyrisToSearchNothing() throws Exception {
+        var accessibleCourse = courseUtilService.createCourse();
+        var inaccessibleCourse = courseUtilService.createCourse();
+        enrollStudent1(accessibleCourse);
+
+        AtomicReference<PyrisGlobalSearchAnswerRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(sent::set);
+
+        var requestDTO = new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID(), List.of(inaccessibleCourse.getId()), null);
+        request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        assertThat(sent.get().searchesNothing()).isTrue();
+        assertThat(sent.get().courseIds()).isNull();
+    }
+
     // ==================== access context consistency with Artemis roles ====================
 
     @Test
@@ -607,6 +788,8 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void lectureSearchAndAnswer_forwardTheSameAccessContext() throws Exception {
+        var course = courseUtilService.createCourse();
+        enrollStudent1(course);
         AtomicReference<PyrisAccessContextDTO> fromLectureSearch = new AtomicReference<>();
         AtomicReference<PyrisAccessContextDTO> fromAnswer = new AtomicReference<>();
         // Declare both expectations up front; MockRestServiceServer matches them in declared order.
@@ -623,6 +806,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(answerContext).isNotNull();
         // Both endpoints resolve the same user through the same service, so the scoping they forward must agree;
         // otherwise the list results and the answer sources could enforce different access rights for one user.
+        assertThat(orEmpty(lectureContext.courseIds())).containsExactly(course.getId());
         assertThat(orEmpty(answerContext.courseIds())).containsExactlyInAnyOrderElementsOf(orEmpty(lectureContext.courseIds()));
         assertThat(orEmpty(answerContext.staffCourseIds())).containsExactlyInAnyOrderElementsOf(orEmpty(lectureContext.staffCourseIds()));
         assertThat(orEmpty(answerContext.studentCourseIds())).containsExactlyInAnyOrderElementsOf(orEmpty(lectureContext.studentCourseIds()));

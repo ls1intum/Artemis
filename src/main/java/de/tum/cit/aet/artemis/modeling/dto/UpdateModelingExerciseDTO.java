@@ -51,7 +51,9 @@ public record UpdateModelingExerciseDTO(Long id, String title, String channelNam
         Long courseId = exercise.isCourseExercise() ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        List<GradingCriterionDTO> gradingCriterionDTOs = ModelingDtoCollections.listFromInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
+        List<GradingCriterionDTO> gradingCriterionDTOs = exercise.getGradingCriteria() != null && Hibernate.isInitialized(exercise.getGradingCriteria())
+                ? GradingCriterionDTO.ofAll(exercise.getGradingCriteria())
+                : null;
 
         Set<CompetencyLinkDTO> competencyLinkDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
         TeamAssignmentConfigDTO teamAssignmentConfig = Hibernate.isInitialized(exercise.getTeamAssignmentConfig()) ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())

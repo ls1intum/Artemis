@@ -18,7 +18,6 @@ import instructorCompetencyRelationsImg from './assets/adaptive-learning/compete
 import instructorGenerateCompetenciesImg from './assets/adaptive-learning/generate-competencies.png';
 import instructorCompetencyRecommendationImg from './assets/adaptive-learning/competency-recommendation.png';
 import instructorsLearningPathManagementImg from './assets/adaptive-learning/learning-path-management.png';
-import competencyGenerationSettingsImg from './assets/adaptive-learning/competency-generation-settings.png';
 
 Adaptive Learning in Artemis is centered around **competencies**, overarching learning objectives that tie together various lectures and exercises. Artemis is also able to provide students with individualized **learning paths** based on competencies and their relations.
 
@@ -26,8 +25,9 @@ Students can track their progress on the [Competencies](/student/progress-analyt
 next recommended content on the [Learning Path](/student/progress-analytics/adaptive-learning#learning-paths) tab.
 
 Instructors have multiple ways to add competencies to their course: they can [create new ones](#createedit-competencies),
-[import existing ones](#import-competencies) or [generate them](#generate-competencies) with the integrated LLM subsystem of
-Artemis.
+[import existing ones](#import-competencies) or [generate them](#generate-competencies) with Iris.
+The [Atlas agent](/instructor/analytics/atlas-agent) goes further: it builds the competencies, their relations and
+their links to exercises with you in a chat and can keep them up to date when the course content changes.
 They can also then link exercises and lecture units to competencies and define competency relations. These relations determine the order in which competencies are presented in the students' learning paths.
 
 Administrators manage the [standardized competency catalog](/admin/adaptive-learning), an instance-wide catalog from which
@@ -38,7 +38,7 @@ instructors can import competencies into their course.
     When introducing adaptive learning into a course for the first time, you can quickly create a competency model by:
 
     <ul>
-        <li>Generating competencies using an integrated LLM</li>
+        <li>Generating competencies with Iris or building them with the <a href="/instructor/analytics/atlas-agent">Atlas agent</a></li>
         <li>Importing standardized competencies into your course</li>
     </ul>
 
@@ -89,12 +89,18 @@ Instructors can link competencies to an exercise or lecture unit on the respecti
 
 ### Manage Relations
 
-An Instructor can create relations between competencies by selecting a source and target competency from the dropdown menus.
-They can also set a relation type, which can be one of the following:
+An instructor can create a relation between two competencies by selecting them in the dropdown menus and choosing a
+relation type:
 
-* *Assumes*: The head competency assumes the knowledge of the tail competency but does not deepen it. E.g. Class diagrams assume knowledge about object-oriented programming.
-* *Extends*: The head competency builds upon the knowledge of the tail competency and deepens it. E.g. Inheritance deepens the knowledge about object-oriented programming.
-* *Matches*: The knowledge of the head and tail competency match each other.
+* **Requires**: One competency requires knowledge of the other but does not deepen it. For example, class diagrams
+  require knowledge about object-oriented programming.
+* **Extends**: One competency builds upon the knowledge of the other and deepens it. For example, inheritance deepens
+  the knowledge about object-oriented programming.
+* **Matches**: The knowledge of both competencies matches, for example when two competencies describe the same topic.
+
+If AI suggestions are enabled on your instance and the course has at least two competencies, the lightbulb button
+(hover text **Get AI Suggestions**) proposes relations under **AI Suggestions**. Select the ones you want and click **Add Selected Suggestions**. The
+[Atlas agent](/instructor/analytics/atlas-agent) can also propose relations in a chat.
 
 The relations are displayed in a diagram below the form and can be deleted by clicking on them.
 
@@ -143,18 +149,20 @@ Again, selected competencies are displayed in a table and can be de-selected aga
 
 <Callout variant={CalloutVariant.info}>
 
-    To use this feature, Iris needs to be enabled for your Artemis instance and <em>Competency Generation</em> needs to be enabled in the Iris global settings <strong>as well as the Iris settings of your course</strong> (see image below). If you cannot enable <em>Competency Generation</em> in your Iris course settings, contact your instance administrators.
+    To use this feature, Iris needs to be enabled for your Artemis instance and in the Iris settings of your course,
+    and you need instructor rights in the course.
+    If you cannot enable Iris for your course, contact your instance administrators.
 
 </Callout>
 
-<Image src={competencyGenerationSettingsImg} alt={"competency-generation-settings"} size={ImageSize.large} />
-
-Instructors can use the integrated LLM subsystem of Artemis to generate competencies for their course. Based on a course description, the LLM generates around 10 recommendations for possible competencies (the amount may vary depending on the description provided).
+Instructors can use Iris to generate competencies for their course. Based on a course description, the LLM generates around 10 recommendations for possible competencies (the amount may vary depending on the description provided).
 
 <Image src={instructorGenerateCompetenciesImg} alt={"instructor-generate-competencies"} size={ImageSize.large} />
 
 Instructors can view the details (title, description and taxonomy) of each recommendation by expanding it.
 They can then edit these details or delete the recommendation if it is unfit. After saving, the recommendations are saved as actual competencies into the course of the instructor.
+To also create relations and exercise links, or to keep the competencies up to date later, use the
+[Atlas agent](/instructor/analytics/atlas-agent).
 
 <Image src={instructorCompetencyRecommendationImg} alt={"instructor-competency-recommendation"} size={ImageSize.large} />
 
