@@ -196,6 +196,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         assertThat(progress.toGenerate()).isZero();
         assertThat(progress.toJudge()).isZero();
         assertThat(progress.failed()).isZero();
+        assertThat(questionCounter.get()).as("the rejected question of every cell is generated three times before it is kept").isEqualTo(EXPECTED_ITEMS + 2 * EXPECTED_CELLS);
 
         List<QuizQuestionPoolItemDTO> items = request.getList("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", HttpStatus.OK, QuizQuestionPoolItemDTO.class);
         assertThat(items).hasSize(EXPECTED_ITEMS);

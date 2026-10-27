@@ -82,7 +82,7 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private static final String GENERATION_PIPELINE_ID = "HYPERION_QUIZ_POOL_GENERATION";
 
-    /** Attempts an item gets per stage within one build before it is marked as failed. */
+    /** Attempts an item gets per stage before it is marked as failed, and questions it may use up before a rejected one is kept. */
     static final int MAX_ATTEMPTS = 3;
 
     /** The generation call itself failed; the item is revived at the next build. */
@@ -623,7 +623,18 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         else {
             Optional<QuizQuestionFilterDecisionDTO> decision = filterService.evaluate(course, userId, item.getQuestion(), material.groundingBlock());
-            if (decision.isPresent()) {
+            if (decision.isPresent() && !decision.get().accepted() && item.getGenerationAttempts() < MAX_ATTEMPTS) {
+                log.debug("Quiz question pool item [{}] of course [{}]: the filter rejected generation attempt {}, generating another question", item.getId(), course.getId(),
+                        item.getGenerationAttempts());
+                item.setQuestion(null);
+                item.setDecision(null);
+                item.setAccepted(null);
+                item.setGeneratorModel(null);
+                item.setFailure(null);
+                item.setFilterAttempts(0);
+                item.setState(QuizQuestionPoolItemState.PENDING);
+            }
+            else if (decision.isPresent()) {
                 item.setDecision(decision.get());
                 item.setAccepted(decision.get().accepted());
                 item.setJudgeModel(filterService.getJudgeModel().isEmpty() ? null : filterService.getJudgeModel());
