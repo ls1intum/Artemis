@@ -219,14 +219,10 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
             .find(exercise.id)
             .pipe(takeUntilDestroyed(this.previewDestroyRef))
             .subscribe({
-                next: (response) => {
+                next: (quiz) => {
                     this.previewLoadingId.set(undefined);
-                    if (response.body) {
-                        this.preview.set({ exercise, quiz: response.body });
-                        this.previewVisible.set(true);
-                    } else {
-                        this.alertService.error('artemisApp.exercise.import.preview.loadFailed');
-                    }
+                    this.preview.set({ exercise, quiz });
+                    this.previewVisible.set(true);
                 },
                 error: () => {
                     this.previewLoadingId.set(undefined);

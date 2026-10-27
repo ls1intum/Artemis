@@ -1147,7 +1147,7 @@ describe('ExamParticipationComponent', () => {
                 vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').mockReturnValue(of(localExam));
                 const examStartedSpy = vi.spyOn(comp, 'examStarted');
                 const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
-                vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+                vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
                 vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
 
                 comp.handleStudentExam(buildStartedStudentExam());
