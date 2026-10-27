@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,8 +28,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
+import de.tum.cit.aet.artemis.assessment.repository.AthenaFeedbackRequestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -80,6 +83,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private ModelingSubmissionTestRepository modelingSubmissionRepo;
+
+    @Autowired
+    private AthenaFeedbackRequestRepository athenaFeedbackRequestRepository;
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
@@ -1154,6 +1160,59 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(returnedSubmission.results()).as("the result is not sent to the client if the assessment is not finished").isNullOrEmpty();
     }
 
+    @ParameterizedTest
+    @CsvSource({ "none, false", "none, true", "past, false", "past, true", "future, false", "future, true" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentReloadWithAthenaRequestHidesEachUnfinishedManualAssessment(String publication, boolean failed) throws Exception {
+        classExercise.setAssessmentDueDate(switch (publication) {
+            case "past" -> ZonedDateTime.now().minusDays(1);
+            case "future" -> ZonedDateTime.now().plusDays(1);
+            default -> null;
+        });
+        exerciseRepository.save(classExercise);
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmission(classExercise, ParticipationFactory.generateModelingSubmission(validModel, true),
+                TEST_PREFIX + "student1");
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+        User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+
+        Result completed = createResult(AssessmentType.MANUAL, submission, participation, assessor);
+        Result draft = createResult(AssessmentType.SEMI_AUTOMATIC, submission, participation, assessor);
+        draft.setCompletionDate(null);
+        resultRepository.saveAndFlush(draft);
+        // A timestamp without an assessor must not turn an incomplete manual assessment into a published result either.
+        createResult(AssessmentType.MANUAL, submission, participation, null);
+
+        // Add feedback after constructing the result history so saving the submission cannot re-merge transient feedback.
+        Feedback releasedFeedback = new Feedback();
+        releasedFeedback.setDetailText("Released manual feedback");
+        completed.addFeedback(releasedFeedback);
+        resultRepository.saveAndFlush(completed);
+        Feedback privateFeedback = new Feedback();
+        privateFeedback.setDetailText("Unfinished manual feedback must stay private");
+        draft.addFeedback(privateFeedback);
+        resultRepository.saveAndFlush(draft);
+
+        Result athenaRequest = athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(submission);
+        if (failed) {
+            assertThat(athenaFeedbackRequestRepository.failAthenaFeedbackRequest(athenaRequest)).isTrue();
+        }
+        Set<Long> expectedIds = publication.equals("future") ? Set.of(athenaRequest.getId()) : Set.of(completed.getId(), athenaRequest.getId());
+        String path = "/api/modeling/participations/" + participation.getId();
+        ModelingSubmissionResponseDTO latest = request.get(path + "/latest-modeling-submission", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        List<ModelingSubmissionResponseDTO> history = request.getList(path + "/submissions-with-results", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(history).hasSize(1);
+        for (var response : List.of(latest, history.getFirst())) {
+            assertThat(response.results()).extracting(ResultDTO::id).containsExactlyInAnyOrderElementsOf(expectedIds);
+            assertThat(response.results()).allSatisfy(result -> assertThat(result.assessor()).isNull());
+            assertThat(response.results()).filteredOn(result -> result.id().equals(athenaRequest.getId())).singleElement()
+                    .satisfies(result -> assertThat(result.successful()).isEqualTo(failed ? false : null));
+            if (!publication.equals("future")) {
+                assertThat(response.results()).filteredOn(result -> result.assessmentType() == AssessmentType.MANUAL).singleElement().satisfies(
+                        result -> assertThat(result.feedbacks()).singleElement().satisfies(feedback -> assertThat(feedback.detailText()).isEqualTo("Released manual feedback")));
+            }
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void submitExercise_afterDueDate_forbidden() throws Exception {
@@ -1318,7 +1377,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         // Create an Athena automatic result and a manual result
         createResult(AssessmentType.AUTOMATIC_ATHENA, submission, participation, null);
-        createResult(AssessmentType.MANUAL, submission, participation, null);
+        createResult(AssessmentType.MANUAL, submission, participation, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
 
         List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/participations/" + participation.getId() + "/submissions-with-results", HttpStatus.OK,
                 ModelingSubmissionResponseDTO.class);
