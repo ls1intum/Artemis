@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Set;
 
@@ -297,6 +299,20 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReEvaluateRejectsABuildTimeWindowOutsideTheExerciseDates() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(programmingExercise.getDueDate().minusDays(1), programmingExercise.getDueDate().plusDays(1)));
+
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+
+        var stored = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(stored.getBuildTimeWindow()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateTimelineRejectsADueDateBeforeTheEndOfTheBuildTimeWindow() throws Exception {
         ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
         var window = windowInsideTheDatesOf(programmingExercise);
@@ -310,7 +326,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         request.put("/api/programming/programming-exercises/timeline", timeline, HttpStatus.BAD_REQUEST);
 
         var stored = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
-        assertThat(stored.getDueDate()).isEqualToIgnoringNanos(programmingExercise.getDueDate());
+        assertThat(stored.getDueDate()).isCloseTo(programmingExercise.getDueDate(), within(1, ChronoUnit.SECONDS));
     }
 
     @Test

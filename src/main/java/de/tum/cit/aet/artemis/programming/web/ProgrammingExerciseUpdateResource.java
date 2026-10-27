@@ -531,6 +531,7 @@ public class ProgrammingExerciseUpdateResource {
             update(updateDTO, programmingExercise, buildConfig, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
             PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
             programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
+            programmingExerciseValidationService.validateBuildTimeWindow(programmingExercise, buildConfig);
 
             programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(programmingExercise, buildConfig, originalBuildAndTestOffset);
 
