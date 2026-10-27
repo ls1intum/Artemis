@@ -703,8 +703,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * local user edit, so only the matching dirty signal for this file is suppressed.
      */
     private onFileSyncStateReplaced(filePath: string, replacementContent: string, contentDivergedFromBaseline?: boolean): void {
-        const normalizedReplacement = replacementContent.replace(/\r\n/g, '\n');
-        const persistedFallback = this.fileSession()[filePath]?.code.replace(/\r\n/g, '\n');
+        const normalizedReplacement = replacementContent.replaceAll('\r\n', '\n');
+        const persistedFallback = this.fileSession()[filePath]?.code.replaceAll('\r\n', '\n');
         if (contentDivergedFromBaseline ?? (persistedFallback !== undefined && persistedFallback !== normalizedReplacement)) {
             this.emitDirtySignalFromInitialSync(filePath, normalizedReplacement);
         }
@@ -742,7 +742,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         // post-finalize change so hydration does not mark the file as locally dirty.
         if (isSelectedFile && this.dirtySignalSuppressedDuringInitialSync.has(filePath)) {
             this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
-            this.dirtySignalContentToSuppress.set(filePath, finalContent.replace(/\r\n/g, '\n'));
+            this.dirtySignalContentToSuppress.set(filePath, finalContent.replaceAll('\r\n', '\n'));
         }
         if (isSelectedFile) {
             this.selectedFileAwaitingInitialSync.set(false);
