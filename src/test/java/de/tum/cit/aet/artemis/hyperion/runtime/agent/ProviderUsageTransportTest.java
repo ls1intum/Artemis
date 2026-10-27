@@ -43,4 +43,13 @@ class ProviderUsageTransportTest {
     void rejectsMissingResponseRatherThanInventingZeroUsage() {
         assertThatThrownBy(() -> ProviderUsageTransport.capture(null)).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void missingModelNameDoesNotDiscardReportedTokenCounts() {
+        var metadata = ChatResponseMetadata.builder().model(null).id("provider-id").usage(new DefaultUsage(10, 20)).build();
+
+        var captured = ProviderUsageTransport.capture(new ChatResponse(List.of(), metadata));
+
+        assertThat(captured).isEqualTo(new ProviderUsageUpdate.Call("", "provider-id", 10, 20, null));
+    }
 }
