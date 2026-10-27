@@ -2,7 +2,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
-import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, SubmissionExerciseType, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -163,18 +163,48 @@ export class AthenaResultNotificationTracker {
     private readonly notifiedFailureSubmissionIds = new Set<number>();
 
     /**
-     * Marks the completed, persisted Athena results a view already shows when it loads as notified, so a later
-     * re-emission of the same participation does not announce them again. Pending results stay eligible for their
-     * completion notification, and unsaved failures keep their per-submission dedup in {@link shouldNotify}.
+     * Marks the completed Athena results a view already shows when it loads as notified, so a later re-emission of
+     * the same participation does not announce them again. A participation taken from the websocket cache can still
+     * carry an unsaved failure, which is recorded under its submission id. Pending results stay eligible for their
+     * completion notification.
      *
-     * @param results the results the view loaded
+     * @param submissions the submissions the view loaded
      */
-    markAsNotified(results: Result[]) {
-        for (const result of results) {
-            if (result.id !== undefined && result.successful !== undefined && isAthenaAIResult(result)) {
-                this.notifiedResultIds.add(result.id);
+    markAsNotified(submissions: Submission[] | undefined) {
+        for (const submission of submissions ?? []) {
+            for (const result of submission.results ?? []) {
+                if (result.successful === undefined || !isAthenaAIResult(result)) {
+                    continue;
+                }
+                if (result.id !== undefined) {
+                    this.notifiedResultIds.add(result.id);
+                } else if (submission.id !== undefined) {
+                    this.notifiedFailureSubmissionIds.add(submission.id);
+                }
             }
         }
+    }
+
+    /**
+     * Evaluates the newest Athena result of each submission, so a submission's pending request and its outcome are
+     * observed even when another submission holds a newer result or an unsaved failure of its own.
+     *
+     * @param submissions the submissions of the changed participation
+     * @return the results a success/failure notification should be shown for
+     */
+    resultsToNotify(submissions: Submission[] | undefined): Result[] {
+        const results: Result[] = [];
+        for (const submission of submissions ?? []) {
+            // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
+            // Only among Athena results: a build that finishes while feedback is pending has a higher id than the Athena
+            // result, which keeps its id from the pending request, and would otherwise hide its completion.
+            const result = getNewestResult(submission.results?.filter(isAthenaAIResult));
+            // The result's own submission back-reference is not reliably populated on every path, so pass the submission id.
+            if (this.shouldNotify(result, submission.id)) {
+                results.push(result!);
+            }
+        }
+        return results;
     }
 
     /**

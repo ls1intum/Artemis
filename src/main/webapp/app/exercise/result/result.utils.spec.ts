@@ -498,21 +498,43 @@ describe('ResultUtils', () => {
             expect(tracker.shouldNotify(athenaResult({ submission, successful: false }))).toBe(true);
         });
 
-        it('does not notify for completed results marked as notified, but keeps pending and unsaved results eligible', () => {
+        it('does not notify for completed results marked as notified, but keeps pending results eligible', () => {
             const tracker = new AthenaResultNotificationTracker();
-            const submission = { id: 7 } as Submission;
 
             tracker.markAsNotified([
-                athenaResult({ id: 1, successful: true }),
-                athenaResult({ id: 2, successful: false }),
-                athenaResult({ id: 3, successful: undefined }),
-                athenaResult({ submission, successful: false }),
+                {
+                    id: 7,
+                    results: [athenaResult({ id: 1, successful: true }), athenaResult({ id: 2, successful: false }), athenaResult({ id: 3, successful: undefined })],
+                } as Submission,
+                { id: 8, results: [athenaResult({ successful: false })] } as Submission,
+                { id: 9, results: [athenaResult({ successful: undefined })] } as Submission,
             ]);
 
             expect(tracker.shouldNotify(athenaResult({ id: 1, successful: true }))).toBe(false);
             expect(tracker.shouldNotify(athenaResult({ id: 2, successful: false }))).toBe(false);
             expect(tracker.shouldNotify(athenaResult({ id: 3, successful: true }))).toBe(true);
-            expect(tracker.shouldNotify(athenaResult({ submission, successful: false }))).toBe(true);
+            // A loaded unsaved failure is already shown, so a replay from the cache must not notify.
+            expect(tracker.shouldNotify(athenaResult({ successful: false }), 8)).toBe(false);
+            // A loaded pending request stays eligible for its outcome.
+            expect(tracker.shouldNotify(athenaResult({ successful: false }), 9)).toBe(true);
+        });
+
+        it('evaluates the newest Athena result of each submission', () => {
+            const tracker = new AthenaResultNotificationTracker();
+            const staleFailure = athenaResult({ successful: false });
+            const manualResult = { id: 20, assessmentType: AssessmentType.MANUAL, successful: true } as Result;
+            tracker.markAsNotified([{ id: 2, results: [staleFailure] } as Submission]);
+
+            // The retried submission comes first and another submission holds an unsaved failure: the retry must still be observed.
+            expect(
+                tracker.resultsToNotify([{ id: 1, results: [athenaResult({ successful: undefined })] } as Submission, { id: 2, results: [staleFailure] } as Submission]),
+            ).toEqual([]);
+            const retryFailure = athenaResult({ successful: false });
+            expect(tracker.resultsToNotify([{ id: 1, results: [retryFailure] } as Submission, { id: 2, results: [staleFailure] } as Submission])).toEqual([retryFailure]);
+
+            // A newer result of another kind does not hide the Athena result of the same submission.
+            const completed = athenaResult({ id: 10, successful: true });
+            expect(tracker.resultsToNotify([{ id: 3, results: [completed, manualResult] } as Submission])).toEqual([completed]);
         });
 
         it('notifies independently for unsaved failures of different submissions', () => {

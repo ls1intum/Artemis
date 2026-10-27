@@ -23,13 +23,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import {
-    getAllResultsOfAllSubmissions,
-    getFirstResultWithComplaint,
-    getLatestSubmissionResult,
-    getNewestResult,
-    setLatestSubmissionResult,
-} from 'app/exercise/shared/entities/submission/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { AthenaResultNotificationTracker, getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -209,22 +203,15 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     return;
                 }
                 const changedParticipation = updatedParticipation as StudentParticipation;
-                const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
-                // Only among Athena results, so a newer result of another kind cannot hide the completion of a pending request.
-                const lastResult = getNewestResult(results.filter(isAthenaAIResult));
-                // The result's own submission back-reference is not reliably populated on this path, so resolve the
-                // containing submission explicitly for dedup purposes.
-                const lastResultSubmissionId = changedParticipation.submissions?.find((submission) => submission.results?.includes(lastResult!))?.id;
-                if (this.athenaResultNotificationTracker.shouldNotify(lastResult, lastResultSubmissionId)) {
-                    if (lastResult?.successful === false) {
+                for (const athenaResult of this.athenaResultNotificationTracker.resultsToNotify(changedParticipation.submissions)) {
+                    if (athenaResult.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise()?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
                         if (this.isExamSummary() && this.participation()?.id !== undefined) {
-                            this.textService.get(this.participation().id!, lastResult?.id).subscribe({
-                                next: (data) => this.updateParticipation(data, this.submissionId, lastResult?.id),
+                            this.textService.get(this.participation().id!, athenaResult.id).subscribe({
+                                next: (data) => this.updateParticipation(data, this.submissionId, athenaResult.id),
                                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
                             });
                             return;
@@ -263,7 +250,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         if (this.participation() && this.textExercise()) {
-            this.athenaResultNotificationTracker.markAsNotified(getAllResultsOfAllSubmissions(this.participation().submissions));
+            this.athenaResultNotificationTracker.markAsNotified(this.participation().submissions);
             this.participationWebsocketService.addParticipation(this.participation(), this.textExercise());
         }
     }
@@ -281,7 +268,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             return;
         }
         // Results that arrive with the participation are already shown, so re-emitting them must not notify.
-        this.athenaResultNotificationTracker.markAsNotified(getAllResultsOfAllSubmissions(participation.submissions));
+        this.athenaResultNotificationTracker.markAsNotified(participation.submissions);
         this.textExercise.set(this.participation().exercise as TextExercise);
         this.examMode.set(!!this.textExercise().exerciseGroup);
         this.textExercise().studentParticipations = [this.participation()];
