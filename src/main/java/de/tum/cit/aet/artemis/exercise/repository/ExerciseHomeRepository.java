@@ -89,12 +89,14 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
 
     String FEEDBACK = """
             (SELECT MAX(CASE WHEN TYPE(e) = QuizExercise THEN CASE WHEN e.dueDate > r.completionDate THEN e.dueDate ELSE r.completionDate END
-                 WHEN TYPE(e) = ProgrammingExercise AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC THEN r.completionDate
+                 WHEN r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                      de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA) THEN r.completionDate
                  WHEN e.assessmentDueDate > r.completionDate THEN e.assessmentDueDate ELSE r.completionDate END)
              FROM Result r JOIN r.submission s JOIN TREAT(s.participation AS StudentParticipation) p
              WHERE p.exercise = e AND p.testRun = FALSE AND r.rated = TRUE AND r.completionDate IS NOT NULL AND r.completionDate <= :asOf
                AND (TYPE(e) <> QuizExercise OR e.dueDate <= :asOf)
-               AND (TYPE(e) = QuizExercise OR (TYPE(e) = ProgrammingExercise AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC)
+               AND (TYPE(e) = QuizExercise OR r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                    de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                     OR e.assessmentDueDate IS NULL OR e.assessmentDueDate <= :asOf)
                AND
             """ + OWNED + ")";

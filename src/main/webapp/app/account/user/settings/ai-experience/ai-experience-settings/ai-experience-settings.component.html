@@ -29,11 +29,11 @@
 
     <div class="mt-4! flex items-center gap-4!">
         @if (currentSelection()) {
-            <tumaet-ui-button (clicked)="openSelectionModal()">
+            <tumaet-ui-button [disabled]="selectionPending()" (clicked)="openSelectionModal()">
                 <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.changeSelection"></span>
             </tumaet-ui-button>
         } @else {
-            <tumaet-ui-button (clicked)="openSelectionModal()">
+            <tumaet-ui-button [disabled]="selectionPending()" (clicked)="openSelectionModal()">
                 <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.chooseNow"></span>
             </tumaet-ui-button>
         }

@@ -166,6 +166,16 @@ class CourseHomeCommunicationIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
+    void currentlyPinnedAnnouncementsRemainVisibleAfterTheVisitBaseline() {
+        var pinned = post(channel("news", true, true, true), other, "Still important", baseline.minusDays(30));
+        pinned.setUpdatedDate(null);
+        pinned.setDisplayPriority(DisplayPriority.PINNED);
+        posts.saveAndFlush(pinned);
+        assertThat(posts.findById(pinned.getId()).orElseThrow().getCreationDate().toInstant()).isEqualTo(baseline.minusDays(30).toInstant());
+        assertThat(load().announcement()).isNotNull().satisfies(item -> assertThat(item.target().id()).isEqualTo(pinned.getId()));
+    }
+
+    @Test
     void titleFallbackIsPlainTextAndBounded() {
         var root = post(channel, student, null);
         root.setContent("<b>Question</b> " + "x".repeat(300));
@@ -211,6 +221,39 @@ class CourseHomeCommunicationIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
+    void newlyApprovedIrisReplyIsUnreadAtItsPublicationTime() {
+        var root = post(channel, student, "Question awaiting approval", baseline.minusMinutes(5));
+        assertThat(posts.findById(root.getId()).orElseThrow().getCreationDate().toInstant()).isEqualTo(baseline.minusMinutes(5).toInstant());
+        var reply = answer(root, userUtilService.getOrCreateIrisBotUser(), baseline.minusMinutes(1));
+        reply.setVerified(false);
+        answers.saveAndFlush(reply);
+        assertThat(load().questions().items().getFirst().totalReplies()).isZero();
+        var published = baseline.plusMinutes(1);
+        assertThat(answers.verifyIfUnverified(reply.getId(), userUtilService.getUserByLogin(PREFIX + "instructor1"), published, null)).isTrue();
+
+        var beforePublication = home.load(course.getId(), student, published.minusSeconds(1).toInstant(), baseline.minusDays(7).toInstant());
+        assertThat(beforePublication.questions().items().getFirst().totalReplies()).isZero();
+        assertThat(load().questions().items()).singleElement().satisfies(item -> {
+            assertThat(item.state()).isEqualTo(CourseHomeQuestionState.ANSWERED);
+            assertThat(item.unreadReplies()).isOne();
+            assertThat(item.focusReplyId()).isEqualTo(reply.getId());
+            assertThat(item.latestActivity()).isEqualTo(published.toInstant());
+        });
+        membership.setLastRead(published);
+        participants.saveAndFlush(membership);
+        assertThat(load().questions().items().getFirst().unreadReplies()).isZero();
+    }
+
+    @Test
+    void verifyingAnAlreadyVisibleHumanReplyDoesNotMakeItUnreadAgain() {
+        var root = post(channel, student, "Previously read reply");
+        var reply = answer(root, other, baseline.minusMinutes(1));
+        reply.setVerifiedAt(baseline.plusMinutes(1));
+        answers.saveAndFlush(reply);
+        assertThat(load().questions().items().getFirst().unreadReplies()).isZero();
+    }
+
+    @Test
     void disabledCommunicationSuppressesQuestionsButKeepsPublishedFaqs() {
         post(channel, student, "Question");
         faq(FaqState.ACCEPTED);
@@ -248,7 +291,12 @@ class CourseHomeCommunicationIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     private Post post(de.tum.cit.aet.artemis.communication.domain.conversation.Conversation c, User author, String title) {
+        return post(c, author, title, ZonedDateTime.now());
+    }
+
+    private Post post(de.tum.cit.aet.artemis.communication.domain.conversation.Conversation c, User author, String title, ZonedDateTime createdAt) {
         var p = new Post();
+        p.setCreationDate(createdAt);
         p.setConversation(c);
         p.setAuthor(author);
         p.setTitle(title);

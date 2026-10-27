@@ -41,6 +41,12 @@ describe('TumAetUiAvatarComponent', () => {
         ['Ada', 'AD'],
         ['Änne Öztürk', 'ÄÖ'],
         ['李小龙', '李小'],
+        ['Alex -', 'AL'],
+        ['-- Ada - Lovelace --', 'AL'],
+        ['123 ---', '?'],
+        ['\u0301 \u0308', '?'],
+        ['👩‍💻 Änne Öztürk', 'ÄÖ'],
+        ['A\u0301da O\u0308ztürk', 'A\u0301O\u0308'],
         ['Supercalifragilisticexpialidocious Person', 'SP'],
     ])('handles the name %s with bounded Unicode initials', (name, initials) => {
         fixture.componentRef.setInput('name', name);
