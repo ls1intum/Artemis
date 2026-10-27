@@ -237,6 +237,10 @@ public class ProgrammingExerciseCreationUpdateService {
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
+        // These values only depend on the course and short name, so persist them with the initial insert.
+        programmingExercise.generateAndSetProjectKey();
+        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
+
         // We save once in order to generate an id for the programming exercise. The build configuration names the
         // exercise, so it is written afterwards rather than before.
         var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -247,9 +251,8 @@ public class ProgrammingExerciseCreationUpdateService {
         final var storedTeamAssignmentConfig = savedProgrammingExercise.getStoredTeamAssignmentConfig();
         final var storedPlagiarismDetectionConfig = savedProgrammingExercise.getPlagiarismDetectionConfig();
 
+        buildConfig.setBranch(defaultBranch);
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, savedProgrammingExercise);
-        savedProgrammingExercise.generateAndSetProjectKey();
-        savedBuildConfig.setBranch(defaultBranch);
 
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
         initParticipations(savedProgrammingExercise);
@@ -258,8 +261,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
-        programmingExerciseBuildConfigRepository.saveAndFlush(savedBuildConfig);
-        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        programmingExerciseRepository.updateRepositoryMetadataForCreation(savedProgrammingExercise);
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
@@ -285,10 +287,13 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
-        // Restore competency links with proper exercise reference before final save
+        // Only the competency links still need writing. Keep their cascade save, but avoid merging and re-fetching
+        // the entire exercise graph when no links were selected (or none survived resolution).
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
-
-        ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        ProgrammingExercise createdProgrammingExercise = savedProgrammingExercise;
+        if (!savedProgrammingExercise.getCompetencyLinks().isEmpty()) {
+            createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        }
         createdProgrammingExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
         createdProgrammingExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
 

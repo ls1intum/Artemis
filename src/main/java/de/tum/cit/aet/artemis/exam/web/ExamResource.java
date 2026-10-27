@@ -336,6 +336,7 @@ public class ExamResource {
         Channel updatedChannel = channelService.updateExamChannel(originalExam);
 
         Exam savedExam = examRepository.save(originalExam);
+        channelService.notifyExamChannelOfDateChange(originalVisibleDate, savedExam);
 
         User instructor = userRepository.getUser();
         final var auditEvent = new AuditEvent(instructor.getLogin(), Constants.UPDATE_EXAM, "exam=" + savedExam.getId());

@@ -9,6 +9,7 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
@@ -24,6 +25,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     readonly exerciseType = input.required<ExerciseType>();
     readonly courseId = input.required<number>();
     readonly exerciseId = input.required<number>();
+    readonly exerciseGroup = input<ExerciseGroup>();
 
     readonly chartEntries = signal<ChartSeriesEntry[]>([]);
 
@@ -73,7 +75,9 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
      * @param event identifies the clicked bar
      */
     selectChartBar(event: TumAetUiChartSelectEvent): void {
-        const route = [`/course-management/${this.courseId()}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
+        const group = this.exerciseGroup();
+        const examPath = group?.exam ? `/exams/${group.exam.id}/exercise-groups/${group.id}` : '';
+        const route = [`/course-management/${this.courseId()}${examPath}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`];
         this.navigationService.routeInNewTab(route, { queryParams: { scoreRangeFilter: event.index } });
     }
 }

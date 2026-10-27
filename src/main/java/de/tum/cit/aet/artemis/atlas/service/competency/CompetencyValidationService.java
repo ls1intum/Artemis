@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
@@ -18,6 +19,25 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 public class CompetencyValidationService {
 
     public static final String ENTITY_NAME = "competency";
+
+    /**
+     * Validates the import boundary before either course is loaded or its access is checked.
+     *
+     * @param options        requested import options
+     * @param targetCourseId destination course identifier
+     * @param entityName     entity name used in request validation errors
+     * @return source course identifier after validating it differs from the destination
+     */
+    public static long sourceCourseIdForImport(CompetencyImportOptionsDTO options, long targetCourseId, String entityName) {
+        if (options.sourceCourseId().isEmpty()) {
+            throw new BadRequestAlertException("No source course specified", entityName, "noSourceCourse");
+        }
+        long sourceCourseId = options.sourceCourseId().get();
+        if (sourceCourseId == targetCourseId) {
+            throw new BadRequestAlertException("Cannot import from a course into itself", entityName, "courseCycle");
+        }
+        return sourceCourseId;
+    }
 
     public void checkForCreation(CourseCompetency competency) {
         if (competency.getId() != null) {

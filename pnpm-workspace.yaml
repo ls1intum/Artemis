@@ -7,16 +7,16 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.8.1
-  '@analogjs/vitest-angular': 2.8.1
+  '@analogjs/vite-plugin-angular': 2.9.1
+  '@analogjs/vitest-angular': 2.9.1
   '@arethetypeswrong/cli': 0.18.5
   '@angular-devkit/architect': 0.2202.3
   '@angular-devkit/core': 22.2.3
   # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
   # move both together.
-  '@angular/aria': 22.2.3
+  '@angular/aria': 22.2.4
   '@angular/build': 22.2.3
-  '@angular/cdk': 22.2.3
+  '@angular/cdk': 22.2.4
   '@angular/cli': 22.2.3
   '@angular/common': 22.2.3
   '@angular/compiler': 22.2.3
@@ -28,12 +28,12 @@ catalog:
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
-  '@playwright/test': 1.64.0
-  '@storybook/addon-a11y': 10.6.1
-  '@storybook/addon-docs': 10.6.1
-  '@storybook/addon-themes': 10.6.1
-  '@storybook/addon-vitest': 10.6.1
-  '@storybook/angular-vite': 10.6.1
+  '@playwright/test': 1.64.1
+  '@storybook/addon-a11y': 10.6.3
+  '@storybook/addon-docs': 10.6.3
+  '@storybook/addon-themes': 10.6.3
+  '@storybook/addon-vitest': 10.6.3
+  '@storybook/angular-vite': 10.6.3
   '@tailwindcss/postcss': 4.3.3
   # Node 24 is the supported runtime (.nvmrc, `engines`, the Dockerfiles and CI). Stay on the 24.x line: @types/node 25 and 26
   # describe the APIs of Node versions we do not support yet. Move to the next major together with the Node major, not on its own.
@@ -47,21 +47,21 @@ catalog:
   concurrently: 10.0.6
   cross-env: 10.1.0
   dayjs: 1.11.23
-  eslint: 10.12.0
-  eslint-plugin-storybook: 10.6.1
+  eslint: 10.13.0
+  eslint-plugin-storybook: 10.6.3
   jsdom: 30.0.1
   lodash-es: 4.18.1
   ng-packagr: 22.2.4
-  postcss: 8.5.29
+  postcss: 8.5.31
   publint: 0.3.25
-  playwright: 1.64.0
+  playwright: 1.64.1
   # Only here to satisfy Storybook's peer requirement (packages/tum-aet-ui declares it); Artemis itself is Angular.
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.2.8
   rxjs: 7.8.2
-  sass: 1.105.1
+  sass: 1.106.0
   semver: 7.8.5
-  storybook: 10.6.1
+  storybook: 10.6.3
   stylelint: 17.16.0
   tailwindcss: 4.3.3
   tslib: 2.8.1
@@ -155,12 +155,12 @@ overrides:
   # Kept on the 5.x line; 6.x is a major bump.
   devalue: '5.9.4'
   diff: '9.0.0'
-  dompurify: '3.4.16'
+  dompurify: '3.4.17'
   esbuild: '0.28.2'
   # Kept on the 3.x line (ajv/fast-json-stringify require ^3); 4.x is an API break.
   # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
   # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
-  fast-uri: '3.1.8'
+  fast-uri: '3.1.9'
   globals: '17.13.0'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'
@@ -190,7 +190,7 @@ overrides:
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.20'
   piscina: '5.3.2'
-  postcss: '8.5.29'
+  postcss: '8.5.31'
   punycode: '2.3.1'
   # React and react-dom must resolve to one version each, and to the same one: react-dom asserts this at import time
   # and throws "Incompatible React versions" otherwise. Only Storybook renders React here, but that is enough - the
@@ -212,7 +212,7 @@ overrides:
   tar: '7.5.22'
   tmp: '0.2.7'
   tough-cookie: '6.0.2'
-  undici: '7.30.0'
+  undici: '7.30.1'
   uuid: '14.0.3'
   # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
   # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
@@ -226,7 +226,13 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-  'eslint@10.12.0': 'config/pnpm/patches/eslint+10.12.0.patch'
+  # GHSA-vfj7-8cjw-p6xm has no upstream fixed release. Bound parser and AST
+  # traversal depth while preserving normal brace globbing used by stylelint.
+  # Documentation shares this patch; exercise-template installs are separate.
+  # Version-based audit findings remain visible until upstream ships a fix.
+  # Remove after an upstream fix: https://github.com/micromatch/braces/issues/70
+  braces@3.0.3: config/pnpm/patches/braces@3.0.3.patch
+  'eslint@10.13.0': 'config/pnpm/patches/eslint+10.13.0.patch'
   y-monaco@0.1.6: config/pnpm/patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.

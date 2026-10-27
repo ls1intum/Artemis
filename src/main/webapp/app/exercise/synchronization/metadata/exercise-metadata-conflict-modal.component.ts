@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -59,7 +59,7 @@ export interface ExerciseMetadataConflictModalData {
     selector: 'jhi-exercise-metadata-conflict-modal',
     templateUrl: './exercise-metadata-conflict-modal.component.html',
     styleUrls: ['./exercise-metadata-conflict-modal.component.scss'],
-    imports: [NgClass, TranslateDirective, CustomExerciseCategoryBadgeComponent, ButtonModule, TableModule],
+    imports: [NgTemplateOutlet, NgClass, TranslateDirective, CustomExerciseCategoryBadgeComponent, ButtonModule, TableModule],
 })
 export class ExerciseMetadataConflictModalComponent implements OnInit {
     private readonly dialogRef = inject(DynamicDialogRef);
@@ -254,6 +254,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.timeoutSeconds', key: 'timeoutSeconds' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.dockerFlags', key: 'dockerFlags' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.theiaImage', key: 'theiaImage' },
+            { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.onlineIdeExperienceLevel', key: 'onlineIdeExperienceLevel' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.allowBranching', key: 'allowBranching' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.branchRegex', key: 'branchRegex' },
         ] as const;
