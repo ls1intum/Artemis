@@ -126,7 +126,7 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   that were not performed.
 - Use drafts only for unfinished implementations. Open completed work as non-draft or mark it ready for
   review immediately so full CI and review bots run. Pending CI, reviews or test-server validation do not
-  require draft status; all applicable checks and reviews must still pass before merge.
+  require draft status; required checks and applicable reviews must still pass before merge.
 - Set the PR milestone to the intended release. Keep draft state and the `ready for review` / `ready to merge`
   labels aligned with the documented stage; recheck them after updates. Add `ready to merge` only after
   all remaining tasks, required approvals, resolved threads, passing checks and mergeability are verified.
