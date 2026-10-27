@@ -1,4 +1,5 @@
 openai-whisper==20250625
 torch==2.13.0
+setuptools>=84.1.0  # GHSA-xmj3-9gf7-h52w: prevent Windows path escape during legacy wheel installation
 filelock>=3.20.1  # CVE-2025-68146: fix TOCTOU race condition vulnerability
 urllib3>=2.7.0
