@@ -69,7 +69,7 @@ export class ManageAssessmentButtonsComponent {
                     correctionRound,
                     result,
                     action,
-                    severity: action === 'assess' ? 'success' : action === 'continue' ? 'warn' : 'primary',
+                    severity: (action === 'assess' ? 'success' : action === 'continue' ? 'warn' : 'primary') as const,
                     labelKey:
                         action === 'complaint'
                             ? 'artemisApp.exerciseAssessmentDashboard.showComplaint'
