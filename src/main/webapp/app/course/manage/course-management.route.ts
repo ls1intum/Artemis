@@ -129,7 +129,7 @@ export const courseManagementRoutes: Routes = [
                 canDeactivate: [PendingChangesGuard],
             },
             {
-                path: ':courseId/quiz-question-pool',
+                path: ':courseId/smart-quizzes',
                 loadComponent: () => import('app/hyperion/manage/quiz-question-pool/quiz-question-pool.component').then((m) => m.QuizQuestionPoolComponent),
                 data: {
                     authorities: IS_AT_LEAST_EDITOR,

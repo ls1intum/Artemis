@@ -244,11 +244,11 @@ export class CourseSidebarItemService {
 
     getQuizQuestionPoolItem(courseId: number): SidebarItem {
         return {
-            routerLink: `${courseId}/quiz-question-pool`,
+            routerLink: `${courseId}/smart-quizzes`,
             icon: faListCheck,
             title: 'Smart Quizzes',
             translation: 'artemisApp.hyperion.quizQuestionPool.sidebarTitle',
-            testId: 'quiz-question-pool',
+            testId: 'smart-quizzes',
             hidden: false,
         };
     }
