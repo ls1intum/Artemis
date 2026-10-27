@@ -160,6 +160,20 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.config().frameworkVersion).toBe('3.4.1');
     });
 
+    it('activates with the pinned version while the versions are unknown', () => {
+        service.getVersions.mockReturnValue(throwError(() => new Error('LOAD_FAILED')));
+        // The versions are requested on construction, so re-create the component with the failing request.
+        fixture.destroy();
+        fixture = TestBed.createComponent(ProgrammingExerciseSecurityComponent);
+        comp = fixture.componentInstance;
+        initEdit({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '2.0.0' });
+        service.activate.mockReturnValue(of(activeConfig('2.0.0')));
+
+        comp.onToggleChanged(true);
+
+        expect(service.activate).toHaveBeenCalledWith(42, '2.0.0');
+    });
+
     it('ignores choosing a version that is not selectable', () => {
         initEdit(activeConfig('2.0.0'));
         comp.onFrameworkVersionChanged('2.0.0');

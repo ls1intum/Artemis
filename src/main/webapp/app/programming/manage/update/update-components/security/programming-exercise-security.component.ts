@@ -258,9 +258,11 @@ export class ProgrammingExerciseSecurityComponent {
             return;
         }
         if (checked) {
-            // An exercise that pins a version which is no longer selectable is activated with the template's version, which the server accepts.
+            // Keep the pinned version. Only once the versions are known and the pinned one is no longer selectable, activate with the template's version.
+            // While the versions are unknown (loading or failed), the server validates the pinned version, and a rejection shows as ERROR.
             const current = this.config().frameworkVersion;
-            const version = current && this.selectableVersions().includes(current) ? current : this.defaultVersion();
+            const versionsKnown = this.versions() !== undefined;
+            const version = current && (!versionsKnown || this.selectableVersions().includes(current)) ? current : this.defaultVersion();
             if (!version) {
                 return;
             }

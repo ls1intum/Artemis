@@ -255,7 +255,8 @@ public class SecurityFrameworkService {
         validateFrameworkVersion(frameworkVersion);
         return changeTestRepository(exercise, user, "Use Ares " + frameworkVersion + " for the security policy", repository -> {
             Path root = repository.getLocalPath();
-            if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root)) {
+            // The same rule as getConfig: a test that switches its policy off makes the framework inactive.
+            if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root) || SecurityPolicyRepositoryFiles.hasDeactivatedPolicyAnnotation(root)) {
                 throw new BadRequestAlertException("The framework version cannot be changed because the Security Framework is not active for this exercise.", ENTITY_NAME,
                         "securityFrameworkNotActive");
             }
