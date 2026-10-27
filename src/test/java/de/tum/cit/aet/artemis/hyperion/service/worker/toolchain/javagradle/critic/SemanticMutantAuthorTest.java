@@ -33,12 +33,12 @@ class SemanticMutantAuthorTest {
     @NullAndEmptySource
     @ValueSource(strings = { "   ", "not JSON", "{", "{}", "null", "{\"mutants\":null}" })
     void unavailableResponsesAreNotSuccessfulEmptyProposals(String response) {
-        assertThatThrownBy(() -> author.parse(response, SPEC, Map.of("src/example/Scheduler.java", SOURCE))).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> author.parse(response, SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of())).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void anExplicitEmptyArrayIsAValidProposal() {
-        assertThat(author.parse("{\"mutants\":[]}", SPEC, Map.of("src/example/Scheduler.java", SOURCE))).isEmpty();
+        assertThat(author.parse("{\"mutants\":[]}", SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of())).isEmpty();
     }
 
     @Test
@@ -64,7 +64,7 @@ class SemanticMutantAuthorTest {
     @Test
     void parsesACompleteOneFileMutantAndCounterexample() {
         var result = author.parse(response("src/example/Scheduler.java", "R1", "org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose(), \"R1 global choice\");"),
-                SPEC, Map.of("src/example/Scheduler.java", SOURCE));
+                SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of());
 
         assertThat(result).singleElement().satisfies(mutant -> {
             assertThat(mutant.solutionPath()).isEqualTo("src/example/Scheduler.java");
@@ -76,13 +76,15 @@ class SemanticMutantAuthorTest {
     @Test
     void rejectsTraversalInventedRulesVacuousTestsAndUnchangedSources() {
         String validAssertion = "org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose(), \"R1 global choice\");";
-        assertThat(author.parse(response("../Scheduler.java", "R1", validAssertion), SPEC, Map.of("../Scheduler.java", SOURCE))).isEmpty();
-        assertThat(author.parse(response("src/example/Scheduler.java", "R9", validAssertion), SPEC, Map.of("src/example/Scheduler.java", SOURCE))).isEmpty();
-        assertThat(author.parse(response("src/example/Scheduler.java", "globally", validAssertion), SPEC + "globally", Map.of("src/example/Scheduler.java", SOURCE))).isEmpty();
-        assertThat(author.parse(response("src/example/Scheduler.java", "R1", "new Scheduler().choose();"), SPEC, Map.of("src/example/Scheduler.java", SOURCE))).isEmpty();
+        assertThat(author.parse(response("../Scheduler.java", "R1", validAssertion), SPEC, Map.of("../Scheduler.java", SOURCE), List.of())).isEmpty();
+        assertThat(author.parse(response("src/example/Scheduler.java", "R9", validAssertion), SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of())).isEmpty();
+        assertThat(author.parse(response("src/example/Scheduler.java", "globally", validAssertion), SPEC + "globally", Map.of("src/example/Scheduler.java", SOURCE), List.of()))
+                .isEmpty();
+        assertThat(author.parse(response("src/example/Scheduler.java", "R1", "new Scheduler().choose();"), SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of()))
+                .isEmpty();
 
         String unchanged = response("src/example/Scheduler.java", "R1", validAssertion).replace("return 2", "return 1");
-        assertThat(author.parse(unchanged, SPEC, Map.of("src/example/Scheduler.java", SOURCE))).isEmpty();
+        assertThat(author.parse(unchanged, SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of())).isEmpty();
     }
 
     @Test
@@ -92,14 +94,14 @@ class SemanticMutantAuthorTest {
                 + item("src/example/Scheduler.java", "R1", "fifthGlobalChoice") + "," + item("src/example/Scheduler.java", "R1", "sixthGlobalChoice") + ","
                 + item("src/example/Scheduler.java", "R1", "seventhGlobalChoice") + "]}";
 
-        assertThat(author.parse(seven, SPEC, Map.of("src/example/Scheduler.java", SOURCE))).hasSize(6);
+        assertThat(author.parse(seven, SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of())).hasSize(6);
     }
 
     @Test
     void rejectsTestsThatDependOnBorrowedJunitImports() {
         String shorthand = response("src/example/Scheduler.java", "R1", "assertEquals(1, new Scheduler().choose(), \"R1\");").replace("@org.junit.jupiter.api.Test", "@Test");
 
-        assertThat(author.parse(shorthand, SPEC, Map.of("src/example/Scheduler.java", SOURCE))).isEmpty();
+        assertThat(author.parse(shorthand, SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of())).isEmpty();
     }
 
     @Test
