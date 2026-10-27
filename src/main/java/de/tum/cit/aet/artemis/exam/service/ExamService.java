@@ -534,6 +534,7 @@ public class ExamService {
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResultDTO>();
         var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
+        Map<Long, Set<ExamGradeScoreDTO>> testRunGradesByUser = new HashMap<>();
 
         // Resolve the participations of every student exam first. A test run and a test exam load theirs individually,
         // and they have to be part of the preload below as much as the regular ones.
@@ -554,7 +555,12 @@ public class ExamService {
         // submissions once here so the statistic can name the earlier round without widening that fetch.
         Map<Long, List<CorrectionRoundResultDTO>> manualResultsBySubmissionId = loadManualResultsForFirstCorrection(exam, participationsByStudentExamId.values());
         for (StudentExam studentExam : studentExams) {
-            var studentGrades = new HashSet<>(gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
+            // An instructor can also have a regular participation. Reuse their test-run grade projection across runs,
+            // keeping it separate from the cohort's regular grades and avoiding repeated queries for the same instructor.
+            var studentGrades = new HashSet<>(studentExam.isTestRun()
+                    ? testRunGradesByUser.computeIfAbsent(studentExam.getUser().getId(),
+                            userId -> studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(examId, userId))
+                    : gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
             var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
 
             List<StudentParticipation> participations = participationsByStudentExamId.getOrDefault(studentExam.getId(), List.of());
