@@ -75,3 +75,4 @@ export { TumAetUiTagComponent, type TumAetUiTagSeverity, type TumAetUiTagSize } 
 export { TumAetUiToggleSwitchComponent } from './lib/toggle-switch/tumaet-ui-toggle-switch.component';
 export { TumAetUiTooltipDirective } from './lib/tooltip/tumaet-ui-tooltip.directive';
 export type { TumAetUiOverlayPlacement } from './lib/overlay/tumaet-ui-overlay.service';
+export { setInputs } from './lib/internal/set-inputs';

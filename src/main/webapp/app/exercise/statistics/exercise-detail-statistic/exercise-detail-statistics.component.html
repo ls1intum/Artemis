@@ -1,8 +1,9 @@
-<div class="row d-flex justify-content-between">
+<div class="row d-flex justify-content-between" data-testid="exercise-statistics-summary">
     <jhi-doughnut-chart
         class="col-md-4"
         [course]="course()"
         [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
+        [exerciseGroup]="exercise().exerciseGroup"
         [exerciseId]="exercise().id!"
         [exerciseType]="exerciseType()"
         [currentPercentage]="doughnutStats()?.averageScoreOfExercise"
@@ -13,6 +14,7 @@
         class="col-md-4"
         [course]="course()"
         [contentType]="DoughnutChartType.PARTICIPATIONS"
+        [exerciseGroup]="exercise().exerciseGroup"
         [exerciseId]="exercise().id!"
         [exerciseType]="exerciseType()"
         [currentPercentage]="doughnutStats()?.participationsInPercent"

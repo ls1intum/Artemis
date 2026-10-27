@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -219,7 +220,9 @@ class UserDeletionDataCoverageTest extends AbstractSpringIntegrationIndependentT
             userActivityRepository.save(activity);
         }
         if (userAiPreferenceRepository.findByUserId(target.getId()).isEmpty()) {
-            userAiPreferenceRepository.save(new UserAiPreference(target.getId()));
+            UserAiPreference preference = new UserAiPreference(target.getId());
+            preference.setSelectionDecision(AiSelectionDecision.CLOUD_AI);
+            userAiPreferenceRepository.save(preference);
         }
         if (userRecoveryKeyRepository.findByUserId(target.getId()).isEmpty()) {
             userRecoveryKeyRepository.save(new UserRecoveryKey(target.getId()));

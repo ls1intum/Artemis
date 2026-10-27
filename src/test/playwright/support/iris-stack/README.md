@@ -65,9 +65,9 @@ edutelligence commit you're running.
 
 **Building from source** is only needed to test an in-progress edutelligence branch/PR that
 hasn't been merged to `main` yet (no published image exists for those). Pyris's Dockerfile
-(`iris/Dockerfile`) `COPY memiris ../memiris`, so the **build context must be the
-edutelligence repo root** (the directory that contains both `iris/` and `memiris/`), not
-`iris/`:
+(`iris/Dockerfile`) copies paths relative to the edutelligence repo root (e.g.
+`COPY iris/pyproject.toml ...`), so the **build context must be the edutelligence repo root**,
+not `iris/`:
 
 ```bash
 # from a fresh checkout of edutelligence at the branch/commit you want to test:
@@ -92,8 +92,8 @@ Key choices, and why:
   Artemis `artemis.iris.secret-token` (the runner sets `ARTEMIS_IRIS_SECRETTOKEN` to the
   same value). Pyris raw-compares the incoming `Authorization` header to this token.
 - `weaviate.host: "weaviate"` — the compose service name (same docker network).
-- `memiris.enabled: false` — disables memory pipelines so no Ollama/embedding hosts are
-  contacted at message time.
+- `memiris.enabled: false` — only read by Pyris images from before the Memiris removal, which
+  refuse to start without the block; newer Pyris ignores it.
 - `local_llm_enabled: false` — only the `.cloud` LLM ids must resolve; Artemis sends
   `selection=CLOUD_AI` by default, so only cloud ids are used.
 - `llm_configuration` includes the `chat_pipeline` key (the unified pipeline, PIPELINE_ID

@@ -215,6 +215,31 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
+     * Executor for an instructor's bulk build runs: the build of all participations of an exercise and the rebuild of
+     * selected participations (see {@code ProgrammingTriggerService}).
+     * <p>
+     * A run waits for room in the build queue before it queues the next build and may do so for hours. On the shared
+     * {@code taskExecutor} a handful of such runs would occupy every core worker, and unrelated work such as websocket
+     * sends and mail would queue behind them. The runs have a pool of their own instead.
+     * <p>
+     * Four threads are enough because a run mostly sleeps and every run looks at the same build queue, so more runs at
+     * once would not queue builds faster. A run that finds all threads busy waits in the queue, which is long enough that
+     * the rejection handler is unreachable in practice. Rejecting would be the right answer if it were reached, since
+     * the caller is a request thread that must not run a bulk run itself.
+     *
+     * @return a dedicated pool for bulk build runs
+     */
+    @Bean("bulkBuildTriggerExecutor")
+    public Executor bulkBuildTriggerExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("bulk-build-trigger-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
      * Executor for the version control access log writes (see {@code VcsAccessLogService}).
      * <p>
      * These run on their own pool because of how the writes are reached. A git push submits the log write from the
@@ -237,16 +262,7 @@ public class AsyncConfiguration implements AsyncConfigurer {
      */
     @Bean("vcsAccessLogExecutor")
     public Executor vcsAccessLogExecutor() {
-        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            return new SyncTaskExecutor();
-        }
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(1);
-        executor.setMaxPoolSize(1);
-        executor.setQueueCapacity(1000);
-        executor.setThreadNamePrefix("vcs-access-log-");
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        return new ExceptionHandlingAsyncTaskExecutor(executor);
+        return callerRunsExecutor(1, 1, 1000, "vcs-access-log-");
     }
 
     /**
@@ -265,16 +281,7 @@ public class AsyncConfiguration implements AsyncConfigurer {
      */
     @Bean("submissionVersionExecutor")
     public Executor submissionVersionExecutor() {
-        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            return new SyncTaskExecutor();
-        }
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(8);
-        executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("submission-version-");
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        return new ExceptionHandlingAsyncTaskExecutor(executor);
+        return callerRunsExecutor(4, 8, 500, "submission-version-");
     }
 
     /**
@@ -295,18 +302,19 @@ public class AsyncConfiguration implements AsyncConfigurer {
      */
     @Bean("buildTriggerExecutor")
     public Executor buildTriggerExecutor() {
+        return callerRunsExecutor(2, 4, 2000, "build-trigger-");
+    }
+
+    /** Small bounded pools preserve work by applying backpressure on the producing thread when saturated. */
+    private Executor callerRunsExecutor(int corePoolSize, int maxPoolSize, int queueCapacity, String threadNamePrefix) {
         if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return new SyncTaskExecutor();
         }
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        // Deliberately small. Queueing a build competes with request handling for database connections and processor
-        // time, and a pool wide enough to absorb an exam's worth of pushes at once starves the endpoints students are
-        // waiting on. Kept narrow, the caller-runs fallback pushes the work back onto the git thread that produced it,
-        // which is where the natural backpressure was before this became asynchronous.
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(4);
-        executor.setQueueCapacity(2000);
-        executor.setThreadNamePrefix("build-trigger-");
+        executor.setCorePoolSize(corePoolSize);
+        executor.setMaxPoolSize(maxPoolSize);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setThreadNamePrefix(threadNamePrefix);
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }

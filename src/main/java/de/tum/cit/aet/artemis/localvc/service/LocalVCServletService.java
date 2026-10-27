@@ -287,7 +287,15 @@ public class LocalVCServletService {
 
         log.debug("Path to resolve repository from: {}", sanitizedPath);
         if (!Files.exists(repositoryDir)) {
-            log.error("Could not find local repository with name {}", sanitizedPath);
+            // A client asking for a path that does not exist is not a server error: students' tools poll the predictable URL of their repository before they have started
+            // the exercise. A storage that is gone or unreadable is one. Files.exists is also false then, so the repository only counts as missing for the client if the
+            // base path is a directory and the repository is known not to exist.
+            if (Files.isDirectory(normalizedBasePath) && Files.notExists(repositoryDir)) {
+                log.warn("Could not find local repository with name {}", sanitizedPath);
+            }
+            else {
+                log.error("Could not find local repository with name {}, the storage of the repositories may be unavailable", sanitizedPath);
+            }
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
@@ -423,7 +431,7 @@ public class LocalVCServletService {
             }
         }
         catch (LocalVCForbiddenException e) {
-            log.error("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
+            log.warn("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
             saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), repositoryTypeOrUserName, exercise.exerciseId(), localVCRepositoryUri, user, repositoryAction);
             throw e;
         }

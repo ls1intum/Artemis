@@ -482,26 +482,6 @@ export class AccountService implements IAccountService {
         });
     }
 
-    setUserEnabledMemiris(memirisEnabled: boolean): void {
-        this.http.put('api/account/enable-memiris', memirisEnabled).subscribe({
-            next: () => {
-                this.userIdentity.update((currentUserIdentity) => {
-                    if (!currentUserIdentity) {
-                        return currentUserIdentity;
-                    }
-
-                    // Return a NEW object rather than mutating in place: a signal compares with Object.is, so
-                    // returning the same reference emits no notification and (under zoneless change detection) any
-                    // dependent view would not react to the toggled setting. Mirrors setImageUrl.
-                    const updatedUserIdentity = deepClone(currentUserIdentity);
-                    updatedUserIdentity.memirisEnabled = memirisEnabled;
-                    return updatedUserIdentity;
-                });
-            },
-            error: (_) => {},
-        });
-    }
-
     /**
      * Trades the current cookie for a new Tool-specific bearer token which is able to authenticate the user.
      * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
