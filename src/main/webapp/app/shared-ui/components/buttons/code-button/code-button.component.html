@@ -94,12 +94,7 @@
                         }
                     </tumaet-ui-menu>
                 </ng-template>
-                <pre
-                    data-testid="clone-url"
-                    class="m-0! min-w-0 flex-1 truncate"
-                    [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
-                    (cdkCopyToClipboardCopied)="copyEnabled() ? onCopyFinished($event) : null"
-                    >{{ getHttpOrSshRepositoryUri() }}</pre>
+                <pre data-testid="clone-url" class="m-0! min-w-0 flex-1 truncate">{{ getHttpOrSshRepositoryUri() }}</pre>
                 <a
                     tumAetUiButton
                     size="small"

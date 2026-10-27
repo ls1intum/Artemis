@@ -374,6 +374,32 @@ describe('CodeButtonComponent', () => {
             expect(component.copyEnabled()).toBe(true);
         });
 
+        it('only copies through the copy button when copying is enabled', () => {
+            fixture.componentRef.setInput('participations', [participation]);
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
+            component.copyEnabled.set(false);
+            fixture.detectChanges();
+            const copy = vi.fn(() => true);
+            Object.defineProperty(document, 'execCommand', { configurable: true, value: copy });
+            const cloneUrl = document.querySelector<HTMLElement>('[data-testid="clone-url"]')!;
+            const copyButton = document.querySelector<HTMLButtonElement>('[data-testid="copyRepoUrlButton"]')!;
+
+            try {
+                cloneUrl.click();
+                expect(copyButton.disabled).toBe(true);
+                copyButton.click();
+                expect(copy).not.toHaveBeenCalled();
+
+                component.copyEnabled.set(true);
+                fixture.detectChanges();
+                expect(copyButton.disabled).toBe(false);
+                copyButton.click();
+                expect(copy).toHaveBeenCalledExactlyOnceWith('copy');
+            } finally {
+                Reflect.deleteProperty(document, 'execCommand');
+            }
+        });
+
         it('closes the code popover with Escape without clicking its covered trigger', () => {
             fixture.componentRef.setInput('participations', [participation]);
             fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
