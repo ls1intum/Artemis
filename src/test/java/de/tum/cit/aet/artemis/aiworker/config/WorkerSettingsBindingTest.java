@@ -64,6 +64,27 @@ class WorkerSettingsBindingTest {
         });
     }
 
+    @Test
+    void shippedWorkerProfileStartsWithoutAConfiguredSandboxImage() {
+        new ApplicationContextRunner().withUserConfiguration(SettingsConfiguration.class).withInitializer(context -> {
+            try {
+                new YamlPropertySourceLoader().load("aiworker", new ClassPathResource("config/application-aiworker.yml"))
+                        .forEach(context.getEnvironment().getPropertySources()::addLast);
+            }
+            catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }).withPropertyValues("AI_WORKER_ID=worker-1").run(context -> {
+            assertThat(context).hasNotFailed();
+            assertThat(context.getBean(WorkerSettings.class).image()).isEmpty();
+        });
+    }
+
+    @Test
+    void rejectsAConfiguredImageWithoutDigest() {
+        runner.withPropertyValues("artemis.aiworker.image=ghcr.io/ls1intum/artemis-hyperion-sandbox:latest").run(context -> assertThat(context).hasFailed());
+    }
+
     @Configuration(proxyBeanMethods = false)
     @Lazy
     @EnableConfigurationProperties(WorkerSettings.class)

@@ -350,6 +350,25 @@ jobs:
         type=ref,event=branch
         sha-${{ inputs.commit_sha }}
 
+  # The offline sandbox image the AI worker runs generated code in. Published with the same tags as the
+  # Artemis image, so a worker on release X pulls `artemis-hyperion-sandbox:sha-<X's commit>` by itself
+  # instead of an operator building and pinning it for every release.
+  sandbox-image-release:
+    name: Build and Push Hyperion Sandbox Image
+    if: ${{ !inputs.is_pr }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@ee1b52f07891ed489887681c09c52b4a83fa9fb2  # v1.2.0
+    with:
+      ref: ${{ inputs.commit_sha }}
+      image-name: ls1intum/artemis-hyperion-sandbox
+      docker-file: ./deployment/docker/hyperion/gradle-sandbox.Dockerfile
+      tags: |
+        type=ref,event=tag
+        type=ref,event=branch
+        sha-${{ inputs.commit_sha }}
+
   # Mirrors the `docker-tag` artifact upload from `docker-pr` for the release path so that
   # .github/actions/e2e-setup can consume it uniformly regardless of which docker job produced
   # the image.

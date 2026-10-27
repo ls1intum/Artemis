@@ -26,7 +26,10 @@ for other workloads. Keep the worker process in an isolated VM.
 
 ## Offline Java build image (Gradle and Maven)
 
-Build the sandbox image from the repository root:
+CI publishes this image for every `develop` push and release as
+`ghcr.io/ls1intum/artemis-hyperion-sandbox`, with the same tags as the Artemis image. A worker without
+`AI_WORKER_SANDBOX_IMAGE` pulls the tag `sha-<commit>` of its own build. Build it yourself only for a
+local or pull-request build, from the repository root:
 
 ```sh
 docker build -f deployment/docker/hyperion/gradle-sandbox.Dockerfile -t hyperion-gradle-sandbox:local .

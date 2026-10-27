@@ -183,7 +183,8 @@ class WorkerBoundaryContractsTest {
         var shutdown = Duration.ofSeconds(1);
         assertThatThrownBy(() -> settings(null, IMAGE, 1, heartbeat, grace, shutdown)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("worker id");
         assertThatThrownBy(() -> settings("bad/worker", IMAGE, 1, heartbeat, grace, shutdown)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("worker id");
-        assertThatThrownBy(() -> settings("worker", null, 1, heartbeat, grace, shutdown)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("pinned");
+        assertThatThrownBy(() -> settings("worker", "registry.example.org/worker:latest", 1, heartbeat, grace, shutdown)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("pinned");
         assertThatThrownBy(() -> settings("worker", "latest", 1, heartbeat, grace, shutdown)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("pinned");
         assertThatThrownBy(() -> settings("worker", IMAGE, 0, heartbeat, grace, shutdown)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("execution slots");
         assertThatThrownBy(() -> settings("worker", IMAGE, 17, heartbeat, grace, shutdown)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("execution slots");

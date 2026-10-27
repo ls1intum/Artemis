@@ -10,7 +10,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerCapacityDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 
-/** Operator-owned worker limits and image. No job or model can widen these values. */
+/** Operator-owned worker limits and image. No job or model can widen these values. A blank image selects the image published for this release. */
 @ConfigurationProperties("artemis.aiworker")
 public record WorkerSettings(String id, String image, @DefaultValue("runc") String runtime, @DefaultValue("2147483648") long memoryBytes, @DefaultValue("200000") long cpuQuota,
         @DefaultValue("256") long pids, @DefaultValue("PT10S") Duration heartbeatInterval, @DefaultValue("PT45S") Duration connectionGrace,
@@ -34,7 +34,8 @@ public record WorkerSettings(String id, String image, @DefaultValue("runc") Stri
         if (id == null || !WORKER_ID_PATTERN.matcher(id).matches()) {
             throw new IllegalArgumentException("Configure a unique destination-safe worker id");
         }
-        if (image == null || !IMAGE_PATTERN.matcher(image).matches()) {
+        // A blank image selects the sandbox image published for this release; see PublishedSandboxImage.
+        if (image != null && !image.isBlank() && !IMAGE_PATTERN.matcher(image).matches()) {
             throw new IllegalArgumentException("The worker image must be pinned by SHA-256 digest");
         }
         if (runtime == null || runtime.isBlank() || memoryBytes <= 0 || cpuQuota <= 0 || pids <= 0) {

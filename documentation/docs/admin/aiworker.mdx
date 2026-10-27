@@ -120,7 +120,9 @@ The selected distributed-data provider supplies the shared client.
 Startup rejects `core`, `localci`, `localvc`, and `buildagent` with `aiworker`,
 and rejects any attempt to turn the HTTP server back on. Do not run this profile
 on a core node. Keep the core container away from the worker's Docker socket.
-Preload a qualified, digest-pinned sandbox image on the isolated daemon.
+The sandbox image is published with each release, like the build agents' build images. Without
+`artemis.aiworker.image`, the worker pulls `ghcr.io/ls1intum/artemis-hyperion-sandbox:sha-<commit>` for
+its own commit at startup and uses that image's registry digest from then on.
 Configuration files containing secrets must be readable only by the deployment account
 and worker UID, and mounted read-only.
 
@@ -139,7 +141,8 @@ artemis:
         provider: hazelcast # Or redis, matching the core nodes.
     aiworker:
         id: worker-1
-        image: registry.example/hyperion-java-gradle@sha256:<qualified-digest>
+        # Optional: defaults to the published sandbox image of this Artemis commit.
+        # image: registry.example/hyperion-sandbox@sha256:<digest>
         max-concurrent-executions: 1
         runtime: runc
         memory-bytes: 2147483648
@@ -150,7 +153,8 @@ artemis:
         shutdown-timeout: PT2M
 ```
 
-Replace the digest placeholder with the image's actual 64-digit SHA-256 digest.
+Set `image` only for a build without a published sandbox image, such as a local or pull-request build;
+it must then be pinned by its 64-digit SHA-256 digest.
 The environment-based entry point also accepts `AI_WORKER_ID` and `AI_WORKER_SANDBOX_IMAGE`.
 The workload defaults to `hyperion-generation`, schema `1`, profile `java-gradle`; set
 `artemis.aiworker.workload` and `artemis.aiworker.profile` only for another installed workload. Configure provider access through
@@ -243,7 +247,7 @@ Set `artemis_aiworker_ids` on eligible core nodes. Hyperion generation starts wo
 coordination automatically; set `artemis_aiworker_enabled` only for coordination
 without Hyperion generation.
 
-The role validates inputs, protects rendered secrets and preloads the sandbox image.
+The role validates inputs, protects rendered secrets and preloads a configured sandbox image; otherwise the worker pulls the published one.
 It does not provision the provider, firewall or isolation boundary, or drain jobs.
 Stop new admission and drain active work and persistence before replacing a worker.
 Shared-host rootless deployment requires separate provisioning outside this role.

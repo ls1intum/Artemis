@@ -35,7 +35,8 @@ spring:
 artemis:
     aiworker:
         id: ${AI_WORKER_ID}
-        image: ${AI_WORKER_SANDBOX_IMAGE}
+        # Empty: use the sandbox image published for this Artemis commit (ghcr.io/ls1intum/artemis-hyperion-sandbox:sha-<commit>).
+        image: ${AI_WORKER_SANDBOX_IMAGE:}
         # Hyperion generation is the only shipped workload; override both only for another installed workload.
         workload: ${AI_WORKER_WORKLOAD:hyperion-generation}
         profile: ${AI_WORKER_PROFILE:java-gradle}
