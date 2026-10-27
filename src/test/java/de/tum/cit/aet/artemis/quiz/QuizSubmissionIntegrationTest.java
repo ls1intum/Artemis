@@ -61,10 +61,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -542,6 +543,43 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     }
 
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    void testQuizPracticeWithUninitializedLiveParticipation(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        quizExercise.setDuration(2);
+        quizExerciseService.save(quizExercise);
+        var liveParticipation = new StudentParticipation();
+        liveParticipation.setExercise(quizExercise);
+        liveParticipation.setParticipant(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        liveParticipation.setInitializationState(InitializationState.UNINITIALIZED);
+        liveParticipation.setAttempt(0);
+        liveParticipation.setPracticeMode(false);
+        liveParticipation = participationRepository.saveAndFlush(liveParticipation);
+
+        // A live-start request has inserted its row but has not finished initializing it yet.
+        for (int attempt = 0; attempt < 2; attempt++) {
+            QuizSubmission submission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+            Result result = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", QuizSubmissionFromStudentDTO.of(submission),
+                    Result.class, HttpStatus.OK);
+            assertThat(result.getSubmission().isSubmitted()).isTrue();
+        }
+
+        var participations = participationRepository.findByExerciseId(quizExercise.getId());
+        assertThat(participations).hasSize(2);
+        var storedLive = participations.stream().filter(participation -> !participation.isPracticeMode()).findFirst().orElseThrow();
+        assertThat(storedLive.getId()).isEqualTo(liveParticipation.getId());
+        assertThat(storedLive.getInitializationState()).isEqualTo(InitializationState.UNINITIALIZED);
+        assertThat(((StudentParticipation) storedLive).getAttempt()).isZero();
+        var practice = participations.stream().filter(participation -> participation.isPracticeMode()).map(StudentParticipation.class::cast).findFirst().orElseThrow();
+        assertThat(practice.getId()).isNotEqualTo(liveParticipation.getId());
+        assertThat(practice.getAttempt()).isEqualTo(1);
+        assertThat(practice.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(2);
+        assertThat(resultTestRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(2);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExerciseScoresDurationIsNotDerivedFromPracticeAttempts() throws Exception {
@@ -572,15 +610,15 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationRepository.save(practiceParticipation);
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var search = new ParticipationScoreSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null);
-        var scores = request.getList("/api/exercise/exercises/" + quizExercise.getId() + "/participations/scores", HttpStatus.OK, ParticipationScoreDTO.class,
+        var search = new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null);
+        var scores = request.getList("/api/exercise/exercises/" + quizExercise.getId() + "/participations/page", HttpStatus.OK, ParticipationManagementDTO.class,
                 pageableSearchUtilService.searchMapping(search));
 
         assertThat(scores).hasSize(2);
         var gradedScore = scores.stream().filter(score -> !score.testRun()).findFirst().orElseThrow();
         assertThat(gradedScore.durationInSeconds()).as("a graded attempt shows the time between its start and its submission").isBetween(299L, 301L);
         // the start of a single practice attempt is not recorded, so the time since the first attempt must not be shown as the duration of the last one
-        var practiceScore = scores.stream().filter(ParticipationScoreDTO::testRun).findFirst().orElseThrow();
+        var practiceScore = scores.stream().filter(ParticipationManagementDTO::testRun).findFirst().orElseThrow();
         assertThat(practiceScore.submissionCount()).isEqualTo(2);
         assertThat(practiceScore.durationInSeconds()).as("the duration of the latest practice attempt is unknown").isNull();
     }

@@ -206,13 +206,15 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     }
 
     private createAccordionGroups(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]): AccordionGroups {
+        // The sidebar renders the sections in key order. The lessons come first as they are opened far more often
+        // than the group overview, which would otherwise push them below a long list of groups.
         const accordionGroups: AccordionGroups = {
-            allGroups: { entityData: [] },
-            registeredGroups: { entityData: [] },
-            furtherGroups: { entityData: [] },
             allTutorialLectures: { entityData: [] },
             currentTutorialLecture: { entityData: [] },
             furtherTutorialLectures: { entityData: [] },
+            allGroups: { entityData: [] },
+            registeredGroups: { entityData: [] },
+            furtherGroups: { entityData: [] },
         };
         let tutorialGroupCategory: TutorialGroupCategory;
 

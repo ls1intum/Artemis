@@ -21,6 +21,8 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -974,11 +976,15 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * them itself (the links need managed competencies), so the resource resolves them through the competency link
      * service; without that call the exercise would be created with no links at all and nothing would fail loudly.
      */
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 30 })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void testCreateProgrammingExercise_withCompetencyLinks_persistsTheLinks() throws Exception {
+    void testCreateProgrammingExercise_withCompetencyLinks_persistsTheLinks(int linkCount) throws Exception {
         addInstructorToCourse();
-        Competency competency = competencyUtilService.createCompetency(course);
+        Set<Competency> competencies = new HashSet<>();
+        for (int index = 0; index < linkCount; index++) {
+            competencies.add(competencyUtilService.createCompetency(course));
+        }
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setShortName("compLinks");
@@ -988,16 +994,29 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
         var buildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
         buildConfig.setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
-        newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
+        Set<CompetencyExerciseLink> links = new HashSet<>();
+        competencies.forEach(competency -> links.add(new CompetencyExerciseLink(competency, newExercise, 1)));
+        newExercise.setCompetencyLinks(links);
 
-        var created = request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
-                ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        var created = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
+                ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(linkCount == 1 ? 120 : 260);
 
         // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
         List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(created.id());
-        assertThat(storedLinks).hasSize(1);
-        assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
-        assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
+        Set<Long> expectedIds = new HashSet<>();
+        competencies.forEach(competency -> expectedIds.add(competency.getId()));
+        assertThat(storedLinks).hasSize(linkCount);
+        assertThat(storedLinks).extracting(link -> link.getCompetency().getId()).containsExactlyInAnyOrderElementsOf(expectedIds);
+        assertThat(storedLinks).allSatisfy(link -> {
+            assertThat(link.getWeight()).isEqualTo(1);
+            assertThat(link.isGeneratedByAi()).isFalse();
+        });
+        assertThat(created.competencyLinks()).hasSize(linkCount);
+        assertThat(created.competencyLinks()).extracting(link -> link.competency().id()).containsExactlyInAnyOrderElementsOf(expectedIds);
+        assertThat(created.competencyLinks()).allSatisfy(link -> {
+            assertThat(link.weight()).isEqualTo(1);
+            assertThat(link.generatedByAi()).isFalse();
+        });
     }
 
     @Test
@@ -1325,7 +1344,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private static UpdateProgrammingExerciseDTO toClientUpdateDTO(ProgrammingExerciseResponseDTO response) {
         Long exerciseGroupId = response.exerciseGroup() != null ? response.exerciseGroup().id() : null;
         Long courseId = exerciseGroupId != null ? null : (response.course() != null ? response.course().id() : null);
-        Set<GradingCriterionDTO> gradingCriteria = response.gradingCriteria() == null ? null : new HashSet<>(response.gradingCriteria());
+        List<GradingCriterionDTO> gradingCriteria = response.gradingCriteria();
         return new UpdateProgrammingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(), response.problemStatement(), response.categories(),
                 response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(), response.allowComplaintsForAutomaticAssessments(),
                 response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.gradingInstructions(), response.releaseDate(), response.startDate(),
@@ -1354,11 +1373,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         return new UpdateProgrammingExerciseDTO(dto.id(), dto.title(), dto.channelName(), dto.shortName(), dto.problemStatement(), dto.categories(), dto.difficulty(),
                 dto.maxPoints(), dto.bonusPoints(), dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.presentationScoreEnabled(),
                 dto.secondCorrectionEnabled(), dto.gradingInstructions(), dto.releaseDate(), dto.startDate(), dto.dueDate(), dto.assessmentDueDate(),
-                dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria, dto.competencyLinks(), dto.testRepositoryUri(),
-                dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(), dto.staticCodeAnalysisEnabled(),
-                dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(), dto.buildAndTestStudentSubmissionsAfterDueDate(),
-                dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(), dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig(),
-                dto.plagiarismDetectionConfig());
+                dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria == null ? null : List.copyOf(gradingCriteria), dto.competencyLinks(),
+                dto.testRepositoryUri(), dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(),
+                dto.staticCodeAnalysisEnabled(), dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(),
+                dto.buildAndTestStudentSubmissionsAfterDueDate(), dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(),
+                dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig(), dto.plagiarismDetectionConfig());
     }
 
     /**
