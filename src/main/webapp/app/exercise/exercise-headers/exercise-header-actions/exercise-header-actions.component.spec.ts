@@ -2,6 +2,7 @@ import { ApplicationRef } from '@angular/core';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -539,6 +540,23 @@ describe('ExerciseHeaderActionsComponent', () => {
             return exercise;
         };
 
+        it('should provide a participation token for a team participation', () => {
+            const exercise = programmingExercise([
+                {
+                    id: 10,
+                    testRun: false,
+                    initializationState: InitializationState.INITIALIZED,
+                    repositoryUri: 'https://vcs.example.com/course/exercise.git',
+                    team: { id: 3 },
+                } as StudentParticipation,
+            ]);
+            exercise.allowOfflineIde = true;
+            createComponent(exercise);
+
+            const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
+            expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({ returnedTokenType: 'participation-token', participationId: 10 });
+        });
+
         it('should replace a known participation and emit it', () => {
             createComponent(programmingExercise([{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE } as StudentParticipation]));
             const emitted: StudentParticipation[] = [];
@@ -571,12 +589,12 @@ describe('ExerciseHeaderActionsComponent', () => {
             const practice = { id: 20, testRun: true } as StudentParticipation;
             createComponent(programmingExercise([practice]));
 
-            expect(fixture.componentInstance.routerLinkForRepositoryView()).toEqual(['/courses', 1, 'exercises', 7]);
+            expect(fixture.componentInstance.repositoryViewLink()).toEqual(['/courses', 1, 'exercises', 7]);
 
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.routerLinkForRepositoryView()).toEqual(['/courses', 1, 'exercises', 7, 'repository', 20]);
+            expect(fixture.componentInstance.repositoryViewLink()).toEqual(['/courses', 1, 'exercises', 7, 'repository', 20]);
         });
 
         it('should fall back to the graded participation in the practice mode as long as no practice participation exists', () => {

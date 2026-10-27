@@ -5,7 +5,7 @@
     [ngbTooltip]="tooltip() | artemisTranslate"
     (click)="onClick.emit($event)"
     [jhiFeatureToggle]="featureToggle()"
-    [overwriteDisabled]="disabled() || isLoading()"
+    [forceDisabled]="disabled() || isLoading()"
     [placement]="tooltipPlacement()"
     [triggers]="'hover'"
 >
