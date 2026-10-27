@@ -24,6 +24,23 @@ export function sanitizeStringForMarkdownEditor(str: string | undefined): string
 }
 
 /**
+ * Checks whether the given text, ignoring surrounding whitespace, is exactly one http or https URL.
+ * @param text The text to check.
+ */
+export function isHttpUrl(text: string): boolean {
+    const trimmed = text.trim();
+    if (!trimmed || /\s/.test(trimmed)) {
+        return false;
+    }
+    try {
+        const protocol = new URL(trimmed).protocol;
+        return protocol === 'http:' || protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+/**
  * Parse the markdown text and apply the result to the target object's data
  *
  * The markdown text is split at QUIZ_HINT_IDENTIFIER and QUIZ_EXPLANATION_IDENTIFIER tags.

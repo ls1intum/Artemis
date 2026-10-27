@@ -1,7 +1,7 @@
 import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
-import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
+import { isHttpUrl, sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { TranslateService } from '@ngx-translate/core';
@@ -86,12 +86,12 @@ export class UrlAction extends TextStyleTextEditorAction {
         const selection = editor.getSelection();
         const start = selection.getStartPosition();
         const end = selection.getEndPosition();
-        if (!UrlAction.isHttpUrl(pastedText) || start.getLineNumber() !== end.getLineNumber() || start.getColumn() === end.getColumn()) {
+        if (!isHttpUrl(pastedText) || start.getLineNumber() !== end.getLineNumber() || start.getColumn() === end.getColumn()) {
             return false;
         }
         const selectedText = this.getTextAtRange(editor, selection) ?? '';
         const label = sanitizeStringForMarkdownEditor(selectedText) ?? '';
-        if (!label.trim() || UrlAction.isHttpUrl(selectedText)) {
+        if (!label.trim() || isHttpUrl(selectedText)) {
             return false;
         }
         // Keep the URL as copied; only encode the parentheses that would end the markdown link early.
@@ -100,23 +100,6 @@ export class UrlAction extends TextStyleTextEditorAction {
         this.replaceTextAtRange(editor, selection, link);
         editor.setPosition(start.withColumn(start.getColumn() + link.length));
         return true;
-    }
-
-    /**
-     * Checks whether the given text, ignoring surrounding whitespace, is exactly one http or https URL.
-     * @param text The text to check.
-     */
-    private static isHttpUrl(text: string): boolean {
-        const trimmed = text.trim();
-        if (!trimmed || /\s/.test(trimmed)) {
-            return false;
-        }
-        try {
-            const protocol = new URL(trimmed).protocol;
-            return protocol === 'http:' || protocol === 'https:';
-        } catch {
-            return false;
-        }
     }
 
     /**
