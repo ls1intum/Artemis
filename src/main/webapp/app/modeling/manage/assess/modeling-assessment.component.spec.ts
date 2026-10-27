@@ -380,6 +380,21 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.text).toBe('Missing abstraction');
     });
 
+    it('should leave a saved default title to Apollon as its placeholder, and let it follow the points', () => {
+        const saved: Feedback = { text: 'artemisApp.feedback.type.positive', detailText: 'Looks right', referenceId: RELATIONSHIP_ID, reference: 'reference', credits: 1 };
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.detectChanges();
+        fixture.componentRef.setInput('resultFeedbacks', [saved]);
+        fixture.detectChanges();
+
+        const assessment = comp.apollonEditor!.model.assessments[RELATIONSHIP_ID];
+        expect(assessment.title).toBeUndefined();
+        expect(assessment.feedback).toBe('Looks right');
+
+        comp.generateFeedbackFromAssessment([{ ...assessment, score: -1 }]);
+        expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.text).toBe('artemisApp.feedback.type.needsRevision');
+    });
+
     it('should show the comment of feedback saved before Apollon had a title as its description', () => {
         const legacy: Feedback = { text: 'Consider extracting a common superclass.', referenceId: RELATIONSHIP_ID, reference: 'reference', credits: 1 };
         fixture.componentRef.setInput('umlModel', makeMockModel());

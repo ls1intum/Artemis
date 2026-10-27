@@ -695,7 +695,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 // suggestion's `text` is always a title (Athena's own, prefixed with its accepted/adapted state) once
                 // that prefix is stripped.
                 const isTextTitle = isSuggestion || Feedback.isTextTitle(feedback);
-                const title = isSuggestion ? this.stripSuggestionPrefix(feedback.text ?? '') : isTextTitle ? feedback.text : undefined;
+                // A saved default title is left out, so Apollon shows the default for the current points as its placeholder.
+                const title = isSuggestion ? this.stripSuggestionPrefix(feedback.text ?? '') : isTextTitle && !this.isDefaultTitle(feedback.text ?? '') ? feedback.text : undefined;
                 const feedbackContent = isTextTitle ? (feedback.detailText ?? '') : (feedback.text ?? '');
                 this.shownInApollon.set(feedback.referenceId!, feedbackContent);
                 if (isSuggestion) {
@@ -815,13 +816,16 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     /**
      * A feedback never keeps an empty title: a missing one is saved as the points-based default the unified
      * feedback editor offers ("Positive", "Needs Revision" or "Feedback"), so the student sees the same heading.
-     * A title that already is one of these defaults (e.g. reloaded into Apollon's title field) keeps following the
-     * score, as in the unified feedback editor.
+     * A title that already is one of these defaults keeps following the score, as in the unified feedback editor.
      */
     private titleOrDefault(title: string, score: number | undefined): string {
+        return title.trim() && !this.isDefaultTitle(title) ? title : this.translateService.instant(Feedback.getDefaultTitleKey(score));
+    }
+
+    /** Whether the title is one of the points-based defaults in the user's language. */
+    private isDefaultTitle(title: string): boolean {
         const trimmedTitle = title.trim();
-        const isDefault = Feedback.DEFAULT_TITLE_KEYS.some((key) => this.translateService.instant(key) === trimmedTitle);
-        return trimmedTitle && !isDefault ? title : this.translateService.instant(Feedback.getDefaultTitleKey(score));
+        return Feedback.DEFAULT_TITLE_KEYS.some((key) => this.translateService.instant(key) === trimmedTitle);
     }
 
     /**
