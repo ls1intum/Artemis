@@ -45,6 +45,7 @@ api/hyperion-problem-statement-resources.ts
 api/quiz-exercise-deletion-resources.ts
 api/quiz-training-resources.ts
 api/admin-hyperion-generation-resources.ts
+api/push-notification-resources.ts
 api/user-course-notification-status-resources.ts
 api/quiz-exercise-batch-resources.ts
 api/quiz-assessment-resources.ts

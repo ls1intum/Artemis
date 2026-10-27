@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.notification.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.aMapWithSize;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItem;
@@ -9,10 +10,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -20,10 +26,11 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 /**
  * Checks the notification contracts exported by springdoc before client-input pruning can hide a missing schema.
  */
-@TestPropertySource(properties = { "springdoc.api-docs.enabled=true", "springdoc.packages-to-scan=de.tum.cit.aet.artemis.notification.web",
-        // Keep the remaining notification families excluded until their contracts and callers are migrated.
-        "springdoc.paths-to-exclude=/api/notification/push_notification/**" })
+@TestPropertySource(properties = { "springdoc.api-docs.enabled=true", "springdoc.packages-to-scan=de.tum.cit.aet.artemis.notification.web", "springdoc.paths-to-exclude=" })
 class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndependentTest {
+
+    @Autowired
+    private JsonMapper objectMapper;
 
     @Test
     void shouldExportBothGlobalSettingsOperationsWithAccurateSchemas() throws Exception {
@@ -33,7 +40,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String input = "$.components.schemas.UpdateGlobalNotificationSetting";
         String[] notificationTypes = Arrays.stream(GlobalNotificationType.values()).map(Enum::name).toArray(String[]::new);
 
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(16)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
                 .andExpect(jsonPath(read + ".operationId").value("getGlobalNotificationSettings"))
                 .andExpect(jsonPath(read + ".responses['200'].content['application/json'].schema.additionalProperties.type").value("boolean"))
                 .andExpect(jsonPath(update + ".operationId").value("updateGlobalNotificationSetting")).andExpect(jsonPath(update + ".parameters[0].name").value("notificationType"))
@@ -59,7 +66,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String count = "$.paths['/api/notification/admin/system-notifications/maintenance-recipients-count'].get";
         String response = "$.components.schemas.SystemNotification";
         String input = "$.components.schemas.SystemNotificationUpdate";
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(16)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
                 .andExpect(jsonPath(list + ".operationId").value("getAllSystemNotifications"))
                 .andExpect(jsonPath(list + ".parameters[*].name", containsInAnyOrder("page", "size", "sort"))).andExpect(jsonPath(list + ".parameters[0].schema.default").value(0))
                 .andExpect(jsonPath(list + ".parameters[1].schema.default").value(20)).andExpect(jsonPath(list + ".parameters[2].schema.type").value("array"))
@@ -109,7 +116,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String info = "$.components.schemas.CourseNotificationSettingInfo";
         String input = "$.components.schemas.CourseNotificationSettingSpecificationRequest";
         String channels = ".properties.notificationTypeChannels.additionalProperties";
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(16)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
                 .andExpect(jsonPath(read + ".operationId").value("getUserCourseNotificationSettings")).andExpect(jsonPath(read + ".parameters[0].name").value("courseId"))
                 .andExpect(jsonPath(read + ".parameters[0].in").value("path"))
                 .andExpect(jsonPath(read + ".responses['200'].content['application/json'].schema['$ref']").value("#/components/schemas/CourseNotificationSettingInfo"))
@@ -136,7 +143,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String state = "$.paths['/api/notification/courses/{courseId}/status'].put";
         String seen = "$.paths['/api/notification/courses/{courseId}/seen'].put";
         String archive = "$.paths['/api/notification/courses/{courseId}/archive-all'].put";
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(16)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
                 .andExpect(jsonPath(feed + ".operationId").value("getCourseNotifications"))
                 .andExpect(jsonPath(feed + ".parameters[*].name", containsInAnyOrder("courseId", "page", "size", "sort")))
                 .andExpect(jsonPath(feed + ".responses['200'].content['application/json'].schema['$ref']").value("#/components/schemas/CourseNotificationPage"))
@@ -160,8 +167,57 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
                 .andExpect(jsonPath("$.components.schemas.CourseNotificationPage.required", containsInAnyOrder("pageNumber", "pageSize", "totalElements", "totalPages")))
                 .andExpect(jsonPath("$.components.schemas.UserCourseNotificationSettingPreset.required", containsInAnyOrder("identifier", "typeId")))
                 .andExpect(jsonPath("$.components.schemas.UserCourseNotificationSettingPreset.properties.presetMap.additionalProperties.required",
-                        containsInAnyOrder("EMAIL", "WEBAPP", "PUSH")))
-                .andExpect(jsonPath("$.paths['/api/notification/push_notification/register']").doesNotExist());
+                        containsInAnyOrder("EMAIL", "WEBAPP", "PUSH")));
+    }
+
+    @Test
+    void shouldExportPushInputsDefaultsStatusAndOptionalLegacyDeleteBody() throws Exception {
+        String register = "$.paths['/api/notification/push_notification/register'].post";
+        String unregister = "$.paths['/api/notification/push_notification/unregister'].delete";
+        String input = "$.components.schemas.PushNotificationRegisterBody";
+        String legacy = "$.components.schemas.PushNotificationUnregisterRequest";
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
+                .andExpect(jsonPath(register + ".operationId").value("registerPushNotificationDevice")).andExpect(jsonPath(register + ".requestBody.required").value(true))
+                .andExpect(jsonPath(register + ".requestBody.content['application/json'].schema['$ref']").value("#/components/schemas/PushNotificationRegisterBody"))
+                .andExpect(jsonPath(register + ".responses['200'].content['application/json'].schema['$ref']").value("#/components/schemas/PushNotificationRegister"))
+                .andExpect(jsonPath(register + ".responses['401'].content").doesNotExist()).andExpect(jsonPath(register + ".responses['400']").exists())
+                .andExpect(jsonPath(register + ".responses['500']").exists()).andExpect(jsonPath(input + ".properties.deviceType.enum", containsInAnyOrder("FIREBASE", "APNS")))
+                .andExpect(jsonPath(input + ".properties.apiType.enum", containsInAnyOrder("DEFAULT", "IOS_V2", null)))
+                .andExpect(jsonPath(input + ".properties.apiType.type", containsInAnyOrder("string", "null")))
+                .andExpect(jsonPath(input + ".properties.apiType.default").value("DEFAULT"))
+                .andExpect(jsonPath(input + ".properties.versionCode.type", containsInAnyOrder("string", "null")))
+                .andExpect(jsonPath(input + ".properties.versionCode.pattern").value("^\\d+\\.\\d+\\.\\d+$"))
+                .andExpect(jsonPath("$.components.schemas.PushNotificationRegister.required", containsInAnyOrder("secretKey", "algorithm")))
+                .andExpect(jsonPath(unregister + ".operationId").value("unregisterPushNotificationDevice")).andExpect(jsonPath(unregister + ".deprecated").doesNotExist())
+                .andExpect(jsonPath(unregister + ".parameters[*].name", containsInAnyOrder("token", "deviceType")))
+                .andExpect(jsonPath(unregister + ".parameters[*].required", containsInAnyOrder(false, false)))
+                .andExpect(jsonPath(unregister + ".requestBody.required").doesNotExist())
+                .andExpect(jsonPath(unregister + ".requestBody.description").value(org.hamcrest.Matchers.containsString("Deprecated")))
+                .andExpect(jsonPath(unregister + ".requestBody.content['application/json'].schema['$ref']").value("#/components/schemas/PushNotificationUnregisterRequest"))
+                .andExpect(jsonPath(unregister + ".responses['200'].content").doesNotExist())
+                .andExpect(jsonPath(unregister + ".responses['400'].content['application/problem+json'].schema.type").value("object"))
+                .andExpect(jsonPath(unregister + ".responses['404'].content").doesNotExist()).andExpect(jsonPath(legacy + ".required").doesNotExist())
+                .andExpect(jsonPath(legacy + ".properties.deviceType.enum", containsInAnyOrder("FIREBASE", "APNS", null)))
+                .andExpect(jsonPath(legacy + ".properties.token.type", containsInAnyOrder("string", "null")));
+    }
+
+    @Test
+    void shouldExportExactlyAllNineteenCanonicalNotificationOperations() throws Exception {
+        var result = request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andReturn();
+        var paths = objectMapper.readTree(result.getResponse().getContentAsString()).path("paths");
+        Set<String> expected = Set.of("GET /api/notification/global-notification-settings", "PUT /api/notification/global-notification-settings/{notificationType}",
+                "GET /api/notification/system-notifications", "GET /api/notification/system-notifications/{notificationId}",
+                "GET /api/notification/public/system-notifications/active", "POST /api/notification/admin/system-notifications", "PUT /api/notification/admin/system-notifications",
+                "DELETE /api/notification/admin/system-notifications/{notificationId}", "GET /api/notification/admin/system-notifications/maintenance-recipients-count",
+                "GET /api/notification/courses/info", "GET /api/notification/courses/{courseId}", "GET /api/notification/courses/{courseId}/settings",
+                "PUT /api/notification/courses/{courseId}/setting-preset", "PUT /api/notification/courses/{courseId}/setting-specification",
+                "PUT /api/notification/courses/{courseId}/status", "PUT /api/notification/courses/{courseId}/seen", "PUT /api/notification/courses/{courseId}/archive-all",
+                "POST /api/notification/push_notification/register", "DELETE /api/notification/push_notification/unregister");
+        Set<String> actual = paths.properties().stream()
+                .flatMap(path -> path.getValue().properties().stream().filter(operation -> Set.of("get", "post", "put", "delete", "patch").contains(operation.getKey()))
+                        .map(operation -> operation.getKey().toUpperCase(java.util.Locale.ROOT) + " " + path.getKey()))
+                .collect(Collectors.toSet());
+        assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
     }
 
 }

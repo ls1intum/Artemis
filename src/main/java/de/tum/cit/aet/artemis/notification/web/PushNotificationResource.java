@@ -45,6 +45,11 @@ import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterDTO;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationUnregisterRequestDTO;
 import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * Rest Controller for managing push notification device tokens for native clients.
@@ -91,6 +96,11 @@ public class PushNotificationResource {
      * @param pushNotificationRegisterBody contains all information required to store the device token for a specific user
      * @return an DTO containing information about the encryption
      */
+    @Operation(operationId = "registerPushNotificationDevice", summary = "Register a native push device")
+    @ApiResponse(responseCode = "200", description = "Registration stored; generated encryption key and algorithm")
+    @ApiResponse(responseCode = "401", description = "Authentication credentials could not be parsed or have expired", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Malformed JSON or an unknown enum value", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "500", description = "Invalid nonnull version format currently reaches the generic server error handler", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
     @PostMapping("register")
     @EnforceAtLeastStudent
     public ResponseEntity<PushNotificationRegisterDTO> register(@Valid @RequestBody PushNotificationRegisterBodyDTO pushNotificationRegisterBody) {
@@ -149,10 +159,16 @@ public class PushNotificationResource {
      * @param body       deprecated: the token and device type passed in the request body (older clients only)
      * @return HttpStatus as ResponseEntity
      */
+    @Operation(operationId = "unregisterPushNotificationDevice", summary = "Unregister a native push device for the current user")
+    @ApiResponse(responseCode = "200", description = "Registration removed; empty response body", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Incomplete effective fields return an empty response; malformed JSON or enums return problem details", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "No matching registration belongs to the current user", content = @Content)
     @DeleteMapping("unregister")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> unregister(@RequestParam(required = false) String token, @RequestParam(required = false) PushNotificationDeviceType deviceType,
-            @RequestBody(required = false) PushNotificationUnregisterRequestDTO body) {
+    public ResponseEntity<Void> unregister(
+            @Parameter(description = "Device token; a nonblank query value overrides the deprecated body token") @RequestParam(required = false) String token,
+            @Parameter(description = "Device transport; a supplied query value overrides the deprecated body deviceType") @RequestParam(required = false) PushNotificationDeviceType deviceType,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(required = false, description = "Deprecated compatibility body for older native clients; each field independently supplies an absent query value, with blank query tokens also falling back") @RequestBody(required = false) PushNotificationUnregisterRequestDTO body) {
         // Prefer the query parameters; fall back to the deprecated request body for older (mobile) clients.
         String effectiveToken = StringUtils.hasText(token) ? token : (body != null ? body.token() : null);
         PushNotificationDeviceType effectiveDeviceType = deviceType != null ? deviceType : (body != null ? body.deviceType() : null);
