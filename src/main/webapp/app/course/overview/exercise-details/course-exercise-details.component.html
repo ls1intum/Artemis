@@ -26,7 +26,7 @@
             (showsPillsChange)="titleBarShowsPills.set($event)"
         />
 
-        <jhi-programming-exercise-build-window-notice [exercise]="exercise" />
+        <jhi-programming-exercise-build-window-notice [exercise]="exercise" [practiceMode]="participationMode() === 'practice'" />
 
         <jhi-exercise-split-panel
             class="flex-fill overflow-hidden"
