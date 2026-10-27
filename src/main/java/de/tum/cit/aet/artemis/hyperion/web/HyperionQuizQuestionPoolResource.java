@@ -138,6 +138,9 @@ public class HyperionQuizQuestionPoolResource {
     @PutMapping("courses/{courseId}/quiz-question-pool/settings")
     public ResponseEntity<HyperionCourseSettingsDTO> updateQuizQuestionPoolSettings(@PathVariable long courseId, @Valid @RequestBody HyperionCourseSettingsDTO settings) {
         log.debug("REST request to update the Hyperion settings of course [{}]", courseId);
+        if (!settings.hasCompleteDifficultyMix()) {
+            throw new BadRequestAlertException("The difficulty shares must add up to 100 percent", "QuizQuestionPool", "difficultyMix");
+        }
         courseRepository.findByIdElseThrow(courseId);
         return ResponseEntity.ok(poolService.updateSettings(courseId, settings));
     }

@@ -5244,9 +5244,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -5638,10 +5638,25 @@ components:
       properties:
         poolGenerationEnabled: {type: boolean, description: Whether the quiz question
             pool is generated automatically for new lecture material}
-        questionsPerLectureUnit: {type: integer, format: int32, description: 'Questions
-            the pool holds per lecture unit and competency, spread over that unit''s
-            cells', maximum: 60, minimum: 1}
-      required: [poolGenerationEnabled, questionsPerLectureUnit]
+        singleChoiceQuestionsPerLectureUnit: {type: integer, format: int32, description: Single-choice
+            questions the pool holds per lecture unit and competency, maximum: 60,
+          minimum: 1}
+        multipleChoiceEnabled: {type: boolean, description: Whether the pool also
+            holds multiple-choice questions}
+        multipleChoiceQuestionsPerLectureUnit: {type: integer, format: int32, description: Multiple-choice
+            questions the pool holds per lecture unit and competency while they are
+            enabled, maximum: 60, minimum: 1}
+        easyPercent: {type: integer, format: int32, description: 'Share of each lecture
+            unit''s questions generated at the easy difficulty, in percent', maximum: 100,
+          minimum: 0}
+        mediumPercent: {type: integer, format: int32, description: 'Share of each
+            lecture unit''s questions generated at the medium difficulty, in percent',
+          maximum: 100, minimum: 0}
+        hardPercent: {type: integer, format: int32, description: 'Share of each lecture
+            unit''s questions generated at the hard difficulty, in percent; the three
+            shares add up to 100', maximum: 100, minimum: 0}
+      required: [easyPercent, hardPercent, mediumPercent, multipleChoiceEnabled, multipleChoiceQuestionsPerLectureUnit,
+        poolGenerationEnabled, singleChoiceQuestionsPerLectureUnit]
     QuizQuestionPoolBuildStart:
       type: object
       description: Outcome of a request to build a course's quiz question pool

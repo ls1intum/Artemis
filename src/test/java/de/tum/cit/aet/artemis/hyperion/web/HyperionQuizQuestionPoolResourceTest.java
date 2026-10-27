@@ -62,12 +62,12 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     private static final String TEST_PREFIX = "hyperionquizpool";
 
     /**
-     * The first competency has a text unit and a slide-deck unit, the second a text unit: three lecture units, each with two question types
-     * and three difficulties, give eighteen cells; twelve questions per lecture unit give two items per cell.
+     * The first competency has a text unit and a slide-deck unit, the second a text unit: three lecture units, each with the default
+     * twelve single-choice questions split 20/50/30 over the difficulties, give nine cells holding two, six and four items.
      */
     private static final int EXPECTED_ITEMS = 36;
 
-    private static final int EXPECTED_CELLS = 18;
+    private static final int EXPECTED_CELLS = 9;
 
     private static final int EXPECTED_ITEMS_OF_FIRST_COMPETENCY = 24;
 
@@ -336,14 +336,14 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         HyperionCourseSettingsDTO defaults = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", HttpStatus.OK, HyperionCourseSettingsDTO.class);
-        assertThat(defaults).isEqualTo(new HyperionCourseSettingsDTO(false, 12));
+        assertThat(defaults).isEqualTo(new HyperionCourseSettingsDTO(false, 12, false, 12, 20, 50, 30));
 
         HyperionCourseSettingsDTO updated = request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings",
-                new HyperionCourseSettingsDTO(true, 30), HyperionCourseSettingsDTO.class, HttpStatus.OK);
-        assertThat(updated).isEqualTo(new HyperionCourseSettingsDTO(true, 30));
+                new HyperionCourseSettingsDTO(true, 30, true, 10, 25, 50, 25), HyperionCourseSettingsDTO.class, HttpStatus.OK);
+        assertThat(updated).isEqualTo(new HyperionCourseSettingsDTO(true, 30, true, 10, 25, 50, 25));
 
         HyperionCourseSettingsDTO reloaded = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", HttpStatus.OK, HyperionCourseSettingsDTO.class);
-        assertThat(reloaded).isEqualTo(new HyperionCourseSettingsDTO(true, 30));
+        assertThat(reloaded).isEqualTo(new HyperionCourseSettingsDTO(true, 30, true, 10, 25, 50, 25));
     }
 
     @Test
@@ -352,7 +352,18 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/hyperion/courses/{courseId}/quiz-question-pool/settings", courseId)
-                .contentType(MediaType.APPLICATION_JSON).content("{ \"poolGenerationEnabled\": true, \"questionsPerLectureUnit\": 0 }")).andExpect(status().isBadRequest());
+                .contentType(MediaType.APPLICATION_JSON).content(
+                        "{ \"poolGenerationEnabled\": true, \"singleChoiceQuestionsPerLectureUnit\": 0, \"multipleChoiceEnabled\": false, \"multipleChoiceQuestionsPerLectureUnit\": 12, "
+                                + "\"easyPercent\": 20, \"mediumPercent\": 50, \"hardPercent\": 30 }"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldRejectADifficultyMixThatDoesNotAddUpToOneHundredPercent() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        request.put("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", new HyperionCourseSettingsDTO(true, 12, false, 12, 30, 50, 30), HttpStatus.BAD_REQUEST);
     }
 
     @Test
