@@ -1,5 +1,5 @@
 .quiz-question-pool-item-list .pool-list-status {
-    color: var(--text-color-secondary);
+    color: var(--p-text-muted-color);
     display: flex;
     flex-wrap: wrap;
     font-size: 0.9rem;
@@ -8,7 +8,7 @@
 }
 
 .quiz-question-pool-item-list .pool-list-empty {
-    color: var(--text-color-secondary);
+    color: var(--p-text-muted-color);
     margin-bottom: 0;
 }
 
@@ -17,7 +17,7 @@
 }
 
 .quiz-question-pool-item-list .pool-section-title {
-    color: var(--text-color);
+    color: var(--p-text-color);
     font-size: 1rem;
     font-weight: 700;
     margin-bottom: 0.25rem;
@@ -28,11 +28,11 @@
 }
 
 .quiz-question-pool-item-list .pool-section-rejected .pool-section-title {
-    color: var(--text-color-secondary);
+    color: var(--p-text-muted-color);
 }
 
 .quiz-question-pool-item-list .pool-section-hint {
-    color: var(--text-color-secondary);
+    color: var(--p-text-muted-color);
     font-size: 0.85rem;
     margin-bottom: 0.6rem;
 }
@@ -74,7 +74,7 @@
 }
 
 .quiz-question-pool-item-list .pool-item-cell {
-    color: var(--text-color-secondary);
+    color: var(--p-text-muted-color);
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -113,7 +113,7 @@
     background: var(--bs-body-bg);
     border: 1px solid var(--bs-border-color);
     border-radius: 0.5rem;
-    color: var(--text-color);
+    color: var(--p-text-color);
     font-size: 0.85rem;
     margin-top: 0.5rem;
     padding: 0.75rem 0.85rem;
@@ -142,7 +142,7 @@
 }
 
 .quiz-question-pool-item-list .pool-rationale-justification {
-    color: var(--text-color-secondary);
+    color: var(--p-text-muted-color);
 }
 
 .quiz-question-pool-item-list .pool-item-review {

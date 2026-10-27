@@ -4,7 +4,7 @@
 }
 
 .quiz-question-pool .pool-intro {
-    color: var(--text-color-secondary);
+    color: var(--p-text-muted-color);
     margin-bottom: 1rem;
 }
 
@@ -16,8 +16,8 @@
 }
 
 .quiz-question-pool .pool-card {
-    background: var(--surface-card);
-    border: 1px solid var(--surface-border);
+    background: var(--p-content-background);
+    border: 1px solid var(--p-content-border-color);
     border-radius: 0.75rem;
     display: flex;
     flex-direction: column;
@@ -26,19 +26,19 @@
 }
 
 .quiz-question-pool .pool-card-title {
-    color: var(--text-color);
+    color: var(--p-text-color);
     font-size: 1.1rem;
     font-weight: 700;
     margin: 0;
 }
 
 .quiz-question-pool .pool-card-hint {
-    color: var(--text-color-secondary);
+    color: var(--p-text-muted-color);
     font-size: 0.85rem;
 }
 
 .quiz-question-pool .pool-progress-counts {
-    color: var(--text-color);
+    color: var(--p-text-color);
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem 1.25rem;
@@ -65,7 +65,7 @@
 }
 
 .quiz-question-pool .pool-setting-label {
-    color: var(--text-color);
+    color: var(--p-text-color);
     font-weight: 600;
 }
 
@@ -76,7 +76,7 @@
 }
 
 .quiz-question-pool .pool-setting-toggle label {
-    color: var(--text-color);
+    color: var(--p-text-color);
 }
 
 .quiz-question-pool .pool-filter {
@@ -92,15 +92,15 @@
 }
 
 .quiz-question-pool .pool-group {
-    background: var(--surface-card);
-    border: 1px solid var(--surface-border);
+    background: var(--p-content-background);
+    border: 1px solid var(--p-content-border-color);
     border-radius: 0.75rem;
     margin-bottom: 1rem;
     padding: 1rem;
 }
 
 .quiz-question-pool .pool-group-title {
-    color: var(--text-color);
+    color: var(--p-text-color);
     font-size: 1.15rem;
     font-weight: 700;
     margin-bottom: 0.75rem;
@@ -111,14 +111,14 @@
 }
 
 .quiz-question-pool .pool-unit-title {
-    color: var(--text-color);
+    color: var(--p-text-color);
     font-size: 1rem;
     font-weight: 600;
     margin: 0 0 0.5rem;
 }
 
 .quiz-question-pool .pool-unit-title span {
-    color: var(--text-color-secondary);
+    color: var(--p-text-muted-color);
     font-weight: 500;
     margin-right: 0.35rem;
 }
