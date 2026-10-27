@@ -16,18 +16,22 @@ import org.junit.jupiter.params.provider.ValueSource;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
+
 class WorkerMessageCodecTest {
 
     private static final String IMAGE = "sha256:" + "a".repeat(64);
 
     private final WorkerMessageCodec codec = new WorkerMessageCodec();
 
+    private final WorkerMessageCodecApi wire = new WorkerMessageCodecApi();
+
     @ParameterizedTest
     @ValueSource(strings = { "modelCalls", "toolCalls", "agentTurns", "attempts", "inputTokens", "outputTokens", "cachedInputTokens" })
     void rejectsNegativeUsageCountersOnTheWire(String field) {
         var json = completeUsageEvent();
         ((ObjectNode) json.at("/payload/usage")).put(field, -1);
-        assertThatThrownBy(() -> codec.decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class).hasMessageContaining("usage");
+        assertThatThrownBy(() -> decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class).hasMessageContaining("usage");
     }
 
     @ParameterizedTest
@@ -35,23 +39,23 @@ class WorkerMessageCodecTest {
     void rejectsInvalidUsageCostOnTheWire(double cost) {
         var json = completeUsageEvent();
         ((ObjectNode) json.at("/payload/usage")).put("estimatedCostEur", cost);
-        assertThatThrownBy(() -> codec.decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void rejectsCacheHitsGreaterThanInputOnTheWire() {
         var json = completeUsageEvent();
         ((ObjectNode) json.at("/payload/usage")).put("cachedInputTokens", 11);
-        assertThatThrownBy(() -> codec.decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class).hasMessageContaining("usage");
+        assertThatThrownBy(() -> decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class).hasMessageContaining("usage");
     }
 
     @Test
     void acceptsZeroUsageAndFullyCachedInput() {
         var json = completeUsageEvent();
         ((ObjectNode) json.at("/payload/usage")).put("cachedInputTokens", 10);
-        assertThat(codec.decodeEvent(packPayload(json)).output().usage().cachedInputTokens()).isEqualTo(10);
+        assertThat(decodeEvent(packPayload(json)).output().usage().cachedInputTokens()).isEqualTo(10);
         ((ObjectNode) json.at("/payload/usage")).put("inputTokens", 0).put("cachedInputTokens", 0);
-        assertThat(codec.decodeEvent(packPayload(json)).output().usage().inputTokens()).isZero();
+        assertThat(decodeEvent(packPayload(json)).output().usage().inputTokens()).isZero();
     }
 
     private ObjectNode completeUsageEvent() {
@@ -61,7 +65,7 @@ class WorkerMessageCodecTest {
                 "RUN_FAILED", usage, GenerationOutput.AccountingState.COMPLETE, "standard");
         var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
                 null, output);
-        return expandPayload(codec.encode(event));
+        return expandPayload(encode(event));
     }
 
     @ParameterizedTest
@@ -73,9 +77,11 @@ class WorkerMessageCodecTest {
                 new WorkspaceFile("template/src/.gitkeep", new byte[0], false), new WorkspaceFile("tests/gradlew", new byte[] { 35, 33 }, true)));
         var parameters = new GenerationParameters(effortProfile, 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
         var assignment = new GenerationAssignment(identity, new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE), parameters,
-                seed, Instant.parse("2026-09-08T12:00:00Z"), IMAGE, new GradingContext(true, java.util.Set.of("testPush")));
+                seed, Instant.parse("2026-09-08T12:00:00Z"), IMAGE, new GradingContext(true, java.util.Set.of("testPush"), java.util.Set.of("testPush")));
         var command = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, identity, assignment);
-        assertThat(codec.decodeCommand(codec.encode(command))).isEqualTo(command);
+        var decoded = wire.decodeCommand(wire.encode(codec.toWire(command)));
+        assertThat(WorkerMessageCodec.fromWire(decoded.identity())).isEqualTo(identity);
+        assertThat(codec.decodeAssignment(decoded.assignment())).isEqualTo(assignment);
     }
 
     @ParameterizedTest
@@ -88,7 +94,7 @@ class WorkerMessageCodecTest {
                 null, GenerationOutput.AccountingState.INCOMPLETE, effortProfile);
         var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
                 null, output);
-        assertThat(codec.decodeEvent(codec.encode(event))).isEqualTo(event);
+        assertThat(decodeEvent(encode(event))).isEqualTo(event);
     }
 
     @ParameterizedTest
@@ -102,7 +108,7 @@ class WorkerMessageCodecTest {
                 GenerationOutput.AccountingState.INCOMPLETE, effortProfile);
         var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
                 null, output);
-        assertThat(codec.decodeEvent(codec.encode(event))).isEqualTo(event);
+        assertThat(decodeEvent(encode(event))).isEqualTo(event);
     }
 
     @ParameterizedTest
@@ -111,20 +117,20 @@ class WorkerMessageCodecTest {
         var id = identity();
         var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.HEARTBEAT, null, true, IMAGE, null,
                 null, null).withCapacity(new WorkerCapacity(4, occupied ? List.of(id) : List.of()));
-        assertThat(codec.decodeEvent(codec.encode(event))).isEqualTo(event);
+        assertThat(decodeEvent(encode(event))).isEqualTo(event);
     }
 
     @Test
     void rejectsUnknownFieldsAndDuplicateKeys() {
-        String command = codec.encode(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, identity(), null));
-        assertThatThrownBy(() -> codec.decodeCommand(command.replaceFirst("\\{", "{\"shell\":\"execute on host\","))).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> codec.decodeCommand(command.replaceFirst("\\{", "{\"protocolVersion\":2,"))).isInstanceOf(RuntimeException.class);
+        String command = encode(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, identity(), null));
+        assertThatThrownBy(() -> wire.decodeCommand(command.replaceFirst("\\{", "{\"shell\":\"execute on host\","))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> wire.decodeCommand(command.replaceFirst("\\{", "{\"protocolVersion\":2,"))).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void rejectsUnsupportedProtocolVersionsBeforeDispatch() {
-        String command = codec.encode(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, identity(), null));
-        assertThatThrownBy(() -> codec.decodeCommand(command.replace("\"protocolVersion\":" + WorkerCommand.PROTOCOL_VERSION, "\"protocolVersion\":99")))
+        String command = encode(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, identity(), null));
+        assertThatThrownBy(() -> wire.decodeCommand(command.replace("\"protocolVersion\":" + WorkerCommand.PROTOCOL_VERSION, "\"protocolVersion\":99")))
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -132,23 +138,23 @@ class WorkerMessageCodecTest {
     @ValueSource(strings = { "type", "identity" })
     void rejectsMissingAndNullCommandAuthority(String field) {
         var mapper = new JsonMapper();
-        var command = (ObjectNode) mapper.readTree(codec.encode(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, identity(), null)));
+        var command = (ObjectNode) mapper.readTree(encode(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, identity(), null)));
         command.putNull(field);
-        assertThatThrownBy(() -> codec.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> wire.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
         command.remove(field);
-        assertThatThrownBy(() -> codec.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> wire.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "executionId", "workerIncarnation" })
     void rejectsMissingAndNullExecutionAuthority(String field) {
         var mapper = new JsonMapper();
-        var command = (ObjectNode) mapper.readTree(codec.encode(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, identity(), null)));
+        var command = (ObjectNode) mapper.readTree(encode(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, identity(), null)));
         var identity = (ObjectNode) command.get("identity");
         identity.putNull(field);
-        assertThatThrownBy(() -> codec.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> wire.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
         identity.remove(field);
-        assertThatThrownBy(() -> codec.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> wire.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
     }
 
     @ParameterizedTest
@@ -161,7 +167,7 @@ class WorkerMessageCodecTest {
         var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
                 null, output);
         var mapper = new JsonMapper();
-        var json = expandPayload(codec.encode(event));
+        var json = expandPayload(encode(event));
         var finding = (ObjectNode) json.at("/payload/review/findings/0");
         if (omitted) {
             finding.remove("kind");
@@ -169,7 +175,7 @@ class WorkerMessageCodecTest {
         else {
             finding.putNull("kind");
         }
-        assertThatThrownBy(() -> codec.decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class).hasMessageContaining("kind");
+        assertThatThrownBy(() -> decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class).hasMessageContaining("kind");
     }
 
     private static ExecutionIdentity identity() {
@@ -201,6 +207,18 @@ class WorkerMessageCodecTest {
         var tree = (tools.jackson.databind.node.ObjectNode) mapper.readTree(mapper.writeValueAsString(brief));
         tree.remove("toolchain");
         assertThatThrownBy(() -> mapper.treeToValue(tree, ExerciseBrief.class)).isInstanceOf(RuntimeException.class);
+    }
+
+    private String encode(WorkerCommand command) {
+        return wire.encode(codec.toWire(command));
+    }
+
+    private String encode(WorkerEvent event) {
+        return wire.encode(codec.toWire(event));
+    }
+
+    private WorkerEvent decodeEvent(String encoded) {
+        return codec.fromWire(wire.decodeEvent(encoded));
     }
 
     private ObjectNode expandPayload(String encoded) {

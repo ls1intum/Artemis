@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -109,6 +110,38 @@ class GenerationLiveSaveResultSynchronizationTest {
         }
         finally {
             writer.release(EXERCISE_ID, token);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void lostReservationDoesNotHideDiscoveryFailure(boolean discoveryFails) {
+        var provider = new LocalDataProviderService();
+        var writer = new GenerationLiveSaveService(provider, true);
+        var resultProcessor = new GenerationLiveSaveService(provider, true);
+        String token = writer.claim(EXERCISE_ID);
+        writer.expectTestCaseSynchronization(EXERCISE_ID, SOLUTION, TESTS);
+        var discoveryFailure = new IllegalArgumentException("discovery failed");
+        try {
+            var failure = catchThrowable(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
+                assertThat(writer.recoverSlot(EXERCISE_ID, token)).isTrue();
+                if (discoveryFails) {
+                    throw discoveryFailure;
+                }
+                return true;
+            }));
+            if (discoveryFails) {
+                assertThat(failure).isSameAs(discoveryFailure);
+                assertThat(failure.getSuppressed()).singleElement()
+                        .satisfies(cleanup -> assertThat(cleanup).isInstanceOf(IllegalStateException.class).hasMessage("Test synchronization lost its save reservation"));
+            }
+            else {
+                assertThat(failure).isInstanceOf(IllegalStateException.class).hasMessage("Test synchronization lost its save reservation");
+            }
+            assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isFalse();
+        }
+        finally {
+            writer.retain(EXERCISE_ID, token);
         }
     }
 
