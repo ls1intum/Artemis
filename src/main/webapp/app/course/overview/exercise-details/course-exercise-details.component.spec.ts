@@ -1215,6 +1215,16 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'exercises', 'text-exercises', 42, 'participate', 1, 'submission', 5]);
         });
 
+        it('should not alert an Athena result that was already loaded when the participation is emitted again', () => {
+            startWith([changed([athenaResult(true)], { exercise: { id: 42 } as Exercise })]);
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            comp.exercise!.dueDate = undefined;
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(true)], { exercise: { id: 42 } as Exercise }));
+
+            expect(successSpy).not.toHaveBeenCalled();
+        });
+
         it('should open the submission with the Athena feedback of a modeling exercise', () => {
             startWith([{ id: 1, testRun: false, submissions: [] } as unknown as StudentParticipation], ExerciseType.MODELING);
             const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');

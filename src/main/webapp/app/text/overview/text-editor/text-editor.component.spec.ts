@@ -916,6 +916,15 @@ describe('TextEditorComponent', () => {
             expect(comp.result().id).toBe(5);
         });
 
+        it('should not alert an Athena result that was already loaded when the participation is emitted again', () => {
+            const participationSubject = openWithParticipation(withResults([athenaResult(true)]));
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+
+            participationSubject.next(withResults([athenaResult(true)]));
+
+            expect(successSpy).not.toHaveBeenCalled();
+        });
+
         it('should reload the participation with the Athena result in the exam summary', () => {
             const participationSubject = openWithParticipation(withResults([]), true);
             const reloaded = withResults([athenaResult(true)]);

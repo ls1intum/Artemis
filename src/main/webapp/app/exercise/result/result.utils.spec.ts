@@ -498,6 +498,23 @@ describe('ResultUtils', () => {
             expect(tracker.shouldNotify(athenaResult({ submission, successful: false }))).toBe(true);
         });
 
+        it('does not notify for completed results marked as notified, but keeps pending and unsaved results eligible', () => {
+            const tracker = new AthenaResultNotificationTracker();
+            const submission = { id: 7 } as Submission;
+
+            tracker.markAsNotified([
+                athenaResult({ id: 1, successful: true }),
+                athenaResult({ id: 2, successful: false }),
+                athenaResult({ id: 3, successful: undefined }),
+                athenaResult({ submission, successful: false }),
+            ]);
+
+            expect(tracker.shouldNotify(athenaResult({ id: 1, successful: true }))).toBe(false);
+            expect(tracker.shouldNotify(athenaResult({ id: 2, successful: false }))).toBe(false);
+            expect(tracker.shouldNotify(athenaResult({ id: 3, successful: true }))).toBe(true);
+            expect(tracker.shouldNotify(athenaResult({ submission, successful: false }))).toBe(true);
+        });
+
         it('notifies independently for unsaved failures of different submissions', () => {
             const tracker = new AthenaResultNotificationTracker();
 

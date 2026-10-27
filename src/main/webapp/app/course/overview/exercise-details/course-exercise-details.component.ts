@@ -501,6 +501,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const participations = this._studentParticipations();
         if (this.exercise && participations?.length) {
             participations.forEach((participation) => {
+                this.athenaResultNotificationTracker.markAsNotified(getAllResultsOfAllSubmissions(participation.submissions));
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
             });
         }

@@ -23,7 +23,13 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import {
+    getAllResultsOfAllSubmissions,
+    getFirstResultWithComplaint,
+    getLatestSubmissionResult,
+    getNewestResult,
+    setLatestSubmissionResult,
+} from 'app/exercise/shared/entities/submission/submission.model';
 import { AthenaResultNotificationTracker, getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -256,6 +262,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         if (this.participation() && this.textExercise()) {
+            this.athenaResultNotificationTracker.markAsNotified(getAllResultsOfAllSubmissions(this.participation().submissions));
             this.participationWebsocketService.addParticipation(this.participation(), this.textExercise());
         }
     }
@@ -272,6 +279,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         } else {
             return;
         }
+        // Results that arrive with the participation are already shown, so re-emitting them must not notify.
+        this.athenaResultNotificationTracker.markAsNotified(getAllResultsOfAllSubmissions(participation.submissions));
         this.textExercise.set(this.participation().exercise as TextExercise);
         this.examMode.set(!!this.textExercise().exerciseGroup);
         this.textExercise().studentParticipations = [this.participation()];

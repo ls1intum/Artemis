@@ -163,6 +163,21 @@ export class AthenaResultNotificationTracker {
     private readonly notifiedFailureSubmissionIds = new Set<number>();
 
     /**
+     * Marks the completed, persisted Athena results a view already shows when it loads as notified, so a later
+     * re-emission of the same participation does not announce them again. Pending results stay eligible for their
+     * completion notification, and unsaved failures keep their per-submission dedup in {@link shouldNotify}.
+     *
+     * @param results the results the view loaded
+     */
+    markAsNotified(results: Result[]) {
+        for (const result of results) {
+            if (result.id !== undefined && result.successful !== undefined && isAthenaAIResult(result)) {
+                this.notifiedResultIds.add(result.id);
+            }
+        }
+    }
+
+    /**
      * Call once per incoming result.
      *
      * @param result the result to evaluate
