@@ -2,18 +2,19 @@
     <jhi-course-title-bar-title title="artemisApp.course.athenaConfig.settingsPage.title" />
 </div>
 
-<!-- As wide as Iris's settings page, so the two AI-feedback settings pages share the same content width. -->
-<div class="mx-auto flex max-w-[800px] flex-col gap-12! pt-6!">
+<!-- Width, spacing and row surface follow Iris's settings page, so the two AI-feedback settings pages look alike. -->
+<div class="mx-auto flex max-w-[800px] flex-col gap-4! pt-4!">
     @if (loadFailed()) {
-        <button tumAetUiButton type="button" size="small" severity="secondary" variant="outlined" class="self-start" data-testid="athena-settings-retry" (click)="retryLoad()">
-            <span jhiTranslate="entity.action.retry"></span>
-        </button>
-    }
-    @for (feature of features; track feature.key) {
-        @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
-        <tumaet-ui-card>
-            <div class="flex items-start gap-4!">
+        <!-- Without the stored configuration the switches would show a state the course may not have, so none are shown. -->
+        <tumaet-ui-message severity="error" data-testid="athena-settings-load-failed">
+            <span jhiTranslate="artemisApp.course.athenaConfig.loadFailed"></span>
+        </tumaet-ui-message>
+    } @else {
+        @for (feature of features; track feature.key) {
+            @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
+            <div class="flex items-start gap-3! rounded-lg border border-solid border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-6 py-5!">
                 <tumaet-ui-toggle-switch
+                    class="shrink-0"
                     [inputId]="feature.testId + '-toggle'"
                     [ngModel]="feature.enabled()"
                     [ngModelOptions]="{ standalone: true }"
@@ -28,6 +29,6 @@
                     <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"></small>
                 </label>
             </div>
-        </tumaet-ui-card>
+        }
     }
 </div>

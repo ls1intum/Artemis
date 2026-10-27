@@ -83,8 +83,6 @@ export class AthenaCourseConfigState {
      * that feature is still in flight, because what that switch put on screen is what the instructor last asked for.
      * It is recorded as the confirmed state either way, so a switch that then fails rolls back to what is stored
      * rather than to "disabled".
-     *
-     * Can be called again after a failed load to retry it.
      */
     load(): void {
         this.loadFailed.set(false);

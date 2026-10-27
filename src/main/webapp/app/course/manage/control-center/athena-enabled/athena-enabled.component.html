@@ -1,15 +1,17 @@
 <div class="athena-controls">
-    <jhi-enabled-toggle
-        [enabled]="masterEnabled()"
-        [disabled]="!loaded()"
-        [ariaLabel]="'artemisApp.course.athenaConfig.enabledLabel' | artemisTranslate"
-        testId="athena-enabled"
-        (enabledChange)="setEnabled($event)"
-    />
     @if (loadFailed()) {
-        <button tumAetUiButton type="button" size="small" severity="secondary" variant="outlined" data-testid="athena-retry" (click)="retryLoad()">
-            <span jhiTranslate="entity.action.retry"></span>
-        </button>
+        <!-- Without the stored configuration the toggle would show a state the course may not have, so it is not shown. -->
+        <tumaet-ui-message severity="error" data-testid="athena-load-failed">
+            <span jhiTranslate="artemisApp.course.athenaConfig.loadFailed"></span>
+        </tumaet-ui-message>
+    } @else {
+        <jhi-enabled-toggle
+            [enabled]="masterEnabled()"
+            [disabled]="!loaded()"
+            [ariaLabel]="'artemisApp.course.athenaConfig.enabledLabel' | artemisTranslate"
+            testId="athena-enabled"
+            (enabledChange)="setEnabled($event)"
+        />
     }
     <a tumAetUiButton severity="secondary" variant="outlined" [routerLink]="settingsRoute()" data-testid="athena-configure-link">
         <span jhiTranslate="artemisApp.course.athenaConfig.configure"></span>

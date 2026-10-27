@@ -25,7 +25,7 @@ import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/abou
 import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
 import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',
@@ -43,7 +43,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
         IrisLogoComponent,
         EnabledToggleComponent,
         AthenaLogoComponent,
-        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
@@ -164,13 +164,6 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
      */
     setAthenaFeatureEnabled(feature: AthenaFeature, enabled: boolean) {
         this.athenaState()?.setEnabled(feature, enabled);
-    }
-
-    /**
-     * Load the Athena configuration again after it failed to load, which is what keeps its toggles blocked.
-     */
-    retryAthenaLoad() {
-        this.athenaState()?.load();
     }
 
     updateField<K extends keyof Course>(field: K, value: Course[K]) {

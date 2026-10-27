@@ -8,7 +8,7 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 /**
  * Dedicated course-level Athena settings page, reached from the course-management sidebar like Iris's settings page.
@@ -27,9 +27,8 @@ import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiToggleSwitchCom
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TumAetUiCardComponent,
+        TumAetUiMessageComponent,
         TumAetUiToggleSwitchComponent,
-        TumAetUiButtonDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -50,7 +49,7 @@ export class AthenaSettingsUpdateComponent {
     /** Until the configuration has loaded, "disabled" is only a fallback, so the switches cannot be used yet. */
     readonly loaded = computed(() => this.state()?.loaded() ?? false);
 
-    /** A failed load keeps the switches blocked, so the instructor is offered to load it again. */
+    /** After a failed load the switches are hidden, since their state would be a guess; reloading the page loads it again. */
     readonly loadFailed = computed(() => this.state()?.loadFailed() ?? false);
 
     /** The two toggle rows, rendered by one @for so the markup stays in a single place. */
@@ -67,12 +66,5 @@ export class AthenaSettingsUpdateComponent {
      */
     setEnabled(feature: AthenaFeature, enabled: boolean) {
         this.state()?.setEnabled(feature, enabled);
-    }
-
-    /**
-     * Load the configuration again after it failed to load.
-     */
-    retryLoad() {
-        this.state()?.load();
     }
 }

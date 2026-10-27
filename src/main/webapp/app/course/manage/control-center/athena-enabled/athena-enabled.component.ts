@@ -6,7 +6,7 @@ import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-tog
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -16,7 +16,7 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-athena-enabled',
     templateUrl: './athena-enabled.component.html',
-    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent, TumAetUiButtonDirective],
+    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent, TumAetUiButtonDirective, TumAetUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `
@@ -50,7 +50,7 @@ export class AthenaEnabledComponent {
     /** Until the configuration has loaded, "Disabled" is only a fallback, so the toggle cannot be switched yet. */
     readonly loaded = computed(() => this.state()?.loaded() ?? false);
 
-    /** A failed load keeps the toggle blocked, so the instructor is offered to load it again. */
+    /** After a failed load the toggle is hidden, since its state would be a guess; reloading the page loads it again. */
     readonly loadFailed = computed(() => this.state()?.loadFailed() ?? false);
 
     /**
@@ -66,12 +66,5 @@ export class AthenaEnabledComponent {
      */
     setEnabled(enabled: boolean) {
         this.state()?.setMasterEnabled(enabled);
-    }
-
-    /**
-     * Load the configuration again after it failed to load.
-     */
-    retryLoad() {
-        this.state()?.load();
     }
 }
