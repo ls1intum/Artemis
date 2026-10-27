@@ -13,7 +13,7 @@
  * Progress of a course\'s quiz question pool build
  */
 export interface QuizQuestionPoolProgress {
-    /** Whether a build is running on this node */
+    /** Whether a build of the course is running anywhere in the cluster */
     running?: boolean;
     /** Intended questions in the pool */
     total?: number;

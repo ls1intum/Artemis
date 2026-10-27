@@ -64,7 +64,7 @@ public class HyperionQuizQuestionPoolService {
     }
 
     /**
-     * Tops the course's pool up to its target and starts a build in the background, unless one is already running on this node.
+     * Tops the course's pool up to its target and starts a build in the background, unless one is already running anywhere in the cluster.
      *
      * @param course the course
      * @param userId the user the token usage is attributed to; may be {@code null}
