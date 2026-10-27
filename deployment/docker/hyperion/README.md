@@ -32,8 +32,8 @@ CI publishes this image for every `develop` push and release as
 local or pull-request build, from the repository root:
 
 ```sh
-docker build -f deployment/docker/hyperion/gradle-sandbox.Dockerfile -t hyperion-gradle-sandbox:local .
-docker image inspect hyperion-gradle-sandbox:local --format '{{.Id}}'
+docker build -f deployment/docker/hyperion/sandbox.Dockerfile -t hyperion-sandbox:local .
+docker image inspect hyperion-sandbox:local --format '{{.Id}}'
 ```
 
 Use the emitted immutable image ID as `AI_WORKER_SANDBOX_IMAGE` on this host.
@@ -61,7 +61,7 @@ bindings. The shared LocalCI report parser is not modified to rename tests.
 Qualify the image against actual isolated builds:
 
 ```sh
-HYPERION_GRADLE_TEST_IMAGE=$(docker image inspect hyperion-gradle-sandbox:local --format '{{.Id}}') \
+HYPERION_GRADLE_TEST_IMAGE=$(docker image inspect hyperion-sandbox:local --format '{{.Id}}') \
   ./gradlew test --tests '*DockerGradleBuildTest' -x webapp
 ```
 

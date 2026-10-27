@@ -51,8 +51,8 @@ env:
   java: 25
 
 jobs:
-  sandbox-tests:
-    name: AI Worker Sandbox Tests
+  hyperion-sandbox-tests:
+    name: Hyperion Sandbox Tests
     if: inputs.run_sandbox_tests
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -70,13 +70,13 @@ jobs:
           java-version: '${{ env.java }}'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
-      - name: Build the offline sandbox image
+      - name: Build the Hyperion sandbox image
         run: |
-          docker build -f deployment/docker/hyperion/gradle-sandbox.Dockerfile -t aiworker-sandbox-test .
-          image=$(docker image inspect aiworker-sandbox-test --format '{{.Id}}')
+          docker build -f deployment/docker/hyperion/sandbox.Dockerfile -t hyperion-sandbox:test .
+          image=$(docker image inspect hyperion-sandbox:test --format '{{.Id}}')
           echo "AI_WORKER_TEST_IMAGE=$image" >> "$GITHUB_ENV"
           echo "HYPERION_GRADLE_TEST_IMAGE=$image" >> "$GITHUB_ENV"
-      - name: Test Docker isolation and offline Gradle builds
+      - name: Test sandbox isolation and offline Gradle and Maven builds
         run: ./gradlew test --tests '*DockerSandboxIsolationTest' --tests '*DockerGradleBuildTest' -x webapp
       - name: Verify both image-gated suites ran
         run: |
@@ -96,7 +96,7 @@ jobs:
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
         if: ${{ !cancelled() }}
         with:
-          name: AI Worker Sandbox Tests
+          name: Hyperion Sandbox Tests
           path: build/test-results/test/*.xml
           reporter: java-junit
 
