@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
@@ -569,6 +570,49 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 commitFile(git, "instructor-feedback.txt");
                 testPushSuccessful(git, instructor1.getLogin(), projectKey, student1RepoSlug);
             }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStartParticipation_withOnlineIdeExperienceLevel_writesTheEduIdeConfiguration() throws Exception {
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-online-ide-level");
+            String projectKey = exercise.getProjectKey();
+            setAllowOnlineIde(exercise.getId(), true);
+            var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId());
+            buildConfig.setOnlineIdeExperienceLevel(OnlineIdeExperienceLevel.ADVANCED);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            mockDockerClientForStudentBuild();
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
+
+            String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                Path configuration = git.getRepository().getWorkTree().toPath().resolve(OnlineIdeExperienceLevel.EDU_IDE_CONFIGURATION_PATH);
+                assertThat(configuration).as("the student repository carries the selected level").exists();
+                assertThat(Files.readString(configuration)).contains("\"level\": \"advanced\"");
+                assertThat(git.log().call()).as("the configuration is part of the initial commit").hasSize(1);
+            }
+
+            // Without the online IDE, the level has no effect and no configuration is written
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+            setAllowOnlineIde(exercise.getId(), false);
+
+            userUtilService.changeUser(TEST_PREFIX + "student2");
+            mockDockerClientForStudentBuild();
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
+
+            String student2RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student2.getLogin();
+            try (Git git = cloneRepository(student2.getLogin(), projectKey, student2RepoSlug)) {
+                assertThat(git.getRepository().getWorkTree().toPath().resolve(OnlineIdeExperienceLevel.EDU_IDE_CONFIGURATION_PATH)).doesNotExist();
+            }
+        }
+
+        private void setAllowOnlineIde(long exerciseId, boolean allowOnlineIde) {
+            ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            exercise.setAllowOnlineIde(allowOnlineIde);
+            programmingExerciseRepository.save(exercise);
         }
 
         @Test

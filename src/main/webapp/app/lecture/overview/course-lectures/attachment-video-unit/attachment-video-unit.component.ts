@@ -196,6 +196,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly targetTimestamp = computed(() => this.matchedDeepLink()?.timestamp);
     readonly targetPdfPage = computed(() => this.matchedDeepLink()?.page);
 
+    // The positions the student had reached when the combined view and the split layout swapped, which recreated the video player and the PDF viewer.
+    private readonly resumeVideoTimestamp = signal<number | undefined>(undefined);
+    private readonly resumePdfPage = signal<number | undefined>(undefined);
+    readonly videoInitialTimestamp = computed(() => this.resumeVideoTimestamp() ?? this.targetTimestamp());
+    readonly pdfInitialPage = computed(() => this.resumePdfPage() ?? this.targetPdfPage());
+
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
@@ -406,6 +412,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private applyDeepLink(deepLink: LectureDeepLink): void {
+        // A new target takes precedence over the position the viewers resumed from, but only for what it names: a changed start time of a live player would
+        // cue its video again and stop it, so a link to a page leaves the resumed time alone.
+        if (deepLink.timestamp !== undefined) {
+            this.resumeVideoTimestamp.set(undefined);
+        }
+        if (deepLink.page !== undefined) {
+            this.resumePdfPage.set(undefined);
+        }
         const pdfViewer = this.pdfViewer();
         const pageShownBefore = pdfViewer?.getCurrentPage();
 
@@ -712,6 +726,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.clearPdfState();
             this.synchronizeVideoAndSlides.set(false);
             this.clearSynchronizationTargets();
+            // The viewers that were started from these positions are gone, so the next ones start from the deep link again.
+            this.resumeVideoTimestamp.set(undefined);
+            this.resumePdfPage.set(undefined);
         }
     }
 
@@ -849,6 +866,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     protected onFullscreenChange(isFullscreen: boolean): void {
+        // The viewers still exist here: they are destroyed by the change detection that follows the layout switch.
+        this.rememberMediaPositions();
         this.fullscreenState.set(isFullscreen);
         if (!isFullscreen) {
             // The view was closed before a point-out could be applied, so its target is now unreachable.
@@ -859,6 +878,25 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // The toggle it explains goes away with the view; a later reopen starts without a stale explanation.
             this.syncDisabledByPointOutState.set(undefined);
         }
+    }
+
+    /**
+     * Fullscreen switches a unit with a video and a PDF between the combined view and the split layout, and each layout
+     * creates its own video player and PDF viewer. The recreated ones start where the student stopped.
+     */
+    private rememberMediaPositions(): void {
+        if (!this.hasRenderableVideo() || !this.hasPdf()) {
+            return;
+        }
+        // A viewer or player that has not reached its start position yet reports the first page or time 0, which must not replace the target of a deep link that is still pending.
+        const pdfViewer = this.pdfViewer();
+        const player = this.activePlayer();
+        const page = pdfViewer && pdfViewer.getTotalPages() > 0 ? pdfViewer.getCurrentPage() : undefined;
+        const timestamp = player?.isSeekable() ? player.getCurrentTime() : undefined;
+        this.resumePdfPage.set(page ?? this.pdfInitialPage());
+        this.resumeVideoTimestamp.set(timestamp ?? this.videoInitialTimestamp());
+        // The new viewer reports the page it starts on, which must not move the video away from where it resumes. It reports nothing for the first page.
+        this.pendingPdfTargetPage = page !== undefined && page > 1 ? page : undefined;
     }
 
     protected onSynchronizationToggleChange(enabled: boolean): void {

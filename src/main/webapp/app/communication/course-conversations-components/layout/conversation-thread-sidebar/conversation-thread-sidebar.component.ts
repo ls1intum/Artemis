@@ -1,4 +1,5 @@
 import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -46,6 +47,7 @@ export class ConversationThreadSidebarComponent {
     course = input<Course>();
 
     readonly closePostThread = output<void>();
+    readonly onNavigateToPost = output<Posting>();
 
     constructor() {
         effect(() => {

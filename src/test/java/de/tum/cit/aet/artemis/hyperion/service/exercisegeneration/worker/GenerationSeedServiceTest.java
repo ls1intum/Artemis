@@ -7,10 +7,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -196,6 +199,62 @@ class GenerationSeedServiceTest {
         sourceBytes = new byte[WorkspaceFile.MAX_FILE_BYTES + 1];
         assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class);
         assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void captureFailureSurvivesTemporaryCheckoutDeletionFailure() throws Exception {
+        var captureFailure = new IllegalStateException("checkout failed");
+        var cleanupFailure = new IOException("temporary checkout deletion failed");
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenThrow(captureFailure);
+
+        try (var fileUtils = mockStatic(FileUtils.class)) {
+            fileUtils.when(() -> FileUtils.deleteDirectory(any(java.io.File.class))).thenThrow(cleanupFailure);
+
+            assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasCause(captureFailure);
+            assertThat(captureFailure.getSuppressed()).containsExactly(cleanupFailure);
+        }
+    }
+
+    @Test
+    void captureErrorSurvivesTemporaryCheckoutDeletionFailure() throws Exception {
+        var captureFailure = new AssertionError("checkout failed");
+        var cleanupFailure = new IOException("temporary checkout deletion failed");
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenThrow(captureFailure);
+
+        try (var fileUtils = mockStatic(FileUtils.class)) {
+            fileUtils.when(() -> FileUtils.deleteDirectory(any(java.io.File.class))).thenThrow(cleanupFailure);
+
+            assertThatThrownBy(() -> service.capture(exercise)).isSameAs(captureFailure);
+            assertThat(captureFailure.getSuppressed()).containsExactly(cleanupFailure);
+        }
+    }
+
+    @Test
+    void repositoryCloseFailureDoesNotMaskCaptureFailureAndStillDeletesTemporaryCheckout() throws Exception {
+        var closeFailure = new IllegalStateException("repository close failed");
+        sourceMode = FileMode.SYMLINK;
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenAnswer(invocation -> {
+            Repository repository = spy(createRepository(invocation.getArgument(1)));
+            doAnswer(close -> {
+                close.callRealMethod();
+                throw closeFailure;
+            }).when(repository).closeBeforeDelete();
+            return repository;
+        });
+
+        assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).cause().isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("links or submodules").satisfies(failure -> assertThat(failure.getSuppressed()).containsExactly(closeFailure));
+        assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void temporaryCheckoutDeletionFailureIsReportedAfterSuccessfulCapture() {
+        var cleanupFailure = new IOException("temporary checkout deletion failed");
+        try (var fileUtils = mockStatic(FileUtils.class)) {
+            fileUtils.when(() -> FileUtils.deleteDirectory(any(java.io.File.class))).thenThrow(cleanupFailure);
+
+            assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasCause(cleanupFailure);
+        }
     }
 
     @Test

@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseMetadataDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -48,7 +49,7 @@ public record UpdateProgrammingExerciseDTO(
         Long courseId, Long exerciseGroupId,
 
         // Grading and competencies
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
+        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
 
         // Programming exercise specific fields
         String testRepositoryUri, String solutionRepositoryUri, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, Boolean allowOnlineEditor, Boolean allowOfflineIde,
@@ -60,7 +61,7 @@ public record UpdateProgrammingExerciseDTO(
         UpdateProgrammingExerciseBuildConfigDTO buildConfig,
 
         // Plagiarism detection config
-        PlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CompetencyLinksHolderDTO {
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CompetencyLinksHolderDTO, ExerciseMetadataDTO {
 
     /**
      * Creates a DTO from a ProgrammingExercise entity.
@@ -80,7 +81,7 @@ public record UpdateProgrammingExerciseDTO(
                 : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs = null;
+        List<GradingCriterionDTO> gradingCriterionDTOs = null;
         Set<CompetencyLinkDTO> competencyLinkDTOs = null;
         List<AuxiliaryRepositoryDTO> auxiliaryRepositoryDTOs = null;
 
@@ -88,7 +89,7 @@ public record UpdateProgrammingExerciseDTO(
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = GradingCriterionDTO.ofAll(criteria);
         }
         if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
             competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());

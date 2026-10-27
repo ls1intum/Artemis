@@ -22,7 +22,13 @@ on:
   # The analysis reflects repository settings, not the diff, so a weekly run is enough.
   schedule:
     - cron: '31 5 * * 1'
-  push:
+  # Scorecard only exempts wrapper JARs after a successful validation run on the latest commit.
+  # A push trigger races that validation and can publish a false Binary-Artifacts penalty.
+  workflow_run:
+    workflows:
+      - Validate Gradle Wrapper
+    types:
+      - completed
     branches:
       - develop
   # Branch-protection findings change when protection rules change, not when code does.
@@ -37,7 +43,10 @@ jobs:
     # Forks get their own `develop` pushes, where `publish_results` cannot exchange an OIDC token and
     # there is no code-scanning target for the SARIF, so without this guard fork owners collect
     # recurring red runs for a workflow that cannot work there.
-    if: github.repository_owner == 'ls1intum'
+    if: >-
+      github.repository_owner == 'ls1intum' &&
+      (github.event_name != 'workflow_run' ||
+        (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_sha == github.sha))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -47,6 +56,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # Analyze the trusted default branch; never execute code or download artifacts from
+          # the triggering run. Scorecard itself assesses the latest default-branch commit.
           persist-credentials: false
 
       - name: Run analysis
