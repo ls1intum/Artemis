@@ -566,7 +566,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
         List<Long> examIds = exams.stream().map(Exam::getId).toList();
         List<long[]> examIdAndRegisteredUsersCountPairs = countExamUsersByExamIds(examIds);
         Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
-        exams.forEach(exam -> exam.setNumberOfExamUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
+        // An exam may be deleted after it was listed but before the aggregate query returns its count.
+        exams.forEach(exam -> exam.setNumberOfExamUsers(registeredUsersCountMap.getOrDefault(exam.getId(), 0).longValue()));
     }
 
     /**

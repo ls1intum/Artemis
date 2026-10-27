@@ -9,11 +9,23 @@ jhi-message-editor .message-composer {
     color: var(--artemis-control-color);
 }
 
+// The bar of further options floats above the editor like the formatting bar of a chat app, so opening it moves nothing.
 // Explicitly override the flex utility while retaining the tools and pending uploads.
-jhi-message-editor .message-editor-advanced-toolbar[hidden],
-jhi-message-editor .message-editor-advanced-controls[hidden],
-jhi-message-editor .message-resource-controls[hidden] {
-    display: none;
+jhi-message-editor .message-editor-advanced-toolbar {
+    border-color: var(--border-color);
+    background: var(--popover-bg);
+    color: var(--body-color);
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+jhi-message-editor .message-editor-bar-separator {
+    align-self: stretch;
+    width: 1px;
+    margin-block: 0.25rem;
+    background: var(--border-color);
 }
 
 jhi-message-editor .message-editor-divider {
@@ -22,6 +34,18 @@ jhi-message-editor .message-editor-divider {
 
 .message-editor-muted {
     color: var(--artemis-control-muted);
+}
+
+// The hint of the empty editor sits where the first line of text starts, and never takes the pointer from the editor below it.
+jhi-message-editor .message-editor-placeholder {
+    position: absolute;
+    inset-block-start: 0.75rem;
+    inset-inline-start: 0.75rem;
+    max-width: calc(100% - 1.5rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
 }
 
 jhi-message-editor .message-editor-content {

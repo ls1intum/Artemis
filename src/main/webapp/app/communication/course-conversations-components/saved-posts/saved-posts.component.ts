@@ -13,6 +13,7 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
     selector: 'jhi-saved-posts',
     templateUrl: './saved-posts.component.html',
     styleUrls: ['./saved-posts.component.scss'],
+    host: { class: 'flex min-h-0 flex-1 flex-col' },
     imports: [TranslateDirective, FaIconComponent, PostingSummaryComponent],
 })
 export class SavedPostsComponent implements OnDestroy {

@@ -143,4 +143,12 @@ describe('Message editor clipboard conversion', () => {
         expect(element.querySelector('a, iframe, [style], [onclick]')).toBeNull();
         expect(message).not.toContain('tracker');
     });
+
+    it.each([
+        ['<b>Line one<br><br>Line two</b>', '**Line one\nLine two**'],
+        ['<a href="https://example.org/x">Line one<br><br>Line two</a>', '[Line one\nLine two](https://example.org/x)'],
+        ['Line one<br><br>Line two', 'Line one\n\nLine two'],
+    ])('keeps formatting in one piece around an empty line of pasted text: %s', (html, expected) => {
+        expect(clipboardToMessage(html)).toBe(expected);
+    });
 });
