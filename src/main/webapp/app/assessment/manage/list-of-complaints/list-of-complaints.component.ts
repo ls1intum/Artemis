@@ -278,15 +278,15 @@ export class ListOfComplaintsComponent implements OnInit {
         const submission = complaint.result?.submission;
         const participation = submission?.participation;
         const exercise = participation?.exercise;
-        if (!submission?.id || !exercise?.type) {
+        if (!submission?.id || !exercise?.type || exercise.id === undefined) {
             return undefined;
         }
         const acceptedComplaint = this.complaintType() === ComplaintType.COMPLAINT && complaint.accepted;
         const link = getLinkToSubmissionAssessment(
             exercise.type,
             this.courseId,
-            exercise.id!,
-            participation!.id,
+            exercise.id,
+            participation?.id,
             submission.id,
             undefined, // even if the list of complaints are part of an exam, the assessment of non-exam exercises gets executed
             undefined,

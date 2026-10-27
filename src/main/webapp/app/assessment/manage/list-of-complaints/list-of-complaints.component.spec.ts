@@ -315,14 +315,17 @@ describe('ListOfComplaintsComponent', () => {
         it('shows no link for a complaint whose assessment cannot be opened', () => {
             const withoutSubmission = complaintWithAssessment(ComplaintType.COMPLAINT, false, 1);
             withoutSubmission.result!.submission = undefined;
+            const withoutExerciseId = complaintWithAssessment(ComplaintType.COMPLAINT, false, 2);
+            withoutExerciseId.result!.submission!.participation!.exercise!.id = undefined;
 
-            const links = showLinks(ComplaintType.COMPLAINT, [withoutSubmission, complaintWithAssessment(ComplaintType.COMPLAINT, false, 2)]);
+            const links = showLinks(ComplaintType.COMPLAINT, [withoutSubmission, withoutExerciseId, complaintWithAssessment(ComplaintType.COMPLAINT, false, 3)]);
 
             const rows: HTMLTableRowElement[] = Array.from(fixture.nativeElement.querySelectorAll('tbody tr'));
-            expect(rows).toHaveLength(2);
+            expect(rows).toHaveLength(3);
             expect(rows[0].querySelector('[data-testid="show-complaint"]')).toBeNull();
+            expect(rows[1].querySelector('[data-testid="show-complaint"]')).toBeNull();
             expect(links).toHaveLength(1);
-            expect(rows[1].contains(links[0])).toBe(true);
+            expect(rows[2].contains(links[0])).toBe(true);
         });
 
         it('navigates within the application on a plain click', async () => {
