@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -120,12 +121,28 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param repositoryRoot root of the checked-out exercise-tests repository; it may be relative or contain {@code .} and {@code ..}, e.g. below a relative
+     *                           {@code artemis.temp-path}
      * @return whether the Security Framework is active, see {@link #isEnforcing(Iterable, Predicate)}
      */
     public static boolean isEnforcing(Path repositoryRoot) {
-        return isEnforcing(javaFiles(repositoryRoot).stream().map(SecurityPolicyRepositoryFiles::readFile).toList(),
-                path -> Files.isRegularFile(repositoryRoot.resolve(path).normalize()) && repositoryRoot.resolve(path).normalize().startsWith(repositoryRoot));
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        return isEnforcing(javaFiles(root).stream().map(SecurityPolicyRepositoryFiles::readFile).toList(), path -> isRepositoryFile(root, path));
+    }
+
+    /**
+     * @param root the absolute, normalized repository root
+     * @param path a path relative to the root
+     * @return whether the path is a regular file inside the repository; a path that leaves the repository or is not valid is none
+     */
+    private static boolean isRepositoryFile(Path root, String path) {
+        try {
+            Path file = root.resolve(path).normalize();
+            return file.startsWith(root) && Files.isRegularFile(file);
+        }
+        catch (InvalidPathException e) {
+            return false;
+        }
     }
 
     /**

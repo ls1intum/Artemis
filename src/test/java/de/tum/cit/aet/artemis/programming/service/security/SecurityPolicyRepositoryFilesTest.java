@@ -105,6 +105,20 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void findsThePolicyBelowARootThatIsRelativeOrNotNormalized() throws IOException {
+        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
+        SecurityPolicyRepositoryFiles.writePolicy(root, "policy");
+        Path notNormalized = Files.createDirectories(root.resolve("module")).resolve("..").resolve(".");
+        Path relative = Path.of("").toAbsolutePath().relativize(root).resolve("module").resolve("..");
+
+        assertThat(SecurityPolicyRepositoryFiles.isEnforcing(notNormalized)).isTrue();
+        assertThat(SecurityPolicyRepositoryFiles.isEnforcing(relative)).isTrue();
+
+        SecurityPolicyRepositoryFiles.deletePolicy(root);
+        assertThat(SecurityPolicyRepositoryFiles.isEnforcing(notNormalized)).isFalse();
+    }
+
+    @Test
     void readsTheAresVersionFromBuildFileContents() {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("ext {\n    aresVersion = '2.3.0'\n}\n", null)).contains("2.3.0");
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<properties><ares.version>2.2.1</ares.version></properties>")).contains("2.2.1");
