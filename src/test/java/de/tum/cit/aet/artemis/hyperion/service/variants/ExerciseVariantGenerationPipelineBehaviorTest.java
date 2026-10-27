@@ -84,7 +84,7 @@ class ExerciseVariantGenerationPipelineBehaviorTest {
         VariantToolset tools = mock(VariantToolset.class);
         when(tools.toolCallStats()).thenReturn(Map.of());
         when(adapters.createTools(any(), any())).thenReturn(tools);
-        when(agent.runLoop(any(), any(), any(), any(), any(), any(), anyString())).thenReturn(new VariantAgentLoopService.AgentResult("Done", false, 10));
+        when(agent.runLoop(any(), any(), any(), any(), any(), any(), anyString())).thenReturn(new VariantAgentLoopService.AgentResult("Done", 10));
         when(adapters.verify(any(), any(), any(), any())).thenReturn(new VerificationReport(true, List.of()));
         when(adapters.finalizeVariant(any(), any())).thenReturn(List.of());
         when(model.getOptions()).thenReturn(ChatOptions.builder().build());
@@ -122,7 +122,7 @@ class ExerciseVariantGenerationPipelineBehaviorTest {
 
     @Test
     void exhaustedBudgetKeepsDraftAndSummarizesWarningsWithoutCompilerLogs() {
-        when(agent.runLoop(any(), any(), any(), any(), any(), any(), anyString())).thenReturn(new VariantAgentLoopService.AgentResult(null, true, 10_000_001));
+        when(agent.runLoop(any(), any(), any(), any(), any(), any(), anyString())).thenReturn(new VariantAgentLoopService.AgentResult(null, 10_000_001));
         when(adapters.verify(any(), any(), any(), any())).thenReturn(new VerificationReport(false,
                 List.of(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.SOLUTION_BUILD, "Compilation failed\n\nBuild logs:\ncompiler details"))));
         pipeline.run(job);

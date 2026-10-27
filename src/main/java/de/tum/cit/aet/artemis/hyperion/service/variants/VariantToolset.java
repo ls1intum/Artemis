@@ -13,9 +13,7 @@ import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 
 /**
- * One agent round's toolset plus the per-round state the pipeline needs back after the round: the agent's own
- * finish summary and — for programming — whether the round touched the test repository (build-dependency
- * constraint). Created per round by {@link VariantToolsetFactory#createTools}; instances are stateful and must
+ * One quiz agent round's toolset and finish summary. Created per round by {@link VariantToolsetFactory#createTools}; instances are stateful and must
  * not be reused across rounds.
  */
 public interface VariantToolset {
@@ -105,37 +103,4 @@ public interface VariantToolset {
     @Nullable
     String finishSummary();
 
-    /**
-     * @return true when the round edited (or rebuilt) the test repository — prior green build evidence is
-     *         invalid then and both builds must be re-verified
-     */
-    default boolean touchedTestRepo() {
-        return false;
-    }
-
-    /**
-     * Prefetched repository context to seed the round's OPENING user message (performance lever A4): each
-     * ChatClient call is a fresh conversation with no memory of a previous round's reads, so a round otherwise
-     * starts blind and spends its first several tool calls just discovering what it's working with — on every
-     * repair round too. Bounded by an internal budget.
-     *
-     * @param plan the round's binding ChangePlan, so an implementation can target the prefetch at what the plan
-     *                 actually intends to change instead of dumping the whole repository
-     * @return prefetched context to append to the opening user message, or empty when there is nothing to
-     *         prefetch (quiz has no repositories) or the plan gives no reliable signal of which files matter
-     */
-    default String prefetchContext(ChangePlan plan) {
-        return "";
-    }
-
-    /**
-     * Persists any work the round left unpersisted, called by the loop runner at the end of every round
-     * (after the model's final response, before the round result is reported). For programming this commits
-     * and pushes uncommitted working-tree edits: nothing else in the round commits, so without this call a
-     * round would otherwise silently drop its edits — and verification, which builds the last PUSHED commit,
-     * would trivially pass on the unchanged provision commit. Default: no-op for toolsets whose tools persist
-     * immediately (quiz).
-     */
-    default void flushPendingChanges() {
-    }
 }
