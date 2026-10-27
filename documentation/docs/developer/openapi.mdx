@@ -26,6 +26,8 @@ Course feed schemas use the outer `notificationType` to discriminate 28 flat env
 
 `CourseNotificationPage` preserves the internal cached page's fields and totals, including null reconstruction results. Its item schema references a named union containing all envelope branches and a literal null branch. With the pinned generator this emits a nullable item alias; wrapping only the envelope reference and null would collapse during normalization. The client date/state adapter rejects a null item before committing converted content and never silently removes it or changes totals.
 
+Push registration/unregistration have generated contracts and services, with no production Angular caller. Registration preserves existing credential parsing, encryption and DEFAULT API fallback; its schema does not add field validation. Unregistration retains optional query parameters and the deprecated optional body. A nonblank query token and a supplied query device type each independently override their body field. The generated DELETE call passes the body in HttpClient options; it does not make the body mandatory or merge precedence on the client. Legacy body support remains in the existing architecture baseline. Native implementation is outside this client migration.
+
 ## Generating OpenAPI Specs and Client Files
 
 When you update a REST endpoint or a DTO, you need to generate a new OpenAPI spec and generate new client files.
