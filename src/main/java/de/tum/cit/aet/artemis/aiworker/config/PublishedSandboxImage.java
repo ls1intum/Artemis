@@ -43,8 +43,9 @@ final class PublishedSandboxImage {
                     "This Artemis build has no full commit ID, so the published sandbox image cannot be selected. Configure artemis.aiworker.image (AI_WORKER_SANDBOX_IMAGE).");
         }
         String reference = REPOSITORY + ":sha-" + commitId;
-        Optional<List<String>> digests = repoDigests(dockerClient, reference);
-        if (digests.isEmpty()) {
+        // Pull unless the daemon already has this image with its registry digest; a locally built or re-tagged image has none.
+        Optional<String> digest = registryDigest(dockerClient, reference);
+        if (digest.isEmpty()) {
             log.info("Pulling the published sandbox image {}", reference);
             try {
                 if (!dockerClient.pullImageCmd(reference).exec(new PullImageResultCallback()).awaitCompletion(PULL_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
@@ -59,17 +60,16 @@ final class PublishedSandboxImage {
                 throw new IllegalStateException("Could not pull the sandbox image " + reference
                         + ". CI publishes it for develop and release builds; for other builds, configure artemis.aiworker.image (AI_WORKER_SANDBOX_IMAGE).", e);
             }
-            digests = repoDigests(dockerClient, reference);
+            digest = registryDigest(dockerClient, reference);
         }
-        return digests.orElse(List.of()).stream().filter(digest -> digest.startsWith(REPOSITORY + "@sha256:")).findFirst()
-                .orElseThrow(() -> new IllegalStateException("The sandbox image " + reference + " has no registry digest after pulling it."));
+        return digest.orElseThrow(() -> new IllegalStateException("The sandbox image " + reference + " has no registry digest after pulling it."));
     }
 
-    /** The image's registry digests, or empty when the daemon does not have the image. */
-    private static Optional<List<String>> repoDigests(DockerClient dockerClient, String reference) {
+    /** The image's digest in the published repository, or empty when the daemon does not have the image or has it without that digest. */
+    private static Optional<String> registryDigest(DockerClient dockerClient, String reference) {
         try (var inspect = dockerClient.inspectImageCmd(reference)) {
             List<String> digests = inspect.exec().getRepoDigests();
-            return Optional.of(digests == null ? List.of() : digests);
+            return digests == null ? Optional.empty() : digests.stream().filter(digest -> digest.startsWith(REPOSITORY + "@sha256:")).findFirst();
         }
         catch (NotFoundException e) {
             return Optional.empty();

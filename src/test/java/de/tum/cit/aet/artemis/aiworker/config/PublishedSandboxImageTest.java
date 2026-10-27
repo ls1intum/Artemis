@@ -54,6 +54,20 @@ class PublishedSandboxImageTest {
     }
 
     @Test
+    void pullsWhenTheDaemonHasTheTagWithoutARegistryDigest() {
+        InspectImageResponse localBuild = mock();
+        when(localBuild.getRepoDigests()).thenReturn(List.of());
+        InspectImageResponse pulled = mock();
+        when(pulled.getRepoDigests()).thenReturn(List.of(DIGEST));
+        when(docker.inspectImageCmd(REFERENCE)).thenReturn(inspect);
+        when(inspect.exec()).thenReturn(localBuild, pulled);
+        pullCompletes();
+
+        assertThat(PublishedSandboxImage.resolve(docker, COMMIT)).isEqualTo(DIGEST);
+        verify(docker).pullImageCmd(REFERENCE);
+    }
+
+    @Test
     void namesTheConfigurationWhenNoImageIsPublishedForThisBuild() {
         when(docker.inspectImageCmd(REFERENCE)).thenReturn(inspect);
         when(inspect.exec()).thenThrow(new NotFoundException("missing"));
