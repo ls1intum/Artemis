@@ -14,6 +14,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -176,9 +178,9 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR ")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetPlagiarismCaseForInstructor_forbidden_editor() throws Exception {
-        request.get("/api/plagiarism/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
@@ -245,6 +247,32 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(examCourse.getId()).isNotEqualTo(course.getId());
 
         request.getList("/api/plagiarism/courses/" + course.getId() + "/exams/" + exam.getId() + "/plagiarism-cases/for-instructor", HttpStatus.CONFLICT, PlagiarismCase.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void examPlagiarismCasesRejectForeignExamRegardlessOfCases(boolean hasCases) throws Exception {
+        Course foreignCourse = examTextExercise.getCourseViaExerciseGroupOrCourseMember();
+        userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), foreignCourse);
+        Exam foreignExam = hasCases ? examTextExercise.getExerciseGroup().getExam() : examUtilService.addExam(foreignCourse);
+        assertThat(foreignCourse.getId()).isNotEqualTo(course.getId());
+        assertThat(plagiarismCaseRepository.findOverviewDtosByExamId(foreignExam.getId())).hasSize(hasCases ? 2 : 0);
+
+        request.performMvcRequest(get("/api/plagiarism/courses/{courseId}/exams/{examId}/plagiarism-cases/for-instructor", course.getId(), foreignExam.getId()))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.entityName").value("Exam")).andExpect(jsonPath("$.errorKey").value("cannotChangeCourseId"));
+        assertThat(plagiarismCaseRepository.findOverviewDtosByExamId(foreignExam.getId())).hasSize(hasCases ? 2 : 0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void examPlagiarismCasesReturnEmptyListForOwnEmptyExam() throws Exception {
+        Exam emptyExam = examUtilService.addExam(course);
+
+        var cases = request.getList("/api/plagiarism/courses/" + course.getId() + "/exams/" + emptyExam.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK,
+                PlagiarismCaseOverviewDTO.class);
+
+        assertThat(cases).isEmpty();
     }
 
     @Test

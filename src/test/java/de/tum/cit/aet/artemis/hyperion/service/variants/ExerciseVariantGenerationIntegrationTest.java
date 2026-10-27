@@ -22,6 +22,8 @@ import java.util.function.Function;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -40,6 +42,7 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -635,8 +638,74 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
 
         // Foreign job detail is 404 — indistinguishable from an unknown job so ids cannot be probed.
         request.get("/api/hyperion/variant-jobs/" + foreignJob.getJobId(), HttpStatus.NOT_FOUND, VariantJobDetailDTO.class);
+        request.delete("/api/hyperion/variant-jobs/" + foreignJob.getJobId(), HttpStatus.NOT_FOUND);
+        assertThat(jobService.isCancelRequested(foreignJob.getJobId())).isFalse();
         List<VariantJobDTO> jobs = request.getList("/api/hyperion/variant-jobs", HttpStatus.OK, VariantJobDTO.class);
         assertThat(jobs).noneSatisfy(entry -> assertThat(entry.jobId()).isEqualTo(foreignJob.getJobId()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void variantJobsRequireCurrentEditorAccessAfterGrantRevokeAndRegrant(boolean forExam) throws Exception {
+        QuizExercise source = sourceQuiz;
+        if (forExam) {
+            Exam exam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), false);
+            ExamFactory.generateExerciseGroup(true, exam);
+            exam = examRepository.save(exam);
+            source = quizExerciseRepository.save(QuizExerciseFactory.generateQuizExerciseForExam(exam.getExerciseGroups().getFirst()));
+        }
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        VariantJob job = jobService.startJob(caller, source, domainChangeRequest(standalonePlacement()));
+        jobService.recordStepOutput(job.getJobId(), VariantJobPhase.ANALYZING, new StepOutput("Private plan", "Unpublished quiz adaptation", Instant.now()));
+        String jobUrl = "/api/hyperion/variant-jobs/" + job.getJobId();
+
+        assertThat(request.getList("/api/hyperion/variant-jobs", HttpStatus.OK, VariantJobDTO.class)).noneMatch(entry -> entry.jobId().equals(job.getJobId()));
+        request.get(jobUrl, HttpStatus.NOT_FOUND, VariantJobDetailDTO.class);
+        request.delete(jobUrl, HttpStatus.NOT_FOUND);
+        assertThat(jobService.isCancelRequested(job.getJobId())).isFalse();
+
+        userUtilService.enrollUserInCourse(caller, course, CourseRole.EDITOR);
+        assertThat(request.getList("/api/hyperion/variant-jobs", HttpStatus.OK, VariantJobDTO.class)).anyMatch(entry -> entry.jobId().equals(job.getJobId()));
+        var detail = request.get(jobUrl, HttpStatus.OK, VariantJobDetailDTO.class);
+        assertThat(detail.stepOutputs().get(VariantJobPhase.ANALYZING)).singleElement().satisfies(output -> assertThat(output.detail()).isEqualTo("Unpublished quiz adaptation"));
+
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, courseUtilService.addEmptyCourse(), CourseRole.EDITOR);
+        assertThat(request.getList("/api/hyperion/variant-jobs", HttpStatus.OK, VariantJobDTO.class)).noneMatch(entry -> entry.jobId().equals(job.getJobId()));
+        request.get(jobUrl, HttpStatus.NOT_FOUND, VariantJobDetailDTO.class);
+        request.delete(jobUrl, HttpStatus.NOT_FOUND);
+        var unchanged = jobService.getJob(job.getJobId(), caller.getLogin()).orElseThrow();
+        assertThat(unchanged.isCancelRequested()).isFalse();
+        assertThat(unchanged.getPhase()).isEqualTo(VariantJobPhase.ANALYZING);
+        assertThat(unchanged.getSourceExerciseId()).isEqualTo(source.getId());
+
+        userUtilService.enrollUserInCourse(caller, course, CourseRole.EDITOR);
+        assertThat(request.getList("/api/hyperion/variant-jobs", HttpStatus.OK, VariantJobDTO.class)).anyMatch(entry -> entry.jobId().equals(job.getJobId()));
+        request.get(jobUrl, HttpStatus.OK, VariantJobDetailDTO.class);
+        request.delete(jobUrl, HttpStatus.NO_CONTENT);
+        assertThat(jobService.isCancelRequested(job.getJobId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
+    void variantJobsWithDeletedOrMissingSourcesAreHiddenAndCannotBeCancelled() throws Exception {
+        var caller = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        var deletedSource = createMcSaQuiz(course);
+        var deletedSourceJob = jobService.startJob(caller, deletedSource, domainChangeRequest(standalonePlacement()));
+        quizExerciseRepository.deleteById(deletedSource.getId());
+        var missingSource = new QuizExercise();
+        var missingSourceJob = jobService.startJob(caller, missingSource, domainChangeRequest(standalonePlacement()));
+
+        var visible = request.getList("/api/hyperion/variant-jobs", HttpStatus.OK, VariantJobDTO.class);
+        assertThat(visible).noneMatch(entry -> entry.jobId().equals(deletedSourceJob.getJobId()) || entry.jobId().equals(missingSourceJob.getJobId()));
+        for (var job : List.of(deletedSourceJob, missingSourceJob)) {
+            request.get("/api/hyperion/variant-jobs/" + job.getJobId(), HttpStatus.NOT_FOUND, VariantJobDetailDTO.class);
+            request.delete("/api/hyperion/variant-jobs/" + job.getJobId(), HttpStatus.NOT_FOUND);
+            assertThat(jobService.isCancelRequested(job.getJobId())).isFalse();
+        }
+        request.get("/api/hyperion/variant-jobs/unknown-job", HttpStatus.NOT_FOUND, VariantJobDetailDTO.class);
+        request.delete("/api/hyperion/variant-jobs/unknown-job", HttpStatus.NOT_FOUND);
     }
 
     @Test

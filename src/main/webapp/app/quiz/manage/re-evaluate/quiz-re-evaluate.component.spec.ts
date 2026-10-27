@@ -346,7 +346,7 @@ describe('QuizExercise Re-evaluate Component', () => {
         fresh.title = 'Fresh quiz';
         fresh.duration = 60;
         fresh.quizQuestions = [createValidMCQuestion().question];
-        quizServiceFindStub.mockReturnValue(of(new HttpResponse({ body: fresh })).pipe(observeOn(asyncScheduler)));
+        quizServiceFindStub.mockReturnValue(of(fresh).pipe(observeOn(asyncScheduler)));
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
         const child = TestBed.runInInjectionContext(() => new ReEvaluateDragAndDropQuestionComponent());

@@ -112,12 +112,11 @@ public class ParticipationUpdateResource {
 
         // Load the existing participation from database to avoid orphan removal issues with detached entities
         StudentParticipation existingParticipation = studentParticipationRepository.findByIdElseThrow(dto.id());
+        var user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), user);
         if (existingParticipation.getExercise().getId() != exerciseId) {
             throw new ConflictException("The participation does not belong to the specified exercise", ENTITY_NAME, "noidmatch");
         }
-
-        var user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), null);
 
         Course course = existingParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         boolean hideParticipant = !authCheckService.isAtLeastInstructorInCourse(course, user) && !authCheckService.isOwnerOfParticipation(existingParticipation)

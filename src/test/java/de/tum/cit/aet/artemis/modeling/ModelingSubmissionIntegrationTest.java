@@ -1636,6 +1636,96 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(preview.results().getFirst().assessor()).isNotNull();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "instructor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerTimelineMasksExerciseSolutionsAndKeepsResultPublication(String owner) throws Exception {
+        classExercise.setExampleSolutionModel("Private solution model");
+        classExercise.setExampleSolutionExplanation("Private solution explanation");
+        classExercise.setGradingInstructions("Private grading instructions");
+        classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        classExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(1));
+        exerciseRepository.save(classExercise);
+        var submission = modelingExerciseUtilService.addModelingSubmission(classExercise, generateSubmittedSubmission(), TEST_PREFIX + owner);
+        var participation = (StudentParticipation) submission.getParticipation();
+        var assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var athena = createResult(AssessmentType.AUTOMATIC_ATHENA, submission, participation, null);
+        var manual = createResult(AssessmentType.MANUAL, submission, participation, assessor);
+        String url = "/api/modeling/participations/" + participation.getId() + "/submissions-with-results";
+
+        userUtilService.changeUser(TEST_PREFIX + owner);
+        var beforePublication = request.getList(url, HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(beforePublication).singleElement().satisfies(response -> {
+            assertThat(response.results()).extracting(ResultDTO::id).containsExactly(athena.getId());
+            assertOwnerTimelineExerciseIsFiltered(response);
+        });
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var staff = request.getList(url + "/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(staff).singleElement().satisfies(response -> {
+            assertThat(response.results()).extracting(ResultDTO::id).containsExactlyInAnyOrder(athena.getId(), manual.getId());
+            assertThat(response.participation().exercise().exampleSolutionModel()).isEqualTo("Private solution model");
+            assertThat(response.participation().exercise().exampleSolutionExplanation()).isEqualTo("Private solution explanation");
+            assertThat(response.participation().exercise().gradingInstructions()).isEqualTo("Private grading instructions");
+        });
+
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        userUtilService.changeUser(TEST_PREFIX + owner);
+        var afterPublication = request.getList(url, HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(afterPublication).singleElement().satisfies(response -> {
+            assertThat(response.results()).extracting(ResultDTO::id).containsExactlyInAnyOrder(athena.getId(), manual.getId());
+            assertOwnerTimelineExerciseIsFiltered(response);
+        });
+        var storedExercise = (ModelingExercise) exerciseRepository.findByIdElseThrow(classExercise.getId());
+        assertThat(storedExercise.getExampleSolutionModel()).isEqualTo("Private solution model");
+        assertThat(storedExercise.getExampleSolutionExplanation()).isEqualTo("Private solution explanation");
+        assertThat(storedExercise.getGradingInstructions()).isEqualTo("Private grading instructions");
+        assertThat(submissionRepository.findByIdWithResultsElseThrow(submission.getId()).getResults()).extracting(Result::getId).containsExactlyInAnyOrder(athena.getId(),
+                manual.getId());
+        assertThat(resultRepository.findByIdElseThrow(manual.getId()).getAssessor().getId()).isEqualTo(assessor.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "instructor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerTimelineMasksExamManagementContextWithoutChangingPersistedExercise(String owner) throws Exception {
+        var group = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
+        var exam = group.getExam();
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setEndDate(ZonedDateTime.now().minusHours(2));
+        exam.setPublishResultsDate(ZonedDateTime.now().minusHours(1));
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(exam);
+        var exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, group);
+        exercise.setExampleSolutionModel("Private solution model");
+        exercise.setExampleSolutionExplanation("Private solution explanation");
+        exercise.setGradingInstructions("Private grading instructions");
+        exercise = exerciseRepository.save(exercise);
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(exercise, generateSubmittedSubmission(), TEST_PREFIX + owner,
+                TEST_PREFIX + "tutor1");
+        String url = "/api/modeling/participations/" + submission.getParticipation().getId() + "/submissions-with-results";
+
+        userUtilService.changeUser(TEST_PREFIX + owner);
+        var response = request.getList(url, HttpStatus.OK, ModelingSubmissionResponseDTO.class).getFirst();
+        assertThat(response.results()).extracting(ResultDTO::id).containsExactly(submission.getLatestResult().getId());
+        assertOwnerTimelineExerciseIsFiltered(response);
+        assertThat(response.participation().exercise().exerciseGroup().exam()).isNull();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var staff = request.getList(url + "/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class).getFirst();
+        assertThat(staff.participation().exercise().exerciseGroup().exam().id()).isEqualTo(exam.getId());
+        assertThat(staff.participation().exercise().exampleSolutionModel()).isEqualTo("Private solution model");
+        var storedExercise = (ModelingExercise) exerciseRepository.findByIdElseThrow(exercise.getId());
+        assertThat(storedExercise.getExerciseGroup().getExam().getId()).isEqualTo(exam.getId());
+        assertThat(storedExercise.getExampleSolutionModel()).isEqualTo("Private solution model");
+        assertThat(storedExercise.getExampleSolutionExplanation()).isEqualTo("Private solution explanation");
+        assertThat(storedExercise.getGradingInstructions()).isEqualTo("Private grading instructions");
+    }
+
+    private void assertOwnerTimelineExerciseIsFiltered(ModelingSubmissionResponseDTO response) {
+        assertThat(response.participation().exercise().exampleSolutionModel()).isNull();
+        assertThat(response.participation().exercise().exampleSolutionExplanation()).isNull();
+        assertThat(response.participation().exercise().gradingInstructions()).isNull();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void staffAssessmentWithResultCannotFallBackToOwner() throws Exception {

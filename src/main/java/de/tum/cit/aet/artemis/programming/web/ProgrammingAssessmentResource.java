@@ -154,8 +154,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
 
         User user = userRepository.getUserWithAuthorities();
-        var programmingExercise = (ProgrammingExercise) participation.getExercise();
-        checkAuthorization(programmingExercise, user);
+        var exercise = participation.getExercise();
+        checkAuthorization(exercise, user);
+        if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
+            throw new BadRequestAlertException("The participation does not belong to a programming exercise", ENTITY_NAME, "invalidExerciseType");
+        }
 
         // Write the manual result the tutor loaded. A submission can hold several manual results (correction rounds, overlapping
         // lock requests), and the feedback ids in the request only belong to the loaded one. Without an id, the most recent one is used.

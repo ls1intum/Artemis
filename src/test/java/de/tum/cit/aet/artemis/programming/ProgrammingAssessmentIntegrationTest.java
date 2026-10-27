@@ -68,6 +68,8 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAsses
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -94,6 +96,46 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @Autowired
     private ProgrammingSubmissionService programmingSubmissionService;
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void manualResultAuthorizesBeforeRejectingAnotherExerciseType(boolean authorizedCourse) throws Exception {
+        Course course = authorizedCourse ? programmingExercise.getCourseViaExerciseGroupOrCourseMember() : courseUtilService.createCourse();
+        var exercise = exerciseRepository
+                .save(TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course));
+        var participation = studentParticipationRepository
+                .save(ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        long resultCount = resultRepository.count();
+
+        request.put("/api/programming/participations/" + participation.getId() + "/manual-results",
+                Map.of("rated", true, "score", 0.0, "successful", false, "feedbacks", List.of()), authorizedCourse ? HttpStatus.BAD_REQUEST : HttpStatus.FORBIDDEN);
+
+        assertThat(resultRepository.count()).isEqualTo(resultCount);
+        assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getId()).isEqualTo(exercise.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void assessmentLockAuthorizesBeforeRejectingAnotherSubmissionType(boolean authorizedCourse) throws Exception {
+        Course course = authorizedCourse ? programmingExercise.getCourseViaExerciseGroupOrCourseMember() : courseUtilService.createCourse();
+        var exercise = exerciseRepository
+                .save(TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course));
+        var participation = studentParticipationRepository
+                .save(ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.setText("Unchanged text submission");
+        textSubmission.setParticipation(participation);
+        textSubmission = submissionRepository.save(textSubmission);
+        long resultCount = resultRepository.count();
+
+        request.get("/api/programming/programming-submissions/" + textSubmission.getId() + "/lock", authorizedCourse ? HttpStatus.BAD_REQUEST : HttpStatus.FORBIDDEN, Map.class);
+
+        assertThat(resultRepository.count()).isEqualTo(resultCount);
+        assertThat(((TextSubmission) submissionRepository.findByIdElseThrow(textSubmission.getId())).getText()).isEqualTo("Unchanged text submission");
+        assertThat(submissionRepository.findByIdElseThrow(textSubmission.getId()).getParticipation().getId()).isEqualTo(participation.getId());
+    }
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })

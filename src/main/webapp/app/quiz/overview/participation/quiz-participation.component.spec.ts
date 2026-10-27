@@ -216,8 +216,8 @@ describe('QuizParticipationComponent - live mode', () => {
         component.onSelectionChanged();
         const alerts = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
         component.triggerSave();
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/exercises/1/submissions/live?submit=false' });
-        expect(req.request.body.submittedAnswers).toEqual(expect.arrayContaining([expect.objectContaining({ selectedOptions: [{ id: 1, invalid: false }] })]));
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/exercises/1/submissions/live?submit=false' });
+        expect(req.request.body.submittedAnswers).toEqual(expect.arrayContaining([expect.objectContaining({ selectedOptions: [{ id: 1 }] })]));
         if (failed) req.flush({}, { status: 400, statusText: 'Bad Request' });
         else req.flush({ id: 7, submissionDate: now.toISOString() });
         expect(component.unsavedChanges()).toBe(failed);
@@ -235,8 +235,8 @@ describe('QuizParticipationComponent - live mode', () => {
         component.quizSubmittedEvent.subscribe((submission) => emitted.push(submission));
         component.submitExercise();
         expect(component.isSubmitting()).toBe(true);
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/exercises/1/submissions/live?submit=true' });
-        expect(req.request.body.submittedAnswers).toEqual(expect.arrayContaining([expect.objectContaining({ selectedOptions: [{ id: 1, invalid: false }] })]));
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/exercises/1/submissions/live?submit=true' });
+        expect(req.request.body.submittedAnswers).toEqual(expect.arrayContaining([expect.objectContaining({ selectedOptions: [{ id: 1 }] })]));
         req.flush({ id: 7, submitted: true, submittedAnswers: [], submissionDate: now.toISOString() });
         expect(component.isSubmitting()).toBe(false);
         expect(component.unsavedChanges()).toBe(false);
@@ -268,13 +268,12 @@ describe('QuizParticipationComponent - live mode', () => {
     it.each([false, true])('joins a password-protected batch and starts only when ready=%s', (started) => {
         fixture.detectChanges();
         component.password = 'quiz-secret';
-        vi.spyOn(quizExerciseService, 'join').mockReturnValue(of(new HttpResponse({ body: { id: 9, started } })));
-        const refresh = vi
-            .spyOn(quizExerciseService, 'findForStudent')
-            .mockReturnValue(of(new HttpResponse({ body: { ...quizExercise, quizBatches: [{ id: 9, started, startTime: now }] } })));
+        const refresh = vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ ...quizExercise, quizBatches: [{ id: 9, started, startTime: now }] }));
         refresh.mockClear();
         component.joinBatch();
-        expect(quizExerciseService.join).toHaveBeenCalledExactlyOnceWith(1, 'quiz-secret');
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/quiz-exercises/1/join' });
+        expect(req.request.body).toEqual({ password: 'quiz-secret' });
+        req.flush({ id: 9, started });
         if (!started) expect(component.quizBatch()?.id).toBe(9);
         expect(refresh).toHaveBeenCalledTimes(started ? 1 : 0);
         if (!started) expect(component.quizBatch()?.started).toBe(false);

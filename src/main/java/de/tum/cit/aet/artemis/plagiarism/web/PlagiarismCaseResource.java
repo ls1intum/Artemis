@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.plagiarism.web;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,6 +34,8 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
@@ -70,16 +73,20 @@ public class PlagiarismCaseResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final Optional<ExamAccessApi> examAccessApi;
+
     private static final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
 
     public PlagiarismCaseResource(CourseRepository courseRepository, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
-            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository, ExerciseRepository exerciseRepository) {
+            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository, ExerciseRepository exerciseRepository,
+            Optional<ExamAccessApi> examAccessApi) {
         this.courseRepository = courseRepository;
         this.authenticationCheckService = authenticationCheckService;
         this.userRepository = userRepository;
         this.plagiarismCaseService = plagiarismCaseService;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.exerciseRepository = exerciseRepository;
+        this.examAccessApi = examAccessApi;
     }
 
     /**
@@ -123,13 +130,9 @@ public class PlagiarismCaseResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<PlagiarismCaseOverviewDTO>> getPlagiarismCasesForExamForInstructor(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get all plagiarism cases for instructor in exam with id: {}", examId);
+        ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
+        api.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var plagiarismCases = plagiarismCaseRepository.findOverviewDtosByExamId(examId);
-        if (!plagiarismCases.isEmpty()) {
-            var plagiarismCaseExercise = plagiarismCases.getFirst().exercise();
-            if (plagiarismCaseExercise == null || !Long.valueOf(courseId).equals(plagiarismCaseExercise.courseId())) {
-                throw new ConflictException("Exam with id " + examId + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
-            }
-        }
         return getPlagiarismCaseOverviewResponseEntity(plagiarismCases);
     }
 

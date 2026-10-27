@@ -259,6 +259,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
         studentExamAccessService.validateExamRequestParametersElseThrow(existingStudentExam, examId, courseId);
+        checkCourseAccessForTestRunElseThrow(existingStudentExam, examId, courseId, currentUser);
 
         if (Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             log.error("Student exam with id {} for user {} is already submitted.", studentExamFromClient.id(), currentUser.getLogin());

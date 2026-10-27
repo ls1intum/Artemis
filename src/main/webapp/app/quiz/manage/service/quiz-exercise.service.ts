@@ -78,9 +78,7 @@ export class QuizExerciseService {
     /** Loads management details of an exam exercise with the same conversion as course details. */
     findForExam(quizExerciseId: number): Observable<QuizExercise> {
         // This purpose-specific endpoint is not included in the generated retrieval API yet.
-        return this.http
-            .get<QuizExerciseDetails>(`api/quiz/quiz-exercises/${quizExerciseId}/for-exam`)
-            .pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
+        return this.http.get<QuizExerciseDetails>(`api/quiz/quiz-exercises/${quizExerciseId}/for-exam`).pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
     }
 
     /**

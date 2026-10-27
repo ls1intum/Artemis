@@ -3730,6 +3730,52 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void submitTestRunRequiresCurrentInstructorRoleBeforeChangingState() throws Exception {
+        var owner = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = examUtilService.addExamWithExerciseGroup(course1, true);
+        var group = exam.getExerciseGroups().getFirst();
+        var exercise = TextExerciseFactory.generateTextExerciseForExam(group);
+        exerciseRepository.save(exercise);
+        group.addExercise(exercise);
+        var testRun = createTestRun(exam);
+        userUtilService.changeUser(owner.getLogin());
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        var body = request.get(base + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
+        var submission = (TextSubmission) body.getExercises().getFirst().getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+        var storedSubmission = (TextSubmission) submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        String originalText = storedSubmission.getText();
+        var originalSubmitted = storedSubmission.isSubmitted();
+        var originalSubmissionDate = storedSubmission.getSubmissionDate();
+        var originalResultIds = storedSubmission.getResults().stream().map(Result::getId).toList();
+        long submissionCount = submissionRepository.count();
+        long resultCount = resultRepository.count();
+        submission.setText("Last-second test run changes");
+
+        userUtilService.unenrollUserFromCourseByRole(owner, course1, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(owner, course1, CourseRole.STUDENT);
+        request.postWithoutResponseBody(base + "/student-exams/submit", body, HttpStatus.FORBIDDEN, null);
+
+        var rejectedAttempt = studentExamRepository.findByIdElseThrow(testRun.getId());
+        assertThat(rejectedAttempt.isSubmitted()).isFalse();
+        assertThat(rejectedAttempt.getSubmissionDate()).isNull();
+        var unchangedSubmission = (TextSubmission) submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        assertThat(unchangedSubmission.getText()).isEqualTo(originalText);
+        assertThat(unchangedSubmission.isSubmitted()).isEqualTo(originalSubmitted);
+        assertThat(unchangedSubmission.getSubmissionDate()).isEqualTo(originalSubmissionDate);
+        assertThat(unchangedSubmission.getResults()).extracting(Result::getId).containsExactlyInAnyOrderElementsOf(originalResultIds);
+        assertThat(submissionRepository.count()).isEqualTo(submissionCount);
+        assertThat(resultRepository.count()).isEqualTo(resultCount);
+
+        userUtilService.enrollUserInCourse(owner, course1, CourseRole.INSTRUCTOR);
+        request.postWithoutResponseBody(base + "/student-exams/submit", body, HttpStatus.OK, null);
+        var submittedAttempt = studentExamRepository.findByIdElseThrow(testRun.getId());
+        assertThat(submittedAttempt.isSubmitted()).isTrue();
+        assertThat(submittedAttempt.getSubmissionDate()).isNotNull();
+        assertThat(((TextSubmission) submissionRepository.findByIdWithResultsElseThrow(submission.getId())).getText()).isEqualTo("Last-second test run changes");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSubmitTestRun() throws Exception {
         var testRun = createTestRun();
         testRunExam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));

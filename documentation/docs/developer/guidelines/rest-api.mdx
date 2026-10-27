@@ -714,7 +714,9 @@ Data that the server pushes over the websocket needs the same care: every websoc
 
 ### Role Hierarchy
 
-Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant/tutor), USER, and ANONYMOUS. Each role has all the access rights of the roles following it (e.g., ANONYMOUS has almost no rights, while ADMIN users can access every page). INSTRUCTOR, EDITOR and TA are course roles. An endpoint that needs one of them always belongs to a course, an exercise, a lecture or a lecture unit, whose course role is checked. An endpoint that has no such resource is open to every signed-in user or limited to administrators.
+Global authorities follow the hierarchy SUPER_ADMIN, ADMIN, USER. Course roles follow a separate hierarchy: instructor, editor, tutor, student. A higher course role satisfies a lower-role check only within the same course. Anonymous access describes a visitor who has not signed in.
+
+Resource authorization checks permit the administrator override only when administrator elevation is active: the persisted account is still an active administrator, the session carries ADMIN or SUPER_ADMIN, and the session satisfies the configured passkey requirement. An administrator can also use course roles assigned to their account. An endpoint that requires a teaching role belongs to a course, an exercise, a lecture or a lecture unit, whose course role is checked. An endpoint that has no such resource is open to every signed-in user or limited to administrators.
 
 | **Minimum Role** | **Endpoint Annotation**                                  | **Path Prefix**          | **Package**          |
 |------------------|----------------------------------------------------------|--------------------------|----------------------|

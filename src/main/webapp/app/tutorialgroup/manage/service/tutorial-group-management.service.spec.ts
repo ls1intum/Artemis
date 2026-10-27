@@ -8,6 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { User } from 'app/account/user/user.model';
 import { TutorialGroupManagementService } from './tutorial-group-management.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 
 describe('TutorialGroupManagementService', () => {
     beforeEach(() => {
@@ -25,11 +26,31 @@ describe('TutorialGroupManagementService', () => {
             .getTutorialGroupsForCourse(7)
             .subscribe((response) => (groups = response));
         const http = TestBed.inject(HttpTestingController);
-        http.expectOne({ method: 'GET', url: `/api/tutorialgroup/courses/7/tutorial-groups/${suffix}` }).flush([
-            { id: 3, teachingAssistantName: 'Tutor', nextSession: { start: '2026-10-26T10:00:00Z', end: '2026-10-26T11:00:00Z' } },
-        ]);
+        const summary: TutorialGroupSummary = {
+            id: 3,
+            title: 'Tutorial',
+            teachingAssistantName: 'Tutor',
+            teachingAssistantId: 5,
+            isUserTutor: true,
+            numberOfRegisteredUsers: 8,
+            averageAttendance: 6,
+            tutorialGroupSchedule: { validFromInclusive: '2026-10-26', validToInclusive: '2027-02-01' },
+            nextSession: { start: '2026-10-26T10:00:00Z', end: '2026-10-26T11:00:00Z' },
+        };
+        http.expectOne({ method: 'GET', url: `/api/tutorialgroup/courses/7/tutorial-groups/${suffix}` }).flush([summary]);
+        expect(groups[0]).toBeInstanceOf(TutorialGroup);
         expect(groups[0].nextSession?.start?.toISOString()).toBe('2026-10-26T10:00:00.000Z');
-        expect(groups[0].teachingAssistantName).toBe('Tutor');
+        expect(groups[0].nextSession?.end?.toISOString()).toBe('2026-10-26T11:00:00.000Z');
+        expect(groups[0].tutorialGroupSchedule?.validFromInclusive?.format('YYYY-MM-DD')).toBe('2026-10-26');
+        expect(groups[0].tutorialGroupSchedule?.validToInclusive?.format('YYYY-MM-DD')).toBe('2027-02-01');
+        expect(groups[0]).toMatchObject({
+            title: 'Tutorial',
+            teachingAssistantName: 'Tutor',
+            teachingAssistantId: 5,
+            isUserTutor: true,
+            numberOfRegisteredUsers: 8,
+            averageAttendance: 6,
+        });
         http.verify();
     });
 

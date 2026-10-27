@@ -181,6 +181,74 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @ParameterizedTest
+    @CsvSource({ "save,false", "save,true", "submit,false", "submit,true", "after-complaint,false", "after-complaint,true", "cancel,false", "cancel,true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void assessmentMutationsAuthorizeBeforeRevealingParticipationBinding(String operation, boolean foreignCourse) throws Exception {
+        var submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise,
+                ParticipationFactory.generateTextSubmission("Original submitted text", Language.ENGLISH, true), TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var result = submission.getLatestResult();
+        var originalFeedback = new Feedback().credits(2.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("Original feedback");
+        participationUtilService.addFeedbackToResult(originalFeedback, result);
+        var originalScore = result.getScore();
+        var originalCompletionDate = result.getCompletionDate();
+        long resultCount = resultRepository.count();
+        long submissionCount = submissionRepository.count();
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, foreignCourse ? courseUtilService.addEmptyCourse() : course, foreignCourse ? CourseRole.INSTRUCTOR : CourseRole.STUDENT);
+
+        for (long participationId : List.of(submission.getParticipation().getId(), Long.MAX_VALUE)) {
+            switch (operation) {
+                case "save", "submit" -> saveOrSubmitTextAssessment(participationId, result.getId(), new TextAssessmentDTO(List.of(), Set.of(), "Unauthorized note"),
+                        operation.equals("submit"), HttpStatus.FORBIDDEN);
+                case "after-complaint" -> request.put("/api/text/participations/" + participationId + "/submissions/" + submission.getId() + "/text-assessment-after-complaint",
+                        new TextAssessmentUpdateDTO(List.of(), null, "Unauthorized note", Set.of()), HttpStatus.FORBIDDEN);
+                case "cancel" -> request.postWithoutResponseBody("/api/text/participations/" + participationId + "/submissions/" + submission.getId() + "/cancel-assessment", null,
+                        HttpStatus.FORBIDDEN);
+                default -> throw new IllegalArgumentException(operation);
+            }
+        }
+
+        var storedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId());
+        assertThat(storedResult.getScore()).isEqualTo(originalScore);
+        assertThat(storedResult.getCompletionDate().toInstant()).isEqualTo(originalCompletionDate.toInstant());
+        assertThat(storedResult.getAssessor().getId()).isEqualTo(caller.getId());
+        assertThat(storedResult.getFeedbacks()).singleElement().satisfies(feedback -> {
+            assertThat(feedback.getId()).isEqualTo(originalFeedback.getId());
+            assertThat(feedback.getCredits()).isEqualTo(2.0);
+            assertThat(feedback.getDetailText()).isEqualTo("Original feedback");
+        });
+        var storedSubmission = (TextSubmission) submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        assertThat(storedSubmission.getParticipation().getId()).isEqualTo(submission.getParticipation().getId());
+        assertThat(storedSubmission.getText()).isEqualTo("Original submitted text");
+        assertThat(storedSubmission.getResults()).extracting(Result::getId).containsExactly(result.getId());
+        assertThat(resultRepository.count()).isEqualTo(resultCount);
+        assertThat(submissionRepository.count()).isEqualTo(submissionCount);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void submitAssessmentAuthorizesBeforeRevealingExerciseType(boolean foreignCourse) throws Exception {
+        var exercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(2), now().minusDays(1), now().plusDays(1), "png,pdf", course);
+        exercise = exerciseRepository.save(exercise);
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(exercise, ParticipationFactory.generateFileUploadSubmission(true),
+                TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var result = submission.getLatestResult();
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, foreignCourse ? courseUtilService.addEmptyCourse() : course, foreignCourse ? CourseRole.INSTRUCTOR : CourseRole.STUDENT);
+
+        saveOrSubmitTextAssessment(submission.getParticipation().getId(), result.getId(), new TextAssessmentDTO(List.of(), Set.of(), "Unauthorized note"), true,
+                HttpStatus.FORBIDDEN);
+
+        var storedSubmission = submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        assertThat(storedSubmission).isInstanceOf(FileUploadSubmission.class);
+        assertThat(storedSubmission.getResults()).extracting(Result::getId).containsExactly(result.getId());
+        assertThat(resultRepository.findByIdElseThrow(result.getId()).getAssessor().getId()).isEqualTo(caller.getId());
+    }
+
+    @ParameterizedTest
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void saveAssessmentRejectsMissingGradingInstruction(boolean submit) throws Exception {

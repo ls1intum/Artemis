@@ -577,6 +577,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             return false;
         }).toList();
 
+        if (!staffView) {
+            var exercise = validationResult.modelingExercise;
+            exercise.filterSensitiveInformation();
+            if (exercise.isExamExercise()) {
+                exercise.getExerciseGroup().setExam(null);
+            }
+        }
+
         // The consumer is the owning student's modeling editor (feedback timeline); include the participation owner so the
         // client can promote an element to the active editor submission and verify ownership.
         List<ModelingSubmissionResponseDTO> submissionDTOs = submissionsWithResults.stream()

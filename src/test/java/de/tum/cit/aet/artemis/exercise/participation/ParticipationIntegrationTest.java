@@ -1895,14 +1895,39 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         request.putWithResponseBody("/api/exercise/exercises/" + modelingExercise.getId() + "/participations", dto2, StudentParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = OTHER_TUTOR_LOGIN, roles = "USER")
-    void updateParticipation_notTutorInCourse() throws Exception {
+    void updateParticipation_notTutorInCourse(boolean mismatchedExercise) throws Exception {
+        var foreignCourse = courseUtilService.addEmptyCourse();
+        userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(OTHER_TUTOR_LOGIN), foreignCourse, CourseRole.TEACHING_ASSISTANT);
         var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participation.setPresentationScore(1.);
         participation = participationRepo.save(participation);
-        var dto = new ParticipationUpdateDTO(participation.getId(), textExercise.getId(), null);
-        request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto, StudentParticipation.class, HttpStatus.FORBIDDEN);
+        long requestedExerciseId = mismatchedExercise ? modelingExercise.getId() : textExercise.getId();
+        var dto = new ParticipationUpdateDTO(participation.getId(), requestedExerciseId, null);
+        request.putWithResponseBody("/api/exercise/exercises/" + requestedExerciseId + "/participations", dto, StudentParticipation.class, HttpStatus.FORBIDDEN);
+
+        var unchanged = participationRepo.findByIdElseThrow(participation.getId());
+        assertThat(unchanged.getExercise().getId()).isEqualTo(textExercise.getId());
+        assertThat(unchanged.getPresentationScore()).isEqualTo(1.);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void updateParticipation_rejectsStoredExerciseMismatch() throws Exception {
+        var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participation.setPresentationScore(1.);
+        participation = participationRepo.save(participation);
+        var dto = new ParticipationUpdateDTO(participation.getId(), modelingExercise.getId(), null);
+
+        request.putAndExpectError("/api/exercise/exercises/" + modelingExercise.getId() + "/participations", dto, HttpStatus.CONFLICT, "noidmatch");
+
+        var unchanged = participationRepo.findByIdElseThrow(participation.getId());
+        assertThat(unchanged.getExercise().getId()).isEqualTo(textExercise.getId());
+        assertThat(unchanged.getPresentationScore()).isEqualTo(1.);
     }
 
     @Test

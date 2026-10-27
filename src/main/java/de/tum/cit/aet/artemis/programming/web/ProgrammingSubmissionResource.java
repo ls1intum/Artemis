@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
@@ -401,19 +402,22 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<ProgrammingSubmissionForTutorAssessmentDTO> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
-        var programmingSubmission = (ProgrammingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
-        final var participation = programmingSubmission.getParticipation();
+        var submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
+        final var participation = submission.getParticipation();
+        if (participation == null) {
+            throw new AccessForbiddenException();
+        }
+        final User user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), user);
+        if (!(submission instanceof ProgrammingSubmission programmingSubmission)) {
+            throw new BadRequestAlertException("The submission is not a programming submission", "programmingSubmission", "invalidSubmissionType");
+        }
         final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
         // the code editor gates feedback suggestions on the course's Athena setting, which the reload above does not carry
         courseAthenaConfigRepository.attachToCourseOf(programmingExercise);
         final var numberOfEnabledCorrectionRounds = programmingExercise.getNumberOfCorrectionRounds();
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
-
-        final User user = userRepository.getUserWithAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
-            throw new AccessForbiddenException();
-        }
 
         programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
         programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, submissionId, correctionRound);

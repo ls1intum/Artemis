@@ -76,7 +76,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
             """;
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void programmingVariant_cannotUseLegacyQuizPipeline() throws Exception {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
@@ -102,7 +102,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void programmingVariant_foreignInstructor_isForbidden() throws Exception {
         request.performMvcRequest(
                 post("/api/hyperion/programming-exercises/" + exerciseId + "/generation/variants").contentType(MediaType.APPLICATION_JSON).content(VARIANT_REQUEST))
@@ -110,7 +110,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void programmingVariant_editor_rejectsUnsupportedConfigurationBeforeProvisioning() throws Exception {
         request.performMvcRequest(
                 post("/api/hyperion/programming-exercises/" + exerciseId + "/generation/variants").contentType(MediaType.APPLICATION_JSON).content(VARIANT_REQUEST))
@@ -159,13 +159,13 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void capabilitiesRejectForeignInstructors() throws Exception {
         request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generation/capabilities", exerciseId)).andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void capabilitiesTellEditorsWhenTheConfigurationIsUnsupported() throws Exception {
         request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generation/capabilities", exerciseId)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.supported").value(false)).andExpect(jsonPath("$.canCreateVariant").value(false))
@@ -180,7 +180,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void generationWorkers_instructor_isForbidden() throws Exception {
         request.performMvcRequest(get("/api/aiworker/admin/workers")).andExpect(status().isForbidden());
         Mockito.verify(aiWorkers, Mockito.never()).workerStatuses();

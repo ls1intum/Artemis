@@ -172,11 +172,11 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         final Set<TextBlock> textBlocks = textBlocksFromDtos(textAssessment.textBlocks());
         Result result = resultRepository.findByIdElseThrow(resultId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getSubmission().getParticipation().getExercise(), null);
         if (!result.getSubmission().getParticipation().getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "feedbackList",
                     "participationIdMismatch");
         }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getSubmission().getParticipation().getExercise(), null);
         final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
         checkTextBlocksBelongToSubmissionElseThrow(textBlocks, textSubmission.getId());
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, feedbacks, resultId, textAssessment.assessmentNote());
@@ -294,6 +294,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         final Set<TextBlock> textBlocks = textBlocksFromDtos(textAssessment.textBlocks());
         Result result = resultRepository.findByIdElseThrow(resultId);
+        checkAuthorization(result.getSubmission().getParticipation().getExercise(), null);
         if (!(result.getSubmission().getParticipation().getExercise() instanceof final TextExercise exercise)) {
             throw new BadRequestAlertException("This exercise isn't a TextExercise!", "Exercise", "wrongExerciseType");
         }
@@ -301,7 +302,6 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "participationId",
                     "participationIdMismatch");
         }
-        checkAuthorization(exercise, null);
         final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
         checkTextBlocksBelongToSubmissionElseThrow(textBlocks, textSubmission.getId());
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, feedbacks, resultId, textAssessment.assessmentNote());
@@ -333,13 +333,13 @@ public class TextAssessmentResource extends AssessmentResource {
         User user = userRepository.getUserWithAuthorities();
         TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
+        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        checkAuthorization(textExercise, user);
         if (!studentParticipation.getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
                     "participationIdMismatch");
         }
-        long exerciseId = studentParticipation.getExercise().getId();
-        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        checkAuthorization(textExercise, user);
         final AssessmentUpdateBaseDTO assessmentUpdateEntities = assessmentUpdateFromDto(assessmentUpdate);
         final Set<TextBlock> textBlocks = textBlocksFromDtos(assessmentUpdate.textBlocks());
         checkTextBlocksBelongToSubmissionElseThrow(textBlocks, textSubmission.getId());
@@ -372,11 +372,11 @@ public class TextAssessmentResource extends AssessmentResource {
         if (submission.getParticipation() == null) {
             throw new AccessForbiddenException();
         }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
         if (!submission.getParticipation().getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
                     "participationIdMismatch");
         }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
         return super.cancelAssessment(submissionId, resultId);
     }
 
