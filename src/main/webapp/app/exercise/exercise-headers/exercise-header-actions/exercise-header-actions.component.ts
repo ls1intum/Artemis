@@ -2,7 +2,6 @@ import { ProgrammingExerciseParticipationActionsComponent } from 'app/exercise/p
 import { StudentExerciseActionsDirective } from 'app/exercise/participation/student-exercise-actions.directive';
 import { Component, ElementRef, HostListener, computed, effect, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faEye, faFileSignature, faListAlt, faPaperPlane, faPlayCircle, faRobot, faSignal, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -12,23 +11,22 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
-
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
     RequestFeedbackButtonComponent,
     countSuccessfulAthenaFeedbackRequests,
 } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -130,8 +128,11 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
+    readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
+    readonly repositoryUriForCodeButton = computed(() => this.getRepositoryUriForCodeButton());
+    readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
-    readonly routerLinkForRepositoryView = computed(() => {
+    readonly repositoryViewLink = computed(() => {
         const participation = this.activeParticipationForCode();
         if (!participation?.id) {
             return ['/courses', this.courseId(), 'exercises', this.exercise().id!];
@@ -178,6 +179,26 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
         this._quizNotStarted.set(false);
         this._programmingExercise.set(undefined);
         this._editorLabel.set(undefined);
+    }
+
+    private getRepositoryUriForCodeButton(): string {
+        const participations = this.studentParticipations();
+        const participation = this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
+        return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
+    }
+
+    private isProgrammingExerciseStudentParticipation(participation: StudentParticipation): participation is ProgrammingExerciseStudentParticipation {
+        return participation.type === ParticipationType.PROGRAMMING;
+    }
+
+    private getProgrammingParticipationForCodeButton(): ProgrammingExerciseStudentParticipation | undefined {
+        const participations = this.studentParticipations();
+        return this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
+    }
+
+    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenSourceInfo {
+        const participationId = this.programmingParticipationForCodeButton()!.id!;
+        return { returnedTokenType: 'participation-token', participationId };
     }
 
     /**
