@@ -1,32 +1,32 @@
 import { ExerciseType } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
+import { expect } from '@playwright/test';
 
 /**
  * A class which encapsulates UI selectors and actions for the programming exercise assessment page.
  */
 export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     async provideFeedbackOnCodeLine(lineIndex: number, points: number, feedback: string) {
+        // Adding feedback requires an empty line. Use fillInlineFeedback to select an existing card explicitly.
+        await expect(this.getInlineFeedback(lineIndex)).toHaveCount(0);
         // Monaco renders the code lines, and its decoration API takes a class name and nothing else, so the
         // hover button cannot carry a test id either. These two selectors name Monaco's DOM out of necessity.
         await this.page.locator('.view-line').nth(lineIndex).hover();
         await this.page.locator('.monaco-add-feedback-button').click();
-        await this.typeIntoFeedbackEditor(feedback, lineIndex);
-        await this.typePointsIntoFeedbackEditor(points, lineIndex);
-        await this.getInlineFeedback(lineIndex).getByTestId('feedback-save').click();
+        await this.fillInlineFeedback(lineIndex, 0, points, feedback);
     }
 
-    private async typeIntoFeedbackEditor(text: string, index: number) {
-        await this.getInlineFeedback(index).getByTestId('feedback-editor-text-input').fill(text);
-    }
-
-    private async typePointsIntoFeedbackEditor(points: number, index: number) {
-        const pointsInput = this.getInlineFeedback(index).getByTestId('feedback-editor-points-input');
+    async fillInlineFeedback(lineIndex: number, feedbackIndex: number, points: number, feedback: string) {
+        const card = this.getInlineFeedback(lineIndex).nth(feedbackIndex);
+        await card.getByTestId('feedback-editor-text-input').fill(feedback);
+        const pointsInput = card.getByTestId('feedback-editor-points-input');
         await pointsInput.fill(points.toString());
         await pointsInput.blur();
+        await card.getByTestId('feedback-save').click();
     }
 
     private getInlineFeedback(line: number) {
-        return this.page.locator(`#code-editor-inline-feedback-${line}`);
+        return this.page.getByTestId('code-editor-inline-feedback').and(this.page.locator(`[data-code-line="${line}"]`));
     }
 
     override async rejectComplaint(response: string, examMode: boolean) {

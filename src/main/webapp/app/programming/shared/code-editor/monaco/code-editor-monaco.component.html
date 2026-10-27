@@ -14,8 +14,8 @@
                     [highlightDifferences]="highlightDifferences()"
                     [course]="course()"
                     [gradingCriteria]="gradingCriteria()"
-                    (onUpdateFeedback)="updateFeedback($event, feedback)"
-                    (onDeleteFeedback)="deleteFeedback($event)"
+                    (onUpdateFeedback)="updateFeedback($event, entry.source)"
+                    (onDeleteFeedback)="deleteFeedback($event, entry.source)"
                     (onCancelFeedback)="cancelFeedback($event)"
                 />
             }

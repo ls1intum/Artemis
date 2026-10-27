@@ -25,7 +25,7 @@ interface Composer {
 
 // Every test owns its course and conversations. Browser editing never depends on seed message IDs,
 // another worker's messages, or direct DOM content assignment that bypasses beforeinput/input.
-const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean }>({
+const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean; mentionUsers: { users: string[]; prefix: string } }>({
     expandedToolbar: [true, { option: true }],
     composer: async ({ page, login, courseManagementAPIRequests, communicationAPIRequests, expandedToolbar }, use) => {
         await login(admin);
@@ -49,6 +49,36 @@ const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean }
             await use({ course, channel, editor, route });
         } finally {
             await courseManagementAPIRequests.deleteCourse(course, admin);
+        }
+    },
+    mentionUsers: async ({ composer, login, courseManagementAPIRequests, userManagementAPIRequests }, use) => {
+        const users: string[] = [];
+        const prefix = `mention-${generateUUID().slice(0, 8)}`;
+        try {
+            await login(admin);
+            for (let index = 0; index < 10; index++) {
+                const username = `${prefix}-${index}`;
+                const response = await userManagementAPIRequests.createUser(username, username, UserRole.Student);
+                expect(response.status()).toBe(201);
+                users.push(username);
+                await courseManagementAPIRequests.addStudentToCourse(composer.course, { username, password: username });
+            }
+            await use({ users, prefix });
+        } finally {
+            // Depending on composer keeps its course/page alive until every account cleanup finishes.
+            // Fixture teardown uses Playwright's existing cleanup phase, rather than the keyboard test's body budget.
+            if (users.length) {
+                await login(admin);
+                const results: PromiseSettledResult<void>[] = [];
+                for (let offset = 0; offset < users.length; offset += 3) {
+                    results.push(
+                        ...(await Promise.allSettled(
+                            users.slice(offset, offset + 3).map(async (username) => expect((await userManagementAPIRequests.deleteUser(username)).ok()).toBe(true)),
+                        )),
+                    );
+                }
+                for (const result of results) expect(result.status, result.status === 'rejected' ? String(result.reason) : undefined).toBe('fulfilled');
+            }
         }
     },
 });
@@ -1401,86 +1431,59 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         }
     });
 
-    test('keyboard mention navigation scrolls the active option into view in both directions and wraps', async ({
-        page,
-        composer,
-        login,
-        courseManagementAPIRequests,
-        userManagementAPIRequests,
-    }) => {
-        const users: string[] = [];
-        const prefix = `mention-${generateUUID().slice(0, 8)}`;
-        await login(admin);
-        try {
-            for (let index = 0; index < 10; index++) {
-                const username = `${prefix}-${index}`;
-                const response = await userManagementAPIRequests.createUser(username, username, UserRole.Student);
-                expect(response.status()).toBe(201);
-                users.push(username);
-                await courseManagementAPIRequests.addStudentToCourse(composer.course, { username, password: username });
-            }
-            await login(studentOne, composer.route);
-            const { editor } = composer;
-            // Keep pointer hover from choosing a row while exercising keyboard-only navigation.
-            await page.mouse.move(0, 0);
-            await editor.pressSequentially(`@${prefix}`);
-            const popup = page.getByTestId('message-completion-list');
-            const options = popup.getByRole('option');
-            await expect(options).toHaveCount(10);
-            expect(await popup.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
-            const documentScroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
-            const selected = popup.getByRole('option', { selected: true });
-            const expectSelectionVisible = async (index: number) => {
-                await expect(options.nth(index)).toHaveAttribute('aria-selected', 'true');
-                await expect(selected).toHaveCount(1);
-                await expect(editor).toHaveAttribute('aria-activedescendant', (await selected.getAttribute('id'))!);
-                await expect
-                    .poll(() =>
-                        selected.evaluate((element) => {
-                            const bounds = element.getBoundingClientRect();
-                            const container = element.closest('[data-testid="message-completion-list"]')!.getBoundingClientRect();
-                            return bounds.top >= container.top && bounds.bottom <= container.bottom;
-                        }),
-                    )
-                    .toBe(true);
-                await expect(editor).toBeFocused();
-                expect(await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))).toEqual(documentScroll);
-            };
-            await expectSelectionVisible(0);
-            for (let index = 1; index < 10; index++) {
-                await editor.press('ArrowDown');
-                await expectSelectionVisible(index);
-            }
-            expect(await popup.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    test('keyboard mention navigation scrolls the active option into view in both directions and wraps', async ({ page, composer, login, mentionUsers }) => {
+        const { users, prefix } = mentionUsers;
+        await login(studentOne, composer.route);
+        const { editor } = composer;
+        // Keep pointer hover from choosing a row while exercising keyboard-only navigation.
+        await page.mouse.move(0, 0);
+        await editor.pressSequentially(`@${prefix}`);
+        const popup = page.getByTestId('message-completion-list');
+        const options = popup.getByRole('option');
+        await expect(options).toHaveCount(10);
+        expect(await popup.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+        const documentScroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+        const selected = popup.getByRole('option', { selected: true });
+        const expectSelectionVisible = async (index: number) => {
+            await expect(options.nth(index)).toHaveAttribute('aria-selected', 'true');
+            await expect(selected).toHaveCount(1);
+            await expect(editor).toHaveAttribute('aria-activedescendant', (await selected.getAttribute('id'))!);
+            await expect
+                .poll(() =>
+                    selected.evaluate((element) => {
+                        const bounds = element.getBoundingClientRect();
+                        const container = element.closest('[data-testid="message-completion-list"]')!.getBoundingClientRect();
+                        return bounds.top >= container.top && bounds.bottom <= container.bottom;
+                    }),
+                )
+                .toBe(true);
+            await expect(editor).toBeFocused();
+            expect(await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))).toEqual(documentScroll);
+        };
+        await expectSelectionVisible(0);
+        for (let index = 1; index < 10; index++) {
             await editor.press('ArrowDown');
-            await expectSelectionVisible(0);
-            await editor.press('ArrowUp');
-            await expectSelectionVisible(9);
-            for (let index = 8; index >= 0; index--) {
-                await editor.press('ArrowUp');
-                await expectSelectionVisible(index);
-            }
-            const label = (await selected.locator('span').first().textContent())!;
-            const selectedLogin = users.find((username) => label === `@${username} ${username}`);
-            expect(selectedLogin).toBeDefined();
-            await editor.press('Enter');
-            await expect(popup).toBeHidden();
-            await expect(editor.locator('[data-reference-type="user"]')).toHaveText(label);
-            await expect(page.locator('[id^="item-"]')).toHaveCount(0);
-            const saved = await send(page, composer);
-            expect(saved.content).toBe(`[user]${label.slice(1)}(${selectedLogin})[/user]`);
-            await expect(postContent(page, saved.id!)).toContainText(label.slice(1));
-        } finally {
-            await login(admin);
-            // Each account is independent. Bound cleanup concurrency so these twenty requests do not consume
-            // the keyboard-navigation test's remaining budget one round trip at a time.
-            for (let offset = 0; offset < users.length; offset += 3) {
-                const results = await Promise.allSettled(
-                    users.slice(offset, offset + 3).map(async (username) => expect((await userManagementAPIRequests.deleteUser(username)).ok()).toBe(true)),
-                );
-                for (const result of results) expect(result.status, result.status === 'rejected' ? String(result.reason) : undefined).toBe('fulfilled');
-            }
+            await expectSelectionVisible(index);
         }
+        expect(await popup.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+        await editor.press('ArrowDown');
+        await expectSelectionVisible(0);
+        await editor.press('ArrowUp');
+        await expectSelectionVisible(9);
+        for (let index = 8; index >= 0; index--) {
+            await editor.press('ArrowUp');
+            await expectSelectionVisible(index);
+        }
+        const label = (await selected.locator('span').first().textContent())!;
+        const selectedLogin = users.find((username) => label === `@${username} ${username}`);
+        expect(selectedLogin).toBeDefined();
+        await editor.press('Enter');
+        await expect(popup).toBeHidden();
+        await expect(editor.locator('[data-reference-type="user"]')).toHaveText(label);
+        await expect(page.locator('[id^="item-"]')).toHaveCount(0);
+        const saved = await send(page, composer);
+        expect(saved.content).toBe(`[user]${label.slice(1)}(${selectedLogin})[/user]`);
+        await expect(postContent(page, saved.id!)).toContainText(label.slice(1));
     });
 
     for (const kind of ['slides', 'faq'] as const) {

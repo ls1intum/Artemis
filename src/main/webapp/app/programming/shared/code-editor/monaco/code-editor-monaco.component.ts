@@ -159,6 +159,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     readonly feedbackForSelectedFile = computed(() =>
         this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((source) => ({
+            source,
             key: source.id === undefined ? this.localFeedbackKey(source) : source.id + (source.reference ?? 'unreferenced'),
             feedback: this.attachLineAndReferenceToFeedback(source),
         })),
@@ -566,7 +567,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         if (this.readOnlyManualFeedback()) {
             return;
         }
-        // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
         if (!this.newFeedbackLines().includes(lineNumberZeroBased) && !this.getInlineFeedbackNode(lineNumberZeroBased)) {
             this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
@@ -577,13 +577,12 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     /**
      * Updates an existing feedback item and renders it. If necessary, an unsaved feedback item will be converted into an actual feedback item.
      * @param feedback The feedback item to save.
+     * @param original The bound item whose edit emitted this feedback, which may be a working copy.
      */
     updateFeedback(feedback: Feedback, original?: Feedback) {
         const line = Feedback.getReferenceLine(feedback);
         const previous = original ?? feedback;
-        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) =>
-            previous.id !== undefined ? f.id === previous.id : original !== undefined && Feedback.areIdentical(f, original),
-        );
+        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f === previous || (previous.id !== undefined && f.id === previous.id));
         if (existingFeedbackIndex !== -1) {
             // Existing feedback -> update only
             const feedbackArray = [...this.feedbackInternal()];
@@ -652,9 +651,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     /**
      * Removes an existing feedback item and renders the updated state.
      * @param feedback The feedback to remove.
+     * @param originalFeedback The bound item when the editor emits a working copy.
      */
-    deleteFeedback(feedback: Feedback) {
-        this.feedbackInternal.set(this.feedbackInternal().filter((f) => !Feedback.areIdentical(f, feedback)));
+    deleteFeedback(feedback: Feedback, originalFeedback = feedback) {
+        this.feedbackInternal.set(this.feedbackInternal().filter((f) => f !== originalFeedback && !(feedback.id !== undefined && f.id === feedback.id)));
         this.onUpdateFeedback.emit(this.feedbackInternal());
         this.renderFeedbackWidgets();
     }
@@ -1015,8 +1015,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     getInlineFeedbackNode(line: number, feedback?: Feedback, isSuggestion = false): HTMLElement | undefined {
         const components = isSuggestion ? this.inlineFeedbackSuggestionComponents() : this.inlineFeedbackComponents();
-        return components.find((comp) => comp.codeLine() === line && (!feedback || (comp.feedback() && Feedback.areIdentical(comp.feedback()!, feedback))))?.elementRef
-            ?.nativeElement;
+        const renderedFeedback = isSuggestion
+            ? this.feedbackSuggestionsForSelectedFile()[this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).indexOf(feedback!)]
+            : this.feedbackForSelectedFile().find((entry) => entry.source === feedback)?.feedback;
+        return components.find(
+            (comp) =>
+                comp.codeLine() === line && (feedback === undefined || comp.feedback() === feedback || (renderedFeedback !== undefined && comp.feedback() === renderedFeedback)),
+        )?.elementRef?.nativeElement;
     }
 
     private getNewFeedbackNode(line: number): HTMLElement | undefined {

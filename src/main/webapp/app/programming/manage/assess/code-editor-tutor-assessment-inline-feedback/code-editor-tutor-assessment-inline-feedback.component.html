@@ -1,5 +1,5 @@
 @let feedback = currentFeedback();
-<tumaet-ui-card id="code-editor-inline-feedback-{{ codeLine() }}" class="inline-feedback" [attr.data-tone]="tone(currentFeedback())">
+<tumaet-ui-card class="inline-feedback" [attr.data-tone]="tone(currentFeedback())">
     <div class="inline-feedback__content">
         @if (Feedback.isFeedbackSuggestion(feedback) && !readOnly()) {
             <div class="inline-feedback__badges">

@@ -101,7 +101,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     readonly removableInstructionIds = computed<ReadonlySet<number>>(() => new Set(instructionCountsOf(this.feedbacks()).keys()));
 
     /**
-     * The feedback cards split into one block per grading criterion (criteria in alphabetical order), with every
+     * The feedback cards split into one block per grading criterion in instructor order, with every
      * feedback that belongs to no criterion collected in a trailing block.
      */
     readonly feedbackGroups = computed<FeedbackGroup[]>(() => {
@@ -110,8 +110,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         const groups: FeedbackGroup[] = [];
         const alreadyGrouped = new Set<Feedback>();
 
-        const sortedCriteria = [...this.gradingCriteria()].sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
-        for (const criterion of sortedCriteria) {
+        for (const criterion of this.gradingCriteria()) {
             const instructionIds = new Set((criterion.structuredGradingInstructions ?? []).map((instruction) => instruction.id));
             const groupFeedbacks = feedbacks.filter((feedback) => feedback.gradingInstruction?.id !== undefined && instructionIds.has(feedback.gradingInstruction.id));
             if (groupFeedbacks.length === 0) {

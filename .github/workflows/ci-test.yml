@@ -105,6 +105,15 @@ jobs:
       contents: read
       checks: write
     steps:
+      - name: Restore Playwright report ownership before checkout
+        shell: bash
+        run: |
+          for directory in test-results test-reports; do
+            report_path="$GITHUB_WORKSPACE/src/test/playwright/$directory"
+            if [ -e "$report_path" ]; then
+              sudo chown -hR "$(id -u):$(id -g)" "$report_path"
+            fi
+          done
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}

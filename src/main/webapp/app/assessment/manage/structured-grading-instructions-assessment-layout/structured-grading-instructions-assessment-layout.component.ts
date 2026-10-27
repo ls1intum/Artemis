@@ -40,7 +40,7 @@ export interface SortedGradingInstruction {
     accessibleNameIds: string;
 }
 
-/** A criterion prepared for display: alphabetically sorted instructions plus its live "applied" counter. */
+/** A criterion prepared for display in instructor order, together with its live "applied" counter. */
 export interface SortedGradingCriterion {
     title: string;
     instructions: SortedGradingInstruction[];
@@ -80,38 +80,33 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
 
     /**
-     * Criteria and their instructions in alphabetical order, so a tutor can find an instruction by its wording
-     * instead of by the (arbitrary) order in which the instructor happened to create them.
+     * Preserve the instructor's rubric order in the assessment editor.
      */
     readonly sortedCriteria = computed<SortedGradingCriterion[]>(() =>
-        [...(this.criteria() ?? [])]
-            .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-            .map((criterion, criterionIndex) => ({
-                title: criterion.title,
-                instructions: [...(criterion.structuredGradingInstructions ?? [])]
-                    .sort((a, b) => (a.instructionDescription ?? '').localeCompare(b.instructionDescription ?? ''))
-                    .map((instruction, instructionIndex) => {
-                        const prefix = `criterion-${criterionIndex}-instruction-${instructionIndex}`;
-                        const scaleElementId = instruction.gradingScale ? `${prefix}-scale` : undefined;
-                        const descriptionElementId = `${prefix}-desc`;
-                        return {
-                            instruction,
-                            useCount: this.selectionService.applicationCount(instruction),
-                            usageLimit: instruction.usageCount ?? 0,
-                            isDraggable: this.isDraggable(instruction),
-                            showUsageStepper: this.showUsageStepper(instruction),
-                            canDecrementApplication: this.canDecrementApplication(instruction),
-                            canIncrementApplication: this.canIncrementApplication(instruction),
-                            isLockedByReferencedFeedback: this.isLockedByReferencedFeedback(instruction),
-                            isApplied: this.isApplied(instruction),
-                            pointsSeverity: pointsSeverity(instruction.credits),
-                            pointsLabel: pointsLabel(instruction.credits),
-                            scaleElementId,
-                            descriptionElementId,
-                            accessibleNameIds: [scaleElementId, descriptionElementId].filter((id): id is string => id !== undefined).join(' '),
-                        };
-                    }),
-            })),
+        [...(this.criteria() ?? [])].map((criterion, criterionIndex) => ({
+            title: criterion.title,
+            instructions: [...(criterion.structuredGradingInstructions ?? [])].map((instruction, instructionIndex) => {
+                const prefix = `criterion-${criterionIndex}-instruction-${instructionIndex}`;
+                const scaleElementId = instruction.gradingScale ? `${prefix}-scale` : undefined;
+                const descriptionElementId = `${prefix}-desc`;
+                return {
+                    instruction,
+                    useCount: this.selectionService.applicationCount(instruction),
+                    usageLimit: instruction.usageCount ?? 0,
+                    isDraggable: this.isDraggable(instruction),
+                    showUsageStepper: this.showUsageStepper(instruction),
+                    canDecrementApplication: this.canDecrementApplication(instruction),
+                    canIncrementApplication: this.canIncrementApplication(instruction),
+                    isLockedByReferencedFeedback: this.isLockedByReferencedFeedback(instruction),
+                    isApplied: this.isApplied(instruction),
+                    pointsSeverity: pointsSeverity(instruction.credits),
+                    pointsLabel: pointsLabel(instruction.credits),
+                    scaleElementId,
+                    descriptionElementId,
+                    accessibleNameIds: [scaleElementId, descriptionElementId].filter((id): id is string => id !== undefined).join(' '),
+                };
+            }),
+        })),
     );
 
     readonly selectable = computed(() => !this.readonly() && this.selectionService.isSelectable());

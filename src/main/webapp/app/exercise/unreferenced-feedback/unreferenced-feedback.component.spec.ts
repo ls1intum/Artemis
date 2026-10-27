@@ -266,8 +266,8 @@ describe('UnreferencedFeedbackComponent', () => {
             comp.addUnreferencedFeedback();
 
             const groups = comp.feedbackGroups();
-            expect(groups.map((group) => group.title)).toEqual(['Camera', 'Documentation', 'artemisApp.assessment.detail.otherFeedback']);
-            expect(groups.map((group) => group.points)).toEqual([-2, 4, 0]);
+            expect(groups.map((group) => group.title)).toEqual(['Documentation', 'Camera', 'artemisApp.assessment.detail.otherFeedback']);
+            expect(groups.map((group) => group.points)).toEqual([4, -2, 0]);
             expect(groups[2].translateTitle).toBe(true);
             expect(comp.showGroupHeaders()).toBe(true);
             expect(comp.placeAddButtonWithOtherGroup()).toBe(true);

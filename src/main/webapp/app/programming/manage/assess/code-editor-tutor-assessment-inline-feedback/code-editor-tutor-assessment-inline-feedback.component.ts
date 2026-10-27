@@ -31,7 +31,12 @@ import { FeedbackTone } from 'app/assessment/manage/unreferenced-feedback-detail
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
-    styleUrls: ['./code-editor-tutor-assessment-inline-feedback.component.scss'],
+    styleUrl: './code-editor-tutor-assessment-inline-feedback.component.scss',
+    host: {
+        'data-testid': 'code-editor-inline-feedback',
+        '[attr.data-code-line]': 'codeLine()',
+        '[style.max-width.%]': '95',
+    },
     imports: [
         FeedbackSuggestionBadgeComponent,
         TranslateDirective,

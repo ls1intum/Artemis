@@ -33,7 +33,7 @@ import {
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { IKeyboardEvent } from 'monaco-editor';
+import { IKeyboardEvent, editor } from 'monaco-editor';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
@@ -72,6 +72,178 @@ type MonacoInternals = Omit<
 };
 
 const internals = (c: CodeEditorMonacoComponent): MonacoInternals => c as unknown as MonacoInternals;
+
+describe('CodeEditorMonacoComponent same-line suggestions', () => {
+    let fixture: ComponentFixture<CodeEditorMonacoComponent>;
+    let comp: CodeEditorMonacoComponent;
+    let originalResizeObserver: typeof ResizeObserver;
+    let overlays: Map<string, editor.IOverlayWidget>;
+    let zones: Map<string, editor.IViewZone>;
+
+    const settle = async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+    };
+
+    const suggestions = (): Feedback[] => [
+        {
+            type: FeedbackType.MANUAL,
+            reference: 'file:file1.java_line:1',
+            text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'First suggestion',
+            detailText: 'First suggestion detail',
+            credits: -1,
+        },
+        {
+            type: FeedbackType.MANUAL,
+            reference: 'file:file1.java_line:1',
+            text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Second suggestion',
+            detailText: 'Second suggestion detail',
+            credits: -2,
+        },
+    ];
+
+    beforeEach(async () => {
+        originalResizeObserver = global.ResizeObserver;
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        await TestBed.configureTestingModule({
+            imports: [CodeEditorMonacoComponent],
+            providers: [
+                CodeEditorFileService,
+                { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+        fixture = TestBed.createComponent(CodeEditorMonacoComponent);
+        comp = fixture.componentInstance;
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('sessionId', 'same-line-suggestions');
+        fixture.componentRef.setInput('editorState', EditorState.CLEAN);
+        fixture.componentRef.setInput('commitState', CommitState.CLEAN);
+        fixture.componentRef.setInput('isTutorAssessment', true);
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+
+        // Keep the real Angular feedback cards and Artemis widget/view-zone classes. Only Monaco's
+        // registration API is simulated: overlay IDs are unique, and each zone positions its own card.
+        overlays = new Map();
+        zones = new Map();
+        let nextZoneId = 0;
+        const monaco = comp.editor().getActiveEditor();
+        vi.spyOn(monaco, 'addOverlayWidget').mockImplementation((widget) => {
+            overlays.set(widget.getId(), widget);
+        });
+        vi.spyOn(monaco, 'removeOverlayWidget').mockImplementation((widget) => {
+            overlays.delete(widget.getId());
+        });
+        vi.spyOn(monaco, 'changeViewZones').mockImplementation((callback) => {
+            callback({
+                addZone: (zone) => {
+                    const id = String(nextZoneId++);
+                    zones.set(id, zone);
+                    return id;
+                },
+                removeZone: (id) => {
+                    zones.delete(id);
+                },
+                layoutZone: () => {},
+            });
+        });
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        global.ResizeObserver = originalResizeObserver;
+        vi.restoreAllMocks();
+    });
+
+    it('gives unsaved suggestions on the same line independent cards and scroll positions after switching files', async () => {
+        const feedbacks = suggestions();
+        fixture.componentRef.setInput('feedbacks', feedbacks);
+        await settle();
+
+        const assertIndependentCards = () => {
+            expect(overlays.size).toBe(2);
+            expect(zones.size).toBe(2);
+            const cards = [...overlays.values()].map((overlay) => overlay.getDomNode());
+            expect(cards[0]).not.toBe(cards[1]);
+            expect(cards.map((card) => card.querySelector('[data-testid="inline-feedback-text"]')?.textContent)).toEqual(['First suggestion detail', 'Second suggestion detail']);
+            const viewZones = [...zones.values()];
+            expect(viewZones.map((zone) => zone.afterLineNumber)).toEqual([2, 2]);
+            viewZones[0].onDomNodeTop?.(80);
+            viewZones[1].onDomNodeTop?.(180);
+            expect(cards.map((card) => card.style.top)).toEqual(['80px', '180px']);
+            viewZones[0].onDomNodeTop?.(-20);
+            viewZones[1].onDomNodeTop?.(80);
+            expect(cards.map((card) => card.style.top)).toEqual(['-20px', '80px']);
+        };
+        assertIndependentCards();
+
+        fixture.componentRef.setInput('selectedFile', 'file2.java');
+        await settle();
+        expect(overlays.size).toBe(0);
+        expect(zones.size).toBe(0);
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        await settle();
+        assertIndependentCards();
+    });
+
+    it('edits and deletes only the selected unsaved suggestion on a shared line', async () => {
+        const [first, second] = suggestions();
+        fixture.componentRef.setInput('feedbacks', [first, second]);
+        await settle();
+        const secondCard = comp.inlineFeedbackComponents()[1];
+        secondCard.editFeedback(1);
+        await settle();
+        const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]');
+        textarea.value = 'Edited second suggestion';
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+
+        expect(comp.feedbackInternal()).toEqual([first, second]);
+        secondCard.updateFeedback();
+        await settle();
+        expect(comp.feedbackInternal()[0]).toBe(first);
+        expect(comp.feedbackInternal()[1].detailText).toBe('Edited second suggestion');
+        secondCard.deleteFeedback();
+        await settle();
+        expect(comp.feedbackInternal()).toEqual([first]);
+        expect(overlays.size).toBe(1);
+        expect(zones.size).toBe(1);
+        const remainingCard = [...overlays.values()][0].getDomNode();
+        expect(remainingCard.querySelector('[data-testid="inline-feedback-text"]')?.textContent).toBe('First suggestion detail');
+    });
+
+    it('retains the focused input on a cloned update and deletes only one of two identical unsaved suggestions', async () => {
+        const first = suggestions()[0];
+        const second = { ...first };
+        fixture.componentRef.setInput('feedbacks', [first, second]);
+        await settle();
+        const secondCard = comp.inlineFeedbackComponents()[1];
+        secondCard.editFeedback(1);
+        await settle();
+        const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]');
+        textarea.focus();
+        textarea.setSelectionRange(7, 7);
+        const changedCopy = { ...second };
+
+        secondCard.onUpdateFeedback.emit(changedCopy);
+        await settle();
+
+        expect(comp.feedbackInternal()[0]).toBe(first);
+        expect(comp.feedbackInternal()[1]).toBe(changedCopy);
+        expect(comp.inlineFeedbackComponents()[1]).toBe(secondCard);
+        expect(secondCard.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]')).toBe(textarea);
+        expect(document.activeElement).toBe(textarea);
+        expect(textarea.value).toBe('First suggestion detail');
+        expect(textarea.selectionStart).toBe(7);
+        expect(textarea.selectionEnd).toBe(7);
+        secondCard.deleteFeedback();
+        await settle();
+
+        expect(comp.feedbackInternal()).toHaveLength(1);
+        expect(comp.feedbackInternal()[0]).toBe(first);
+        expect(overlays.size).toBe(1);
+    });
+});
 
 describe('CodeEditorMonacoComponent', () => {
     let originalResizeObserver: typeof ResizeObserver | undefined;

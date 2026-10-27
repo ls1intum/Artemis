@@ -159,13 +159,15 @@ export class ExamAPIRequests {
         // Deleting an exam whose programming exercises still have builds in flight fails with a server error, because the build results
         // are written while the exercise is being removed. Such builds finish within seconds, so the delete is repeated for a bounded time;
         // a retry is recorded in the report and anything that still fails afterwards is a real failure.
+        // Exam deletion removes programming repositories sequentially; three exercises exceeded 30s in CI.
+        const deletionTimeout = 120_000;
         let response: APIResponse;
         let attempts = 0;
         try {
             await expect
                 .poll(
                     async () => {
-                        response = await this.request.delete(`api/exam/courses/${exam.course!.id}/exams/${exam.id}`);
+                        response = await this.request.delete(`api/exam/courses/${exam.course!.id}/exams/${exam.id}`, { timeout: deletionTimeout });
                         // Authorization and validation errors are permanent: retry only server failures caused by active builds.
                         if (response.status() < 500) {
                             return true;
@@ -176,7 +178,7 @@ export class ExamAPIRequests {
                         }
                         return false;
                     },
-                    { message: `delete exam ${exam.id}`, intervals: [2000], timeout: 30_000 },
+                    { message: `delete exam ${exam.id}`, intervals: [2000], timeout: deletionTimeout },
                 )
                 .toBe(true);
         } catch (error) {

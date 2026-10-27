@@ -22,6 +22,16 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Restore Playwright report ownership
+      shell: bash
+      run: |
+        for directory in test-results test-reports; do
+          report_path="$GITHUB_WORKSPACE/src/test/playwright/$directory"
+          if [ -e "$report_path" ]; then
+            sudo chown -hR "$(id -u):$(id -g)" "$report_path"
+          fi
+        done
+
     - name: Determine JUnit artifact name
       id: junit-artifact-name
       shell: bash
