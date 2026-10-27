@@ -11,13 +11,13 @@
 import type { IngestionTypeCount } from './ingestion-type-count';
 
 export interface IngestionCoverage {
-    courseId: number;
+    courseId?: number;
     courseTitle?: string;
     releaseDate?: string;
-    active: boolean;
+    active?: boolean;
     semester?: string;
     status?: IngestionCoverageStatusEnum;
-    coverageGapScore: number;
+    coverageGapScore?: number;
     computedAt?: string;
     lastIngestedAt?: string;
     typeCounts?: Array<IngestionTypeCount>;

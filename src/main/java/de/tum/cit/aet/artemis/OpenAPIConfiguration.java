@@ -2,10 +2,6 @@ package de.tum.cit.aet.artemis;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.lang.reflect.RecordComponent;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -14,13 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.util.ClassUtils;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.Operation;
@@ -76,7 +69,6 @@ public class OpenAPIConfiguration {
      * </p>
      * <ul>
      * <li>Set the API title, version, and contact information on the OpenAPI {@link Info} object.</li>
-     * <li>Mark the primitive components of DTO records as required.</li>
      * <li>Filter component schemas to only include those ending in “Dto” (and Spring's Pageable), strip the “Dto” suffix
      * from their schema names, and remove the “Dto” suffix from all property names within those schemas.</li>
      * <li>Iterate over all paths and operations to:
@@ -99,7 +91,6 @@ public class OpenAPIConfiguration {
             openApi.info(new Info().title("Artemis Application Server API").version(version).contact(new Contact().email("krusche@tum.de").name("Stephan Krusche")));
 
             if (components != null && components.getSchemas() != null) {
-                markPrimitiveRecordComponentsRequired(components.getSchemas());
                 Map<String, Schema> schemas = filterForSchemasWithDtoSuffixAndStripSuffix(components);
                 removeDtoSuffixFromAttributeNames(schemas);
 
@@ -125,37 +116,6 @@ public class OpenAPIConfiguration {
                 });
             });
         };
-    }
-
-    static void markPrimitiveRecordComponentsRequired(Map<String, Schema> schemas) {
-        Map<String, List<Class<?>>> recordsBySchemaName = findRecordsBySchemaName();
-        schemas.forEach((name, schema) -> {
-            List<Class<?>> records = recordsBySchemaName.get(name);
-            // Two records sharing a schema name cannot be told apart here, so neither is trusted.
-            if (records == null || records.size() != 1 || schema.getProperties() == null) {
-                return;
-            }
-            for (RecordComponent component : records.getFirst().getRecordComponents()) {
-                String property = component.getName();
-                boolean alreadyRequired = schema.getRequired() != null && schema.getRequired().contains(property);
-                if (component.getType().isPrimitive() && schema.getProperties().containsKey(property) && !alreadyRequired) {
-                    schema.addRequiredItem(property);
-                }
-            }
-        });
-    }
-
-    private static Map<String, List<Class<?>>> findRecordsBySchemaName() {
-        var scanner = new ClassPathScanningCandidateComponentProvider(false);
-        scanner.addIncludeFilter((reader, factory) -> Record.class.getName().equals(reader.getClassMetadata().getSuperClassName()));
-        Map<String, List<Class<?>>> recordsBySchemaName = new HashMap<>();
-        for (BeanDefinition candidate : scanner.findCandidateComponents("de.tum.cit.aet.artemis")) {
-            Class<?> record = ClassUtils.resolveClassName(candidate.getBeanClassName(), OpenAPIConfiguration.class.getClassLoader());
-            var schemaAnnotation = record.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
-            String name = schemaAnnotation != null && !schemaAnnotation.name().isEmpty() ? schemaAnnotation.name() : record.getSimpleName();
-            recordsBySchemaName.computeIfAbsent(name, key -> new ArrayList<>()).add(record);
-        }
-        return recordsBySchemaName;
     }
 
     private static void stripTrailingUnderscoreDigitCharacter(Operation operation) {

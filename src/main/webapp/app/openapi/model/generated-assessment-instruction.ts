@@ -22,5 +22,5 @@ export interface GeneratedAssessmentInstruction {
     /** Suggested feedback */
     feedback: string;
     /** Maximum number of uses */
-    usageCount: number;
+    usageCount?: number;
 }

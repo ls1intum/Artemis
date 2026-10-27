@@ -10,7 +10,7 @@
 
 
 export interface MissingContent {
-    lectureUnitId: number;
+    lectureUnitId?: number;
     title?: string;
     kind?: string;
 }

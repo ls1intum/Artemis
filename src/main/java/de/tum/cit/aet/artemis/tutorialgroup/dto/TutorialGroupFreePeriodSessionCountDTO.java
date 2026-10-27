@@ -15,5 +15,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param count        how many of the course's sessions overlap it
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupFreePeriodSessionCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long freePeriodId, long count) {
+public record TutorialGroupFreePeriodSessionCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long freePeriodId,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long count) {
 }

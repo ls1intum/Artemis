@@ -10,10 +10,10 @@
 
 
 export interface ExerciseGenerationWedgedSlot {
-    exerciseId: number;
+    exerciseId?: number;
     token?: string;
     kind?: string;
     ownerNodeId?: string;
     startedAt?: string;
-    ownerLeftCluster: boolean;
+    ownerLeftCluster?: boolean;
 }

@@ -12,5 +12,5 @@
 export interface IndexedCollectionCount {
     collection?: string;
     count?: number;
-    readable: boolean;
+    readable?: boolean;
 }

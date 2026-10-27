@@ -11,11 +11,11 @@
 
 export interface ActiveGeneration {
     jobId?: string;
-    exerciseId: number;
+    exerciseId?: number;
     userLogin?: string;
     startedAt?: string;
-    cancellable: boolean;
-    cancellationRequested: boolean;
+    cancellable?: boolean;
+    cancellationRequested?: boolean;
     mode?: ActiveGenerationModeEnum;
     exerciseTitle?: string;
     courseId?: number;

@@ -10,7 +10,7 @@
 
 
 export interface CourseForSearchFilter {
-    id: number;
+    id?: number;
     title?: string;
-    active: boolean;
+    active?: boolean;
 }

@@ -11,7 +11,7 @@
 
 export interface IndexedEntityRecord {
     type?: string;
-    entityId: number;
+    entityId?: number;
     title?: string;
     ingestedAt?: string;
     properties?: { [key: string]: any | null; };

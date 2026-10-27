@@ -17,5 +17,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param count how many sessions start on that day, whatever their status
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupSessionCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) LocalDate date, long count) {
+public record TutorialGroupSessionCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) LocalDate date, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long count) {
 }

@@ -11,8 +11,8 @@
 
 export interface IngestionTypeCount {
     type?: string;
-    expected: number;
-    indexed: number;
-    missing: number;
-    orphaned: number;
+    expected?: number;
+    indexed?: number;
+    missing?: number;
+    orphaned?: number;
 }

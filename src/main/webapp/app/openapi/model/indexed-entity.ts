@@ -11,9 +11,9 @@
 
 export interface IndexedEntity {
     type?: string;
-    entityId: number;
+    entityId?: number;
     title?: string;
     lectureId?: number;
     ingestedAt?: string;
-    expected: boolean;
+    expected?: boolean;
 }
