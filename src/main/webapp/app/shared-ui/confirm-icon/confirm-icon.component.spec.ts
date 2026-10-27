@@ -55,4 +55,13 @@ describe('ConfirmIconComponent', () => {
         expect(component.showConfirm()).toBe(false);
         expect(confirmSpy).not.toHaveBeenCalled();
     });
+
+    it('should only mark the host to be filled by the button when fillParent is set', () => {
+        expect(fixture.nativeElement.classList).not.toContain('confirm-icon-fill-parent');
+
+        fixture.componentRef.setInput('fillParent', true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.classList).toContain('confirm-icon-fill-parent');
+    });
 });

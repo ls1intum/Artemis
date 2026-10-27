@@ -1,10 +1,11 @@
 requests==2.34.2
 urllib3>=2.8.0
-# Must stay >= 3.1.59, which fixed CVE-2026-78675 (file content disclosure through .gitmodules
+# Must stay >= 3.2.1, which also fixes CVE-2026-114145 (code execution through submodule paths
+# inside .git). Version 3.1.59 fixed CVE-2026-78675 (file content disclosure through .gitmodules
 # include directives), CVE-2026-78676 (code execution through multi-line git-config values),
 # CVE-2026-78677 (--separate-git-dir escaping the clone destination) and CVE-2026-78678
 # (arbitrary file reads through --contents/-S in Repo.blame).
-gitpython==3.2.0
+gitpython==3.2.1
 beautifulsoup4==4.15.0
 # soupsieve 3.0 is a new major release, so keep the 2.x line.
 soupsieve>=2.8.4,<3

@@ -1,3 +1,4 @@
+import { PostPageRequestState } from 'app/communication/course-conversations-components/post-page-request-state';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
     AfterViewInit,
@@ -7,6 +8,7 @@ import {
     OnInit,
     ViewEncapsulation,
     afterRenderEffect,
+    computed,
     effect,
     inject,
     input,
@@ -21,7 +23,7 @@ import { Conversation, ConversationDTO } from 'app/communication/shared/entities
 import { Observable, Subject, catchError, forkJoin, map, of, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { PageType, PostContextFilter, PostSortCriterion, SortDirection, getUnreadPostsByLastReadDate } from 'app/communication/communication.util';
+import { PageType, PostContextFilter, PostSortCriterion, SortDirection, USER_SCROLL_EVENTS, getUnreadPostsByLastReadDate } from 'app/communication/communication.util';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -64,6 +66,8 @@ function withConsecutiveFlag(post: Post, isConsecutive: boolean): Post {
 
 // sub-pixel scroll positions on scaled displays must still count as "at the bottom"
 const SCROLLED_TO_BOTTOM_TOLERANCE_PX = 5;
+// space kept above the new-messages line when the list opens at it, so that the line is not flush with the edge
+const NEW_MESSAGES_LINE_MARGIN_PX = 8;
 
 @Component({
     selector: 'jhi-conversation-messages',
@@ -109,15 +113,21 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     // A required query throws NG0951 in both cases, so this must stay optional and every read guarded.
     readonly content = viewChild<ElementRef>('container');
     readonly messageListContent = viewChild<ElementRef>('messageListContent');
+    readonly createEditModal = viewChild(PostCreateEditModalComponent);
     private resizeObserver?: ResizeObserver;
     private bottomScrollFrame: number | undefined;
-    private pendingPageScrollDistance: number | undefined;
-    private preserveScrollOnNextPage = false;
-    private postRequestId = 0;
+    private readonly postPageRequest = new PostPageRequestState();
     private postPreparationId = 0;
     private readonly isPreparingPosts = signal(false);
     private restoringPageScroll = false;
     private pageScrollFrame: number | undefined;
+    // The post the list opened at. Images and link previews above it load after it was positioned and push it out of view,
+    // so its position is held until the user scrolls themselves.
+    private initialAnchor: { postId: number; alignToUnreadLine: boolean } | undefined;
+    /** Release the opening unread anchor on reader input so later rendering cannot pull the reader back. */
+    private readonly releaseInitialAnchor = () => {
+        this.initialAnchor = undefined;
+    };
 
     readonly course = input<Course>();
     showOnlyPinned = input<boolean>(false);
@@ -137,6 +147,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private readonly search$ = new Subject<string>();
     searchText = '';
     readonly _activeConversation = signal<ConversationDTO | undefined>(undefined);
+    readonly isAnnouncementChannel = computed(() => !!getAsChannelDTO(this._activeConversation())?.isAnnouncementChannel);
+    // Keep the opening divider stable while successful reads advance the shared conversation cache.
+    private readonly openingLastReadDate = computed(() => this._activeConversation()?.lastReadDate);
     readonly onNavigateToPost = output<Posting>();
     readonly forwardedMessagesLoaded = output<Post[]>();
 
@@ -212,7 +225,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 if (
                     !this.isFetchingPosts() &&
                     !this.isPreparingPosts() &&
-                    this.pendingPageScrollDistance === undefined &&
+                    this.postPageRequest.pendingScrollDistance === undefined &&
                     !this.createdNewMessage &&
                     this.posts().length > 0 &&
                     !keepsFollowingNewMessages &&
@@ -279,6 +292,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 return;
             }
             this._activeConversation.set(conversation);
+            // Capture before loading posts can update the same DTO's lastReadDate.
+            this.openingLastReadDate();
             this.onActiveConversationChange();
         });
     }
@@ -308,6 +323,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     };
     private mutationObserver: MutationObserver | undefined;
 
+    /** Observe settled layout while holding the initial unread anchor, and release it on explicit reader input. */
     ngAfterViewInit() {
         const el = this.content()?.nativeElement;
         if (!el) {
@@ -316,17 +332,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         el.addEventListener('scroll', this.scrollListener);
         this.resizeObserver = new ResizeObserver(() => {
-            if (
-                this.wasScrolledToBottom &&
-                this.canStartSaving &&
-                !this.isFetchingPosts() &&
-                this.pendingPageScrollDistance === undefined &&
-                !this.restoringPageScroll &&
-                !this.focusOnPostId
-            ) {
+            const isPositioned =
+                this.canStartSaving && !this.isFetchingPosts() && this.postPageRequest.pendingScrollDistance === undefined && !this.restoringPageScroll && !this.focusOnPostId;
+            if (isPositioned && this.initialAnchor) {
+                // Held before following the bottom: the list may still have been short when the post was put at the top, so that its
+                // position was clamped to the end of the list, which counts as being at the bottom although the user never went there.
+                this.reapplyInitialAnchor();
+            } else if (isPositioned && this.wasScrolledToBottom) {
                 this.scrollToBottomOfMessages();
             }
         });
+        USER_SCROLL_EVENTS.forEach((eventName) => el.addEventListener(eventName, this.releaseInitialAnchor, { passive: true }));
         this.resizeObserver.observe(el);
         const messageList = this.messageListContent()?.nativeElement;
         if (messageList) this.resizeObserver.observe(messageList);
@@ -340,32 +356,74 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
     }
 
+    /** Invalidate pending rendering and remove scroll listeners and layout observers owned by this message view. */
     ngOnDestroy(): void {
-        this.postRequestId++;
+        this.postPageRequest.invalidate();
         this.postPreparationId++;
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.scrollSubject.complete();
         this.content()?.nativeElement.removeEventListener('scroll', this.scrollListener);
+        USER_SCROLL_EVENTS.forEach((eventName) => this.content()?.nativeElement.removeEventListener(eventName, this.releaseInitialAnchor));
         this.mutationObserver?.disconnect();
         this.resizeObserver?.disconnect();
         if (this.bottomScrollFrame !== undefined) window.cancelAnimationFrame(this.bottomScrollFrame);
         if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
     }
 
+    /**
+     * Prioritizes explicit post navigation, then the first unread message on opening. Fully read conversations
+     * open at the newest message; saved positions preserve an active reader or an unloaded first-unread target.
+     */
     private scrollToStoredId() {
         let savedScrollId: number | undefined;
         if (this.focusOnPostId) {
             savedScrollId = this.focusOnPostId;
         } else {
+            const firstUnreadPostId = this.firstUnreadPostIdToOpenAt();
+            if (firstUnreadPostId !== undefined) {
+                requestAnimationFrame(() => this.goToLastSelectedElement(firstUnreadPostId, false, true));
+                return;
+            }
+            if (!this.canStartSaving && !this.searchText && this.unreadPostsCount() === 0) {
+                void this.goToLastSelectedElement(0, false);
+                return;
+            }
             const activeConversationId = this._activeConversation()?.id;
             savedScrollId = activeConversationId ? this.sessionStorageService.retrieve<number>(this.sessionStorageKey + activeConversationId) : undefined;
         }
         if (savedScrollId && (!this.searchText || this.focusOnPostId !== undefined)) {
-            requestAnimationFrame(() => this.goToLastSelectedElement(savedScrollId, this.isOpenThreadOnFocus));
+            // A reader at the new-messages line keeps the line, not the post below it, at the top when a message arrives.
+            const isAtNewMessagesLine = this.focusOnPostId === undefined && savedScrollId === this.firstUnreadPostId();
+            requestAnimationFrame(() =>
+                isAtNewMessagesLine
+                    ? this.goToLastSelectedElement(savedScrollId, this.isOpenThreadOnFocus, true)
+                    : this.goToLastSelectedElement(savedScrollId, this.isOpenThreadOnFocus),
+            );
         } else {
             void this.goToLastSelectedElement(0, false);
         }
+    }
+
+    /**
+     * The first unread post when the list should open at it, instead of at the stored position or the bottom.
+     * <p>
+     * Only the initial positioning does so: afterwards the position the reader is at is the one to keep, and a message
+     * that arrives must not pull them back to the first unread one. It also needs the first unread post to really be the
+     * first one: either an older, read post is loaded, or nothing older exists. With more unread messages than the
+     * loaded page holds, the first unread message is on an older page, and the oldest loaded post must not be presented
+     * as the start of the unread ones.
+     */
+    private firstUnreadPostIdToOpenAt(): number | undefined {
+        const firstUnreadPostId = this.firstUnreadPostId();
+        const lastReadDate = this.displayedLastReadDate();
+        if (this.canStartSaving || this.searchText || firstUnreadPostId === undefined || !lastReadDate) {
+            return undefined;
+        }
+        const allPosts = this.allPosts();
+        const isEverythingLoaded = allPosts.length >= this.totalNumberOfPosts();
+        const hasLoadedReadPost = allPosts.some((post) => !post.creationDate?.isAfter(lastReadDate));
+        return isEverythingLoaded || hasLoadedReadPost ? firstUnreadPostId : undefined;
     }
 
     private onActiveConversationChange() {
@@ -391,6 +449,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.onSearch();
             // the scroll state of the previously opened conversation does not apply to the new one
             this.wasScrolledToBottom = false;
+            this.initialAnchor = undefined;
             this.createEmptyPost();
             this.communicationService.fetchAllPinnedPosts(activeConversation.id!).subscribe({
                 next: (pinnedPosts: Post[]) => {
@@ -433,9 +492,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private groupPosts(preparationId = this.postPreparationId): void {
         if (preparationId !== this.postPreparationId) return;
         // Forwarded-source lookups leave the old groups visible; include reader movement during those lookups too.
-        if (this.pendingPageScrollDistance !== undefined) {
-            const element = this.content()?.nativeElement;
-            this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
+        if (this.postPageRequest.pendingScrollDistance !== undefined) {
+            this.postPageRequest.captureScrollDistance(this.content()?.nativeElement);
         }
         // If there are no posts, clear groupedPosts and exit.
         if (!this.posts() || this.posts().length === 0) {
@@ -706,7 +764,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
         // Navigation/restoration must keep looking for its target as pages arrive; only reader-driven pagination keeps a viewport anchor.
-        this.preserveScrollOnNextPage = this.canStartSaving && this.focusOnPostId === undefined;
+        this.postPageRequest.preserveScrollOnNextPage = this.canStartSaving && this.focusOnPostId === undefined;
         const previousPage = this.page;
         this.page += 1;
         this.fetchPosts(false, previousPage);
@@ -720,26 +778,21 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.captureScrolledToBottom();
             }
             this.isFetchingPosts.set(true);
-            const requestId = ++this.postRequestId;
-            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation(), {
-                beforeApply: () => {
-                    if (requestId !== this.postRequestId || !this.preserveScrollOnNextPage) return;
-                    // Capture only for the requested response, after any reader movement and intervening live updates.
-                    const element = this.content()?.nativeElement;
-                    this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
-                    this.preserveScrollOnNextPage = false;
-                },
-                complete: (applied) => {
-                    if (requestId !== this.postRequestId) return;
-                    this.isFetchingPosts.set(false);
-                    this.preserveScrollOnNextPage = false;
-                    if (!applied) {
-                        this.page = previousPage;
-                        this.pendingPageScrollDistance = undefined;
-                    }
-                    // Position only after grouped posts (including forwarded sources) have rendered.
-                },
-            });
+            this.communicationService.getFilteredPosts(
+                this.currentPostContextFilter,
+                forceUpdate,
+                this._activeConversation(),
+                this.postPageRequest.callbacks(
+                    () => this.content()?.nativeElement,
+                    (applied) => {
+                        this.isFetchingPosts.set(false);
+                        if (!applied) {
+                            this.page = previousPage;
+                        }
+                        // Position only after grouped posts (including forwarded sources) have rendered.
+                    },
+                ),
+            );
         }
     }
 
@@ -749,8 +802,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.restoringPageScroll = false;
         this.page = 1;
         this.canStartSaving = false;
-        this.pendingPageScrollDistance = undefined;
-        this.preserveScrollOnNextPage = false;
+        this.postPageRequest.pendingScrollDistance = undefined;
+        this.postPageRequest.preserveScrollOnNextPage = false;
         this.fetchPosts(true);
     }
 
@@ -794,9 +847,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!el) {
             return;
         }
-        if (this.pendingPageScrollDistance !== undefined) {
-            const distance = this.pendingPageScrollDistance;
-            this.pendingPageScrollDistance = undefined;
+        if (this.postPageRequest.pendingScrollDistance !== undefined) {
+            const distance = this.postPageRequest.pendingScrollDistance;
+            this.postPageRequest.pendingScrollDistance = undefined;
             this.restoringPageScroll = true;
             this.pageScrollFrame = requestAnimationFrame(() => {
                 this.pageScrollFrame = undefined;
@@ -816,6 +869,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     scrollToBottomOfMessages() {
         if (this.bottomScrollFrame !== undefined) window.cancelAnimationFrame(this.bottomScrollFrame);
+        this.initialAnchor = undefined;
         this.bottomScrollFrame = requestAnimationFrame(() => {
             this.bottomScrollFrame = undefined;
             const el = this.content()?.nativeElement;
@@ -845,7 +899,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.scrollToBottomOfMessages();
     }
 
-    async goToLastSelectedElement(lastScrollPosition: number, isOpenThread: boolean) {
+    /**
+     * Scrolls to a post, or to the bottom for the position 0, and holds that position while the content around it settles.
+     *
+     * @param lastScrollPosition the id of the post to scroll to, or 0 for the bottom
+     * @param isOpenThread whether to open the thread of the post
+     * @param alignToUnreadLine whether to put the new-messages line in front of the post at the top, instead of the post itself
+     */
+    async goToLastSelectedElement(lastScrollPosition: number, isOpenThread: boolean, alignToUnreadLine = false) {
         if (!lastScrollPosition) {
             this.scrollToBottomOfMessages();
             this.canStartSaving = true;
@@ -857,12 +918,18 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!element) {
             this.fetchNextPage();
         } else {
-            // We scroll to the element with a slight buffer to ensure its fully visible (-10)
             const containerEl = this.content()?.nativeElement;
             if (this.bottomScrollFrame !== undefined) window.cancelAnimationFrame(this.bottomScrollFrame);
             this.bottomScrollFrame = undefined;
             if (containerEl) {
-                containerEl.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
+                this.alignToPost(containerEl, element.elementRef.nativeElement, alignToUnreadLine);
+                this.initialAnchor = { postId: lastScrollPosition, alignToUnreadLine };
+                // The debounced saving would leave the old stored position in place for a moment, and a message arriving in that
+                // moment would restore it, pulling the list away from the line it was just opened at.
+                const activeConversationId = this._activeConversation()?.id;
+                if (alignToUnreadLine && activeConversationId) {
+                    this.sessionStorageService.store<number>(this.sessionStorageKey + activeConversationId, lastScrollPosition);
+                }
                 // A ResizeObserver can run before the native scroll event. Historical navigation must stop bottom-following synchronously.
                 this.captureScrolledToBottom();
             }
@@ -879,6 +946,33 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
             this.focusOnPostId = undefined;
             this.isOpenThreadOnFocus = false;
+        }
+    }
+
+    /**
+     * Puts a post at the top of the list with a slight buffer to ensure it is fully visible (-10), or the new-messages line
+     * in front of it, when that is asked for and rendered, with a smaller buffer.
+     */
+    private alignToPost(containerEl: HTMLElement, postElement: HTMLElement, alignToUnreadLine: boolean) {
+        const unreadLine = alignToUnreadLine ? this.newMessagesLineOf(postElement) : undefined;
+        containerEl.scrollTop = unreadLine ? Math.max(0, unreadLine.offsetTop - NEW_MESSAGES_LINE_MARGIN_PX) : Math.max(0, postElement.offsetTop - 10);
+    }
+
+    // the line sits in front of the post item that holds the post, see the template
+    /** Find the separator immediately before a post when aligning the first unread message. */
+    private newMessagesLineOf(postElement: HTMLElement): HTMLElement | undefined {
+        const line = postElement.closest('.post-item')?.previousElementSibling;
+        return line?.classList.contains('new-messages-separator') ? (line as HTMLElement) : undefined;
+    }
+
+    /** Restore the opening post or separator after layout changes while the reader still owns no scroll position. */
+    private reapplyInitialAnchor() {
+        const anchor = this.initialAnchor;
+        const containerEl = this.content()?.nativeElement;
+        const element = anchor ? this.messages().find((message) => message.post().id === anchor.postId) : undefined;
+        if (anchor && containerEl && element) {
+            this.alignToPost(containerEl, element.elementRef.nativeElement, anchor.alignToUnreadLine);
+            this.captureScrolledToBottom();
         }
     }
 
@@ -930,12 +1024,18 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * and were not authored by the current user (i.e. true unread posts).
      */
     private getUnreadPosts(): Post[] {
-        const lastReadDate = this._activeConversation()?.lastReadDate;
+        const lastReadDate = this.displayedLastReadDate();
         if (!lastReadDate || !this.allPosts()?.length) {
             return [];
         }
 
         return getUnreadPostsByLastReadDate(this.currentUser, this.allPosts(), lastReadDate);
+    }
+
+    /** Keep the opening divider stable through automatic reads, but honor a new explicit unread boundary. */
+    private displayedLastReadDate() {
+        const conversation = this._activeConversation();
+        return this.courseConversationsService.isConversationMarkedAsUnread(conversation?.id) ? conversation?.lastReadDate : this.openingLastReadDate();
     }
 
     /**

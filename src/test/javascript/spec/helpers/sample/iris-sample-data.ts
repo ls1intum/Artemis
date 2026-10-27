@@ -8,7 +8,6 @@ import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/sha
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 const map = new Map<string, any>();
@@ -35,27 +34,11 @@ export const mockServerMessage2 = {
     sentAt: dayjs(),
 } as IrisAssistantMessage;
 
-export const mockServerMessageWithMemories = {
-    sender: IrisSender.LLM,
-    id: 3,
-    content: [mockMessageContent],
-    sentAt: dayjs(),
-    accessedMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
-} as IrisAssistantMessage;
-
 export const mockClientMessage = {
     id: 2,
     sender: IrisSender.USER,
     content: [mockMessageContent],
     sentAt: dayjs(),
-} as IrisUserMessage;
-
-export const mockClientMessageWithMemories = {
-    id: 5,
-    sender: IrisSender.USER,
-    content: [mockMessageContent],
-    sentAt: dayjs(),
-    createdMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
 } as IrisUserMessage;
 
 // Wire-format message DTOs for WebSocket payloads (mirrors server IrisMessageResponseDTO)
@@ -66,27 +49,11 @@ const mockServerMessageDTO: IrisMessageResponseDTO = {
     sentAt: dayjs().toISOString(),
 };
 
-const mockServerMessageWithMemoriesDTO: IrisMessageResponseDTO = {
-    sender: IrisSender.LLM,
-    id: 3,
-    content: [{ type: 'text', textContent: 'Hello, world!' }],
-    sentAt: dayjs().toISOString(),
-    accessedMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
-};
-
 const mockClientMessageDTO: IrisMessageResponseDTO = {
     id: 2,
     sender: IrisSender.USER,
     content: [{ type: 'text', textContent: 'Hello, world!' }],
     sentAt: dayjs().toISOString(),
-};
-
-const mockClientMessageWithMemoriesDTO: IrisMessageResponseDTO = {
-    id: 5,
-    sender: IrisSender.USER,
-    content: [{ type: 'text', textContent: 'Hello, world!' }],
-    sentAt: dayjs().toISOString(),
-    createdMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
 };
 
 export const mockWebsocketServerMessage: IrisChatWebsocketDTO = {
@@ -95,20 +62,9 @@ export const mockWebsocketServerMessage: IrisChatWebsocketDTO = {
     runId: 'run-1',
 };
 
-export const mockWebsocketServerMessageWithMemories: IrisChatWebsocketDTO = {
-    type: IrisChatWebsocketPayloadType.MESSAGE,
-    message: mockServerMessageWithMemoriesDTO,
-    runId: 'run-1',
-};
-
 export const mockWebsocketClientMessage: IrisChatWebsocketDTO = {
     type: IrisChatWebsocketPayloadType.MESSAGE,
     message: mockClientMessageDTO,
-};
-
-export const mockWebsocketClientMessageWithMemories: IrisChatWebsocketDTO = {
-    type: IrisChatWebsocketPayloadType.MESSAGE,
-    message: mockClientMessageWithMemoriesDTO,
 };
 
 export const mockWebsocketStatusMessage = {
