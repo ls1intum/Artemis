@@ -15,14 +15,14 @@ export interface CodeGenerationRequest {
     selectedFeedbackThreadIds?: Array<number>;
 }
 
-export type CodeGenerationRequestRepositoryTypeEnum = 'exercise' | 'solution' | 'tests' | 'auxiliary' | 'user';
+export type CodeGenerationRequestRepositoryTypeEnum = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY' | 'USER';
 
 export const CodeGenerationRequestRepositoryTypeEnum = {
-    Exercise: 'exercise' as const,
-    Solution: 'solution' as const,
-    Tests: 'tests' as const,
-    Auxiliary: 'auxiliary' as const,
-    User: 'user' as const,
+    Template: 'TEMPLATE' as const,
+    Solution: 'SOLUTION' as const,
+    Tests: 'TESTS' as const,
+    Auxiliary: 'AUXILIARY' as const,
+    User: 'USER' as const,
 } as const;
 
-export const CodeGenerationRequestRepositoryTypeEnumValues = ['exercise', 'solution', 'tests', 'auxiliary', 'user'] as const;
+export const CodeGenerationRequestRepositoryTypeEnumValues = ['TEMPLATE', 'SOLUTION', 'TESTS', 'AUXILIARY', 'USER'] as const;

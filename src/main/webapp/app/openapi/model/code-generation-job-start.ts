@@ -14,14 +14,14 @@ export interface CodeGenerationJobStart {
     repositoryType?: CodeGenerationJobStartRepositoryTypeEnum;
 }
 
-export type CodeGenerationJobStartRepositoryTypeEnum = 'exercise' | 'solution' | 'tests' | 'auxiliary' | 'user';
+export type CodeGenerationJobStartRepositoryTypeEnum = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY' | 'USER';
 
 export const CodeGenerationJobStartRepositoryTypeEnum = {
-    Exercise: 'exercise' as const,
-    Solution: 'solution' as const,
-    Tests: 'tests' as const,
-    Auxiliary: 'auxiliary' as const,
-    User: 'user' as const,
+    Template: 'TEMPLATE' as const,
+    Solution: 'SOLUTION' as const,
+    Tests: 'TESTS' as const,
+    Auxiliary: 'AUXILIARY' as const,
+    User: 'USER' as const,
 } as const;
 
-export const CodeGenerationJobStartRepositoryTypeEnumValues = ['exercise', 'solution', 'tests', 'auxiliary', 'user'] as const;
+export const CodeGenerationJobStartRepositoryTypeEnumValues = ['TEMPLATE', 'SOLUTION', 'TESTS', 'AUXILIARY', 'USER'] as const;

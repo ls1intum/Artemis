@@ -1,4 +1,4 @@
-import { OnDestroy, Service, inject, signal } from '@angular/core';
+import { OnDestroy, Service, Signal, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
@@ -20,6 +20,16 @@ type CommentThreadResponseType = HttpResponse<CommentThread>;
 type CommentResponseType = HttpResponse<Comment>;
 type ReviewCommentSuccessCallback = () => void;
 
+/** What the editor that owns the Hyperion run state tells the review threads about AI adaptation. */
+export interface ReviewAdaptationAvailability {
+    /** Whether this deployment offers whole-exercise adaptation for the open exercise. */
+    offered: Signal<boolean>;
+    /** Whether feedback selection is available, including legacy code generation. */
+    feedbackOffered?: Signal<boolean>;
+    /** Translation key for why adaptation cannot start right now; `undefined` when it can. */
+    blockedReason: Signal<string | undefined>;
+}
+
 @Service()
 export class ExerciseReviewCommentService implements OnDestroy {
     private http = inject(HttpClient);
@@ -27,7 +37,6 @@ export class ExerciseReviewCommentService implements OnDestroy {
     private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
 
     public readonly resourceUrl = 'api/exercise/exercises';
-
     private activeExerciseId?: number;
     private synchronizationSubscription?: Subscription;
     private subscribedExerciseId?: number;
@@ -42,10 +51,26 @@ export class ExerciseReviewCommentService implements OnDestroy {
     readonly threads = signal<CommentThread[]>([]);
 
     /**
-     * Local-only selection of review threads that should be forwarded to Hyperion code generation as feedback.
+     * Local-only selection of review threads that should be forwarded to Hyperion exercise adaptation as feedback.
      * This state is scoped to the active exercise/editor session and is never persisted independently.
      */
     readonly selectedFeedbackThreadIds = signal<number[]>([]);
+
+    private readonly adaptation = signal<ReviewAdaptationAvailability | undefined>(undefined);
+    /** Whether this editor offers whole-exercise adaptation. */
+    readonly adaptationOffered = computed(() => this.adaptation()?.offered() ?? false);
+    readonly feedbackSelectionOffered = computed(() => this.adaptation()?.feedbackOffered?.() ?? this.adaptationOffered());
+    /** Why the feedback selection is disabled right now, or `undefined` when it is available. */
+    readonly adaptationBlockedReason = computed(() => this.adaptation()?.blockedReason());
+
+    /**
+     * Lets the editor container that knows the Hyperion feature and run state drive what the thread widgets offer. The
+     * widgets are created deep inside generic editors, so this shared service is how the state reaches them without
+     * threading Hyperion inputs through every component in between.
+     */
+    connectAdaptation(availability: ReviewAdaptationAvailability): void {
+        this.adaptation.set(availability);
+    }
 
     /**
      * Sets the active exercise context and clears thread state when it changes.
@@ -91,7 +116,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
                     return;
                 }
-                this.threads.set(this.applyQueuedSyncUpdates(threads, this.pendingSyncUpdates));
+                this.setThreads(this.applyQueuedSyncUpdates(threads, this.pendingSyncUpdates));
                 this.pendingSyncUpdates = [];
                 this.isReloading = false;
                 this.ensureSynchronizationSubscription(exerciseId);
@@ -111,7 +136,18 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
-     * Toggles whether a thread should be included as feedback in the next Hyperion generation request.
+     * The currently selected feedback threads, resolved against the loaded threads in selection order. Threads that are no longer loaded are dropped. Derived from
+     * {@link selectedFeedbackThreadIds} — the single source of truth — so callers (e.g. the adapt dialog) never rebuild the selection state.
+     */
+    readonly selectedFeedbackThreads = computed<CommentThread[]>(() => {
+        const threadsById = new Map(this.threads().map((thread) => [thread.id, thread]));
+        return this.selectedFeedbackThreadIds()
+            .map((threadId) => threadsById.get(threadId))
+            .filter((thread): thread is CommentThread => thread !== undefined);
+    });
+
+    /**
+     * Toggles whether a thread should be included as feedback in the next Hyperion exercise adaptation request.
      *
      * @param threadId The thread id to toggle.
      */
@@ -125,7 +161,14 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
-     * Checks whether a thread is currently selected for Hyperion code generation.
+     * Clears the local feedback selection after it has been consumed by an adaptation run.
+     */
+    clearSelectedFeedback(): void {
+        this.selectedFeedbackThreadIds.set([]);
+    }
+
+    /**
+     * Checks whether a thread is currently selected for Hyperion exercise adaptation.
      *
      * @param threadId The thread id to inspect.
      * @returns True if the thread is part of the local feedback selection.

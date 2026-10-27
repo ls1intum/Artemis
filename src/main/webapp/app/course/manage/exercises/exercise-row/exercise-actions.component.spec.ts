@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { afterEach, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
@@ -14,6 +14,8 @@ import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/qui
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ExerciseGenerationCapabilities } from 'app/openapi/model/exercise-generation-capabilities';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -25,7 +27,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, PROFILE_LOCALCI } from 'app/app.constants';
+import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
@@ -66,6 +70,7 @@ describe('ExerciseActionsComponent', () => {
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ExerciseService),
+                MockProvider(AlertService),
                 EventManager,
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),
@@ -75,6 +80,7 @@ describe('ExerciseActionsComponent', () => {
                 MockProvider(DeleteDialogService),
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: GenerationCapabilityRequestsService, useValue: { describe: vi.fn(() => of({ canCreateVariant: true })) } },
             ],
         })
             .overrideComponent(ExerciseActionsComponent, {
@@ -101,20 +107,122 @@ describe('ExerciseActionsComponent', () => {
 
     afterEach(() => vi.restoreAllMocks());
 
+    describe('on-demand AI variant preflight', () => {
+        const programming = () => {
+            const exercise = new ProgrammingExercise(course, undefined);
+            exercise.id = 5;
+            exercise.isAtLeastEditor = true;
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.projectType = ProjectType.PLAIN_GRADLE;
+            return exercise;
+        };
+        const action = () => component.mainActions().find((item) => item.id === 'create-variant-ai');
+        let requests: GenerationCapabilityRequestsService;
+        let warning: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            fixture.destroy();
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation(
+                (feature) => feature === MODULE_FEATURE_HYPERION || feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+            );
+            fixture = TestBed.createComponent(ExerciseActionsComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('exercise', programming());
+            fixture.componentRef.setInput('courseId', 1);
+            fixture.componentRef.setInput('course', course);
+            requests = TestBed.inject(GenerationCapabilityRequestsService);
+            warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+        });
+
+        it('renders rows without requests and leaves quiz variants synchronous', () => {
+            TestBed.tick();
+            expect(action()).toBeDefined();
+            expect(requests.describe).not.toHaveBeenCalled();
+            fixture.componentRef.setInput('exercise', { id: 8, type: ExerciseType.QUIZ, isAtLeastEditor: true } as QuizExercise);
+            action()!.onClick!();
+            expect(component['aiVariantModalVisible']()).toBe(true);
+            expect(requests.describe).not.toHaveBeenCalled();
+        });
+
+        it('checks once on click, ignores rapid clicks, and opens only after approval', () => {
+            const response = new Subject<ExerciseGenerationCapabilities>();
+            vi.mocked(requests.describe).mockReturnValue(response);
+            const originalAction = action()!;
+            originalAction.onClick!();
+            originalAction.onClick!();
+            expect(requests.describe).toHaveBeenCalledExactlyOnceWith(5);
+            expect(action()!.disabled).toBe(true);
+            expect(component.mainActions().find((item) => item.id === 'edit')!.disabled).not.toBe(true);
+            expect(component['aiVariantModalVisible']()).toBe(false);
+            response.next({ canCreateVariant: true });
+            expect(component['aiVariantModalVisible']()).toBe(true);
+            expect(action()!.disabled).not.toBe(true);
+            originalAction.onClick!();
+            expect(requests.describe).toHaveBeenCalledTimes(1);
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it.each(['denied', 'error'])('keeps the wizard closed and clears pending when the preflight is %s', (outcome) => {
+            vi.mocked(requests.describe).mockReturnValue(
+                outcome === 'denied' ? of({ canCreateVariant: false, restriction: 'generationHarnessUnsupported' }) : throwError(() => new HttpErrorResponse({ status: 503 })),
+            );
+            action()!.onClick!();
+            expect(requests.describe).toHaveBeenCalledExactlyOnceWith(5);
+            expect(component['aiVariantModalVisible']()).toBe(false);
+            expect(action()!.disabled).not.toBe(true);
+            expect(warning).toHaveBeenCalledExactlyOnceWith(`artemisApp.hyperion.generation.blocker.${outcome === 'denied' ? 'harnessUnsupported' : 'capabilitiesUnavailable'}`);
+        });
+
+        it('does not open a different row after its input changes during the request', () => {
+            const response = new Subject<ExerciseGenerationCapabilities>();
+            vi.mocked(requests.describe).mockReturnValue(response);
+            action()!.onClick!();
+            fixture.componentRef.setInput('exercise', { ...programming(), id: 9 });
+            response.next({ canCreateVariant: true });
+            expect(component['aiVariantModalVisible']()).toBe(false);
+            expect(action()!.disabled).not.toBe(true);
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('unsubscribes on destruction without opening a wizard', () => {
+            const response = new Subject<ExerciseGenerationCapabilities>();
+            vi.mocked(requests.describe).mockReturnValue(response);
+            action()!.onClick!();
+            fixture.destroy();
+            response.next({ canCreateVariant: true });
+            expect(component['aiVariantModalVisible']()).toBe(false);
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('keeps authorization and project prefilters without capability requests', () => {
+            fixture.componentRef.setInput('exercise', { ...programming(), isAtLeastEditor: false });
+            expect(action()).toBeUndefined();
+            fixture.componentRef.setInput('exercise', { ...programming(), programmingLanguage: ProgrammingLanguage.PYTHON });
+            expect(action()).toBeUndefined();
+            expect(requests.describe).not.toHaveBeenCalled();
+        });
+    });
+
     describe('mainActions', () => {
         it('offers the AI variant action for programming exercises only when Hyperion is enabled', () => {
             const programming = textExercise({ id: 5, type: ExerciseType.PROGRAMMING, isAtLeastEditor: true });
+            Object.assign(programming, { programmingLanguage: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE });
             fixture.componentRef.setInput('exercise', programming);
             expect(component.mainActions().map((a) => a.id)).not.toContain('create-variant-ai');
 
-            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation(
+                (feature) => feature === MODULE_FEATURE_HYPERION || feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+            );
             const hyperionFixture = TestBed.createComponent(ExerciseActionsComponent);
             hyperionFixture.componentRef.setInput('exercise', programming);
             hyperionFixture.componentRef.setInput('courseId', 1);
             hyperionFixture.componentRef.setInput('course', course);
+            TestBed.tick();
+            expect(TestBed.inject(GenerationCapabilityRequestsService).describe).not.toHaveBeenCalled();
             const variantAction = hyperionFixture.componentInstance.mainActions().find((a) => a.id === 'create-variant-ai');
             expect(variantAction).toBeDefined();
             variantAction!.onClick!();
+            expect(TestBed.inject(GenerationCapabilityRequestsService).describe).toHaveBeenCalledExactlyOnceWith(5);
             expect(hyperionFixture.componentInstance['aiVariantModalVisible']()).toBe(true);
 
             hyperionFixture.componentRef.setInput('exercise', textExercise({ id: 5, type: ExerciseType.PROGRAMMING, isAtLeastEditor: false }));
