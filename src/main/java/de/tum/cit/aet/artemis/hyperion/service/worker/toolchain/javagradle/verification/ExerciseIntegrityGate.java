@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
@@ -591,11 +593,12 @@ public final class ExerciseIntegrityGate {
     /**
      * Checks the immutable Java harness before authoring, without imposing conventions on existing test sources.
      *
+     * @param buildTool  the build tool of the exercise's harness
      * @param testsFiles captured tests repository
      * @return unsupported or missing Ares 2 harness components
      */
-    public static List<String> javaAresHarnessReasons(Map<String, String> testsFiles) {
-        return AresConventions.harnessReasons(testsFiles);
+    public static List<String> javaAresHarnessReasons(GenerationBuildTool buildTool, Map<String, String> testsFiles) {
+        return AresTestHarness.reasons(buildTool, testsFiles);
     }
 
     /**
