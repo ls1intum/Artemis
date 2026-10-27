@@ -370,7 +370,7 @@
 
     .unified-feedback-header:has(.unified-feedback-title-input) {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto;
         align-items: end;
 
         .unified-feedback-header-left,
@@ -410,7 +410,7 @@
     .unified-feedback-assessment-points {
         display: grid;
         grid-template-columns: 2rem minmax(0, 1fr) 2rem;
-        width: 10rem;
+        width: 5rem;
         max-width: 100%;
         min-width: 0;
 
