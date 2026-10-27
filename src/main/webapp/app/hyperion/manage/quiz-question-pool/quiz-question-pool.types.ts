@@ -1,4 +1,4 @@
-import { GeneratedQuestion, GeneratedQuestionType, GenerationLanguage } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { GeneratedQuestion, GeneratedQuestionType, GenerationLanguage } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 
 export type PoolFailureMode = 'FACTUAL_ERROR' | 'AMBIGUOUS_CORRECT_ANSWER' | 'OFF_TOPIC' | 'NEAR_DUPLICATE' | 'ILL_FORMED_DISTRACTORS';
 

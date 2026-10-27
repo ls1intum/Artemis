@@ -5,7 +5,7 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { QuizAiGeneratedQuestionCardComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generated-question-card/quiz-ai-generated-question-card.component';
+import { QuizAiGeneratedQuestionCardComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generated-question-card/quiz-ai-generated-question-card.component';
 import { PoolFailureMode, PoolFilterDecision, PoolFilterVerdict, PoolQuestion, PoolReviewState, isFlagged } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
 
 export interface PoolReviewRequest {

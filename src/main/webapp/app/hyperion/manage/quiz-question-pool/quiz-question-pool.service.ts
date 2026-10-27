@@ -6,7 +6,7 @@ import { HyperionQuizQuestionPoolApi } from 'app/openapi/api/hyperion-quiz-quest
 import { QuizQuestionPoolItem } from 'app/openapi/model/quiz-question-pool-item';
 import { QuizQuestionPoolProgress } from 'app/openapi/model/quiz-question-pool-progress';
 import { HyperionCourseSettings } from 'app/openapi/model/hyperion-course-settings';
-import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { PoolBuildStart, PoolProgress, PoolQuestion, PoolReviewState, PoolSettings } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
 
 @Service()
