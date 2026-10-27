@@ -184,6 +184,18 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         assertIndependentCards();
     });
 
+    it('excludes canceled drafts from the guard before Angular removes their components', async () => {
+        await settle();
+        comp.addNewFeedback(2);
+        await settle();
+        expect(comp.hasUnsavedInlineFeedback()).toBe(true);
+
+        comp.discardUnsavedInlineFeedback();
+
+        expect(comp.inlineFeedbackComponents()).toHaveLength(1);
+        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
+    });
+
     it('focuses the new draft when the keyboard shortcut is used on a line with existing feedback', async () => {
         fixture.componentRef.setInput('feedbacks', [
             {

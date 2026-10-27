@@ -44,6 +44,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
 
     public readonly criteria = input.required<GradingCriterion[]>();
     readonly readonly = input<boolean>();
+    readonly allowArming = input(true);
     readonly allowDrop = computed(() => !this.readonly());
     // Icons
     faInfoCircle = faInfoCircle;
@@ -202,7 +203,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * Selectable cards use {@link armInstruction} on their dedicated button instead (nested controls forbid role=button).
      */
     onInstructionKeydown(event: KeyboardEvent, instruction: GradingInstruction): void {
-        if (this.selectable() || !this.isDraggable(instruction)) {
+        if (!this.allowArming() || this.selectable() || !this.isDraggable(instruction)) {
             return;
         }
         if (event.key !== 'Enter' && event.key !== ' ') {
@@ -219,7 +220,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     armInstruction(event: Event, instruction: GradingInstruction): void {
         event.preventDefault();
         event.stopPropagation();
-        if (!this.isDraggable(instruction)) {
+        if (!this.allowArming() || !this.isDraggable(instruction)) {
             return;
         }
         this.selectionService.toggleArmedInstruction(instruction);

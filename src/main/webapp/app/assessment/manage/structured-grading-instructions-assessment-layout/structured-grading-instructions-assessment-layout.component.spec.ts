@@ -171,6 +171,24 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.detectChanges();
         }
 
+        it('hides unsupported arming while keeping instruction applications and dragging available', () => {
+            fixture.componentRef.setInput('allowArming', false);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="arm-instruction"]')).toBeNull();
+            expect(comp.isDraggable(instruction)).toBe(true);
+            fixture.nativeElement.querySelector('[data-testid="increase-instruction-usage"]').click();
+            expect(host.applyInstruction).toHaveBeenCalledExactlyOnceWith(instruction);
+            comp.armInstruction(new Event('click'), instruction);
+
+            TestBed.inject(GradingInstructionSelectionService).unregister(host);
+            fixture.detectChanges();
+            const card = fixture.nativeElement.querySelector('#criterion-0-instruction-0') as HTMLElement;
+            expect(card.getAttribute('role')).toBeNull();
+            expect(card.getAttribute('tabindex')).toBeNull();
+            card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(TestBed.inject(GradingInstructionSelectionService).hasArmedInstruction()).toBe(false);
+        });
+
         it('supports arming, unarming and single-application stepper actions', () => {
             const arm = fixture.nativeElement.querySelector('[data-testid="arm-instruction"]') as HTMLButtonElement;
             arm.click();

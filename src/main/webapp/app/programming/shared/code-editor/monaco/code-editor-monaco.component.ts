@@ -114,7 +114,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly newFeedbackLines = signal<number[]>([]);
 
     hasUnsavedInlineFeedback(): boolean {
-        return this.newFeedbackLines().length > 0 || this.inlineFeedbackComponents().some((component) => component.hasUnsavedEdits());
+        return this.newFeedbackLines().length > 0 || this.inlineFeedbackComponents().some((component) => component.feedback() !== undefined && component.hasUnsavedEdits());
     }
 
     discardUnsavedInlineFeedback(): void {
