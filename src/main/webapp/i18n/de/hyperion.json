@@ -2,8 +2,8 @@
     "artemisApp": {
         "hyperion": {
             "quizQuestionPool": {
-                "title": "MCQ-Pool",
-                "sidebarTitle": "MCQ-Pool",
+                "title": "Smart Quizzes",
+                "sidebarTitle": "Smart Quizzes",
                 "intro": "Hyperion generiert Multiple-Choice-Fragen zu jeder Vorlesungseinheit, die mit einer Kompetenz dieses Kurses verknüpft ist, gestützt auf die Folien, das Transkript oder den Text der Einheit, und prüft jede Frage, bevor du sie siehst. Übernimm die Fragen, die du in Quizzen verwenden willst, und schließe die anderen aus. Die übernommenen Fragen ermöglichen später außerdem personalisiertes Lernen: Studierende üben mit Fragen, die auf ihre Stärken und Schwächen zugeschnitten sind.",
                 "progress": {
                     "title": "Pool",

@@ -371,7 +371,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.find((item) => item.title === 'Exams')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Competency Management')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'MCQ Pool')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Smart Quizzes')).toBeTruthy();
 
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
