@@ -18,7 +18,19 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
+type AssessmentLink = {
+    correctionRound: number;
+    result: Result | undefined;
+    action: 'assess' | 'open' | 'continue' | 'complaint';
+    severity: TumAetUiButtonSeverity;
+    labelKey: string;
+    link: string[] | undefined;
+    targetRound: number;
+    submissionId: number | undefined;
+    canCancel: boolean;
+};
 
 @Component({
     selector: 'jhi-manage-assessment-buttons',
@@ -48,7 +60,7 @@ export class ManageAssessmentButtonsComponent {
     readonly examMode = computed(() => !!this.exercise().exerciseGroup);
     readonly newManualResultAllowed = computed(() => areManualResultsAllowed(this.exercise()) && (!isPracticeMode(this.participation()) || this.examMode()));
     readonly correctionRoundIndices = computed(() => [...Array(this.correctionRoundsEnabled() ?? this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
-    readonly assessmentLinks = computed(() => [
+    readonly assessmentLinks = computed<AssessmentLink[]>(() => [
         ...this.correctionRoundIndices().flatMap((correctionRound) => {
             const result = this.resultForRound(correctionRound);
             const action = this.assessmentAction(correctionRound);
@@ -69,7 +81,7 @@ export class ManageAssessmentButtonsComponent {
                     correctionRound,
                     result,
                     action,
-                    severity: (action === 'assess' ? 'success' : action === 'continue' ? 'warn' : 'primary') as const,
+                    severity: action === 'assess' ? 'success' : action === 'continue' ? 'warn' : 'primary',
                     labelKey:
                         action === 'complaint'
                             ? 'artemisApp.exerciseAssessmentDashboard.showComplaint'
@@ -79,10 +91,10 @@ export class ManageAssessmentButtonsComponent {
                     submissionId: this.participation().submissions?.[0]?.id,
                     canCancel:
                         canManageDraft && this.newManualResultAllowed() && !!result?.assessmentType && !result.completionDate && result.assessmentType !== AssessmentType.AUTOMATIC,
-                },
+                } satisfies AssessmentLink,
             ];
         }),
-        ...this.olderAssessmentDrafts().map((draft) => {
+        ...this.olderAssessmentDrafts().map((draft): AssessmentLink => {
             const result = new Result();
             result.id = draft.resultId;
             result.assessmentType = AssessmentType.MANUAL;
@@ -90,7 +102,7 @@ export class ManageAssessmentButtonsComponent {
             return {
                 correctionRound,
                 result,
-                action: 'continue' as const,
+                action: 'continue',
                 severity: 'warn',
                 labelKey: 'artemisApp.assessment.dashboard.actions.' + (this.examMode() ? 'examCorrectionRound.' : '') + 'continue',
                 link: this.getAssessmentLink(correctionRound, draft.submissionId, draft.resultId),
