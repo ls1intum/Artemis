@@ -92,6 +92,7 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -1036,11 +1037,13 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         Submission quizSubmission = createSubmittedQuizSubmissionWithResult(quizExercise, TEST_PREFIX + "student1");
         Result result = quizSubmission.getLatestResult();
+        Map<Long, SubmittedAnswerFromStudentDTO> answersBeforeDeletion = persistedAnswers(quizSubmission.getId());
 
         request.delete(quizResultPath(quizSubmission, result), HttpStatus.OK);
 
         assertThat(resultRepository.findById(result.getId())).isEmpty();
-        assertThat(submissionRepository.findById(quizSubmission.getId())).as("only the result is deleted, the student's answers stay").isPresent();
+        assertThat(persistedAnswers(quizSubmission.getId())).as("deleting the result preserves the student's answers and selections").usingRecursiveComparison()
+                .ignoringCollectionOrder().isEqualTo(answersBeforeDeletion);
         // open statistics pages reload when they are notified
         verify(websocketMessagingService, timeout(5000)).sendMessage(topic("/topic/statistic/" + quizExercise.getId()), eq(quizExercise.getId()));
     }
@@ -1081,6 +1084,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
         participationUtilService.addSubmission(quizExercise, quizSubmission, login);
         return participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+    }
+
+    private Map<Long, SubmittedAnswerFromStudentDTO> persistedAnswers(long submissionId) {
+        return quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(submissionId).getSubmittedAnswers().stream()
+                .collect(Collectors.toMap(SubmittedAnswer::getId, SubmittedAnswerFromStudentDTO::of));
     }
 
     private Set<Long> answeredQuestionIds(long submissionId) {
