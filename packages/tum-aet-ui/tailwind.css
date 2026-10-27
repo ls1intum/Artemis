@@ -96,34 +96,34 @@
 }
 
 .tumaet-ui-button-group > tumaet-ui-button,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn) {
+.tumaet-ui-button-group > button {
     margin: 0;
 }
 
 .tumaet-ui-button-group > tumaet-ui-button:not(:first-of-type, :last-of-type) .tumaet-ui-btn,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn, :first-of-type, :last-of-type) {
+.tumaet-ui-button-group > button:not(:first-of-type, :last-of-type) {
     border-radius: 0;
 }
 
 .tumaet-ui-button-group > tumaet-ui-button:first-of-type:not(:only-of-type) .tumaet-ui-btn,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn):first-of-type:not(:only-of-type) {
+.tumaet-ui-button-group > button:first-of-type:not(:only-of-type) {
     border-start-end-radius: 0;
     border-end-end-radius: 0;
 }
 
 .tumaet-ui-button-group > tumaet-ui-button:last-of-type:not(:only-of-type) .tumaet-ui-btn,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn):last-of-type:not(:only-of-type) {
+.tumaet-ui-button-group > button:last-of-type:not(:only-of-type) {
     border-start-start-radius: 0;
     border-end-start-radius: 0;
 }
 
 .tumaet-ui-button-group > tumaet-ui-button:not(:last-of-type) .tumaet-ui-btn,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn):not(:last-of-type) {
+.tumaet-ui-button-group > button:not(:last-of-type) {
     border-inline-end: 0 none;
 }
 
 .tumaet-ui-button-group .tumaet-ui-btn:focus-visible,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn):focus-visible {
+.tumaet-ui-button-group > button:focus-visible {
     position: relative;
     z-index: 1;
 }

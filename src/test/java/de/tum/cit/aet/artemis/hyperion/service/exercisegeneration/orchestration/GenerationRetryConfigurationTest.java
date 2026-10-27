@@ -20,14 +20,15 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class GenerationRetryConfigurationTest {
 
     @ParameterizedTest
-    @CsvSource({ "0, 2, INCOMPLETE", "1, 0, PENDING", "0, , PENDING", "0, 3, PENDING", "1, , INCOMPLETE" })
-    void coreAdmissionUsesRetryPrecedenceWithoutAnOpenAiModel(int common, Integer chat, ExerciseGenerationAccountingState expected) {
+    @CsvSource({ "0, 2", "1, 0", "0, ", "0, 3", "1, ", "3, 3" })
+    void coreRetrySettingsDoNotChangeWorkerAccountingLifecycle(int common, Integer chat) {
         var runner = new ApplicationContextRunner().withInitializer(context -> {
             context.getEnvironment().setActiveProfiles("core", "localci", "localvc");
             context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance());
@@ -47,9 +48,14 @@ class GenerationRetryConfigurationTest {
             var exercise = new ProgrammingExercise();
             exercise.setId(1L);
 
-            jobs.startJob(owner, exercise, "test", GenerationMode.GENERATE);
+            String jobId = jobs.startJob(owner, exercise, "test", GenerationMode.GENERATE);
 
-            assertThat(jobs.getStatus(owner, exercise)).hasValueSatisfying(status -> assertThat(status.accountingState()).isEqualTo(expected));
+            assertThat(jobs.getStatus(owner, exercise)).hasValueSatisfying(status -> assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.PENDING));
+
+            jobs.recordEvent(exercise.getId(), jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "No model calls were made."), true);
+            jobs.sealTokenAccountingOnWorkerExit(exercise.getId(), jobId);
+
+            assertThat(jobs.getStatus(owner, exercise)).hasValueSatisfying(status -> assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.COMPLETE));
         });
     }
 
