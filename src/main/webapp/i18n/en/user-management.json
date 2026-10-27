@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "managedUserVM": {
+            "email": "Email",
             "password": "Password"
         },
         "userManagement": {

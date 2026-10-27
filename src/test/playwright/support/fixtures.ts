@@ -174,7 +174,9 @@ export type ArtemisRequests = {
 /**
  * Custom test object extended to use Artemis related fixtures.
  */
-export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
+export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests & { recoverNavigation: boolean }>({
+    // Navigation/request-count contracts must be able to observe one unmodified navigation.
+    recoverNavigation: [true, { option: true }],
     /**
      * Wrap `page.goto` with a lightweight Angular-render check. Under heavy parallel
      * multi-node load the SPA occasionally fails to bootstrap the route component on
@@ -190,7 +192,12 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
      * Net cost on healthy pages: a single sub-100ms locator check. Net benefit on broken
      * pages: ~10s reload that turns a deterministic test failure into a passing test.
      */
-    page: async ({ page }, use) => {
+    page: async ({ page, recoverNavigation }, use) => {
+        if (!recoverNavigation) {
+            await use(page);
+            return;
+        }
+
         // Unauthenticated routes (login / account / reset) do not render `#account-menu`
         // (the navbar template gates it on `isAuthenticated()`), so the render-check would
         // always go through the reload+10s grace path on those routes and burn budget for
