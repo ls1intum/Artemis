@@ -52,8 +52,8 @@ final class AgentConversationContext {
         if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
             return 0;
         }
-        Number promptTokens = response.getMetadata().getUsage().getPromptTokens();
-        return promptTokens == null ? 0 : promptTokens.longValue();
+        // Usage is null-marked: providers report a missing prompt count as zero, never as null.
+        return response.getMetadata().getUsage().getPromptTokens().longValue();
     }
 
     static long estimateTokens(List<Message> conversation, int from, int to) {

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -118,13 +119,11 @@ public class SandboxAgentTools implements SubmitVetoAware {
     private volatile GenerationStage currentStage;
 
     /** Root artifacts the current semantic repair may change; {@code null} outside a finding-scoped repair. */
-    @Nullable
-    private volatile Set<String> repairWritableRoots;
+    private final AtomicReference<Set<String>> repairWritableRoots = new AtomicReference<>();
 
-    private volatile SeededStructuralTests seededStructuralTests = SeededStructuralTests.EMPTY;
+    private final AtomicReference<SeededStructuralTests> seededStructuralTests = new AtomicReference<>(SeededStructuralTests.EMPTY);
 
-    @Nullable
-    private volatile Supplier<SeededStructuralTests> structuralOracleRefresh;
+    private final AtomicReference<Supplier<SeededStructuralTests>> structuralOracleRefresh = new AtomicReference<>();
 
     /** Makes {@link AgentLoopRunner} keep the loop going instead of ending the session on a rejected {@code submit}; cleared by {@link #consumeSubmitVeto()}. */
     private volatile boolean submitVetoed;
@@ -138,15 +137,13 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Nullable
     private volatile GenerationStage cachedPassingCheckStage;
 
-    @Nullable
-    private volatile StageCheckResult cachedPassingCheck;
+    private final AtomicReference<StageCheckResult> cachedPassingCheck = new AtomicReference<>();
 
     /**
      * The TESTS stage's most recent {@link AgentVerifyReport}, so the STATEMENT stage's binding check can resolve {@code [task]} names without a build of its own. Set
      * opportunistically by an in-loop TESTS check and authoritatively by {@link #recordLastTestsReport}.
      */
-    @Nullable
-    private volatile AgentVerifyReport lastTestsReport;
+    private final AtomicReference<AgentVerifyReport> lastTestsReport = new AtomicReference<>();
 
     public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerifier verifier, GenerationInput exercise) {
         this(sandbox, sessionId, verifier, exercise, Map.of(), false, null);
@@ -592,11 +589,11 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * @param stage the stage the orchestrator is about to run
      */
     public void enterStage(GenerationStage stage) {
-        this.repairWritableRoots = null;
+        this.repairWritableRoots.set(null);
         this.currentStage = stage;
         this.dirtySinceLastPassingCheck = true;
         this.cachedPassingCheckStage = null;
-        this.cachedPassingCheck = null;
+        this.cachedPassingCheck.set(null);
     }
 
     /**
@@ -607,19 +604,19 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     public void enterRepairScope(Set<String> writableRoots) {
         this.currentStage = null;
-        this.repairWritableRoots = Set.copyOf(writableRoots);
+        this.repairWritableRoots.set(Set.copyOf(writableRoots));
     }
 
     public void exitRepairScope() {
-        this.repairWritableRoots = null;
+        this.repairWritableRoots.set(null);
     }
 
     public Set<String> seededStructuralTestNames() {
-        return seededStructuralTests.testNames();
+        return seededStructuralTests.get().testNames();
     }
 
     public SeededStructuralTests seededStructuralTests() {
-        return seededStructuralTests;
+        return seededStructuralTests.get();
     }
 
     /**
@@ -628,19 +625,19 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * @param refresh re-materializes the oracle and yields its authoritative test names
      */
     public void configureStructuralOracleRefresh(Supplier<SeededStructuralTests> refresh) {
-        structuralOracleRefresh = refresh;
+        structuralOracleRefresh.set(refresh);
     }
 
     /**
      * @return the oracle's authoritative test names, empty when no refresh is installed
      */
     public SeededStructuralTests refreshStructuralOracle() {
-        Supplier<SeededStructuralTests> refresh = structuralOracleRefresh;
+        Supplier<SeededStructuralTests> refresh = structuralOracleRefresh.get();
         if (refresh != null) {
             SeededStructuralTests result = refresh.get();
-            seededStructuralTests = result == null ? SeededStructuralTests.EMPTY : result;
+            seededStructuralTests.set(result == null ? SeededStructuralTests.EMPTY : result);
         }
-        return seededStructuralTests;
+        return seededStructuralTests.get();
     }
 
     /**
@@ -651,7 +648,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
     private @Nullable String stageWriteRejection(String path) {
         GenerationStage stage = currentStage;
         if (stage == null) {
-            Set<String> writableRoots = repairWritableRoots;
+            Set<String> writableRoots = repairWritableRoots.get();
             if (writableRoots == null || writableRoots.stream().anyMatch(root -> path.equals(root) || path.startsWith(root + "/"))) {
                 return null;
             }
@@ -686,7 +683,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (currentStage != null) {
             return protectedStagePaths(currentStage);
         }
-        Set<String> writableRoots = repairWritableRoots;
+        Set<String> writableRoots = repairWritableRoots.get();
         if (writableRoots == null) {
             return List.of();
         }
@@ -739,10 +736,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     public void exitStagedGeneration() {
         this.currentStage = null;
-        this.repairWritableRoots = null;
+        this.repairWritableRoots.set(null);
         this.dirtySinceLastPassingCheck = true;
         this.cachedPassingCheckStage = null;
-        this.cachedPassingCheck = null;
+        this.cachedPassingCheck.set(null);
     }
 
     /**
@@ -752,8 +749,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * @return the cached passing result if the stage matches and nothing has mutated the workspace since, otherwise empty
      */
     public Optional<StageCheckResult> reuseCachedPassingCheck(GenerationStage stage) {
-        if (!dirtySinceLastPassingCheck && stage.equals(cachedPassingCheckStage) && cachedPassingCheck != null) {
-            return Optional.of(cachedPassingCheck);
+        StageCheckResult cached = cachedPassingCheck.get();
+        if (!dirtySinceLastPassingCheck && stage.equals(cachedPassingCheckStage) && cached != null) {
+            return Optional.of(cached);
         }
         return Optional.empty();
     }
@@ -765,7 +763,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * @param report the TESTS stage's report, or {@code null} if none is available
      */
     public void recordLastTestsReport(@Nullable AgentVerifyReport report) {
-        this.lastTestsReport = report;
+        this.lastTestsReport.set(report);
     }
 
     private void markDirty() {
@@ -866,14 +864,14 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (stage == GenerationStage.TESTS) {
             refreshStructuralOracle();
         }
-        StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, seededStructuralTests);
+        StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport.get(), seededStructuralTests.get());
         if (stage == GenerationStage.TESTS && result.report() != null) {
-            lastTestsReport = result.report();
+            lastTestsReport.set(result.report());
         }
         if (result.passed()) {
             dirtySinceLastPassingCheck = false;
             cachedPassingCheckStage = stage;
-            cachedPassingCheck = result;
+            cachedPassingCheck.set(result);
         }
         return result;
     }
