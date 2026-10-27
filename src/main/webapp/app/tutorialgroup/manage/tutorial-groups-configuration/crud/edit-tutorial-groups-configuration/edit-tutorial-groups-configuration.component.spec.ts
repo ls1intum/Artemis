@@ -97,7 +97,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
 
         sessionForm.formSubmitted.emit(formData);
         expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(course.id, exampleConfiguration.id, exampleConfiguration, formData);
+        expect(updatedStub).toHaveBeenCalledWith(course.id, exampleConfiguration.id, [], formData);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();

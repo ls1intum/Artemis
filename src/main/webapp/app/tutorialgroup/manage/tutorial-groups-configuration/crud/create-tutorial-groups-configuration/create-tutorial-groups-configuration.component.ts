@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal }
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/foundation/util/global.utils';
-import { TutorialGroupsConfigurationFormData } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -11,7 +10,7 @@ import { Subject } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService, TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({
@@ -55,7 +54,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
             });
     }
 
-    createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationFormData) {
+    createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationSettings) {
         this.isLoading.set(true);
         this.tutorialGroupsConfigurationService
             .create(this.course().id!, formData)

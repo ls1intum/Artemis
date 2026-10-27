@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService, TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
 
 const CONFIGURATIONS_URL = '/api/tutorialgroup/courses/1/tutorial-groups-configurations';
@@ -11,11 +11,13 @@ const CONFIGURATIONS_URL = '/api/tutorialgroup/courses/1/tutorial-groups-configu
 describe('TutorialGroupsConfigurationService', () => {
     let service: TutorialGroupsConfigurationService;
     let httpMock: HttpTestingController;
-    const loaded: TutorialGroupConfiguration = {
-        ...generateExampleTutorialGroupsConfigurationDTO({ id: 5 }),
-        tutorialGroupFreePeriods: [{ id: 1, start: '2021-01-10T00:00:00Z', end: '2021-01-15T00:00:00Z', reason: 'Holiday' }],
+    const freePeriods = [{ id: 1, start: '2021-01-10T00:00:00Z', end: '2021-01-15T00:00:00Z', reason: 'Holiday' }];
+    const loaded: TutorialGroupConfiguration = { ...generateExampleTutorialGroupsConfigurationDTO({ id: 5 }), tutorialGroupFreePeriods: freePeriods };
+    const settings: TutorialGroupsConfigurationSettings = {
+        period: [new Date(2021, 0, 1), new Date(2021, 1, 1)],
+        useTutorialGroupChannels: true,
+        usePublicTutorialGroupChannels: false,
     };
-    const settings = { period: [new Date(2021, 0, 1), new Date(2021, 1, 1)], useTutorialGroupChannels: true, usePublicTutorialGroupChannels: false };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -63,11 +65,11 @@ describe('TutorialGroupsConfigurationService', () => {
     });
 
     it('should update a configuration, keeping its id and free periods', () => {
-        service.update(1, 5, loaded, settings).subscribe();
+        service.update(1, 5, freePeriods, settings).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT', url: `${CONFIGURATIONS_URL}/5` });
         expect(req.request.body.id).toBe(5);
-        expect(req.request.body.tutorialGroupFreePeriods).toEqual(loaded.tutorialGroupFreePeriods);
+        expect(req.request.body.tutorialGroupFreePeriods).toEqual(freePeriods);
         expect(req.request.body.useTutorialGroupChannels).toBe(true);
         expect(req.request.body.usePublicTutorialGroupChannels).toBe(false);
         req.flush(loaded);

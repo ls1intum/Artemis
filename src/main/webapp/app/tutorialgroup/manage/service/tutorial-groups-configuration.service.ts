@@ -4,7 +4,14 @@ import { map } from 'rxjs/operators';
 import { toISO8601DateString } from 'app/foundation/util/date.utils';
 import { TutorialGroupsConfigurationApi } from 'app/openapi/api/tutorial-groups-configuration-api';
 import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
-import type { TutorialGroupsConfigurationFormData } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { TutorialGroupConfigurationFreePeriod } from 'app/openapi/model/tutorial-group-configuration-free-period';
+
+/** What the configuration form submits. The form submits only once its validator accepts a complete period. */
+export interface TutorialGroupsConfigurationSettings {
+    period: [Date, Date];
+    useTutorialGroupChannels: boolean;
+    usePublicTutorialGroupChannels: boolean;
+}
 
 @Service()
 export class TutorialGroupsConfigurationService {
@@ -15,29 +22,29 @@ export class TutorialGroupsConfigurationService {
         return this.api.getOneOfCourse(courseId).pipe(map((configuration) => configuration ?? undefined));
     }
 
-    create(courseId: number, settings: TutorialGroupsConfigurationFormData): Observable<TutorialGroupConfiguration> {
-        return this.api.create(courseId, toRequest(settings));
+    create(courseId: number, settings: TutorialGroupsConfigurationSettings): Observable<TutorialGroupConfiguration> {
+        return this.api.create(courseId, toRequest(settings, []));
     }
 
-    /** Sends the settings along with the id and the free periods of the configuration as it was loaded. */
+    /** Sends the configuration's free periods along, so the server rejects a period that no longer contains them. */
     update(
         courseId: number,
         configurationId: number,
-        configuration: TutorialGroupConfiguration,
-        settings: TutorialGroupsConfigurationFormData,
+        freePeriods: TutorialGroupConfigurationFreePeriod[],
+        settings: TutorialGroupsConfigurationSettings,
     ): Observable<TutorialGroupConfiguration> {
-        return this.api.update(courseId, configurationId, toRequest(settings, configuration));
+        return this.api.update(courseId, configurationId, toRequest(settings, freePeriods, configurationId));
     }
 }
 
-function toRequest(settings: TutorialGroupsConfigurationFormData, loaded?: TutorialGroupConfiguration): TutorialGroupConfiguration {
-    const [start, end] = settings.period ?? [];
+function toRequest(settings: TutorialGroupsConfigurationSettings, tutorialGroupFreePeriods: TutorialGroupConfigurationFreePeriod[], id?: number): TutorialGroupConfiguration {
+    const [start, end] = settings.period;
     return {
-        id: loaded?.id,
-        tutorialPeriodStartInclusive: toISO8601DateString(start)!,
-        tutorialPeriodEndInclusive: toISO8601DateString(end)!,
-        useTutorialGroupChannels: settings.useTutorialGroupChannels ?? false,
-        usePublicTutorialGroupChannels: settings.usePublicTutorialGroupChannels ?? false,
-        tutorialGroupFreePeriods: loaded?.tutorialGroupFreePeriods ?? [],
+        id,
+        tutorialPeriodStartInclusive: toISO8601DateString(start),
+        tutorialPeriodEndInclusive: toISO8601DateString(end),
+        useTutorialGroupChannels: settings.useTutorialGroupChannels,
+        usePublicTutorialGroupChannels: settings.usePublicTutorialGroupChannels,
+        tutorialGroupFreePeriods,
     };
 }
