@@ -280,7 +280,8 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send lectures to Pyris", e);
+            // Status only: the exception message quotes the response body, which may echo the request and its callback token.
+            log.error("Failed to send lectures to Pyris: status {}", e.getStatusCode().value());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
@@ -318,7 +319,8 @@ public class PyrisConnectorService {
         catch (JacksonException | IllegalArgumentException e) {
             // Pyris or a proxy in front of it can answer 400 or 500 with a body that is not the error JSON, e.g. a plain-text "Internal Server Error".
             // The caller turns the status into an IrisException, so a warning is enough.
-            log.warn("Pyris answered with status {} and a body that is not the expected error JSON: {}", ex.getStatusCode(), e.getMessage());
+            // Not the parser message: it can quote the body, which may echo the request and its callback token.
+            log.warn("Pyris answered with status {} and a body that is not the expected error JSON ({})", ex.getStatusCode().value(), e.getClass().getSimpleName());
             return "";
         }
     }
@@ -368,7 +370,8 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send faq {} to Pyris: {}", toUpdateFaq.faqId(), e.getMessage());
+            // Status only: the exception message quotes the response body, which may echo the request and its callback token.
+            log.error("Failed to send faq {} to Pyris: status {}", toUpdateFaq.faqId(), e.getStatusCode().value());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
@@ -388,7 +391,8 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send faqs to Pyris", e);
+            // Status only: the exception message quotes the response body, which may echo the request and its callback token.
+            log.error("Failed to send faqs to Pyris: status {}", e.getStatusCode().value());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
