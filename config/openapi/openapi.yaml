@@ -3592,7 +3592,6 @@ components:
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterion'}
-          uniqueItems: true
         channelName: {type: string}
         testRunParticipationsExist: {type: boolean}
         isEditable: {type: boolean}
@@ -3957,7 +3956,6 @@ components:
         structuredGradingInstructions:
           type: array
           items: {$ref: '#/components/schemas/GradingInstruction'}
-          uniqueItems: true
     DragAndDropQuizQuestionWithoutSolution:
       required: [type]
       type: object
