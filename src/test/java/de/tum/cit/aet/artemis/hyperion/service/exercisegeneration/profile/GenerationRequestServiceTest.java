@@ -126,11 +126,12 @@ class GenerationRequestServiceTest {
 
     @ParameterizedTest
     @EnumSource(ProjectType.class)
-    void onlyGradleIsQualified(ProjectType type) {
+    void onlyGradleAndMavenAreQualified(ProjectType type) {
         var exercise = exercise();
         exercise.setProjectType(type);
-        // Both Gradle types share the test harness the sandbox verifies against; PLAIN_GRADLE is what the create form assigns to a Java exercise by default.
-        assertThat(service.isGenerationSupported(exercise)).isEqualTo(type == ProjectType.GRADLE_GRADLE || type == ProjectType.PLAIN_GRADLE);
+        // The sandbox verifies the Gradle and Maven test harnesses; black-box Maven and non-Java project types stay unqualified.
+        assertThat(service.isGenerationSupported(exercise))
+                .isEqualTo(type == ProjectType.GRADLE_GRADLE || type == ProjectType.PLAIN_GRADLE || type == ProjectType.PLAIN_MAVEN || type == ProjectType.MAVEN_MAVEN);
     }
 
     @Test

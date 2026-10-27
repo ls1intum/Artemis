@@ -49,7 +49,7 @@ export class TumAetUiTabListComponent implements OnDestroy {
         });
         // Aria's selection, changed by a click or the keyboard, flows back into the bound value, and a selection that
         // lands on no enabled tab falls back to the first enabled one.
-        effect(() => {
+        afterRenderEffect(() => {
             const tabs = this.tabsService.orderedTabs();
             const selected = tabs.find((tab) => tab.selected() && !tab.disabled()) ?? tabs.find((tab) => !tab.disabled());
             if (selected) {

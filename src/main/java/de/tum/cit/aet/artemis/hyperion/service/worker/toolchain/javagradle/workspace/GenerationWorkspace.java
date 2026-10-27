@@ -21,6 +21,7 @@ import org.springframework.core.io.Resource;
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
@@ -219,6 +220,10 @@ public class GenerationWorkspace {
         try {
             String policy = new String(resourceLoaderService.getResource(Path.of("templates", READINESS_SOURCE_DIR, "tests", "SecurityPolicy.yaml")).getContentAsByteArray(),
                     StandardCharsets.UTF_8);
+            // Ares selects its build-tool-specific class layout from the policy's language configuration.
+            if (exercise.buildTool() == GenerationBuildTool.MAVEN) {
+                policy = policy.replace("JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ", "JAVA_USING_MAVEN_ARCHUNIT_AND_ASPECTJ");
+            }
             fixture.put("tests/SecurityPolicy.yaml", policy);
         }
         catch (IOException e) {
