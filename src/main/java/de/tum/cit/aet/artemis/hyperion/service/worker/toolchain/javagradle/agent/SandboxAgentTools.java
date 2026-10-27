@@ -83,10 +83,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
     /** First line the bash wrapper prints, carrying the real exit code and size (the container exec's own exit code reflects the wrapper, not the command). */
     private static final Pattern BASH_META = Pattern.compile("^__HYP_META__ rc=(-?\\d+) bytes=(\\d+) lines=(\\d+)$");
 
-    /**
-     * Matches the {@code List.toString()} render of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}), which is what arrives when the model sends {@code {"command":[...]}}
-     * instead of a shell string. A POSIX {@code [ -f x ]} test has a space after the bracket and a single-element {@code [foo]} has no comma, so neither is caught.
-     */
     private static final String SELF_REPORTED_VERDICT_MARKER = "MECHANICAL PRECHECK:";
 
     private final InteractiveSandbox sandbox;
@@ -904,6 +900,11 @@ public class SandboxAgentTools implements SubmitVetoAware {
         return "apply_patch".equals(program);
     }
 
+    /**
+     * Whether the command is the {@code List.toString()} render of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}), which is what arrives when the model sends
+     * {@code {"command":[...]}}
+     * instead of a shell string. A POSIX {@code [ -f x ]} test has a space after the bracket and a single-element {@code [foo]} has no comma, so neither is caught.
+     */
     static boolean isRenderedArgvArray(String command) {
         String stripped = command.strip();
         int comma = stripped.indexOf(',', 2);

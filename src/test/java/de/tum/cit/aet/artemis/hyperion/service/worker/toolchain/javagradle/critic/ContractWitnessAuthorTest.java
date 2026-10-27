@@ -11,6 +11,10 @@ class ContractWitnessAuthorTest {
 
             class SchedulerTest {
 
+                private static int if$helper() {
+                    return 1;
+                }
+
                 private static Scheduler scheduler(
                         @SuppressWarnings("unused") int size) {
                     return new Scheduler();
@@ -20,6 +24,9 @@ class ContractWitnessAuthorTest {
                 void choosesFirst() {
                     if (scheduler(1).choose() != 1) {
                         fail("expected first");
+                    }
+                    else if (if$helper() != 1) {
+                        fail("expected one");
                     }
                     assertThat(scheduler(1).choose()).isEqualTo(1);
                 }
@@ -34,5 +41,11 @@ class ContractWitnessAuthorTest {
     @Test
     void controlFlowAndLibraryCallsInTheSuiteAreNotSuiteLocalHelpers() {
         assertThat(ContractWitnessAuthor.usesSuiteLocalHelper("if (new Scheduler().choose() == 1) { assertThat(true).isTrue(); }", "witness", SUITE)).isFalse();
+    }
+
+    @Test
+    void anElseIfLineIsNotADeclarationButADollarIdentifierStartingWithIfIs() {
+        assertThat(ContractWitnessAuthor.usesSuiteLocalHelper("if (true) { assertEquals(1, 1); }", "witness", SUITE)).isFalse();
+        assertThat(ContractWitnessAuthor.usesSuiteLocalHelper("assertEquals(1, if$helper());", "witness", SUITE)).isTrue();
     }
 }

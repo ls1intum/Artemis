@@ -14,7 +14,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -30,7 +30,7 @@ class SemanticMutantAuthorTest {
     private final SemanticMutantAuthor author = new SemanticMutantAuthor(mock(ReviewerClient.class), JsonMapper.builder().build());
 
     @ParameterizedTest
-    @EmptySource
+    @NullAndEmptySource
     @ValueSource(strings = { "   ", "not JSON", "{", "{}", "null", "{\"mutants\":null}" })
     void unavailableResponsesAreNotSuccessfulEmptyProposals(String response) {
         assertThatThrownBy(() -> author.parse(response, SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of())).isInstanceOf(IllegalStateException.class);

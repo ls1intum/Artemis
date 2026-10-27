@@ -117,8 +117,9 @@ class SemanticMutantAuthor {
                 .collect(Collectors.joining("\n"));
     }
 
-    List<SemanticMutant> parse(String responseText, String specification, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets) {
-        if (responseText.isBlank()) {
+    List<SemanticMutant> parse(@Nullable String responseText, String specification, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets) {
+        // The reviewer returns null when the run is cancelled before the call; like a blank response, that yields no proposals rather than an empty success.
+        if (responseText == null || responseText.isBlank()) {
             throw new IllegalStateException("Semantic-mutant authoring returned no response");
         }
         Response response;
