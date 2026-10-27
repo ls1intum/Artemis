@@ -2,12 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTrainingComponent } from './course-training.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { LeaderboardService } from './course-training-quiz/leaderboard/service/leaderboard-service';
-import { LeaderboardDTO, LeaderboardEntry, LeaderboardSettingsDTO } from './course-training-quiz/leaderboard/leaderboard-types';
+import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
+import { LeaderboardEntry } from 'app/openapi/model/leaderboard-entry';
+import { LeaderboardWithCurrentUserEntry } from 'app/openapi/model/leaderboard-with-current-user-entry';
 import { LocationStrategy, PathLocationStrategy } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,7 +17,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('CourseTrainingComponent', () => {
     let component: CourseTrainingComponent;
     let fixture: ComponentFixture<CourseTrainingComponent>;
-    let leaderboardService: LeaderboardService;
+    let quizTrainingApi: QuizTrainingApi;
 
     const mockLeaderboardEntry: LeaderboardEntry = {
         rank: 1,
@@ -31,7 +32,7 @@ describe('CourseTrainingComponent', () => {
         streak: 5,
     };
 
-    const mockLeaderboardDTO: LeaderboardDTO = {
+    const mockLeaderboardDTO: LeaderboardWithCurrentUserEntry = {
         leaderboardEntries: [mockLeaderboardEntry],
         hasUserSetSettings: true,
         currentUserEntry: mockLeaderboardEntry,
@@ -45,7 +46,7 @@ describe('CourseTrainingComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 Router,
-                LeaderboardService,
+                QuizTrainingApi,
                 { provide: LocationStrategy, useClass: PathLocationStrategy },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
@@ -60,9 +61,9 @@ describe('CourseTrainingComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                leaderboardService = TestBed.inject(LeaderboardService);
-                vi.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
-                vi.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true } as LeaderboardSettingsDTO);
+                quizTrainingApi = TestBed.inject(QuizTrainingApi);
+                vi.spyOn(quizTrainingApi, 'getQuizTrainingLeaderboard').mockReturnValue(of(mockLeaderboardDTO));
+                vi.spyOn(quizTrainingApi, 'getLeaderboardSettings').mockReturnValue(of({ showInLeaderboard: true }));
 
                 fixture = TestBed.createComponent(CourseTrainingComponent);
                 component = fixture.componentInstance;
@@ -86,7 +87,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should load leaderboard data on initialization', async () => {
-        const leaderboardSpy = vi.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
+        const leaderboardSpy = vi.spyOn(quizTrainingApi, 'getQuizTrainingLeaderboard').mockReturnValue(of(mockLeaderboardDTO));
 
         await component.loadLeaderboard(1);
 
@@ -149,11 +150,11 @@ describe('CourseTrainingComponent', () => {
         expect(dueIn.isPast).toBe(true);
     });
 
-    it('should handle undefined due date', () => {
+    it('should handle a missing due date', () => {
         component.currentTime.set(new Date(Date.now()).toISOString());
         component.currentUserEntry.set({
             ...mockLeaderboardEntry,
-            dueDate: undefined,
+            dueDate: '',
         });
 
         const dueIn = component.dueIn();
@@ -202,7 +203,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should save leaderboard settings', async () => {
-        const saveSpy = vi.spyOn(leaderboardService, 'updateSettings').mockResolvedValue(undefined);
+        const saveSpy = vi.spyOn(quizTrainingApi, 'updateLeaderboardSettings').mockReturnValue(of(undefined));
         const loadSpy = vi.spyOn(component, 'loadLeaderboard').mockResolvedValue(undefined);
 
         component.showInLeaderboard = true;
@@ -219,7 +220,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should handle error when saving leaderboard settings', async () => {
-        vi.spyOn(leaderboardService, 'updateSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+        vi.spyOn(quizTrainingApi, 'updateLeaderboardSettings').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
         component.isLoading.set(true);
         await component.onSaveDialog();
@@ -228,7 +229,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should load settings and open info dialog', async () => {
-        const getSettingsSpy = vi.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true });
+        const getSettingsSpy = vi.spyOn(quizTrainingApi, 'getLeaderboardSettings').mockReturnValue(of({ showInLeaderboard: true }));
 
         await component.showInfoDialog();
 
@@ -240,7 +241,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should handle error when loading settings for info dialog', async () => {
-        vi.spyOn(leaderboardService, 'getSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+        vi.spyOn(quizTrainingApi, 'getLeaderboardSettings').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
         component.displayInfoDialog = false;
         component.isLoading.set(true);
@@ -251,7 +252,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should save info dialog settings and reload leaderboard', async () => {
-        const updateSettingsSpy = vi.spyOn(leaderboardService, 'updateSettings').mockResolvedValue(undefined);
+        const updateSettingsSpy = vi.spyOn(quizTrainingApi, 'updateLeaderboardSettings').mockReturnValue(of(undefined));
         const loadLeaderboardSpy = vi.spyOn(component, 'loadLeaderboard').mockResolvedValue(undefined);
 
         component.showInLeaderboard = false;
@@ -269,7 +270,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should handle error when saving info dialog settings', async () => {
-        vi.spyOn(leaderboardService, 'updateSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+        vi.spyOn(quizTrainingApi, 'updateLeaderboardSettings').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
         component.displayInfoDialog = true;
         component.isLoading.set(true);

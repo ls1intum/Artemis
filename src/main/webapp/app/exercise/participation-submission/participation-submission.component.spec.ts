@@ -841,7 +841,7 @@ describe('ParticipationSubmissionComponent', () => {
             comp.ngOnInit();
 
             comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
-            httpMock.expectOne({ method: 'DELETE', url: 'api/quiz/participations/1/quiz-submissions/77/results/45' }).flush(null);
+            httpMock.expectOne({ method: 'DELETE', url: '/api/quiz/participations/1/quiz-submissions/77/results/45' }).flush(null);
 
             expect(comp.submissions()[0].results!.map((result) => result.id)).toEqual([44]);
             // an empty dialog error closes the delete dialog
