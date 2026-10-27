@@ -381,7 +381,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
             @Test
             void shouldThrowNullPointerExceptionWhenFreePeriodEntityIsNull() {
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.of(null)).isInstanceOf(NullPointerException.class);
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupConfigurationFreePeriodDTO.of(null)).isInstanceOf(NullPointerException.class);
             }
         }
     }
