@@ -14,6 +14,8 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
+import de.tum.cit.aet.artemis.aiworker.dto.WorkerCapacityDTO;
+
 /** Docker credentials remain on the supervisor and are never added to a sandbox environment. */
 @Configuration(proxyBeanMethods = false)
 @Profile(PROFILE_AIWORKER)
@@ -27,9 +29,13 @@ public class DockerConfiguration {
      */
     @Bean(destroyMethod = "close")
     public DockerClient dockerClient() {
-        var config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+        return createDockerClient(DefaultDockerClientConfig.createDefaultConfigBuilder().build());
+    }
+
+    static DockerClient createDockerClient(DefaultDockerClientConfig config) {
         requireSecureTransport(config);
-        var transport = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).maxConnections(8)
+        // One attached command can hold a connection per slot. Keep control requests, including cancellation, runnable at full capacity.
+        var transport = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).maxConnections(WorkerCapacityDTO.MAX_SLOTS + 2)
                 .connectionTimeout(Duration.ofSeconds(10)).responseTimeout(Duration.ofMinutes(3)).build();
         return DockerClientImpl.getInstance(config, transport);
     }

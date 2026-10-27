@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
-import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderRetryPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -96,8 +95,6 @@ public class GenerationJobService {
 
     private final Duration terminalReplayTtl;
 
-    private final boolean exactProviderUsage;
-
     private String localNodeId;
 
     private DistributedMap<String, JobInfo> jobMap;
@@ -113,30 +110,21 @@ public class GenerationJobService {
     @Autowired
     public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             HyperionGenerationBudgetService generationBudgetService, HyperionAgentProperties agentProperties, HyperionEffortProfileService effortProfiles,
-            @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl,
-            @Value("${spring.ai.openai.max-retries:1}") int providerMaxRetries, @Value("${spring.ai.openai.chat.max-retries:#{null}}") @Nullable Integer chatProviderMaxRetries) {
+            @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, agentProperties.getStaleJobTimeout(), agentProperties.getMaxJobDuration(),
-                cancellationExecutor, terminalReplayTtl, ProviderRetryPolicy.effectiveSdkRetries(providerMaxRetries, chatProviderMaxRetries) == 0,
-                effortProfiles.longestMaxJobDuration());
+                cancellationExecutor, terminalReplayTtl, effortProfiles.longestMaxJobDuration());
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             Duration terminalReplayTtl) {
-        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, terminalReplayTtl, true,
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, terminalReplayTtl,
                 maxJobDuration);
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
-            Duration terminalReplayTtl, boolean exactProviderUsage) {
-        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, terminalReplayTtl,
-                exactProviderUsage, maxJobDuration);
-    }
-
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
-            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
-            Duration terminalReplayTtl, boolean exactProviderUsage, @Nullable Duration longestConfiguredJobDuration) {
+            Duration terminalReplayTtl, @Nullable Duration longestConfiguredJobDuration) {
         this.longestConfiguredJobDuration = longestConfiguredJobDuration;
         this.distributedDataProvider = distributedDataProvider;
         this.eventPublisher = eventPublisher;
@@ -146,7 +134,6 @@ public class GenerationJobService {
         this.maxJobDuration = maxJobDuration;
         this.cancelHooks = new GenerationCancelHooks(distributedDataProvider, cancellationExecutor);
         this.terminalReplayTtl = terminalReplayTtl;
-        this.exactProviderUsage = exactProviderUsage;
     }
 
     public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
@@ -294,9 +281,6 @@ public class GenerationJobService {
         try {
             claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
             replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode, settings == null ? null : settings.name(), input, startedReplay::set);
-            if (!exactProviderUsage) {
-                replayStore.markUsageIncomplete(jobId);
-            }
             publishExerciseState(exercise.getId(), jobId, true);
             publicStatePublished = true;
             eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt,
