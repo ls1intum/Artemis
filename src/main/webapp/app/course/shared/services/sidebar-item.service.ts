@@ -246,7 +246,7 @@ export class CourseSidebarItemService {
         return {
             routerLink: `${courseId}/quiz-question-pool`,
             icon: faListCheck,
-            title: 'Quiz Question Pool',
+            title: 'MCQ Pool',
             translation: 'artemisApp.hyperion.quizQuestionPool.sidebarTitle',
             testId: 'quiz-question-pool',
             hidden: false,
