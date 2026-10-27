@@ -7,10 +7,9 @@ import { CourseNotificationSettingPreset } from 'app/notification/shared/entitie
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
 import { CourseNotificationSettingSpecificationCardComponent } from 'app/notification/course-notification/course-notification-setting-specification-card/course-notification-setting-specification-card.component';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
+import { CourseNotificationSettingInfo, CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/course-notification/course-notification-settings-map';
 import { AccountService } from 'app/core/auth/account.service';
 

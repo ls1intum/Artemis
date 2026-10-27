@@ -3,8 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingInfo, CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import { CourseNotificationChannelSetting } from 'app/notification/shared/entities/course-notification/course-notification-channel-setting';
@@ -12,6 +11,8 @@ import { CourseNotificationSettingPreset } from 'app/notification/shared/entitie
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
+import { UserCourseNotificationSettingApi } from 'app/openapi/api/user-course-notification-setting-api';
+import { CourseNotificationSettingSpecificationRequest } from 'app/openapi/model/course-notification-setting-specification-request';
 import { User } from 'app/account/user/user.model';
 
 describe('CourseNotificationSettingService', () => {
@@ -36,6 +37,42 @@ describe('CourseNotificationSettingService', () => {
 
     it('should be created', () => {
         expect(service).toBeTruthy();
+    });
+
+    it('emits undefined while loading and normalizes only a legitimately omitted empty map', () => {
+        const values: (CourseNotificationSettingInfo | undefined)[] = [];
+        service.getSettingInfo(7).subscribe((value) => values.push(value));
+        expect(values).toEqual([undefined]);
+        httpMock.expectOne('/api/notification/courses/7/settings').flush({ selectedPreset: 0 });
+        expect(values).toEqual([undefined, { selectedPreset: 0, notificationTypeChannels: {} }]);
+        service.getSettingInfo(7).subscribe();
+        httpMock.expectNone('/api/notification/courses/7/settings');
+    });
+
+    it('sends custom preset zero as a JSON number and keeps the real empty 200 response', () => {
+        service.setSettingPreset(7, 0, undefined);
+        const request = httpMock.expectOne('/api/notification/courses/7/setting-preset');
+        expect(request.request.method).toBe('PUT');
+        expect(request.request.body).toBe(0);
+        expect(request.request.serializeBody()).toBe('0');
+        expect(request.request.detectContentTypeHeader()).toBe('application/json');
+        request.flush(null, { status: 200, statusText: 'OK' });
+    });
+
+    it('preserves partial, null and false flags in the actual generated specification request', () => {
+        const input: CourseNotificationSettingSpecificationRequest = {
+            notificationTypeChannels: { '1': { EMAIL: false, PUSH: null }, '2': { EMAIL: false, PUSH: false, WEBAPP: false }, '3': {} },
+        };
+        let completed = false;
+        TestBed.inject(UserCourseNotificationSettingApi)
+            .setUserCourseNotificationSpecification(7, input)
+            .subscribe(() => (completed = true));
+        const request = httpMock.expectOne('/api/notification/courses/7/setting-specification');
+        expect(request.request.method).toBe('PUT');
+        expect(request.request.serializeBody()).toBe(JSON.stringify(input));
+        expect(request.request.body.notificationTypeChannels['1'].WEBAPP).toBeUndefined();
+        request.flush(null, { status: 200, statusText: 'OK' });
+        expect(completed).toBe(true);
     });
 
     describe('getSettingInfo', () => {
@@ -139,7 +176,7 @@ describe('CourseNotificationSettingService', () => {
             const req = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-preset`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toBe(presetTypeId);
-            req.flush({});
+            req.flush(null);
             vi.advanceTimersByTime(0);
         });
 
@@ -164,7 +201,7 @@ describe('CourseNotificationSettingService', () => {
 
             service.setSettingPreset(courseId, presetTypeId, undefined);
             const updateReq = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-preset`);
-            updateReq.flush({});
+            updateReq.flush(null);
             vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
@@ -210,7 +247,7 @@ describe('CourseNotificationSettingService', () => {
 
             service.setSettingPreset(courseId, presetTypeId, mockPreset);
             const updateReq = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-preset`);
-            updateReq.flush({});
+            updateReq.flush(null);
             vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
@@ -245,7 +282,7 @@ describe('CourseNotificationSettingService', () => {
                     1: channelSetting,
                 },
             });
-            req.flush({});
+            req.flush(null);
             vi.advanceTimersByTime(0);
         });
 
@@ -277,7 +314,7 @@ describe('CourseNotificationSettingService', () => {
 
             service.setSettingSpecification(courseId, specification, undefined);
             const updateReq = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`);
-            updateReq.flush({});
+            updateReq.flush(null);
             vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
@@ -331,7 +368,7 @@ describe('CourseNotificationSettingService', () => {
 
             service.setSettingSpecification(courseId, specification, mockPreset);
             const updateReq = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`);
-            updateReq.flush({});
+            updateReq.flush(null);
             vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
@@ -365,7 +402,7 @@ describe('CourseNotificationSettingService', () => {
             httpMock.expectOne(`/api/notification/courses/${courseId}/settings`).flush({ selectedPreset: 1, notificationTypeChannels: {} });
             vi.advanceTimersByTime(0);
             service.setSettingSpecification(courseId, customized, preset);
-            httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`).flush({});
+            httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`).flush(null);
 
             // Another course customized from the same preset must still start from what the preset says.
             expect(preset.presetMap['notification1'][CourseNotificationChannel.PUSH]).toBe(true);
@@ -392,7 +429,7 @@ describe('CourseNotificationSettingService', () => {
             vi.advanceTimersByTime(0);
             service.setSettingSpecification(courseId, changed, undefined);
             const request = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`);
-            request.flush({});
+            request.flush(null);
             vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
@@ -403,39 +440,6 @@ describe('CourseNotificationSettingService', () => {
             expect(request.request.body).toEqual({ notificationTypeChannels: { 1: changed.channelSetting } });
             expect(result?.selectedPreset).toBe(0);
             expect(result?.notificationTypeChannels['2'][CourseNotificationChannel.EMAIL]).toBe(false);
-        });
-    });
-
-    describe('transformNotificationSettingSpecificationToRequestBody', () => {
-        it('should transform an array of specifications to a record by typeId', () => {
-            const channelSetting1: CourseNotificationChannelSetting = {
-                [CourseNotificationChannel.PUSH]: true,
-                [CourseNotificationChannel.EMAIL]: false,
-                [CourseNotificationChannel.WEBAPP]: true,
-            };
-            const channelSetting2: CourseNotificationChannelSetting = {
-                [CourseNotificationChannel.PUSH]: false,
-                [CourseNotificationChannel.EMAIL]: true,
-                [CourseNotificationChannel.WEBAPP]: true,
-            };
-
-            const specifications: CourseNotificationSettingSpecification[] = [
-                new CourseNotificationSettingSpecification('notification1', 1, channelSetting1),
-                new CourseNotificationSettingSpecification('notification2', 2, channelSetting2),
-            ];
-
-            const result = service['transformNotificationSettingSpecificationToRequestBody'](specifications);
-
-            expect(result).toEqual({
-                1: channelSetting1,
-                2: channelSetting2,
-            });
-        });
-
-        it('should handle empty specifications array', () => {
-            const result = service['transformNotificationSettingSpecificationToRequestBody']([]);
-
-            expect(result).toEqual({});
         });
     });
 
@@ -492,6 +496,24 @@ describe('CourseNotificationSettingService', () => {
             expect(Object.keys(scoped['settingInfoSubjects'])).toHaveLength(0);
         });
 
+        it('completes the old user subjects and ignores their in-flight settings after a direct account switch', () => {
+            const before: (CourseNotificationSettingInfo | undefined)[] = [];
+            const after: (CourseNotificationSettingInfo | undefined)[] = [];
+            let oldCompleted = false;
+            scoped.getSettingInfo(7).subscribe({ next: (value) => before.push(value), complete: () => (oldCompleted = true) });
+            const oldRequest = scopedHttpMock.expectOne('/api/notification/courses/7/settings');
+            authState.next(new User(100));
+            expect(oldCompleted).toBe(true);
+            scoped.getSettingInfo(7).subscribe((value) => after.push(value));
+            const newRequest = scopedHttpMock.expectOne('/api/notification/courses/7/settings');
+            oldRequest.flush({ selectedPreset: 3, notificationTypeChannels: {} });
+            expect(before).toEqual([undefined]);
+            expect(after).toEqual([undefined]);
+            newRequest.flush({ selectedPreset: 0, notificationTypeChannels: { '1': { EMAIL: false, PUSH: false, WEBAPP: false } } });
+            expect(after[1]?.selectedPreset).toBe(0);
+            expect(after[1]?.notificationTypeChannels['1']).toEqual({ EMAIL: false, PUSH: false, WEBAPP: false });
+        });
+
         it('should not clear settings when the same user re-emits', () => {
             const courseId = 7;
             scoped.getSettingInfo(courseId).subscribe();
@@ -500,6 +522,8 @@ describe('CourseNotificationSettingService', () => {
             authState.next({ id: 99 } as User);
 
             expect(scoped['settingInfoSubjects'][courseId]).toBeDefined();
+            scoped.getSettingInfo(courseId).subscribe();
+            scopedHttpMock.expectNone(`/api/notification/courses/${courseId}/settings`);
         });
     });
 });
