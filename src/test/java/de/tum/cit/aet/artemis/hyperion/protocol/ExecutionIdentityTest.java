@@ -13,7 +13,7 @@ class ExecutionIdentityTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "", "worker.commands", "../worker", "worker*", "worker/other", "worker\n" })
-    void workerNameCannotEscapeItsBrokerDestination(String worker) {
+    void workerNameCannotEscapeItsTransportKey(String worker) {
         assertThatIllegalArgumentException().isThrownBy(() -> new ExecutionIdentity("job", 1, UUID.randomUUID(), worker, UUID.randomUUID()));
     }
 

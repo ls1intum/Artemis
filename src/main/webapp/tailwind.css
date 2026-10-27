@@ -68,7 +68,10 @@
 @source './app/exercise/result';
 @source './app/exercise/participation-submission';
 @source './app/exercise/import';
+@source './app/exercise/review';
+@source './app/programming/manage/code-editor/instructor-and-editor-container';
 @source './app/iris/manage/settings';
+@source './app/hyperion';
 @source './app/editor/markdown-editor';
 @source './app/communication/message-editor';
 @source './app/communication/posting-markdown-editor';
@@ -121,9 +124,6 @@
 @source './app/communication/saved-posting-banner';
 @source './app/quiz/manage/statistics/question-statistics-chart';
 
-/* AI exercise variant generation: the navbar progress tray and the wizard modal. */
-@source './app/core/navbar/variant-generation-tray';
-@source './app/course/manage/exercises/create-variant-modal';
 @source './app/account';
 @source './app/course/manage/update';
 @source './app/assessment/shared/assessment-dashboard';
@@ -225,6 +225,13 @@
     --tumaet-ui-state-warning-contrast: var(--artemis-alert-warning-background);
     --tumaet-ui-state-info: var(--artemis-alert-info-color);
     --tumaet-ui-state-info-contrast: var(--artemis-alert-info-background);
+}
+
+/* Keep navbar trigger colors local; portalled content retains the body theme. */
+.jh-navbar jhi-hyperion-activity-tray > button {
+    --tumaet-ui-contrast-background: var(--navbar-light-active-color);
+    --tumaet-ui-text-color: var(--navbar-light-color);
+    --tumaet-ui-focus-color: var(--navbar-light-active-color);
 }
 
 /* Preflight is disabled, so provide its semantic default for bare Tailwind border utilities. */
