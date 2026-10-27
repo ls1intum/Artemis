@@ -327,75 +327,10 @@
     }
 }
 
-.unified-feedback-points-input-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.2rem;
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    padding: 0.15rem 0.6rem;
-    background: var(--card-bg);
-}
-
+// The points input is a `jhi-points-input` (TUM AET UI number input with step buttons); only its width is set here.
 .unified-feedback-points-input {
-    width: 1.75rem;
-    border: none;
-    padding: 0;
-    font-weight: bold;
-    font-size: 0.8rem;
-    text-align: center;
-    background: transparent;
-    color: inherit;
-    cursor: default;
-
-    // Value only changes via the +/- steppers, so the native spin buttons would be redundant.
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-        appearance: none;
-        margin: 0;
-    }
-
-    appearance: textfield;
-}
-
-.unified-feedback-points-step {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.1rem;
-    height: 1.1rem;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    color: inherit;
-    font-size: 0.7rem;
+    width: 6.5rem;
     flex-shrink: 0;
-
-    &:hover:not(:disabled) {
-        background: color-mix(in srgb, var(--body-color) 8%, transparent);
-    }
-
-    &:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-}
-
-.unified-feedback--success .unified-feedback-points-input {
-    color: var(--artemis-alert-success-color);
-}
-
-.unified-feedback--danger .unified-feedback-points-input {
-    color: var(--artemis-alert-danger-color);
-}
-
-.unified-feedback--neutral .unified-feedback-points-input {
-    color: var(--artemis-alert-neutral-color);
-}
-
-.unified-feedback--info .unified-feedback-points-input {
-    color: var(--artemis-alert-info-color);
 }
 
 .unified-feedback-toolbar {

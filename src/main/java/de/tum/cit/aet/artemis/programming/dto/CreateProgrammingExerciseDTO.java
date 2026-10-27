@@ -97,7 +97,7 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
-        ProgrammingLanguage programmingLanguage, ProjectType projectType, UpdateProgrammingExerciseBuildConfigDTO buildConfig, Set<GradingCriterionDTO> gradingCriteria,
+        ProgrammingLanguage programmingLanguage, ProjectType projectType, UpdateProgrammingExerciseBuildConfigDTO buildConfig, List<GradingCriterionDTO> gradingCriteria,
         Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup)
         implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
@@ -113,9 +113,7 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
      */
     public static CreateProgrammingExerciseDTO of(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
         // Every collection below is lazy: a detached exercise carries an uninitialized handle the request must not read.
-        Set<GradingCriterionDTO> gradingCriteria = Hibernate.isInitialized(exercise.getGradingCriteria())
-                ? exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet())
-                : null;
+        List<GradingCriterionDTO> gradingCriteria = Hibernate.isInitialized(exercise.getGradingCriteria()) ? GradingCriterionDTO.ofAll(exercise.getGradingCriteria()) : null;
         Set<CompetencyLinkDTO> competencyLinks = Hibernate.isInitialized(exercise.getCompetencyLinks())
                 ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
                 : null;
@@ -158,7 +156,7 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
             exercise.setCategories(new HashSet<>(categories));
         }
         if (gradingCriteria != null) {
-            exercise.setGradingCriteria(gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toCollection(HashSet::new)));
+            exercise.setGradingCriteria(GradingCriterionDTO.toEntities(gradingCriteria));
         }
         if (auxiliaryRepositories != null) {
             List<AuxiliaryRepository> repositories = auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::toEntity).toList();

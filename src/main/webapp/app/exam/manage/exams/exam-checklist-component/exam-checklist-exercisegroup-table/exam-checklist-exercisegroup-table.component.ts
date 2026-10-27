@@ -1,7 +1,7 @@
 import { Component, effect, input, signal } from '@angular/core';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
+import { ExerciseGroupColumn, ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-column.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -12,12 +12,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-exam-checklist-exercisegroup-table',
     templateUrl: './exam-checklist-exercisegroup-table.component.html',
+    styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
     imports: [TranslateDirective, TumAetUiTableDirective, TumAetUiTooltipDirective, FaIconComponent, NoDataComponent, ArtemisTranslatePipe],
 })
 export class ExamChecklistExerciseGroupTableComponent {
     quizExamMaxPoints = input.required<number>();
     exerciseGroups = input.required<ExerciseGroup[]>();
-    readonly exerciseGroupVariantColumns = signal<ExerciseGroupVariantColumn[]>([]);
+    readonly exerciseGroupColumns = signal<ExerciseGroupColumn[]>([]);
+    readonly totalPoints = signal<number | undefined>(undefined);
+    readonly hasPointMismatch = signal<boolean>(false);
     readonly getIcon = getIcon;
     readonly getIconTooltip = getIconTooltip;
 
@@ -32,42 +35,39 @@ export class ExamChecklistExerciseGroupTableComponent {
     }
 
     private recomputeColumns() {
-        const exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = []; // Clear any previously existing entries
+        const exerciseGroupColumns: ExerciseGroupColumn[] = []; // Clear any previously existing entries
         let totalParticipants = this.totalParticipants();
+        let totalPoints = 0;
+        let pointMismatch = false;
         if (this.exerciseGroups()) {
             let exerciseGroupIndex = 1;
             this.exerciseGroups().forEach((exerciseGroup) => {
-                const exerciseGroupVariantColumn = new ExerciseGroupVariantColumn();
-                exerciseGroupVariantColumn.exerciseGroupTitle = exerciseGroup.title;
-                exerciseGroupVariantColumn.indexExerciseGroup = exerciseGroupIndex;
+                const exerciseGroupColumn = new ExerciseGroupColumn();
+                exerciseGroupColumn.exerciseGroupTitle = exerciseGroup.title;
+                exerciseGroupColumn.indexExerciseGroup = exerciseGroupIndex;
 
                 if (!exerciseGroup.exercises || exerciseGroup.exercises.length === 0) {
-                    exerciseGroupVariantColumn.noExercises = true;
-                    exerciseGroupVariantColumns.push(exerciseGroupVariantColumn);
+                    exerciseGroupColumn.noExercises = true;
                 } else {
                     // set points and checks
                     const maxPoints = exerciseGroup.exercises?.[0].maxPoints;
-                    exerciseGroupVariantColumn.exerciseGroupPointsEqual = true;
-                    exerciseGroupVariantColumn.exerciseGroupPointsEqual = !exerciseGroup.exercises?.some((exercise) => {
+                    exerciseGroupColumn.exerciseGroupPointsEqual = true;
+                    exerciseGroupColumn.exerciseGroupPointsEqual = !exerciseGroup.exercises?.some((exercise) => {
                         return exercise.maxPoints !== maxPoints;
                     });
 
-                    exerciseGroupVariantColumn.noExercises = false;
+                    if (!exerciseGroupColumn.exerciseGroupPointsEqual) {
+                        pointMismatch = true;
+                    }
+
+                    exerciseGroupColumn.noExercises = false;
                     let exerciseVariantIndex = 1;
                     totalParticipants = 0;
                     exerciseGroup.exercises.forEach((exercise, index) => {
                         // generate columns for each exercise
-                        let exerciseVariantColumn;
-                        if (index === 0) {
-                            // the first exercise uses the exercisegroup column
-                            exerciseVariantColumn = exerciseGroupVariantColumn;
-                            exerciseVariantColumn.indexExercise = exerciseVariantIndex;
-                        } else {
-                            exerciseVariantColumn = new ExerciseGroupVariantColumn();
-                            exerciseVariantColumn.indexExercise = exerciseVariantIndex;
-                            exerciseVariantColumn.exerciseGroupTitle = '';
-                        }
+                        const exerciseVariantColumn = new ExerciseGroupVariantColumn();
                         // set properties
+                        exerciseVariantColumn.indexExercise = exerciseVariantIndex;
                         exerciseVariantColumn.exerciseTitle = exercise.title;
                         exerciseVariantColumn.exerciseType = exercise.type;
                         exerciseVariantColumn.exerciseNumberOfParticipations = exercise.numberOfParticipations ? exercise.numberOfParticipations : 0;
@@ -75,15 +75,19 @@ export class ExamChecklistExerciseGroupTableComponent {
 
                         totalParticipants += exerciseVariantColumn.exerciseNumberOfParticipations;
 
-                        exerciseGroupVariantColumns.push(exerciseVariantColumn);
+                        exerciseGroupColumn.variants.push(exerciseVariantColumn);
                         exerciseVariantIndex++;
                     });
+                    totalPoints += maxPoints ?? 0;
                 }
+                exerciseGroupColumns.push(exerciseGroupColumn);
                 exerciseGroupIndex++;
             });
         }
         this.totalParticipants.set(totalParticipants);
-        this.exerciseGroupVariantColumns.set(exerciseGroupVariantColumns);
+        this.exerciseGroupColumns.set(exerciseGroupColumns);
+        this.totalPoints.set(totalPoints);
+        this.hasPointMismatch.set(pointMismatch);
     }
 
     protected readonly ExerciseType = ExerciseType;

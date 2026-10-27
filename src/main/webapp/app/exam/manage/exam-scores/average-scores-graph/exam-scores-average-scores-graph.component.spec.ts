@@ -15,6 +15,7 @@ import { RouterModule } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
@@ -80,6 +81,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
     it('should set chart entries and bar colors correctly', () => {
@@ -118,6 +120,19 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
     describe('test exercise navigation', () => {
         // index 1 corresponds to the entry '2 StrategyPattern' in the chart data
         const event: TumAetUiChartSelectEvent = { seriesIndex: 0, index: 1, label: '2 StrategyPattern' };
+        it('should open the exercise participations directly', () => {
+            vi.useFakeTimers();
+            navigateToExerciseMock.mockRestore();
+            const routeSpy = vi.spyOn(TestBed.inject(ArtemisNavigationUtilService), 'routeInNewTab').mockImplementation(() => {});
+            component.courseId = 10;
+            component.examId = 20;
+
+            component.navigateToExercise(42, ExerciseType.QUIZ);
+            vi.advanceTimersByTime(1000);
+
+            expect(routeSpy).toHaveBeenCalledExactlyOnceWith(['course-management', 10, 'exams', 20, 'exercise-groups', 1, 'quiz-exercises', 42, 'participations']);
+        });
+
         it('should navigate if event is valid', () => {
             component.lookup['2 StrategyPattern'] = { exerciseId: 42, exerciseType: ExerciseType.QUIZ };
 

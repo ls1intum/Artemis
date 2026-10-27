@@ -85,8 +85,6 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { IrisActivityFeedComponent } from 'app/iris/overview/base-chatbot/iris-activity-feed/iris-activity-feed.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
-import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
-import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
 import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
@@ -149,7 +147,6 @@ const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_D
         IrisCitationTextComponent,
         IrisMcqQuestionComponent,
         IrisMcqCarouselComponent,
-        IrisChatMemoriesIndicatorComponent,
         IrisActivityFeedComponent,
         ConfirmDialogModule,
         MenuModule,
@@ -507,18 +504,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         return this.translateService.instant('artemisApp.exerciseChatbot.inputMessage');
     });
-
-    protected getAccessedMemories(message: IrisMessage): MemirisMemory[] {
-        return message.accessedMemories ?? [];
-    }
-
-    protected getCreatedMemories(message: IrisMessage): MemirisMemory[] {
-        return message.createdMemories ?? [];
-    }
-
-    protected hasMemories(message: IrisMessage): boolean {
-        return this.getAccessedMemories(message).length > 0 || this.getCreatedMemories(message).length > 0;
-    }
 
     protected getActivities(message: IrisMessage): IrisActivityItem[] {
         return message.sender === IrisSender.LLM ? (message.activities ?? []) : [];

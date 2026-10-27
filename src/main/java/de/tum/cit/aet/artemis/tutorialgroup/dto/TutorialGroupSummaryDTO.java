@@ -19,7 +19,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
  * Contains the public attributes of a tutorial group plus flattened transient fields populated by
  * {@code TutorialGroupService.setTransientPropertiesForUser}. Privacy-sensitive fields are cleared
  * by {@code TutorialGroup.hidePrivacySensitiveInformation} for users who do not have managing
- * rights for the tutorial group.
+ * rights for the tutorial group. Course staff keep the tutor name and the number of registered users
+ * of such groups, which the management overview needs to tell the groups apart and to show their capacity.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupSummaryDTO(Long id, String title, @Nullable Integer capacity, @Nullable String campus, @Nullable String language, @Nullable String additionalInformation,
