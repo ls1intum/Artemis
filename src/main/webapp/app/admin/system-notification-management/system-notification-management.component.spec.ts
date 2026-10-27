@@ -121,9 +121,17 @@ describe('SystemNotificationManagementComponent', () => {
         component.ngOnInit();
         await fixture.whenStable();
 
-        expect(mockSystemNotificationService.query).toHaveBeenCalled();
+        expect(mockSystemNotificationService.query).toHaveBeenCalledWith({ page: 0, size: component.itemsPerPage, sort: ['id,asc'] });
         expect(component.notifications()).toEqual(notifications);
         expect(component.totalItems()).toBe(2);
+    });
+
+    it('converts a later UI page and retains the primary and tie-break sorts', () => {
+        component.page.set(3);
+        component.predicate.set('title');
+        component.reverse.set(true);
+        component.loadAll();
+        expect(mockSystemNotificationService.query).toHaveBeenCalledWith({ page: 2, size: component.itemsPerPage, sort: ['title,asc', 'id'] });
     });
 
     it('should handle error when loading notifications', async () => {

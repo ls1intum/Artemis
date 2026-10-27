@@ -1,89 +1,49 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
-import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { SystemNotificationApi } from 'app/openapi/api/system-notification-api';
+import { PublicSystemNotificationApi } from 'app/openapi/api/public-system-notification-api';
+import { SystemNotification as SystemNotificationDto } from 'app/openapi/model/system-notification';
+import { Observable, map } from 'rxjs';
 
-type EntityResponseType = HttpResponse<SystemNotification>;
-type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
+/** UI paging options use Spring's zero-based page index and ordered, repeated sort criteria. */
+type SystemNotificationQueryOptions = { page?: number; size?: number; sort?: string[] };
 
-/** Request options for a paged/sorted query, matching what {@link createRequestOption} consumes. */
-type SystemNotificationQueryOptions = { sort?: string[] } & Record<string, string | number | boolean | string[]>;
-
+/** Keeps instant conversion at the boundary; all REST transport is generated. */
 @Service()
 export class SystemNotificationService {
-    private http = inject(HttpClient);
+    private api = inject(SystemNotificationApi);
+    private publicApi = inject(PublicSystemNotificationApi);
 
-    public resourceUrl = 'api/notification/admin/system-notifications';
-    public publicResourceUrl = 'api/notification/public/system-notifications';
-
-    /**
-     * Find a notification on the server using a GET request.
-     * @param systemNotificationId The id of the notification to get.
-     */
-    find(systemNotificationId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<SystemNotification>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertSystemNotificationResponseDatesFromServer(res)));
+    find(systemNotificationId: number): Observable<SystemNotification> {
+        return this.api.getSystemNotification(systemNotificationId).pipe(map((notification) => this.fromServer(notification)));
     }
 
-    query(req?: SystemNotificationQueryOptions): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<SystemNotification[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertSystemNotificationArrayResponseDatesFromServer(res)));
+    query(req?: SystemNotificationQueryOptions): Observable<HttpResponse<SystemNotification[]>> {
+        return this.api
+            .getAllSystemNotifications(req?.page, req?.size, req?.sort)
+            .pipe(map((response) => response.clone({ body: response.body?.map((notification) => this.fromServer(notification)) ?? null })));
     }
 
-    /**
-     * Fetch active and future notifications from the server.
-     */
+    /** This endpoint is public and must also load before authentication. */
     getActiveNotifications(): Observable<SystemNotification[]> {
-        return this.http
-            .get<SystemNotification[]>(`${this.publicResourceUrl}/active`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertSystemNotificationArrayResponseDatesFromServer(res)))
-            .pipe(map((res) => res.body || []));
+        return this.publicApi.getActiveAndFutureSystemNotifications().pipe(map((notifications) => (notifications ?? []).map((notification) => this.fromServer(notification))));
     }
 
-    /**
-     * Convert notification dates from client format to ISO format.
-     * @param {SystemNotification} notification The notification to format.
-     * @return {SystemNotification} A copy of notification with formatted dates.
-     */
-    convertSystemNotificationDatesFromClient(notification: SystemNotification): SystemNotification {
-        return cloneWith(notification, {
-            notificationDate: convertDateFromClient(notification.notificationDate),
-            expireDate: convertDateFromClient(notification.expireDate),
-        });
+    /** REST and WebSocket messages share the server DTO. Never mutate the wire object. */
+    fromServer(notification: SystemNotificationDto): SystemNotification {
+        return {
+            id: notification.id,
+            title: notification.title,
+            text: notification.text,
+            type: notification.type,
+            notificationDate: convertDateStringFromServer(notification.notificationDate),
+            expireDate: convertDateStringFromServer(notification.expireDate),
+        };
     }
 
-    /**
-     * Convert server response dates from server format to ISO format.
-     * @param {EntityResponseType} res The server response to format.
-     * @return {EntityResponseType} The server response with formatted dates.
-     */
-    convertSystemNotificationResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            res.body.notificationDate = convertDateFromServer(res.body.notificationDate);
-            res.body.expireDate = convertDateFromServer(res.body.expireDate);
-        }
-        return res;
-    }
-
-    /**
-     * Convert server response dates from server format to ISO format for an array of responses.
-     * @param {EntityResponseType} res The array of server responses to format.
-     * @return {EntityResponseType} The array of server responses with formatted dates.
-     */
-    convertSystemNotificationArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((notification: SystemNotification) => {
-                notification.notificationDate = convertDateFromServer(notification.notificationDate);
-                notification.expireDate = convertDateFromServer(notification.expireDate);
-            });
-        }
-        return res;
+    fromServerResponse(response: HttpResponse<SystemNotificationDto>): HttpResponse<SystemNotification> {
+        return response.clone({ body: response.body ? this.fromServer(response.body) : null });
     }
 }

@@ -7,7 +7,7 @@ import { User } from 'app/account/user/user.model';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass } from '@angular/common';
 import { Subscription, filter } from 'rxjs';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { SystemNotification as SystemNotificationDto } from 'app/openapi/model/system-notification';
 import { updateHeaderHeight } from 'app/foundation/util/navbar.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
@@ -117,13 +117,9 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
      */
     private subscribeSocket() {
         this.systemNotificationSubscription?.unsubscribe();
-        this.systemNotificationSubscription = this.websocketService.subscribe<SystemNotification[]>(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotification[]) => {
+        this.systemNotificationSubscription = this.websocketService.subscribe<SystemNotificationDto[]>(WEBSOCKET_CHANNEL).subscribe((notifications) => {
             this.websocketUpdateCount++;
-            notifications.forEach((notification) => {
-                notification.notificationDate = convertDateFromServer(notification.notificationDate);
-                notification.expireDate = convertDateFromServer(notification.expireDate);
-            });
-            this.notifications = notifications;
+            this.notifications = notifications.map((notification) => this.systemNotificationService.fromServer(notification));
             this.pruneClosedIds();
             this.selectVisibleNotificationsAndScheduleUpdate();
         });
