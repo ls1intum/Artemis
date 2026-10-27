@@ -266,6 +266,16 @@ export class QuizExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
     }
 
+    /**
+     * Delete a result of a quiz submission
+     * @param participationId the id of the participation the submission belongs to
+     * @param submissionId the id of the submission the result belongs to
+     * @param resultId the id of the result that should be deleted
+     */
+    deleteResult(participationId: number, submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.quizBaseURL}/participations/${participationId}/quiz-submissions/${submissionId}/results/${resultId}`);
+    }
+
     join(quizExerciseId: number, password: string): Observable<HttpResponse<QuizBatch>> {
         return this.http.post<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/join`, { password }, { observe: 'response' });
     }
