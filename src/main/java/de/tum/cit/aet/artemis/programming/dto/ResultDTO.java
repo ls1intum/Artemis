@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -31,11 +32,11 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
-            Visibility visibility, TestCaseDTO testCase) implements Serializable {
+            Visibility visibility, TestCaseDTO testCase, FeedbackSeverity severity) implements Serializable {
 
         public static FeedbackDTO of(Feedback feedback) {
             return new FeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
-                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), TestCaseDTO.of(feedback.getTestCase()));
+                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), TestCaseDTO.of(feedback.getTestCase()), feedback.getSeverity());
         }
     }
 

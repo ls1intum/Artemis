@@ -299,6 +299,26 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(component.achievedPoints()).toBe(8);
     });
 
+    it.each([undefined, true, false])('keeps official points while AI feedback has successful=%s and remains selectable', (successful) => {
+        const official: Result = { id: 1, rated: true, score: 80 };
+        const ai: Result = { id: 2, rated: true, score: successful ? 20 : undefined, successful, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
+        fixture.componentRef.setInput('exercise', { ...baseExercise, maxPoints: 10 });
+        fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [official, ai] }] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.relevantResult()).toEqual(official);
+        expect(component.achievedPoints()).toBe(8);
+        expect(component.sortedHistoryResults()).toContainEqual(ai);
+
+        component.displayedResult.set(ai);
+        expect(component.relevantResult()).toEqual(ai);
+        expect(component.achievedPoints()).toBe(8);
+
+        fixture.componentRef.setInput('isPractice', true);
+        fixture.detectChanges();
+        expect(component.achievedPoints()).toBe(8);
+    });
+
     describe('selected history result', () => {
         const latestResult = { id: 2, score: 80, rated: true } as Result;
         const previousResult = { id: 1, score: 30, rated: true } as Result;
