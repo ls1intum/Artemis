@@ -999,6 +999,14 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(verified.getVerifiedBy()).isNotNull();
         assertThat(verified.getVerifiedAt()).isNotNull();
         assertThat(verified.getContent()).isEqualTo(editedContent == null ? originalContent : editedContent);
+        if (editedContent == null) {
+            // reine Freigabe aendert den Inhalt nicht, der Bulk-Update laesst updatedDate unangetastet
+            assertThat(verified.getUpdatedDate()).isEqualTo(originalUpdatedDate);
+        }
+        else {
+            // edit-and-approve setzt content UND updatedDate im selben Statement auf den verifiedAt-Zeitpunkt
+            assertThat(verified.getUpdatedDate()).isEqualTo(verified.getVerifiedAt());
+        }
     }
 
     private Conversation nameGroupChat(Conversation groupChat, String name) {
