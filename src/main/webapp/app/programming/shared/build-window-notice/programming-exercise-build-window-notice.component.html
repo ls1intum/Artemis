@@ -1,0 +1,31 @@
+@if (buildTimeWindow(); as window) {
+    @switch (phase()) {
+        @case (BuildWindowPhase.BEFORE) {
+            <tumaet-ui-message
+                class="m-2 block"
+                severity="warn"
+                data-testid="build-window-notice-before"
+                [text]="'artemisApp.programmingExercise.buildTimeWindow.notice.before' | artemisTranslate: { start: window.start | artemisDate }"
+            />
+        }
+        @case (BuildWindowPhase.DURING) {
+            @if (window.end) {
+                <tumaet-ui-message
+                    class="m-2 block"
+                    severity="info"
+                    data-testid="build-window-notice-during"
+                    [text]="'artemisApp.programmingExercise.buildTimeWindow.notice.during' | artemisTranslate: { end: window.end | artemisDate }"
+                />
+            }
+        }
+        @case (BuildWindowPhase.AFTER) {
+            <tumaet-ui-message
+                class="m-2 block"
+                severity="warn"
+                data-testid="build-window-notice-after"
+                [text]="'artemisApp.programmingExercise.buildTimeWindow.notice.after' | artemisTranslate: { end: window.end | artemisDate }"
+            />
+        }
+        @default {}
+    }
+}

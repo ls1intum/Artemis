@@ -25,6 +25,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 
 // Cartesian product helper function
 const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));
@@ -311,6 +315,63 @@ describe('CodeEditorActionsComponent', () => {
         commitButton.nativeElement.click();
         commitObservable.error({ error: { detail: 'submitAfterReachingSubmissionLimit' } });
         expect(onErrorSpy).toHaveBeenNthCalledWith(6, 'submitAfterReachingSubmissionLimit');
+    });
+
+    describe('commit with a build time window', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+
+        const commitAt = (now: dayjs.Dayjs, options: { isAtLeastEditor?: boolean } = {}) => {
+            vi.useFakeTimers();
+            vi.setSystemTime(now.toDate());
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.isAtLeastEditor = options.isAtLeastEditor ?? false;
+            exercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            const participation = new ProgrammingExerciseStudentParticipation();
+            participation.exercise = exercise;
+            fixture.componentRef.setInput('participation', participation);
+            comp.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+            comp.editorState.set(EditorState.CLEAN);
+            comp.isBuilding.set(false);
+            fixture.detectChanges();
+            commitStub.mockReturnValue(of(null));
+            comp.commit();
+        };
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it.each([
+            ['before', windowStart.subtract(1, 'minute')],
+            ['after', windowEnd.add(1, 'minute')],
+        ])('should tell that the commit was not built and not show a build %s the window', (_, now) => {
+            const infoSpy = vi.spyOn(TestBed.inject(AlertService), 'info');
+
+            commitAt(now);
+
+            expect(infoSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.editor.committedOutsideBuildWindow');
+            expect(comp.isBuilding()).toBe(false);
+            expect(comp.commitState()).toBe(CommitState.CLEAN);
+        });
+
+        it('should expect a build inside the window', () => {
+            const infoSpy = vi.spyOn(TestBed.inject(AlertService), 'info');
+
+            commitAt(windowStart.add(1, 'minute'));
+
+            expect(infoSpy).not.toHaveBeenCalled();
+            expect(comp.isBuilding()).toBe(true);
+        });
+
+        it('should expect a build for editors and instructors outside the window', () => {
+            const infoSpy = vi.spyOn(TestBed.inject(AlertService), 'info');
+
+            commitAt(windowEnd.add(1, 'day'), { isAtLeastEditor: true });
+
+            expect(infoSpy).not.toHaveBeenCalled();
+            expect(comp.isBuilding()).toBe(true);
+        });
     });
 
     it('should not commit if unsavedFiles exist, instead should save files with commit set to true', async () => {

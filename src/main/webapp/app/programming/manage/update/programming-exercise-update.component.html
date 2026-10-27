@@ -64,6 +64,10 @@
             @if (!isSimpleMode()) {
                 <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
                 <hr class="mb-5" />
+                @if (isEditFieldDisplayedRecord().buildTimeWindow && !isExamMode()) {
+                    <jhi-programming-exercise-build-time-window [programmingExercise]="programmingExercise" [error]="getBuildTimeWindowError()" />
+                    <hr class="mb-5" />
+                }
             }
             <jhi-programming-exercise-problem
                 [editingLocked]="generationEditingLocked()"

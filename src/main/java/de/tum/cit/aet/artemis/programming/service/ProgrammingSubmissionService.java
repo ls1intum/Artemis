@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -59,7 +61,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionInfoDTO;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -92,6 +96,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
             AsyncBuildTriggerService asyncBuildTriggerService, ParticipationService participationService,
@@ -99,7 +105,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
                 exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -109,6 +115,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.gitService = gitService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.participationAuthCheckService = participationAuthCheckService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -124,6 +131,28 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
+     * Gets the build time window that keeps the given user's push or manual trigger from being built, if one applies.
+     * It applies to students working on their own non-practice participation. Editors and instructors, practice mode and the template, solution and test repositories
+     * are never restricted, and neither is a push by an unknown user.
+     *
+     * @param participation the participation that is pushed to or built
+     * @param user          the user who pushed or triggered the build
+     * @param instant       the instant of the push or trigger
+     * @return the exercise's build time window if the instant lies outside of it and builds are therefore skipped, empty otherwise
+     */
+    public Optional<BuildTimeWindow> findBuildTimeWindowExcluding(ProgrammingExerciseParticipation participation, @Nullable User user, ZonedDateTime instant) {
+        if (user == null || !(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) || studentParticipation.isPracticeMode()) {
+            return Optional.empty();
+        }
+        Exercise exercise = studentParticipation.getExercise();
+        BuildTimeWindow window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(exercise.getId());
+        if (window == null || window.isBuildAllowedAt(instant) || authCheckService.isAtLeastEditorForExercise(exercise, user)) {
+            return Optional.empty();
+        }
+        return Optional.of(window);
+    }
+
+    /**
      * This method gets called if a new commit was pushed to the VCS
      *
      * @param participation     The Participation, where the push happened
@@ -134,7 +163,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
      * @throws IllegalStateException    if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException if the Commit hash could not be parsed for submission from participation
-     * @throws VersionControlException  if the commit belongs to the wrong branch (i.e. not the default branch for the participation).
+     * @throws VersionControlException  if the commit belongs to the wrong branch (i.e. not the default branch for the participation), or, as the more specific
+     *                                      {@link BuildOutsideTimeWindowException}, if a student pushed outside the build time window of the exercise. Both leave the push
+     *                                      in the repository, but neither a submission nor a build is created.
      */
     public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Commit commit, User user, RepositoryType triggeredByPushTo)
             throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
@@ -157,6 +188,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // if the commit was made by Artemis and the message is "Setup" (this means it is an empty setup commit), we ignore this as well and do not create a submission!
             throw new IllegalStateException("Submission for participation id " + participation.getId() + " based on an empty setup commit by Artemis will be ignored!");
         }
+
+        findBuildTimeWindowExcluding(participation, user, submissionDate).ifPresent(window -> {
+            throw new BuildOutsideTimeWindowException(participation.getId(), window);
+        });
 
         if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
                 && (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {

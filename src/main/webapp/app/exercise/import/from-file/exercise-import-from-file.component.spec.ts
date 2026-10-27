@@ -17,6 +17,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -214,6 +215,25 @@ describe('ExerciseImportFromFileComponent', () => {
 
         expect(openImportSpy).toHaveBeenCalledOnce();
         expect(openImportSpy).toHaveBeenCalledWith(importedEx);
+    });
+
+    it('should convert the build time window of an export to dayjs objects', async () => {
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
+        const progEx = new ProgrammingExercise(undefined, undefined);
+        progEx.id = 556;
+        progEx.type = ExerciseType.PROGRAMMING;
+        progEx.buildConfig!.advancedSettings = { buildTimeWindow: { start: dayjs('2026-10-01T10:00:00Z'), end: dayjs('2026-10-01T12:00:00Z') } };
+
+        const zip = new ZipBuilder();
+        zip.file('exercise.json', JSON.stringify(progEx));
+        component.fileForImport.set((await zip.generateBlob()) as any);
+
+        await component.uploadExercise();
+
+        const window = (component.exercise as ProgrammingExercise).buildConfig!.advancedSettings!.buildTimeWindow!;
+        expect(dayjs.isDayjs(window.start)).toBe(true);
+        expect(window.start!.isSame(dayjs('2026-10-01T10:00:00Z'))).toBe(true);
+        expect(window.end!.isSame(dayjs('2026-10-01T12:00:00Z'))).toBe(true);
     });
 
     it('should import exercise correctly even if categories are missing', async () => {

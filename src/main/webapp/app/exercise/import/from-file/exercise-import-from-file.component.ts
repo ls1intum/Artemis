@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { convertBuildConfigDatesFromServer } from 'app/programming/shared/utils/build-time-window.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
@@ -81,6 +82,8 @@ export class ExerciseImportFromFileComponent implements OnInit {
                     hydrate(buildConfig, raw);
                     progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
+                // The window dates of an export are ISO strings
+                convertBuildConfigDatesFromServer(progEx.buildConfig);
                 if (progEx.auxiliaryRepositories) {
                     progEx.auxiliaryRepositories.forEach((repo, index) => {
                         progEx.auxiliaryRepositories![index].id = undefined;
