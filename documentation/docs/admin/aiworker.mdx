@@ -11,29 +11,37 @@ through Artemis' distributed-data provider. Artemis core uses the same provider.
 the owning feature; [Hyperion](/admin/hyperion#whole-exercise-generation-workers) owns
 exercise generation and its teaching-quality review.
 
-> This coordination layer is not a deployable worker by itself. The worker-only
-> `ArtemisApp` profile, image recipe, and Hyperion generation workload arrive with
-> the dependent Java Gradle worker layer. The deployment steps below apply only to
-> the complete stack; do not start a worker from this branch alone.
-
 ## Deployment topology
 
-| Environment             | Recommended placement                                 | Required separation                                                                              |
-| ----------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Staging                 | Dedicated worker VM with one execution slot initially | Separate provider access, image qualification, model credentials and budgets from production     |
-| Production              | Dedicated worker VM or host                           | No core, database, LocalVC or exam-critical build services on the worker host                    |
-| Small test installation | Separate VM on the same physical machine              | Independent Docker daemon and restricted network; never mount the core/build-agent Docker socket |
+A VM is not required. A dedicated worker host or VM is recommended for production
+isolation. A single-host installation can run the worker as a separate process
+with its own unprivileged rootless Docker daemon, subject to the checks below.
 
-The supervisor's Docker socket grants control over its daemon and potentially its
-host. Running the supervisor as an unprivileged container does not remove that
-privilege. A separate rootful daemon on the core host is **not** equivalent to VM
-isolation. An explicitly isolated daemon is an advanced test-only deployment option;
-its host and network isolation must be established outside the application.
+| Environment             | Recommended placement                     | Required separation                                                                                    |
+| ----------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Staging                 | Dedicated worker host or separate process | Separate provider access, image qualification, model credentials and budgets from production           |
+| Production              | Dedicated worker host or VM               | Keep core, database, LocalVC and exam-critical build services outside the worker execution environment |
+| Small test installation | Separate worker process on the same host  | Dedicated rootless Docker daemon; no shared core/build-agent socket, credentials or repository mounts  |
+
+The supervisor's Docker socket grants control over its daemon. A rootful daemon
+can also grant host-level authority; putting its supervisor in an unprivileged
+container does not remove that authority. For a host-only installation, use a
+dedicated unprivileged worker account and rootless daemon. Verify that cgroup
+resource limits apply, generated-code containers have network `none`, and the
+worker cannot access the core/build-agent Docker socket or application data.
+Leave generation disabled if these controls cannot be established.
+
+Rootless containers still share the host kernel. They do not provide the same
+isolation as a separate VM or host. Include that residual risk in the deployment
+review, especially when the host also serves core or grading workloads.
 
 Generated-code containers use network `none`, a read-only root filesystem, dropped
 capabilities, `no-new-privileges`, and bounded CPU, memory, processes and writable
 scratch mounts. They never receive the Docker socket or provider credentials.
 Restrict supervisor egress to approved provider, model, registry and telemetry endpoints.
+The worker does not load the core Langfuse exporter or custom Sentry configuration.
+Configure approved worker telemetry explicitly. The existing Sentry logging appender
+can still send errors when `sentry.dsn` is set; approve that destination as worker egress.
 Block database, repository/NFS, management and cloud-metadata access.
 
 ## Distributed-data access
@@ -72,7 +80,7 @@ events or read acknowledgement records from the previous storage layout.
 ## Core configuration
 
 Enable coordination only on a `core` node. The worker pool is independent of whether
-Hyperion is enabled. Set this flag on the coordinating core nodes:
+Hyperion is enabled:
 
 ```yaml
 artemis:
@@ -98,11 +106,17 @@ Never flush or replace the store under running writers.
 
 ## Worker configuration
 
-Build the normal Artemis WAR with `./gradlew -Pprod -Pwar bootWar -x webapp`.
-Start the normal `ArtemisApp` with
-`prod,aiworker`. On a worker-only node, component scanning loads only AI Worker
-services and the selected workload. The `aiworker` profile disables the HTTP
-server and database services and loads only the selected distributed-data client.
+Build the normal Artemis WAR once per release with `./gradlew -Pprod -Pwar bootWar`.
+Use the same WAR for core nodes, build agents, and AI Workers. There is no separate
+worker WAR.
+Run AI Workers from the normal Artemis image of the release (`ghcr.io/ls1intum/artemis:<version>`),
+as for Build Agents, with the Spring profiles `prod,aiworker`. Disable the image's HTTP
+health check, because a worker has no HTTP server, and give the container 8 GB of
+memory: the image fixes a 5 GB maximum heap. The worker starts the
+normal `ArtemisApp` in a separate process. It uses the normal Artemis component scan.
+Profiles and feature conditions select AI Worker services and the configured workload.
+The `aiworker` profile disables server modules, the HTTP server, and database services.
+The selected distributed-data provider supplies the shared client.
 Startup rejects `core`, `localci`, `localvc`, and `buildagent` with `aiworker`,
 and rejects any attempt to turn the HTTP server back on. Do not run this profile
 on a core node. Keep the core container away from the worker's Docker socket.
@@ -126,9 +140,6 @@ artemis:
     aiworker:
         id: worker-1
         image: registry.example/hyperion-java-gradle@sha256:<qualified-digest>
-        workload: hyperion-generation
-        workload-version: 1
-        profile: java-gradle
         max-concurrent-executions: 1
         runtime: runc
         memory-bytes: 2147483648
@@ -140,8 +151,9 @@ artemis:
 ```
 
 Replace the digest placeholder with the image's actual 64-digit SHA-256 digest.
-The environment-based entry point also accepts `AI_WORKER_ID`, `AI_WORKER_SANDBOX_IMAGE`,
-`AI_WORKER_WORKLOAD` and `AI_WORKER_PROFILE`. Configure provider access through
+The environment-based entry point also accepts `AI_WORKER_ID` and `AI_WORKER_SANDBOX_IMAGE`.
+The workload defaults to `hyperion-generation`, schema `1`, profile `java-gradle`; set
+`artemis.aiworker.workload` and `artemis.aiworker.profile` only for another installed workload. Configure provider access through
 Spring properties or a protected, read-only configuration mount.
 A mounted Spring configuration can supply the corresponding properties directly.
 
@@ -150,13 +162,11 @@ workloads/profiles with separate worker identities. An identifier does not insta
 implementation: unsupported combinations advertise no usable capacity. This keeps image,
 resource policy and credentials operator-controlled, not selectable by models or jobs.
 
-A workload is usable only when its implementation is installed. Configure the
-`hyperion-generation` Java Gradle workload for generation; transport alone
-advertises no capacity.
+The shipped workload is `hyperion-generation`, schema `1`, profile `java-gradle`.
 Configure its worker-local Spring AI chat model with `spring.ai.model.chat=openai` and
 `spring.ai.openai.*`, as described in [Hyperion setup](/admin/hyperion#configure-spring-ai).
-An installed generation workload sends model requests from the worker process directly to
-the configured provider. Core sends assignments and receives evidence through the
+Hyperion generation sends model requests from the worker process directly to the
+configured provider. Core sends the assignment and receives evidence through the
 distributed-data provider; it does not proxy generation model requests.
 Chat is disabled by default in the generic executable. Other workloads do not need model
 credentials unless their implementation uses a model. Use `max-retries: 0` when exact
@@ -210,12 +220,18 @@ whether a retained result is usable and whether persistence requires operator re
 
 ## Ansible and staging qualification
 
-The `ls1intum.artemis.ai_worker` role deploys the worker process. Select workload/profile
-explicitly and provision provider access through `ai_worker_provider` and its
-connection settings. Set `artemis_aiworker_ids` and `artemis_aiworker_enabled` on eligible core nodes.
-The role validates inputs, protects rendered secrets, preloads the sandbox image and
-requires an explicit maintenance confirmation before replacing a running worker.
-It does not provision the provider, firewall or isolation boundary.
+The `ls1intum.artemis.ai_worker` role deploys the supervisor on a dedicated host or VM
+with rootful Docker and no user-namespace remapping. It uses the same `valkey` map
+as core and Build Agents; without `valkey`, it uses `registry.url`,
+`artemis_eureka_urls` and `artemis_jhipster_registry_password` for Hazelcast discovery.
+Set `artemis_aiworker_ids` on eligible core nodes. Hyperion generation starts worker
+coordination automatically; set `artemis_aiworker_enabled` only for coordination
+without Hyperion generation.
+
+The role validates inputs, protects rendered secrets and preloads the sandbox image.
+It does not provision the provider, firewall or isolation boundary, or drain jobs.
+Stop new admission and drain active work and persistence before replacing a worker.
+Shared-host rootless deployment requires separate provisioning outside this role.
 
 Before staging admission, verify provider reachability and access control, image digests, Docker runtime,
 store durability, worker capability and capacity. Then exercise successful completion,
