@@ -21,9 +21,9 @@ public final class ContractWitnessProbe {
 
     public static final String PROBE_CLASS_NAME = "HyperionContractWitnessProbeTest";
 
-    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+[^;]+;", Pattern.MULTILINE);
+    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^[ \\t]*+package\\s++[^;]++;", Pattern.MULTILINE);
 
-    private static final Pattern IMPORT_DECLARATION = Pattern.compile("^\\s*import\\s+[^;]+;", Pattern.MULTILINE);
+    private static final Pattern IMPORT_DECLARATION = Pattern.compile("^[ \\t]*+import\\s++[^;]++;", Pattern.MULTILINE);
 
     private static final Pattern METHOD_DECLARATION = Pattern.compile("\\bvoid\\s+([a-zA-Z_$][a-zA-Z\\d_$]*)\\s*\\(");
 
