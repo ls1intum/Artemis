@@ -50,9 +50,20 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import {
+    faCheckCircle,
+    faCircleInfo,
+    faExclamationTriangle,
+    faFileImport,
+    faFlag,
+    faFolderOpen,
+    faListAlt,
+    faQuestionCircle,
+    faSort,
+    faSpinner,
+} from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -80,6 +91,8 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
+import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
 
 /** Largest delay `setTimeout` accepts before its signed 32-bit delay overflows and the timer fires immediately. */
 const MAX_TIMEOUT_DELAY = 2_147_483_647;
@@ -99,7 +112,9 @@ export interface ExampleSubmissionQueryParams {
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
         TumAetUiDoughnutChartComponent,
+        TumAetUiButtonComponent,
         TumAetUiButtonDirective,
+        AssessmentUploadDialogComponent,
         SidePanelComponent,
         TranslateDirective,
         RouterLink,
@@ -210,6 +225,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     readonly ExerciseType = ExerciseType;
     protected readonly RepositoryType = RepositoryType;
+    protected readonly faFileImport = faFileImport;
+    protected readonly uploadDialogVisible = signal(false);
 
     // Mutated in place only within the getForTutors subscribe (alongside exercise.set()), so it renders on that signal's CD tick.
     stats = {
@@ -265,6 +282,32 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * test runs, which happen before the exam starts and stay assessable). The dates come from the server, so all
      * exercise types agree and the banner never contradicts the alert shown after a 403.
      */
+    /** Whether the manual assessment upload belongs on this dashboard at all: it imports programming assessments, and only an instructor may do that. */
+    readonly canOfferManualAssessmentUpload = computed(() => this.exercise().type === ExerciseType.PROGRAMMING && !!this.exercise().isAtLeastInstructor && !this.isTestRun());
+
+    /**
+     * Whether an upload would be accepted. The upload creates and overwrites manual assessments, so it is allowed under the same condition the assessment editor is: manual
+     * assessment configured and the relevant due date passed. The server enforces the same gate; this only decides whether the instructor is invited to try.
+     */
+    readonly canUploadManualAssessments = computed(() => this.canOfferManualAssessmentUpload() && areManualResultsAllowed(this.exercise()));
+
+    /** Why the upload is offered but disabled, or undefined while it is possible. The two reasons need different things from the instructor, so they are told apart. */
+    readonly manualAssessmentUploadDisabledReason = computed(() => {
+        if (!this.canOfferManualAssessmentUpload() || this.canUploadManualAssessments()) {
+            return undefined;
+        }
+        return this.exercise().assessmentType === AssessmentType.AUTOMATIC
+            ? 'artemisApp.assessmentUpload.notPossible.automaticAssessment'
+            : 'artemisApp.assessmentUpload.notPossible.beforeDueDate';
+    });
+
+    /** Tooltip for the disabled upload button, empty while the upload is possible so that no tooltip is shown. */
+    readonly manualAssessmentUploadDisabledTooltip = computed(() => {
+        this.currentLanguage();
+        const reason = this.manualAssessmentUploadDisabledReason();
+        return reason ? this.translateService.instant(reason) : '';
+    });
+
     readonly assessmentNotPossibleYetReason = computed(() => {
         this.assessmentAvailabilityTick();
         if (this.isTestRun()) {
@@ -298,6 +341,27 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faListAlt = faListAlt;
     faFlag = faFlag;
     faCircleInfo = faCircleInfo;
+
+    /**
+     * Opens the dialog that lets an instructor upload manual assessments for the participants of this programming exercise at once.
+     * Precondition: the current exercise is a programming exercise and the user is at least instructor (the launch button is only shown then).
+     * Postcondition: opens the upload dialog for the current exercise id; it does not itself change any persistent state.
+     */
+    openAssessmentUpload(): void {
+        // Guarded as well as disabled: the button is the only way in, but re-enabling it in the browser must not open a dialog the server would reject anyway.
+        if (!this.canUploadManualAssessments()) {
+            return;
+        }
+        this.uploadDialogVisible.set(true);
+    }
+
+    /**
+     * Refreshes the dashboard after an instructor uploaded manual assessments, so the assessment counts, chart and assessable-submission state reflect the newly stored results.
+     * Postcondition: reloads the exercise data for tutors; it does not itself change any persistent state.
+     */
+    onAssessmentsUploaded(): void {
+        this.loadAll();
+    }
 
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server

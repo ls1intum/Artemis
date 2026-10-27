@@ -354,6 +354,65 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
     });
 
+    it.each([
+        [AssessmentType.SEMI_AUTOMATIC, true, undefined],
+        [AssessmentType.AUTOMATIC, false, 'artemisApp.assessmentUpload.notPossible.automaticAssessment'],
+    ])('should enable the manual assessment upload only when %s allows it', (assessmentType, expectedEnabled, expectedReason) => {
+        // The upload creates and overwrites manual assessments, so it is allowed under the same condition the assessment editor is. It stays visible when it is not allowed,
+        // with the reason, rather than disappearing without explanation.
+        setUpProgrammingExerciseForUpload({ assessmentType, dueDate: dayjs().subtract(1, 'day') });
+
+        fixture.detectChanges();
+
+        expect(comp.canOfferManualAssessmentUpload()).toBe(true);
+        expect(comp.canUploadManualAssessments()).toBe(expectedEnabled);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe(expectedReason);
+        expect(fixture.nativeElement.querySelector('[data-testid="open-assessment-upload"]')).not.toBeNull();
+    });
+
+    it('should disable the manual assessment upload until the due date has passed, naming that reason', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().add(1, 'day') });
+
+        fixture.detectChanges();
+
+        expect(comp.canUploadManualAssessments()).toBe(false);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe('artemisApp.assessmentUpload.notPossible.beforeDueDate');
+    });
+
+    it('should not open the upload dialog when the upload is not allowed', () => {
+        // The disabled button is the only way in, but re-enabling it in the browser must not open a dialog the server would reject anyway.
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(false);
+    });
+
+    function setUpProgrammingExerciseForUpload(overrides: Partial<ProgrammingExercise>): void {
+        const exerciseForUpload = { ...programmingExercise, isAtLeastInstructor: true, ...overrides } as ProgrammingExercise;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForUpload, headers: new HttpHeaders() })));
+        comp.exerciseId.set(exerciseForUpload.id!);
+    }
+
+    it('should open the manual assessment upload dialog', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
+        expect(comp['uploadDialogVisible']()).toBe(false);
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(true);
+    });
+
+    it('should reload the dashboard data after manual assessments were uploaded', () => {
+        const loadAllSpy = vi.spyOn(comp, 'loadAll').mockImplementation(() => {});
+
+        comp.onAssessmentsUploaded();
+
+        expect(loadAllSpy).toHaveBeenCalledOnce();
+    });
+
     it('should initialize with tutor leaderboard entry', () => {
         const tutor = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity.set(tutor);

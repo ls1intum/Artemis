@@ -176,6 +176,15 @@
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."
         },
         "assignmentRepositoryNotAllowed": "Assignment-Repositories werden für Klausuraufgaben nicht unterstützt. Bitte nutze stattdessen das Testlauf-Feature, um die Aufgabe auszuprobieren.",
+        "assessmentUpload": {
+            "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
+            "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",
+            "invalidZipFile": "Die hochgeladene Datei konnte nicht als ZIP-Datei gelesen werden",
+            "multipleCorrectionRounds": "Manuelle Bewertungen können nur für Aufgaben mit genau einer Korrekturrunde hochgeladen werden",
+            "manualResultsNotAllowed": "Manuelle Bewertungen sind für diese Aufgabe noch nicht erlaubt",
+            "automaticAssessment": "Manuelle Bewertungen können nur für Aufgaben hochgeladen werden, bei denen die manuelle Bewertung aktiviert ist",
+            "tooManyParticipantsForTemplate": "Die Aufgabe hat zu viele Teilnehmende, um eine Vorlage für den Upload manueller Bewertungen zu erzeugen"
+        },
         "room": {
             "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
             "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",
@@ -337,11 +346,9 @@
             "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
             "courseHasNoTimeZone": "Für diesen Kurs ist keine Zeitzone konfiguriert.",
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
-
             "tutorialPeriodMissing": "Das Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
             "tutorialPeriodInvalidFormat": "Das Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
             "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
-
             "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
             "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
         },
