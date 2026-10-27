@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentDraftDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -540,6 +541,16 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                     ))
             """)
     List<CorrectionRoundResultDTO> findCorrectionRoundResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds, @Param("currentUserLogin") String currentUserLogin);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentDraftDTO(result.submission.participation.id, result.submission.id, result.id, result.correctionRound)
+            FROM Result result
+            WHERE result.submission.participation.id IN :participationIds
+                AND result.assessor.login = :currentUserLogin
+                AND result.completionDate IS NULL
+                AND result.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+            """)
+    List<AssessmentDraftDTO> findUnfinishedAssessmentDrafts(@Param("participationIds") List<Long> participationIds, @Param("currentUserLogin") String currentUserLogin);
 
     /**
      * Returns true if there is at least one result for the given exercise.

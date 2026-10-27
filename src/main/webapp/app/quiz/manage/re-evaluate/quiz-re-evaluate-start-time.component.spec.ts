@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,7 +37,7 @@ describe('QuizReEvaluateComponent start time', () => {
         await TestBed.configureTestingModule({
             providers: [
                 MockProvider(DialogService),
-                MockProvider(QuizExerciseService, { find: () => of(new HttpResponse({ body: quizExercise })) }),
+                MockProvider(QuizExerciseService, { find: () => of(quizExercise) }),
                 { provide: ActivatedRoute, useValue: { params: of({ exerciseId: 456 }) } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },

@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentDraftDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
@@ -1271,19 +1272,23 @@ public class ParticipationService {
         }
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
+        Map<Long, List<AssessmentDraftDTO>> olderDraftsByParticipationId = assessmentQueue ? resultRepository
+                .findUnfinishedAssessmentDrafts(ids, SecurityUtils.getCurrentUserLogin().orElse("")).stream().collect(Collectors.groupingBy(AssessmentDraftDTO::participationId))
+                : Map.of();
 
         Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
         final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
         User assessmentUser = assessmentQueue ? userRepository.getUserWithAuthorities() : null;
-        List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
-                .map(p -> mapToManagementDTO(p, exercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults, assessmentUser)).toList();
+        List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToManagementDTO(p, exercise, submissionCountMap,
+                finalResultMap, finalCorrectionRoundResults, assessmentUser, olderDraftsByParticipationId.getOrDefault(p.getId(), List.of()))).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
     private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, Exercise exercise, Map<Long, Integer> submissionCountMap,
-            Map<Long, Result> resultBySubmissionId, Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId, @Nullable User assessmentUser) {
+            Map<Long, Result> resultBySubmissionId, Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId, @Nullable User assessmentUser,
+            List<AssessmentDraftDTO> olderAssessmentDrafts) {
         String participantName;
         String participantIdentifier;
         Long studentId = null;
@@ -1358,7 +1363,8 @@ public class ParticipationService {
                                 .filter(round -> latestSubmission != null && assessmentEligibilityService.canStartAssessment(latestSubmission, exercise, round, assessmentUser))
                                 .boxed().toList()
                         : null,
-                latestSubmission instanceof de.tum.cit.aet.artemis.text.domain.TextSubmission textSubmission ? textSubmission.getLanguage() : null);
+                latestSubmission instanceof de.tum.cit.aet.artemis.text.domain.TextSubmission textSubmission ? textSubmission.getLanguage() : null,
+                olderAssessmentDrafts.stream().filter(draft -> !Objects.equals(draft.submissionId(), submissionId)).toList());
     }
 
     /**

@@ -1,4 +1,4 @@
-@for (link of assessmentLinks(); track link.correctionRound) {
+@for (link of assessmentLinks(); track link.result?.id ?? link.correctionRound) {
     <div class="flex items-center gap-1">
         <a
             tumAetUiButton
@@ -28,7 +28,7 @@
                 size="small"
                 severity="danger"
                 data-testid="manage-assessment-cancel"
-                (click)="cancelAssessment(link.result!, participation())"
+                (click)="cancelAssessment(link.result!, participation(), link.submissionId)"
                 [disabled]="isLoading() || disabled()"
                 [attr.aria-label]="
                     'artemisApp.assessment.dashboard.actions.' + (examMode() ? 'examCorrectionRound.' : '') + 'cancel'

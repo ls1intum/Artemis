@@ -94,7 +94,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-cancel"]')).not.toBeNull();
     });
 
-    describe('assessmentLinkSeverity', () => {
+    describe('assessment link severity', () => {
         const withResult = (result?: Partial<Result>) =>
             fixture.componentRef.setInput('participation', {
                 id: 10,
@@ -109,8 +109,18 @@ describe('ManageAssessmentButtonsComponent', () => {
             ['primary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, hasComplaint: true }],
         ])('is %s', (severity, result) => {
             withResult(result as Partial<Result> | undefined);
-            expect(comp.assessmentLinkSeverity(0)).toBe(severity);
+            expect(comp.assessmentLinks()[0]?.severity).toBe(severity);
         });
+    });
+
+    it('keeps an older owned draft available when the latest submission changed', () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
+        fixture.componentRef.setInput('participation', { id: 10, submissions: [{ id: 21, results: [] }] } as Participation);
+        fixture.componentRef.setInput('olderAssessmentDrafts', [{ submissionId: 20, resultId: 30, correctionRound: 0 }]);
+
+        const draftLink = comp.assessmentLinks().find((link) => link.result?.id === 30);
+        expect(draftLink).toMatchObject({ action: 'continue', submissionId: 20, canCancel: true });
+        expect(draftLink?.link).toBeDefined();
     });
 
     describe('reactive assessment availability', () => {

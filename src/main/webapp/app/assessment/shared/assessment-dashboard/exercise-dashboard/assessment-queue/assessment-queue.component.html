@@ -92,6 +92,7 @@
             [assessableCorrectionRounds]="isTestRun() ? undefined : (dto.assessableCorrectionRounds ?? [])"
             [ownedCorrectionRounds]="isTestRun() ? undefined : ownedCorrectionRounds(dto)"
             [isTestRun]="isTestRun()"
+            [olderAssessmentDrafts]="isTestRun() ? [] : (dto.olderAssessmentDrafts ?? [])"
             (refresh)="refresh(); assessmentChanged.emit()"
         />
         @if (isProgrammingExercise() || dto.teamId) {

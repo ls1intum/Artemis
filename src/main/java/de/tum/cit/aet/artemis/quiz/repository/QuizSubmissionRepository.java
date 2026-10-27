@@ -191,6 +191,23 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
     Optional<QuizSubmission> findWithEagerSubmittedAnswersByResultId(@Param("resultId") long resultId);
 
     /**
+     * Get the submissions of a quiz exercise that have no result, with their submitted answers. Re-evaluation reaches submissions through their results, so it
+     * loads these separately, for example a submission whose only result an instructor deleted.
+     *
+     * @param exerciseId the id of the quiz exercise
+     * @return the submissions of the exercise without a result
+     */
+    @Query("""
+            SELECT DISTINCT submission
+            FROM QuizSubmission submission
+                JOIN submission.participation participation
+                LEFT JOIN FETCH submission.submittedAnswers
+            WHERE participation.exercise.id = :exerciseId
+                AND submission.results IS EMPTY
+            """)
+    List<QuizSubmission> findWithEagerSubmittedAnswersWithoutResultsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Retrieve QuizSubmission for given quiz batch and studentLogin
      *
      * @param quizBatchId  the id of the quiz batch for which QuizSubmission is to be retrieved

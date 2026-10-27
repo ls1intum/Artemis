@@ -20,6 +20,12 @@ export interface CorrectionRoundResultDTO {
     score?: number;
 }
 
+export interface AssessmentDraftDTO {
+    submissionId: number;
+    resultId: number;
+    correctionRound?: number;
+}
+
 export interface ParticipationManagementDTO {
     participationId: number;
     initializationState?: string;
@@ -54,4 +60,5 @@ export interface ParticipationManagementDTO {
     codeIssueCount?: number;
     correctionRoundResults?: CorrectionRoundResultDTO[];
     assessableCorrectionRounds?: number[];
+    olderAssessmentDrafts?: AssessmentDraftDTO[];
 }

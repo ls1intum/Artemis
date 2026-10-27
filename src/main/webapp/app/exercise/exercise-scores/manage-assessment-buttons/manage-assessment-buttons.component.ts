@@ -5,6 +5,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { AssessmentDraftDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getSubmissionResultByCorrectionRound } from 'app/exercise/shared/entities/submission/submission.model';
@@ -17,7 +18,7 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-manage-assessment-buttons',
@@ -43,13 +44,15 @@ export class ManageAssessmentButtonsComponent {
     readonly assessableCorrectionRounds = input<number[]>();
     readonly ownedCorrectionRounds = input<number[]>();
     readonly isTestRun = input(false);
+    readonly olderAssessmentDrafts = input<AssessmentDraftDTO[]>([]);
     readonly examMode = computed(() => !!this.exercise().exerciseGroup);
     readonly newManualResultAllowed = computed(() => areManualResultsAllowed(this.exercise()) && (!isPracticeMode(this.participation()) || this.examMode()));
     readonly correctionRoundIndices = computed(() => [...Array(this.correctionRoundsEnabled() ?? this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
-    readonly assessmentLinks = computed(() =>
-        this.correctionRoundIndices().flatMap((correctionRound) => {
+    readonly assessmentLinks = computed(() => [
+        ...this.correctionRoundIndices().flatMap((correctionRound) => {
             const result = this.resultForRound(correctionRound);
             const action = this.assessmentAction(correctionRound);
+            const targetRound = this.getCorrectionRoundForAssessmentLink(correctionRound);
             const canManageDraft = this.exercise().isAtLeastInstructor || this.ownedCorrectionRounds() === undefined || this.ownedCorrectionRounds()!.includes(correctionRound);
             if (
                 !this.participation().submissions?.[0]?.id ||
@@ -66,16 +69,37 @@ export class ManageAssessmentButtonsComponent {
                     correctionRound,
                     result,
                     action,
-                    severity: this.assessmentLinkSeverity(correctionRound),
-                    labelKey: this.assessmentLabelKey(correctionRound),
-                    link: this.getAssessmentLink(correctionRound),
-                    targetRound: this.getCorrectionRoundForAssessmentLink(correctionRound),
+                    severity: action === 'assess' ? 'success' : action === 'continue' ? 'warn' : 'primary',
+                    labelKey:
+                        action === 'complaint'
+                            ? 'artemisApp.exerciseAssessmentDashboard.showComplaint'
+                            : 'artemisApp.assessment.dashboard.actions.' + (this.examMode() ? 'examCorrectionRound.' : '') + action,
+                    link: this.getAssessmentLink(targetRound),
+                    targetRound,
+                    submissionId: this.participation().submissions?.[0]?.id,
                     canCancel:
                         canManageDraft && this.newManualResultAllowed() && !!result?.assessmentType && !result.completionDate && result.assessmentType !== AssessmentType.AUTOMATIC,
                 },
             ];
         }),
-    );
+        ...this.olderAssessmentDrafts().map((draft) => {
+            const result = new Result();
+            result.id = draft.resultId;
+            result.assessmentType = AssessmentType.MANUAL;
+            const correctionRound = draft.correctionRound ?? 0;
+            return {
+                correctionRound,
+                result,
+                action: 'continue' as const,
+                severity: 'warn',
+                labelKey: 'artemisApp.assessment.dashboard.actions.' + (this.examMode() ? 'examCorrectionRound.' : '') + 'continue',
+                link: this.getAssessmentLink(correctionRound, draft.submissionId, draft.resultId),
+                targetRound: correctionRound,
+                submissionId: draft.submissionId,
+                canCancel: this.newManualResultAllowed(),
+            };
+        }),
+    ]);
     cancelConfirmationText!: string;
 
     readonly faBan = faBan;
@@ -100,17 +124,6 @@ export class ManageAssessmentButtonsComponent {
         return submission ? getSubmissionResultByCorrectionRound(submission, correctionRound) : undefined;
     }
 
-    /**
-     * Green to start an assessment, blue to open a finished one or its complaint, amber to continue a draft.
-     */
-    assessmentLinkSeverity(correctionRound: number): TumAetUiButtonSeverity {
-        const result = this.resultForRound(correctionRound);
-        if ((!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC) && !result?.hasComplaint) {
-            return 'success';
-        }
-        return result?.completionDate || result?.hasComplaint ? 'primary' : 'warn';
-    }
-
     assessmentAction(correctionRound: number): 'assess' | 'open' | 'continue' | 'complaint' {
         const result = this.resultForRound(correctionRound);
         if (result?.hasComplaint) {
@@ -119,33 +132,25 @@ export class ManageAssessmentButtonsComponent {
         return !result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC ? 'assess' : result.completionDate ? 'open' : 'continue';
     }
 
-    assessmentLabelKey(correctionRound: number): string {
-        const action = this.assessmentAction(correctionRound);
-        return action === 'complaint'
-            ? 'artemisApp.exerciseAssessmentDashboard.showComplaint'
-            : 'artemisApp.assessment.dashboard.actions.' + (this.examMode() ? 'examCorrectionRound.' : '') + action;
-    }
-
-    getAssessmentLink(correctionRound = 0) {
+    getAssessmentLink(correctionRound = 0, submissionId?: number, resultId?: number) {
         const exercise = this.exercise();
         const course = this.course();
         const participation = this.participation();
-        const submission = participation.submissions?.[0];
-        if (!exercise.type || !exercise.id || !course.id || !submission?.id) {
+        const currentSubmission = participation.submissions?.[0];
+        submissionId ??= currentSubmission?.id;
+        if (!exercise.type || !exercise.id || !course.id || !submissionId) {
             return;
         }
-        correctionRound = this.getCorrectionRoundForAssessmentLink(correctionRound);
-
         return getLinkToSubmissionAssessment(
             exercise.type,
             course.id,
             exercise.id,
             participation.id,
-            submission.id,
+            submissionId,
             exercise.exerciseGroup?.exam?.id,
             exercise.exerciseGroup?.id,
             // TODO do we need to handle this differently for programming exercises?
-            exercise.isAtLeastInstructor ? this.resultForRound(correctionRound)?.id : undefined,
+            exercise.isAtLeastInstructor ? (resultId ?? this.resultForRound(correctionRound)?.id) : undefined,
         );
     }
 
@@ -168,12 +173,12 @@ export class ManageAssessmentButtonsComponent {
      * result per correction round, and without it the server released the newest round, so cancelling correction round 1
      * released round 2 and round 1 stayed locked (#13396).
      */
-    cancelAssessment(result: Result, participation: Participation) {
+    cancelAssessment(result: Result, participation: Participation, submissionId?: number) {
         // Take the submission from the participation, not from the result. The participation page builds its rows from
         // ParticipationManagementDTO (ParticipationComponent#toParticipation), and those results carry no back reference to
         // their submission, so `result.submission?.id` was always undefined here and the guard below silently swallowed
         // every click: no request ever left the client and the lock was never released (#13396).
-        const submissionId = participation.submissions?.[0]?.id;
+        submissionId ??= participation.submissions?.[0]?.id;
         const confirmCancel = window.confirm(this.cancelConfirmationText);
 
         if (confirmCancel && submissionId) {
