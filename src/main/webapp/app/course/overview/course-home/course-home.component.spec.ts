@@ -15,7 +15,7 @@ import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { CourseHomeComponent } from './course-home.component';
 import { CourseHomeService } from './course-home.service';
-import { CourseHome, CourseHomeGeneratedWelcome } from './course-home.model';
+import { CourseHome, CourseHomeGeneratedWelcome, CourseHomeTeachingTeam } from './course-home.model';
 import { COURSE_HOME_SITUATIONS, createCourseHomeFixture } from './test/course-home.fixtures';
 import en from '../../../../i18n/en/courseHome.json';
 import de from '../../../../i18n/de/courseHome.json';
@@ -113,6 +113,40 @@ describe('CourseHomeComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="home-questions"]')).toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="home-iris"]')).toBeNull();
         expect(text()).toContain('temporarily unavailable');
+    });
+    it('discloses unavailable upcoming exam data', async () => {
+        const home = createCourseHomeFixture('minimal');
+        home.sections.exams = 'UNAVAILABLE';
+        await render(home);
+        expect(text()).toContain('Upcoming exams');
+        expect(text()).toContain('temporarily unavailable');
+    });
+    it('replaces expanded staff with the latest preview on refresh', async () => {
+        await render(createCourseHomeFixture('first'));
+        fixture.componentInstance.loadMoreTeam();
+        fixture.detectChanges();
+        expect(text()).toContain('Grace Hopper');
+        const refreshed = createCourseHomeFixture('first');
+        refreshed.teachingTeam = { items: [{ id: 9, name: 'Barbara Liskov', role: 'INSTRUCTOR' }], hasMore: false, page: 0 };
+        fixture.componentInstance.refresh();
+        await render(refreshed);
+        expect(text()).toContain('Barbara Liskov');
+        expect(text()).not.toContain('Ada Lovelace');
+        expect(text()).not.toContain('Grace Hopper');
+    });
+    it('discards a staff-page response superseded by a refreshed preview', async () => {
+        await render(createCourseHomeFixture('first'));
+        const staff = new Subject<CourseHomeTeachingTeam>();
+        api.teachingTeam.mockReturnValue(staff);
+        fixture.componentInstance.loadMoreTeam();
+        const refreshed = createCourseHomeFixture('first');
+        refreshed.teachingTeam = { items: [{ id: 9, name: 'Barbara Liskov', role: 'INSTRUCTOR' }], hasMore: false, page: 0 };
+        fixture.componentInstance.refresh();
+        await render(refreshed);
+        staff.next({ items: [{ id: 1, name: 'Ada Lovelace', role: 'INSTRUCTOR' }], hasMore: false, page: 0 });
+        fixture.detectChanges();
+        expect(text()).toContain('Barbara Liskov');
+        expect(text()).not.toContain('Ada Lovelace');
     });
     it('avoids a percentage for 0/0 available work', async () => {
         await render(createCourseHomeFixture('before'));

@@ -57,7 +57,6 @@ public class CourseHomeCommunicationService {
             throw new AccessForbiddenException("course", courseId);
         }
         var now = ZonedDateTime.ofInstant(asOf, ZoneOffset.UTC);
-        var baseline = ZonedDateTime.ofInstant(since, ZoneOffset.UTC);
         boolean enabled = courses.isCommunicationEnabled(courseId);
         var questions = enabled ? repository.findQuestions(courseId, user.getId(), now, PageRequest.of(0, 3)).stream()
                 .map(row -> new CourseHomeQuestionsDTO.ItemDTO(row.getId(), row.getConversationId(), plainTitle(row.getTitle(), row.getExcerpt()), row.getReplies(),
@@ -65,7 +64,7 @@ public class CourseHomeCommunicationService {
                                 : row.getExternalReplies() > 0 ? CourseHomeQuestionState.ANSWERED : CourseHomeQuestionState.AWAITING_REPLY,
                         row.getUnread(), row.getActivityAt().toInstant(), row.getFocusReplyId()))
                 .toList() : List.<CourseHomeQuestionsDTO.ItemDTO>of();
-        var announcement = enabled ? repository.findAnnouncements(courseId, user.getId(), now, baseline, PageRequest.of(0, 1)).stream()
+        var announcement = enabled ? repository.findAnnouncements(courseId, user.getId(), now, PageRequest.of(0, 1)).stream()
                 .map(row -> new CourseHomeDTO.ItemDTO(plainTitle(row.getTitle(), row.getExcerpt()),
                         new CourseHomeTargetDTO(CourseHomeTargetKind.THREAD, row.getId(), row.getConversationId(), null), row.getActivityAt().toInstant(), null,
                         "IMPORTANT_ANNOUNCEMENT"))

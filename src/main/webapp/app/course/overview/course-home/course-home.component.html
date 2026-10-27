@@ -107,6 +107,11 @@
                             {{ 'artemisApp.courseHome.viewLectures' | artemisTranslate }}: {{ 'artemisApp.courseHome.unavailable' | artemisTranslate }}
                         </p>
                     }
+                    @if (data.sections.exams === 'UNAVAILABLE') {
+                        <p class="text-sm text-muted-color mt-3!" role="status">
+                            {{ 'artemisApp.courseHome.exams' | artemisTranslate }}: {{ 'artemisApp.courseHome.unavailable' | artemisTranslate }}
+                        </p>
+                    }
                 </section>
                 @if ((data.faqs?.length ?? 0) > 0 || data.sections.faq === 'UNAVAILABLE') {
                     <section aria-labelledby="home-faq-heading" class="px-1!">

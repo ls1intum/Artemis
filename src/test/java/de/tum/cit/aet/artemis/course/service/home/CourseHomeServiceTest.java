@@ -13,6 +13,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.dao.DataAccessResourceFailureException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.course.dto.home.CourseHomeTeachingTeamDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseHomeRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseHomeSessionsDTO;
 import de.tum.cit.aet.artemis.lecture.api.LectureCourseHomeApi;
 
 class CourseHomeServiceTest {
@@ -88,6 +91,27 @@ class CourseHomeServiceTest {
         assertThat(result.irisSessions().status()).isEqualTo(CourseHomeSectionStatus.DISABLED);
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = { -60, 0, 60 })
+    void onlyAnnouncementsNewerThanTheBaselineBecomeTheNextStep(int secondsFromBaseline) {
+        Instant baseline = NOW.minusSeconds(600);
+        when(visits.read(COURSE, user.getId())).thenReturn(new CourseHomeVisitService.VisitState(baseline, baseline, 1));
+        var announcement = new CourseHomeDTO.ItemDTO("Pinned course information", new CourseHomeTargetDTO(CourseHomeTargetKind.THREAD, 10L, 11L, null),
+                baseline.plusSeconds(secondsFromBaseline), null, "IMPORTANT_ANNOUNCEMENT");
+        when(communication.load(anyLong(), any(), any(), any()))
+                .thenReturn(new CourseHomeCommunicationDTO(new CourseHomeQuestionsDTO(CourseHomeSectionStatus.AVAILABLE, List.of()), announcement, List.of()));
+        var result = service(Optional.empty()).load(COURSE, user, new CourseHomeQueryDTO(baseline), NOW);
+        assertThat(result.announcement()).isEqualTo(announcement);
+        if (secondsFromBaseline > 0) {
+            assertThat(result.nextStep()).isEqualTo(announcement);
+            assertThat(result.welcome().welcomeCase()).isEqualTo(CourseHomeWelcomeCase.IMPORTANT_ANNOUNCEMENT);
+        }
+        else {
+            assertThat(result.nextStep()).isNull();
+            assertThat(result.welcome().welcomeCase()).isEqualTo(CourseHomeWelcomeCase.CAUGHT_UP);
+        }
+    }
+
     @Test
     void anOptionalDatabaseFailureLeavesTheCoreUsable() {
         var api = mock(LectureCourseHomeApi.class);
@@ -96,6 +120,30 @@ class CourseHomeServiceTest {
         assertThat(result.sections().get("lectures")).isEqualTo(CourseHomeSectionStatus.UNAVAILABLE);
         assertThat(result.welcome()).isNotNull();
         assertThat(result.course().id()).isEqualTo(COURSE);
+    }
+
+    @Test
+    void unrelatedChatHistoryIsNotPromotedToThePrimaryLearningStep() {
+        var sections = mock(CourseHomeSectionsService.class);
+        when(sections.lectures(anyLong(), any(), any(), any()))
+                .thenReturn(new de.tum.cit.aet.artemis.lecture.dto.LectureCourseHomeDTO(CourseHomeSectionStatus.DISABLED, List.of()));
+        when(sections.exams(anyLong(), any(), any(), any())).thenReturn(new de.tum.cit.aet.artemis.exam.dto.ExamCourseHomeDTO(CourseHomeSectionStatus.DISABLED, List.of()));
+        when(sections.discussions(anyLong(), any(), any(), any()))
+                .thenReturn(new CourseHomeCommunicationDTO(new CourseHomeQuestionsDTO(CourseHomeSectionStatus.AVAILABLE, List.of()), null, List.of()));
+        var history = new IrisCourseHomeSessionsDTO(CourseHomeSectionStatus.AVAILABLE,
+                List.of(new IrisCourseHomeSessionsDTO.ItemDTO(10L, "Weather question", "COURSE", COURSE, "Course", NOW.minusSeconds(3600))));
+        when(sections.chats(anyLong(), any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean())).thenReturn(history);
+        var home = new CourseHomeService(courses, configurations, visits, learning, team, tabs, new CourseHomeContextService(), authorization, sections,
+                mock(CourseHomeAiPolicyService.class));
+
+        var firstVisit = home.load(COURSE, user, new CourseHomeQueryDTO(null), NOW);
+        assertThat(firstVisit.nextStep()).isNull();
+        assertThat(firstVisit.irisSessions()).isEqualTo(history);
+        when(visits.read(COURSE, user.getId())).thenReturn(new CourseHomeVisitService.VisitState(NOW, NOW, 1));
+        var returning = home.load(COURSE, user, new CourseHomeQueryDTO(null), NOW.plusSeconds(60));
+        assertThat(returning.nextStep()).isNull();
+        assertThat(returning.welcome().welcomeCase()).isEqualTo(CourseHomeWelcomeCase.CAUGHT_UP);
+        assertThat(returning.irisSessions()).isEqualTo(history);
     }
 
     @Test
