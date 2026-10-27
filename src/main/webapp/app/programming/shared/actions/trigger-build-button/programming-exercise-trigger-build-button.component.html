@@ -5,7 +5,7 @@
         [size]="btnSize() === ButtonSize.SMALL ? 'small' : btnSize() === ButtonSize.LARGE ? 'large' : 'default'"
         [severity]="participationHasLatestSubmissionWithoutResult() ? 'danger' : 'primary'"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [overwriteDisabled]="isRetrievingBuildStatus() || isBuilding()"
+        [forceDisabled]="isRetrievingBuildStatus() || isBuilding()"
         [attr.aria-label]="title() || 'artemisApp.programmingExercise.resubmit' | artemisTranslate"
         [attr.aria-busy]="isBuilding()"
         [tumAetUiTooltip]="

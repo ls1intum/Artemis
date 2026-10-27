@@ -16,7 +16,7 @@ import { ParticipationManagementDTO } from 'app/exercise/participation/participa
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -41,6 +41,7 @@ import { MockResultService } from 'test/helpers/mocks/service/mock-result.servic
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -106,6 +107,10 @@ describe('ParticipationComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
+            .overrideComponent(ParticipationComponent, {
+                remove: { imports: [CodeButtonComponent] },
+                add: { imports: [MockComponent(CodeButtonComponent)] },
+            })
             .compileComponents()
             .then(() => {
                 componentFixture = TestBed.createComponent(ParticipationComponent);

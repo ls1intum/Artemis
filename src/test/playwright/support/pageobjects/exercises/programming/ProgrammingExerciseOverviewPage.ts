@@ -79,19 +79,18 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async openCloneMenu(cloneMethod: GitCloneMethod, codeButton?: Locator) {
-        const gitCloneMethodName = {
-            [GitCloneMethod.https]: 'HTTPS',
-            [GitCloneMethod.httpsWithToken]: 'Token',
-            [GitCloneMethod.ssh]: 'SSH',
+        const authenticationMethodTestId = {
+            [GitCloneMethod.https]: 'authentication-method-password',
+            [GitCloneMethod.httpsWithToken]: 'authentication-method-token',
+            [GitCloneMethod.ssh]: 'authentication-method-ssh',
         };
 
         const codeButtonLocator = codeButton ?? this.getCodeButton();
         await Commands.reloadUntilFound(this.page, codeButtonLocator, 10000, 40000);
 
-        // Retry the interaction if asynchronous repository credentials refresh the open controls.
-        const popover = this.page.getByTestId('code-popover');
-        const toggle = this.page.getByTestId('code-popover').getByTestId('repository-authentication');
-        const cloneMethodOption = this.page.getByRole('menuitemradio', { name: gitCloneMethodName[cloneMethod], exact: true });
+        const popover = this.getRepositoryActionsDialog();
+        const menuTrigger = popover.getByTestId('authentication-method-menu-trigger');
+        const cloneMethodOption = this.page.getByTestId(authenticationMethodTestId[cloneMethod]);
         const maxAttempts = 5;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             try {
@@ -99,9 +98,8 @@ export class ProgrammingExerciseOverviewPage {
                     await codeButtonLocator.click();
                     await popover.waitFor({ state: 'visible', timeout: 15_000 });
                 }
-                await toggle.waitFor({ state: 'visible', timeout: 15_000 });
                 if (!(await cloneMethodOption.isVisible())) {
-                    await toggle.click({ timeout: 10_000 });
+                    await menuTrigger.click({ timeout: 10_000 });
                 }
                 await cloneMethodOption.waitFor({ state: 'visible', timeout: 10_000 });
                 await cloneMethodOption.click({ timeout: 10_000 });
@@ -110,7 +108,6 @@ export class ProgrammingExerciseOverviewPage {
                 if (attempt === maxAttempts - 1) {
                     throw error;
                 }
-                // Give the popover a moment to finish its async-driven re-render before retrying.
                 await this.page.waitForTimeout(1_000);
             }
         }
@@ -118,7 +115,7 @@ export class ProgrammingExerciseOverviewPage {
 
     async closeCloneMenu() {
         await this.page.keyboard.press('Escape');
-        await expect(this.page.getByTestId('code-popover')).toBeHidden();
+        await expect(this.getRepositoryActionsDialog()).toBeHidden();
     }
 
     /**
@@ -132,7 +129,7 @@ export class ProgrammingExerciseOverviewPage {
      * @param cloneMethod the clone method whose URL is expected to be on screen.
      */
     async getCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https) {
-        const cloneUrl = this.page.getByTestId('code-popover').getByTestId('clone-url');
+        const cloneUrl = this.getRepositoryActionsDialog().getByTestId('clone-url');
         await expect.poll(async () => this.cloneUrlBelongsTo(cloneMethod, (await cloneUrl.innerText()).trim()), { timeout: 15000 }).toBeTruthy();
         return (await cloneUrl.innerText()).trim();
     }
@@ -169,12 +166,9 @@ export class ProgrammingExerciseOverviewPage {
         } catch {
             await this.closeCloneMenu();
             await codeButtonLocator.click();
-            await this.page.getByTestId('code-popover').waitFor({ state: 'visible' });
+            await this.getRepositoryActionsDialog().waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
         }
-        // The copy button is enabled before the URL next to it has switched, so copying right away can put the previous
-        // plain HTTPS URL on the clipboard and the caller clones without the token it asked for. Wait for the displayed
-        // URL to be the tokenized one first; it is the same source the button copies from.
         await this.getCloneUrl(GitCloneMethod.httpsWithToken);
         await button.click();
         return await this.page.evaluate(async () => {
@@ -191,7 +185,11 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     getCloneUrlButton() {
-        return this.page.getByTestId('copyRepoUrlButton');
+        return this.getRepositoryActionsDialog().getByTestId('copy-repository-url');
+    }
+
+    private getRepositoryActionsDialog() {
+        return this.page.getByRole('dialog', { name: /repository actions/i });
     }
 
     /**

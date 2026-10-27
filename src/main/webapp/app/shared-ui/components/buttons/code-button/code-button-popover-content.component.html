@@ -1,0 +1,170 @@
+<div>
+    <div class="flex flex-col gap-3 p-3!">
+        <h5 class="m-0" jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
+
+        @let selectedMethod = selectedLabeledAuthenticationMethodData();
+        @let selectedMethodData = selectedMethod.authenticationMethodData;
+        @if (selectedMethodData.authenticationMethod === RepositoryAuthenticationMethod.SSH) {
+            @let sshKeys = selectedMethodData.sshKeyState;
+            @if (sshKeys.status === 'missing') {
+                <tumaet-ui-message severity="warn" data-testid="ssh-key-missing-alert">
+                    <span
+                        class="text-sm [&_a]:text-inherit! [&_a]:underline!"
+                        jhiTranslate="artemisApp.exerciseActions.codePopoverSshKeyTip"
+                        [translateValues]="{ sshSettingsUrl: sshSettingsUrl }"
+                    ></span>
+                </tumaet-ui-message>
+            } @else if (sshKeys.hasExpiredKeys) {
+                <tumaet-ui-message severity="warn">
+                    <span
+                        class="text-sm [&_a]:text-inherit! [&_a]:underline!"
+                        jhiTranslate="artemisApp.exerciseActions.codePopoverSshKeyExpiredTip"
+                        [translateValues]="{ sshSettingsUrl: sshSettingsUrl }"
+                    ></span>
+                </tumaet-ui-message>
+            }
+        }
+        @if (selectedMethodData.authenticationMethod === RepositoryAuthenticationMethod.Password && alternativeAuthenticationMethodAvailable()) {
+            <tumaet-ui-message severity="warn">
+                <span class="flex w-full items-center gap-2 text-sm">
+                    <span jhiTranslate="artemisApp.exerciseActions.passwordAuthenticationWarning"></span>
+                    <fa-icon
+                        class="ms-auto text-muted-color"
+                        [icon]="faQuestionCircle"
+                        [tumAetUiTooltip]="'artemisApp.exerciseActions.passwordAuthenticationWarningTooltip' | artemisTranslate"
+                        tumAetUiTooltipPlacement="left"
+                    />
+                </span>
+            </tumaet-ui-message>
+        }
+
+        <div class="flex items-center gap-2">
+            <div class="flex min-w-0 flex-1">
+                <button
+                    type="button"
+                    class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-2.5 text-(--tumaet-ui-primary-contrast-color)"
+                    [tumAetUiMenuTrigger]="authenticationMenu"
+                    data-testid="authentication-method-menu-trigger"
+                >
+                    {{ selectedMethod.label }}
+                    <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
+                </button>
+
+                <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
+                    <code class="block truncate" data-testid="clone-url">{{ repositoryDisplayUrl() }}</code>
+                </div>
+            </div>
+
+            <a
+                class="flex items-center justify-center rounded-sm text-(--tumaet-ui-text-color)!"
+                [routerLink]="repositoryViewLink()"
+                data-testid="open-repository-button"
+                target="_blank"
+                rel="noopener noreferrer"
+                [tumAetUiTooltip]="'artemisApp.exerciseActions.openRepositoryReadOnly' | artemisTranslate"
+                tumAetUiTooltipPlacement="left"
+                [tumAetUiTooltipDescribesHost]="false"
+            >
+                <fa-icon [icon]="faExternalLink" aria-hidden="true" />
+                <span class="sr-only" jhiTranslate="artemisApp.exerciseActions.openRepositoryReadOnly"></span>
+            </a>
+        </div>
+    </div>
+
+    <button
+        type="button"
+        class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 enabled:hover:bg-(--tumaet-ui-hover-background)! enabled:hover:text-(--tumaet-ui-accent-color)! disabled:text-state-success!"
+        [cdkCopyToClipboard]="repositoryCopyUrl()"
+        (cdkCopyToClipboardCopied)="onRepositoryUrlCopied($event)"
+        [disabled]="copiedRepositoryUrl()"
+        data-testid="copy-repository-url"
+    >
+        <fa-icon [icon]="copiedRepositoryUrl() ? faCheck : faCopy" aria-hidden="true" />
+        <span [jhiTranslate]="copiedRepositoryUrl() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl'"></span>
+    </button>
+
+    @let currentIdeLinkData = ideLinkData();
+    @let currentTheiaLinkData = theiaLinkData();
+    @let currentSourceTreeUrl = sourceTreeUrl();
+    @if (currentIdeLinkData || currentTheiaLinkData || currentSourceTreeUrl) {
+        <div class="border-t border-border"></div>
+        @if (showAlternatives()) {
+            @if (currentIdeLinkData) {
+                <a
+                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-(--tumaet-ui-text-color)! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    target="hidden-iframe"
+                    [href]="currentIdeLinkData.url"
+                >
+                    <fa-icon [icon]="faLaptopCode" aria-hidden="true" />
+                    <span jhiTranslate="artemisApp.exerciseActions.ideButton.openIn" [translateValues]="{ ideName: currentIdeLinkData.name }"></span>
+                    <fa-icon
+                        class="ms-auto text-muted-color"
+                        [icon]="faQuestionCircle"
+                        [tumAetUiTooltip]="'artemisApp.exerciseActions.ideButton.helpIcon' | artemisTranslate"
+                        tumAetUiTooltipPlacement="left"
+                    />
+                </a>
+            }
+            @if (currentTheiaLinkData) {
+                <a
+                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-(--tumaet-ui-text-color)! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    (click)="startOnlineIDE(currentTheiaLinkData)"
+                    #onlineIdeLink
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? onlineIdeLink.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? onlineIdeLink.click() : undefined"
+                >
+                    <fa-icon [icon]="faLaptopCode" aria-hidden="true" />
+                    <span jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
+                </a>
+            }
+            @if (currentSourceTreeUrl) {
+                <a
+                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-(--tumaet-ui-text-color)! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    target="hidden-iframe"
+                    [href]="currentSourceTreeUrl"
+                >
+                    <fa-icon [icon]="faCodeBranch" aria-hidden="true" />
+                    <span jhiTranslate="artemisApp.exerciseActions.openInSourceTree.button"></span>
+                    <fa-icon
+                        class="ms-auto text-muted-color"
+                        [icon]="faQuestionCircle"
+                        [tumAetUiTooltip]="'artemisApp.exerciseActions.openInSourceTree.helpIcon' | artemisTranslate"
+                        tumAetUiTooltipPlacement="left"
+                    />
+                </a>
+            }
+        } @else {
+            <div class="flex h-10 items-center justify-center">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    size="small"
+                    (click)="showAlternatives.set(true)"
+                    jhiTranslate="artemisApp.exerciseActions.showAlternatives"
+                ></button>
+            </div>
+        }
+    }
+</div>
+
+<ng-template #authenticationMenu>
+    <tumaet-ui-menu>
+        @for (item of labeledAuthenticationMethodData(); track item.authenticationMethodData.authenticationMethod) {
+            @let label = item.label;
+            <button
+                type="button"
+                tumAetUiMenuItem
+                menuItemRole="menuitemradio"
+                [menuItemChecked]="selectedLabeledAuthenticationMethodData().authenticationMethodData.authenticationMethod === item.authenticationMethodData.authenticationMethod"
+                (triggered)="selectAuthenticationMethod(item)"
+                [attr.data-testid]="'authentication-method-' + item.authenticationMethodData.authenticationMethod"
+            >
+                {{ label }}
+            </button>
+        }
+    </tumaet-ui-menu>
+</ng-template>

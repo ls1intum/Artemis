@@ -56,7 +56,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faPaperPlane"
                 [buttonLabel]="(exercise().type === ExerciseType.QUIZ ? submitLabel() : 'entity.action.submit') | artemisTranslate"
-                [overwriteDisabled]="exercise().type === ExerciseType.QUIZ && submitDisabled()"
+                [forceDisabled]="exercise().type === ExerciseType.QUIZ && submitDisabled()"
                 [smallButton]="smallButtons()"
                 (click)="onSubmitExercise()!()"
             ></button>
@@ -107,14 +107,15 @@
                 @if (shouldDisplayIDEButtons()) {
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
-                            [loading]="isLoading()"
-                            [smallButtons]="smallButtons()"
-                            [participations]="studentParticipations()"
-                            [exercise]="exercise()"
-                            [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
+                            [disabled]="isLoading()"
+                            [size]="smallButtons() ? 'small' : 'default'"
+                            [programmingLanguage]="programmingExercise()?.programmingLanguage"
+                            [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
+                            [exerciseId]="exercise().id!"
+                            [repositoryViewLink]="repositoryViewLink()"
                             [hideLabelMobile]="true"
-                            [repositoryUri]="''"
-                            [isPractice]="participationMode() === 'practice'"
+                            [repositoryUri]="repositoryUriForCodeButton()"
+                            [vcsAccessTokenSourceInfo]="vcsAccessTokenDataForCodeButton()"
                         />
                     }
                 }
@@ -151,7 +152,7 @@
                             [buttonLoading]="isLoading()"
                             [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
-                            [overwriteDisabled]="isBeforeStartDateAndStudent"
+                            [forceDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
                     </span>

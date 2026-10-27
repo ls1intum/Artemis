@@ -241,7 +241,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                     test.slow();
                     const participationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                     await programmingExerciseOverview.openCloneMenu(GitCloneMethod.ssh);
-                    await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
+                    await expect(programmingExerciseOverview.getCloneUrlButton()).toBeEnabled();
                     const sshKeyNotFoundAlert = page.getByTestId('ssh-key-missing-alert');
                     await expect(sshKeyNotFoundAlert).toBeVisible();
                     // SSH-setup happens in a separate page context, then we reload the main
@@ -249,7 +249,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                     // race occasionally lands the main page on /courses (Angular's
                     // auth/router fall-back) instead of the exercise route. Navigate to the
                     // exercise URL explicitly so the subsequent `makeSubmission` reliably
-                    // finds the Code button. A direct goto is idempotent — it costs ~200ms on
+                    // finds the code button. A direct goto is idempotent — it costs ~200ms on
                     // the happy path and eliminates the drift-recovery branch.
                     const exerciseUrl = `/courses/${course.id}/exercises/${exercise.id!}`;
                     await GitExerciseParticipation.setupSSHCredentials(page.context(), sshAlgorithm);

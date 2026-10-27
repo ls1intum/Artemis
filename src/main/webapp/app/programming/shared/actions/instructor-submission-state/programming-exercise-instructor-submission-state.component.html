@@ -78,7 +78,7 @@
                     variant="text"
                     class="w-full justify-start!"
                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                    [overwriteDisabled]="!hasFailedSubmissions() || isBuildingFailedSubmissions()"
+                    [forceDisabled]="!hasFailedSubmissions() || isBuildingFailedSubmissions()"
                     [attr.aria-label]="'artemisApp.programmingExercise.resubmitFailed' | artemisTranslate"
                     [attr.aria-busy]="isBuildingFailedSubmissions()"
                     [tumAetUiTooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip' | artemisTranslate"

@@ -32,7 +32,7 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
             [variant]="inDropdown() ? 'text' : 'solid'"
             [class]="inDropdown() ? 'w-full justify-start!' : ''"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [overwriteDisabled]="disabled() || isTriggeringBuildAll()"
+            [forceDisabled]="disabled() || isTriggeringBuildAll()"
             [attr.aria-label]="'artemisApp.programmingExercise.resubmitAll' | artemisTranslate"
             [attr.aria-busy]="isTriggeringBuildAll()"
             [tumAetUiTooltip]="'artemisApp.programmingExercise.resubmitAllTooltip' | artemisTranslate"
