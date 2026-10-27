@@ -436,6 +436,10 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             });
     }
 
+    /**
+     * Polls progress and questions until a progress response reports no running build and the question list requested on it has
+     * arrived; a failed question request leaves polling on, so the next tick asks again.
+     */
     private startPolling(courseId: number): void {
         if (this.pollingSubscription) {
             return;
@@ -460,15 +464,18 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
                     const requestedAt = ++this.requestSequence;
                     this.poolService
                         .getQuestions(courseId)
-                        .pipe(takeUntilDestroyed(this.destroyRef))
+                        .pipe(
+                            catchError(() => EMPTY),
+                            takeUntilDestroyed(this.destroyRef),
+                        )
                         .subscribe((questions) => {
                             if (this.isCurrent(courseId)) {
                                 this.applyQuestions(questions, requestedAt);
+                                if (!progress.running) {
+                                    this.stopPolling();
+                                }
                             }
                         });
-                    if (!progress.running) {
-                        this.stopPolling();
-                    }
                 },
             });
     }

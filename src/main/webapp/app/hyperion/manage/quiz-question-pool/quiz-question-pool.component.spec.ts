@@ -218,6 +218,29 @@ describe('QuizQuestionPoolComponent', () => {
         expect(progressSpy.mock.calls.length).toBe(callsAtStart + 3);
     });
 
+    it('should keep polling until the final question list arrives', () => {
+        vi.useFakeTimers();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'startBuild').mockReturnValue(of({ started: true, enqueued: 12 }));
+        const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValue(of({ ...progress, running: false }));
+        const questionsSpy = vi
+            .spyOn(poolService, 'getQuestions')
+            .mockReturnValueOnce(throwError(() => new Error('network')))
+            .mockReturnValue(of(questions()));
+        component.startBuild();
+        const progressCallsAtStart = progressSpy.mock.calls.length;
+        const questionCallsAtStart = questionsSpy.mock.calls.length;
+
+        vi.advanceTimersByTime(3000);
+        expect(questionsSpy.mock.calls.length).toBe(questionCallsAtStart + 1);
+        vi.advanceTimersByTime(3000);
+        expect(questionsSpy.mock.calls.length).toBe(questionCallsAtStart + 2);
+        expect(progressSpy.mock.calls.length).toBe(progressCallsAtStart + 2);
+        vi.advanceTimersByTime(6000);
+
+        expect(progressSpy.mock.calls.length).toBe(progressCallsAtStart + 2);
+    });
+
     it('should compute the progress percentage from judged and failed items', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
 
