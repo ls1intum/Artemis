@@ -211,7 +211,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 const changedParticipation = updatedParticipation as StudentParticipation;
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
-                const lastResult = getNewestResult(results);
+                // Only among Athena results, so a newer result of another kind cannot hide the completion of a pending request.
+                const lastResult = getNewestResult(results.filter(isAthenaAIResult));
                 // The result's own submission back-reference is not reliably populated on this path, so resolve the
                 // containing submission explicitly for dedup purposes.
                 const lastResultSubmissionId = changedParticipation.submissions?.find((submission) => submission.results?.includes(lastResult!))?.id;

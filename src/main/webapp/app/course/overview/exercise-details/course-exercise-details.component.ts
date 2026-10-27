@@ -52,7 +52,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
-import { AthenaResultNotificationTracker } from 'app/exercise/result/result.utils';
+import { AthenaResultNotificationTracker, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
@@ -524,7 +524,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
-                    const lastAthenaResult = getNewestResult(getAllResultsOfAllSubmissions(changedParticipation.submissions));
+                    // Only among Athena results: a build that finishes while feedback is pending has a higher id than the Athena
+                    // result, which keeps its id from the pending request, and would otherwise hide its completion.
+                    const lastAthenaResult = getNewestResult(getAllResultsOfAllSubmissions(changedParticipation.submissions).filter(isAthenaAIResult));
                     // The result's own submission back-reference is not reliably populated at this point (sortResults(), further
                     // below, is what normally attaches it), so resolve the containing submission explicitly for dedup purposes.
                     const lastAthenaResultSubmissionId = changedParticipation.submissions?.find((submission) => submission.results?.includes(lastAthenaResult!))?.id;

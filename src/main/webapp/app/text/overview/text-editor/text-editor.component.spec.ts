@@ -916,6 +916,16 @@ describe('TextEditorComponent', () => {
             expect(comp.result().id).toBe(5);
         });
 
+        it('should alert the Athena feedback even when a newer result of another kind arrives with it', () => {
+            const participationSubject = openWithParticipation(withResults([athenaResult(undefined)]));
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            const manualResult = { id: 9, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() } as Result;
+
+            participationSubject.next(withResults([athenaResult(true), manualResult]));
+
+            expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: 'Essay' });
+        });
+
         it('should not alert an Athena result that was already loaded when the participation is emitted again', () => {
             const participationSubject = openWithParticipation(withResults([athenaResult(true)]));
             const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
