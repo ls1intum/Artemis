@@ -31,6 +31,11 @@ import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationUpdateDTO;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for administrating system notifications.
@@ -67,6 +72,12 @@ public class AdminSystemNotificationResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new system notification, or with status 400 (Bad Request) if the system notification has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    @Operation(operationId = "createSystemNotification")
+    @ApiResponse(responseCode = "201", description = "Created system notification", headers = {
+            @Header(name = "Location", description = "Created notification URI: /api/notifications/{id}", schema = @Schema(type = "string", format = "uri-reference")),
+            @Header(name = "X-artemisApp-alert", description = "Entity alert key (prefix configured by jhipster.clientApp.name)", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "URL-encoded entity id (prefix configured by jhipster.clientApp.name)", schema = @Schema(type = "string")) })
+    @ApiResponse(responseCode = "400", description = "ID must be absent; both dates must be present and the start must precede expiry", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
     @PostMapping("system-notifications")
     public ResponseEntity<SystemNotificationDTO> createSystemNotification(@RequestBody SystemNotificationUpdateDTO dto,
             @RequestParam(defaultValue = "false") boolean sendMaintenanceEmail) throws URISyntaxException {
@@ -97,6 +108,8 @@ public class AdminSystemNotificationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the count of recipients in the body
      */
+    @Operation(operationId = "getMaintenanceRecipientsCount")
+    @ApiResponse(responseCode = "200", description = "Number of maintenance email recipients, including zero")
     @GetMapping("system-notifications/maintenance-recipients-count")
     public ResponseEntity<Long> getMaintenanceRecipientsCount() {
         long count = systemNotificationService.countMaintenanceEmailRecipients();
@@ -110,6 +123,11 @@ public class AdminSystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated notification, or with status 400 (Bad Request) if the system notification is not valid, or with
      *         status 500 (Internal Server Error) if the system notification couldn't be updated
      */
+    @Operation(operationId = "updateSystemNotification")
+    @ApiResponse(responseCode = "200", description = "Updated system notification", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Entity alert key (prefix configured by jhipster.clientApp.name)", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "URL-encoded entity id (prefix configured by jhipster.clientApp.name)", schema = @Schema(type = "string")) })
+    @ApiResponse(responseCode = "400", description = "ID must identify an existing notification; both dates must be present and the start must precede expiry", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
     @PutMapping("system-notifications")
     public ResponseEntity<SystemNotificationDTO> updateSystemNotification(@RequestBody SystemNotificationUpdateDTO updateDTO) {
         log.debug("REST request to update SystemNotification : {}", updateDTO);
@@ -137,6 +155,10 @@ public class AdminSystemNotificationResource {
      * @param notificationId the id of the system notification to delete
      * @return the ResponseEntity with status 200 (OK)
      */
+    @Operation(operationId = "deleteSystemNotification")
+    @ApiResponse(responseCode = "200", description = "Deleted system notification; empty response body", content = @Content, headers = {
+            @Header(name = "X-artemisApp-alert", description = "Entity alert key (prefix configured by jhipster.clientApp.name)", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "URL-encoded entity id (prefix configured by jhipster.clientApp.name)", schema = @Schema(type = "string")) })
     @DeleteMapping("system-notifications/{notificationId}")
     public ResponseEntity<Void> deleteSystemNotification(@PathVariable Long notificationId) {
         log.debug("REST request to delete SystemNotification : {}", notificationId);

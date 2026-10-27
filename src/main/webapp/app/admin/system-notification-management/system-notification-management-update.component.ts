@@ -26,7 +26,7 @@ interface SystemNotificationForm {
     id: FormControl<number | null | undefined>;
     title: FormControl<string | null | undefined>;
     text: FormControl<string | null | undefined>;
-    type: FormControl<SystemNotificationType | null | undefined>;
+    type: FormControl<SystemNotification['type'] | null | undefined>;
     notificationDate: FormControl<dayjs.Dayjs | null | undefined>;
     expireDate: FormControl<dayjs.Dayjs | null | undefined>;
 }
@@ -83,7 +83,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
             id: new FormControl<number | undefined>(undefined),
             title: new FormControl<string | undefined>(undefined, [Validators.required, Validators.minLength(1), Validators.maxLength(50)]),
             text: new FormControl<string | undefined>(undefined),
-            type: new FormControl<SystemNotificationType | undefined>(undefined, [Validators.required]),
+            type: new FormControl<SystemNotification['type'] | undefined>(undefined, [Validators.required]),
             notificationDate: new FormControl<dayjs.Dayjs | undefined>(undefined, [Validators.required]),
             expireDate: new FormControl<dayjs.Dayjs | undefined>(undefined, [Validators.required]),
         },
@@ -100,7 +100,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     ngOnInit(): void {
         this.route.parent!.data.subscribe(({ notification }) => {
             if (notification) {
-                this.notification = notification.body ?? notification;
+                this.notification = notification;
                 this.form.patchValue({
                     id: this.notification.id,
                     title: this.notification.title,
@@ -121,6 +121,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     private loadRecipientCount(): void {
         this.systemNotificationService.getMaintenanceRecipientsCount().subscribe({
             next: (count) => this.recipientCount.set(count),
+            error: () => this.recipientCount.set(undefined),
         });
     }
 

@@ -212,9 +212,12 @@
         List<?> listValue,
         Map<String, Map<String, Object>> componentsMap
     ) {
-        listValue
-            .collect { pruneNode(it, componentsMap) }
-            .findAll { it != null }
+        listValue.collectMany { item ->
+            def prunedItem = pruneNode(item, componentsMap)
+            // A literal JSON null is meaningful (for example in a nullable enum). Only remove nodes
+            // that became null because their reference was invalid, not null values in the input.
+            item == null || prunedItem != null ? [prunedItem] : []
+        }
     }
 
     /**

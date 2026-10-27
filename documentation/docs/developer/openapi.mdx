@@ -18,6 +18,8 @@ Currently, the OpenAPI specs are generated for the `globalsearch`, `tutorialgrou
 
 The schema customizer marks primitive record components as required by default. For an input whose omitted value is deliberately accepted, declare `@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)` on that component and document its default and null handling. The customizer respects this explicit override; it does not change request validation or Jackson defaults.
 
+The Angular generator enables `observeResponseHeaders`. An Observable operation with declared success response headers returns `HttpResponse<T>`, retaining pagination, Location and alert headers for its callers. Declare the headers actually produced by the endpoint. System notification alert header names follow `jhipster.clientApp.name` during export. The pruning step preserves literal null values in nullable enums.
+
 ## Generating OpenAPI Specs and Client Files
 
 When you update a REST endpoint or a DTO, you need to generate a new OpenAPI spec and generate new client files.

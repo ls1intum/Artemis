@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for public system notifications.
@@ -43,8 +45,10 @@ public class PublicSystemNotificationResource {
      * Returns all system notifications with an expiry date in the future or no expiry date.
      * This route is also accessible for unauthenticated users.
      *
-     * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
+     * @return status 200 (OK) with the active and future notifications, including an empty list when none exist
      */
+    @Operation(operationId = "getActiveAndFutureSystemNotifications")
+    @ApiResponse(responseCode = "200", description = "Active and future system notifications, accessible anonymously")
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("system-notifications/active")
     @EnforceNothing
