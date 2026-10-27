@@ -319,6 +319,30 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void anInstructorsOwnPolicyFileIsKeptAndNeverReplacedBySecurityPolicyYaml() throws Exception {
+        Path checkout = newDirectory("instructor-");
+        try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
+            Path testFile = checkout.resolve("test/de/example/SortingTest.java");
+            FileUtils.writeStringToFile(testFile.toFile(), Files.readString(testFile).replace("SecurityPolicy.yaml", "custom.yaml"), StandardCharsets.UTF_8);
+            FileUtils.moveFile(checkout.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), checkout.resolve("custom.yaml").toFile());
+            git.add().setUpdate(true).addFilepattern(".").call();
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("Use an own policy file").setAuthor("Instructor", "instructor@example.org").call();
+            git.push().call();
+        }
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+
+        assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(content -> assertThat(content).contains("value = \"custom.yaml\", activated = false"));
+
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(content -> assertThat(content).contains("value = \"custom.yaml\")"));
+        assertThat(readPushed("custom.yaml")).contains(CUSTOM_POLICY);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+    }
+
+    @Test
     void readingTheStateNeverTouchesAWorkingCopy() throws Exception {
         securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA));
 

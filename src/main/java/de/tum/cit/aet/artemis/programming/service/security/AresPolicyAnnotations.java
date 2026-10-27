@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,6 +49,24 @@ final class AresPolicyAnnotations {
         boolean isActivated() {
             String activated = arguments.get(ACTIVATED_ARGUMENT);
             return activated == null || !"false".equals(activated);
+        }
+
+        /**
+         * @return the policy file the annotation points to, if its {@code value} is a plain string literal; empty if it has no {@code value}, in which
+         *         case Ares applies its strict default policy, or if the value is an expression this class does not evaluate
+         */
+        Optional<String> policyPath() {
+            String value = arguments.get(VALUE_ARGUMENT);
+            if (value == null) {
+                return Optional.empty();
+            }
+            String literal = value.strip();
+            while (literal.length() >= 2 && literal.startsWith("(") && literal.endsWith(")")) {
+                literal = literal.substring(1, literal.length() - 1).strip();
+            }
+            boolean plainString = literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"") && !literal.startsWith("\"\"\"")
+                    && literal.indexOf('\\') < 0 && literal.indexOf('"', 1) == literal.length() - 1;
+            return plainString ? Optional.of(literal.substring(1, literal.length() - 1)) : Optional.empty();
         }
     }
 

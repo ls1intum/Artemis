@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -91,19 +92,50 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * @param repositoryRoot root of the checked-out exercise-tests repository
-     * @return whether a test source switches its {@code @Policy} annotation off, in which case Ares does not sandbox that test class
+     * Whether Ares enforces a policy for the tests of the repository. This is the single rule for the state of the Security Framework:
+     * <ul>
+     * <li>if a test switches its {@code @Policy} annotation off, the framework is off, because that test runs without a sandbox;</li>
+     * <li>otherwise, if the tests have {@code @Policy} annotations, the framework is on if one of them enforces a policy: either Ares's strict default (no
+     * policy file given) or a policy file that exists, such as an instructor's own one;</li>
+     * <li>without any annotation, the framework is on if {@link #POLICY_FILE_NAME} exists.</li>
+     * </ul>
+     *
+     * @param javaSources the contents of the Java files of the repository
+     * @param fileExists  whether a path, relative to the repository root, is a file of the repository
+     * @return whether the Security Framework is active
      */
-    public static boolean hasDeactivatedPolicyAnnotation(Path repositoryRoot) {
-        return javaFiles(repositoryRoot).stream().anyMatch(javaFile -> containsDeactivatedPolicyAnnotation(readFile(javaFile)));
+    public static boolean isEnforcing(Iterable<String> javaSources, Predicate<String> fileExists) {
+        boolean anyAnnotation = false;
+        boolean anyEnforcingAnnotation = false;
+        for (String javaSource : javaSources) {
+            for (AresPolicyAnnotations.Annotation annotation : AresPolicyAnnotations.find(javaSource)) {
+                if (!annotation.isActivated()) {
+                    return false;
+                }
+                anyAnnotation = true;
+                anyEnforcingAnnotation |= annotation.policyPath().map(fileExists::test).orElse(true);
+            }
+        }
+        return anyAnnotation ? anyEnforcingAnnotation : fileExists.test(POLICY_FILE_NAME);
     }
 
     /**
-     * @param javaSource the content of a Java file
-     * @return whether the file contains an Ares {@code @Policy} annotation with {@code activated = false}
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @return whether the Security Framework is active, see {@link #isEnforcing(Iterable, Predicate)}
      */
-    public static boolean containsDeactivatedPolicyAnnotation(String javaSource) {
-        return AresPolicyAnnotations.containsDeactivated(javaSource);
+    public static boolean isEnforcing(Path repositoryRoot) {
+        return isEnforcing(javaFiles(repositoryRoot).stream().map(SecurityPolicyRepositoryFiles::readFile).toList(),
+                path -> Files.isRegularFile(repositoryRoot.resolve(path).normalize()) && repositoryRoot.resolve(path).normalize().startsWith(repositoryRoot));
+    }
+
+    /**
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @return whether a test points its {@code @Policy} annotation to {@link #POLICY_FILE_NAME}, or no test has one, so that file is the one Ares reads
+     */
+    public static boolean isPolicyFileUsed(Path repositoryRoot) {
+        List<AresPolicyAnnotations.Annotation> annotations = javaFiles(repositoryRoot).stream().flatMap(javaFile -> AresPolicyAnnotations.find(readFile(javaFile)).stream())
+                .toList();
+        return annotations.isEmpty() || annotations.stream().anyMatch(annotation -> annotation.policyPath().filter(POLICY_FILE_NAME::equals).isPresent());
     }
 
     /**

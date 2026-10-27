@@ -11,12 +11,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -60,8 +62,8 @@ import de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyReposit
  * Activates and deactivates the Ares 2 Security Framework of a Java programming exercise by changing its exercise-tests repository.
  * <p>
  * The exercise-tests repository is the single source of truth, so there is neither a database column nor any server-side state: the Security Framework is
- * active exactly when the repository contains {@link SecurityPolicyRepositoryFiles#POLICY_FILE_NAME} and no test switches its {@code @Policy} annotation off,
- * and its framework version is the Ares version pinned in the build file. Because the Java templates ship with Ares enabled, a new exercise starts out active.
+ * active exactly when Ares enforces a policy for the tests, see {@link SecurityPolicyRepositoryFiles#isEnforcing(Iterable, Predicate)}, and its framework
+ * version is the Ares version pinned in the build file. Because the Java templates ship with Ares enabled, a new exercise starts out active.
  * <ul>
  * <li>Activating restores the policy the exercise last had (so an instructor's permissions survive a deactivate/activate cycle), or generates a default
  * policy if the exercise never had one, switches the {@code @Policy} annotations of the tests back on, and commits and pushes the change. A restored policy
@@ -188,7 +190,7 @@ public class SecurityFrameworkService {
             RevTree tree = revWalk.parseCommit(head).getTree();
             String frameworkVersion = SecurityPolicyRepositoryFiles
                     .parseAresVersion(readFile(repository, tree, "build.gradle").orElse(null), readFile(repository, tree, "pom.xml").orElse(null)).orElse(null);
-            if (readFile(repository, tree, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).isEmpty() || hasDeactivatedPolicyAnnotation(repository, tree)) {
+            if (!isEnforcing(repository, tree)) {
                 return inactiveConfig(frameworkVersion);
             }
             return activeConfig(frameworkVersion, lastCommitTouchingPolicy(repository, head));
@@ -216,11 +218,12 @@ public class SecurityFrameworkService {
             BuildTool buildTool = SecurityPolicyRepositoryFiles.detectBuildTool(root)
                     .orElseThrow(() -> new BadRequestAlertException("The Security Framework requires a Gradle or Maven test repository that uses Ares.", ENTITY_NAME,
                             "securityFrameworkUnsupportedProject"));
-            if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root)) {
+            SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, true);
+            // Tests that point to their own policy files keep using them; SecurityPolicy.yaml is only needed if a test reads it.
+            if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root) && SecurityPolicyRepositoryFiles.isPolicyFileUsed(root)) {
                 String policy = findPreviousPolicy(repository).orElseGet(() -> SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, buildTool, packageName(exercise)));
                 SecurityPolicyRepositoryFiles.writePolicy(root, policy);
             }
-            SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, true);
             SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
         });
     }
@@ -255,8 +258,7 @@ public class SecurityFrameworkService {
         validateFrameworkVersion(frameworkVersion);
         return changeTestRepository(exercise, user, "Use Ares " + frameworkVersion + " for the security policy", repository -> {
             Path root = repository.getLocalPath();
-            // The same rule as getConfig: a test that switches its policy off makes the framework inactive.
-            if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root) || SecurityPolicyRepositoryFiles.hasDeactivatedPolicyAnnotation(root)) {
+            if (!SecurityPolicyRepositoryFiles.isEnforcing(root)) {
                 throw new BadRequestAlertException("The framework version cannot be changed because the Security Framework is not active for this exercise.", ENTITY_NAME,
                         "securityFrameworkNotActive");
             }
@@ -342,7 +344,7 @@ public class SecurityFrameworkService {
     private SecurityFrameworkConfigDTO readConfig(Repository repository) {
         Path root = repository.getLocalPath();
         String frameworkVersion = SecurityPolicyRepositoryFiles.readAresVersion(root).orElse(null);
-        if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root) || SecurityPolicyRepositoryFiles.hasDeactivatedPolicyAnnotation(root)) {
+        if (!SecurityPolicyRepositoryFiles.isEnforcing(root)) {
             return inactiveConfig(frameworkVersion);
         }
         try {
@@ -379,20 +381,28 @@ public class SecurityFrameworkService {
     }
 
     /**
-     * @return whether a test source in the given commit switches its {@code @Policy} annotation off
+     * Applies {@link SecurityPolicyRepositoryFiles#isEnforcing(Iterable, Predicate)} to a commit of the repository.
      */
-    private static boolean hasDeactivatedPolicyAnnotation(Repository repository, RevTree tree) throws IOException {
+    private static boolean isEnforcing(Repository repository, RevTree tree) throws IOException {
+        List<String> javaSources = new ArrayList<>();
         try (TreeWalk treeWalk = new TreeWalk(repository)) {
             treeWalk.addTree(tree);
             treeWalk.setRecursive(true);
             while (treeWalk.next()) {
-                if (SecurityPolicyRepositoryFiles.isJavaSourcePath(treeWalk.getPathString()) && SecurityPolicyRepositoryFiles
-                        .containsDeactivatedPolicyAnnotation(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8))) {
-                    return true;
+                if (SecurityPolicyRepositoryFiles.isJavaSourcePath(treeWalk.getPathString())) {
+                    javaSources.add(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8));
                 }
             }
-            return false;
         }
+        Set<String> files = new HashSet<>();
+        try (TreeWalk treeWalk = new TreeWalk(repository)) {
+            treeWalk.addTree(tree);
+            treeWalk.setRecursive(true);
+            while (treeWalk.next()) {
+                files.add(treeWalk.getPathString());
+            }
+        }
+        return SecurityPolicyRepositoryFiles.isEnforcing(javaSources, path -> files.contains(Path.of(path).normalize().toString().replace('\\', '/')));
     }
 
     private static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {
