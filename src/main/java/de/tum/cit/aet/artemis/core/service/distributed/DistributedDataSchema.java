@@ -92,6 +92,7 @@ public final class DistributedDataSchema {
             new CarriedOverStructure("features", StructureKind.MAP),
             // Iris jobs waiting for a Pyris callback. Obtained as an expiring map, so its entries have to move with
             // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
+            // Current builds use pyris-job-map-v2 instead, so jobs moved from here are never read again.
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
