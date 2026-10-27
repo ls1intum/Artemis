@@ -44,7 +44,7 @@ export class CourseDetailDoughnutChartComponent {
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY]));
     readonly chartConfig = computed<TumAetUiDoughnutChartConfig>(() => ({
         legend: false,
-        tooltip: { label: (item) => `${this.valueFormatting({ value: item.value })}` },
+        tooltip: this.contentType() === DoughnutChartType.CURRENT_LLM_COST ? false : { label: (item) => `${this.valueFormatting({ value: item.value })}` },
     }));
 
     // Computed values for title and link based on contentType

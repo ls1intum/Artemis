@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, forwardRef, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { CommunicationService } from 'app/communication/service/communication.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { PostingEditType } from '../communication.util';
@@ -25,6 +29,9 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
 })
 export class PostingMarkdownEditorComponent implements ControlValueAccessor, Validator {
     private readonly communicationService = inject(CommunicationService);
+    private readonly conversationService = inject(ConversationService);
+    // Only the course conversations view provides it; a composer elsewhere has no shown conversation.
+    private readonly shownConversation = toSignal(inject(CourseConversationsService, { optional: true })?.activeConversation$ ?? of(undefined));
 
     readonly maxContentLength = input<number>();
     /** Identifies the message or reply draft independently of its current text. */
@@ -32,6 +39,8 @@ export class PostingMarkdownEditorComponent implements ControlValueAccessor, Val
     readonly isInputLengthDisplayed = input(true);
     readonly suppressNewlineOnEnter = input(true);
     readonly showCloseButton = input(false);
+    /** Words the hint of the empty editor for a reply in a thread instead of a message to the conversation. */
+    readonly isReply = input(false);
     readonly closeEditor = output<void>();
     readonly isButtonLoading = input(false);
     readonly isFormGroupValid = input(false);
@@ -46,6 +55,12 @@ export class PostingMarkdownEditorComponent implements ControlValueAccessor, Val
     readonly effectiveCourseId = computed(() => this.course()?.id ?? this.communicationService.getCourse()?.id);
     readonly effectiveConversation = computed(() => this.activeConversation() ?? this.communicationService.getCurrentConversation());
     readonly isUpdating = computed(() => this.editType() === PostingEditType.UPDATE);
+    /** A new post names only the id of its conversation, so the name comes from the conversation that the course view shows when it is the same one. */
+    protected readonly conversationName = computed(() => {
+        const conversation = this.effectiveConversation();
+        const shown = this.shownConversation();
+        return this.conversationService.getConversationName(shown && shown.id === conversation?.id ? shown : conversation);
+    });
 
     private onChange = (_value: string) => {};
     protected onTouched = () => {};
