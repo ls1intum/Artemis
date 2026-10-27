@@ -13,7 +13,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faExclamationTriangle, faPlay, faRotate } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subscription, interval } from 'rxjs';
-import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { catchError, exhaustMap, finalize, timeout } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -46,6 +46,8 @@ export interface CompetencyGroup {
 
 /** How often progress and questions are reloaded while a build runs. */
 const POLL_INTERVAL_MS = 3000;
+/** How long a progress request may stay unanswered before the next poll tick replaces it. */
+const POLL_TIMEOUT_MS = 10000;
 
 /** Bounds of the questions-per-lecture-unit setting, matching the server's validation. */
 export const MIN_QUESTIONS_PER_LECTURE_UNIT = 1;
@@ -397,7 +399,12 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
         }
         this.pollingSubscription = interval(POLL_INTERVAL_MS)
             .pipe(
-                switchMap(() => this.poolService.getProgress(courseId).pipe(catchError(() => EMPTY))),
+                exhaustMap(() =>
+                    this.poolService.getProgress(courseId).pipe(
+                        timeout(POLL_TIMEOUT_MS),
+                        catchError(() => EMPTY),
+                    ),
+                ),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({

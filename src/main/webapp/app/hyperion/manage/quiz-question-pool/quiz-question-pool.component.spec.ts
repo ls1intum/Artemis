@@ -186,6 +186,30 @@ describe('QuizQuestionPoolComponent', () => {
         expect(progressSpy.mock.calls.length).toBe(callsAfterStop);
     });
 
+    it('should skip poll ticks while a progress request is pending and replace one that times out', () => {
+        vi.useFakeTimers();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'startBuild').mockReturnValue(of({ started: true, enqueued: 12 }));
+        const slow = new Subject<PoolProgress>();
+        const hung = new Subject<PoolProgress>();
+        const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValueOnce(slow.asObservable()).mockReturnValueOnce(hung.asObservable());
+        component.startBuild();
+        const callsAtStart = progressSpy.mock.calls.length;
+
+        vi.advanceTimersByTime(6000);
+        expect(progressSpy.mock.calls.length).toBe(callsAtStart + 1);
+        slow.next({ ...progress, running: true });
+        slow.complete();
+        expect(component.isRunning()).toBe(true);
+
+        vi.advanceTimersByTime(3000);
+        expect(progressSpy.mock.calls.length).toBe(callsAtStart + 2);
+        vi.advanceTimersByTime(9000);
+        expect(progressSpy.mock.calls.length).toBe(callsAtStart + 2);
+        vi.advanceTimersByTime(3000);
+        expect(progressSpy.mock.calls.length).toBe(callsAtStart + 3);
+    });
+
     it('should compute the progress percentage from judged and failed items', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
 
