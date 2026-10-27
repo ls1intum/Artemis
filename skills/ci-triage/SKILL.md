@@ -5,6 +5,14 @@ description: Diagnose failed, stuck, or missing Artemis CI checks and distinguis
 
 # Triage a red Artemis build
 
+## Keep completed implementations available for CI and review
+
+Use drafts only while the implementation is unfinished. Once implementation is complete, open the PR
+as non-draft or mark it ready for review immediately: full CI and review bots do not run on drafts.
+Pending or failing CI, reviews and test-server validation do not by themselves require draft status.
+Keep unverified checklist items open and require passing checks and approvals before merge; follow
+[PR readiness](../../documentation/docs/developer/development-process.mdx#pull-request-readiness).
+
 ## Identify the failing check
 
 ```bash

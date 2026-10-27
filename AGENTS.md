@@ -121,8 +121,12 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   the problem and solution, linked issue when applicable, checks run, screenshots for UI changes
   and documentation updates when relevant.
 - Before creating or updating a PR, follow [PR readiness](documentation/docs/developer/development-process.mdx#pull-request-readiness).
-  Complete applicable author tasks with `[x]`, remove only inapplicable tasks and empty sections, and
-  leave applicable review tasks open until verified. Never claim tests or reviews that were not performed.
+  Check completed author tasks with `[x]`, leave pending validation unchecked, and remove only inapplicable
+  tasks and empty sections. Leave applicable review tasks open until verified. Never claim tests or reviews
+  that were not performed.
+- Use drafts only for unfinished implementations. Open completed work as non-draft or mark it ready for
+  review immediately so full CI and review bots run. Pending CI, reviews or test-server validation do not
+  require draft status; all applicable checks and reviews must still pass before merge.
 - Set the PR milestone to the intended release. Keep draft state and the `ready for review` / `ready to merge`
   labels aligned with the documented stage; recheck them after updates. Add `ready to merge` only after
   all remaining tasks, required approvals, resolved threads, passing checks and mergeability are verified.
