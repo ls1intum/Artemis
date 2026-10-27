@@ -26,7 +26,7 @@
                     "questionsPerLectureUnit": "Fragen pro Vorlesungseinheit",
                     "questionsHelp": "Wie viele Fragen der Pool je Vorlesungseinheit einer Kompetenz enthält, verteilt auf Fragetypen und Schwierigkeiten. Wirkt beim nächsten Lauf.",
                     "poolGenerationEnabled": "Über Nacht für neues Vorlesungsmaterial generieren",
-                    "poolGenerationHelp": "Wird jetzt gespeichert und wirkt, sobald die geplante Generierung verfügbar ist.",
+                    "poolGenerationHelp": "Gilt für geplante Läufe.",
                     "save": "Einstellungen speichern",
                     "saved": "Einstellungen gespeichert.",
                     "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
