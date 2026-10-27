@@ -1,3 +1,4 @@
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
@@ -24,8 +25,12 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             toggleThreadFeedbackSelection: vi.fn(),
             isThreadSelectedAsFeedback: vi.fn().mockReturnValue(false),
             toggleGroupResolvedInContext: vi.fn(),
+            adaptationOffered: signal(false),
+            adaptationBlockedReason: signal<string | undefined>(undefined),
             threads: signal([]),
         };
+
+        reviewCommentService.feedbackSelectionOffered = reviewCommentService.adaptationOffered;
 
         await TestBed.configureTestingModule({
             imports: [ReviewCommentThreadWidgetComponent],
@@ -43,6 +48,26 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('offers one outlined AI selection action instead of a second adaptation shortcut', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        fixture.detectChanges();
+        const button = fixture.nativeElement.querySelector('[tumAetUiButton]') as HTMLButtonElement;
+        expect(button).not.toBeNull();
+        expect(button.getAttribute('variant')).toBe('outlined');
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        expect(button.querySelector('fa-icon')).not.toBeNull();
+        button.click();
+        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
+        expect(fixture.nativeElement.querySelector('.monaco-review-comment-adapt-button')).toBeNull();
+    });
+
+    it('does not offer AI selection for auxiliary repositories', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        fixture.componentRef.setInput('thread', { id: 1, targetType: CommentThreadLocationType.AUXILIARY_REPO, resolved: false, comments: [] });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[tumAetUiButton]')).toBeNull();
     });
 
     it('should initialize collapsed state', () => {
@@ -178,16 +203,29 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
 
-    it('should toggle feedback selection when enabled', () => {
-        fixture.componentRef.setInput('showFeedbackAction', true);
+    it('should toggle feedback selection when adaptation is offered', () => {
+        reviewCommentService.adaptationOffered.set(true);
 
         comp.toggleFeedbackSelection();
 
         expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
     });
 
+    it('should select legacy feedback without offering whole-exercise adaptation', () => {
+        reviewCommentService.feedbackSelectionOffered = signal(true);
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('[data-testid="review-feedback-selection"]') as HTMLButtonElement).click();
+        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
+    });
+
+    it('should not toggle feedback selection when adaptation is not offered', () => {
+        comp.toggleFeedbackSelection();
+
+        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
+    });
+
     it('should show feedback action before resolve and reply actions', () => {
-        fixture.componentRef.setInput('showFeedbackAction', true);
+        reviewCommentService.adaptationOffered.set(true);
 
         fixture.detectChanges();
 
@@ -198,7 +236,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should show selected feedback badge and deselection action when selected for feedback', () => {
         reviewCommentService.isThreadSelectedAsFeedback.mockReturnValue(true);
-        fixture.componentRef.setInput('showFeedbackAction', true);
+        reviewCommentService.adaptationOffered.set(true);
 
         fixture.detectChanges();
 
@@ -206,8 +244,20 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('artemisApp.review.removeThreadFromFeedback');
     });
 
+    it('shows the blocked reason next to the disabled feedback action without requiring focus', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        reviewCommentService.adaptationBlockedReason.set('artemisApp.review.adaptExercise.runInProgress');
+        fixture.detectChanges();
+
+        const adaptButton: HTMLButtonElement = fixture.nativeElement.querySelector('.monaco-review-comment-feedback-selection-button');
+        expect(adaptButton.disabled).toBe(true);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.review.adaptExercise.runInProgress');
+        adaptButton.click();
+        expect(fixture.componentInstance.isSelectedAsFeedback()).toBe(false);
+    });
+
     it('should hide the feedback action for outdated threads', () => {
-        fixture.componentRef.setInput('showFeedbackAction', true);
+        reviewCommentService.adaptationOffered.set(true);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false, outdated: true, comments: [] } as any);
 
         fixture.detectChanges();
