@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -18,7 +19,12 @@ import org.mockito.Mockito;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.cloud.netflix.eureka.serviceregistry.EurekaRegistration;
 import org.springframework.core.env.Environment;
+
+import com.netflix.appinfo.ApplicationInfoManager;
+import com.netflix.appinfo.EurekaInstanceConfig;
+import com.netflix.appinfo.InstanceInfo;
 
 /**
  * Unit tests for the address formatting utilities in {@link EurekaInstanceHelper}.
@@ -33,7 +39,26 @@ class EurekaInstanceHelperAddressTest {
         // Create mock dependencies - we only need the instance to test the utility methods
         DiscoveryClient discoveryClient = Mockito.mock(DiscoveryClient.class);
         Environment env = Mockito.mock(Environment.class);
-        eurekaInstanceHelper = new EurekaInstanceHelper(discoveryClient, Optional.empty(), Optional.empty(), env);
+        eurekaInstanceHelper = new EurekaInstanceHelper(discoveryClient, Optional.empty(), env);
+    }
+
+    @Test
+    void publishesHazelcastAddressToLiveEurekaInstance() {
+        EurekaRegistration registration = Mockito.mock(EurekaRegistration.class);
+        Map<String, String> metadata = new HashMap<>(Map.of("profile", "prod,core", "zone", "zone-a", "version", "test"));
+        InstanceInfo info = InstanceInfo.Builder.newBuilder().setAppName("artemis").setHostName("core").setMetadata(new HashMap<>(metadata)).build();
+        ApplicationInfoManager manager = new ApplicationInfoManager(Mockito.mock(EurekaInstanceConfig.class), info);
+        info.setIsDirty(false);
+        when(registration.getMetadata()).thenReturn(metadata);
+        when(registration.getApplicationInfoManager()).thenReturn(manager);
+        EurekaInstanceHelper helper = new EurekaInstanceHelper(Mockito.mock(DiscoveryClient.class), Optional.of(registration), Mockito.mock(Environment.class));
+
+        helper.registerHazelcastAddress("172.30.131.10", 5701);
+
+        assertThat(metadata).containsEntry("hazelcast.host", "172.30.131.10").containsEntry("hazelcast.port", "5701");
+        assertThat(info.getMetadata()).containsEntry("hazelcast.host", "172.30.131.10").containsEntry("hazelcast.port", "5701").containsEntry("profile", "prod,core")
+                .containsEntry("zone", "zone-a").containsEntry("version", "test");
+        assertThat(info.isDirty()).isTrue();
     }
 
     @Nested
@@ -230,7 +255,7 @@ class EurekaInstanceHelperAddressTest {
             serviceInstance = Mockito.mock(ServiceInstance.class);
             DiscoveryClient discoveryClient = Mockito.mock(DiscoveryClient.class);
             Environment env = Mockito.mock(Environment.class);
-            helperWithRegistration = new EurekaInstanceHelper(discoveryClient, Optional.of(registration), Optional.empty(), env);
+            helperWithRegistration = new EurekaInstanceHelper(discoveryClient, Optional.of(registration), env);
         }
 
         @Test

@@ -200,7 +200,7 @@ class GenerationTaskServiceTest {
 
     private GenerationOutcome outcomeWith(AgentLoopResult.Status status, VerificationResult verification, SpecFidelityReport review,
             Map<RepositoryType, Map<String, String>> repositories, String statement, String spec) {
-        var seed = new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of()));
+        var seed = new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of()));
         if (verification == null && repositories.isEmpty() && statement.isEmpty() && spec.isEmpty()) {
             return GenerationOutcome.stopped(seed, status == AgentLoopResult.Status.CANCELLED, "Run failed");
         }
@@ -223,7 +223,7 @@ class GenerationTaskServiceTest {
     private GenerationOutcome outcomeWithTermination(VerificationResult verification, ExerciseGenerationEventDTO.TerminationReason reason) {
         var snapshot = new WorkspaceSnapshot(List.of());
         return GenerationOutcome.received(new GenerationOutput(snapshot, verification, verification.mechanicallyVerified() ? snapshot.sha256() : null, SpecFidelityReport.empty(),
-                reason.name(), null, GenerationOutput.AccountingState.INCOMPLETE, "default"), new Seed(snapshot, Map.of(), new GradingContext(false, Set.of())), false);
+                reason.name(), null, GenerationOutput.AccountingState.INCOMPLETE, "default"), new Seed(snapshot, Map.of(), new GradingContext(false, Set.of(), Set.of())), false);
     }
 
     private void run(GenerationMode mode, GenerationOutcome outcome) {
@@ -233,7 +233,8 @@ class GenerationTaskServiceTest {
 
     @Test
     void originalSourceBriefIsForwardedToOrchestration() {
-        GenerationOutcome outcome = GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), false, "Run stopped");
+        GenerationOutcome outcome = GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), false,
+                "Run stopped");
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), eq("original instructor brief"), any(), any())).thenReturn(outcome);
         GenerationStartedEvent event = new GenerationStartedEvent(JOB_ID, user, exercise, "resolved instruction", GenerationMode.GENERATE, exercise.getProblemStatement(),
                 exercise.getTitle(), null, null, "original instructor brief");
@@ -305,7 +306,7 @@ class GenerationTaskServiceTest {
             @SuppressWarnings("unchecked")
             Consumer<GenerationFileUpdate> fileChangeSink = invocation.getArgument(7);
             fileChangeSink.accept(new GenerationFileUpdate(fileChange, "class Counter {}"));
-            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), true, "Run stopped");
+            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), true, "Run stopped");
         });
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
@@ -453,7 +454,7 @@ class GenerationTaskServiceTest {
             heartbeat.getValue().run();
             BooleanSupplier shouldCancel = invocation.getArgument(5);
             assertThat(shouldCancel.getAsBoolean()).isTrue();
-            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), true, "Run stopped");
+            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), true, "Run stopped");
         });
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
@@ -914,7 +915,8 @@ class GenerationTaskServiceTest {
 
     @Test
     void cancelledRun_emitsCancelled_andPersistsNothing() {
-        run(GenerationMode.GENERATE, GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), true, "Run stopped"));
+        run(GenerationMode.GENERATE,
+                GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), true, "Run stopped"));
 
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
@@ -932,7 +934,7 @@ class GenerationTaskServiceTest {
             assertThat(shouldCancel.getAsBoolean()).isFalse();
             deadline.getValue().run();
             assertThat(shouldCancel.getAsBoolean()).isTrue();
-            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), true, "Run stopped");
+            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), true, "Run stopped");
         });
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
@@ -1010,17 +1012,16 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenAccountingFailure_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
-        // Observed in a live campaign: a single failed critic request made the usage account indeterminate, and an exercise that had already passed differential verification
-        // and been checkpointed was thrown away. Saving consumes no provider tokens, so an account that cannot be closed is a reason to stop spending, not to destroy work.
-        // The run is still reported with an incomplete accounting state.
-        when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenReturn(response -> {
-            throw new GenerationJobService.TokenUsageAccountingException();
-        });
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
-            @SuppressWarnings("unchecked")
-            Consumer<ChatResponse> usageSink = invocation.getArgument(8);
-            usageSink.accept(responseWithTokens(7, 3));
-            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
+            ProviderUsageSink usageSink = invocation.getArgument(8);
+            usageSink.markUncertain();
+            BooleanSupplier shouldStop = invocation.getArgument(5);
+            assertThat(shouldStop.getAsBoolean()).isTrue();
+            var snapshot = new WorkspaceSnapshot(List.of());
+            var verification = new VerificationResult(true, true, true, 3, List.of());
+            var output = new GenerationOutput(snapshot, verification, snapshot.sha256(), SpecFidelityReport.qualityReviewUnavailable("The provider failed during quality review."),
+                    ExerciseGenerationEventDTO.TerminationReason.CANCELLED.name(), null, GenerationOutput.AccountingState.INCOMPLETE, "default");
+            return GenerationOutcome.received(output, new Seed(snapshot, Map.of(), new GradingContext(false, Set.of(), Set.of())), false);
         });
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
@@ -1030,7 +1031,32 @@ class GenerationTaskServiceTest {
         verify(jobService, never()).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString());
         verify(persistenceService).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
         assertThat(sentEvents()).anyMatch(event -> event.message() != null && event.message().contains("keeping and saving the already-verified exercise"));
-        assertThat(sentEvents().getLast().type()).isNotEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.REVIEW_UNAVAILABLE);
+    }
+
+    @Test
+    void operatorCancellationDuringUncertainQualityReview_staysACancellation() {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            ProviderUsageSink usageSink = invocation.getArgument(8);
+            usageSink.markUncertain();
+            when(jobService.isCancelled(JOB_ID)).thenReturn(true);
+            when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(false);
+            var snapshot = new WorkspaceSnapshot(List.of());
+            var verification = new VerificationResult(true, true, true, 3, List.of());
+            var output = new GenerationOutput(snapshot, verification, snapshot.sha256(), SpecFidelityReport.qualityReviewUnavailable("The provider failed during quality review."),
+                    ExerciseGenerationEventDTO.TerminationReason.CANCELLED.name(), null, GenerationOutput.AccountingState.INCOMPLETE, "default");
+            return GenerationOutcome.received(output, new Seed(snapshot, Map.of(), new GradingContext(false, Set.of(), Set.of())), false);
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.CANCELLED);
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -1162,7 +1188,7 @@ class GenerationTaskServiceTest {
             usageSink.recordAttempt();
             usageSink.recordTurn();
             usageSink.recordTurn();
-            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), false, "Run stopped");
+            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), false, "Run stopped");
         });
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
@@ -1177,7 +1203,7 @@ class GenerationTaskServiceTest {
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             ProviderUsageSink usageSink = invocation.getArgument(8);
             usageSink.markUncertain();
-            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), false, "Run stopped");
+            return GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), false, "Run stopped");
         });
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
@@ -1193,7 +1219,8 @@ class GenerationTaskServiceTest {
 
     @Test
     void erroredRun_emitsError_andPersistsNothing() {
-        run(GenerationMode.GENERATE, GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), false, "Run stopped"));
+        run(GenerationMode.GENERATE,
+                GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), false, "Run stopped"));
 
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
@@ -1253,7 +1280,7 @@ class GenerationTaskServiceTest {
     void cleanup_releasesBudgetReservationEvenWhenFinalClearJobFails() {
         Mockito.doThrow(new RuntimeException("clear failed")).when(jobService).clearJob(EXERCISE_ID, JOB_ID);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), true, "Run stopped"));
+                .thenReturn(GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), true, "Run stopped"));
 
         assertThatThrownBy(() -> taskService.runAsync(
                 new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null, "reservation-2")))
@@ -1331,7 +1358,7 @@ class GenerationTaskServiceTest {
     @ParameterizedTest
     @EnumSource(ExerciseGenerationEventDTO.TerminationReason.class)
     void runLevelBudgets_refineOnlyACooperativeStop(ExerciseGenerationEventDTO.TerminationReason reason) {
-        ExerciseGenerationEventDTO.TerminationReason refined = GenerationTaskService.refineTerminationReason(reason, true, true);
+        ExerciseGenerationEventDTO.TerminationReason refined = GenerationTaskService.refineTerminationReason(reason, true, true, true);
 
         if (reason == ExerciseGenerationEventDTO.TerminationReason.CANCELLED) {
             assertThat(refined).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.DEADLINE_EXCEEDED);
@@ -1343,20 +1370,20 @@ class GenerationTaskServiceTest {
 
     @Test
     void aCooperativeStopUnderNoBudgetPressure_staysACancellation() {
-        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, false))
+        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, false, false))
                 .isEqualTo(ExerciseGenerationEventDTO.TerminationReason.CANCELLED);
     }
 
     @Test
     void aCooperativeStopUnderTokenPressureAlone_reportsTheTokenBudget() {
-        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, true))
+        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, true, true))
                 .isEqualTo(ExerciseGenerationEventDTO.TerminationReason.TOKEN_BUDGET_EXHAUSTED);
     }
 
     @Test
     void stoppedTransportWithoutOutputReportsRunFailed() {
         run(GenerationMode.GENERATE,
-                GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), false, "Worker disconnected"));
+                GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), false, "Worker disconnected"));
 
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         assertThat(sentEvents().getLast().terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
@@ -1389,7 +1416,7 @@ class GenerationTaskServiceTest {
         HyperionGenerationSettings thorough = new HyperionGenerationSettings("thorough", "Thorough", 90, java.time.Duration.ofMinutes(60), 6_000_000L, true, "CONTINUOUS", 256_000,
                 null, false, false);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), eq(thorough)))
-                .thenReturn(GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of())), false, "Run stopped"));
+                .thenReturn(GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), false, "Run stopped"));
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null, null,
                 null, thorough));
