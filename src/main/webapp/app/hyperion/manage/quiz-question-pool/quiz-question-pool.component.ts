@@ -178,6 +178,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
         this.selectedCompetencyId.set(undefined);
         this.busyQuestionIds.set(new Set());
         this.reviewSequences.clear();
+        this.appliedQuestionsAt = 0;
     }
 
     private isCurrent(courseId: number): boolean {
@@ -190,11 +191,18 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
     /** The sequence number at which a question's review decision was last stored, by question id. */
     private readonly reviewSequences = new Map<number, number>();
 
+    /** The sequence number of the question-list request whose response the list shows. */
+    private appliedQuestionsAt = 0;
+
     /**
-     * Replaces the question list with a server response, except for questions whose review decision was stored after that request
-     * started; those keep their newer state until a later response carries it.
+     * Replaces the question list with a server response, unless the response of a later request is shown already. Questions whose
+     * review decision was stored after the request started keep their newer state until a later response carries it.
      */
     private applyQuestions(questions: PoolQuestion[], requestedAt: number): void {
+        if (requestedAt < this.appliedQuestionsAt) {
+            return;
+        }
+        this.appliedQuestionsAt = requestedAt;
         this.questions.update((current) => {
             const byId = new Map(current.map((question) => [question.id, question]));
             return questions.map((question) => ((this.reviewSequences.get(question.id) ?? 0) > requestedAt ? (byId.get(question.id) ?? question) : question));

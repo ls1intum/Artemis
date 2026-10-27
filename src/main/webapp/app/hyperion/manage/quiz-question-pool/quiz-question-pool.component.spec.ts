@@ -332,6 +332,24 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.questions().find((question) => question.id === 2)?.reviewState).toBe('PENDING');
     });
 
+    it('should keep the newest question list when an older request answers later', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const first = new Subject<PoolQuestion[]>();
+        const second = new Subject<PoolQuestion[]>();
+        vi.spyOn(poolService, 'getQuestions').mockReturnValueOnce(first.asObservable()).mockReturnValueOnce(second.asObservable());
+        component.refresh();
+        component.refresh();
+        const judged = questions();
+        const generating = judged.map((question) => ({ ...question, state: 'GENERATING' as const, question: undefined, decision: undefined }));
+
+        second.next(judged);
+        second.complete();
+        first.next(generating);
+        first.complete();
+
+        expect(component.questions().map((question) => question.state)).toEqual(['FILTERED', 'FILTERED', 'FILTERED']);
+    });
+
     it('should report a failed review decision', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
         vi.spyOn(poolService, 'review').mockReturnValue(throwError(() => new Error('boom')));
