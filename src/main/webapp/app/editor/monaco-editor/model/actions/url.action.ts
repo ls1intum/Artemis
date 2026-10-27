@@ -117,14 +117,17 @@ export class UrlAction extends TextStyleTextEditorAction {
         if (overlapsSelection(/\[[^\]]*\]\([^)]*\)/g) || overlapsSelection(/`[^`]*`/g)) {
             return true;
         }
-        const fence = /^\s*(```|~~~)/;
-        if (fence.test(line)) {
+        const isFenceLine = (text: string) => {
+            const trimmed = text.trimStart();
+            return trimmed.startsWith('```') || trimmed.startsWith('~~~');
+        };
+        if (isFenceLine(line)) {
             return true;
         }
         // Every fence line before this one opens or closes a code block.
         let insideFence = false;
         for (let previousLine = 1; previousLine < lineNumber; previousLine++) {
-            if (fence.test(this.getLineText(editor, previousLine) ?? '')) {
+            if (isFenceLine(this.getLineText(editor, previousLine) ?? '')) {
                 insideFence = !insideFence;
             }
         }
