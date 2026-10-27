@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.worker;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
 
@@ -26,7 +27,7 @@ public interface GenerationEngine {
      * @param identity the exact execution to cancel
      * @return whether this engine owns teardown; false lets the supervisor use its emergency Docker cleanup
      */
-    default boolean requestCancel(de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity identity) {
+    default boolean requestCancel(ExecutionIdentity identity) {
         return false;
     }
 }

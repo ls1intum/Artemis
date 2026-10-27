@@ -1,0 +1,19 @@
+<span class="hyperion-stage-marker-track" aria-hidden="true">
+    <span class="hyperion-stage-marker">
+        @if (markerIcon(); as icon) {
+            <fa-icon [icon]="icon" />
+        } @else if (isRunning()) {
+            <span class="hyperion-stage-running-indicator"></span>
+            <span class="hyperion-stage-running-fallback"></span>
+        }
+    </span>
+    <span class="hyperion-stage-connector"></span>
+</span>
+<div class="hyperion-stage-content">
+    <span class="hyperion-stage-label">
+        {{ label() }}&ngsp;<span class="sr-only">{{ stateLabelKey() | artemisTranslate }}</span>
+    </span>
+    <div class="hyperion-stage-detail">
+        <ng-content />
+    </div>
+</div>

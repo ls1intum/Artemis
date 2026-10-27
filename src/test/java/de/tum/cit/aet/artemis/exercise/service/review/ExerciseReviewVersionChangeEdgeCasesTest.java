@@ -241,7 +241,7 @@ class ExerciseReviewVersionChangeEdgeCasesTest {
 
     private static ExerciseSnapshotDTO snapshot(String text, ProgrammingExerciseSnapshotDTO programming) {
         return new ExerciseSnapshotDTO(1L, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, text, null, null, null, null, null, null,
-                null, programming, null, null, null, null);
+                null, programming, null, null, null, null, null);
     }
 
     private static ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO participation(String commit, String uri) {

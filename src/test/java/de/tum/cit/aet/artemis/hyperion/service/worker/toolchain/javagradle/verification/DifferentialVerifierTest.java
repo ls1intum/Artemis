@@ -39,6 +39,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -50,7 +51,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
 
 /**
  * Deterministic unit test for the differential oracle: a fake sandbox serves the {@code copyOut} of the verifier-owned reports dir as a tar of real JUnit (and, where exercised,
- * SCA) reports for the solution and template builds, parsed by the production parsers ({@code TestResultXmlParser}, {@code ReportParser}) exactly as against a live container. Live
+ * SCA) reports for the solution and template builds, parsed by Hyperion's JUnit and SCA parsers exactly as against a live container. Live
  * build behaviour is covered by the gated end-to-end test.
  */
 class DifferentialVerifierTest {
@@ -64,7 +65,7 @@ class DifferentialVerifierTest {
     }
 
     private static GenerationInput input() {
-        return new GenerationInput(1, "de.test", null, false, Set.of(), Set.of());
+        return new GenerationInput(1, "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
     }
 
     private static DifferentialVerifier newVerifier() {
@@ -98,7 +99,7 @@ class DifferentialVerifierTest {
             return new BuildReportSpec(allNames, failedNames, scaReports, exitCode, false, null);
         }
 
-        /** A spec whose JUnit report is the given verbatim XML (for the skipped/multi-suite shapes the production parser must interpret); names/fails are unused. */
+        /** A spec whose JUnit report is the given verbatim XML (for the skipped/multi-suite shapes the Hyperion parser must interpret); names/fails are unused. */
         static BuildReportSpec withJunitXml(String junitXml, int exitCode) {
             return new BuildReportSpec(List.of(), List.of(), Map.of(), exitCode, false, junitXml);
         }
@@ -541,7 +542,7 @@ class DifferentialVerifierTest {
     void adaptationPreservesSavedHiddenTestsWithoutBindingThemOrInventingSpecificationSeams(boolean withPlan) {
         List<String> names = List.of("visibleBehavior", "otherVisibleBehavior", "savedHiddenBehavior");
         String statement = "[task][Implement behavior](visibleBehavior,otherVisibleBehavior)\nImplement the documented sorting behavior for the supplied input values.";
-        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"));
+        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"), GenerationBuildTool.GRADLE);
         String plan = """
                 {"tests":[
                   {"name":"visibleBehavior","seamWeightTier":3,"visibility":"ALWAYS"},
@@ -563,7 +564,7 @@ class DifferentialVerifierTest {
     void adaptationStillRejectsUnboundVisibleTestsAndNewUnapprovedHiddenTests() {
         List<String> names = List.of("visibleBehavior", "otherVisibleBehavior", "savedHiddenBehavior");
         String statement = "[task][Implement behavior](otherVisibleBehavior)\nImplement the documented sorting behavior for the supplied input values.";
-        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"));
+        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"), GenerationBuildTool.GRADLE);
         var request = new VerificationRequest(harness(), Map.of(), Map.of(), harness(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.copyOf(names), statement,
                 null, true);
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement);
@@ -591,7 +592,7 @@ class DifferentialVerifierTest {
     void savedHiddenExemptionDoesNotApplyToVisiblePlanEntriesOrGeneration() {
         List<String> names = List.of("visibleBehavior", "savedHiddenBehavior");
         String statement = "[task][Implement behavior](visibleBehavior)\nImplement the documented sorting behavior for the supplied input values.";
-        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"));
+        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"), GenerationBuildTool.GRADLE);
         String plan = """
                 {"tests":[
                   {"name":"visibleBehavior","seamWeightTier":3,"visibility":"ALWAYS"},
@@ -799,7 +800,7 @@ class DifferentialVerifierTest {
     @Test
     void integrityGates_adaptationPreservesUntouchedLegacyTestsButChecksNewTests() {
         GenerationInput exercise = input();
-        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of());
+        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         String legacyTest = """
                 package de.test;
                 import org.junit.jupiter.api.Test;
@@ -833,7 +834,7 @@ class DifferentialVerifierTest {
     @Test
     void integrityGates_rejectJavaSourcesWhosePackageDoesNotMatchTheirPath() {
         GenerationInput exercise = input();
-        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of());
+        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         String pom = aresGradle();
         String test = """
                 package de.test;
@@ -1208,7 +1209,7 @@ class DifferentialVerifierTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("bound more than once") && r.contains("push_grows"));
     }
 
-    // Skipped-test parity: production's TestResultXmlParser drops a <testcase><skipped/></testcase> from both lists, and the verifier uses that same parser.
+    // Skipped-test parity: both LocalCI and Hyperion drop a <testcase><skipped/></testcase> from both lists.
 
     @Test
     void shouldRejectWhenATestSkippedOnSolutionFailsOnTemplate() {
@@ -1218,12 +1219,12 @@ class DifferentialVerifierTest {
                 List.of("push_then_pop", "size_tracks_elements", "peek_does_not_remove"));
         String ps = "# Stack\n[task][Push/Pop](push_then_pop)\n[task][Size](size_tracks_elements)\n";
         VerificationResult result = verify(solution, template, ps);
-        assertThat(result.testCount()).as("the skipped solution test is not counted by the production parser").isEqualTo(2);
+        assertThat(result.testCount()).as("the skipped solution test is not counted by the Hyperion parser").isEqualTo(2);
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("different number of tests"));
     }
 
-    /** A solution build whose report has two passing tests and one {@code <skipped/>} test; the production parser drops the skipped case from both lists. */
+    /** A solution build whose report has two passing tests and one {@code <skipped/>} test; the Hyperion parser drops the skipped case from both lists. */
     private static BuildReportSpec skippedSolution() {
         String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -1454,7 +1455,7 @@ class DifferentialVerifierTest {
             Map<String, String> testsFiles = withHarness(Map.of("test/de/test/SpellTest.java", test));
             List<String> names = List.of(DEFAULT_BOUND_NAMES);
             GenerationInput javaExercise = input();
-            javaExercise = new GenerationInput(javaExercise.id(), "de.test", null, false, Set.of(), Set.of());
+            javaExercise = new GenerationInput(javaExercise.id(), "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
             DifferentialVerifier verifier = newVerifier(spec);
 
             ScriptedSandbox misleading = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
