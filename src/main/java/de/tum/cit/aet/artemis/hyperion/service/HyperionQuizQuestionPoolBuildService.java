@@ -481,7 +481,7 @@ public class HyperionQuizQuestionPoolBuildService {
                 Map.ofEntries(Map.entry("courseTitle", getSanitizedCourseTitle(course)), Map.entry("courseDescription", getSanitizedCourseDescription(course)),
                         Map.entry("groundingBlock", material.groundingBlock()), Map.entry("competency", material.competencyBlock()),
                         Map.entry("language", first.getLanguage().getValue()), Map.entry("questionType", first.getQuestionType().getValue()),
-                        Map.entry("numberOfQuestions", batch.size()), Map.entry("optionCount", HyperionQuizQuestionChecks.OPTION_COUNT),
+                        Map.entry("numberOfQuestions", batch.size()), Map.entry("optionCount", HyperionQuizQuestionChecks.optionCountFor(first.getQuestionType())),
                         Map.entry("difficulty", first.getDifficulty().getPromptValue()), Map.entry("format", outputConverter.getFormat())));
 
         ChatResponse chatResponse;
