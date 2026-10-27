@@ -23,6 +23,9 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusTy
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSeenRequestDTO;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationStatusUpdateRequestDTO;
 import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -43,7 +46,7 @@ public class UserCourseNotificationStatusResource {
     }
 
     /**
-     * PUT communication/notification/{courseId}/status : Update status of multiple notifications for the current user
+     * PUT /api/notification/courses/{courseId}/status : Update status of multiple notifications for the current user
      * <p>
      * The web client sends this when the user acts on notifications: closing one, or marking them all as read. It marks
      * notifications as seen merely because they were shown through {@link #markDisplayedNotificationsAsSeen} instead, so
@@ -54,6 +57,8 @@ public class UserCourseNotificationStatusResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
+    @Operation(operationId = "updateNotificationStatus")
+    @ApiResponse(responseCode = "200", description = "Notification state updated; empty response body", content = @Content)
     @PutMapping("{courseId}/status")
     public ResponseEntity<Void> updateNotificationStatus(@PathVariable Long courseId, @RequestBody UserCourseNotificationStatusUpdateRequestDTO requestDTO) {
         log.debug("REST request to update notification status to {} for notifications {} in course {}", requestDTO.statusType(), requestDTO.notificationIds(), courseId);
@@ -66,7 +71,7 @@ public class UserCourseNotificationStatusResource {
     }
 
     /**
-     * PUT communication/notification/{courseId}/seen : Mark notifications as seen because the client displayed them
+     * PUT /api/notification/courses/{courseId}/seen : Mark notifications as seen because the client displayed them
      * <p>
      * The client calls this on its own whenever the open notification overview shows unseen notifications, so a call says
      * nothing about anyone acting on them: opening the overview is already counted by the request that loads it.
@@ -77,6 +82,8 @@ public class UserCourseNotificationStatusResource {
      */
     @EnforceAtLeastStudentInCourse
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @Operation(operationId = "markDisplayedNotificationsAsSeen")
+    @ApiResponse(responseCode = "200", description = "Notification state updated; empty response body", content = @Content)
     @PutMapping("{courseId}/seen")
     public ResponseEntity<Void> markDisplayedNotificationsAsSeen(@PathVariable Long courseId, @RequestBody UserCourseNotificationSeenRequestDTO requestDTO) {
         log.debug("REST request to mark the displayed notifications {} in course {} as seen", requestDTO.notificationIds(), courseId);
@@ -89,12 +96,14 @@ public class UserCourseNotificationStatusResource {
     }
 
     /**
-     * PUT communication/notification/{courseId}/archive-all : Update status of all notifications for the course to archived
+     * PUT /api/notification/courses/{courseId}/archive-all : Update status of all notifications for the course to archived
      *
      * @param courseId the ID of the course
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
+    @Operation(operationId = "archiveAll")
+    @ApiResponse(responseCode = "200", description = "Notification state updated; empty response body", content = @Content)
     @PutMapping("{courseId}/archive-all")
     public ResponseEntity<Void> archiveAll(@PathVariable Long courseId) {
         log.debug("REST request to update notification status to ARCHIVED for all notifications in course {}", courseId);

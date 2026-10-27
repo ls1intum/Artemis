@@ -9,11 +9,8 @@
  */
 
 
-/**
- * All effective channel flags
- */
-export interface CourseNotificationSettingInfoNotificationTypeChannelsValue {
-    WEBAPP: boolean;
-    PUSH: boolean;
-    EMAIL: boolean;
+export interface TutorialGroupAssignedPayload {
+    groupTitle?: string;
+    groupId?: number;
+    moderatorName?: string;
 }

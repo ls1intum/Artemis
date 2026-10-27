@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -23,8 +25,9 @@ import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
  * {@link #legacyParameters()}.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseNotificationDTO(String notificationType, long notificationId, long courseId, ZonedDateTime creationDate, CourseNotificationCategory category,
-        String courseTitle, String courseIconUrl, CourseNotificationPayloadDTO payload, UserCourseNotificationStatusType status, String relativeWebAppUrl) implements Serializable {
+public record CourseNotificationDTO(String notificationType, long notificationId, long courseId, @Nullable ZonedDateTime creationDate,
+        @Nullable CourseNotificationCategory category, @Nullable String courseTitle, @Nullable String courseIconUrl, @Nullable CourseNotificationPayloadDTO payload,
+        @Nullable UserCourseNotificationStatusType status, @Nullable String relativeWebAppUrl) implements Serializable {
 
     public CourseNotificationDTO(String notificationType, long notificationId, long courseId, ZonedDateTime creationDate, CourseNotificationCategory category, String courseTitle,
             String courseIconUrl, CourseNotificationPayloadDTO payload, String relativeWebAppUrl) {

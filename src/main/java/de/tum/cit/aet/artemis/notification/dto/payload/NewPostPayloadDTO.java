@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -16,6 +18,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param authorIsBot         whether the author is a bot
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NewPostPayloadDTO(Long postId, String postMarkdownContent, Long channelId, String channelName, String channelType, String authorName, String authorImageUrl,
-        Long authorId, boolean authorIsBot) implements CourseNotificationPayloadDTO {
+public record NewPostPayloadDTO(@Nullable Long postId, @Nullable String postMarkdownContent, @Nullable Long channelId, @Nullable String channelName, @Nullable String channelType,
+        @Nullable String authorName, @Nullable String authorImageUrl, @Nullable Long authorId, boolean authorIsBot) implements CourseNotificationPayloadDTO {
 }

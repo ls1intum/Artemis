@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -10,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param chatTitle      the title of the chat
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisResponsePayloadDTO(Long sessionId, String messagePreview, String chatTitle) implements CourseNotificationPayloadDTO {
+public record IrisResponsePayloadDTO(@Nullable Long sessionId, @Nullable String messagePreview, @Nullable String chatTitle) implements CourseNotificationPayloadDTO {
 }
