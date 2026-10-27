@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.UnaryOperator;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -346,6 +347,47 @@ class SecurityFrameworkServiceTest {
         assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(content -> assertThat(content).contains("value = \"custom.yaml\")"));
         assertThat(readPushed("custom.yaml")).contains(CUSTOM_POLICY);
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+    }
+
+    /**
+     * Pushes a change of the test class, as an instructor would through git.
+     */
+    private void pushTestClassChange(UnaryOperator<String> change) throws Exception {
+        Path checkout = newDirectory("instructor-");
+        try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
+            Path testFile = checkout.resolve("test/de/example/SortingTest.java");
+            FileUtils.writeStringToFile(testFile.toFile(), change.apply(Files.readString(testFile)), StandardCharsets.UTF_8);
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("Change the test class by hand").setAuthor("Instructor", "instructor@example.org").call();
+            git.push().call();
+        }
+    }
+
+    @Test
+    void aParenthesizedActivatedFlagMakesTheFrameworkInactive() throws Exception {
+        String parenthesized = "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", activated = (false))";
+        pushTestClassChange(source -> source.replace(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION, parenthesized));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
+    }
+
+    @Test
+    void aRelativePathToTheRootPolicySurvivesADeactivateActivateCycle() throws Exception {
+        pushTestClassChange(source -> source.replace("value = \"SecurityPolicy.yaml\"", "value = \"./SecurityPolicy.yaml\""));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+
+        assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
+        assertThat(readPushed("test/de/example/SortingTest.java"))
+                .hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy(value = \"./SecurityPolicy.yaml\")"));
     }
 
     @Test

@@ -92,6 +92,19 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void aRelativePathToTheRootPolicyUsesThePolicyFile() throws IOException {
+        Path testFile = root.resolve("test/de/example/SortingTest.java");
+        FileUtils.writeStringToFile(testFile.toFile(), "package de.example;\n\n@de.tum.cit.ase.ares.api.Policy(\"./SecurityPolicy.yaml\")\nclass SortingTest {\n}\n",
+                StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.isPolicyFileUsed(root)).isTrue();
+        assertThat(SecurityPolicyRepositoryFiles.isEnforcing(root)).isFalse();
+
+        SecurityPolicyRepositoryFiles.writePolicy(root, "policy");
+        assertThat(SecurityPolicyRepositoryFiles.isEnforcing(root)).isTrue();
+    }
+
+    @Test
     void readsTheAresVersionFromBuildFileContents() {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("ext {\n    aresVersion = '2.3.0'\n}\n", null)).contains("2.3.0");
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<properties><ares.version>2.2.1</ares.version></properties>")).contains("2.2.1");

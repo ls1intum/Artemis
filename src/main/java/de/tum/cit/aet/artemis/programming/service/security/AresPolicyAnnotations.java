@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -62,12 +64,19 @@ final class AresPolicyAnnotations {
      */
     record Annotation(int start, int end, String name, Map<String, Argument> arguments) {
 
+        /**
+         * @return whether the annotation enforces its policy, i.e. its {@code activated} argument is not the literal {@code false}, also when it is written
+         *         in parentheses like {@code activated = (false)}
+         */
         boolean isActivated() {
             Argument activated = arguments.get(ACTIVATED_ARGUMENT);
-            return activated == null || !"false".equals(activated.expression());
+            return activated == null || !"false".equals(withoutOuterParentheses(activated.expression()));
         }
 
         /**
+         * Ares resolves the policy path relative to the root of the tests repository, so the path is returned in its normalized form relative to that
+         * root: {@code ./SecurityPolicy.yaml} and {@code test/../SecurityPolicy.yaml} both are {@code SecurityPolicy.yaml}.
+         *
          * @return the policy file the annotation points to, if its {@code value} is a plain string literal; empty if it has no {@code value}, in which
          *         case Ares applies its strict default policy, or if the value is an expression this class does not evaluate
          */
@@ -76,13 +85,35 @@ final class AresPolicyAnnotations {
             if (value == null) {
                 return Optional.empty();
             }
-            String literal = value.expression();
-            while (literal.length() >= 2 && literal.startsWith("(") && literal.endsWith(")")) {
-                literal = literal.substring(1, literal.length() - 1).strip();
-            }
+            String literal = withoutOuterParentheses(value.expression());
             boolean plainString = literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"") && !literal.startsWith("\"\"\"") && literal.indexOf('\\') < 0
                     && literal.indexOf('"', 1) == literal.length() - 1;
-            return plainString ? Optional.of(literal.substring(1, literal.length() - 1)) : Optional.empty();
+            return plainString ? Optional.of(normalizePath(literal.substring(1, literal.length() - 1))) : Optional.empty();
+        }
+    }
+
+    /**
+     * Removes the parentheses that enclose a whole expression, like {@code ((false))}, but not those of {@code (a) + (b)}.
+     */
+    private static String withoutOuterParentheses(String expression) {
+        String result = expression.strip();
+        while (result.startsWith("(") && matchingParenthesis(mask(result), 0) == result.length() - 1) {
+            result = result.substring(1, result.length() - 1).strip();
+        }
+        return result;
+    }
+
+    /**
+     * @return the path in normalized form with forward slashes, e.g. {@code SecurityPolicy.yaml} for {@code ./SecurityPolicy.yaml}; the path as written
+     *         if it is not a valid path
+     */
+    private static String normalizePath(String path) {
+        try {
+            String normalized = Path.of(path).normalize().toString().replace('\\', '/');
+            return normalized.isEmpty() ? path : normalized;
+        }
+        catch (InvalidPathException e) {
+            return path;
         }
     }
 

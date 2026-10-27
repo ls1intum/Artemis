@@ -51,6 +51,24 @@ class AresPolicyAnnotationsTest {
         assertThat(commentedFlag.isActivated()).isFalse();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "activated = (false)", "activated = ( /* off */ (false) )" })
+    void recognizesAParenthesizedFlag(String flag) {
+        String original = source("", "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", " + flag + ")");
+
+        assertThat(AresPolicyAnnotations.containsDeactivated(original)).isTrue();
+        assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
+        assertThat(AresPolicyAnnotations.setActive(original, true)).contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")").doesNotContain("activated");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "\"SecurityPolicy.yaml\"", "\"./SecurityPolicy.yaml\"", "(\"test/../SecurityPolicy.yaml\")", "\"././SecurityPolicy.yaml\"" })
+    void normalizesThePolicyPathRelativeToTheRepositoryRoot(String value) {
+        AresPolicyAnnotations.Annotation annotation = AresPolicyAnnotations.find(source("", "@de.tum.cit.ase.ares.api.Policy(value = " + value + ")")).getFirst();
+
+        assertThat(annotation.policyPath()).contains("SecurityPolicy.yaml");
+    }
+
     @Test
     void neverAppendsTheFlagBehindALineComment() {
         String deactivated = AresPolicyAnnotations.setActive(source("", "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\" // policy file\n)"), false);
