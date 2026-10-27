@@ -5,7 +5,6 @@ import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import io.zonky.test.db.provider.postgres.PostgreSQLContainerCustomizer;
 
@@ -36,7 +35,6 @@ public class PostgresTmpfsContainerCustomizer {
 
     @Bean
     PostgreSQLContainerCustomizer postgresTmpfs() {
-        // The temporary initdb server also logs readiness; wait for the final server's TCP listener instead.
-        return container -> container.withTmpFs(Map.of("/var/lib/postgresql", "rw,noexec,nosuid")).waitingFor(Wait.forListeningPort());
+        return container -> container.withTmpFs(Map.of("/var/lib/postgresql", "rw,noexec,nosuid"));
     }
 }
