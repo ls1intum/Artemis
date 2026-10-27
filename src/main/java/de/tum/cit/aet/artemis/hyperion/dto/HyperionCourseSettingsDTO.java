@@ -13,8 +13,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Hyperion settings of one course")
-public record HyperionCourseSettingsDTO(@Schema(description = "Whether the quiz question pool is generated automatically for new lecture material") boolean poolGenerationEnabled,
-        @Min(HyperionCourseSettings.MIN_QUESTIONS_PER_LECTURE_UNIT) @Max(HyperionCourseSettings.MAX_QUESTIONS_PER_LECTURE_UNIT) @Schema(description = "Questions the pool holds per lecture unit and competency, spread over that unit's cells") int questionsPerLectureUnit) {
+public record HyperionCourseSettingsDTO(
+        @Schema(description = "Whether the quiz question pool is generated automatically for new lecture material", requiredMode = Schema.RequiredMode.REQUIRED) boolean poolGenerationEnabled,
+        @Min(HyperionCourseSettings.MIN_QUESTIONS_PER_LECTURE_UNIT) @Max(HyperionCourseSettings.MAX_QUESTIONS_PER_LECTURE_UNIT) @Schema(description = "Questions the pool holds per lecture unit and competency, spread over that unit's cells", requiredMode = Schema.RequiredMode.REQUIRED) int questionsPerLectureUnit) {
 
     /**
      * Converts the persisted settings to their DTO.

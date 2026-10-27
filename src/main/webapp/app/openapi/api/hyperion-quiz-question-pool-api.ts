@@ -75,12 +75,6 @@ export class HyperionQuizQuestionPoolApi {
      *
      *
      * @param courseId
-     * @param hyperionCourseSettings
-     */
-    /**
-     *
-     *
-     * @param courseId
      * @param questionId
      * @param quizQuestionPoolReview
      */
@@ -89,6 +83,12 @@ export class HyperionQuizQuestionPoolApi {
         return this.http.put<QuizQuestionPoolItem>(url, quizQuestionPoolReview);
     }
 
+    /**
+     *
+     *
+     * @param courseId
+     * @param hyperionCourseSettings
+     */
     updateQuizQuestionPoolSettings(courseId: number, hyperionCourseSettings: HyperionCourseSettings): Observable<HyperionCourseSettings> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/settings`;
         return this.http.put<HyperionCourseSettings>(url, hyperionCourseSettings);

@@ -14,7 +14,7 @@
  */
 export interface HyperionCourseSettings {
     /** Whether the quiz question pool is generated automatically for new lecture material */
-    poolGenerationEnabled?: boolean;
+    poolGenerationEnabled: boolean;
     /** Questions the pool holds per lecture unit and competency, spread over that unit\'s cells */
-    questionsPerLectureUnit?: number;
+    questionsPerLectureUnit: number;
 }

@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { HyperionQuizQuestionPoolApi } from 'app/openapi/api/hyperion-quiz-question-pool-api';
+import { GeneratedQuizQuestion } from 'app/openapi/model/generated-quiz-question';
 import { QuizQuestionPoolItem } from 'app/openapi/model/quiz-question-pool-item';
 import { QuizQuestionPoolProgress } from 'app/openapi/model/quiz-question-pool-progress';
 import { HyperionCourseSettings } from 'app/openapi/model/hyperion-course-settings';
@@ -125,7 +126,7 @@ export class QuizQuestionPoolService {
         };
     }
 
-    private toGeneratedQuestion(question: Omit<GeneratedQuestion, 'id'>, itemId: number): GeneratedQuestion {
+    private toGeneratedQuestion(question: GeneratedQuizQuestion, itemId: number): GeneratedQuestion {
         return {
             id: `pool-${itemId}`,
             type: question.type,

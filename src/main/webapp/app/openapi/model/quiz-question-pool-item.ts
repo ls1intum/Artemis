@@ -8,6 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { GeneratedQuizQuestion } from './generated-quiz-question';
 import type { QuizQuestionFilterDecision } from './quiz-question-filter-decision';
 
 /**
@@ -34,6 +35,8 @@ export interface QuizQuestionPoolItem {
     state: QuizQuestionPoolItemStateEnum;
     /** The instructor\'s review decision */
     reviewState: QuizQuestionPoolItemReviewStateEnum;
+    /** The generated question, present once generated */
+    question?: GeneratedQuizQuestion;
     /** The filter\'s decision, present once judged */
     decision?: QuizQuestionFilterDecision;
     /** Why the last attempt failed, present after a failure */

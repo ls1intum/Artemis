@@ -26,4 +26,3 @@ export const QuizQuestionPoolReviewReviewStateEnum = {
 } as const;
 
 export const QuizQuestionPoolReviewReviewStateEnumValues = ['PENDING', 'APPROVED', 'EXCLUDED'] as const;
-
