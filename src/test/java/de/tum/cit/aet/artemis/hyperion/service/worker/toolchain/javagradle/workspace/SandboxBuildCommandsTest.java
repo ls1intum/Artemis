@@ -14,12 +14,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ByteArrayResource;
 
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
 
 class SandboxBuildCommandsTest {
 
-    private final GenerationInput input = new GenerationInput(1, "de.example", null, false, Set.of(), Set.of());
+    private final GenerationInput input = new GenerationInput(1, "de.example", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
     @Test
     void disposableGradleCachesNeverUsePersistentDaemons() {
@@ -48,5 +49,32 @@ class SandboxBuildCommandsTest {
         when(resources.getResource(any())).thenReturn(new ByteArrayResource(yaml.getBytes(StandardCharsets.UTF_8)));
 
         assertThatThrownBy(() -> new SandboxBuildCommands(resources)).isInstanceOf(RuntimeException.class);
+    }
+
+    private final GenerationInput mavenInput = new GenerationInput(1, "de.example", null, false, Set.of(), Set.of(), GenerationBuildTool.MAVEN);
+
+    @Test
+    void mavenExercisesRunTheCanonicalMavenPhasesOfflineAgainstTheImageRepository() {
+        var commands = new SandboxBuildCommands(new GenerationResources());
+        var context = commands.describeBuildContext(mavenInput);
+
+        assertThat(context.phaseScripts()).containsExactly("mvn -B clean compile", "mvn -B test");
+        assertThat(context.reportGlobs()).containsExactly("**/target/surefire-reports/*.xml");
+        String script = commands.verifyScriptContent(mavenInput);
+        assertThat(script).doesNotContain("@@", "./gradlew", "org.gradle.daemon")
+                .contains("export MAVEN_ARGS=\"-o -Dmaven.repo.local=/tmp/hyperion-maven-repository -Dmaven.repo.local.tail=/root/.m2/repository\"")
+                .contains("rm -rf \"/tmp/hyperion-maven-repository\"", "-path '*/target/surefire-reports/*.xml'");
+        assertThat(commands.readinessVerifyScriptContent(mavenInput)).doesNotContain("@@").contains("MAVEN_ARGS", "/opt/aiworker-readiness-fixture");
+    }
+
+    @Test
+    void mavenSourceIsolatedLaneCompilesThroughTheAresAgentCopyThenRunsOnlySurefire() {
+        String script = new SandboxBuildCommands(new GenerationResources()).verifyScriptContent(mavenInput);
+        String isolated = script.substring(script.indexOf("if [ \"$LANE\" = \"behavior-isolated\" ]; then\n    run_phase"), script.indexOf("else\n    run_phase"));
+
+        assertThat(isolated).contains("run_phase 'mvn -B clean compile'", "run_phase 'mvn -B process-test-classes'", "run_phase 'mvn -B surefire:test'")
+                .doesNotContain("run_phase 'mvn -B test'");
+        assertThat(isolated.indexOf("process-test-classes")).isLessThan(isolated.indexOf("-name '*.java' -delete"));
+        assertThat(isolated.indexOf("-name '*.java' -delete")).isLessThan(isolated.indexOf("surefire:test"));
     }
 }

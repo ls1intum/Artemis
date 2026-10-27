@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
@@ -223,7 +224,7 @@ class SemanticMutantExecutionTest {
     }
 
     private static GenerationInput javaExercise() {
-        return new GenerationInput(42, "de.tum", "", false, Set.of(), Set.of());
+        return new GenerationInput(42, "de.tum", "", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
     }
 
     private static InteractiveSandbox sandbox(TarArchiveInputStream first, TarArchiveInputStream... remaining) {

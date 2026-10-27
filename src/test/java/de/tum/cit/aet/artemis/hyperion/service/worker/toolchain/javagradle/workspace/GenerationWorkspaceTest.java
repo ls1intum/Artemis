@@ -18,6 +18,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
@@ -31,7 +32,7 @@ class GenerationWorkspaceTest {
 
     private final GenerationWorkspace service = new GenerationWorkspace(new SandboxBuildCommands(resources), resources);
 
-    private final GenerationInput exercise = new GenerationInput(1, "de.test", "Existing statement", false, Set.of(), Set.of());
+    private final GenerationInput exercise = new GenerationInput(1, "de.test", "Existing statement", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
     private final RecordingSandbox sandbox = new RecordingSandbox();
 
@@ -109,7 +110,8 @@ class GenerationWorkspaceTest {
 
     @Test
     void missingStatementSeedsAnEmptyFile() {
-        service.seedWorkspace(sandbox, "session", new GenerationInput(1, "de.test", null, false, Set.of(), Set.of()), Mode.ADAPT, new WorkspaceSnapshot(List.of()), true);
+        service.seedWorkspace(sandbox, "session", new GenerationInput(1, "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE), Mode.ADAPT,
+                new WorkspaceSnapshot(List.of()), true);
 
         assertThat(sandbox.contents.textFiles()).containsEntry("problem-statement.md", "");
     }
