@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -60,7 +61,6 @@ const DEFAULT_SORT_COLUMN = 'ID';
         TumAetUiTooltipDirective,
         QuizQuestionPreviewComponent,
     ],
-    host: { '(keydown.escape)': 'onPreviewEscape($event)' },
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     private injector = inject(Injector);
@@ -68,6 +68,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     private alertService = inject(AlertService);
     private previewDestroyRef = inject(DestroyRef);
     private host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private document = inject(DOCUMENT);
     readonly ExerciseType = ExerciseType;
 
     exerciseType = input<ExerciseType | undefined>();
@@ -106,6 +107,12 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         // This gets determined based on the exercise type, which is not set when invoking the constructor
         // Therefore we temporally use this empty paging service which directly gets overwritten in ngOnInit().
         super(undefined);
+
+        // Escape closes the dialog that hosts this component, whichever of its controls has the focus. While the preview is shown,
+        // it leads back to the list instead. The capture phase of the document sees the key before the handler of the dialog does.
+        const onKeydown = (event: KeyboardEvent) => this.onPreviewEscape(event);
+        this.document.addEventListener('keydown', onKeydown, true);
+        this.previewDestroyRef.onDestroy(() => this.document.removeEventListener('keydown', onKeydown, true));
     }
 
     override ngOnInit(): void {
@@ -231,10 +238,10 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
      * Keeps Escape from closing the import dialog while the preview is shown, and shows the list instead.
      * Without a preview, Escape is left to the dialog that hosts this component.
      *
-     * @param event the keydown event of the Escape key, which would otherwise reach the dialog that hosts this component
+     * @param event the keydown event, which only matters if it is the Escape key
      */
-    protected onPreviewEscape(event: Event): void {
-        if (!this.preview()) {
+    private onPreviewEscape(event: KeyboardEvent): void {
+        if (!this.preview() || event.key !== 'Escape' || event.isComposing) {
             return;
         }
         event.stopPropagation();

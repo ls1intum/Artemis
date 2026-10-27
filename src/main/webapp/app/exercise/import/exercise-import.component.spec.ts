@@ -649,6 +649,51 @@ describe('ExerciseImportComponent template', () => {
             expect(dialogRefCloseSpy).not.toHaveBeenCalled();
         });
 
+        it('should show the list when Escape is pressed on a control of the dialog outside of the component', async () => {
+            const documentListener = vi.fn();
+            document.addEventListener('keydown', documentListener);
+            const dialogControl = document.createElement('button');
+            document.body.append(dialogControl);
+            showRows([row]);
+            clickPreview(1);
+            await fixture.whenStable();
+
+            dialogControl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+            document.removeEventListener('keydown', documentListener);
+            dialogControl.remove();
+
+            expect(documentListener).not.toHaveBeenCalled();
+            expect(previewElement('exercise-import-preview')).toBeNull();
+            expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not react to other keys while the preview is shown', async () => {
+            showRows([row]);
+            clickPreview(1);
+            await fixture.whenStable();
+
+            previewElement('exercise-import-preview-title')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(previewElement('exercise-import-preview')).not.toBeNull();
+        });
+
+        it('should stop listening for Escape once the preview is closed', async () => {
+            showRows([row]);
+            clickPreview(1);
+            await fixture.whenStable();
+            previewElement('exercise-import-preview-back')!.querySelector('button')!.click();
+            fixture.detectChanges();
+            const documentListener = vi.fn();
+            document.addEventListener('keydown', documentListener);
+
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            document.removeEventListener('keydown', documentListener);
+
+            expect(documentListener).toHaveBeenCalledOnce();
+        });
+
         it('should leave Escape to the import dialog while the list is shown', () => {
             const documentListener = vi.fn();
             document.addEventListener('keydown', documentListener);
