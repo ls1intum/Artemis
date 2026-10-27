@@ -26,8 +26,7 @@ const meta = {
     parameters: {
         docs: {
             description: {
-                component:
-                    'The panel stays open while selecting values. A backdrop intercepts outside clicks and dismisses the panel.',
+                component: 'The panel stays open while selecting values. A backdrop intercepts outside clicks and dismisses the panel.',
             },
         },
     },
