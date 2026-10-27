@@ -117,7 +117,7 @@ public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submiss
             List<GradingCriterionDTO> gradingCriteria = null;
             var criteria = exercise.getGradingCriteria();
             if (criteria != null && Hibernate.isInitialized(criteria)) {
-                gradingCriteria = criteria.stream().map(GradingCriterionDTO::of).toList();
+                gradingCriteria = GradingCriterionDTO.ofAll(criteria);
             }
             var solution = exercise.getSolutionParticipation();
             var solutionParticipation = solution != null && Hibernate.isInitialized(solution)

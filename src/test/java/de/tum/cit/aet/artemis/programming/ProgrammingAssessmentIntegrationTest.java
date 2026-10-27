@@ -23,6 +23,7 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
+import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
@@ -58,6 +61,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO;
@@ -83,6 +87,12 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private AssessmentNoteRepository assessmentNoteRepository;
 
     @Autowired
     private ProgrammingSubmissionService programmingSubmissionService;
@@ -1549,6 +1559,46 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submission.getFirstResult()).isEqualTo(firstResult);
         assertThat(resultsInCreationOrder(submission).get(2)).isEqualTo(firstSemiAutomaticResult);
         assertThat(resultsInCreationOrder(submission).get(3)).isEqualTo(submission.getLatestResult()).isEqualTo(lastResult);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AssessmentType.class, names = { "AUTOMATIC", "SEMI_AUTOMATIC" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteProgrammingResultWithDependentFeedbackAndNote(AssessmentType assessmentType) throws Exception {
+        var submission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, ParticipationFactory.generateProgrammingSubmission(true),
+                TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", assessmentType, true);
+        var result = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(submission.getLatestResult().getId());
+        var longFeedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("long feedback ".repeat(1000));
+        result.setFeedbacks(List.of(longFeedback));
+        var note = new AssessmentNote();
+        note.setNote("Internal assessment note");
+        result.setAssessmentNote(note);
+        result = resultRepository.saveAndFlush(result);
+        long resultId = result.getId();
+        long feedbackId = result.getFeedbacks().iterator().next().getId();
+        long noteId = result.getAssessmentNote().getId();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).isPresent();
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "deletedResultTest");
+        var typedFeedback = participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "failed test");
+        var scaFeedback = participationUtilService.addScaFeedbackToResult(result, StaticCodeAnalysisTool.CHECKSTYLE, "Code Style", "Whitespace", "missing whitespace");
+        var retainedResult = new Result().submission(submission).assessmentType(AssessmentType.AUTOMATIC).score(25D);
+        retainedResult.setExerciseId(programmingExercise.getId());
+        retainedResult = resultRepository.saveAndFlush(retainedResult);
+        var retainedFeedback = participationUtilService.addTestCaseFeedbackToResult(retainedResult, testCase, true, null);
+
+        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + resultId,
+                HttpStatus.OK);
+
+        assertThat(resultRepository.findById(resultId)).isEmpty();
+        assertThat(feedbackRepository.findById(feedbackId)).isEmpty();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).isEmpty();
+        assertThat(assessmentNoteRepository.findById(noteId)).isEmpty();
+        assertThat(testCaseFeedbackRepository.findById(typedFeedback.getId())).isEmpty();
+        assertThat(scaFeedbackRepository.findById(scaFeedback.getId())).isEmpty();
+        var storedSubmission = submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        assertThat(storedSubmission.getResults()).extracting(Result::getId).containsExactly(retainedResult.getId());
+        assertThat(resultRepository.findById(retainedResult.getId())).get().extracting(Result::getScore).isEqualTo(25D);
+        assertThat(testCaseFeedbackRepository.findById(retainedFeedback.getId())).isPresent();
     }
 
     @Test

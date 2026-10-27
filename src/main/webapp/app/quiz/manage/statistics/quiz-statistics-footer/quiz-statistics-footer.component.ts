@@ -17,7 +17,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass } from '@angular/common';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
-import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
+import { quizCountdown } from 'app/quiz/shared/util/quiz-time.util';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -74,34 +74,9 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * updates all displayed (relative) times in the UI
      */
     updateDisplayedTimes() {
-        const translationBasePath = 'artemisApp.showStatistic.';
-        // update remaining time
-        if (this.quizExercise() && this.quizExercise().dueDate) {
-            const endDate = this.quizExercise().dueDate!;
-            if (endDate.isAfter(this.serverDateService.now())) {
-                // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
-                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
-            } else {
-                // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds.set(-1);
-                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
-            }
-        } else {
-            // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds.set(0);
-            this.remainingTimeText.set('?');
-        }
-    }
-
-    /**
-     * Express the given timespan as humanized text
-     *
-     * @param remainingTimeSeconds the amount of seconds to display
-     * @return humanized text for the given amount of seconds
-     */
-    relativeTimeText(remainingTimeSeconds: number) {
-        return formatQuizRelativeTime(remainingTimeSeconds);
+        const countdown = quizCountdown(this.quizExercise()?.dueDate, this.serverDateService.now(), this.translateService.instant('artemisApp.showStatistic.quizHasEnded'));
+        this.remainingTimeSeconds.set(countdown.seconds);
+        this.remainingTimeText.set(countdown.text);
     }
 
     ngOnDestroy() {

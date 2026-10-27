@@ -313,6 +313,7 @@ public class ConversationResource extends ConversationManagementResource {
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
         var requestingUser = userRepository.getUserWithAuthorities();
+        conversationService.checkConversationVisibilityElseThrow(conversationFromDatabase, requestingUser);
         var isAllowedToSearchForMembers = (conversationFromDatabase instanceof Channel channel && channel.getIsCourseWide())
                 || conversationService.isMember(conversationId, requestingUser.getId());
         if (!isAllowedToSearchForMembers) {
@@ -357,6 +358,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     private void checkConversationMembership(Conversation conversation, @NonNull User user) {
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
         if (conversationService.isMember(conversation.getId(), user.getId())) {
             return;
         }
