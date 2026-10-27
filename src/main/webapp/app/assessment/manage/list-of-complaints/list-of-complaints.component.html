@@ -123,7 +123,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.locks.lockStatus"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiTranslate="artemisApp.complaint.listOfComplaints.actions"></th>
+                    <th class="text-end whitespace-nowrap" jhiTranslate="artemisApp.complaint.listOfComplaints.actions"></th>
                 </tr>
             </thead>
             <tbody>
@@ -183,16 +183,18 @@
                         <td>
                             {{ calculateComplaintLockStatus(complaint) }}
                         </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" data-testid="show-complaint">
-                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                @if (complaintType() === ComplaintType.COMPLAINT) {
-                                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.showComplaint"></span>
-                                }
-                                @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
-                                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests"></span>
-                                }
-                            </button>
+                        <td class="text-end whitespace-nowrap">
+                            @if (assessmentLinks().get(complaint.id!); as assessmentLink) {
+                                <a tumAetUiButton size="small" [routerLink]="assessmentLink.link" [queryParams]="assessmentLink.queryParams" data-testid="show-complaint">
+                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                    @if (complaintType() === ComplaintType.COMPLAINT) {
+                                        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.showComplaint"></span>
+                                    }
+                                    @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
+                                        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests"></span>
+                                    }
+                                </a>
+                            }
                         </td>
                     </tr>
                 }
