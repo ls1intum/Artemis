@@ -71,7 +71,9 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
 
         var context = ExerciseResponseContextDTO.of(exercise, ModelingExerciseExamGroupDTO::of);
 
-        List<GradingCriterionDTO> gradingCriterionDTOs = ModelingDtoCollections.listFromInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
+        List<GradingCriterionDTO> gradingCriterionDTOs = exercise.getGradingCriteria() != null && Hibernate.isInitialized(exercise.getGradingCriteria())
+                ? GradingCriterionDTO.ofAll(exercise.getGradingCriteria())
+                : null;
 
         Set<CompetencyLinkDTO> competencyLinkDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
 
