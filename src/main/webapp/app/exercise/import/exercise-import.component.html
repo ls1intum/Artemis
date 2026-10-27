@@ -103,7 +103,7 @@
          dialog, and the layers of the two libraries are independent of each other. Escape leads back to the list, like the button. -->
     <div class="flex flex-col gap-4 px-4 pb-4" data-testid="exercise-import-preview">
         <!-- The heading comes first so that the focus it receives is followed by the buttons. The header stays in view while the questions scroll. -->
-        <div class="sticky top-0 z-10 flex items-center justify-between gap-2 bg-surface-card py-2">
+        <div class="sticky top-0 z-10 flex items-center justify-between gap-2 bg-(--module-bg) py-2">
             <h3 #previewHeading tabindex="-1" class="m-0! min-w-0 flex-1 text-lg font-semibold break-words" data-testid="exercise-import-preview-title">
                 {{ 'artemisApp.exercise.import.preview.title' | artemisTranslate: { title: current.quiz.title } }}
             </h3>
