@@ -58,19 +58,6 @@ describe('TumAetUiMultiSelectComponent', () => {
         fixture.detectChanges();
     }
 
-    it('allows page scrolling while open and dismisses on an outside click', () => {
-        openPanel();
-        expect(document.querySelector('.cdk-overlay-backdrop')).toBeNull();
-        const wheel = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 100 });
-        document.body.dispatchEvent(wheel);
-        expect(wheel.defaultPrevented).toBe(false);
-        expect(trigger().getAttribute('aria-expanded')).toBe('true');
-
-        document.body.click();
-        fixture.detectChanges();
-        expect(trigger().getAttribute('aria-expanded')).toBe('false');
-    });
-
     it('renders the placeholder when nothing is chosen', () => {
         fixture.componentRef.setInput('placeholder', 'Pick some');
         fixture.detectChanges();
