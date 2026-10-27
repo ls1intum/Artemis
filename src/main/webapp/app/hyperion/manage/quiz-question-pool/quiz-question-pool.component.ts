@@ -175,10 +175,28 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
         this.originalSettings.set(undefined);
         this.selectedCompetencyId.set(undefined);
         this.busyQuestionIds.set(new Set());
+        this.reviewSequences.clear();
     }
 
     private isCurrent(courseId: number): boolean {
         return this.courseId() === courseId;
+    }
+
+    /** Orders question-list requests against stored review decisions. */
+    private requestSequence = 0;
+
+    /** The sequence number at which a question's review decision was last stored, by question id. */
+    private readonly reviewSequences = new Map<number, number>();
+
+    /**
+     * Replaces the question list with a server response, except for questions whose review decision was stored after that request
+     * started; those keep their newer state until a later response carries it.
+     */
+    private applyQuestions(questions: PoolQuestion[], requestedAt: number): void {
+        this.questions.update((current) => {
+            const byId = new Map(current.map((question) => [question.id, question]));
+            return questions.map((question) => ((this.reviewSequences.get(question.id) ?? 0) > requestedAt ? (byId.get(question.id) ?? question) : question));
+        });
     }
 
     ngOnDestroy(): void {
@@ -228,6 +246,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
                 },
                 error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed'),
             });
+        const requestedAt = ++this.requestSequence;
         this.poolService
             .getQuestions(courseId)
             .pipe(
@@ -237,7 +256,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             .subscribe({
                 next: (questions) => {
                     if (this.isCurrent(courseId)) {
-                        this.questions.set(questions);
+                        this.applyQuestions(questions, requestedAt);
                     }
                 },
                 error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed'),
@@ -348,6 +367,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             .subscribe({
                 next: (updated) => {
                     if (this.isCurrent(courseId)) {
+                        this.reviewSequences.set(updated.id, ++this.requestSequence);
                         this.questions.update((questions) => questions.map((question) => (question.id === updated.id ? updated : question)));
                     }
                 },
@@ -371,12 +391,13 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
                         return;
                     }
                     this.progress.set(progress);
+                    const requestedAt = ++this.requestSequence;
                     this.poolService
                         .getQuestions(courseId)
                         .pipe(takeUntilDestroyed(this.destroyRef))
                         .subscribe((questions) => {
                             if (this.isCurrent(courseId)) {
-                                this.questions.set(questions);
+                                this.applyQuestions(questions, requestedAt);
                             }
                         });
                     if (!progress.running) {

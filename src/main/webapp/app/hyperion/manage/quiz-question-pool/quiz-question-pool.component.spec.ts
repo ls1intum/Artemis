@@ -265,6 +265,23 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.busyQuestionIds().has(1)).toBe(false);
     });
 
+    it('should keep a review decision stored after a question list request started', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const staleList = new Subject<PoolQuestion[]>();
+        vi.spyOn(poolService, 'getQuestions').mockReturnValue(staleList.asObservable());
+        component.refresh();
+        const reviewed = { ...questions()[0], reviewState: 'APPROVED' as const };
+        vi.spyOn(poolService, 'review').mockReturnValue(of(reviewed));
+        component.review({ questionId: 1, reviewState: 'APPROVED' });
+        expect(component.questions().find((question) => question.id === 1)?.reviewState).toBe('APPROVED');
+
+        staleList.next(questions());
+        staleList.complete();
+
+        expect(component.questions().find((question) => question.id === 1)?.reviewState).toBe('APPROVED');
+        expect(component.questions().find((question) => question.id === 2)?.reviewState).toBe('PENDING');
+    });
+
     it('should report a failed review decision', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
         vi.spyOn(poolService, 'review').mockReturnValue(throwError(() => new Error('boom')));
