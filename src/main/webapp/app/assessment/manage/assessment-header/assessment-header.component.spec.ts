@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -141,24 +143,23 @@ describe('AssessmentHeaderComponent', () => {
 
             expect(component.saveDisabled).toBe(true);
         });
+    });
 
-        it('should explain incomplete feedback when that is why save is disabled', () => {
-            fixture.componentRef.setInput('assessmentsAreValid', false);
-            fixture.componentRef.setInput('isAssessor', true);
-            fixture.detectChanges();
-
-            expect(component.saveTooltip).toBe('artemisApp.assessment.messages.incompleteFeedback');
-            expect(component.submitTooltip).toBe('artemisApp.assessment.messages.incompleteFeedback');
-        });
-
-        it('should keep the keyboard-shortcut tooltip when assessments are valid', () => {
-            fixture.componentRef.setInput('assessmentsAreValid', true);
-            fixture.componentRef.setInput('isAssessor', true);
-            fixture.detectChanges();
-
-            expect(component.saveTooltip).toBe('artemisApp.assessment.button.control + S');
-            expect(component.submitTooltip).toBe('artemisApp.assessment.button.control + Enter');
-        });
+    it('explains incomplete feedback on the disabled Submit wrapper and restores the shortcut when valid', () => {
+        vi.spyOn(TestBed.inject(ArtemisTranslatePipe), 'transform').mockImplementation((key) => key ?? '');
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('assessmentsAreValid', false);
+        fixture.detectChanges();
+        const wrapper = fixture.debugElement.query(By.css('[data-testid="assessment-submit-control"]'));
+        const tooltip = wrapper.injector.get(TumAetUiTooltipDirective);
+        expect(tooltip.content()).toBe('artemisApp.assessment.messages.incompleteFeedback');
+        expect(wrapper.nativeElement.tabIndex).toBe(0);
+        expect(wrapper.nativeElement.querySelector('#submit').disabled).toBe(true);
+        fixture.componentRef.setInput('assessmentsAreValid', true);
+        fixture.detectChanges();
+        expect(tooltip.content()).toContain(' + Enter');
+        expect(wrapper.nativeElement.getAttribute('tabindex')).toBeNull();
+        expect(wrapper.nativeElement.querySelector('#submit').disabled).toBe(false);
     });
 
     describe('submitDisabled', () => {

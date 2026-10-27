@@ -16,17 +16,23 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
         await this.fillInlineFeedback(lineIndex, 0, points, feedback);
     }
 
+    /**
+     * Fills the explicitly selected card (0-based) among the feedback entries on a code line (also 0-based).
+     * Inline edits are committed through the card’s Save control.
+     */
     async fillInlineFeedback(lineIndex: number, feedbackIndex: number, points: number, feedback: string) {
         const card = this.getInlineFeedback(lineIndex).nth(feedbackIndex);
-        await card.getByTestId('feedback-editor-text-input').fill(feedback);
-        const pointsInput = card.getByTestId('feedback-editor-points-input');
-        await pointsInput.fill(points.toString());
-        await pointsInput.blur();
+        const edit = card.getByTestId('feedback-edit');
+        if (await edit.isVisible()) {
+            await edit.click();
+        }
+        await card.getByRole('textbox', { name: 'Feedback', exact: true }).fill(feedback);
+        await this.setPoints(card, points);
         await card.getByTestId('feedback-save').click();
     }
 
-    private getInlineFeedback(line: number) {
-        return this.page.getByTestId('code-editor-inline-feedback').and(this.page.locator(`[data-code-line="${line}"]`));
+    private getInlineFeedback(lineIndex: number) {
+        return this.page.getByTestId('code-editor-inline-feedback').and(this.page.locator(`[data-code-line="${lineIndex}"]`));
     }
 
     override async rejectComplaint(response: string, examMode: boolean) {

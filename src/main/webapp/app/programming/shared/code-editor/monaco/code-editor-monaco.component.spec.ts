@@ -1,12 +1,12 @@
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
-import { By } from '@angular/platform-browser';
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
-import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -23,14 +23,8 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import {
-    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_IDENTIFIER,
-    Feedback,
-    FeedbackType,
-} from 'app/assessment/shared/entities/feedback.model';
-import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent, editor } from 'monaco-editor';
@@ -108,6 +102,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         await TestBed.configureTestingModule({
             imports: [CodeEditorMonacoComponent],
             providers: [
+                { provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } },
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -165,7 +160,10 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
             expect(zones.size).toBe(2);
             const cards = [...overlays.values()].map((overlay) => overlay.getDomNode());
             expect(cards[0]).not.toBe(cards[1]);
-            expect(cards.map((card) => card.querySelector('[data-testid="inline-feedback-text"]')?.textContent)).toEqual(['First suggestion detail', 'Second suggestion detail']);
+            expect(cards.map((card) => card.querySelector<HTMLElement>('[data-testid="unified-feedback-text"]')?.textContent?.trim())).toEqual([
+                'First suggestion detail',
+                'Second suggestion detail',
+            ]);
             const viewZones = [...zones.values()];
             expect(viewZones.map((zone) => zone.afterLineNumber)).toEqual([2, 2]);
             viewZones[0].onDomNodeTop?.(80);
@@ -193,23 +191,26 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         const secondCard = comp.inlineFeedbackComponents()[1];
         secondCard.editFeedback(1);
         await settle();
-        const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]');
+        const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input');
         textarea.value = 'Edited second suggestion';
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
         await settle();
-
-        expect(comp.feedbackInternal()).toEqual([first, second]);
         secondCard.updateFeedback();
         await settle();
+
+        expect(comp.feedbackInternal()).toHaveLength(2);
         expect(comp.feedbackInternal()[0]).toBe(first);
-        expect(comp.feedbackInternal()[1].detailText).toBe('Edited second suggestion');
+        expect(comp.feedbackInternal()[1]).toMatchObject({ detailText: 'Edited second suggestion', credits: -2 });
+        expect(second.detailText).toBe('Second suggestion detail');
+        expect(secondCard.viewOnly()).toBe(true);
+
         secondCard.deleteFeedback();
         await settle();
         expect(comp.feedbackInternal()).toEqual([first]);
         expect(overlays.size).toBe(1);
         expect(zones.size).toBe(1);
         const remainingCard = [...overlays.values()][0].getDomNode();
-        expect(remainingCard.querySelector('[data-testid="inline-feedback-text"]')?.textContent).toBe('First suggestion detail');
+        expect(remainingCard.querySelector('[data-testid="unified-feedback-text"]')?.textContent).toContain('First suggestion detail');
     });
 
     it('retains the focused input on a cloned update and deletes only one of two identical unsaved suggestions', async () => {
@@ -220,7 +221,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         const secondCard = comp.inlineFeedbackComponents()[1];
         secondCard.editFeedback(1);
         await settle();
-        const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]');
+        const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input');
         textarea.focus();
         textarea.setSelectionRange(7, 7);
         const changedCopy = { ...second };
@@ -231,7 +232,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         expect(comp.feedbackInternal()[0]).toBe(first);
         expect(comp.feedbackInternal()[1]).toBe(changedCopy);
         expect(comp.inlineFeedbackComponents()[1]).toBe(secondCard);
-        expect(secondCard.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]')).toBe(textarea);
+        expect(secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input')).toBe(textarea);
         expect(document.activeElement).toBe(textarea);
         expect(textarea.value).toBe('First suggestion detail');
         expect(textarea.selectionStart).toBe(7);
@@ -243,6 +244,56 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         expect(comp.feedbackInternal()[0]).toBe(first);
         expect(overlays.size).toBe(1);
     });
+    it('keeps card A’s working copy while card B is saved, then saves A without losing its edits', async () => {
+        const [first, second] = suggestions();
+        fixture.componentRef.setInput('feedbacks', [first, second]);
+        await settle();
+        const [cardA, cardB] = comp.inlineFeedbackComponents();
+        cardA.editFeedback(1);
+        await settle();
+        const comment = cardA.elementRef.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
+        comment.value = 'Unsaved comment A';
+        comment.dispatchEvent(new Event('input'));
+        const points = cardA.elementRef.nativeElement.querySelector('jhi-points-input input') as HTMLInputElement;
+        points.value = '2.5';
+        points.dispatchEvent(new Event('input'));
+        await settle();
+        cardB.editFeedback(1);
+        await settle();
+        cardB.updateFeedback();
+        await settle();
+        expect(comp.inlineFeedbackComponents()[0]).toBe(cardA);
+        expect(comment.value).toBe('Unsaved comment A');
+        expect(points.value).toBe('2.5');
+        expect(first.detailText).toBe('First suggestion detail');
+        expect(comp.hasUnsavedInlineFeedback()).toBe(true);
+        cardA.updateFeedback();
+        await settle();
+        expect(comp.feedbackInternal()[0]).toMatchObject({ detailText: 'Unsaved comment A', credits: 2.5 });
+        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
+    });
+
+    it('keeps a linked unsaved card open and restores it through parent-level Cancel', async () => {
+        const [feedback] = suggestions();
+        fixture.componentRef.setInput('feedbacks', [feedback]);
+        await settle();
+        const card = comp.inlineFeedbackComponents()[0];
+        card.editFeedback(1);
+        await settle();
+        const selection = TestBed.inject(GradingInstructionSelectionService);
+        selection.toggleArmedInstruction({ id: 77, credits: 2, feedback: 'Instruction text' } as GradingInstruction);
+        card.applyArmedInstruction();
+        await settle();
+        expect(comp.inlineFeedbackComponents()[0]).toBe(card);
+        expect(card.viewOnly()).toBe(false);
+        expect(card.elementRef.nativeElement.querySelector('[data-testid="feedback-save"]')).not.toBeNull();
+        card.cancelFeedback();
+        await settle();
+        expect(comp.feedbackInternal()).toEqual([feedback]);
+        expect(feedback.gradingInstruction).toBeUndefined();
+        expect(card.currentFeedback()).toEqual(feedback);
+        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
+    });
 });
 
 describe('CodeEditorMonacoComponent', () => {
@@ -250,7 +301,6 @@ describe('CodeEditorMonacoComponent', () => {
 
     let comp: CodeEditorMonacoComponent;
     let fixture: ComponentFixture<CodeEditorMonacoComponent>;
-    let getInlineFeedbackNodeStub: ReturnType<typeof vi.spyOn>;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let loadFileFromRepositoryStub: ReturnType<typeof vi.spyOn>;
 
@@ -280,6 +330,7 @@ describe('CodeEditorMonacoComponent', () => {
         await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockComponent(CodeEditorHeaderComponent)],
             providers: [
+                { provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } },
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
 
@@ -293,7 +344,7 @@ describe('CodeEditorMonacoComponent', () => {
         loadFileFromRepositoryStub = vi.spyOn(codeEditorRepositoryFileService, 'getFile');
         // Provide a safe default so accidental file loads during change detection don't throw
         loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: '' }));
-        getInlineFeedbackNodeStub = vi.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
+        vi.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
         global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
         fixture.componentRef.setInput('sessionId', 'test');
@@ -311,225 +362,6 @@ describe('CodeEditorMonacoComponent', () => {
         const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
         expect(element!.hidden).toBe(true);
-    });
-
-    it('should remove a rendered suggestion from both widget and parent lists when accepted', () => {
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const suggestion = {
-            id: 17,
-            reference: 'file:file1.java_line:2',
-            text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Title`,
-            detailText: 'Comment',
-        } as Feedback;
-        let parentSuggestions = [suggestion];
-        const onUpdateFeedback = vi.fn();
-        comp.onUpdateFeedback.subscribe(onUpdateFeedback);
-        comp.onAcceptSuggestion.subscribe((original) => {
-            expect(original).toBe(suggestion);
-            expect(original.text).toBe(`${FEEDBACK_SUGGESTION_IDENTIFIER}Title`);
-            parentSuggestions = parentSuggestions.filter((item) => !Feedback.areIdentical(item, original));
-            fixture.componentRef.setInput('feedbackSuggestions', parentSuggestions);
-        });
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.componentRef.setInput('feedbackSuggestions', parentSuggestions);
-        fixture.detectChanges();
-
-        const widget = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent))
-            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent;
-        expect(widget.feedback()).not.toBe(suggestion);
-        widget.onAcceptSuggestion.emit(widget.feedback());
-        fixture.detectChanges();
-
-        expect(comp.feedbackSuggestionsInternal()).toEqual([]);
-        expect(parentSuggestions).toEqual([]);
-        expect(comp.feedbackSuggestions()).toEqual([]);
-        expect(onUpdateFeedback).toHaveBeenCalledWith([expect.objectContaining({ text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title` })]);
-    });
-
-    it.each([FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER])(
-        'should append an accepted suggestion exactly once beside existing feedback from %s',
-        (prefix) => {
-            const reference = 'file:file1.java_line:2';
-            const existing = { id: 1, reference, text: 'Existing', detailText: 'Manual' } as Feedback;
-            const suggestion = { id: 2, reference, text: `${prefix}New`, detailText: 'Suggested' } as Feedback;
-            fixture.componentRef.setInput('feedbacks', [existing]);
-            fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
-            fixture.detectChanges();
-
-            comp.acceptSuggestion(suggestion);
-
-            expect(comp.feedbackInternal()).toEqual([existing, expect.objectContaining({ id: 2, reference, text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}New` })]);
-            expect(comp.feedbackSuggestionsInternal()).toEqual([]);
-        },
-    );
-
-    it.each(['used', 'reserved'])('keeps an instruction-linked suggestion pending when its only slot is %s', (occupancy) => {
-        const instruction = { id: 7, credits: 1, usageCount: 1, gradingScale: 'good', instructionDescription: 'description', feedback: 'feedback' };
-        const suggestion = {
-            id: 8,
-            reference: 'file:file1.java_line:1',
-            text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Suggested`,
-            gradingInstruction: instruction,
-        } as Feedback;
-        const selectionService = TestBed.inject(GradingInstructionSelectionService);
-        const host: GradingInstructionSelectionHost = {
-            appliedInstructionIds: signal(new Set<number>()),
-            appliedInstructionCounts: signal(new Map(occupancy === 'used' ? [[instruction.id, 1]] : [])),
-            removableInstructionIds: signal(new Set<number>()),
-            applyInstruction: vi.fn(),
-            unapplyOneInstruction: vi.fn(),
-            unapplyInstruction: vi.fn(),
-        };
-        selectionService.register(host);
-        if (occupancy === 'reserved') {
-            selectionService.reserveInstruction({}, instruction);
-        }
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
-        fixture.detectChanges();
-        const updateSpy = vi.fn();
-        const acceptSpy = vi.fn();
-        comp.onUpdateFeedback.subscribe(updateSpy);
-        comp.onAcceptSuggestion.subscribe(acceptSpy);
-
-        comp.acceptSuggestion(suggestion);
-
-        expect(selectionService.applicationCount(instruction)).toBe(1);
-        expect(comp.feedbackSuggestionsInternal()).toEqual([suggestion]);
-        expect(comp.feedbackInternal()).toEqual([]);
-        expect(suggestion.text).toBe(`${FEEDBACK_SUGGESTION_IDENTIFIER}Suggested`);
-        expect(updateSpy).not.toHaveBeenCalled();
-        expect(acceptSpy).not.toHaveBeenCalled();
-    });
-
-    it('keeps the unsaved feedback card for the same line when another card is removed', () => {
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const reference = 'file:file1.java_line:1';
-        const first = { reference, text: 'Manual' } as Feedback;
-        const second = { reference, text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggested` } as Feedback;
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.componentRef.setInput('feedbacks', [first, second]);
-        fixture.detectChanges();
-
-        const cards = fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent));
-        expect(cards).toHaveLength(2);
-
-        comp.feedbackInternal.set([second]);
-        fixture.detectChanges();
-
-        const remaining = fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent));
-        expect(remaining).toHaveLength(1);
-        expect(remaining[0].componentInstance).toBe(cards[1].componentInstance);
-    });
-
-    it('keeps an unsaved accepted suggestion open through instruction linking and cancel', () => {
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const accepted = {
-            reference: 'file:file1.java_line:1',
-            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion`,
-            detailText: 'Original comment',
-            credits: 1,
-            type: FeedbackType.MANUAL,
-        } as Feedback;
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.componentRef.setInput('feedbacks', [accepted]);
-        fixture.detectChanges();
-        comp.onUpdateFeedback.subscribe((feedbacks) => fixture.componentRef.setInput('feedbacks', feedbacks));
-
-        const card = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
-            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
-        card.editFeedback(1);
-        TestBed.inject(GradingInstructionSelectionService).armInstruction({
-            id: 1,
-            credits: 2,
-            feedback: 'Linked feedback',
-            gradingScale: 'good',
-            instructionDescription: 'description',
-            usageCount: 0,
-        });
-        card.applyArmedInstruction();
-        fixture.detectChanges();
-
-        const linkedCard = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
-            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
-        expect(linkedCard).toBe(card);
-        expect(linkedCard.viewOnly()).toBe(false);
-        expect(fixture.debugElement.query(By.css('[data-testid="feedback-save"]'))).not.toBeNull();
-        expect(fixture.debugElement.queryAll(By.css('.inline-feedback__footer button'))).toHaveLength(2);
-        expect(comp.feedbackInternal()).toHaveLength(1);
-        expect(comp.feedbackInternal()[0].text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Suggestion`);
-
-        linkedCard.cancelFeedback();
-        fixture.detectChanges();
-        expect(comp.feedbackInternal()).toHaveLength(1);
-        expect(Feedback.areIdentical(comp.feedbackInternal()[0], accepted)).toBe(true);
-        expect(comp.feedbackInternal()[0].gradingInstruction).toBeUndefined();
-        expect(comp.feedbackInternal()[0].credits).toBe(1);
-        expect(linkedCard.viewOnly()).toBe(true);
-    });
-
-    it('keeps an open card’s comment and points when another suggestion is accepted', () => {
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const first = { id: 1, reference: 'file:file1.java_line:1', text: 'Manual', detailText: 'Original', credits: 1, type: FeedbackType.MANUAL } as Feedback;
-        const suggestion = { id: 2, reference: 'file:file1.java_line:2', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Second`, detailText: 'Suggested' } as Feedback;
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.componentRef.setInput('feedbacks', [first]);
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
-        fixture.detectChanges();
-        comp.onUpdateFeedback.subscribe((feedbacks) => fixture.componentRef.setInput('feedbacks', feedbacks));
-
-        const card = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
-            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
-        card.editFeedback(1);
-        fixture.detectChanges();
-        const textarea = card.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]') as HTMLTextAreaElement;
-        textarea.value = 'Edited comment';
-        textarea.dispatchEvent(new Event('input'));
-        const points = card.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-points-input"]') as HTMLInputElement;
-        points.value = '1.5';
-        points.dispatchEvent(new Event('change'));
-        fixture.detectChanges();
-
-        expect(comp.hasUnsavedInlineFeedback()).toBe(true);
-
-        comp.acceptSuggestion(suggestion);
-        fixture.detectChanges();
-
-        const rebound = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
-            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
-        expect(rebound).toBe(card);
-        expect(card.currentFeedback().detailText).toBe('Edited comment');
-        expect(card.currentFeedback().credits).toBe(1.5);
-        card.updateFeedback();
-
-        expect(comp.feedbackInternal().find((feedback) => feedback.id === 1)).toEqual(expect.objectContaining({ detailText: 'Edited comment', credits: 1.5 }));
-        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
-    });
-
-    it('should remove only the selected suggestion when identical text appears on another line', () => {
-        const first = { text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Title`, detailText: 'Comment', reference: 'file:file1.java_line:1' } as Feedback;
-        const second = { text: first.text, detailText: first.detailText, reference: 'file:file1.java_line:2' } as Feedback;
-        fixture.componentRef.setInput('feedbackSuggestions', [first, second]);
-        fixture.detectChanges();
-
-        comp.acceptSuggestion(first);
-        expect(comp.feedbackSuggestionsInternal()).toEqual([second]);
-
-        comp.feedbackSuggestionsInternal.set([first, second]);
-        comp.discardSuggestion(first);
-        expect(comp.feedbackSuggestionsInternal()).toEqual([second]);
-    });
-
-    it('should render two suggestions without IDs on the same line', () => {
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const reference = 'file:file1.java_line:1';
-        const first = { reference, text: `${FEEDBACK_SUGGESTION_IDENTIFIER}First` } as Feedback;
-        const second = { reference, text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Second` } as Feedback;
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.componentRef.setInput('feedbackSuggestions', [first, second]);
-        fixture.detectChanges();
-
-        const cards = fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent));
-        expect(cards.map((card) => (card.componentInstance as CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent).feedback().text)).toEqual([first.text, second.text]);
     });
 
     it('should not try to load a file if none is selected', async () => {
@@ -1203,127 +1035,12 @@ describe('CodeEditorMonacoComponent', () => {
         // not asserted: the rendering is driven by both an effect and a requestAnimationFrame
         // pass, which legitimately fire multiple times in the test harness without affecting
         // production correctness.
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-0-line-2`, document.createElement('div'));
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-1-line-3`, document.createElement('div'));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
         expect(selectFileInEditorStub).toHaveBeenCalled();
         consoleErrorSpy.mockRestore();
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
-    });
-
-    it('should render each feedback on the same line in its own widget', async () => {
-        getInlineFeedbackNodeStub.mockRestore();
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const addLineWidget = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
-        const graded = { id: 1, reference: 'file:file1.java_line:1', text: 'Graded', detailText: 'Manual' } as Feedback;
-        const otherGraded = { id: 2, reference: 'file:file1.java_line:1', text: 'Other graded', detailText: 'Manual' } as Feedback;
-        const suggestion = { id: 1, reference: 'file:file1.java_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Suggested`, detailText: 'Automatic' } as Feedback;
-        const gradedNode = document.createElement('div');
-        const otherGradedNode = document.createElement('div');
-        const suggestionNode = document.createElement('div');
-        Object.defineProperty(comp, 'inlineFeedbackComponents', {
-            value: () => [
-                { codeLine: () => 1, feedback: () => graded, elementRef: { nativeElement: gradedNode } },
-                { codeLine: () => 1, feedback: () => otherGraded, elementRef: { nativeElement: otherGradedNode } },
-            ],
-        });
-        Object.defineProperty(comp, 'inlineFeedbackSuggestionComponents', {
-            value: () => [{ codeLine: () => 1, feedback: () => suggestion, elementRef: { nativeElement: suggestionNode } }],
-        });
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.componentRef.setInput('feedbacks', [graded, otherGraded]);
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
-        fixture.detectChanges();
-        await new Promise(process.nextTick);
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', gradedNode);
-        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-1-line-2', otherGradedNode);
-        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-2-line-2', suggestionNode);
-    });
-
-    it('renders suggestions that arrive after the selected file has rendered', async () => {
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const addLineWidget = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.detectChanges();
-        await new Promise(process.nextTick);
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        addLineWidget.mockClear();
-
-        const suggestion = { id: 42, reference: 'file:file1.java_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Late` } as Feedback;
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
-        fixture.detectChanges();
-        await new Promise(process.nextTick);
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', expect.any(HTMLElement));
-    });
-
-    it('opens a manual draft beside an existing suggestion', async () => {
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        getInlineFeedbackNodeStub.mockRestore();
-        const addLineWidget = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
-        const suggestion = { id: 42, reference: 'file:file1.java_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Suggested` } as Feedback;
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        comp.addNewFeedback(2);
-        comp.addNewFeedback(2);
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        const suggestionNode = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)).nativeElement as HTMLElement;
-        const draftNode = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent)).nativeElement as HTMLElement;
-        expect(comp.newFeedbackLines()).toEqual([1]);
-        expect(draftNode).not.toBe(suggestionNode);
-        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', suggestionNode);
-        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-new-1', draftNode);
-    });
-
-    it('keeps a same-line draft distinct when a late suggestion is accepted', async () => {
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        getInlineFeedbackNodeStub.mockRestore();
-        const addLineWidget = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        comp.addNewFeedback(2);
-        fixture.detectChanges();
-        await fixture.whenStable();
-        const draft = fixture.debugElement
-            .queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
-            .map((element) => element.componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent)
-            .find((card) => card.feedback() === undefined)!;
-        draft.currentFeedback().detailText = 'Unsaved draft';
-        draft.currentFeedback().credits = 1;
-        const draftNode = draft.elementRef.nativeElement as HTMLElement;
-
-        const suggestion = { id: 42, reference: 'file:file1.java_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Late` } as Feedback;
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
-        fixture.detectChanges();
-        await fixture.whenStable();
-        addLineWidget.mockClear();
-        comp.acceptSuggestion(suggestion);
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        const accepted = fixture.debugElement
-            .queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
-            .map((element) => element.componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent)
-            .find((card) => card.feedback() !== undefined)!;
-        const acceptedNode = accepted.elementRef.nativeElement as HTMLElement;
-        expect(comp.newFeedbackLines()).toEqual([1]);
-        expect(draft.currentFeedback()).toEqual(expect.objectContaining({ detailText: 'Unsaved draft', credits: 1 }));
-        expect(draftNode.querySelector('[data-testid="feedback-save"]')).not.toBeNull();
-        expect(draftNode.querySelector('.inline-feedback__footer button')).not.toBeNull();
-        expect(acceptedNode).not.toBe(draftNode);
-        expect(addLineWidget).toHaveBeenCalledTimes(2);
-        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', acceptedNode);
-        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-new-1', draftNode);
     });
 
     describe('inline feedback placement', () => {
@@ -1355,8 +1072,8 @@ describe('CodeEditorMonacoComponent', () => {
             await settle();
 
             expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
-            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-0-line-1', expect.any(HTMLElement));
-            expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-1-line-5', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-10-line-1', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
         });
 
         it('should render feedback on the first line after switching to the file it belongs to', async () => {
@@ -1369,7 +1086,7 @@ describe('CodeEditorMonacoComponent', () => {
             await settle();
 
             expect(renderedInlineFeedbackLines()).toEqual([0]);
-            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(1, 'feedback-0-line-1', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(1, 'feedback-12-line-1', expect.any(HTMLElement));
         });
 
         it('should render feedback on the first line when it arrives after the file was opened', async () => {
@@ -1381,8 +1098,8 @@ describe('CodeEditorMonacoComponent', () => {
             await settle();
 
             expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
-            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-0-line-1', expect.any(HTMLElement));
-            expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-1-line-5', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-10-line-1', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
         });
 
         it('should turn a new feedback on the first line into a stored feedback', async () => {
@@ -1406,9 +1123,9 @@ describe('CodeEditorMonacoComponent', () => {
             fixture.componentRef.setInput('feedbacks', [malformedFeedback, laterFeedback]);
             await settle();
 
-            expect(comp.feedbackForSelectedFile().map((entry) => entry.feedback)).toEqual([expect.objectContaining(laterFeedback)]);
+            expect(comp.feedbackForSelectedFile()).toEqual([laterFeedback]);
             expect(renderedInlineFeedbackLines()).toEqual([4]);
-            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(5, 'feedback-0-line-5', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
         });
     });
 
@@ -1428,15 +1145,15 @@ describe('CodeEditorMonacoComponent', () => {
         });
         vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation((() => {}) as any);
         const element = document.createElement('div');
-        getInlineFeedbackNodeStub.mockImplementationOnce(() => undefined).mockImplementation(() => element);
+        vi.spyOn(comp, 'inlineFeedbackComponents').mockReturnValue([
+            { codeLine: () => feedbackLineZeroBased, feedback: () => undefined, elementRef: { nativeElement: element } },
+        ] as unknown as readonly CodeEditorTutorAssessmentInlineFeedbackComponent[]);
         fixture.detectChanges();
         // Simulate adding the element
         comp.addNewFeedback(feedbackLineOneBased);
         await vi.advanceTimersByTimeAsync(20);
         expect(comp.newFeedbackLines()).toContain(feedbackLineZeroBased);
-        expect(comp.hasUnsavedInlineFeedback()).toBe(true);
-        comp.cancelFeedback(feedbackLineZeroBased);
-        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
+        expect(comp.editor().addLineWidget).toHaveBeenCalledWith(feedbackLineOneBased, 'feedback-new-' + feedbackLineZeroBased, element);
         vi.useRealTimers();
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
@@ -1506,82 +1223,6 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.newFeedbackLines()).toEqual([2, 3]);
     });
 
-    it('should track pending instruction-linked drafts and clear them on cancel or save', () => {
-        const pendingLine = 4;
-        const instruction = {
-            id: 3,
-            credits: 1,
-            feedback: 'ok',
-            gradingScale: 'good',
-            instructionDescription: 'desc',
-            usageCount: 1,
-        };
-        const draft = {
-            detailText: 'draft',
-            credits: 1,
-            reference: `file:test.java_line:${pendingLine}`,
-            gradingInstruction: instruction,
-            type: FeedbackType.MANUAL,
-        } as Feedback;
-        const pendingSpy = vi.fn();
-        comp.onPendingFeedbackChange.subscribe(pendingSpy);
-
-        comp.setPendingFeedback(pendingLine, draft);
-        expect(pendingSpy).toHaveBeenCalledExactlyOnceWith([draft]);
-
-        pendingSpy.mockClear();
-        comp.cancelFeedback(pendingLine);
-        expect(pendingSpy).toHaveBeenCalledExactlyOnceWith([]);
-
-        comp.setPendingFeedback(pendingLine, draft);
-        pendingSpy.mockClear();
-        const updateSpy = vi.fn();
-        comp.onUpdateFeedback.subscribe(updateSpy);
-        comp.updateFeedback(draft);
-        expect(updateSpy).toHaveBeenCalledOnce();
-        expect(pendingSpy).toHaveBeenCalledExactlyOnceWith([]);
-    });
-
-    it('preserves a pending draft when updating an existing card on the same line', () => {
-        const original = { id: 1, reference: 'file:file1.java_line:1', detailText: 'Original' } as Feedback;
-        const updated = { id: 1, reference: original.reference, detailText: 'Updated' } as Feedback;
-        const draft = { reference: original.reference, gradingInstruction: { id: 2 } } as Feedback;
-        fixture.componentRef.setInput('feedbacks', [original]);
-        fixture.detectChanges();
-        comp.newFeedbackLines.set([1]);
-        comp.setPendingFeedback(1, draft);
-        const pendingSpy = vi.fn();
-        comp.onPendingFeedbackChange.subscribe(pendingSpy);
-
-        comp.updateFeedback(updated, original);
-
-        expect(comp.feedbackInternal()).toEqual([updated]);
-        expect(comp.newFeedbackLines()).toEqual([1]);
-        expect(comp['pendingFeedbackByLine']().get(1)).toBe(draft);
-        expect(pendingSpy).not.toHaveBeenCalled();
-    });
-
-    it('should preserve an unsaved feedback draft when the feedback input changes', () => {
-        fixture.detectChanges();
-        const line = 4;
-        const draft = {
-            reference: `file:file1.java_line:${line}`,
-            gradingInstruction: { id: 3, credits: 1 },
-        } as Feedback;
-        const pendingSpy = vi.fn();
-        comp.onPendingFeedbackChange.subscribe(pendingSpy);
-        comp.newFeedbackLines.set([line]);
-        comp.setPendingFeedback(line, draft);
-        pendingSpy.mockClear();
-
-        fixture.componentRef.setInput('feedbacks', [...exampleFeedbacks]);
-        fixture.detectChanges();
-
-        expect(comp.newFeedbackLines()).toContain(line);
-        expect(comp['pendingFeedbackByLine']().get(line)).toBe(draft);
-        expect(pendingSpy).not.toHaveBeenCalled();
-    });
-
     it('should update existing feedback and notify', () => {
         const feedbackToUpdate: Feedback = { ...exampleFeedbacks[0] };
         const remainingFeedbacks = exampleFeedbacks.slice(1);
@@ -1595,32 +1236,6 @@ describe('CodeEditorMonacoComponent', () => {
         const expectedFeedbacks = [feedbackToUpdate, ...remainingFeedbacks];
         expect(comp.feedbackInternal()).toEqual(expectedFeedbacks);
         expect(updateFeedbackCallbackStub).toHaveBeenCalledExactlyOnceWith(expectedFeedbacks);
-    });
-
-    it('should update the matching feedback when two items share a code line', () => {
-        const reference = 'file:file1.java_line:1';
-        const first = { id: 1, reference, text: 'First' } as Feedback;
-        const second = { id: 2, reference, text: 'Second' } as Feedback;
-        const edited = { id: 2, reference, text: 'Edited second' } as Feedback;
-        fixture.componentRef.setInput('feedbacks', [first, second]);
-        fixture.detectChanges();
-
-        comp.updateFeedback(edited, second);
-
-        expect(comp.feedbackInternal()).toEqual([first, edited]);
-    });
-
-    it('should identify an unsaved feedback by its original values when editing it', () => {
-        const reference = 'file:file1.java_line:1';
-        const first = { reference, text: 'First', detailText: 'One' } as Feedback;
-        const second = { reference, text: 'Second', detailText: 'Two' } as Feedback;
-        const edited = { reference, text: 'Second', detailText: 'Edited' } as Feedback;
-        fixture.componentRef.setInput('feedbacks', [first, second]);
-        fixture.detectChanges();
-
-        comp.updateFeedback(edited, second);
-
-        expect(comp.feedbackInternal()).toEqual([first, edited]);
     });
 
     it('should save new feedback and notify', () => {

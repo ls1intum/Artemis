@@ -30,9 +30,8 @@ export class FeedbackSuggestionBadgeComponent {
     get text(): string {
         switch (Feedback.getFeedbackSuggestionType(this.feedbackText())) {
             case FeedbackSuggestionType.SUGGESTED:
-                return 'artemisApp.assessment.suggestion.suggested';
             case FeedbackSuggestionType.ACCEPTED:
-                return 'artemisApp.assessment.suggestion.accepted';
+                return 'artemisApp.assessment.suggestion.suggested';
             case FeedbackSuggestionType.ADAPTED:
                 return 'artemisApp.assessment.suggestion.adapted';
             default:

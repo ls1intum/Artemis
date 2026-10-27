@@ -137,9 +137,6 @@
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/structured-grading-criterion/grading-instructions-details';
 @source './app/exercise/unreferenced-feedback';
-@source './app/assessment/manage/unreferenced-feedback-detail';
-@source './app/assessment/manage/structured-grading-instructions-assessment-layout';
-@source './app/assessment/manage/assessment-instructions';
 @source './app/programming/shared/programming-exercise-update-timeline';
 @source './app/course/manage/user-management-dropdown';
 @source './app/videosource/gocast';
@@ -237,3 +234,6 @@
         border-color: var(--p-content-border-color);
     }
 }
+
+/* Assessment instruction card layout. */
+@source './app/assessment/manage/structured-grading-instructions-assessment-layout';

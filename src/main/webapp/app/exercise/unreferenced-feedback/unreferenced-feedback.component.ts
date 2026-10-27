@@ -1,5 +1,6 @@
-import { Component, computed, effect, inject, input, model, output } from '@angular/core';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, computed, effect, inject, input, model } from '@angular/core';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
@@ -21,7 +22,16 @@ export interface FeedbackGroup {
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
-    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiMessageComponent, ArtemisTranslatePipe],
+    styleUrls: ['./unreferenced-feedback.component.scss'],
+    imports: [
+        NgTemplateOutlet,
+        TranslateDirective,
+        UnreferencedFeedbackDetailComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -61,9 +71,6 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     readonly addReferenceIdForExampleSubmission = input(false);
 
     readonly feedbacks = model<Feedback[]>([]);
-    readonly feedbackSuggestions = model<Feedback[]>([]);
-    readonly onAcceptSuggestion = output<Feedback>();
-    readonly onDiscardSuggestion = output<Feedback>();
 
     /** Feedback used for scoring: full assessment when the parent supplies it, otherwise this list only. */
     private readonly scoringFeedbacks = computed(() => {
@@ -121,7 +128,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         }
 
         const ungrouped = feedbacks.filter((feedback) => !alreadyGrouped.has(feedback));
-        if (ungrouped.length > 0 || groups.length > 0) {
+        if (ungrouped.length > 0) {
             groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped, contributingCredits));
         }
         return groups;
@@ -137,15 +144,11 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     });
 
     /**
-     * True while at least one criterion group is shown. Add Feedback then sits next to Other feedback, because that
-     * is the only group new free-text items land in.
-     */
-    readonly placeAddButtonWithOtherGroup = computed(() => this.feedbackGroups().some((group) => !group.translateTitle));
-
-    /**
      * Awarded / deducted / final points for the assessment, using the same structured-grading usage and
      * positive/max-point capping as the assessment save path.
      */
+    readonly placeAddButtonWithOtherGroup = computed(() => this.showGroupHeaders() && this.feedbackGroups().some((group) => group.translateTitle));
+
     readonly pointsSummary = computed(() => {
         const { awarded, deducted, total } = this.assessmentScore();
         return { awarded, deducted, total };
@@ -204,7 +207,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      */
     updateFeedback(feedback: Feedback) {
         const unreferencedFeedback = [...this.unreferencedFeedback];
-        const indexToUpdate = unreferencedFeedback.findIndex((item) => item === feedback || (feedback.id !== undefined && item.id === feedback.id));
+        const indexToUpdate = feedback.id != undefined ? unreferencedFeedback.findIndex((existing) => existing.id === feedback.id) : unreferencedFeedback.indexOf(feedback);
         if (indexToUpdate < 0) {
             unreferencedFeedback.push(feedback);
         } else {
@@ -219,6 +222,9 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     }
 
     applyInstruction(instruction: GradingInstruction): void {
+        if (!this.selectionService.canApplyInstruction(instruction)) {
+            return;
+        }
         const feedback = this.createFeedback();
         feedback.gradingInstruction = instruction;
         feedback.credits = instruction.credits;
@@ -226,9 +232,9 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     }
 
     unapplyOneInstruction(instruction: GradingInstruction): void {
-        const feedbackToRemove = this.unreferencedFeedback.findLast((feedback) => feedback.gradingInstruction?.id === instruction.id);
-        if (feedbackToRemove) {
-            this.deleteFeedback(feedbackToRemove);
+        const feedback = this.unreferencedFeedback.findLast((item) => item.gradingInstruction?.id === instruction.id);
+        if (feedback) {
+            this.deleteFeedback(feedback);
         }
     }
 
@@ -240,7 +246,6 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     private createFeedback(): Feedback {
         const feedback = new Feedback();
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-        feedback.credits = 0;
 
         // Assign the next id to the unreferenced feedback
         if (this.addReferenceIdForExampleSubmission()) {
@@ -270,34 +275,6 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
             return id;
         });
         return Math.max(...references.concat([0])) + 1;
-    }
-
-    /**
-     * Accept a feedback suggestion: Make it "real" feedback and remove the suggestion card
-     */
-    acceptSuggestion(feedback: Feedback) {
-        if (this.readOnly()) {
-            return;
-        }
-        if (!this.selectionService.canApplyInstruction(feedback.gradingInstruction)) {
-            return;
-        }
-        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((f) => f !== feedback)); // Remove the suggestion card
-        // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
-        // and will be filtered out in all kinds of places
-        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-        // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
-        feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + Feedback.stripSuggestionPrefix(feedback.text ?? '');
-        this.updateFeedback(feedback); // Make it "real" feedback
-        this.onAcceptSuggestion.emit(feedback);
-    }
-
-    /**
-     * Discard a feedback suggestion: Remove the suggestion card and emit the event
-     */
-    discardSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((f) => f !== feedback)); // Remove the suggestion card
-        this.onDiscardSuggestion.emit(feedback);
     }
 
     createAssessmentOnDrop(event: Event) {

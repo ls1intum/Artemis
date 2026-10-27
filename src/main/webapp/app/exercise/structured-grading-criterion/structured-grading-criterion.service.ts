@@ -1,6 +1,5 @@
 import { Service, inject } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -147,17 +146,5 @@ export class StructuredGradingCriterionService {
         // Either unlimited (maxCount === 0) or limit not yet reached: add credits
         score += feedback.credits ?? 0;
         return score;
-    }
-
-    findCriterionTitle(gradingCriteria: GradingCriterion[] | undefined, instructionId: number | undefined): string | undefined {
-        if (!gradingCriteria || instructionId === undefined) {
-            return undefined;
-        }
-        for (const criterion of gradingCriteria) {
-            if (criterion.structuredGradingInstructions?.some((instruction) => instruction.id === instructionId)) {
-                return criterion.title || undefined;
-            }
-        }
-        return undefined;
     }
 }

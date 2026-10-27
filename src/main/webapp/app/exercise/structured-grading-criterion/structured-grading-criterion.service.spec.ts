@@ -49,20 +49,6 @@ describe('Structured Grading Criteria Service', () => {
             expect(totalScore).toBe(5.0);
         });
 
-        it('should resolve the criterion title for a grading instruction', () => {
-            const title = service.findCriterionTitle(
-                [
-                    {
-                        id: 1,
-                        title: 'Player',
-                        structuredGradingInstructions: [{ id: 7, credits: 1, gradingScale: 'good', instructionDescription: 'desc', feedback: 'inst', usageCount: 0 }],
-                    },
-                ],
-                7,
-            );
-            expect(title).toBe('Player');
-        });
-
         it('should calculate the total score too', () => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();
@@ -96,7 +82,7 @@ describe('Structured Grading Criteria Service', () => {
             const instruction = new GradingInstruction();
             instruction.id = 9;
             instruction.credits = 2.5;
-            selectionService.armInstruction(instruction);
+            selectionService.toggleArmedInstruction(instruction);
 
             const feedback = new Feedback();
             feedback.credits = 0;
@@ -113,7 +99,7 @@ describe('Structured Grading Criteria Service', () => {
             const instruction = new GradingInstruction();
             instruction.id = 9;
             instruction.credits = 2.5;
-            selectionService.armInstruction(instruction);
+            selectionService.toggleArmedInstruction(instruction);
 
             const feedback = new Feedback();
             feedback.credits = 0;
@@ -126,7 +112,7 @@ describe('Structured Grading Criteria Service', () => {
 
         it('should apply a dropped instruction from a non-empty text/plain payload', () => {
             const selectionService = TestBed.inject(GradingInstructionSelectionService);
-            selectionService.armInstruction({ id: 99, credits: 9 } as GradingInstruction);
+            selectionService.toggleArmedInstruction({ id: 99, credits: 9 } as GradingInstruction);
 
             const feedback = new Feedback();
             const event = {

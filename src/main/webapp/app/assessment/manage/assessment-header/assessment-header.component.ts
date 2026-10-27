@@ -15,6 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentWarningComponent } from '../assessment-warning/assessment-warning.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Message } from 'primeng/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -26,7 +27,7 @@ import { Message } from 'primeng/message';
     selector: 'jhi-assessment-header',
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
-    imports: [TranslateDirective, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe, Message],
+    imports: [TumAetUiTooltipDirective, TranslateDirective, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe, Message],
 })
 export class AssessmentHeaderComponent {
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
@@ -108,28 +109,6 @@ export class AssessmentHeaderComponent {
 
     get submitDisabled() {
         return !this.assessmentsAreValid() || !this.isAssessor() || this.saveBusy() || this.submitBusy() || this.cancelBusy();
-    }
-
-    /**
-     * Save/submit stay disabled while a feedback item is missing its text (or score). The shortcut tooltip would not
-     * explain that, so those buttons show an explicit reason instead while that is the blocker.
-     */
-    private get blockedByIncompleteFeedback(): boolean {
-        return !this.assessmentsAreValid() && this.isAssessor() && !this.saveBusy() && !this.submitBusy() && !this.cancelBusy();
-    }
-
-    get saveTooltip(): string {
-        if (this.blockedByIncompleteFeedback && !Result.hasNonEmptyAssessmentNote(this.result())) {
-            return this.translateService.instant('artemisApp.assessment.messages.incompleteFeedback');
-        }
-        return this.translateService.instant('artemisApp.assessment.button.control') + ' + S';
-    }
-
-    get submitTooltip(): string {
-        if (this.blockedByIncompleteFeedback) {
-            return this.translateService.instant('artemisApp.assessment.messages.incompleteFeedback');
-        }
-        return this.translateService.instant('artemisApp.assessment.button.control') + ' + Enter';
     }
 
     get overrideDisabled() {

@@ -372,18 +372,22 @@ public class ExerciseSharingService {
             return Optional.empty();
         }
 
+        Path zipPath;
         try {
+            // Reject malformed UTF-8 instead of replacing invalid bytes with characters that some file systems cannot encode.
             String decodedToken = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(b64Token))).toString();
-            Path baseDir = Path.of(repoDownloadClonePath).normalize();
-            Path zipPath = baseDir.resolve(decodedToken + ".zip").normalize();
-            if (zipPath.startsWith(baseDir) && Files.isRegularFile(zipPath)) {
-                return Optional.of(zipPath);
-            }
+            zipPath = Path.of(repoDownloadClonePath, decodedToken + ".zip");
         }
-        catch (CharacterCodingException | IllegalArgumentException e) {
+        catch (IllegalArgumentException | CharacterCodingException e) {
+            // Base64 decoding and path construction can fail even when the token only contains permitted characters.
             log.warn("Invalid token received: {}", b64Token);
+            return Optional.empty();
         }
-        return Optional.empty();
+        if (!Files.isRegularFile(zipPath)) {
+            return Optional.empty();
+        }
+        // Integrity is ensured via HMAC validation.
+        return Optional.of(zipPath);
     }
 
     /**

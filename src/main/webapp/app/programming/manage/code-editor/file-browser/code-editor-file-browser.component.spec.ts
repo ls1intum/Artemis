@@ -111,6 +111,22 @@ describe('CodeEditorFileBrowserComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should leave the current file selected when unsaved inline feedback blocks a switch', () => {
+        const current = new TreeViewItem({ checked: true, text: 'Current', value: 'Current', children: [] });
+        const next = new TreeViewItem({ checked: false, text: 'Next', value: 'Next', children: [] });
+        comp.filesTreeViewItem.set([current, next]);
+        fixture.componentRef.setInput('selectedFile', 'Current');
+        fixture.componentRef.setInput('canSelectFile', () => false);
+        fixture.detectChanges();
+        const emitSpy = vi.spyOn(comp.selectedFileChange, 'emit');
+
+        comp.handleNodeSelected(next);
+
+        expect(current.checked).toBe(true);
+        expect(next.checked).toBe(false);
+        expect(emitSpy).not.toHaveBeenCalled();
+    });
+
     it('uncompresses the tree when toggling from true → false', () => {
         comp.repositoryFiles.set({ a: FileType.FILE });
         comp.compressFolders.set(true);
@@ -644,22 +660,6 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(nodeFirstFile.checked).toBe(false);
         expect(nodeSecondFile.checked).toBe(true);
         expect(selectedFileChangeSpy).toHaveBeenCalledWith(otherFile);
-    });
-
-    it('should leave the current file selected when unsaved inline feedback blocks a switch', () => {
-        const current = new TreeViewItem({ checked: true, text: 'Current', value: 'Current', children: [] });
-        const next = new TreeViewItem({ checked: false, text: 'Next', value: 'Next', children: [] });
-        comp.filesTreeViewItem.set([current, next]);
-        fixture.componentRef.setInput('selectedFile', 'Current');
-        fixture.componentRef.setInput('canSelectFile', () => false);
-        fixture.detectChanges();
-        const emitSpy = vi.spyOn(comp.selectedFileChange, 'emit');
-
-        comp.handleNodeSelected(next);
-
-        expect(current.checked).toBe(true);
-        expect(next.checked).toBe(false);
-        expect(emitSpy).not.toHaveBeenCalled();
     });
 
     it('should set node to checked if its file gets selected and update ui', () => {

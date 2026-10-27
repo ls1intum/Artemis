@@ -89,6 +89,26 @@ describe('CodeEditorContainerComponent', () => {
 
     afterEach(() => vi.clearAllMocks());
 
+    it('should block file switches and unload while inline feedback is unsaved', () => {
+        fixture.componentRef.setInput('isTutorAssessment', true);
+        fixture.detectChanges();
+        component.selectedFile = 'Current.java';
+        monacoEditorStub.hasUnsavedInlineFeedback.mockReturnValue(true);
+        const event = { preventDefault: vi.fn() } as any;
+
+        component.selectedFile = 'Next.java';
+        expect(component.selectedFile).toBe('Current.java');
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
+        expect(component.canDeactivate()).toBe(false);
+        expect(component.unloadNotification(event)).toBe('pendingChanges');
+        expect(event.preventDefault).toHaveBeenCalled();
+
+        monacoEditorStub.hasUnsavedInlineFeedback.mockReturnValue(false);
+        component.selectedFile = 'Next.java';
+        expect(component.selectedFile).toBe('Next.java');
+        expect(component.canDeactivate()).toBe(true);
+    });
+
     it('should initialize defaults', () => {
         expect(component.editorState).toBe(EditorState.CLEAN);
         expect(component.commitState).toBe(CommitState.UNDEFINED);
@@ -492,26 +512,6 @@ describe('CodeEditorContainerComponent', () => {
         event.preventDefault.mockClear();
         expect(component.unloadNotification(event)).toBe(true);
         expect(event.preventDefault).not.toHaveBeenCalled();
-    });
-
-    it('should block file switches and unload while inline feedback is unsaved', () => {
-        fixture.componentRef.setInput('isTutorAssessment', true);
-        fixture.detectChanges();
-        component.selectedFile = 'Current.java';
-        monacoEditorStub.hasUnsavedInlineFeedback.mockReturnValue(true);
-        const event = { preventDefault: vi.fn() } as any;
-
-        component.selectedFile = 'Next.java';
-        expect(component.selectedFile).toBe('Current.java');
-        expect(alertService.error).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
-        expect(component.canDeactivate()).toBe(false);
-        expect(component.unloadNotification(event)).toBe('pendingChanges');
-        expect(event.preventDefault).toHaveBeenCalled();
-
-        monacoEditorStub.hasUnsavedInlineFeedback.mockReturnValue(false);
-        component.selectedFile = 'Next.java';
-        expect(component.selectedFile).toBe('Next.java');
-        expect(component.canDeactivate()).toBe(true);
     });
 
     it('jumpToLine should call monaco revealLine with Immediate scroll type', () => {

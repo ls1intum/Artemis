@@ -108,17 +108,30 @@
             <br />
             <div class="d-flex flex-wrap flex-lg-nowrap">
                 @if (!result()?.completionDate) {
-                    <span class="inline-block m-1" [attr.tabindex]="saveDisabled ? 0 : null" [ngbTooltip]="saveTooltip" container="body">
-                        <button type="button" class="btn btn-primary" (click)="save.emit()" [disabled]="saveDisabled">
-                            @if (saveBusy()) {
-                                <fa-icon [icon]="faSpinner" animation="spin" />
-                            }
-                            <fa-icon [icon]="faSave" />
-                            <span jhiTranslate="entity.action.save"></span>
-                        </button>
-                    </span>
-                    <span class="inline-block m-1" [attr.tabindex]="submitDisabled ? 0 : null" [ngbTooltip]="submitTooltip" container="body">
-                        <button type="button" id="submit" class="btn btn-success" (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()" [disabled]="submitDisabled">
+                    <button
+                        type="button"
+                        class="btn m-1 btn-primary"
+                        (click)="save.emit()"
+                        [disabled]="saveDisabled"
+                        [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
+                    >
+                        @if (saveBusy()) {
+                            <fa-icon [icon]="faSpinner" animation="spin" />
+                        }
+                        <fa-icon [icon]="faSave" />
+                        <span jhiTranslate="entity.action.save"></span>
+                    </button>
+                    <span
+                        class="assessment-submit-control"
+                        data-testid="assessment-submit-control"
+                        [attr.tabindex]="submitDisabled ? 0 : null"
+                        [tumAetUiTooltip]="
+                            !assessmentsAreValid()
+                                ? ('artemisApp.assessment.messages.incompleteFeedback' | artemisTranslate)
+                                : ('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'
+                        "
+                    >
+                        <button type="button" id="submit" class="btn m-1 btn-success" (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()" [disabled]="submitDisabled">
                             @if (submitBusy()) {
                                 <fa-icon [icon]="faSpinner" animation="spin" />
                             }

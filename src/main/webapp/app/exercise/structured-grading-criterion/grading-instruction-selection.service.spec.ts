@@ -103,13 +103,13 @@ describe('GradingInstructionSelectionService', () => {
     });
 
     it('should clear an armed instruction explicitly and when a host registers', () => {
-        service.armInstruction(instruction);
+        service.toggleArmedInstruction(instruction);
         expect(service.hasArmedInstruction()).toBe(true);
 
         service.clearArmedInstruction();
         expect(service.hasArmedInstruction()).toBe(false);
 
-        service.armInstruction(instruction);
+        service.toggleArmedInstruction(instruction);
         service.register(host);
         expect(service.hasArmedInstruction()).toBe(false);
     });
@@ -127,7 +127,7 @@ describe('GradingInstructionSelectionService', () => {
         service.register({ ...host, appliedInstructionCounts: appliedCounts });
         const limitedInstruction = { id: 1, credits: 2, usageCount: 1 } as GradingInstruction;
 
-        service.armInstruction(limitedInstruction);
+        service.toggleArmedInstruction(limitedInstruction);
         appliedCounts.set(new Map([[limitedInstruction.id!, 1]]));
 
         expect(service.consumeArmedInstruction()).toBeUndefined();

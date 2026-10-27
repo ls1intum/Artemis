@@ -94,7 +94,7 @@ export class GradingInstructionSelectionService {
         }
     }
 
-    /** Keeps an existing card's original instruction slot occupied while its link is edited. */
+    /** Counts a draft instruction link until its card is saved or canceled. */
     reserveInstruction(owner: object, instruction?: GradingInstruction): void {
         if (this.reservedInstructions().get(owner)?.id === instruction?.id) {
             return;
@@ -154,13 +154,6 @@ export class GradingInstructionSelectionService {
         }
     }
 
-    /**
-     * Arms an instruction for the next feedback drop or keyboard apply.
-     */
-    armInstruction(instruction: GradingInstruction): void {
-        this.armedInstruction.set(instruction);
-    }
-
     isArmed(instruction: GradingInstruction): boolean {
         const armed = this.armedInstruction();
         return armed !== undefined && (armed === instruction || (armed.id !== undefined && armed.id === instruction.id));
@@ -187,7 +180,7 @@ export class GradingInstructionSelectionService {
 
     /** Adds one more application of the instruction in the registered feedback list. */
     addApplication(instruction: GradingInstruction): void {
-        this.host()?.applyInstruction(instruction);
+        this.setApplied(instruction, true);
     }
 
     /** Removes one application of the instruction owned by the registered feedback list. */

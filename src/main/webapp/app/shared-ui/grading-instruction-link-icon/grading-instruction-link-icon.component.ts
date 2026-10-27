@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,7 +12,7 @@ import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
     styleUrl: './grading-instruction-link-icon.component.scss',
     imports: [FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
-export class GradingInstructionLinkIconComponent implements OnInit {
+export class GradingInstructionLinkIconComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
     linkIcon = input(faLink);
@@ -20,21 +20,15 @@ export class GradingInstructionLinkIconComponent implements OnInit {
     /** Fired after the grading instruction is cleared so parents can refresh usage counts (zoneless). */
     readonly linkRemoved = output<void>();
 
-    instruction = signal<GradingInstruction | undefined>(undefined);
     confirmIcon = faTrash;
     readonly showConfirm = signal(false);
-
-    ngOnInit(): void {
-        this.instruction.set(this.feedback().gradingInstruction);
-    }
 
     /**
      * remove grading instruction on click
      */
     removeLink(): void {
-        this.toggle();
+        this.showConfirm.set(false);
         this.feedback().gradingInstruction = undefined;
-        this.instruction.set(undefined);
         this.linkRemoved.emit();
     }
 

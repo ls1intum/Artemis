@@ -1,5 +1,5 @@
 import { BASE_API, ExerciseType } from '../../constants';
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 /**
  * Parent class for all exercise assessment pages.
@@ -17,14 +17,26 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async fillFeedback(points: number, feedback?: string) {
+        // Scoped to the newest card: with multiple unreferenced feedback entries present, an unscoped locator
+        // matches every card's stepper/points input and Playwright strict mode rejects the ambiguous match.
         const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail').last();
-        const pointsInput = unreferencedFeedback.getByTestId('feedback-editor-points-input');
-        await pointsInput.fill(points.toString());
-        await pointsInput.blur();
+        await this.setPoints(unreferencedFeedback, points);
         if (feedback) {
-            await unreferencedFeedback.getByTestId('unreferenced-feedback-detail-text').clear();
-            await unreferencedFeedback.getByTestId('unreferenced-feedback-detail-text').fill(feedback);
+            await unreferencedFeedback.locator('.unified-feedback-detail-input').clear();
+            await unreferencedFeedback.locator('.unified-feedback-detail-input').fill(feedback);
         }
+    }
+
+    /**
+     * Types the points into the unified feedback card's points input (a TUM AET UI number input, see
+     * UnifiedFeedbackComponent) and leaves the field, which snaps the value onto the half-point grid.
+     */
+    protected async setPoints(scope: Locator, points: number) {
+        const input = scope.getByTestId('unified-feedback-points-input').locator('input');
+        await input.waitFor({ state: 'visible' });
+        await input.fill(String(points));
+        await input.blur();
+        await expect(input).toHaveValue(String(points));
     }
 
     async submitWithoutInterception() {

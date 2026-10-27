@@ -1,9 +1,6 @@
-import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
-import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { DebugElement } from '@angular/core';
 import { Location } from '@angular/common';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -20,13 +17,7 @@ import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import {
-    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_IDENTIFIER,
-    Feedback,
-    FeedbackType,
-} from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -38,7 +29,6 @@ import {
     CodeEditorTutorAssessmentContainerComponent,
     canLeaveCodeEditorTutorAssessmentContainer,
 } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
-import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -51,6 +41,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, ParamMap, Router, RouterStateSn
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -79,9 +70,7 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
  */
 type ContainerInternalsOverrides = {
     athenaService: AthenaService;
-    dialogService: DialogService;
     loadFeedbackSuggestions: () => Promise<void>;
-    handleReceivedSubmission: (submission: ProgrammingSubmission) => Promise<void>;
     onSubmissionReceived: (submissionId: string, submission?: ProgrammingSubmission) => Promise<void>;
 };
 type ContainerInternals = Omit<CodeEditorTutorAssessmentContainerComponent, keyof ContainerInternalsOverrides> & ContainerInternalsOverrides;
@@ -130,7 +119,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let lockAndGetProgrammingSubmissionParticipationStub: ReturnType<typeof vi.spyOn>;
     let findWithParticipationsStub: ReturnType<typeof vi.spyOn>;
 
-    let user: User;
+    const user = <User>{ id: 99 };
+    // Rebuilt fresh in beforeEach (not module-scope consts): `manualResult` now shares object identity with
+    // participation().submissions[0].results[0] (see the signal's declaration for why), so production code
+    // mutates this object in place. Module-scope consts would leak those mutations (feedbacks, rated, score,
+    // circular-reference stripping, ...) across unrelated tests.
     let result: Result;
     let complaint: Complaint;
     let exercise: ProgrammingExercise;
@@ -148,11 +141,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             snapshot: { queryParams: { 'correction-round': '0', testRun: 'false' } },
         }) as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
-    let templateFileSessionReturn: { [fileName: string]: string };
+    const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
     beforeEach(async () => {
-        templateFileSessionReturn = { 'folder/file1': fileContent };
-        user = <User>{ id: 99 };
         result = {
             feedbacks: [new Feedback()],
             score: 80,
@@ -164,6 +155,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             id: 2,
         };
         result.submission!.id = 1;
+
         complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
         exercise = {
             id: 1,
@@ -176,12 +168,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             gradingInstructions: 'Grading Instructions',
             course: <Course>{},
         } as unknown as ProgrammingExercise;
+
         participation = new ProgrammingExerciseStudentParticipation();
         participation.exercise = exercise;
         participation.id = 1;
         participation.student = { login: 'student1' } as User;
         participation.repositoryUri = 'http://student1@artemis.tum.de/git/TEST/test-repo-student1.git';
         result.submission!.participation = participation;
+
         submission = new ProgrammingSubmission();
         submission.results = [result];
         submission.participation = participation;
@@ -189,10 +183,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         submission.commitHash = '0123456789abcdef0123456789abcdef01234567';
         submission.latestResult = result;
         participation.submissions = [submission];
+
         unassessedSubmission = new ProgrammingSubmission();
         unassessedSubmission.id = 12;
+
         afterComplaintResult = new Result();
         afterComplaintResult.score = 100;
+
         afterOverrideResult = new Result();
         afterOverrideResult.feedbacks = [
             {
@@ -203,6 +200,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             },
         ];
         afterOverrideResult.assessor = user;
+
         overrideEntityResponse = new HttpResponse({ body: afterOverrideResult });
 
         await TestBed.configureTestingModule({
@@ -224,16 +222,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .overrideComponent(CodeEditorMonacoComponent, {
-                set: {
-                    imports: [
-                        MonacoEditorComponent,
-                        MockComponent(CodeEditorHeaderComponent),
-                        CodeEditorTutorAssessmentInlineFeedbackComponent,
-                        CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent,
-                    ],
-                },
-            })
+            .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent, MockComponent(CodeEditorHeaderComponent)] } })
             .compileComponents();
         // Ignore console errors
         console.error = () => {
@@ -271,6 +260,29 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should block assessment save, submit, and next submission while an inline card is unsaved', async () => {
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({ hasUnsavedInlineFeedback: () => true } as CodeEditorContainerComponent);
+        const saveSpy = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.participation.set(participation);
+        comp.submission.set(submission);
+        comp.manualResult.set(result);
+
+        comp.save();
+        await comp.submit();
+        comp.nextSubmission();
+
+        const beforeUnload = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+        comp.handleBeforeUnload(beforeUnload);
+        expect(beforeUnload.defaultPrevented).toBe(true);
+        expect(canLeaveCodeEditorTutorAssessmentContainer(comp, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot)).toBe(false);
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).not.toHaveBeenCalled();
+        expect(comp.saveBusy()).toBe(false);
+        expect(comp.submitBusy()).toBe(false);
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
     });
 
     it('should highlight lines that were changed', async () => {
@@ -382,7 +394,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should update assessor correctly if the manual assessment is overridden', async () => {
         const user2 = <User>{ id: 100 };
-        const discardPendingSubmissionsWithConfirmationStub = vi.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
         const updateAfterNewAssessment = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
         result.assessor = user2;
         result.hasComplaint = false;
@@ -396,7 +407,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(alertElementSubmit).not.toBeNull();
 
         expect(getIdentityStub).toHaveBeenCalled();
-        expect(discardPendingSubmissionsWithConfirmationStub).toHaveBeenCalled();
         expect(updateAfterNewAssessment).toHaveBeenCalledOnce();
         expect(comp.isAssessor()).toBe(true);
     });
@@ -415,45 +425,99 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.canOverride).toBe(true);
     });
 
-    it('should show unreferenced feedback suggestions', () => {
-        comp.feedbackSuggestions.set([{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }]);
-        expect(comp.unreferencedFeedbackSuggestions()).toHaveLength(1);
-    });
+    it('should merge new feedback suggestions directly into the editable feedback, skipping duplicates of existing manual feedback', async () => {
+        const existingUnreferenced = { text: 'unreferenced test', detailText: 'some detail', reference: undefined, type: FeedbackType.MANUAL_UNREFERENCED, credits: 1 } as Feedback;
+        const existingReferenced = {
+            text: 'referenced test',
+            detailText: 'some detail',
+            reference: 'file:src/Test.java_line:1',
+            type: FeedbackType.MANUAL,
+            credits: 1,
+        } as Feedback;
+        comp.unreferencedFeedback.set([existingUnreferenced]);
+        comp.referencedFeedback.set([existingReferenced]);
+        comp.manualResult.set({ feedbacks: [existingUnreferenced, existingReferenced] } as Result);
 
-    it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
-        comp.unreferencedFeedback.set([{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }]);
-        comp.referencedFeedback.set([
-            {
-                text: 'referenced test',
-                detailText: 'some detail',
-                reference: 'file:src/Test.java_line:1',
-            },
-        ]);
         const feedbackSuggestionsStub = vi.spyOn(internals(comp).athenaService, 'getProgrammingFeedbackSuggestions');
         feedbackSuggestionsStub.mockReturnValue(
             of([
-                { text: 'FeedbackSuggestion:unreferenced test', detailText: 'some detail' },
+                { text: 'FeedbackSuggestion:accepted:unreferenced test', detailText: 'some detail' },
                 {
-                    text: 'FeedbackSuggestion:referenced test',
+                    text: 'FeedbackSuggestion:accepted:referenced test',
                     detailText: 'some detail',
                     reference: 'file:src/Test.java_line:1',
                 },
                 {
-                    text: 'FeedbackSuggestion:suggestion to pass',
+                    text: 'FeedbackSuggestion:accepted:suggestion to pass',
                     detailText: 'some detail',
                     reference: 'file:src/Test.java_line:2',
+                    type: FeedbackType.MANUAL,
+                    credits: 1,
                 },
             ] as Feedback[]),
         );
         comp.submission.set({ id: undefined } as ProgrammingSubmission); // Needed for loadFeedbackSuggestions
         await internals(comp).loadFeedbackSuggestions();
-        expect(comp.feedbackSuggestions()).toStrictEqual([
+
+        // Only the genuinely new suggestion is merged in, directly as editable feedback - no separate pending/accept-discard state.
+        expect(comp.referencedFeedback()).toContainEqual(
+            expect.objectContaining({ text: 'FeedbackSuggestion:accepted:suggestion to pass', reference: 'file:src/Test.java_line:2' }),
+        );
+        expect(comp.unreferencedFeedback()).toEqual([existingUnreferenced]);
+        expect(comp.hasAcceptedFeedbackSuggestions()).toBe(true);
+        // Auto-accepted suggestions are unsaved changes: navigating away must warn like any other edit.
+        expect(comp.hasPendingChanges).toBe(true);
+    });
+
+    it('should render newly auto-accepted AI feedback suggestions as inline widgets in the code editor', async () => {
+        // Reproduces the reported bug: AI feedback suggestions get merged into the editable feedback list, but
+        // never reach the Monaco editor's `feedbacks` input, so no inline widget appears on the line.
+        const getFilesWithContentStub = vi.spyOn(repositoryFileService, 'getFilesWithContent');
+        getFilesWithContentStub.mockReturnValue(of(templateFileSessionReturn));
+        const getFileStub = vi.spyOn(repositoryFileService, 'getFile');
+        getFileStub.mockReturnValue(new BehaviorSubject({ fileContent: 'new file text' }));
+
+        const feedbackLoaded = firstValueFrom(outputToObservable(comp.onFeedbackLoaded));
+        fixture.detectChanges();
+        await feedbackLoaded;
+        await flushMicrotasks();
+        fixture.changeDetectorRef.detectChanges();
+
+        const codeEditorMonacoComp: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
+        expect(codeEditorMonacoComp.feedbacks()).toEqual(result.feedbacks);
+
+        const suggestion = {
+            text: 'FeedbackSuggestion:accepted:new suggestion',
+            detailText: 'some detail',
+            reference: 'file:folder/file1_line:0',
+            type: FeedbackType.MANUAL,
+            credits: 1,
+        } as Feedback;
+        vi.spyOn(internals(comp).athenaService, 'getProgrammingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+        await internals(comp).loadFeedbackSuggestions();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(codeEditorMonacoComp.feedbacks()).toContainEqual(expect.objectContaining({ reference: 'file:folder/file1_line:0' }));
+
+        getFilesWithContentStub.mockRestore();
+        getFileStub.mockRestore();
+    });
+
+    it('should reset hasAcceptedFeedbackSuggestions when a new submission is received', async () => {
+        // Simulate the banner still being shown for a previously loaded submission's auto-accepted suggestions.
+        comp.hasAcceptedFeedbackSuggestions.set(true);
+
+        submission.results![0].feedbacks = [
             {
-                text: 'FeedbackSuggestion:suggestion to pass',
-                detailText: 'some detail',
-                reference: 'file:src/Test.java_line:2',
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
             },
-        ]);
+        ];
+        await internals(comp).onSubmissionReceived('123', submission);
+
+        expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
     });
 
     it('should show complaint for result with complaint and check assessor', async () => {
@@ -683,44 +747,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(cancelBackStub).toHaveBeenCalledOnce();
     });
 
-    it('should block assessment save, submit, and next submission while an inline card is unsaved', async () => {
-        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({ hasUnsavedInlineFeedback: () => true } as CodeEditorContainerComponent);
-        const saveSpy = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
-        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-        comp.participation.set(participation);
-        comp.submission.set(submission);
-        comp.manualResult.set(result);
-
-        comp.save();
-        await comp.submit();
-        comp.nextSubmission();
-
-        expect(saveSpy).not.toHaveBeenCalled();
-        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).not.toHaveBeenCalled();
-        expect(comp.saveBusy()).toBe(false);
-        expect(comp.submitBusy()).toBe(false);
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
-    });
-
-    it('should ask before leaving an assessment with unsaved inline feedback', () => {
-        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({ hasUnsavedInlineFeedback: () => true } as CodeEditorContainerComponent);
-        comp.submission.set(submission);
-        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-        const canLeave = () =>
-            TestBed.runInInjectionContext(() =>
-                canLeaveCodeEditorTutorAssessmentContainer(comp, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot),
-            );
-
-        const beforeUnload = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
-        comp.handleBeforeUnload(beforeUnload);
-        expect(beforeUnload.defaultPrevented).toBe(true);
-
-        expect(canLeave()).toBe(false);
-        confirmSpy.mockReturnValue(true);
-        expect(canLeave()).toBe(true);
-        expect(confirmSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.confirmLeave');
-    });
-
     it('should go to next submission', async () => {
         const routerStub = vi.spyOn(router, 'navigate');
 
@@ -861,140 +887,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             { queryParams: { 'correction-round': '0', testRun: 'false' } },
         );
         expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
-    });
-
-    it.each(['save', 'submit'] as const)('should block inline and unreferenced suggestion acceptance during a delayed %s response', async (action) => {
-        vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
-        vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(of({ fileContent }));
-        vi.spyOn(comp, 'readOnly').mockReturnValue(false);
-        vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef);
-        const response = new Subject<EntityResponseType>();
-        const save = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(response);
-        const feedbackLoaded = firstValueFrom(outputToObservable(comp.onFeedbackLoaded));
-        fixture.detectChanges();
-        await feedbackLoaded;
-        await flushMicrotasks();
-        fixture.detectChanges();
-        const container = fixture.debugElement.query(By.directive(CodeEditorContainerComponent)).componentInstance as CodeEditorContainerComponent;
-        const editor = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance as CodeEditorMonacoComponent;
-        const unreferenced = fixture.debugElement.query(By.directive(UnreferencedFeedbackComponent)).componentInstance as UnreferencedFeedbackComponent;
-        vi.spyOn(editor, 'selectFileInEditor').mockResolvedValue(undefined);
-        container.selectedFile = 'folder/file1';
-        const inline = { id: 101, type: FeedbackType.MANUAL, reference: 'file:folder/file1_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Inline`, credits: 1 } as Feedback;
-        const general = { id: 102, text: `${FEEDBACK_SUGGESTION_IDENTIFIER}General`, credits: 1 } as Feedback;
-        comp.feedbackSuggestions.set([inline, general]);
-        fixture.detectChanges();
-        await fixture.whenStable();
-        const acceptButtons = () =>
-            Array.from(fixture.nativeElement.querySelectorAll('[data-testid="accept-feedback-suggestion"]')).map((element) => {
-                const host = element as HTMLElement;
-                return host instanceof HTMLButtonElement ? host : host.querySelector('button')!;
-            });
-        expect(acceptButtons()).toHaveLength(2);
-        expect(acceptButtons().every((button) => !button.disabled)).toBe(true);
-        const inlineAccepted = vi.fn();
-        const generalAccepted = vi.fn();
-        editor.onAcceptSuggestion.subscribe(inlineAccepted);
-        unreferenced.onAcceptSuggestion.subscribe(generalAccepted);
-
-        await comp[action]();
-        fixture.detectChanges();
-        expect(save).toHaveBeenCalledOnce();
-        const persisted = { ...comp.manualResult()!, feedbacks: [...comp.manualResult()!.feedbacks!] };
-        expect(acceptButtons().every((button) => button.disabled)).toBe(true);
-        acceptButtons().forEach((button) => button.click());
-        // Also reject events already queued before the controls became disabled.
-        editor.acceptSuggestion(inline);
-        unreferenced.acceptSuggestion(general);
-        fixture.detectChanges();
-        expect(inlineAccepted).not.toHaveBeenCalled();
-        expect(generalAccepted).not.toHaveBeenCalled();
-        expect(comp.feedbackSuggestions()).toEqual([inline, general]);
-        expect(editor.feedbackSuggestionsInternal()).toEqual([inline, general]);
-        expect(unreferenced.feedbackSuggestions()).toEqual([general]);
-        expect(editor.feedbackInternal().some((feedback) => feedback.id === inline.id)).toBe(false);
-        expect(comp.unreferencedFeedback().some((feedback) => feedback.id === general.id)).toBe(false);
-
-        response.next(new HttpResponse({ body: persisted }));
-        response.complete();
-        fixture.detectChanges();
-        expect(comp.saveBusy()).toBe(false);
-        expect(comp.submitBusy()).toBe(false);
-        expect(comp.hasPendingChanges).toBe(false);
-        if (action === 'save') {
-            expect(comp.feedbackSuggestions()).toEqual([inline, general]);
-            expect(acceptButtons().every((button) => !button.disabled)).toBe(true);
-            acceptButtons().forEach((button) => button.click());
-            fixture.detectChanges();
-            expect(inlineAccepted).toHaveBeenCalledOnce();
-            expect(generalAccepted).toHaveBeenCalledOnce();
-            expect(comp.feedbackSuggestions()).toEqual([]);
-            expect(comp.referencedFeedback()).toContainEqual(expect.objectContaining({ id: inline.id }));
-            expect(comp.unreferencedFeedback()).toContainEqual(expect.objectContaining({ id: general.id }));
-            expect(comp.hasPendingChanges).toBe(true);
-        } else {
-            // A successful Submit deliberately discards the suggestions confirmed above.
-            expect(comp.feedbackSuggestions()).toEqual([]);
-        }
-    });
-
-    it.each(['save', 'submit'] as const)('should lock a locally saved inline card until a delayed %s response assigns its ID', async (action) => {
-        vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
-        vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(of({ fileContent }));
-        vi.spyOn(comp, 'readOnly').mockReturnValue(false);
-        const response = new Subject<EntityResponseType>();
-        const save = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(response);
-        const feedbackLoaded = firstValueFrom(outputToObservable(comp.onFeedbackLoaded));
-        fixture.detectChanges();
-        await feedbackLoaded;
-        await flushMicrotasks();
-        fixture.detectChanges();
-        const container = fixture.debugElement.query(By.directive(CodeEditorContainerComponent)).componentInstance as CodeEditorContainerComponent;
-        const editor = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance as CodeEditorMonacoComponent;
-        vi.spyOn(editor, 'selectFileInEditor').mockResolvedValue(undefined);
-        container.selectedFile = 'folder/file1';
-        fixture.detectChanges();
-        await fixture.whenStable();
-        editor.addNewFeedback(2);
-        fixture.detectChanges();
-        const getCard = () =>
-            fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent)).componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
-        getCard().currentFeedback().detailText = 'Locally saved comment';
-        getCard().currentFeedback().credits = 1;
-        getCard().updateFeedback();
-        fixture.detectChanges();
-        await fixture.whenStable();
-        const card = getCard();
-        expect(card.feedback()?.id).toBeUndefined();
-        expect(card.viewOnly()).toBe(true);
-
-        await comp[action]();
-        fixture.detectChanges();
-        expect(save).toHaveBeenCalledOnce();
-        expect(card.readOnly()).toBe(true);
-        card.editFeedback(1);
-        card['onDetailTextChange']('Edit during request');
-        editor.addNewFeedback(3);
-        fixture.detectChanges();
-        expect(card.viewOnly()).toBe(true);
-        expect(card.currentFeedback().detailText).toBe('Locally saved comment');
-        expect(editor.newFeedbackLines()).toEqual([]);
-        expect(card.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]')).toBeNull();
-
-        const persisted = { ...comp.manualResult()!, feedbacks: [{ ...card.currentFeedback(), id: 123 }] };
-        response.next(new HttpResponse({ body: persisted }));
-        response.complete();
-        fixture.detectChanges();
-        expect(comp.saveBusy()).toBe(false);
-        expect(comp.submitBusy()).toBe(false);
-        expect(comp.manualResult()?.feedbacks?.[0].id).toBe(123);
-        expect(getCard().feedback()?.id).toBe(123);
-        expect(getCard()).not.toBe(card);
-        expect(getCard().currentFeedback().detailText).toBe('Locally saved comment');
-        expect(getCard().readOnly()).toBe(false);
-        getCard().editFeedback(1);
-        fixture.detectChanges();
-        expect(getCard().viewOnly()).toBe(false);
     });
 
     it('should not invalidate assessment after saving', async () => {
@@ -1150,191 +1042,19 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(validateFeedbackStub).toHaveBeenCalled();
     });
 
-    it('should replace an edited automatic inline finding without persisting its original', () => {
-        const original = { id: 1, reference: 'file:src/Test.java_line:1', type: FeedbackType.AUTOMATIC, credits: 1 } as Feedback;
-        const edited = { id: 1, reference: original.reference, type: FeedbackType.MANUAL, credits: 2 } as Feedback;
-        comp.exercise.set(exercise);
-        comp.manualResult.set({ ...result, feedbacks: [original] });
-        comp.automaticFeedback.set([original]);
+    it('should drop a feedback from the automatic bucket once it is edited into a manual one, to avoid double-counting it', () => {
+        // Editing an inline automatic/static-analysis feedback retags it to MANUAL and emits the whole feedback
+        // array again (see CodeEditorTutorAssessmentInlineFeedbackComponent.commitFeedback). automaticFeedback must
+        // be re-derived from that same array, or the now-manual feedback would remain counted in both buckets.
+        comp.automaticFeedback.set([{ reference: 'file:src/Test.java_line:1', type: FeedbackType.AUTOMATIC, credits: 2 } as Feedback]);
+        vi.spyOn(comp, 'validateFeedback').mockReturnValue(undefined);
 
-        comp.onUpdateFeedback([edited]);
+        const editedFeedback = { reference: 'file:src/Test.java_line:1', type: FeedbackType.MANUAL, credits: 2 } as Feedback;
+        comp.onUpdateFeedback([editedFeedback]);
 
-        expect(comp.referencedFeedback()).toEqual([edited]);
         expect(comp.automaticFeedback()).toEqual([]);
-        expect(comp.manualResult()?.feedbacks).toEqual([edited]);
-    });
-
-    it('should correctly remove feedback suggestions', () => {
-        const feedbackSuggestion1 = { id: 1, credits: 1 };
-        const feedbackSuggestion2 = { id: 2, credits: 2 };
-        const feedbackSuggestion3 = { id: 3, credits: 3 };
-        comp.feedbackSuggestions.set([feedbackSuggestion1, feedbackSuggestion2, feedbackSuggestion3]);
-        comp.removeSuggestion(feedbackSuggestion2);
-        expect(comp.feedbackSuggestions()).toEqual([feedbackSuggestion1, feedbackSuggestion3]);
-    });
-
-    it('should preserve suggestions with the same text on other lines', () => {
-        const first = { text: 'Same title', detailText: 'Same comment', reference: 'file:src/Test.java_line:1' } as Feedback;
-        const second = { text: first.text, detailText: first.detailText, reference: 'file:src/Test.java_line:2' } as Feedback;
-        comp.feedbackSuggestions.set([first, second]);
-
-        comp.removeSuggestion(first);
-
-        expect(comp.feedbackSuggestions()).toEqual([second]);
-    });
-
-    it('should keep feedback suggestions after confirming until submission succeeds', async () => {
-        const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef); // Confirm dismissal
-        comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
-        expect(await comp.discardPendingSubmissionsWithConfirmation()).toBe(true);
-        expect(modalOpenStub).toHaveBeenCalled();
-        expect(comp.feedbackSuggestions()).toHaveLength(1);
-    });
-
-    it('should clear suggestions only after a successful submission', async () => {
-        const suggestion = { id: 1, credits: 1 };
-        const saveResponse = new Subject<EntityResponseType>();
-        vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef);
-        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(saveResponse);
-        comp.participation.set(participation);
-        comp.submission.set({ results: [new Result()] } as ProgrammingSubmission);
-        comp.manualResult.set(new Result());
-        comp.feedbackSuggestions.set([suggestion]);
-
-        await comp.submit();
-        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
-
-        saveResponse.next(new HttpResponse({ body: new Result() }));
-        expect(comp.feedbackSuggestions()).toEqual([]);
-    });
-
-    it('should not submit a new submission after confirming the previous submission’s dialog', async () => {
-        const confirmation = new Subject<boolean>();
-        const nextResult = new Result();
-        const nextSubmission = { id: 42, results: [nextResult] } as ProgrammingSubmission;
-        vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: confirmation } as unknown as DynamicDialogRef);
-        const saveSpy = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(new HttpResponse({ body: new Result() })));
-        vi.spyOn(internals(comp), 'handleReceivedSubmission').mockImplementation(async (received) => {
-            comp.submission.set(received);
-            comp.manualResult.set(nextResult);
-        });
-        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => {});
-        comp.participation.set(participation);
-        comp.submission.set({ id: 41, results: [new Result()] } as ProgrammingSubmission);
-        comp.manualResult.set(new Result());
-        comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
-
-        const submitPromise = comp.submit();
-        await internals(comp).onSubmissionReceived('42', nextSubmission);
-        confirmation.next(true);
-        confirmation.complete();
-        await submitPromise;
-
-        expect(comp.submission()?.id).toBe(42);
-        expect(comp.submitBusy()).toBe(false);
-        expect(saveSpy).not.toHaveBeenCalled();
-    });
-
-    it('should ignore a successful submission response after navigating to another submission', async () => {
-        const saveResponse = new Subject<EntityResponseType>();
-        const nextResult = new Result();
-        const nextSubmission = { id: 42, results: [nextResult] } as ProgrammingSubmission;
-        const nextSuggestion = { id: 2, credits: 1 };
-        const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
-        vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef);
-        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(saveResponse);
-        vi.spyOn(internals(comp), 'handleReceivedSubmission').mockImplementation(async (received) => {
-            comp.submission.set(received);
-            comp.manualResult.set(nextResult);
-        });
-        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => {});
-        comp.participation.set(participation);
-        comp.submission.set({ id: 41, results: [new Result()] } as ProgrammingSubmission);
-        comp.manualResult.set(new Result());
-        comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
-
-        await comp.submit();
-        expect(comp.submitBusy()).toBe(true);
-        await internals(comp).onSubmissionReceived('42', nextSubmission);
-        expect(comp.submitBusy()).toBe(false);
-        comp.feedbackSuggestions.set([nextSuggestion]);
-
-        saveResponse.next(new HttpResponse({ body: new Result() }));
-        expect(comp.submission()?.results?.[0]).toBe(nextResult);
-        expect(comp.manualResult()).toBe(nextResult);
-        expect(comp.feedbackSuggestions()).toEqual([nextSuggestion]);
-        expect(successSpy).not.toHaveBeenCalled();
-    });
-
-    it('should ignore a failed save response after navigating to another submission', async () => {
-        const oldResponse = new Subject<EntityResponseType>();
-        const newResponse = new Subject<EntityResponseType>();
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValueOnce(oldResponse).mockReturnValueOnce(newResponse);
-        vi.spyOn(internals(comp), 'handleReceivedSubmission').mockImplementation(async (received) => {
-            comp.submission.set(received);
-        });
-        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => {});
-        comp.participation.set(participation);
-        comp.submission.set({ id: 41, results: [new Result()] } as ProgrammingSubmission);
-        comp.manualResult.set(new Result());
-
-        comp.save();
-        expect(comp.saveBusy()).toBe(true);
-        await internals(comp).onSubmissionReceived('42', { id: 42 } as ProgrammingSubmission);
-        expect(comp.saveBusy()).toBe(false);
-        comp.save();
-        expect(comp.saveBusy()).toBe(true);
-
-        oldResponse.error(new HttpErrorResponse({ status: 500 }));
-        expect(comp.saveBusy()).toBe(true);
-        expect(errorSpy).not.toHaveBeenCalled();
-    });
-
-    it('should keep suggestions if submission fails', async () => {
-        const suggestion = { id: 1, credits: 1 };
-        vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef);
-        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-        comp.participation.set(participation);
-        comp.manualResult.set(new Result());
-        comp.feedbackSuggestions.set([suggestion]);
-
-        await comp.submit();
-
-        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
-    });
-
-    it('should keep suggestions when saving succeeds or fails', () => {
-        const suggestion = { id: 1, credits: 1 };
-        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment')
-            .mockReturnValueOnce(of(new HttpResponse({ body: new Result() })))
-            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
-        comp.participation.set(participation);
-        comp.submission.set({ results: [new Result()] } as ProgrammingSubmission);
-        comp.manualResult.set(new Result());
-        comp.feedbackSuggestions.set([suggestion]);
-
-        comp.save();
-        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
-
-        comp.save();
-        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
-    });
-
-    it('should keep feedback suggestions if the confirmation dialog is cancelled', async () => {
-        const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(false) } as DynamicDialogRef); // Cancel suggestion dismissal
-        comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
-        await comp.discardPendingSubmissionsWithConfirmation();
-        expect(modalOpenStub).toHaveBeenCalled();
-        // Cancelling should keep everything intact
-        expect(comp.feedbackSuggestions()).not.toHaveLength(0);
-    });
-
-    it('should not show a confirmation dialog if there are no feedback suggestions left', async () => {
-        const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open');
-        comp.feedbackSuggestions.set([]);
-        await comp.discardPendingSubmissionsWithConfirmation();
-        expect(modalOpenStub).not.toHaveBeenCalled();
+        expect(comp.referencedFeedback()).toEqual([editedFeedback]);
+        expect(comp.allAssessmentFeedbacks()).toEqual([editedFeedback]);
     });
 
     it('should return true for hasAutomaticFeedback when automaticFeedback is non-empty', () => {
@@ -1342,32 +1062,15 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.hasAutomaticFeedback()).toBe(true);
     });
 
-    it.each([FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER])(
-        'keeps the AI notice for %s manual feedback after all suggestions are accepted',
-        (prefix) => {
-            comp.feedbackSuggestions.set([]);
-            comp.automaticFeedback.set([]);
-            comp.referencedFeedback.set([{ type: FeedbackType.MANUAL, text: `${prefix}inline` } as Feedback]);
-            expect(comp.hasAutomaticFeedback()).toBe(true);
-
-            comp.referencedFeedback.set([]);
-            comp.unreferencedFeedback.set([{ type: FeedbackType.MANUAL_UNREFERENCED, text: `${prefix}other` } as Feedback]);
-            expect(comp.hasAutomaticFeedback()).toBe(true);
-        },
-    );
-
-    it('should include automatic feedback in the editor file badges input', () => {
-        const manual = { type: FeedbackType.MANUAL, reference: 'file:Manual.java_line:1' } as Feedback;
-        const automatic = { type: FeedbackType.AUTOMATIC, reference: 'file:Automatic.java_line:1' } as Feedback;
-        comp.referencedFeedback.set([manual]);
-        comp.automaticFeedback.set([automatic]);
-
-        expect(comp.referencedFeedbackForEditor()).toEqual([manual, automatic]);
-    });
-
-    it('should return false for hasAutomaticFeedback when automaticFeedback is empty', () => {
+    it('should return false for hasAutomaticFeedback when automaticFeedback is empty and no suggestions were accepted', () => {
         comp.automaticFeedback.set([]);
         expect(comp.hasAutomaticFeedback()).toBe(false);
+    });
+
+    it('should return true for hasAutomaticFeedback when Athena feedback suggestions were accepted', () => {
+        comp.automaticFeedback.set([]);
+        comp.hasAcceptedFeedbackSuggestions.set(true);
+        expect(comp.hasAutomaticFeedback()).toBe(true);
     });
 
     it('should return true for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is set on course', () => {
@@ -1395,40 +1098,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.loadingFeedbackSuggestions()).toBe(false);
     });
 
-    it('should ignore suggestions from a previous submission while the next request is pending', async () => {
-        const oldRequest = new Subject<Feedback[]>();
-        const nextRequest = new Subject<Feedback[]>();
-        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockImplementation((_exercise, id) =>
-            id === 41 ? oldRequest.asObservable() : nextRequest.asObservable(),
-        );
-        comp.exercise.set(exercise);
-        comp.submission.set({ id: 41 } as ProgrammingSubmission);
-        comp.feedbackSuggestions.set([{ text: 'Old suggestion' }]);
-        const oldLoad = comp['loadFeedbackSuggestions']();
+    it('should reset loadingFeedbackSuggestions when a new submission that needs no suggestions arrives while a previous request is still pending', async () => {
+        // Simulate submission A's Athena request still being in flight when navigation loads submission B, an
+        // already-assessed submission which never starts its own request.
+        comp.loadingFeedbackSuggestions.set(true);
 
-        const nextSubmission = structuredClone(submission);
-        nextSubmission.id = 42;
-        vi.spyOn(internals(comp), 'handleReceivedSubmission').mockImplementation(async (received) => {
-            comp.submission.set(received);
-        });
-        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => {});
-        await internals(comp).onSubmissionReceived('42', nextSubmission);
-        expect(comp.feedbackSuggestions()).toEqual([]);
-        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+        await internals(comp).onSubmissionReceived('123', submission);
 
-        const nextLoad = comp['loadFeedbackSuggestions']();
-        expect(comp.loadingFeedbackSuggestions()).toBe(true);
-        oldRequest.next([{ text: 'Old suggestion' }]);
-        oldRequest.complete();
-        await oldLoad;
-        expect(comp.feedbackSuggestions()).toEqual([]);
-        expect(comp.loadingFeedbackSuggestions()).toBe(true);
-
-        const nextSuggestion = { text: 'New suggestion' } as Feedback;
-        nextRequest.next([nextSuggestion]);
-        nextRequest.complete();
-        await nextLoad;
-        expect(comp.feedbackSuggestions()).toEqual([nextSuggestion]);
         expect(comp.loadingFeedbackSuggestions()).toBe(false);
     });
 
@@ -1566,61 +1242,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(comp.assessmentNotPossibleYet()).toBeUndefined();
             expect(comp.submission()).toEqual(submission);
         });
-    });
-
-    it('should rebuild allAssessmentFeedbacks so in-place instruction link changes refresh usage state', () => {
-        const instruction = {
-            id: 9,
-            credits: 1,
-            feedback: 'ok',
-            gradingScale: 'good',
-            instructionDescription: 'desc',
-            usageCount: 0,
-        };
-        const feedback = {
-            detailText: 'line note',
-            credits: 1,
-            reference: 'file:src/Main.java_line:0',
-            type: FeedbackType.MANUAL,
-        } as Feedback;
-        comp.referencedFeedback.set([feedback]);
-
-        const beforeLink = comp.allAssessmentFeedbacks();
-        expect(beforeLink.some((item) => item.gradingInstruction?.id === 9)).toBe(false);
-        expect(comp.allAssessmentFeedbacks()).not.toBe(beforeLink);
-
-        // Inline link mutates the existing feedback instance (same as drop / link-icon unlink).
-        feedback.gradingInstruction = instruction;
-        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(true);
-
-        feedback.gradingInstruction = undefined;
-        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
-    });
-
-    it('should include pending inline instruction links in allAssessmentFeedbacks', () => {
-        const instruction = {
-            id: 9,
-            credits: 1,
-            feedback: 'ok',
-            gradingScale: 'good',
-            instructionDescription: 'desc',
-            usageCount: 1,
-        };
-        const pending = {
-            detailText: 'draft',
-            credits: 1,
-            reference: 'file:src/Main.java_line:3',
-            gradingInstruction: instruction,
-        } as Feedback;
-
-        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
-
-        comp.onPendingFeedbackChange([pending]);
-        expect(comp.pendingReferencedFeedback()).toEqual([pending]);
-        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(true);
-
-        comp.onPendingFeedbackChange([]);
-        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
     });
 
     describe('when the locked submission has no result', () => {
