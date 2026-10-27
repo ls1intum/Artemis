@@ -400,6 +400,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     recalculationNecessary = true;
                     originalSolutionItem.setInvalid(Boolean.TRUE);
                 }
+                // the solution text is what submitted answers are graded against, so a changed text requires a recalculation
+                if (!Objects.equals(originalSolutionItem.getText(), solutionDTOItem.text())) {
+                    recalculationNecessary = true;
+                    originalSolutionItem.setText(solutionDTOItem.text());
+                }
             }
         }
         originalSolution.removeAll(solutionsToRemove);

@@ -56,13 +56,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Tag } from 'primeng/tag';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { FileUploadResponse, FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
+import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/hyperion/problem-statement/problem-statement.utils';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /** Cached selection with Monaco-compatible data used by scroll re-positioning. */
@@ -316,7 +316,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
-    private reviewCommentManager?: ReviewCommentWidgetManager;
+    // Lazy manager creation must invalidate draft checks made before it exists.
+    private readonly reviewCommentManagerValue = signal<ReviewCommentWidgetManager | undefined>(undefined);
+
+    private get reviewCommentManager(): ReviewCommentWidgetManager | undefined {
+        return this.reviewCommentManagerValue();
+    }
+
+    private set reviewCommentManager(manager: ReviewCommentWidgetManager | undefined) {
+        this.reviewCommentManagerValue.set(manager);
+    }
 
     constructor() {
         this.uniqueMarkdownEditorId.set('markdown-editor-' + generateUuid());
@@ -873,6 +882,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.reviewCommentManager?.clearDrafts();
     }
 
+    hasReviewCommentDrafts(): boolean {
+        return this.reviewCommentManager?.hasDrafts() ?? false;
+    }
+
     private getReviewCommentManager(): ReviewCommentWidgetManager | undefined {
         if (!this.monacoEditor()) {
             return undefined;
@@ -893,7 +906,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onApplyInlineFix: ({ thread }) => this.onApplyInlineFix.emit({ threadId: thread.id }),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
-                showFeedbackAction: () => false,
             });
         }
         return this.reviewCommentManager;

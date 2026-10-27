@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
-import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderRetryPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -96,8 +95,6 @@ public class GenerationJobService {
 
     private final Duration terminalReplayTtl;
 
-    private final boolean exactProviderUsage;
-
     private String localNodeId;
 
     private DistributedMap<String, JobInfo> jobMap;
@@ -113,30 +110,21 @@ public class GenerationJobService {
     @Autowired
     public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             HyperionGenerationBudgetService generationBudgetService, HyperionAgentProperties agentProperties, HyperionEffortProfileService effortProfiles,
-            @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl,
-            @Value("${spring.ai.openai.max-retries:1}") int providerMaxRetries, @Value("${spring.ai.openai.chat.max-retries:#{null}}") @Nullable Integer chatProviderMaxRetries) {
+            @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, agentProperties.getStaleJobTimeout(), agentProperties.getMaxJobDuration(),
-                cancellationExecutor, terminalReplayTtl, ProviderRetryPolicy.effectiveSdkRetries(providerMaxRetries, chatProviderMaxRetries) == 0,
-                effortProfiles.longestMaxJobDuration());
+                cancellationExecutor, terminalReplayTtl, effortProfiles.longestMaxJobDuration());
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             Duration terminalReplayTtl) {
-        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, terminalReplayTtl, true,
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, terminalReplayTtl,
                 maxJobDuration);
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
-            Duration terminalReplayTtl, boolean exactProviderUsage) {
-        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, terminalReplayTtl,
-                exactProviderUsage, maxJobDuration);
-    }
-
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
-            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
-            Duration terminalReplayTtl, boolean exactProviderUsage, @Nullable Duration longestConfiguredJobDuration) {
+            Duration terminalReplayTtl, @Nullable Duration longestConfiguredJobDuration) {
         this.longestConfiguredJobDuration = longestConfiguredJobDuration;
         this.distributedDataProvider = distributedDataProvider;
         this.eventPublisher = eventPublisher;
@@ -146,7 +134,6 @@ public class GenerationJobService {
         this.maxJobDuration = maxJobDuration;
         this.cancelHooks = new GenerationCancelHooks(distributedDataProvider, cancellationExecutor);
         this.terminalReplayTtl = terminalReplayTtl;
-        this.exactProviderUsage = exactProviderUsage;
     }
 
     public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
@@ -241,9 +228,10 @@ public class GenerationJobService {
         Duration longestJobDuration = longestConfiguredJobDuration == null || longestConfiguredJobDuration.compareTo(maxJobDuration) < 0 ? maxJobDuration
                 : longestConfiguredJobDuration;
         HyperionGenerationTimeouts.validateStaleJobTimeout(staleJobTimeout, longestJobDuration);
+        HyperionGenerationTimeouts.validateTerminalReplayTtl(terminalReplayTtl, longestJobDuration);
         jobMap = distributedDataProvider.getMap(JOB_MAP_NAME);
         cancellationMap = distributedDataProvider.getExpiringMap(CANCEL_MAP_NAME, longestJobDuration);
-        replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl, cancellationMap);
+        replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl, longestJobDuration, cancellationMap);
         cleanup = new GenerationJobCleanup(jobMap, cancellationMap, replayStore, (exerciseId, jobId) -> publishExerciseState(exerciseId, jobId, false));
         cancelHooks.subscribe();
         localNodeId = UUID.randomUUID().toString();
@@ -282,28 +270,75 @@ public class GenerationJobService {
      */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief,
             @Nullable HyperionGenerationSettings settings, @Nullable ExerciseGenerationInputDTO input) {
+        return startJob(user, exercise, userPrompt, mode, budgetReservationId, sourceBrief, settings, input, null, eventPublisher::publishEvent);
+    }
+
+    /**
+     * Reserves the destination before its database transaction commits, without starting remote work.
+     * The caller must dispatch after commit or abandon this exact job after rollback.
+     *
+     * @param user                requesting editor
+     * @param exercise            new destination
+     * @param userPrompt          resolved transformation
+     * @param budgetReservationId reserved provider budget
+     * @param settings            resolved effort
+     * @param input               owner-visible input
+     * @param preparation         source-copy context
+     * @return deferred start event
+     */
+    public GenerationStartedEvent prepareVariantJob(User user, ProgrammingExercise exercise, String userPrompt, String budgetReservationId, HyperionGenerationSettings settings,
+            ExerciseGenerationInputDTO input, GenerationVariantPreparation preparation) {
+        var event = new java.util.concurrent.atomic.AtomicReference<GenerationStartedEvent>();
+        startJob(user, exercise, userPrompt, GenerationMode.ADAPT, budgetReservationId, null, settings, input, preparation, event::set);
+        return event.get();
+    }
+
+    /**
+     * Dispatches a committed destination. Rejection is a visible failed run, not an untracked orphan draft.
+     *
+     * @param event reserved start event, dispatched once after database commit
+     * @return whether the executor accepted responsibility for the run
+     */
+    public boolean dispatchPreparedJob(GenerationStartedEvent event) {
+        try {
+            eventPublisher.publishEvent(event);
+            return true;
+        }
+        catch (RuntimeException failure) {
+            log.warn("Could not dispatch prepared generation job {}", event.jobId(), failure);
+            recordEvent(event.exercise().getId(), event.jobId(), ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                    "The authoring executor could not start. The unused destination draft remains available for inspection or deletion."), true);
+            clearJob(event.exercise().getId(), event.jobId());
+            recordDispatchFailure(event.jobId());
+            return false;
+        }
+    }
+
+    private String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief,
+            @Nullable HyperionGenerationSettings settings, @Nullable ExerciseGenerationInputDTO input, @Nullable GenerationVariantPreparation preparation,
+            Consumer<GenerationStartedEvent> dispatch) {
         String jobId = UUID.randomUUID().toString();
         String key = key(exercise.getId());
         Instant startedAt = Instant.now();
         Instant deadlineAt = startedAt.plus(settings == null ? maxJobDuration : settings.maxJobDuration());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId, mode, exercise.getTitle(),
-                course == null ? null : course.getId());
+        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, preparation == null, budgetReservationId, mode,
+                exercise.getTitle(), course == null ? null : course.getId());
         var startedReplay = new AtomicReference<GenerationJobReplayStore.StartedReplay>();
         boolean publicStatePublished = false;
         try {
             claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
             replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode, settings == null ? null : settings.name(), input, startedReplay::set);
-            if (!exactProviderUsage) {
-                replayStore.markUsageIncomplete(jobId);
-            }
             publishExerciseState(exercise.getId(), jobId, true);
             publicStatePublished = true;
-            eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt,
-                    budgetReservationId, sourceBrief, settings));
+            var event = new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt, budgetReservationId,
+                    sourceBrief, settings, preparation);
+            eventPublisher.publishEvent(new GenerationAdmittedEvent(event));
+            dispatch.accept(event);
         }
         catch (RejectedExecutionException e) {
             cleanup.unpublished(newJob, startedReplay.get());
+            recordDispatchFailure(jobId);
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
             }
@@ -313,6 +348,7 @@ public class GenerationJobService {
         }
         catch (RuntimeException e) {
             cleanup.unpublished(newJob, startedReplay.get());
+            recordDispatchFailure(jobId);
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
             }
@@ -342,6 +378,15 @@ public class GenerationJobService {
         }
         finally {
             unlockJobSlot(key);
+        }
+    }
+
+    private void recordDispatchFailure(String jobId) {
+        try {
+            eventPublisher.publishEvent(new GenerationDispatchFailedEvent(jobId));
+        }
+        catch (RuntimeException failure) {
+            log.error("Could not record dispatch failure for authoring run {}", jobId, failure);
         }
     }
 
@@ -698,6 +743,25 @@ public class GenerationJobService {
         JobInfo current = jobMap.get(key);
         if (current != null && current.jobId().equals(token)) {
             jobMap.remove(key, current);
+        }
+    }
+
+    /**
+     * Makes an initialized variant cancellable only after repository creation has stopped mutating its destination.
+     *
+     * @param exerciseId initialized destination
+     * @param jobId      exact current job
+     * @return false when ownership was lost
+     */
+    public boolean allowCancellationAfterPreparation(long exerciseId, String jobId) {
+        String key = key(exerciseId);
+        lockJobSlot(key);
+        try {
+            JobInfo current = jobMap.get(key);
+            return current != null && current.jobId().equals(jobId) && localNodeId.equals(current.ownerNodeId()) && jobMap.replace(key, current, current.withCancellable(true));
+        }
+        finally {
+            unlockJobSlot(key);
         }
     }
 

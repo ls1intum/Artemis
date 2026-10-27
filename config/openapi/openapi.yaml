@@ -284,6 +284,40 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/settings:
+    get:
+      tags: [hyperion-quiz-question-pool]
+      operationId: getQuizQuestionPoolSettings
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HyperionCourseSettings'}
+    put:
+      tags: [hyperion-quiz-question-pool]
+      operationId: updateQuizQuestionPoolSettings
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/HyperionCourseSettings'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HyperionCourseSettings'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -671,6 +705,45 @@ paths:
         required: true
       responses:
         '200': {description: OK}
+  /api/hyperion/programming-exercises/{exerciseId}/generation/variants:
+    post:
+      tags: [hyperion-programming-variant]
+      operationId: generateProgrammingVariant
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/VariantGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationJobStart'}
+  /api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert:
+    post:
+      tags: [hyperion-exercise-generation]
+      operationId: revertExerciseGeneration
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: runId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationRevertResult'}
   /api/hyperion/programming-exercises/{exerciseId}/generate-exercise:
     post:
       tags: [hyperion-exercise-generation]
@@ -691,21 +764,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ExerciseGenerationJobStart'}
-  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert:
-    post:
-      tags: [hyperion-exercise-generation]
-      operationId: revertExerciseGeneration
-      parameters:
-      - name: exerciseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ExerciseGenerationRevertResult'}
   /api/hyperion/programming-exercises/{exerciseId}/generate-code:
     post:
       tags: [hyperion-code-generation]
@@ -765,6 +823,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/VariantJobStart'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/build:
+    post:
+      tags: [hyperion-quiz-question-pool]
+      operationId: startQuizQuestionPoolBuild
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolBuildStart'}
   /api/hyperion/courses/{courseId}/quiz-exercises/refine-question:
     post:
       tags: [hyperion-quiz-question-generation]
@@ -1031,6 +1104,28 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/AssessmentCriteriaGenerationResponse'}
+  /api/hyperion/authoring-runs/access:
+    post:
+      tags: [hyperion-authoring-run]
+      operationId: checkAuthoringRunAccess
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: string, maxLength: 128, minLength: 1}
+              maxItems: 500
+              minItems: 1
+        required: true
+      responses:
+        '200':
+          description: Currently authorized run identities
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: string, maxLength: 128}
+                maxItems: 500
   /api/global-search/admin/coverage/refresh:
     post:
       tags: [ingestion-coverage]
@@ -1463,6 +1558,40 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}:
+    get:
+      tags: [hyperion-authoring-run]
+      operationId: getAuthoringRunStatus
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: runId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationStatus'}
+  /api/hyperion/programming-exercises/{exerciseId}/generation/capabilities:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getGenerationCapabilities
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationCapabilities'}
   /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status:
     get:
       tags: [hyperion-exercise-generation]
@@ -1536,7 +1665,70 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/ExerciseGenerationEffortProfile'}
-  /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot:
+  /api/hyperion/courses/{courseId}/quiz-question-pool/questions:
+    get:
+      tags: [hyperion-quiz-question-pool]
+      operationId: getQuizQuestionPoolQuestions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: competencyId
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/progress:
+    get:
+      tags: [hyperion-quiz-question-pool]
+      operationId: getQuizQuestionPoolProgress
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolProgress'}
+  /api/hyperion/authoring-runs:
+    get:
+      tags: [hyperion-authoring-run]
+      operationId: getAuthoringRuns
+      parameters:
+      - name: beforeId
+        in: query
+        required: false
+        schema: {type: integer, format: int64, exclusiveMinimum: 0}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthoringRunPage'}
+  /api/hyperion/admin/generations:
+    get:
+      tags: [admin-hyperion-generation-monitoring]
+      operationId: getActiveGenerations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ActiveGeneration'}
+  /api/hyperion/admin/exercises/{exerciseId}/wedged-slot:
     get:
       tags: [admin-hyperion-generation]
       operationId: getWedgedSlot
@@ -1551,18 +1743,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ExerciseGenerationWedgedSlot'}
-  /api/hyperion/admin/exercises/generations:
-    get:
-      tags: [admin-hyperion-generation-monitoring]
-      operationId: getActiveGenerations
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items: {$ref: '#/components/schemas/ActiveGeneration'}
   /api/global-search/admin/index/overview:
     get:
       tags: [ingestion-coverage]
@@ -1766,6 +1946,18 @@ paths:
           content:
             text/calendar:
               schema: {type: string}
+  /api/aiworker/admin/workers:
+    get:
+      tags: [admin-ai-worker]
+      operationId: getWorkers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/WorkerStatus'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
       tags: [tutorial-group]
@@ -1800,7 +1992,7 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
-  /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/{token}:
+  /api/hyperion/admin/exercises/{exerciseId}/wedged-slot/{token}:
     delete:
       tags: [admin-hyperion-generation]
       operationId: recoverWedgedSlot
@@ -1951,6 +2143,12 @@ components:
           items: {$ref: '#/components/schemas/SubmittedAnswerFromStudent'}
           uniqueItems: true
       required: [submittedAnswers]
+    WorkloadCapability:
+      type: object
+      properties:
+        workload: {type: string}
+        version: {type: integer, format: int32}
+        profile: {type: string}
     QuizSubmissionBeforeEvaluation:
       type: object
       properties:
@@ -2038,6 +2236,50 @@ components:
         content: {type: string, description: The file's text content as the agent
             left it}
       required: [content, path, repo]
+    QuizQuestionPoolItem:
+      type: object
+      description: One item of a course's quiz question pool
+      properties:
+        id: {type: integer, format: int64, description: Id of the pool item}
+        competencyId: {type: integer, format: int64, description: Id of the competency
+            the question assesses}
+        competencyTitle: {type: string, description: Title of the competency the question
+            assesses}
+        lectureUnitId: {type: integer, format: int64, description: Id of the lecture
+            unit the question is grounded in}
+        lectureUnitName: {type: string, description: Name of the lecture unit the
+            question is grounded in}
+        language:
+          type: string
+          description: Language of the question
+          enum: [en, de]
+        questionType:
+          type: string
+          description: Type of the question
+          enum: [single-choice, multiple-choice, true-false]
+        difficulty:
+          type: string
+          description: Difficulty band of the question
+          enum: [EASY, MEDIUM, HARD]
+        state:
+          type: string
+          description: Lifecycle state of the item
+          enum: [PENDING, GENERATING, GENERATED, FILTERING, FILTERED, FAILED_GENERATION,
+            FAILED_FILTER]
+        reviewState:
+          type: string
+          description: The instructor's review decision
+          enum: [PENDING, APPROVED, EXCLUDED]
+        decision: {$ref: '#/components/schemas/QuizQuestionFilterDecision', description: 'The
+            filter''s decision, present once judged'}
+        failure: {type: string, description: 'Why the last attempt failed, present
+            after a failure'}
+        generatorModel: {type: string, description: Model that generated the question}
+        judgeModel: {type: string, description: Model that judged the question}
+        updatedAt: {type: string, format: date-time, description: When the item last
+            changed}
+      required: [competencyId, difficulty, id, language, lectureUnitId, questionType,
+        reviewState, state, updatedAt]
     SubmittedAnswerFromLiveClient:
       discriminator:
         propertyName: type
@@ -2078,6 +2320,8 @@ components:
       type: object
       properties:
         jobId: {type: string}
+        exerciseId: {type: integer, format: int64}
+        sourceExerciseId: {type: integer, format: int64}
       required: [jobId]
     ResultAfterEvaluation:
       type: object
@@ -2420,6 +2664,7 @@ components:
         artifactsRetained: {type: boolean, description: Whether a current or retained
             candidate snapshot from this run is readable}
         input: {$ref: '#/components/schemas/ExerciseGenerationInput'}
+        run: {$ref: '#/components/schemas/AuthoringRun'}
       required: [accountingState, artifactsRetained, cancellable, events, fileChanges,
         jobId, ownedByCaller, revertAvailable, running]
     TutorialGroupDetailData:
@@ -2863,6 +3108,24 @@ components:
         typeCounts:
           type: array
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
+    WorkerStatus:
+      type: object
+      properties:
+        workerId: {type: string}
+        state:
+          type: string
+          enum: [OFFLINE, NOT_READY, AVAILABLE, RESERVED, BUSY]
+        lastHeartbeat: {type: string, format: date-time}
+        imageDigest: {type: string}
+        incarnation: {type: string, format: uuid}
+        activeExecution: {type: string, format: uuid}
+        leaseHeld: {type: boolean}
+        capacity: {type: integer, format: int32}
+        availableSlots: {type: integer, format: int32}
+        executions:
+          type: array
+          items: {$ref: '#/components/schemas/WorkerExecution'}
+        capability: {$ref: '#/components/schemas/WorkloadCapability'}
     StudentQuizParticipationWithSolutions:
       required: [quizQuestionsType]
       type: object
@@ -2941,7 +3204,7 @@ components:
         feedback: {type: string, description: Suggested feedback, minLength: 1}
         usageCount: {type: integer, format: int32, description: Maximum number of
             uses, minimum: 0}
-      required: [credits, feedback, gradingScale, instructionDescription]
+      required: [credits, feedback, gradingScale, instructionDescription, usageCount]
     TutorialGroupFreePeriod:
       type: object
       properties:
@@ -3143,6 +3406,23 @@ components:
           items: {$ref: '#/components/schemas/ShortAnswerSolution'}
         similarityValue: {type: integer, format: int32}
         matchLetterCase: {type: boolean}
+    QuizQuestionPoolProgress:
+      type: object
+      description: Progress of a course's quiz question pool build
+      properties:
+        running: {type: boolean, description: Whether a build is running on this node}
+        total: {type: integer, format: int32, description: Intended questions in the
+            pool}
+        toGenerate: {type: integer, format: int32, description: Items still to generate}
+        toJudge: {type: integer, format: int32, description: Generated items awaiting
+            the filter}
+        judged: {type: integer, format: int32, description: Items generated and judged}
+        accepted: {type: integer, format: int32, description: Judged items the filter
+            accepted}
+        rejected: {type: integer, format: int32, description: Judged items the filter
+            rejected}
+        failed: {type: integer, format: int32, description: Items whose generation
+            or filtering failed permanently}
     VariantGenerationRequest:
       type: object
       properties:
@@ -3329,7 +3609,7 @@ components:
         jobId: {type: string}
         repositoryType:
           type: string
-          enum: [exercise, solution, tests, auxiliary, user]
+          enum: [TEMPLATE, SOLUTION, TESTS, AUXILIARY, USER]
     ActiveGeneration:
       type: object
       properties:
@@ -3525,7 +3805,14 @@ components:
           items: {$ref: '#/components/schemas/GeneratedAssessmentInstruction'}
           maxItems: 3
           minItems: 3
-      required: [title]
+      required: [bonus, structuredGradingInstructions, title]
+    WorkerExecution:
+      type: object
+      properties:
+        slot: {type: integer, format: int32}
+        executionId: {type: string, format: uuid}
+        jobId: {type: string}
+        resourceId: {type: string}
     QualityIssueLocation:
       type: object
       description: Location of a quality issue within the problem statement
@@ -3615,6 +3902,14 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    AuthoringRunPage:
+      type: object
+      properties:
+        runs:
+          type: array
+          items: {$ref: '#/components/schemas/AuthoringRun'}
+        nextBeforeId: {type: integer, format: int64}
+      required: [runs]
     Costs:
       type: object
       description: Response containing consistency check costs
@@ -3701,6 +3996,39 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+    QuizQuestionFilterVerdict:
+      type: object
+      description: The filter's judgement of one generated quiz question on one failure
+        mode
+      properties:
+        mode:
+          type: string
+          description: The failure mode judged
+          enum: [FACTUAL_ERROR, AMBIGUOUS_CORRECT_ANSWER, OFF_TOPIC, NEAR_DUPLICATE,
+            ILL_FORMED_DISTRACTORS]
+        severity: {type: number, format: double, description: Severity of the defect
+            from 0 (absent) to 1 (severe)}
+        triggered: {type: boolean, description: Whether the defect is severe enough
+            that an instructor would reject or rewrite the question}
+        justification: {type: string, description: One-sentence justification of the
+            severity}
+      required: [mode]
+    QuizQuestionFilterDecision:
+      type: object
+      description: The filter's decision for one generated quiz question and the per-mode
+        verdicts behind it
+      properties:
+        accepted: {type: boolean, description: Whether the question passed the filter}
+        aggregateScore: {type: number, format: double, description: 'One minus the
+            worst severity among the gating failure modes, from 0 to 1; higher is
+            better'}
+        verdicts:
+          type: array
+          description: One verdict per failure mode
+          items: {$ref: '#/components/schemas/QuizQuestionFilterVerdict'}
+          minItems: 1
+        rationale: {type: string, description: The filter's overall rationale}
+      required: [verdicts]
     VariantPlacement:
       type: object
       properties:
@@ -3748,7 +4076,7 @@ components:
       properties:
         repositoryType:
           type: string
-          enum: [exercise, solution, tests, auxiliary, user]
+          enum: [TEMPLATE, SOLUTION, TESTS, AUXILIARY, USER]
         initialAutoGeneration: {type: boolean}
         selectedFeedbackThreadIds:
           type: array
@@ -3856,6 +4184,16 @@ components:
         text: {type: string, maxLength: 255, minLength: 0}
         spotId: {type: integer, format: int64}
       required: [spotId, text]
+    ExerciseGenerationCapabilities:
+      type: object
+      properties:
+        supported: {type: boolean}
+        canGenerate: {type: boolean}
+        canAdapt: {type: boolean}
+        canCreateVariant: {type: boolean}
+        busy: {type: boolean}
+        capacityAvailable: {type: boolean}
+        restriction: {type: string}
     IndexedCollectionCount:
       type: object
       properties:
@@ -3893,6 +4231,22 @@ components:
         suggestedFix: {type: string, description: Concrete suggestion to fix the issue}
         impactOnLearners: {type: string, description: How this issue increases extraneous
             cognitive load}
+    HyperionCourseSettings:
+      type: object
+      description: Hyperion settings of one course
+      properties:
+        poolGenerationEnabled: {type: boolean, description: Whether the quiz question
+            pool is generated automatically for new lecture material}
+        questionsPerLectureUnit: {type: integer, format: int32, description: 'Questions
+            the pool holds per lecture unit and competency, spread over that unit''s
+            cells', maximum: 60, minimum: 1}
+    QuizQuestionPoolBuildStart:
+      type: object
+      description: Outcome of a request to build a course's quiz question pool
+      properties:
+        started: {type: boolean, description: Whether a build was started}
+        enqueued: {type: integer, format: int32, description: Intended questions newly
+            added to the pool}
     TutorialGroupImportData:
       type: object
       properties:
@@ -3929,6 +4283,7 @@ components:
         reviewFeedback:
           type: array
           items: {$ref: '#/components/schemas/ExerciseGenerationFeedback'}
+        sourceExerciseId: {type: integer, format: int64}
     TutorialGroupSession:
       type: object
       properties:
@@ -4054,6 +4409,27 @@ components:
         isStudent: {type: boolean}
         isChannelModerator: {type: boolean}
         isRequestingUser: {type: boolean}
+    AuthoringRun:
+      type: object
+      properties:
+        jobId: {type: string}
+        exerciseId: {type: integer, format: int64}
+        sourceExerciseId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        kind:
+          type: string
+          enum: [CREATE, ADAPT, VARIANT]
+        status:
+          type: string
+          enum: [QUEUED, SAVED, NEEDS_REVIEW, PARTIAL, ERROR, CANCELLED, UNKNOWN]
+        running: {type: boolean}
+        startedAt: {type: string, format: date-time}
+        finishedAt: {type: string, format: date-time}
+        beforeVersionId: {type: integer, format: int64}
+        afterVersionId: {type: integer, format: int64}
+        revertedAt: {type: string, format: date-time}
+      required: [courseId, exerciseId, jobId, kind, running, startedAt, status]
     ProblemStatementGlobalRefinementRequest:
       type: object
       description: Request to refine a problem statement globally using a user prompt
