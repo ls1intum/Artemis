@@ -4,6 +4,7 @@
             tumAetUiButton
             size="small"
             data-testid="manage-assessment-link"
+            class="whitespace-nowrap"
             [attr.data-assessment-action]="link.action"
             [attr.data-correction-round]="link.correctionRound"
             [severity]="link.severity"
@@ -28,6 +29,7 @@
                 size="small"
                 severity="danger"
                 data-testid="manage-assessment-cancel"
+                class="whitespace-nowrap"
                 (click)="cancelAssessment(link.result!, participation(), link.submissionId)"
                 [disabled]="isLoading() || disabled()"
                 [attr.aria-label]="

@@ -229,6 +229,7 @@ describe('AssessmentQueueComponent', () => {
     });
 
     it('keeps new test-run assessments available without queue eligibility metadata', async () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, exerciseGroup: { id: 5, exam: { id: 4, course: { id: 3 } } } });
         fixture.componentRef.setInput('isTestRun', true);
         vi.spyOn(TestBed.inject(SubmissionService), 'getTestRunSubmissionsForExercise').mockReturnValue(
             of(new HttpResponse({ body: [{ id: 12, participation: { id: 11 }, results: [] } as Submission] })),

@@ -1,5 +1,6 @@
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -64,13 +65,14 @@ function scoreDtoToSubmission(dto: ParticipationManagementDTO, exercise?: Exerci
 }
 
 /**
- * Builds a minimal Participation-like object from the flat DTO so that jhi-result and
+ * Builds a minimal student participation from the flat DTO so that jhi-result and
  * manage-assessment-buttons can render results, assessment links and cancel buttons.
  */
-export function scoreDtoToParticipation(dto: ParticipationManagementDTO, exercise?: Exercise): Participation {
+export function scoreDtoToParticipation(dto: ParticipationManagementDTO, exercise?: Exercise): StudentParticipation {
     return {
         id: dto.participationId,
         type: exercise?.type === ExerciseType.PROGRAMMING ? ParticipationType.PROGRAMMING : ParticipationType.STUDENT,
+        testRun: dto.testRun,
         exercise,
         individualDueDate: dto.individualDueDate,
         submissionCount: dto.submissionCount,
