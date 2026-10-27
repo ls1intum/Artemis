@@ -7,10 +7,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+
+import de.tum.cit.aet.artemis.core.config.Constants;
 
 /** Applies feature-package and service conventions to the AI Worker code in the Artemis application. */
 @Tag("ArchitectureTest")
@@ -38,6 +43,16 @@ class AiWorkerArchitectureTest {
     @Test
     void springConfigurationsStayInTheConfigPackage() {
         classes().that().areAnnotatedWith(Configuration.class).should().resideInAPackage("..config..").check(CLASSES);
+    }
+
+    @Test
+    void mvcComponentsInTheWorkerScanAreCoreOnly() {
+        var controllers = CLASSES.stream().filter(type -> type.isAnnotatedWith(Controller.class) || type.isAnnotatedWith(RestController.class)).toList();
+        assertThat(controllers).isNotEmpty();
+        for (var controller : controllers) {
+            assertThat(controller.isAnnotatedWith(Profile.class)).as(controller.getName()).isTrue();
+            assertThat(controller.getAnnotationOfType(Profile.class).value()).as(controller.getName()).containsExactly(Constants.PROFILE_CORE);
+        }
     }
 
     @Test

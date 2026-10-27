@@ -29,7 +29,7 @@ export class AdminHyperionGenerationApi {
      * @param exerciseId
      */
     getWedgedSlot(exerciseId: number): Observable<ExerciseGenerationWedgedSlot> {
-        const url = `${this.basePath}/api/hyperion/admin/exercises/${exerciseId}/hyperion-wedged-slot`;
+        const url = `${this.basePath}/api/hyperion/admin/exercises/${exerciseId}/wedged-slot`;
         return this.http.get<ExerciseGenerationWedgedSlot>(url);
     }
 
@@ -45,7 +45,7 @@ export class AdminHyperionGenerationApi {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'reason', reason);
         const queryString = queryParams.toString();
-        const url = `${this.basePath}/api/hyperion/admin/exercises/${exerciseId}/hyperion-wedged-slots/${tokenPath}${queryString ? `?${queryString}` : ''}`;
+        const url = `${this.basePath}/api/hyperion/admin/exercises/${exerciseId}/wedged-slot/${tokenPath}${queryString ? `?${queryString}` : ''}`;
         return this.http.delete<void>(url);
     }
 

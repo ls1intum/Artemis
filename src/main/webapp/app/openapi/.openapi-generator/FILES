@@ -1,14 +1,18 @@
+api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
+api/hyperion-authoring-run-api.ts
 api/hyperion-code-generation-api.ts
 api/hyperion-exercise-generation-api.ts
 api/hyperion-exercise-variant-api.ts
 api/hyperion-faq-api.ts
 api/hyperion-problem-statement-api.ts
+api/hyperion-programming-variant-api.ts
 api/hyperion-quiz-question-generation-api.ts
+api/hyperion-quiz-question-pool-api.ts
 api/ingestion-browser-api.ts
 api/query-params.ts
 api/quiz-exercise-api.ts
@@ -35,6 +39,8 @@ model/answer-option-without-solution.ts
 model/artifact-location.ts
 model/assessment-criteria-generation-request.ts
 model/assessment-criteria-generation-response.ts
+model/authoring-run-page.ts
+model/authoring-run.ts
 model/bloom-radar.ts
 model/calendar-event.ts
 model/channel-sub-type-reference-dates.ts
@@ -88,6 +94,7 @@ model/drop-location.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
 model/exercise-generation-activity.ts
+model/exercise-generation-capabilities.ts
 model/exercise-generation-effort-profile.ts
 model/exercise-generation-event.ts
 model/exercise-generation-feedback.ts
@@ -112,6 +119,7 @@ model/generated-assessment-instruction.ts
 model/global-search-result.ts
 model/grading-criterion.ts
 model/grading-instruction.ts
+model/hyperion-course-settings.ts
 model/indexed-content-object.ts
 model/indexed-content-presence.ts
 model/indexed-entity-record.ts
@@ -168,9 +176,14 @@ model/quiz-point-statistics.ts
 model/quiz-question-bulk-refinement-request.ts
 model/quiz-question-bulk-refinement-response.ts
 model/quiz-question-create.ts
+model/quiz-question-filter-decision.ts
+model/quiz-question-filter-verdict.ts
 model/quiz-question-from-editor.ts
 model/quiz-question-generation-request.ts
 model/quiz-question-generation-response.ts
+model/quiz-question-pool-build-start.ts
+model/quiz-question-pool-item.ts
+model/quiz-question-pool-progress.ts
 model/quiz-question-re-evaluate.ts
 model/quiz-question-refinement-failure.ts
 model/quiz-question-refinement-request.ts
@@ -255,3 +268,6 @@ model/variant-job-detail.ts
 model/variant-job-start.ts
 model/variant-job.ts
 model/variant-placement.ts
+model/worker-execution.ts
+model/worker-status.ts
+model/workload-capability.ts

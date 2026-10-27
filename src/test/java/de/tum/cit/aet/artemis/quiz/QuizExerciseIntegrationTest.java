@@ -1033,6 +1033,36 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReEvaluateShortAnswerSolutionTextChangeIsPersisted() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
+        ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+
+        // the student fills every spot with the original solution text, so the short answer question is fully correct before the edit
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerFor(shortAnswerQuestion, true));
+        quizSubmission.submitted(true);
+        quizSubmission.submissionDate(ZonedDateTime.now().minusHours(3));
+        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        double scoreBeforeReEvaluation = quizExercise.getScoreForSubmission(quizSubmission);
+        participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, scoreBeforeReEvaluation, true);
+        assertThat(scoreBeforeReEvaluation).isPositive();
+
+        ShortAnswerSolution editedSolution = shortAnswerQuestion.getSolutions().getFirst();
+        editedSolution.setText("corrected solution");
+
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), OK);
+
+        QuizExercise updatedQuizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
+        ShortAnswerQuestion updatedQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
+        assertThat(updatedQuestion.findSolutionById(editedSolution.getId()).getText()).isEqualTo("corrected solution");
+
+        // the submitted original text no longer matches the edited solution, so the stored result must be graded against the new text
+        var reEvaluatedResult = resultRepository.findDistinctBySubmissionId(quizSubmission.getId()).orElseThrow();
+        assertThat(reEvaluatedResult.getScore()).isLessThan(scoreBeforeReEvaluation);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReevaluate_DragItemRemoved() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
