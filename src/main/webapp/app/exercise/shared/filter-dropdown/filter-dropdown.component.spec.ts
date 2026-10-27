@@ -71,7 +71,7 @@ describe('Participation filter toolbar', () => {
         expect(fixture.nativeElement.querySelector('button[tumAetUiButton]')).toBeNull();
     });
 
-    it('stays open on scroll and input refresh, and closes on outside click', () => {
+    it('stays open on scroll and input refresh, and closes when the backdrop is clicked', () => {
         const trigger = openGroup(0);
         fixture.nativeElement.dispatchEvent(new Event('scroll', { bubbles: true }));
         fixture.componentRef.setInput('groupedFilters', [
@@ -80,7 +80,9 @@ describe('Participation filter toolbar', () => {
         ]);
         fixture.detectChanges();
         expect(trigger.getAttribute('aria-expanded')).toBe('true');
-        document.body.click();
+        const backdrop = document.querySelector('.cdk-overlay-backdrop');
+        expect(backdrop).not.toBeNull();
+        backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         fixture.detectChanges();
         expect(trigger.getAttribute('aria-expanded')).toBe('false');
     });
