@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyShort;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -189,6 +190,29 @@ class CourseNotificationSettingServiceTest {
         courseNotificationSettingService.applySpecification(notificationTypeChannels, userId, testUser, courseId);
 
         verify(userCourseNotificationSettingSpecificationRepository).saveAll(any());
+    }
+
+    @Test
+    void shouldKeepOmittedAndNullFlagsWhileApplyingExplicitFalseToAnExistingSpecification() {
+        var existingPreset = new UserCourseNotificationSettingPreset();
+        existingPreset.setSettingPreset(customPresetId);
+        when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(existingPreset);
+        var existing = new UserCourseNotificationSettingSpecification();
+        existing.setCourseNotificationType(notificationTypeId);
+        existing.setEmail(true);
+        existing.setPush(true);
+        existing.setWebapp(true);
+        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseIdAndCourseNotificationTypeIn(eq(userId), eq(courseId), any()))
+                .thenReturn(List.of(existing));
+        doReturn(NewPostNotification.class).when(courseNotificationRegistryService).getNotificationClass(notificationTypeId);
+        Map<NotificationChannelOption, Boolean> partial = new HashMap<>();
+        partial.put(NotificationChannelOption.EMAIL, false);
+        partial.put(NotificationChannelOption.PUSH, null);
+        courseNotificationSettingService.applySpecification(Map.of(notificationTypeId, partial), userId, false, courseId);
+        assertThat(existing.isEmail()).isFalse();
+        assertThat(existing.isPush()).isTrue();
+        assertThat(existing.isWebapp()).isTrue();
+        verify(userCourseNotificationSettingSpecificationRepository).saveAll(List.of(existing));
     }
 
     @Test

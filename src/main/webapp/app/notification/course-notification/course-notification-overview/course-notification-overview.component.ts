@@ -19,7 +19,7 @@ import { RouterLink } from '@angular/router';
 import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingInfo } from 'app/openapi/model/course-notification-setting-info';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 
@@ -138,11 +138,7 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
                     from(
                         Promise.all([
                             firstValueFrom(this.courseNotificationService.getInfo()),
-                            firstValueFrom(
-                                this.courseNotificationSettingService
-                                    .getSettingInfo(courseId, false)
-                                    .pipe(filter((value): value is CourseNotificationSettingInfo => value !== undefined)),
-                            ),
+                            firstValueFrom(this.courseNotificationSettingService.getSettingInfo(courseId, false).pipe(filter((value) => value !== undefined))),
                         ]).then(([info, settingInfo]) => ({ info, settingInfo })),
                     ),
                 ),
