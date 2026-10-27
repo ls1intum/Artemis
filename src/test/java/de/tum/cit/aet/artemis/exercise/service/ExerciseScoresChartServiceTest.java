@@ -16,8 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.StudentScoreTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation;
@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 class ExerciseScoresChartServiceTest {
 
     @Mock
-    private StudentScoreRepository studentScoreRepository;
+    private StudentScoreTestRepository studentScoreRepository;
 
     @Mock
     private TeamScoreRepository teamScoreRepository;
