@@ -10,8 +10,9 @@ import tools.jackson.databind.json.JsonMapper;
  * Builds {@link BeanOutputConverter}s that tolerate the JSON deviations language models commonly emit.
  * <p>
  * Models writing mathematical notation produce escapes such as {@code \(} and {@code \[} inside JSON strings, which a strict
- * parser rejects. This mapper accepts any backslash escape, treating the escaped character literally, and tolerates single
- * quotes, trailing commas, unescaped control characters and unknown fields.
+ * parser rejects. This mapper accepts such non-standard backslash escapes by dropping the backslash and keeping the escaped
+ * character; the standard JSON escapes keep their meaning. It also tolerates single quotes, trailing commas, unescaped control
+ * characters and unknown fields.
  */
 final class HyperionStructuredOutputs {
 
