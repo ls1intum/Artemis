@@ -1,0 +1,19 @@
+.hyperion-run-title {
+    margin: 0;
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+    font-weight: var(--font-weight-semibold);
+
+    /* Not `--bs-heading-color`: the title takes the colour of the card it sits on, as every other heading here does. */
+    color: inherit;
+    text-wrap: balance;
+}
+
+.hyperion-fact-qualifier {
+    color: var(--text-body-secondary);
+}
+
+.hyperion-fact-qualifier[data-band='over'] {
+    color: var(--artemis-alert-warning-color);
+    font-weight: 500;
+}
