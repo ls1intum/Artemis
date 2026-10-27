@@ -79,6 +79,7 @@ describe('ExamUpdateComponent', () => {
     }
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
         projectedViews.splice(0).forEach((view) => view.destroy());
     });
@@ -944,11 +945,14 @@ describe('ExamUpdateComponent', () => {
             expect(button?.disabled).toBe(false);
         });
 
-        it('should toggle save button disabled state based on form validity and configuration validity', () => {
+        it.each(['2026-10-25T00:30:45Z', '2026-10-25T01:30:45Z'])('should toggle save button disabled state based on form validity and configuration validity at %s', (instant) => {
+            vi.useFakeTimers({ toFake: ['Date'] });
+            vi.setSystemTime(new Date(instant));
+            // Keep initial and restored dates relative to the same anchor across clock changes.
             const now = dayjs().startOf('minute');
-            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
-            examWithoutExercises.startDate = dayjs().add(2, 'hours');
-            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.visibleDate = now.add(1, 'hours');
+            examWithoutExercises.startDate = now.add(2, 'hours');
+            examWithoutExercises.endDate = now.add(3, 'hours');
             examWithoutExercises.workingTime = 3600;
 
             fixture.changeDetectorRef.detectChanges();

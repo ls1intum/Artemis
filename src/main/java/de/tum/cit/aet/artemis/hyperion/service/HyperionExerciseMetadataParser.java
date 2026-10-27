@@ -30,10 +30,10 @@ final class HyperionExerciseMetadataParser {
      * An explicit statement of difficulty in an instructor's brief, in either order: "Difficulty: easy" and "an easy difficulty" both count, "easy to test" does not, because the
      * word has to be tied to the noun to be a statement about the exercise rather than about something in it.
      */
-    private static final Pattern DIFFICULTY_IN_BRIEF = Pattern.compile("difficulty\\s*(?:level)?\\s*[:=-]?\\s*(easy|medium|hard)|\\b(easy|medium|hard)\\s+difficulty",
+    private static final Pattern DIFFICULTY_IN_BRIEF = Pattern.compile("difficulty\\s*+(?:level)?\\s*+[:=-]?\\s*+(easy|medium|hard)|\\b(easy|medium|hard)\\s++difficulty",
             Pattern.CASE_INSENSITIVE);
 
-    private static final Pattern CODE_FENCE = Pattern.compile("(?:^\\s*```[a-zA-Z]*\\s*)|(?:\\s*```\\s*$)");
+    private static final Pattern CODE_FENCE = Pattern.compile("(?:^```[a-zA-Z]*)|(?:```$)");
 
     private HyperionExerciseMetadataParser() {
     }
