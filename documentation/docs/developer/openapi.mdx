@@ -22,6 +22,10 @@ The Angular generator enables `observeResponseHeaders`. An Observable operation 
 
 Course notification preference schemas distinguish complete effective channel flags in responses from partial, nullable channel overrides in requests. The settings adapter normalizes an omitted empty response map for its UI subjects; channel flags remain the generated booleans without new defaults.
 
+Course feed schemas use the outer `notificationType` to discriminate 28 flat envelope variants. The ordered shared pipeline registers sealed payload records, marks primitive fields required, composes complete envelope branches, then filters and strips DTO suffixes. This changes only OpenAPI metadata; Jackson, legacy read-only `parameters` and flat push JSON retain their existing shape. Optional payload references remain optional, while primitive payload flags and counts remain required.
+
+`CourseNotificationPage` preserves the internal cached page's fields and totals, including null reconstruction results. Its item schema references a named union containing all envelope branches and a literal null branch. With the pinned generator this emits a nullable item alias; wrapping only the envelope reference and null would collapse during normalization. The client date/state adapter rejects a null item before committing converted content and never silently removes it or changes totals.
+
 ## Generating OpenAPI Specs and Client Files
 
 When you update a REST endpoint or a DTO, you need to generate a new OpenAPI spec and generate new client files.

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.notification.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
@@ -154,4 +155,56 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
             assertThat(newStatus.getStatus()).isEqualTo(UserCourseNotificationStatusType.ARCHIVED);
         }
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldApplySelectiveUpdatesOnlyToCurrentUsersRows() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX + "other", 1, 0, 0, 0);
+        User other = userUtilService.getUserByLogin(TEST_PREFIX + "otherstudent1");
+        var notification = courseNotificationRepository.save(new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now()));
+        var own = userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(notification, user, UserCourseNotificationStatusType.UNSEEN));
+        var others = userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(notification, other, UserCourseNotificationStatusType.UNSEEN));
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/courses/" + course.getId() + "/seen").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"notificationIds\":[" + notification.getId() + "]}")).andExpect(status().isOk()).andExpect(content().string(""));
+        assertThat(readStatus(own)).isEqualTo(UserCourseNotificationStatusType.SEEN);
+        assertThat(readStatus(others)).isEqualTo(UserCourseNotificationStatusType.UNSEEN);
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/courses/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"statusType\":\"ARCHIVED\",\"notificationIds\":[" + notification.getId() + "]}")).andExpect(status().isOk()).andExpect(content().string(""));
+        assertThat(readStatus(own)).isEqualTo(UserCourseNotificationStatusType.ARCHIVED);
+        assertThat(readStatus(others)).isEqualTo(UserCourseNotificationStatusType.UNSEEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldArchiveOnlyCurrentUsersRowsInRequestedCourseWithoutRequestBody() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX + "other", 1, 0, 0, 0);
+        User other = userUtilService.getUserByLogin(TEST_PREFIX + "otherstudent1");
+        var otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        var notification = courseNotificationRepository.save(new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now()));
+        var otherNotification = courseNotificationRepository.save(new CourseNotification(otherCourse, (short) 1, ZonedDateTime.now(), ZonedDateTime.now()));
+        var own = userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(notification, user, UserCourseNotificationStatusType.UNSEEN));
+        var others = userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(notification, other, UserCourseNotificationStatusType.UNSEEN));
+        var otherCourseStatus = userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(otherNotification, user, UserCourseNotificationStatusType.UNSEEN));
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/courses/" + course.getId() + "/archive-all")).andExpect(status().isOk())
+                .andExpect(content().string(""));
+        assertThat(readStatus(own)).isEqualTo(UserCourseNotificationStatusType.ARCHIVED);
+        assertThat(readStatus(others)).isEqualTo(UserCourseNotificationStatusType.UNSEEN);
+        assertThat(readStatus(otherCourseStatus)).isEqualTo(UserCourseNotificationStatusType.UNSEEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDenyAllThreeWritesForNonmember() throws Exception {
+        var otherCourse = courseUtilService.createCourse();
+        for (String operation : List.of("status", "seen", "archive-all")) {
+            request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/courses/" + otherCourse.getId() + "/" + operation).contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"statusType\":\"SEEN\",\"notificationIds\":[]}")).andExpect(status().isForbidden());
+        }
+    }
+
+    private UserCourseNotificationStatusType readStatus(UserCourseNotificationStatus stored) {
+        return userCourseNotificationStatusRepository.findAllByCourseNotificationId(stored.getCourseNotification().getId()).stream()
+                .filter(row -> row.getId().equals(stored.getId())).findFirst().orElseThrow().getStatus();
+    }
+
 }

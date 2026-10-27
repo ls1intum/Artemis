@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CourseNotification, payloadOf } from 'app/notification/shared/entities/course-notification/course-notification';
+import { CourseNotification, notificationOf } from 'app/notification/shared/entities/course-notification/course-notification';
 import { Subscription, distinctUntilChanged, filter, map } from 'rxjs';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
@@ -187,13 +187,14 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
         }
 
         // The channel a post was written in, read from the payload of the type that carries it.
-        const openedChannelId = payloadOf(notification, 'newPostNotification')?.channelId ?? payloadOf(notification, 'newAnnouncementNotification')?.channelId;
+        const openedChannelId =
+            notificationOf(notification, 'newPostNotification')?.payload?.channelId ?? notificationOf(notification, 'newAnnouncementNotification')?.payload?.channelId;
         if (openedChannelId !== undefined && openConversationId == String(openedChannelId)) {
             return false;
         }
 
         const openThreadId = this.communicationState.openPostId();
-        const answeredPostId = payloadOf(notification, 'newAnswerNotification')?.postId;
+        const answeredPostId = notificationOf(notification, 'newAnswerNotification')?.payload?.postId;
         if (answeredPostId !== undefined && openThreadId == answeredPostId) {
             return false;
         }

@@ -21,8 +21,10 @@ class CourseNotificationSettingOpenApiCustomizerTest {
         var read = new MapSchema();
         var write = new MapSchema();
         var unrelated = new MapSchema();
+        var preset = new MapSchema();
         var api = new OpenAPI().components(new Components().addSchemas("CourseNotificationSettingInfo" + suffix, new ObjectSchema().addProperty("notificationTypeChannels", read))
                 .addSchemas("CourseNotificationSettingSpecificationRequest" + suffix, new ObjectSchema().addProperty("notificationTypeChannels", write))
+                .addSchemas("UserCourseNotificationSettingPreset" + suffix, new ObjectSchema().addProperty("presetMap", preset))
                 .addSchemas("UnrelatedDTO", new ObjectSchema().addProperty("notificationTypeChannels", unrelated)));
         new CourseNotificationSettingOpenApiCustomizer().customise(api);
         assertThat(read.getAdditionalProperties()).isInstanceOf(Schema.class);
@@ -38,6 +40,10 @@ class CourseNotificationSettingOpenApiCustomizerTest {
         assertThat(writeFlags.getProperties().get("EMAIL").getTypes()).containsExactlyInAnyOrder("boolean", "null");
         assertThat(writeFlags.getAdditionalProperties()).isEqualTo(false);
         assertThat(unrelated.getAdditionalProperties()).isNull();
+        var presetFlags = (Schema<?>) preset.getAdditionalProperties();
+        assertThat(presetFlags.getRequired()).containsExactlyInAnyOrder("EMAIL", "PUSH", "WEBAPP");
+        assertThat(presetFlags.getAdditionalProperties()).isEqualTo(false);
+        assertThat(presetFlags.getProperties().get("PUSH").getType()).isEqualTo("boolean");
     }
 
     @Test

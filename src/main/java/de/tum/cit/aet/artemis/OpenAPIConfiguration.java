@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.notification.config.CourseNotificationOpenApiSchema;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
@@ -79,6 +80,8 @@ public class OpenAPIConfiguration {
             openApi.info(new Info().title("Artemis Application Server API").version(version).contact(new Contact().email("krusche@tum.de").name("Stephan Krusche")));
 
             if (components != null && components.getSchemas() != null) {
+                CourseNotificationOpenApiSchema.registerPayloads(components);
+                CourseNotificationOpenApiSchema.composeEnvelopes(components);
                 Map<String, Schema> schemas = filterForSchemasWithDtoSuffixAndStripSuffix(components);
                 removeDtoSuffixFromAttributeNames(schemas);
 
