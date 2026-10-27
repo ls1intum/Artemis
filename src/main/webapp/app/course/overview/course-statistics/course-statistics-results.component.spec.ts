@@ -133,4 +133,36 @@ describe('CourseStatisticsResultsComponent', () => {
         fixture.detectChanges();
         expect(fixture.componentInstance.visibleRows().map((row) => row.exercise.id)).toEqual([2]);
     });
+
+    it('explains that a course has no exercises and omits pagination for its empty ledger', () => {
+        fixture.componentRef.setInput('course', { id: 589, exercises: [] });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.redesign.noExercises');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.courseOverview.statistics.redesign.noMatchingExercises');
+        expect(fixture.nativeElement.querySelector('tumaet-ui-paginator')).toBeNull();
+    });
+
+    it('distinguishes globally filtered exercises from a course with no exercises', () => {
+        fixture.componentRef.setInput('course', { id: 589, exercises: [{ id: 1, title: 'Class design' }] });
+        fixture.componentRef.setInput('exercises', []);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.redesign.noMatchingExercises');
+        expect(fixture.nativeElement.querySelector('tumaet-ui-paginator')).toBeNull();
+    });
+
+    it('hides pagination for an empty search and restores linked results when the search is cleared', () => {
+        fixture.componentRef.setInput('exercises', [{ id: 1, title: 'Class design' }] as Exercise[]);
+        fixture.componentInstance.search.set('missing');
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.redesign.noMatchingExercises');
+        expect(fixture.nativeElement.querySelector('tumaet-ui-paginator')).toBeNull();
+
+        fixture.componentInstance.search.set('');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="statistics-exercise-link"]').getAttribute('href')).toBe('/courses/589/exercises/1');
+        expect(fixture.nativeElement.querySelector('tumaet-ui-paginator')).not.toBeNull();
+    });
 });

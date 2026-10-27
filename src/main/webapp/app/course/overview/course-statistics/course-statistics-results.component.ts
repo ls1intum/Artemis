@@ -42,6 +42,7 @@ export class CourseStatisticsResultsComponent {
     readonly courseId = input.required<number>();
     readonly course = input<Course>();
     readonly exercises = input.required<Exercise[]>();
+    readonly hasExercises = computed(() => (this.course()?.exercises ?? this.exercises()).length > 0);
     readonly search = signal('');
     readonly type = signal<ExerciseType | 'all'>('all');
     readonly status = signal<ResultState | 'all'>('all');

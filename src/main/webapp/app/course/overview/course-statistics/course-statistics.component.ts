@@ -198,7 +198,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private tabReselectionSubscription?: Subscription;
 
     courseId!: number; // set in ngOnInit() from route params
-    private courseExercises: Exercise[] = [];
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private translateSubscription?: Subscription;
@@ -207,8 +206,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     readonly course = signal<Course | undefined>(undefined);
     readonly numberOfAppliedFilters = signal<number>(0);
 
-    private courseExercisesNotIncludedInScore: Exercise[] = [];
-    private courseExercisesFilteredByCategories: Exercise[] = [];
     readonly currentlyHidingNotIncludedInScoreExercises = signal<boolean>(false);
     readonly filteredExerciseIDs = signal<number[]>([]);
     /** Filter-id updates also mark changes made through the legacy category-filter service. */
@@ -278,6 +275,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     // entries of the "Your overall points" doughnut chart (name is a translation key, color the slice color)
     readonly doughnutChartEntries = signal<YourOverallPointsEntry[]>([]);
+    readonly hasScoreRingData = computed(() => this.doughnutChartEntries().some((entry) => entry.value > 0));
     readonly usesCreditedPointsRing = computed(() => this.doughnutChartEntries().some((entry) => entry.name === 'artemisApp.courseOverview.statistics.redesign.points'));
 
     // Labels for the different parts in Your overall points chart
@@ -406,9 +404,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.competenciesLoading.set(false);
         this.competenciesFailed.set(false);
         this.course.set(undefined);
-        this.courseExercises = [];
-        this.courseExercisesNotIncludedInScore = [];
-        this.courseExercisesFilteredByCategories = [];
         this.currentlyHidingNotIncludedInScoreExercises.set(false);
         this.filteredExerciseIDs.set([]);
         this.numberOfAppliedFilters.set(0);
@@ -471,7 +466,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private onCourseLoad(): void {
         const course = this.course();
         if (course?.exercises) {
-            this.courseExercises = course.exercises;
             this.calculateAndFilterNotIncludedInScore();
             this.calculateMaxPoints();
             this.calculateReachablePoints();
@@ -495,16 +489,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     toggleNotIncludedInScoreExercises() {
-        if (this.currentlyHidingNotIncludedInScoreExercises()) {
-            this.courseExercises = this.courseExercises.concat(this.courseExercisesNotIncludedInScore);
-            this.filteredExerciseIDs.set([]);
-        } else {
-            this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
-            this.filteredExerciseIDs.set(this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!));
-        }
         this.currentlyHidingNotIncludedInScoreExercises.update((value) => !value);
-        this.categoryFilter.setupCategoryFilter(this.courseExercises);
-        this.calculateNumberOfAppliedFilters();
+        this.updateExerciseFilters();
     }
 
     /**
@@ -677,12 +663,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     calculateAndFilterNotIncludedInScore() {
         this.currentlyHidingNotIncludedInScoreExercises.set(true);
-        this.courseExercisesNotIncludedInScore = this.courseExercises.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED);
-        this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
-        this.courseExercisesFilteredByCategories = this.courseExercises;
-        this.filteredExerciseIDs.set(this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!));
-        this.categoryFilter.setupCategoryFilter(this.courseExercises);
-        this.calculateNumberOfAppliedFilters();
+        this.categoryFilter.setupCategoryFilter(this.course()?.exercises ?? []);
+        this.updateExerciseFilters();
     }
 
     /**
@@ -690,56 +672,44 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param category the category that is selected or deselected
      */
     toggleCategory(category: string) {
-        const isIncluded = this.categoryFilter.getCurrentFilterState(category)!;
-        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleCategory<Exercise>(this.courseExercises, category);
-        this.updateCategoryFilters(!isIncluded);
+        this.updateExerciseFilters(this.categoryFilter.toggleCategory<Exercise>(this.course()?.exercises ?? [], category));
     }
 
     /**
      * Handles the use case when the user selects or deselects the option "select all categories"
      */
     toggleAllCategories(): void {
-        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleAllCategories<Exercise>(this.courseExercises);
-        this.updateCategoryFilters(this.categoryFilter.allCategoriesSelected);
+        this.updateExerciseFilters(this.categoryFilter.toggleAllCategories<Exercise>(this.course()?.exercises ?? []));
     }
 
     /**
      * handles the selection and deselection of "exercises with no categories" filter option
      */
     toggleExercisesWithNoCategory(): void {
-        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleExercisesWithNoCategory<Exercise>(this.courseExercises);
-        this.updateCategoryFilters(this.categoryFilter.includeExercisesWithNoCategory);
+        this.updateExerciseFilters(this.categoryFilter.toggleExercisesWithNoCategory<Exercise>(this.course()?.exercises ?? []));
     }
 
     /**
-     * Auxiliary method that updates the filtered exercise IDs. These are necessary in order to update the performance in exercises chart below
-     * @param included indicates whether the updated filter is now selected or deselected and updates the filtered exercise IDs accordingly
+     * Intersects category selection with the independent optional-exercise filter. Always derive exclusions from the
+     * complete course list, so changing one control neither resets the other nor retains stale excluded IDs.
      */
-    private filterExerciseIDsForCategorySelection(included: boolean): void {
-        if (!included) {
-            const newlyFilteredIDs = this.courseExercises
-                .filter((exercise) => !this.courseExercisesFilteredByCategories.includes(exercise))
-                .map((exercise) => exercise.id!)
-                .filter((id) => !this.filteredExerciseIDs().includes(id));
-            this.filteredExerciseIDs.update((ids) => ids.concat(newlyFilteredIDs));
-        } else {
-            this.filteredExerciseIDs.update((ids) => ids.filter((id) => !this.courseExercisesFilteredByCategories.find((exercise) => exercise.id === id)));
-        }
+    private updateExerciseFilters(categorySelection = this.categoryFilter.applyCurrentFilter<Exercise>(this.course()?.exercises ?? [])): void {
+        const selectedExercises = new Set(categorySelection);
+        this.filteredExerciseIDs.set(
+            (this.course()?.exercises ?? [])
+                .filter(
+                    (exercise) =>
+                        !selectedExercises.has(exercise) ||
+                        (this.currentlyHidingNotIncludedInScoreExercises() && exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED),
+                )
+                .map((exercise) => exercise.id!),
+        );
+        this.calculateNumberOfAppliedFilters();
     }
 
     private calculateNumberOfAppliedFilters(): void {
         const excludedCategories = [...this.categoryFilter.exerciseCategories].filter((category) => !this.categoryFilter.getCurrentFilterState(category)).length;
         const excludedUncategorized = this.categoryFilter.exercisesWithoutCategoriesPresent && !this.categoryFilter.includeExercisesWithNoCategory ? 1 : 0;
         this.numberOfAppliedFilters.set(excludedCategories + excludedUncategorized + (this.currentlyHidingNotIncludedInScoreExercises() ? 1 : 0));
-    }
-
-    /**
-     * Auxiliary method to reduce code duplication
-     * Calculates the number of applied filters, groups the updated set of exercises and updates the set of filtered IDs
-     * @param isIncluded indicates whether the updated filter is now selected or deselected and updates the filtered exercise IDs accordingly
-     */
-    private updateCategoryFilters(isIncluded: boolean) {
-        this.calculateNumberOfAppliedFilters();
-        this.filterExerciseIDsForCategorySelection(isIncluded);
     }
 }

@@ -19,7 +19,7 @@
             ></a>
         </header>
         @if (showFilters()) {
-            <fieldset class="mb-6! rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5!">
+            <fieldset data-testid="statistics-filters" class="mb-6! rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5!">
                 <legend class="float-none w-auto px-2! text-base! font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></legend>
                 <p class="mb-4! text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.filterScope"></p>
                 <div class="flex flex-wrap gap-x-6! gap-y-3!">
@@ -28,11 +28,13 @@
                             jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises"
                         ></span
                     ></label>
-                    <label class="flex! items-center gap-2! text-sm font-normal!"
-                        ><tumaet-ui-checkbox [checked]="categoryFilter.allCategoriesSelected" (checkedChange)="toggleAllCategories()" /><span
-                            jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"
-                        ></span
-                    ></label>
+                    @if (categoryOptions().length) {
+                        <label class="flex! items-center gap-2! text-sm font-normal!"
+                            ><tumaet-ui-checkbox [checked]="categoryFilter.allCategoriesSelected" (checkedChange)="toggleAllCategories()" /><span
+                                jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"
+                            ></span
+                        ></label>
+                    }
                     @if (categoryFilter.exercisesWithoutCategoriesPresent) {
                         <label class="flex! items-center gap-2! text-sm font-normal!"
                             ><tumaet-ui-checkbox [checked]="categoryFilter.includeExercisesWithNoCategory" (checkedChange)="toggleExercisesWithNoCategory()" /><span
@@ -60,7 +62,12 @@
                             [config]="doughnutConfig"
                             [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
                         />
-                        <div data-testid="total-score-label" class="statistics-score-center" aria-hidden="true">
+                        @if (!hasScoreRingData()) {
+                            <svg data-testid="statistics-empty-score-ring" class="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" aria-hidden="true">
+                                <circle cx="50" cy="50" r="35" fill="none" stroke="var(--tumaet-ui-border-color)" stroke-width="10" />
+                            </svg>
+                        }
+                        <div data-testid="total-score-label" class="statistics-score-center" [attr.aria-hidden]="hasScoreRingData() ? 'true' : null">
                             <strong class="text-3xl font-semibold tabular-nums">{{ displayedScores().currentPercentage }}%</strong
                             ><span class="mt-1! text-sm tabular-nums text-(--tumaet-ui-muted-color)"
                                 >{{ displayedScores().creditedPoints }} / {{ displayedScores().attainablePoints }} pt</span

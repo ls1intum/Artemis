@@ -738,33 +738,27 @@ describe('CourseStatisticsComponent', () => {
         });
 
         it('should toggle categories', () => {
-            const getCurrentFilterStateMock = vi.spyOn(categoryFilter, 'getCurrentFilterState').mockReturnValue(false);
-            const toggleCategoryMock = vi.spyOn(categoryFilter, 'toggleCategory').mockReturnValue(exercises);
-
-            comp.toggleCategory('test1');
-
+            comp.toggleCategory('quiz1');
             expect(comp.numberOfAppliedFilters()).toBe(2);
-            expect(getCurrentFilterStateMock).toHaveBeenCalledWith('test1');
-            expect(toggleCategoryMock).toHaveBeenCalledOnce();
-            expect(toggleCategoryMock).toHaveBeenCalledWith(exercises, 'test1');
+            expect(comp.resultExercises().some((exercise) => exercise.type === ExerciseType.QUIZ)).toBe(false);
+            comp.toggleCategory('quiz1');
+            expect(comp.resultExercises()).toEqual(exercises);
+            expect(comp.numberOfAppliedFilters()).toBe(1);
         });
 
         it('should toggle all categories', () => {
-            const toggleAllCategoriesMock = vi.spyOn(categoryFilter, 'toggleAllCategories').mockReturnValue(exercises);
-
             comp.toggleAllCategories();
-
-            expect(toggleAllCategoriesMock).toHaveBeenCalledOnce();
-            expect(toggleAllCategoriesMock).toHaveBeenCalledWith(exercises);
+            expect(comp.resultExercises()).toEqual([]);
+            comp.toggleAllCategories();
+            expect(comp.resultExercises()).toEqual(exercises);
+            expect(comp.currentlyHidingNotIncludedInScoreExercises()).toBe(true);
         });
 
         it('should toggle exercises with no categories', () => {
-            const toggleExercisesWithNoCategoryMock = vi.spyOn(categoryFilter, 'toggleExercisesWithNoCategory').mockReturnValue(exercises);
-
             comp.toggleExercisesWithNoCategory();
-
-            expect(toggleExercisesWithNoCategoryMock).toHaveBeenCalledOnce();
-            expect(toggleExercisesWithNoCategoryMock).toHaveBeenCalledWith(exercises);
+            expect(comp.resultExercises().map((exercise) => exercise.type)).toEqual([ExerciseType.QUIZ]);
+            comp.toggleExercisesWithNoCategory();
+            expect(comp.resultExercises()).toEqual(exercises);
         });
 
         const setupExercisesWithCategories = () => {
@@ -884,5 +878,73 @@ describe('CourseStatisticsComponent', () => {
         expect(comp.numberOfAppliedFilters()).toBe(1);
         expect(comp.categoryOptions().every((option) => option.selected)).toBe(true);
         expect(comp.overallPoints()).toBe(15);
+    });
+
+    it.each(['categories-first', 'optional-first'])('keeps category and optional filters independent (%s)', (order) => {
+        const exercises = [
+            { id: 1, type: ExerciseType.TEXT, categories: [new ExerciseCategory('Design', '#fff')] },
+            { id: 2, type: ExerciseType.TEXT, categories: [new ExerciseCategory('Practice', '#fff')], includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED },
+            { id: 3, type: ExerciseType.TEXT, categories: [new ExerciseCategory('Reflection', '#fff')] },
+        ] as Exercise[];
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, exercises });
+        fixture.detectChanges();
+
+        if (order === 'categories-first') {
+            comp.toggleAllCategories();
+            comp.toggleNotIncludedInScoreExercises();
+        } else {
+            comp.toggleNotIncludedInScoreExercises();
+            comp.toggleAllCategories();
+        }
+
+        expect(comp.currentlyHidingNotIncludedInScoreExercises()).toBe(false);
+        expect(categoryFilter.allCategoriesSelected).toBe(false);
+        expect(comp.resultExercises()).toEqual([]);
+
+        comp.toggleAllCategories();
+        expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([1, 2, 3]);
+        comp.toggleNotIncludedInScoreExercises();
+        expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([1, 3]);
+    });
+
+    it('preserves a partially selected category filter when optional exercises are shown or hidden', () => {
+        const exercises = [
+            { id: 1, type: ExerciseType.TEXT, categories: [new ExerciseCategory('Design', '#fff')] },
+            { id: 2, type: ExerciseType.TEXT, categories: [new ExerciseCategory('Practice', '#fff')], includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED },
+            { id: 3, type: ExerciseType.TEXT, categories: [new ExerciseCategory('Reflection', '#fff')] },
+        ] as Exercise[];
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, exercises });
+        fixture.detectChanges();
+
+        comp.toggleCategory('Design');
+        comp.toggleNotIncludedInScoreExercises();
+        expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([2, 3]);
+        expect(categoryFilter.getCurrentFilterState('Design')).toBe(false);
+
+        comp.toggleNotIncludedInScoreExercises();
+        expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([3]);
+        comp.toggleCategory('Design');
+        expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([1, 3]);
+    });
+
+    it('does not offer category selection when a course has no exercises', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, exercises: [] });
+        fixture.detectChanges();
+        comp.showFilters.set(true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"]')).toBeNull();
+        expect(comp.resultExercises()).toEqual([]);
+    });
+
+    it('keeps a visible score-ring outline when the course has no points', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, exercises: [] });
+        fixture.detectChanges();
+
+        const ring = fixture.nativeElement.querySelector('[data-testid="total-score-doughnut"]');
+        expect(ring.querySelector('svg circle')).not.toBeNull();
+        expect(ring.textContent).toContain('0%');
+        expect(ring.textContent).toContain('0 / 0 pt');
+        expect(ring.textContent).not.toContain('NaN');
     });
 });

@@ -1,4 +1,8 @@
-<section class="overflow-hidden rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background)" aria-labelledby="statistics-results-title">
+<section
+    data-testid="statistics-results"
+    class="overflow-hidden rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background)"
+    aria-labelledby="statistics-results-title"
+>
     <div class="flex flex-wrap items-start justify-between gap-4! p-5!">
         <div>
             <h2 id="statistics-results-title" class="m-0! text-lg! font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.redesign.exerciseResults"></h2>
@@ -6,12 +10,14 @@
         </div>
         <input
             #exerciseSearch
+            data-testid="statistics-exercise-search"
             tumAetUiInput
             type="search"
             [value]="search()"
             (input)="search.set(exerciseSearch.value)"
             [attr.aria-label]="'artemisApp.courseOverview.statistics.redesign.search' | artemisTranslate"
-            [placeholder]="'artemisApp.courseOverview.statistics.redesign.search' | artemisTranslate"
+            [placeholder]="'artemisApp.courseOverview.statistics.redesign.searchPlaceholder' | artemisTranslate"
+            [title]="'artemisApp.courseOverview.statistics.redesign.search' | artemisTranslate"
             class="w-full sm:w-64"
         />
     </div>
@@ -103,11 +109,19 @@
                     </tr>
                 } @empty {
                     <tr>
-                        <td colspan="3" class="py-8! text-center" jhiTranslate="artemisApp.courseOverview.statistics.redesign.noMatchingExercises"></td>
+                        <td
+                            colspan="3"
+                            class="py-8! text-center"
+                            [jhiTranslate]="
+                                hasExercises() ? 'artemisApp.courseOverview.statistics.redesign.noMatchingExercises' : 'artemisApp.courseOverview.statistics.redesign.noExercises'
+                            "
+                        ></td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
-    <tumaet-ui-paginator [totalRecords]="filteredRows().length" [page]="currentPage()" [pageSize]="pageSize" [showRowsPerPage]="false" (pageChange)="page.set($event)" />
+    @if (filteredRows().length) {
+        <tumaet-ui-paginator [totalRecords]="filteredRows().length" [page]="currentPage()" [pageSize]="pageSize" [showRowsPerPage]="false" (pageChange)="page.set($event)" />
+    }
 </section>
