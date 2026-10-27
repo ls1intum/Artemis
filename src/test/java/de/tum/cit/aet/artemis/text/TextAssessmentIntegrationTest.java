@@ -189,8 +189,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         var result = submission.getLatestResult();
         var originalFeedback = new Feedback().credits(2.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("Original feedback");
         participationUtilService.addFeedbackToResult(originalFeedback, result);
-        var originalScore = result.getScore();
-        var originalCompletionDate = result.getCompletionDate();
+        var originalResult = resultRepository.findByIdElseThrow(result.getId());
+        var originalScore = originalResult.getScore();
+        var originalCompletionDate = originalResult.getCompletionDate();
         long resultCount = resultRepository.count();
         long submissionCount = submissionRepository.count();
         var caller = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");

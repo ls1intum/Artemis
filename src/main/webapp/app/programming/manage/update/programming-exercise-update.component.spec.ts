@@ -964,15 +964,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.data = of({ programmingExercise: saved });
             route.url = of([{ path: 'edit' } as UrlSegment]);
             route.params = of({ courseId, exerciseId: saved.id });
-            vi.spyOn(courseService, 'find').mockReturnValue(
-                of(new HttpResponse({ body: Object.assign(new Course(), { id: courseId, title: 'Hydrated course', description: 'Loaded separately' }) })),
-            );
+            const hydratedCourse = Object.assign(new Course(), { id: courseId, title: 'Hydrated course', description: 'Loaded separately' });
+            const loadCourse = vi
+                .spyOn(courseService, 'findForManagement')
+                .mockReturnValue(of(new HttpResponse({ body: hydratedCourse })))
+                .mockClear();
             fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
             comp = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
             fixture.detectChanges();
             const action = fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent)).componentInstance;
+            expect(loadCourse).toHaveBeenCalledExactlyOnceWith(courseId);
             expect(comp.programmingExercise.course?.title).toBe('Hydrated course');
             expect(comp.backupExercise.course?.title).toBeUndefined();
             expect(comp.programmingExercise.categories).toEqual([]);

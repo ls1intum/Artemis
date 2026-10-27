@@ -835,7 +835,7 @@ describe('ParticipationSubmissionComponent', () => {
             const { submission, participation } = createSubmissionFixture(77);
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             const dialogErrors: string[] = [];
             comp.dialogError$.subscribe((dialogError) => dialogErrors.push(dialogError));
             comp.ngOnInit();
