@@ -1,4 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { convertBuildConfigDatesFromServer } from 'app/programming/shared/utils/build-time-window.utils';
 import { Service, inject } from '@angular/core';
 import { MODULE_FEATURE_SHARING } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -125,6 +126,7 @@ export class ProgrammingExerciseSharingService {
         res.body.buildAndTestStudentSubmissionsAfterDueDate = res.body.buildAndTestStudentSubmissionsAfterDueDate
             ? dayjs(res.body.buildAndTestStudentSubmissionsAfterDueDate)
             : undefined;
+        convertBuildConfigDatesFromServer(res.body.buildConfig);
         return res;
     }
 

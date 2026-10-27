@@ -226,6 +226,22 @@
                 "title": "Regex für den Branchnamen",
                 "description": "Namens für andere Branches als der default Branch müssen im Namen dem Regex entsprechen."
             },
+            "buildTimeWindow": {
+                "title": "Build-Zeitfenster",
+                "message": "Begrenze optional, wann Pushes in die Repositories von Studierenden gebaut werden. Pushes außerhalb des Zeitfensters werden gespeichert, aber nicht gebaut und erzeugen keine Abgabe. Lasse beide Felder leer, um jeden Push zu bauen.",
+                "description": "Pushes von Studierenden außerhalb dieses Zeitfensters werden im Repository gespeichert, aber nicht gebaut, getestet oder bewertet. Jede Grenze kann leer bleiben: Mit nur einem Start beginnen die Builds zu diesem Zeitpunkt, mit nur einem Ende enden sie zu diesem Zeitpunkt. Beide Grenzen sind inklusive. Editoren und Instruktoren, der Übungsmodus und von Instruktoren ausgelöste Builds sind nicht betroffen. Das Zeitfenster muss zwischen dem Startdatum (oder Veröffentlichungsdatum) und der Einreichungsfrist der Übung liegen.",
+                "start": "Beginn des Build-Zeitfensters",
+                "end": "Ende des Build-Zeitfensters",
+                "endNotAfterStart": "Das Ende des Build-Zeitfensters muss nach dessen Beginn liegen.",
+                "outsideExerciseDates": "Das Build-Zeitfenster muss zwischen dem Startdatum (oder Veröffentlichungsdatum) und der Einreichungsfrist der Übung liegen.",
+                "invalidInput": "Das Build-Zeitfenster enthält ein Datum, das nicht gelesen werden kann.",
+                "triggerDisabled": "Außerhalb des Build-Zeitfensters können keine Builds ausgelöst werden.",
+                "notice": {
+                    "before": "Builds starten am {{ start }}. Pushes davor werden gespeichert, aber nicht gebaut oder bewertet.",
+                    "during": "Builds sind bis {{ end }} aktiv.",
+                    "after": "Das Build-Zeitfenster endete am {{ end }}. Pushes werden gespeichert, aber nicht gebaut."
+                }
+            },
             "showTestNamesToStudents": "Zeige die Testnamen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",

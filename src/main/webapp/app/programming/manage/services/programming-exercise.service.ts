@@ -13,6 +13,7 @@ import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/s
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { convertBuildConfigDatesFromServer } from 'app/programming/shared/utils/build-time-window.utils';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -435,6 +436,7 @@ export class ProgrammingExerciseService {
             return res;
         }
         res.body.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(res.body.buildAndTestStudentSubmissionsAfterDueDate);
+        convertBuildConfigDatesFromServer(res.body.buildConfig);
         return res;
     }
 

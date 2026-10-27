@@ -53,6 +53,7 @@ The table below lists which settings each mode shows.
 | Mode | — | Participation Mode, Team Size, Allow Offline IDE, Allow Online Editor, Allow Online IDE |
 | Language | Programming Language, Package Name | Project Type, Exemplary Dependency, Online IDE Configuration and Experience Level, Static Code Analysis, Sequential Test Runs, Build Plan |
 | Version Control | — | Allow Custom Branches, Branch Name Pattern |
+| Build Time Window | — | Build window start, Build window end |
 | Problem | Problem Statement | Linked Competencies |
 | Grading | Score inclusion, Points, Bonus Points, Release Date, Due Date, Assessment Due Date, Grading Instructions | Submission Policy, Start Date, Run Tests after Due Date, Example Solution Publication Date, Complaints on Automatic Assessment, Show Test Names, Include Tests in Example Solution, Presentation Score, Plagiarism Control |
 
@@ -139,6 +140,27 @@ Shown in advanced mode only.
 <Callout variant={CalloutVariant.warning}>
 
   Artemis does not show custom branches in the UI and offers no merge support. Pushing to a non-default branch neither triggers a build nor creates a submission, so students are entirely responsible for managing their branches. Only enable this if the exercise genuinely requires it.
+
+</Callout>
+
+## Build Time Window
+
+Shown in advanced mode only, below **Version Control**. It is not available for exam exercises.
+
+By default every push of a student is built. With a build time window you restrict the period in which pushes are built. This is useful if students should work with the repository first and only get test feedback later, for example from a start date a week after the release.
+
+- **Build window start**: The first moment at which pushes are built.
+- **Build window end**: The last moment at which pushes are built.
+
+Both fields are optional and both bounds are inclusive. With only a start, builds begin at that time and continue as long as students can push. With only an end, builds stop after that time. If both are empty, every push is built as usual.
+
+A push outside the window is accepted into the student's repository and appears in the commit history, but Artemis neither builds it nor creates a submission for it. It therefore does not count towards a [submission policy](/instructor/exercises/programming-exercise/grade-and-verify#submission-policy-configuration) with a limit. The student sees a message in the output of `git push`, and Artemis shows a notice about the window on the exercise page and in the online editor. The online editor and the **Trigger build** button follow the same rule, so students cannot get around the window.
+
+The window must start and end between the **Start Date** (or, without one, the **Release Date**) and the **Due Date** of the exercise. Artemis rejects a window that ends before it starts or lies outside these dates.
+
+<Callout variant={CalloutVariant.info}>
+
+  The window does not change who may push or when. Repository access works exactly as before. The window also does not affect pushes of editors and instructors, the practice mode, the template, solution and test repositories, or builds that instructors start themselves, such as **Trigger all** and the rebuild at **Run Tests after Due Date**.
 
 </Callout>
 

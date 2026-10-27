@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-exercise-trigger-build-button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError } from 'rxjs/operators';
@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { BuildWindowPhase, getBuildTimeWindow, injectBuildWindowPhase, isBuildWindowEnforcedFor } from 'app/programming/shared/utils/build-time-window.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
@@ -15,6 +16,20 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     private alertService = inject(AlertService);
     readonly triggerLastGraded = input(false);
+
+    private readonly buildWindowPhase = injectBuildWindowPhase(computed(() => getBuildTimeWindow(this.exercise())));
+
+    /**
+     * A manual build outside of the build time window is refused by the server, so the button is disabled.
+     * This includes triggering a failed build, as that builds the latest commit, which may have been pushed outside of the window.
+     */
+    override readonly isBlockedByBuildWindow = computed(() => {
+        if (!isBuildWindowEnforcedFor(this.exercise(), this.participation())) {
+            return false;
+        }
+        const phase = this.buildWindowPhase();
+        return phase === BuildWindowPhase.BEFORE || phase === BuildWindowPhase.AFTER;
+    });
 
     // Icons
     faRedo = faRedo;

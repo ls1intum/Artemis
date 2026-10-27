@@ -100,6 +100,11 @@ export function resetProgrammingForImport(exercise: ProgrammingExercise) {
     // without dates set, they have to be reset as well
     exercise.releaseTestsWithExampleSolution = false;
     exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+
+    // the dates are reset, so the build time window of the source would not fit them (and exam exercises do not support it)
+    if (exercise.buildConfig?.advancedSettings) {
+        exercise.buildConfig.advancedSettings.buildTimeWindow = undefined;
+    }
 }
 
 /**
@@ -116,5 +121,6 @@ export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExercis
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;
     buildConfig.buildScript = exerciseJson.buildScript ?? '';
     buildConfig.dockerFlags = exerciseJson.dockerFlags ?? '';
+    buildConfig.advancedSettings = exerciseJson.advancedSettings;
     return buildConfig;
 }

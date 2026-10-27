@@ -323,7 +323,9 @@
                         "theiaImage": "Theia image",
                         "onlineIdeExperienceLevel": "Online IDE experience level",
                         "allowBranching": "Allow branching",
-                        "branchRegex": "Branch regex"
+                        "branchRegex": "Branch regex",
+                        "buildTimeWindowStart": "Build window start",
+                        "buildTimeWindowEnd": "Build window end"
                     }
                 }
             },

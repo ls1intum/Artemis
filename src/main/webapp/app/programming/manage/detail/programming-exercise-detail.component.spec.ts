@@ -41,6 +41,8 @@ import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detai
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
+import dayjs from 'dayjs/esm';
+import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
@@ -419,6 +421,37 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         const sections = comp.getExerciseDetails();
         expect(sections).toBeDefined();
+    });
+
+    describe('build time window details', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+
+        const windowDetails = (buildTimeWindow?: { start?: dayjs.Dayjs; end?: dayjs.Dayjs }) => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 123;
+            programmingExercise.buildConfig!.advancedSettings = buildTimeWindow ? { buildTimeWindow } : undefined;
+            comp.programmingExercise.set(programmingExercise);
+            return comp
+                .getExerciseDetailsLanguageSection(programmingExercise)
+                .details.filter((detail) => !!detail && detail.type === DetailType.Date && detail.title?.includes('buildTimeWindow'));
+        };
+
+        it('should show no row for an exercise without a window', () => {
+            expect(windowDetails()).toEqual([]);
+        });
+
+        it('should show the start and the end of the window', () => {
+            expect(windowDetails({ start: windowStart, end: windowEnd })).toEqual([
+                { type: DetailType.Date, title: 'artemisApp.programmingExercise.buildTimeWindow.start', data: { date: windowStart } },
+                { type: DetailType.Date, title: 'artemisApp.programmingExercise.buildTimeWindow.end', data: { date: windowEnd } },
+            ]);
+        });
+
+        it('should show only the bound that is set', () => {
+            expect(windowDetails({ start: windowStart }).map((detail) => detail && detail.title)).toEqual(['artemisApp.programmingExercise.buildTimeWindow.start']);
+            expect(windowDetails({ end: windowEnd }).map((detail) => detail && detail.title)).toEqual(['artemisApp.programmingExercise.buildTimeWindow.end']);
+        });
     });
 
     it.each([

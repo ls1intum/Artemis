@@ -21,8 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
@@ -322,6 +325,59 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         // the build plan itself still changed, so the save is recorded in the version history even though the exercise did
         // not have to be rescheduled; skipping the reschedule must not skip the version entry
         assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).hasSize(versionsBeforeSave + 1);
+    }
+
+    private void releaseTheExercise() {
+        // the fixture exercise is not released yet, and students may not see it before
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    private void setBuildTimeWindow(BuildTimeWindow window) {
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        buildConfig.setBuildTimeWindow(window);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testEditingTheBuildPlanKeepsTheBuildTimeWindow() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        var window = new BuildTimeWindow(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        setBuildTimeWindow(window);
+
+        var response = request.putWithResponseBody(buildConfigEndpoint(), configurationWith(List.of(phase("compile")), 240), UpdateProgrammingExerciseBuildConfigDTO.class,
+                HttpStatus.OK);
+
+        assertThat(response.advancedSettings().buildTimeWindow()).isEqualTo(window);
+        assertThat(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow().getBuildTimeWindow()).isEqualTo(window);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentsSeeOnlyTheBuildTimeWindowOfTheBuildConfig() throws Exception {
+        releaseTheExercise();
+        var window = new BuildTimeWindow(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        setBuildTimeWindow(window);
+
+        String body = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/details", HttpStatus.OK, String.class);
+
+        var buildConfig = JsonMapper.builder().build().readTree(body).get("exercise").get("buildConfig");
+        assertThat(buildConfig).as("the details of an exercise with a window carry it").isNotNull();
+        assertThat(ZonedDateTime.parse(buildConfig.get("advancedSettings").get("buildTimeWindow").get("start").asString()).toInstant()).isEqualTo(window.start().toInstant());
+        assertThat(ZonedDateTime.parse(buildConfig.get("advancedSettings").get("buildTimeWindow").get("end").asString()).toInstant()).isEqualTo(window.end().toInstant());
+        // nothing else of the build configuration is for students: not the build plan, not the Docker flags, not the images
+        assertThat(buildConfig.propertyNames()).doesNotContain("buildPlanConfiguration", "dockerFlags", "theiaImage", "testCheckoutPath", "assignmentCheckoutPath",
+                "solutionCheckoutPath");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentsGetNoBuildConfigWithoutABuildTimeWindow() throws Exception {
+        releaseTheExercise();
+        String body = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/details", HttpStatus.OK, String.class);
+
+        assertThat(JsonMapper.builder().build().readTree(body).get("exercise").has("buildConfig")).isFalse();
     }
 
     @Test

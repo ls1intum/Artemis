@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Rarely used build settings (the branching settings and the optional build time window) live in one JSON document instead of one column each, so that a new option
+        needs no schema change and the vast majority of rows, which use none of them, carry a single NULL.
+
+        EXPAND step of expand and contract: the application no longer maps allow_branching and branch_regex, but the columns stay in the schema with the values they had
+        when this changelog ran. Rolling the application back to the previous version therefore finds the schema it expects, but sees the branching settings as of the
+        upgrade: settings edited afterwards are only in advanced_settings. The columns are dropped by a later changelog that must not be deployed before this one.
+    -->
+    <changeSet id="20261027204034-01-add-advanced-settings" author="krusche">
+        <addColumn tableName="programming_exercise_build_config">
+            <column name="advanced_settings" type="json"/>
+        </addColumn>
+    </changeSet>
+
+    <!--
+        Only rows that deviate from the default (branching not allowed, regex .*) get a document, all others stay NULL, which is the canonical form of "all defaults".
+    -->
+    <changeSet id="20261027204034-02a-backfill-branching-settings-postgresql" author="krusche" dbms="postgresql">
+        <sql>
+            UPDATE programming_exercise_build_config
+            SET advanced_settings = json_build_object('branching', json_build_object('allowed', allow_branching, 'regex', branch_regex))
+            WHERE allow_branching = TRUE OR (branch_regex IS NOT NULL AND branch_regex &lt;&gt; '.*');
+        </sql>
+        <rollback>
+            <comment>The old columns still hold the values of the upgrade and the column is dropped by the rollback of the previous changeset, so there is nothing to undo.</comment>
+        </rollback>
+    </changeSet>
+
+    <!-- MySQL: CAST('true' AS JSON) yields a JSON boolean, a comparison would yield the number 1 -->
+    <changeSet id="20261027204034-02b-backfill-branching-settings-mysql" author="krusche" dbms="mysql">
+        <sql>
+            UPDATE programming_exercise_build_config
+            SET advanced_settings = JSON_OBJECT('branching', JSON_OBJECT('allowed', IF(allow_branching = TRUE, CAST('true' AS JSON), CAST('false' AS JSON)), 'regex', branch_regex))
+            WHERE allow_branching = TRUE OR (branch_regex IS NOT NULL AND branch_regex &lt;&gt; '.*');
+        </sql>
+        <rollback>
+            <comment>The old columns still hold the values of the upgrade and the column is dropped by the rollback of the previous changeset, so there is nothing to undo.</comment>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

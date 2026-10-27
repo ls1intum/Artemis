@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -171,6 +172,8 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException();
         }
 
+        checkInsideBuildTimeWindowElseThrow(programmingExerciseParticipation);
+
         try {
             var submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
             programmingTriggerService.triggerBuildAndNotifyUser(submission);
@@ -180,6 +183,15 @@ public class ProgrammingSubmissionResource {
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * A student must not get around the build time window of the exercise by triggering the build of a commit pushed outside of it.
+     */
+    private void checkInsideBuildTimeWindowElseThrow(ProgrammingExerciseParticipation participation) {
+        if (programmingSubmissionService.findBuildTimeWindowExcluding(participation, userRepository.getUserWithAuthorities(), ZonedDateTime.now()).isPresent()) {
+            throw new BadRequestAlertException("Builds of this exercise are only run inside its build time window", "programmingSubmission", "buildOutsideTimeWindow");
+        }
     }
 
     /**
@@ -200,6 +212,8 @@ public class ProgrammingSubmissionResource {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseParticipation);
+        // the build runs on the latest commit, which may have been pushed outside the window
+        checkInsideBuildTimeWindowElseThrow(programmingExerciseParticipation);
 
         ProgrammingSubmission submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded)
                 .orElseThrow(() -> new EntityNotFoundException("No latest pending programming submission found for participationId " + participationId));

@@ -254,6 +254,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateProgrammingSettings(buildConfigToValidate);
         programmingExerciseValidationService.validatePackageName(newExercise);
         programmingExerciseValidationService.validateDockerFlags(buildConfigToValidate);
+        programmingExerciseValidationService.validateBuildTimeWindow(newExercise, buildConfigToValidate);
         validateStaticCodeAnalysisSettings(newExercise, buildConfigToValidate);
 
         var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);

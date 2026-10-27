@@ -535,11 +535,24 @@ public class ProgrammingExerciseCreationUpdateService {
             }
         }
         programmingExercise.validateDates();
+        validateBuildTimeWindowFitsDates(programmingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseCreationScheduleService.scheduleOperations(savedProgrammingExercise.getId());
         programmingExerciseCreationScheduleService.createNotificationsOnUpdate(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
+    }
+
+    /**
+     * Rejects a date change that would leave the build time window of the exercise (if any) outside of its new dates, as no push would be built then.
+     */
+    private void validateBuildTimeWindowFitsDates(ProgrammingExercise programmingExercise) {
+        var window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(programmingExercise.getId());
+        ZonedDateTime earliest = programmingExercise.getStartDate() != null ? programmingExercise.getStartDate() : programmingExercise.getReleaseDate();
+        if (window != null && !window.isWithin(earliest, programmingExercise.getDueDate())) {
+            throw new BadRequestAlertException("The build time window must lie between the start (or release) date and the due date of the exercise", "programmingExercise",
+                    "buildTimeWindowOutsideExerciseDates");
+        }
     }
 
     /**

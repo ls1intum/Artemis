@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticip
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
@@ -136,13 +137,16 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -184,7 +188,9 @@ public class ProgrammingExerciseParticipationResource {
 
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submission == null ? List.of()
                 : List.of(ProgrammingSubmissionWithResultsDTO.of(submission, mapResults(results)));
-        ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
+        // the editor tells the student why a push is not built, which needs the build time window of the exercise
+        ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.ofForStudent(participation.getProgrammingExercise(),
+                programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(participation.getProgrammingExercise().getId()));
         var response = ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs);
         return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());
     }
@@ -431,12 +437,25 @@ public class ProgrammingExerciseParticipationResource {
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri);
 
+        // like a push, the reset is kept in the repository but not built outside the build time window, otherwise the reset commit would be graded
+        if (isBuildOutsideTimeWindow(participation, exercise)) {
+            return ResponseEntity.ok().build();
+        }
+
         continuousIntegrationTriggerService
                 .orElseThrow(() -> new UnsupportedOperationException(
                         "Cannot trigger build because neither the Jenkins nor the LocalCI profile are active. This is a misconfiguration if you want to use programming exercises"))
                 .triggerBuild(participation, true);
 
         return ResponseEntity.ok().build();
+    }
+
+    private boolean isBuildOutsideTimeWindow(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise) {
+        if (participation.isPracticeMode() || authCheckService.isAtLeastEditorForExercise(exercise)) {
+            return false;
+        }
+        var window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(exercise.getId());
+        return window != null && !window.isBuildAllowedAt(ZonedDateTime.now());
     }
 
     /**
