@@ -1,13 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationSettingsComponent } from 'app/course/overview/course-settings/notification-settings/notification-settings.component';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
+import { CourseNotificationSettingInfo, CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
@@ -160,6 +159,25 @@ describe('NotificationSettingsComponent', () => {
         expect(component['selectableSettingPresets']()).toEqual(mockPresets);
         expect(component['selectedSettingPreset']()).toEqual(mockPresets[0]);
         expect(component['notificationSpecifications']()).toHaveLength(1);
+    });
+
+    it('waits for undefined settings to load and renders custom zero with all false flags', () => {
+        const settings = new BehaviorSubject<CourseNotificationSettingInfo | undefined>(undefined);
+        const info = new Subject<HttpResponse<CourseNotificationInfo>>();
+        courseNotificationSettingServiceMock.getSettingInfo.mockReturnValue(settings);
+        courseNotificationServiceMock.getInfo.mockReturnValue(info);
+        component['settingInfo'] = undefined;
+        component['info'] = undefined;
+        component['isLoading'].set(true);
+        component.onCourseIdAvailable();
+        expect(courseNotificationSettingServiceMock.getSettingInfo).toHaveBeenCalledWith(courseId, true);
+        info.next(new HttpResponse({ body: mockInfo }));
+        expect(component['isLoading']()).toBe(true);
+        const flags = { EMAIL: false, PUSH: false, WEBAPP: false };
+        settings.next({ selectedPreset: 0, notificationTypeChannels: { '1': flags } });
+        expect(component['isLoading']()).toBe(false);
+        expect(component['selectedSettingPreset']()).toBeUndefined();
+        expect(component['notificationSpecifications']()[0].channelSetting).toEqual(flags);
     });
 
     describe('settings that apply without a chosen preset (an unconfigured test account)', () => {

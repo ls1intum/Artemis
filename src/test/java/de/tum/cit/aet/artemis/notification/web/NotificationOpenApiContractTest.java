@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  */
 @TestPropertySource(properties = { "springdoc.api-docs.enabled=true", "springdoc.packages-to-scan=de.tum.cit.aet.artemis.notification.web",
         // Keep the remaining notification families excluded until their contracts and callers are migrated.
-        "springdoc.paths-to-exclude=/api/notification/courses/**,/api/notification/push_notification/**" })
+        "springdoc.paths-to-exclude=/api/notification/courses/*,/api/notification/courses/*/status,/api/notification/courses/*/seen,/api/notification/courses/*/archive-all,/api/notification/push_notification/**" })
 class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
@@ -32,7 +32,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String input = "$.components.schemas.UpdateGlobalNotificationSetting";
         String[] notificationTypes = Arrays.stream(GlobalNotificationType.values()).map(Enum::name).toArray(String[]::new);
 
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(8)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(11)))
                 .andExpect(jsonPath(read + ".operationId").value("getGlobalNotificationSettings"))
                 .andExpect(jsonPath(read + ".responses['200'].content['application/json'].schema.additionalProperties.type").value("boolean"))
                 .andExpect(jsonPath(update + ".operationId").value("updateGlobalNotificationSetting")).andExpect(jsonPath(update + ".parameters[0].name").value("notificationType"))
@@ -58,7 +58,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String count = "$.paths['/api/notification/admin/system-notifications/maintenance-recipients-count'].get";
         String response = "$.components.schemas.SystemNotification";
         String input = "$.components.schemas.SystemNotificationUpdate";
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(8)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(11)))
                 .andExpect(jsonPath(list + ".operationId").value("getAllSystemNotifications"))
                 .andExpect(jsonPath(list + ".parameters[*].name", containsInAnyOrder("page", "size", "sort"))).andExpect(jsonPath(list + ".parameters[0].schema.default").value(0))
                 .andExpect(jsonPath(list + ".parameters[1].schema.default").value(20)).andExpect(jsonPath(list + ".parameters[2].schema.type").value("array"))
@@ -98,5 +98,38 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
                 .andExpect(jsonPath(input + ".properties.id.type", containsInAnyOrder("integer", "null")))
                 .andExpect(jsonPath(input + ".properties.title.type", containsInAnyOrder("string", "null")))
                 .andExpect(jsonPath(input + ".properties.notificationDate.type").value("string")).andExpect(jsonPath(input + ".properties.type.enum", hasItem(nullValue())));
+    }
+
+    @Test
+    void shouldExportOnlyTheThreePreferenceOperationsWithScalarAndNestedMapContracts() throws Exception {
+        String read = "$.paths['/api/notification/courses/{courseId}/settings'].get";
+        String preset = "$.paths['/api/notification/courses/{courseId}/setting-preset'].put";
+        String specification = "$.paths['/api/notification/courses/{courseId}/setting-specification'].put";
+        String info = "$.components.schemas.CourseNotificationSettingInfo";
+        String input = "$.components.schemas.CourseNotificationSettingSpecificationRequest";
+        String channels = ".properties.notificationTypeChannels.additionalProperties";
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(11)))
+                .andExpect(jsonPath(read + ".operationId").value("getUserCourseNotificationSettings")).andExpect(jsonPath(read + ".parameters[0].name").value("courseId"))
+                .andExpect(jsonPath(read + ".parameters[0].in").value("path"))
+                .andExpect(jsonPath(read + ".responses['200'].content['application/json'].schema['$ref']").value("#/components/schemas/CourseNotificationSettingInfo"))
+                .andExpect(jsonPath(preset + ".operationId").value("setUserCourseNotificationPreset")).andExpect(jsonPath(preset + ".requestBody.required").value(true))
+                .andExpect(jsonPath(preset + ".requestBody.content['application/json'].schema.type").value("integer"))
+                .andExpect(jsonPath(preset + ".requestBody.content['application/json'].schema.minimum").value(-32768))
+                .andExpect(jsonPath(preset + ".requestBody.content['application/json'].schema.maximum").value(32767))
+                .andExpect(jsonPath(preset + ".responses['200'].content").doesNotExist()).andExpect(jsonPath(preset + ".responses['400']").exists())
+                .andExpect(jsonPath(specification + ".operationId").value("setUserCourseNotificationSpecification"))
+                .andExpect(jsonPath(specification + ".requestBody.content['application/json'].schema['$ref']")
+                        .value("#/components/schemas/CourseNotificationSettingSpecificationRequest"))
+                .andExpect(jsonPath(specification + ".responses['200'].content").doesNotExist()).andExpect(jsonPath(info + ".required", containsInAnyOrder("selectedPreset")))
+                .andExpect(jsonPath(info + channels + ".required", containsInAnyOrder("EMAIL", "WEBAPP", "PUSH")))
+                .andExpect(jsonPath(info + channels + ".additionalProperties").value(false)).andExpect(jsonPath(info + channels + ".properties.EMAIL.type").value("boolean"))
+                .andExpect(jsonPath(input + ".required", containsInAnyOrder("notificationTypeChannels"))).andExpect(jsonPath(input + channels + ".required").doesNotExist())
+                .andExpect(jsonPath(input + channels + ".additionalProperties").value(false))
+                .andExpect(jsonPath(input + channels + ".properties.EMAIL.type", containsInAnyOrder("boolean", "null")))
+                .andExpect(jsonPath("$.paths['/api/notification/courses/info']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/notification/courses/{courseId}']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/notification/courses/{courseId}/status']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/notification/courses/{courseId}/seen']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/notification/courses/{courseId}/archive-all']").doesNotExist());
     }
 }
