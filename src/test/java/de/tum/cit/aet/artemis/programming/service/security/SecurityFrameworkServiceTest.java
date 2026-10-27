@@ -22,6 +22,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
@@ -46,6 +48,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -131,6 +134,8 @@ class SecurityFrameworkServiceTest {
 
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
+    private LocalDataProviderService distributedDataProvider;
+
     private SecurityFrameworkService securityFrameworkService;
 
     private final User user = new User();
@@ -190,6 +195,7 @@ class SecurityFrameworkServiceTest {
         when(resourceLoaderService.getResource(any(Path.class))).thenAnswer(call -> new FileSystemResource(MAIN_RESOURCES.resolve(call.getArgument(0, Path.class))));
         localVCServletService = mock(LocalVCServletService.class);
         programmingSubmissionRepository = mock(ProgrammingSubmissionTestRepository.class);
+        distributedDataProvider = new LocalDataProviderService();
 
         securityFrameworkService = createService("2.3.0", "2.2.1");
     }
@@ -202,7 +208,7 @@ class SecurityFrameworkServiceTest {
         SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         when(solutionParticipationRepository.findByProgrammingExerciseId(anyLong())).thenReturn(Optional.of(solutionParticipation));
         return new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository, resourceLoaderService,
-                Optional.of(localVCServletService), solutionParticipationRepository, programmingSubmissionRepository, "main", configuredVersions);
+                Optional.of(localVCServletService), solutionParticipationRepository, programmingSubmissionRepository, distributedDataProvider, "main", configuredVersions);
     }
 
     /**
@@ -493,6 +499,33 @@ class SecurityFrameworkServiceTest {
         assertThat(config.status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
         assertThat(pushedHead()).isEqualTo(pushedHead);
         verify(localVCServletService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
+    }
+
+    @Test
+    void aRetryResumesAProcessingThatFailedAfterSavingTheSubmission() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        // The processing saves the solution submission and then fails, e.g. while triggering the builds.
+        Set<String> submittedCommits = ConcurrentHashMap.newKeySet();
+        when(programmingSubmissionRepository.existsByParticipationIdAndCommitHash(eq(SOLUTION_PARTICIPATION_ID), anyString()))
+                .thenAnswer(call -> submittedCommits.contains(call.getArgument(1, String.class)));
+        doAnswer(call -> {
+            submittedCommits.add(call.getArgument(0, String.class));
+            throw new VersionControlException("Build trigger failed");
+        }).when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
+                .matches(exception -> "securityFrameworkProcessingFailed".equals(exception.getErrorKey()));
+        String pushedHead = pushedHead();
+        assertThat(submittedCommits).containsExactly(pushedHead);
+
+        // Although the submission exists, the processing did not complete, so the retry resumes it.
+        doNothing().when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        securityFrameworkService.deactivate(exercise, user);
+        verify(localVCServletService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
+
+        // Once the processing has completed, a further retry does not process the change again.
+        securityFrameworkService.deactivate(exercise, user);
+        verify(localVCServletService, times(2)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
     }
 
     @Test

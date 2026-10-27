@@ -14,7 +14,9 @@ import java.util.regex.Pattern;
  * <p>
  * The source is first masked: comments and the contents of string, character and text block literals are replaced by spaces, keeping every offset. All
  * searches run on the masked source, so an annotation or import that only appears in a comment or a string is never touched, and the parentheses and commas
- * of a literal never end an annotation or split its arguments. The rewritten text is taken from the original source.
+ * of a literal never end an annotation or split its arguments. Argument names are read from the masked source as well, so a comment before a name is no
+ * obstacle. The rewritten text is taken from the original source, so every argument keeps its comments; the values that are evaluated, like the
+ * {@code activated} flag and the policy path, are read from the source without its comments.
  * <p>
  * The fully qualified {@code @de.tum.cit.ase.ares.api.Policy} always refers to Ares. The simple {@code @Policy} refers to Ares if the file imports it, either
  * directly or with {@code import de.tum.cit.ase.ares.api.*;} while no other {@code Policy} type is imported by name.
@@ -29,12 +31,26 @@ final class AresPolicyAnnotations {
 
     private static final Pattern ARES_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+de\\.tum\\.cit\\.ase\\.ares\\.api\\.\\*\\s*;");
 
-    /** A named annotation argument such as {@code activated = false}. */
-    private static final Pattern NAMED_ARGUMENT = Pattern.compile("^\\s*([A-Za-z_]\\w*)\\s*=\\s*(.*?)\\s*$", Pattern.DOTALL);
+    /** A named annotation argument such as {@code activated = false}, matched on the masked source. */
+    private static final Pattern NAMED_ARGUMENT = Pattern.compile("^\\s*([A-Za-z_]\\w*)\\s*=(?!=)\\s*(.*?)\\s*$", Pattern.DOTALL);
 
     private static final String ACTIVATED_ARGUMENT = "activated";
 
     private static final String VALUE_ARGUMENT = "value";
+
+    /**
+     * One argument of an annotation.
+     *
+     * @param named      whether the argument is written with its name; a single unnamed argument is the {@code value}
+     * @param text       the argument as written, including its comments
+     * @param expression the value expression without comments, for evaluating it
+     */
+    record Argument(boolean named, String text, String expression) {
+
+        private String render() {
+            return named ? text : VALUE_ARGUMENT + " = " + text;
+        }
+    }
 
     /**
      * One Ares {@code @Policy} annotation in a source file.
@@ -42,13 +58,13 @@ final class AresPolicyAnnotations {
      * @param start     offset of the {@code @}
      * @param end       offset after the annotation, including its argument list
      * @param name      the annotation as written, e.g. {@code @Policy}
-     * @param arguments the arguments as name and source expression, in their order
+     * @param arguments the arguments by name, in their order
      */
-    record Annotation(int start, int end, String name, Map<String, String> arguments) {
+    record Annotation(int start, int end, String name, Map<String, Argument> arguments) {
 
         boolean isActivated() {
-            String activated = arguments.get(ACTIVATED_ARGUMENT);
-            return activated == null || !"false".equals(activated);
+            Argument activated = arguments.get(ACTIVATED_ARGUMENT);
+            return activated == null || !"false".equals(activated.expression());
         }
 
         /**
@@ -56,11 +72,11 @@ final class AresPolicyAnnotations {
          *         case Ares applies its strict default policy, or if the value is an expression this class does not evaluate
          */
         Optional<String> policyPath() {
-            String value = arguments.get(VALUE_ARGUMENT);
+            Argument value = arguments.get(VALUE_ARGUMENT);
             if (value == null) {
                 return Optional.empty();
             }
-            String literal = value.strip();
+            String literal = value.expression();
             while (literal.length() >= 2 && literal.startsWith("(") && literal.endsWith(")")) {
                 literal = literal.substring(1, literal.length() - 1).strip();
             }
@@ -104,18 +120,18 @@ final class AresPolicyAnnotations {
     }
 
     private static String render(Annotation annotation, boolean active) {
-        Map<String, String> arguments = new LinkedHashMap<>(annotation.arguments());
+        Map<String, Argument> arguments = new LinkedHashMap<>(annotation.arguments());
         if (active) {
             arguments.remove(ACTIVATED_ARGUMENT);
         }
         else {
-            arguments.put(ACTIVATED_ARGUMENT, "false");
+            arguments.put(ACTIVATED_ARGUMENT, new Argument(true, ACTIVATED_ARGUMENT + " = false", "false"));
         }
         if (arguments.isEmpty()) {
             return annotation.name();
         }
         StringJoiner rendered = new StringJoiner(", ", annotation.name() + "(", ")");
-        arguments.forEach((name, value) -> rendered.add(name + " = " + value));
+        arguments.values().forEach(argument -> rendered.add(argument.render()));
         return rendered.toString();
     }
 
@@ -125,6 +141,7 @@ final class AresPolicyAnnotations {
      */
     static List<Annotation> find(String source) {
         String masked = mask(source);
+        String withoutComments = maskComments(source);
         boolean simpleNameIsAres = simpleNameRefersToAres(masked);
         List<Annotation> annotations = new ArrayList<>();
         Matcher names = POLICY_ANNOTATION_NAME.matcher(masked);
@@ -135,14 +152,14 @@ final class AresPolicyAnnotations {
             }
             int end = names.end();
             int open = skipWhitespace(masked, end);
-            Map<String, String> arguments = new LinkedHashMap<>();
+            Map<String, Argument> arguments = new LinkedHashMap<>();
             if (open < masked.length() && masked.charAt(open) == '(') {
                 int close = matchingParenthesis(masked, open);
                 if (close < 0) {
                     // An incomplete annotation, e.g. in a file that does not compile: leave it alone.
                     continue;
                 }
-                arguments = parseArguments(source, masked, open + 1, close);
+                arguments = parseArguments(new Sources(source, withoutComments, masked), open + 1, close);
                 end = close + 1;
             }
             annotations.add(new Annotation(names.start(), end, source.substring(names.start(), names.end()), arguments));
@@ -202,11 +219,18 @@ final class AresPolicyAnnotations {
     }
 
     /**
+     * The same source three times, with equal offsets: as written, without comments, and with comments and literal contents masked.
+     */
+    private record Sources(String original, String withoutComments, String masked) {
+    }
+
+    /**
      * Splits the argument list between {@code from} and {@code to} at its top-level commas and returns each argument by name. A single unnamed argument is
      * the {@code value}, as in Java.
      */
-    private static Map<String, String> parseArguments(String source, String masked, int from, int to) {
-        Map<String, String> arguments = new LinkedHashMap<>();
+    private static Map<String, Argument> parseArguments(Sources sources, int from, int to) {
+        String masked = sources.masked();
+        Map<String, Argument> arguments = new LinkedHashMap<>();
         int depth = 0;
         int argumentStart = from;
         for (int index = from; index <= to; index++) {
@@ -218,24 +242,49 @@ final class AresPolicyAnnotations {
                 depth--;
             }
             else if (character == ',' && depth == 0) {
-                addArgument(arguments, source.substring(argumentStart, index));
+                addArgument(arguments, sources, argumentStart, index);
                 argumentStart = index + 1;
             }
         }
         return arguments;
     }
 
-    private static void addArgument(Map<String, String> arguments, String argument) {
-        if (argument.isBlank()) {
+    /**
+     * Adds the argument between {@code from} and {@code to}. Its name is read from the masked source, so a comment before it does not hide it. Its text
+     * keeps every comment, except a line comment at its end, which would comment out an argument that is appended behind it.
+     */
+    private static void addArgument(Map<String, Argument> arguments, Sources sources, int from, int to) {
+        String original = sources.original();
+        String withoutComments = sources.withoutComments();
+        int codeEnd = lastNonWhitespace(withoutComments, from, to);
+        if (codeEnd == from) {
+            // Only whitespace and comments, e.g. after a trailing comma.
             return;
         }
-        Matcher named = NAMED_ARGUMENT.matcher(argument);
+        int textEnd = lastNonWhitespace(original, from, to);
+        if (original.substring(codeEnd, textEnd).contains("//")) {
+            textEnd = codeEnd;
+        }
+        String text = original.substring(skipWhitespace(original, from), textEnd);
+        Matcher named = NAMED_ARGUMENT.matcher(sources.masked().substring(from, to));
         if (named.matches()) {
-            arguments.put(named.group(1), named.group(2));
+            String expression = withoutComments.substring(from + named.start(2), from + named.end(2)).strip();
+            arguments.put(named.group(1), new Argument(true, text, expression));
         }
         else {
-            arguments.put(VALUE_ARGUMENT, argument.strip());
+            arguments.put(VALUE_ARGUMENT, new Argument(false, text, withoutComments.substring(from, to).strip()));
         }
+    }
+
+    /**
+     * @return the offset after the last character between {@code from} and {@code to} that is not whitespace, or {@code from} if there is none
+     */
+    private static int lastNonWhitespace(String text, int from, int to) {
+        int end = to;
+        while (end > from && Character.isWhitespace(text.charAt(end - 1))) {
+            end--;
+        }
+        return end;
     }
 
     /**
@@ -246,6 +295,17 @@ final class AresPolicyAnnotations {
      * @return the masked source
      */
     static String mask(String source) {
+        return mask(source, true);
+    }
+
+    /**
+     * Replaces only the comments by spaces, keeping every offset, so the values of literals can still be read.
+     */
+    private static String maskComments(String source) {
+        return mask(source, false);
+    }
+
+    private static String mask(String source, boolean maskLiterals) {
         StringBuilder masked = new StringBuilder(source.length());
         int index = 0;
         while (index < source.length()) {
@@ -259,11 +319,11 @@ final class AresPolicyAnnotations {
             }
             else if (source.startsWith("\"\"\"", index)) {
                 masked.append("\"\"\"");
-                index = maskLiteral(source, masked, index + 3, "\"\"\"");
+                index = maskLiteral(source, masked, index + 3, "\"\"\"", maskLiterals);
             }
             else if (character == '"' || character == '\'') {
                 masked.append(character);
-                index = maskLiteral(source, masked, index + 1, String.valueOf(character));
+                index = maskLiteral(source, masked, index + 1, String.valueOf(character), maskLiterals);
             }
             else {
                 masked.append(character);
@@ -285,15 +345,16 @@ final class AresPolicyAnnotations {
     }
 
     /**
-     * Masks the content of a literal that started before {@code from} and appends its closing delimiter.
+     * Appends the content of a literal that started before {@code from}, masked or as written, and its closing delimiter.
      *
      * @return the offset after the closing delimiter
      */
-    private static int maskLiteral(String source, StringBuilder masked, int from, String delimiter) {
+    private static int maskLiteral(String source, StringBuilder masked, int from, String delimiter, boolean maskContent) {
         int index = from;
         while (index < source.length()) {
             if (source.charAt(index) == '\\' && index + 1 < source.length()) {
-                masked.append(' ').append(source.charAt(index + 1) == '\n' ? '\n' : ' ');
+                appendLiteralCharacter(masked, source.charAt(index), maskContent);
+                appendLiteralCharacter(masked, source.charAt(index + 1), maskContent);
                 index += 2;
             }
             else if (source.startsWith(delimiter, index)) {
@@ -301,10 +362,14 @@ final class AresPolicyAnnotations {
                 return index + delimiter.length();
             }
             else {
-                masked.append(source.charAt(index) == '\n' ? '\n' : ' ');
+                appendLiteralCharacter(masked, source.charAt(index), maskContent);
                 index++;
             }
         }
         return index;
+    }
+
+    private static void appendLiteralCharacter(StringBuilder masked, char character, boolean maskContent) {
+        masked.append(!maskContent || character == '\n' ? character : ' ');
     }
 }

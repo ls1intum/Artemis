@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +43,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -93,6 +96,15 @@ public class SecurityFrameworkService {
     /** Marks the commits of this service, so a retry can tell an unprocessed change of its own from any other commit. */
     private static final String COMMIT_TRAILER = "\n\nChanged-by: Artemis Security Framework";
 
+    /**
+     * The Security Framework commits whose push processing has not completed, by exercise id. An entry is added before the commit is pushed and removed only
+     * after the whole processing has returned, so a retry also resumes a processing that failed after it had already saved the solution submission.
+     */
+    private static final String PENDING_PROCESSING_MAP = "securityFrameworkPendingProcessing";
+
+    /** How long a retry can still resume a failed processing from the pending entry; afterwards only the submission check below applies. */
+    private static final Duration PENDING_PROCESSING_TIME_TO_LIVE = Duration.ofDays(7);
+
     private final GitService gitService;
 
     private final BareGitRepositoryService bareGitRepositoryService;
@@ -113,10 +125,15 @@ public class SecurityFrameworkService {
 
     private final List<String> configuredFrameworkVersions;
 
+    private final DistributedDataProvider distributedDataProvider;
+
+    @Nullable
+    private volatile DistributedMap<Long, String> pendingProcessing;
+
     public SecurityFrameworkService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, TempFileUtilService tempFileUtilService,
             ProgrammingExerciseBuildConfigRepository buildConfigRepository, ResourceLoaderService resourceLoaderService, Optional<LocalVCServletService> localVCServletService,
             SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            @Value("${artemis.version-control.default-branch:main}") String defaultBranch,
+            DistributedDataProvider distributedDataProvider, @Value("${artemis.version-control.default-branch:main}") String defaultBranch,
             @Value("${artemis.programming.security-framework.supported-versions:}") String[] configuredFrameworkVersions) {
         this.gitService = gitService;
         this.bareGitRepositoryService = bareGitRepositoryService;
@@ -126,6 +143,7 @@ public class SecurityFrameworkService {
         this.localVCServletService = localVCServletService;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.distributedDataProvider = distributedDataProvider;
         this.defaultBranch = defaultBranch;
         this.configuredFrameworkVersions = Arrays.stream(configuredFrameworkVersions).map(String::trim).filter(version -> !version.isEmpty()).distinct().toList();
     }
@@ -283,12 +301,15 @@ public class SecurityFrameworkService {
             change.accept(repository);
             if (gitService.stageAllChanges(repository)) {
                 String commitHash = gitService.commitStagedChanges(repository, commitMessage + COMMIT_TRAILER, user);
+                if (localVCServletService.isPresent()) {
+                    pendingProcessing().put(exercise.getId(), commitHash);
+                }
                 gitService.pushCommitWithLease(repository, commitHash, branch, checkedOutHead);
-                processPushToTestRepository(testRepositoryUri, branch, commitHash, user);
+                processPushToTestRepository(exercise, testRepositoryUri, branch, commitHash, user);
             }
             else if (checkedOutHead != null && isUnprocessedSecurityFrameworkCommit(exercise, repository, checkedOutHead)) {
                 // A retry after the processing of an earlier change failed: the change is already pushed, so resume its processing.
-                processPushToTestRepository(testRepositoryUri, branch, checkedOutHead, user);
+                processPushToTestRepository(exercise, testRepositoryUri, branch, checkedOutHead, user);
             }
             return readConfig(repository);
         }
@@ -311,10 +332,12 @@ public class SecurityFrameworkService {
      * marks the existing results as outdated and triggers the template and solution builds, which now run with the changed sandbox. It needs the server-side
      * repository, because it derives the exercise and the repository type from its location.
      */
-    private void processPushToTestRepository(LocalVCRepositoryUri testRepositoryUri, String branch, String commitHash, User user) {
+    private void processPushToTestRepository(ProgrammingExercise exercise, LocalVCRepositoryUri testRepositoryUri, String branch, String commitHash, User user) {
         localVCServletService.ifPresent(servletService -> {
             try (Repository serverRepository = bareGitRepositoryService.getBareRepository(testRepositoryUri, branch, false)) {
                 servletService.processNewPush(commitHash, serverRepository, user, Optional.empty(), Optional.empty(), Optional.empty());
+                // Only now is the processing complete: the submission is saved, the results are marked as outdated and the builds are triggered.
+                pendingProcessing().remove(exercise.getId(), commitHash);
             }
             catch (RuntimeException e) {
                 // The change itself is pushed. Retrying the same action resumes the processing, see isUnprocessedSecurityFrameworkCommit.
@@ -326,10 +349,11 @@ public class SecurityFrameworkService {
     }
 
     /**
-     * Processing a push creates a submission of the solution participation for the pushed tests commit, so a commit of this service without such a submission
-     * was pushed, but its processing failed.
+     * A Security Framework commit is unprocessed if its processing has not completed: either it is still recorded as pending, or the solution participation
+     * has no submission for it. The pending entry covers a processing that failed after it had saved the submission, e.g. while triggering the builds. The
+     * submission check covers a pending entry that is gone, e.g. after all nodes restarted, as long as the processing failed before saving the submission.
      *
-     * @return whether the head of the tests repository is a Security Framework commit whose processing has not happened
+     * @return whether the head of the tests repository is a Security Framework commit whose processing has not completed
      */
     private boolean isUnprocessedSecurityFrameworkCommit(ProgrammingExercise exercise, Repository repository, String head) throws IOException {
         try (RevWalk revWalk = new RevWalk(repository)) {
@@ -337,8 +361,23 @@ public class SecurityFrameworkService {
                 return false;
             }
         }
+        if (head.equals(pendingProcessing().get(exercise.getId()))) {
+            return true;
+        }
         return solutionParticipationRepository.findByProgrammingExerciseId(exercise.getId())
                 .map(solutionParticipation -> !programmingSubmissionRepository.existsByParticipationIdAndCommitHash(solutionParticipation.getId(), head)).orElse(false);
+    }
+
+    /**
+     * The map is requested on first use rather than in the constructor, so creating the service never contacts the distributed data provider.
+     */
+    private DistributedMap<Long, String> pendingProcessing() {
+        DistributedMap<Long, String> map = pendingProcessing;
+        if (map == null) {
+            map = distributedDataProvider.getExpiringMap(PENDING_PROCESSING_MAP, PENDING_PROCESSING_TIME_TO_LIVE);
+            pendingProcessing = map;
+        }
+        return map;
     }
 
     private SecurityFrameworkConfigDTO readConfig(Repository repository) {
