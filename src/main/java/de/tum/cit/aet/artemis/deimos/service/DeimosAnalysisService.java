@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryService.TextSnapshot;
 
 @Conditional(DeimosEnabled.class)
 @Lazy
@@ -470,7 +471,8 @@ public class DeimosAnalysisService {
                 log.warn("No setup commit found for participation {}, falling back to empty template", participationId);
             }
 
-            Map<String, String> templateFiles = setupCommitHash != null ? readSnapshot(repository, setupCommitHash) : Map.of();
+            TextSnapshot template = setupCommitHash != null ? readSnapshot(repository, setupCommitHash) : new TextSnapshot(Map.of(), Set.of());
+            Map<String, String> templateFiles = template.textFiles();
             var templateMarkerLines = new HashMap<String, Set<String>>();
 
             var sb = new StringBuilder();
@@ -478,6 +480,7 @@ public class DeimosAnalysisService {
             long usedBytes = 0;
             long incrementalBudget = (long) maxPayloadBytes - finalStateReservedBytes;
             Map<String, String> previousFiles = templateFiles;
+            Set<String> previousOtherPaths = template.otherPaths();
             int emittedSnapshots = 0;
             int omittedSnapshots = 0;
             int unexaminableSubmissions = 0;
@@ -493,10 +496,11 @@ public class DeimosAnalysisService {
                     continue;
                 }
 
-                Map<String, String> currentFiles = readSnapshot(repository, submission.getCommitHash());
+                TextSnapshot current = readSnapshot(repository, submission.getCommitHash());
+                Map<String, String> currentFiles = current.textFiles();
                 // Scanned on the full contents before any limit applies, so padding cannot push a forged marker out of
                 // sight of this check, even when it pushes it out of the payload.
-                scanForImitatedMarkers(participationId, templateFiles, templateMarkerLines, previousFiles, currentFiles, snapshot.label(), sentinel, evidence);
+                scanForImitatedMarkers(participationId, template, templateMarkerLines, previousFiles, previousOtherPaths, current, snapshot.label(), sentinel, evidence);
 
                 // The header is known before the diff, so its bytes can be taken out of the budget the diff may spend.
                 // Handing buildDiff the whole payload budget instead would let it return a section that no longer fits,
@@ -507,6 +511,7 @@ public class DeimosAnalysisService {
 
                 var diffResult = buildDiff(previousFiles, currentFiles, diffBudget, snapshot);
                 previousFiles = currentFiles;
+                previousOtherPaths = current.otherPaths();
 
                 if (diffResult.text().isEmpty()) {
                     continue;
@@ -549,12 +554,17 @@ public class DeimosAnalysisService {
             // below; the minimum byte limit enforced at startup keeps that positive.
             String cumulativeHeader = "=== Final state vs. exercise template ===" + System.lineSeparator();
             long cumulativeBudget = Math.max(0, maxPayloadBytes - usedBytes - utf8Length(cumulativeHeader));
-            var cumulativeResult = buildDiff(templateFiles, previousFiles, cumulativeBudget, null);
-            boolean cumulativeIsRedundant = emittedSnapshots == 1 && omittedSnapshots == 0 && !evidence.hasOmissions() && cumulativeResult.omissions().isEmpty();
-            if (!cumulativeResult.text().isEmpty() && !cumulativeIsRedundant) {
-                evidence.omissions.addAll(cumulativeResult.omissions());
-                sb.append(cumulativeHeader);
-                sb.append(cumulativeResult.text());
+            // A single complete snapshot already is the change against the template. Building its copy first would let the
+            // smaller remaining budget truncate it, and the omissions of a section that is never sent would wrongly mark
+            // a fully examined participation as incompletely checked.
+            boolean cumulativeIsRedundant = emittedSnapshots == 1 && omittedSnapshots == 0 && !evidence.hasOmissions();
+            if (!cumulativeIsRedundant) {
+                var cumulativeResult = buildDiff(templateFiles, previousFiles, cumulativeBudget, null);
+                if (!cumulativeResult.text().isEmpty()) {
+                    evidence.omissions.addAll(cumulativeResult.omissions());
+                    sb.append(cumulativeHeader);
+                    sb.append(cumulativeResult.text());
+                }
             }
 
             return new SnapshotHistory(sb.toString().stripTrailing(), emittedSnapshots);
@@ -576,24 +586,33 @@ public class DeimosAnalysisService {
      * well, because they reach the prompt through the diff headers.
      *
      * @param participationId     the participation, for the log
-     * @param templateFiles       the exercise template
+     * @param template            the exercise template
      * @param templateMarkerLines cache of the marker lines per template file
-     * @param previousFiles       the previous snapshot
-     * @param currentFiles        the snapshot to scan
+     * @param previousFiles       the text files of the previous snapshot
+     * @param previousOtherPaths  the paths of the previous snapshot that are not text files
+     * @param current             the snapshot to scan
      * @param snapshot            the label of the snapshot, for the report
      * @param sentinel            the prompt sentinel, which must never occur in a submission
      * @param evidence            collects the findings
      */
-    private static void scanForImitatedMarkers(long participationId, Map<String, String> templateFiles, Map<String, Set<String>> templateMarkerLines,
-            Map<String, String> previousFiles, Map<String, String> currentFiles, String snapshot, String sentinel, ParticipationEvidence evidence) {
-        for (Map.Entry<String, String> file : new TreeMap<>(currentFiles).entrySet()) {
+    private static void scanForImitatedMarkers(long participationId, TextSnapshot template, Map<String, Set<String>> templateMarkerLines, Map<String, String> previousFiles,
+            Set<String> previousOtherPaths, TextSnapshot current, String snapshot, String sentinel, ParticipationEvidence evidence) {
+        Map<String, String> templateFiles = template.textFiles();
+        // Binary files and symbolic links never reach the payload, but their names are the student's as well.
+        for (String path : new TreeSet<>(current.otherPaths())) {
+            boolean inTemplate = templateFiles.containsKey(path) || template.otherPaths().contains(path);
+            if (!previousOtherPaths.contains(path) && !inTemplate && containsFenceMarker(path)) {
+                evidence.addFinding("path\0" + path, new DeimosManipulationFinding(displayPath(path), null, snapshot));
+            }
+        }
+        for (Map.Entry<String, String> file : new TreeMap<>(current.textFiles()).entrySet()) {
             String path = file.getKey();
             String content = file.getValue();
             if (content == null || content.equals(previousFiles.get(path))) {
                 continue;
             }
 
-            if (!templateFiles.containsKey(path) && containsFenceMarker(path)) {
+            if (!templateFiles.containsKey(path) && !template.otherPaths().contains(path) && containsFenceMarker(path)) {
                 evidence.addFinding("path\0" + path, new DeimosManipulationFinding(displayPath(path), null, snapshot));
             }
 
@@ -665,21 +684,25 @@ public class DeimosAnalysisService {
     /**
      * Reads one snapshot, failing loudly when the commit cannot be resolved.
      * <p>
-     * {@link RepositoryService#getFilesContentFromBareRepository} returns an empty map for an unresolvable hash, which
-     * is indistinguishable from an empty repository. Left unchecked, a garbage-collected or rewritten commit would be
-     * rendered as "the student deleted every file", or as "nothing to analyse", instead of being reported as an error.
+     * A file is only left out as binary when both its extension and its content say so: scripts such as {@code .sh} or
+     * {@code .bat} count as binary by extension, and they are exactly where an attack on the build infrastructure would
+     * be written.
+     * <p>
+     * {@link RepositoryService#getTextSnapshotFromBareRepository} returns an empty snapshot for an unresolvable hash,
+     * which is indistinguishable from an empty repository. Left unchecked, a garbage-collected or rewritten commit would
+     * be rendered as "the student deleted every file", or as "nothing to analyse", instead of being reported as an error.
      *
      * @param repository the bare repository
      * @param commitHash the commit to read
-     * @return the file contents of that commit
+     * @return the text files of that commit and the paths of all its other entries
      * @throws DeimosSnapshotHistoryException if the commit cannot be resolved or read
      */
-    private Map<String, String> readSnapshot(Repository repository, String commitHash) {
+    private TextSnapshot readSnapshot(Repository repository, String commitHash) {
         try {
             if (repository.resolve(commitHash) == null) {
                 throw new DeimosSnapshotHistoryException("Could not resolve commit " + commitHash + " in the participation repository");
             }
-            return repositoryService.getFilesContentFromBareRepository(repository, commitHash);
+            return repositoryService.getTextSnapshotFromBareRepository(repository, commitHash);
         }
         catch (DeimosSnapshotHistoryException ex) {
             throw ex;

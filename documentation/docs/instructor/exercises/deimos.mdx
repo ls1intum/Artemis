@@ -78,7 +78,8 @@ unified diffs:
    snapshot that was emitted without any omission or truncation.
 
 Diffs contain changed lines with surrounding context, together with file paths, abbreviated commit hashes, and
-submission timestamps. The model receives this history and classifies the participation as malicious or benign, with a
+submission timestamps. Every text file is included, shell and batch scripts as well. Binary files, such as images or
+archives, are left out; their names are still checked for imitated markers. The model receives this history and classifies the participation as malicious or benign, with a
 short rationale. It is instructed to look for patterns across snapshots, such as incremental probing or escalation,
 not only for a single incriminating line.
 

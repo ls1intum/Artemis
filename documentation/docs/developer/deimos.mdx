@@ -98,6 +98,11 @@ walking the git graph. Consequences worth knowing:
 - Submissions without a commit hash never reach the loop; the repository query filters them out and they leave no
   trace. A blank hash reaches the loop, is skipped with a log line, and is marked in the payload as a submission that
   could not be examined. It is recorded as a `MISSING_COMMIT_HASH` omission.
+- Snapshots are read with `RepositoryService.getTextSnapshotFromBareRepository`, which leaves a file out as binary
+  only when both its extension and the beginning of its content say so, and reads no more than that beginning for such
+  files. Scripts such as `.sh` or `.bat`, whose extensions count as binary for the repository exports, are therefore
+  part of the evidence, and a NUL byte cannot hide a file without such an extension. The paths of binary files and
+  symbolic links never reach the payload but are scanned for imitated markers.
 - The baseline is the exercise template, resolved from the setup commit. If that commit cannot be found, an empty
   baseline is used and everything counts as added.
 
@@ -124,7 +129,9 @@ The batch limits `artemis.deimos.batch.max-participations-per-run` (default 5000
 reads it from `ProfileService`, so the client never validates against a different value than the server.
 
 The reservation exists so that exhausting the budget cannot leave the model judging only a chronological prefix. The
-cumulative section is emitted unless it would be empty or would exactly repeat a single unomitted snapshot. Every
+cumulative section is emitted unless it would be empty or would exactly repeat a single unomitted snapshot; that case is
+decided before the section is built, so a truncated copy of complete evidence cannot mark the participation as
+incompletely checked. Every
 budget-caused omission is written into the payload as an explicit marker.
 
 Every omission is also recorded as a `DeimosOmission` with the limit that actually bound (`FILE_INPUT_LIMIT`,

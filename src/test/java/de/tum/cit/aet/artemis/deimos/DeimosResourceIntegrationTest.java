@@ -4,6 +4,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Duration;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -80,8 +82,8 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     private static String emptyWindowBody() {
-        ZonedDateTime from = ZonedDateTime.now().minusDays(3);
-        return body(from, from.plusDays(1));
+        ZonedDateTime from = ZonedDateTime.now(ZoneOffset.UTC).minusDays(3);
+        return body(from, from.plus(Duration.ofDays(1)));
     }
 
     @Test
@@ -203,10 +205,11 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerCourseBatch_exactlyMaximumWindow_returnsAccepted() throws Exception {
-        // The server permits exactly 31 days; this pins the boundary the client validation has to match.
-        ZonedDateTime to = ZonedDateTime.now().minusDays(60);
+        // The server permits exactly 31 days; this pins the boundary the client validation has to match. Built from a fixed
+        // duration in UTC: 31 calendar days in a zone with daylight saving time can be an hour longer or shorter.
+        ZonedDateTime to = ZonedDateTime.now(ZoneOffset.UTC).minusDays(60);
 
-        request.performMvcRequest(post(COURSE_ENDPOINT, course.getId()).contentType(MediaType.APPLICATION_JSON).content(body(to.minusDays(31), to)))
+        request.performMvcRequest(post(COURSE_ENDPOINT, course.getId()).contentType(MediaType.APPLICATION_JSON).content(body(to.minus(Duration.ofDays(31)), to)))
                 .andExpect(status().isAccepted());
     }
 }
