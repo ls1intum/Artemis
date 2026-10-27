@@ -31,14 +31,9 @@
                             [translateValues]="{ count: progressValue.total }"
                         ></li>
                         <li
-                            data-testid="pool-progress-accepted"
-                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.accepted"
+                            data-testid="pool-progress-ready"
+                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.ready"
                             [translateValues]="{ count: progressValue.accepted }"
-                        ></li>
-                        <li
-                            data-testid="pool-progress-rejected"
-                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.rejected"
-                            [translateValues]="{ count: progressValue.rejected }"
                         ></li>
                         @if (progressValue.toGenerate + progressValue.toJudge > 0) {
                             <li

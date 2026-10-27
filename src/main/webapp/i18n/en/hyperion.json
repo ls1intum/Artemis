@@ -8,10 +8,9 @@
                 "progress": {
                     "title": "Pool",
                     "total": "{{ count }} questions planned",
-                    "accepted": "{{ count }} accepted by the filter",
-                    "rejected": "{{ count }} rejected by the filter",
-                    "pending": "{{ count }} being generated or judged",
-                    "failed": "{{ count }} failed",
+                    "ready": "{{ count }} generated and checked",
+                    "pending": "{{ count }} still being generated",
+                    "failed": "{{ count }} could not be generated in three attempts",
                     "running": "A build is running",
                     "idle": "No build is running.",
                     "empty": "No questions yet. Start a build to fill the pool.",

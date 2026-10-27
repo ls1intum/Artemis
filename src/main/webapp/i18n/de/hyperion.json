@@ -8,10 +8,9 @@
                 "progress": {
                     "title": "Pool",
                     "total": "{{ count }} Fragen geplant",
-                    "accepted": "{{ count }} vom Filter akzeptiert",
-                    "rejected": "{{ count }} vom Filter abgelehnt",
-                    "pending": "{{ count }} werden generiert oder geprüft",
-                    "failed": "{{ count }} fehlgeschlagen",
+                    "ready": "{{ count }} generiert und geprüft",
+                    "pending": "{{ count }} werden noch generiert",
+                    "failed": "{{ count }} konnten in drei Versuchen nicht generiert werden",
                     "running": "Ein Lauf ist aktiv",
                     "idle": "Kein Lauf ist aktiv.",
                     "empty": "Noch keine Fragen. Starte einen Lauf, um den Pool zu füllen.",
