@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, TrackByFunction, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TrackByFunction, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -263,7 +263,7 @@ export class TutorialGroupsManagementComponent {
         effect(() => {
             const error = this.tutorialGroupsResource.error();
             if (error instanceof HttpErrorResponse) {
-                onError(this.alertService, error);
+                untracked(() => onError(this.alertService, error));
             }
         });
     }

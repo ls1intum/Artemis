@@ -3,6 +3,8 @@ import { DebugElement, EmbeddedViewRef, getDebugNode } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideHttpClient } from '@angular/common/http';
@@ -417,5 +419,39 @@ describe('TutorialGroupsManagementComponent', () => {
             await setUp([]);
             expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
         });
+    });
+});
+
+describe('TutorialGroupsManagementComponent alert dismissal', () => {
+    it('does not recreate a dismissed error alert', async () => {
+        await TestBed.configureTestingModule({
+            imports: [TutorialGroupsManagementComponent],
+            providers: [
+                AlertService,
+                { provide: EventManager, useValue: { subscribe: () => new Subscription() } },
+                { provide: Router, useValue: new MockRouter() },
+                mockedActivatedRoute({}, {}, { course: { id: 1 } }, {}),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+                provideArtemisTumAetUiTranslator(),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        const fixture = TestBed.createComponent(TutorialGroupsManagementComponent);
+        const http = TestBed.inject(HttpTestingController);
+        const alerts = TestBed.inject(AlertService);
+        fixture.detectChanges();
+        http.expectOne(TUTORIAL_GROUPS_URL).flush(null, { status: 403, statusText: 'Forbidden' });
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(alerts.alerts()).toHaveLength(1);
+        alerts.alerts()[0].close();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(alerts.alerts()).toHaveLength(0);
+        http.verify();
+        fixture.destroy();
     });
 });
