@@ -2213,6 +2213,25 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/quiz/participations/{participationId}/quiz-submissions/{submissionId}/results/{resultId}:
+    delete:
+      tags: [quiz-assessment]
+      operationId: deleteAssessment
+      parameters:
+      - name: participationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: resultId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
   /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
     delete:
       tags: [hyperion-exercise-generation]
