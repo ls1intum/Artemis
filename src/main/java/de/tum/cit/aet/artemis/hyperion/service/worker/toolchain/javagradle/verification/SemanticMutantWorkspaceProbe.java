@@ -20,6 +20,7 @@ final class SemanticMutantWorkspaceProbe {
 
     static BuildSummary run(InteractiveSandbox sandbox, String sessionId, @Nullable SemanticMutant mutant, @Nullable Map<String, String> counterexampleProbe,
             Runnable restoreCandidate, Runnable prepareBuild, Supplier<BuildSummary> build) {
+        BuildSummary summary;
         try {
             restoreCandidate.run();
             Map<String, String> files = new LinkedHashMap<>();
@@ -33,15 +34,31 @@ final class SemanticMutantWorkspaceProbe {
                 sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(files, Map.of()));
             }
             prepareBuild.run();
-            return build.get();
+            summary = build.get();
         }
-        finally {
+        catch (RuntimeException failure) {
             try {
                 restoreCandidate.run();
             }
-            catch (RuntimeException exception) {
-                throw new DifferentialVerifier.VerificationInfrastructureException("The semantic-mutant probe could not restore the verified candidate", exception);
+            catch (RuntimeException restoreFailure) {
+                // A candidate that may still contain the mutant must stop verification; keep the probe's own failure for diagnosis.
+                var infrastructure = new DifferentialVerifier.VerificationInfrastructureException("The semantic-mutant probe could not restore the verified candidate",
+                        restoreFailure);
+                infrastructure.addSuppressed(failure);
+                throw infrastructure;
             }
+            throw failure;
+        }
+        restore(restoreCandidate);
+        return summary;
+    }
+
+    private static void restore(Runnable restoreCandidate) {
+        try {
+            restoreCandidate.run();
+        }
+        catch (RuntimeException exception) {
+            throw new DifferentialVerifier.VerificationInfrastructureException("The semantic-mutant probe could not restore the verified candidate", exception);
         }
     }
 }
