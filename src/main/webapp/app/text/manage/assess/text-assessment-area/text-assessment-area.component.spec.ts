@@ -20,6 +20,10 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 describe('TextAssessmentAreaComponent', () => {
     let component: TextAssessmentAreaComponent;
@@ -40,6 +44,7 @@ describe('TextAssessmentAreaComponent', () => {
             imports: [TextAssessmentAreaComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 MockProvider(StructuredGradingCriterionService),
                 MockProvider(TextAssessmentAnalytics),
@@ -219,7 +224,7 @@ describe('TextAssessmentAreaComponent', () => {
         const feedbackTextareas = (): HTMLTextAreaElement[] => Array.from(fixture.nativeElement.querySelectorAll('textarea.unified-feedback-detail-input'));
 
         const deleteFeedbackOfNewBlock = () => {
-            // an empty feedback is dismissed without confirmation when Escape is pressed in its editor
+            // Escape opens the delete confirmation for an assessment feedback card.
             const unifiedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
             unifiedFeedback.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
             fixture.detectChanges();
@@ -263,8 +268,11 @@ describe('TextAssessmentAreaComponent', () => {
 
         it('should not throw when the feedback of the new block is deleted while Alt is still held', async () => {
             const handleErrorSpy = vi.spyOn(TestBed.inject(ErrorHandler), 'handleError');
+            const openDeleteDialog = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog');
             selectWordsManually();
             deleteFeedbackOfNewBlock();
+            triggerDeleteDialogDelete(openDeleteDialog.mock.calls[0][0].delete);
+            fixture.detectChanges();
             expect(feedbackTextareas()).toHaveLength(0);
 
             pressAlt('keyup');
