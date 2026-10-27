@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faExclamationTriangle, faPlay, faRotate } from '@fortawesome/free-solid-svg-icons';
-import { Subscription, interval } from 'rxjs';
-import { finalize, switchMap } from 'rxjs/operators';
+import { EMPTY, Subscription, interval } from 'rxjs';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -293,6 +293,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             )
             .subscribe({
                 next: (result) => {
+                    if (!this.isCurrent(courseId)) {
+                        return;
+                    }
                     if (result.started) {
                         this.alertService.success('artemisApp.hyperion.quizQuestionPool.progress.started', { count: result.enqueued });
                     } else {
@@ -326,6 +329,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             )
             .subscribe({
                 next: (stored) => {
+                    if (!this.isCurrent(courseId)) {
+                        return;
+                    }
                     this.settings.set(deepClone(stored));
                     this.originalSettings.set(deepClone(stored));
                     this.alertService.success('artemisApp.hyperion.quizQuestionPool.settings.saved');
@@ -381,7 +387,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
         }
         this.pollingSubscription = interval(POLL_INTERVAL_MS)
             .pipe(
-                switchMap(() => this.poolService.getProgress(courseId)),
+                switchMap(() => this.poolService.getProgress(courseId).pipe(catchError(() => EMPTY))),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
@@ -404,7 +410,6 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
                         this.stopPolling();
                     }
                 },
-                error: () => this.stopPolling(),
             });
     }
 

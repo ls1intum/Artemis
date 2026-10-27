@@ -136,6 +136,56 @@ describe('QuizQuestionPoolComponent', () => {
         expect(progressSpy).toHaveBeenCalledWith(2);
     });
 
+    it('should ignore a late build start and a late settings save of a previous course', () => {
+        vi.useFakeTimers();
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true }, params.asObservable());
+        const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValue(of({ ...progress, running: false }));
+        params.next({ courseId: '1' });
+        const lateStart = new Subject<{ started: boolean; enqueued: number }>();
+        const lateSave = new Subject<PoolSettings>();
+        vi.spyOn(poolService, 'startBuild').mockReturnValue(lateStart.asObservable());
+        vi.spyOn(poolService, 'updateSettings').mockReturnValue(lateSave.asObservable());
+        component.startBuild();
+        component.setQuestionsPerLectureUnit(30);
+        component.saveSettings();
+
+        params.next({ courseId: '2' });
+        const pollsOfFirstCourse = progressSpy.mock.calls.filter((call) => call[0] === 1).length;
+        lateStart.next({ started: true, enqueued: 12 });
+        lateStart.complete();
+        lateSave.next({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
+        lateSave.complete();
+        vi.advanceTimersByTime(6000);
+
+        expect(progressSpy.mock.calls.filter((call) => call[0] === 1)).toHaveLength(pollsOfFirstCourse);
+        expect(component.settings()).toEqual(settings);
+        expect(component.isSettingsDirty()).toBe(false);
+    });
+
+    it('should keep polling when a progress request fails once', () => {
+        vi.useFakeTimers();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'startBuild').mockReturnValue(of({ started: true, enqueued: 12 }));
+        const progressSpy = vi.spyOn(poolService, 'getProgress');
+        progressSpy
+            .mockReturnValueOnce(throwError(() => new Error('network')))
+            .mockReturnValueOnce(of({ ...progress, running: true }))
+            .mockReturnValueOnce(of({ ...progress, running: false }));
+
+        component.startBuild();
+        vi.advanceTimersByTime(3000);
+        expect(component.isRunning()).toBe(false);
+        vi.advanceTimersByTime(3000);
+        expect(component.isRunning()).toBe(true);
+        vi.advanceTimersByTime(3000);
+        expect(component.isRunning()).toBe(false);
+        const callsAfterStop = progressSpy.mock.calls.length;
+        vi.advanceTimersByTime(6000);
+
+        expect(progressSpy.mock.calls.length).toBe(callsAfterStop);
+    });
+
     it('should compute the progress percentage from judged and failed items', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
 
