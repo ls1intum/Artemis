@@ -26,9 +26,9 @@ export class IngestionBrowserApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
+     *
+     *
+     * @param courseId
      */
     getCourseBrowserData(courseId: number): Observable<CourseBrowserData> {
         const url = `${this.basePath}/api/global-search/admin/courses/${courseId}/browser`;
@@ -36,10 +36,10 @@ export class IngestionBrowserApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param type 
+     *
+     *
+     * @param courseId
+     * @param type
      */
     getIndexedEntityRecords(courseId: number, type: string): Observable<Array<IndexedEntityRecord>> {
         const queryParams = new URLSearchParams();
@@ -50,11 +50,11 @@ export class IngestionBrowserApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param unitId 
-     * @param key 
+     *
+     *
+     * @param courseId
+     * @param unitId
+     * @param key
      */
     getUnitContent(courseId: number, unitId: number, key: string): Observable<Array<IndexedContentObject>> {
         const queryParams = new URLSearchParams();

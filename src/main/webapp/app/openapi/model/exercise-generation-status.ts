@@ -63,4 +63,3 @@ export const ExerciseGenerationStatusAccountingStateEnum = {
 } as const;
 
 export const ExerciseGenerationStatusAccountingStateEnumValues = ['PENDING', 'COMPLETE', 'INCOMPLETE'] as const;
-

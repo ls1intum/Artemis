@@ -29,4 +29,3 @@ export const ActiveGenerationModeEnum = {
 } as const;
 
 export const ActiveGenerationModeEnumValues = ['GENERATE', 'ADAPT'] as const;
-

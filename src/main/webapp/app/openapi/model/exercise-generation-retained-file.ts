@@ -30,4 +30,3 @@ export const ExerciseGenerationRetainedFileRepoEnum = {
 } as const;
 
 export const ExerciseGenerationRetainedFileRepoEnumValues = ['solution', 'template', 'tests'] as const;
-

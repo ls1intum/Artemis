@@ -43,4 +43,3 @@ export const DragAndDropQuizQuestionWithoutSolutionTypeEnum = {
 } as const;
 
 export const DragAndDropQuizQuestionWithoutSolutionTypeEnumValues = ['drag-and-drop'] as const;
-

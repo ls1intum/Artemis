@@ -14,6 +14,4 @@ import type { QuizQuestionRefinementFailure } from './quiz-question-refinement-f
 /**
  * Discriminated response for a single quiz question refinement, either a success with the refined question or a failure with an error message
  */
-export type QuizQuestionRefinementResponse = (QuizQuestionRefinementSuccess | QuizQuestionRefinementFailure) & {
-    type: string;
-};
+export type QuizQuestionRefinementResponse = QuizQuestionRefinementSuccess | QuizQuestionRefinementFailure;

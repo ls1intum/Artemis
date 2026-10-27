@@ -26,4 +26,3 @@ export const VariantPlacementTypeEnum = {
 } as const;
 
 export const VariantPlacementTypeEnumValues = ['EXISTING_GROUP', 'NEW_GROUP', 'STANDALONE', 'SAME_EXAM_GROUP'] as const;
-

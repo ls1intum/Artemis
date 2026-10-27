@@ -24,12 +24,12 @@ export class CalendarApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param token 
-     * @param filterOptions 
-     * @param language 
+     *
+     *
+     * @param courseId
+     * @param token
+     * @param filterOptions
+     * @param language
      */
     getCalendarEventSubscriptionFile(courseId: number, token: string, filterOptions: Array<'LECTURES' | 'TUTORIALS' | 'EXAMS' | 'EXERCISES'>, language: 'ENGLISH' | 'GERMAN'): Observable<string> {
         const queryParams = new URLSearchParams();
@@ -42,8 +42,8 @@ export class CalendarApi {
     }
 
     /**
-     * 
-     * 
+     *
+     *
      */
     getCalendarEventSubscriptionToken(): Observable<string> {
         const url = `${this.basePath}/api/calendar/subscription-token`;
@@ -52,11 +52,11 @@ export class CalendarApi {
 
     /**
      * Get calendar events grouped by month
-     * 
-     * @param courseId 
-     * @param monthKeys 
-     * @param timeZone 
-     * @param language 
+     *
+     * @param courseId
+     * @param monthKeys
+     * @param timeZone
+     * @param language
      */
     getCalendarEventsOverlappingMonths(courseId: number, monthKeys: Array<string>, timeZone: string, language: 'ENGLISH' | 'GERMAN'): Observable<{ [key: string]: Array<CalendarEvent>; }> {
         const queryParams = new URLSearchParams();

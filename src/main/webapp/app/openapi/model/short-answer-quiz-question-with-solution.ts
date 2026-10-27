@@ -47,4 +47,3 @@ export const ShortAnswerQuizQuestionWithSolutionTypeEnum = {
 } as const;
 
 export const ShortAnswerQuizQuestionWithSolutionTypeEnumValues = ['short-answer'] as const;
-

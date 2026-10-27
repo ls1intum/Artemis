@@ -40,4 +40,3 @@ export const DifficultyAssessmentDeltaEnum = {
 } as const;
 
 export const DifficultyAssessmentDeltaEnumValues = ['LOWER', 'MATCH', 'HIGHER', 'UNKNOWN'] as const;
-

@@ -32,4 +32,3 @@ export const CalendarEventTypeEnum = {
 } as const;
 
 export const CalendarEventTypeEnumValues = ['LECTURE', 'TUTORIAL', 'EXAM', 'QUIZ_EXERCISE', 'TEXT_EXERCISE', 'MODELING_EXERCISE', 'PROGRAMMING_EXERCISE', 'FILE_UPLOAD_EXERCISE'] as const;
-

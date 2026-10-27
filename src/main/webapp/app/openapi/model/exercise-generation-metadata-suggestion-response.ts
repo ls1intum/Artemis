@@ -29,4 +29,3 @@ export const ExerciseGenerationMetadataSuggestionResponseDifficultyEnum = {
 } as const;
 
 export const ExerciseGenerationMetadataSuggestionResponseDifficultyEnumValues = ['EASY', 'MEDIUM', 'HARD'] as const;
-

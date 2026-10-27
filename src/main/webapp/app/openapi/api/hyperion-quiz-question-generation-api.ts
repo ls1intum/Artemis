@@ -28,10 +28,10 @@ export class HyperionQuizQuestionGenerationApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param quizQuestionGenerationRequest 
+     *
+     *
+     * @param courseId
+     * @param quizQuestionGenerationRequest
      */
     generateQuizQuestions(courseId: number, quizQuestionGenerationRequest: QuizQuestionGenerationRequest): Observable<QuizQuestionGenerationResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-exercises/generate-questions`;
@@ -39,10 +39,10 @@ export class HyperionQuizQuestionGenerationApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param quizQuestionBulkRefinementRequest 
+     *
+     *
+     * @param courseId
+     * @param quizQuestionBulkRefinementRequest
      */
     refineAllQuizQuestions(courseId: number, quizQuestionBulkRefinementRequest: QuizQuestionBulkRefinementRequest): Observable<QuizQuestionBulkRefinementResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-exercises/refine-all-questions`;
@@ -50,10 +50,10 @@ export class HyperionQuizQuestionGenerationApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param quizQuestionRefinementRequest 
+     *
+     *
+     * @param courseId
+     * @param quizQuestionRefinementRequest
      */
     refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest): Observable<QuizQuestionRefinementResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-exercises/refine-question`;

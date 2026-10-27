@@ -35,4 +35,3 @@ export const ArtifactLocationTypeEnum = {
 } as const;
 
 export const ArtifactLocationTypeEnumValues = ['PROBLEM_STATEMENT', 'TEMPLATE_REPOSITORY', 'SOLUTION_REPOSITORY', 'TESTS_REPOSITORY'] as const;
-

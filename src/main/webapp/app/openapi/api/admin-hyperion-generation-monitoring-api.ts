@@ -24,11 +24,11 @@ export class AdminHyperionGenerationMonitoringApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param generationId 
-     * @param reason 
+     *
+     *
+     * @param exerciseId
+     * @param generationId
+     * @param reason
      */
     cancelGeneration(exerciseId: number, generationId: string, reason: string): Observable<void> {
         const generationIdPath = encodeURIComponent(String(generationId));
@@ -40,8 +40,8 @@ export class AdminHyperionGenerationMonitoringApi {
     }
 
     /**
-     * 
-     * 
+     *
+     *
      */
     getActiveGenerations(): Observable<Array<ActiveGeneration>> {
         const url = `${this.basePath}/api/hyperion/admin/generations`;

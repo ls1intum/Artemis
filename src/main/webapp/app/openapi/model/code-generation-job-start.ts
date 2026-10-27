@@ -25,4 +25,3 @@ export const CodeGenerationJobStartRepositoryTypeEnum = {
 } as const;
 
 export const CodeGenerationJobStartRepositoryTypeEnumValues = ['TEMPLATE', 'SOLUTION', 'TESTS', 'AUXILIARY', 'USER'] as const;
-

@@ -55,4 +55,3 @@ export const ChannelSubTypeEnum = {
 } as const;
 
 export const ChannelSubTypeEnumValues = ['general', 'exercise', 'lecture', 'exam', 'feedbackDiscussion'] as const;
-

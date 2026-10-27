@@ -26,4 +26,3 @@ export const ExamSeatConditionEnum = {
 } as const;
 
 export const ExamSeatConditionEnumValues = ['USABLE', 'NO_TABLE', 'DEFECT', 'WHEELCHAIR'] as const;
-

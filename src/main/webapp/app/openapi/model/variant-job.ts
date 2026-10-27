@@ -78,4 +78,3 @@ export const VariantJobFailedInPhaseEnum = {
 } as const;
 
 export const VariantJobFailedInPhaseEnumValues = ['ANALYZING', 'PLANNING', 'PROVISIONING', 'TRANSFORMING', 'VERIFYING', 'REPAIRING', 'FINALIZING', 'COMPLETED', 'DRAFT_WITH_WARNINGS', 'FAILED', 'CANCELLED'] as const;
-

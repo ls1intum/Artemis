@@ -25,9 +25,9 @@ export class QuizExerciseBatchApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param quizExerciseId 
+     *
+     *
+     * @param quizExerciseId
      */
     addBatch(quizExerciseId: number): Observable<QuizBatchWithPassword> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/add-batch`;
@@ -35,10 +35,10 @@ export class QuizExerciseBatchApi {
     }
 
     /**
-     * 
-     * 
-     * @param quizExerciseId 
-     * @param quizBatchJoin 
+     *
+     *
+     * @param quizExerciseId
+     * @param quizBatchJoin
      */
     joinBatch(quizExerciseId: number, quizBatchJoin: QuizBatchJoin): Observable<QuizBatch> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/join`;
@@ -46,21 +46,11 @@ export class QuizExerciseBatchApi {
     }
 
     /**
-     * 
-     * 
-     * @param quizBatchId 
+     *
+     *
+     * @param quizBatchId
      */
     startBatch(quizBatchId: number): Observable<QuizBatch> {
-        const url = `${this.basePath}/api/quiz/quiz-exercises/${quizBatchId}/start-batch`;
-        return this.http.put<QuizBatch>(url, null);
-    }
-
-    /**
-     * 
-     * 
-     * @param quizBatchId 
-     */
-    startBatch_(quizBatchId: number): Observable<QuizBatch> {
         const url = `${this.basePath}/api/quiz/quiz-batches/${quizBatchId}/start-batch`;
         return this.http.put<QuizBatch>(url, null);
     }

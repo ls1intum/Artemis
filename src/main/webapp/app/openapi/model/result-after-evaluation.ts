@@ -28,4 +28,3 @@ export const ResultAfterEvaluationAssessmentTypeEnum = {
 } as const;
 
 export const ResultAfterEvaluationAssessmentTypeEnumValues = ['AUTOMATIC', 'SEMI_AUTOMATIC', 'MANUAL', 'AUTOMATIC_ATHENA'] as const;
-

@@ -37,4 +37,3 @@ export const VariantGenerationRequestNarrativeStyleEnum = {
 } as const;
 
 export const VariantGenerationRequestNarrativeStyleEnumValues = ['TECHNICAL', 'REALISTIC', 'CREATIVE'] as const;
-

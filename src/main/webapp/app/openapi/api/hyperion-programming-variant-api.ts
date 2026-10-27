@@ -24,10 +24,10 @@ export class HyperionProgrammingVariantApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param variantGenerationRequest 
+     *
+     *
+     * @param exerciseId
+     * @param variantGenerationRequest
      */
     generateProgrammingVariant(exerciseId: number, variantGenerationRequest: VariantGenerationRequest): Observable<ExerciseGenerationJobStart> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generation/variants`;

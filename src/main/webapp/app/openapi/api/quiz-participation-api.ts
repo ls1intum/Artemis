@@ -24,11 +24,11 @@ export class QuizParticipationApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param participationId 
-     * @param submissionId 
+     *
+     *
+     * @param exerciseId
+     * @param participationId
+     * @param submissionId
      */
     getParticipationResult(exerciseId: number, participationId: number, submissionId?: number): Observable<StudentQuizParticipation> {
         const queryParams = new URLSearchParams();
@@ -39,9 +39,9 @@ export class QuizParticipationApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
+     *
+     *
+     * @param exerciseId
      */
     startParticipation(exerciseId: number): Observable<StudentQuizParticipation> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${exerciseId}/start-participation`;

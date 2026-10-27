@@ -26,4 +26,3 @@ export const CodeGenerationRequestRepositoryTypeEnum = {
 } as const;
 
 export const CodeGenerationRequestRepositoryTypeEnumValues = ['TEMPLATE', 'SOLUTION', 'TESTS', 'AUXILIARY', 'USER'] as const;
-

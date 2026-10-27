@@ -24,10 +24,10 @@ export class HyperionFaqApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param rewriteFaqRequest 
+     *
+     *
+     * @param courseId
+     * @param rewriteFaqRequest
      */
     rewriteFaq(courseId: number, rewriteFaqRequest: RewriteFaqRequest): Observable<RewriteFaqResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/faq/rewrite`;

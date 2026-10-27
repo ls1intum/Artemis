@@ -31,11 +31,11 @@ export class TutorialGroupApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param requestBody 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param requestBody
      */
     batchRegisterStudents(courseId: number, tutorialGroupId: number, requestBody: Array<string>): Observable<void> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/batch-register`;
@@ -43,10 +43,10 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param createOrUpdateTutorialGroupRequest 
+     *
+     *
+     * @param courseId
+     * @param createOrUpdateTutorialGroupRequest
      */
     createTutorialGroup(courseId: number, createOrUpdateTutorialGroupRequest: CreateOrUpdateTutorialGroupRequest): Observable<number> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups`;
@@ -54,10 +54,10 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
      */
     deleteTutorialGroup(courseId: number, tutorialGroupId: number): Observable<void> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}`;
@@ -65,11 +65,11 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param studentLogin 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param studentLogin
      */
     deregisterStudent(courseId: number, tutorialGroupId: number, studentLogin: string): Observable<void> {
         const studentLoginPath = encodeURIComponent(String(studentLogin));
@@ -78,10 +78,10 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param fields 
+     *
+     *
+     * @param courseId
+     * @param fields
      */
     exportTutorialGroupsToCSV(courseId: number, fields: Array<string>): Observable<HttpResponse<Blob>> {
         const queryParams = new URLSearchParams();
@@ -92,10 +92,10 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param fields 
+     *
+     *
+     * @param courseId
+     * @param fields
      */
     exportTutorialGroupsToJSON(courseId: number, fields: Array<string>): Observable<Array<TutorialGroupExportData>> {
         const queryParams = new URLSearchParams();
@@ -106,10 +106,10 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
      */
     getRegisteredStudents(courseId: number, tutorialGroupId: number): Observable<Array<TutorialGroupStudent>> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/registered-students`;
@@ -117,9 +117,9 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param tutorialGroupId 
+     *
+     *
+     * @param tutorialGroupId
      */
     getTitle(tutorialGroupId: number): Observable<string> {
         const url = `${this.basePath}/api/tutorialgroup/tutorial-groups/${tutorialGroupId}/title`;
@@ -127,10 +127,10 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
      */
     getTutorialGroup(courseId: number, tutorialGroupId: number): Observable<TutorialGroupDetailData> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}`;
@@ -138,10 +138,10 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
      */
     getTutorialGroupSchedule(courseId: number, tutorialGroupId: number): Observable<TutorialGroupSchedule> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/schedule`;
@@ -149,9 +149,9 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
+     *
+     *
+     * @param courseId
      */
     getTutorialGroupsForCourse(courseId: number): Observable<Array<TutorialGroupSummary>> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups`;
@@ -159,9 +159,9 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
+     *
+     *
+     * @param courseId
      */
     getUniqueLanguageValues(courseId: number): Observable<Array<string>> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/language-values`;
@@ -169,11 +169,11 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param tutorialGroupStudentImportData 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param tutorialGroupStudentImportData
      */
     importRegistrations(courseId: number, tutorialGroupId: number, tutorialGroupStudentImportData: Array<TutorialGroupStudentImportData>): Observable<Array<TutorialGroupStudentImportData>> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/import-registrations`;
@@ -181,10 +181,10 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupImportData 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupImportData
      */
     importTutorialGroupsWithRegistrations(courseId: number, tutorialGroupImportData: Array<TutorialGroupImportData>): Observable<Array<TutorialGroupImportData>> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/import`;
@@ -192,13 +192,13 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param loginOrName 
-     * @param pageIndex 
-     * @param pageSize 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param loginOrName
+     * @param pageIndex
+     * @param pageSize
      */
     searchUnregisteredStudents(courseId: number, tutorialGroupId: number, loginOrName: string, pageIndex: number, pageSize: number): Observable<Array<TutorialGroupStudent>> {
         const queryParams = new URLSearchParams();
@@ -211,11 +211,11 @@ export class TutorialGroupApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param createOrUpdateTutorialGroupRequest 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param createOrUpdateTutorialGroupRequest
      */
     updateTutorialGroup(courseId: number, tutorialGroupId: number, createOrUpdateTutorialGroupRequest: CreateOrUpdateTutorialGroupRequest): Observable<void> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}`;

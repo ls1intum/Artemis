@@ -36,4 +36,3 @@ export const WorkerStatusStateEnum = {
 } as const;
 
 export const WorkerStatusStateEnumValues = ['OFFLINE', 'NOT_READY', 'AVAILABLE', 'RESERVED', 'BUSY'] as const;
-

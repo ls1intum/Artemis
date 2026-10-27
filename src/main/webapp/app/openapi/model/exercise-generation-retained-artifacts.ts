@@ -31,4 +31,3 @@ export const ExerciseGenerationRetainedArtifactsCompletenessEnum = {
 } as const;
 
 export const ExerciseGenerationRetainedArtifactsCompletenessEnumValues = ['COMPLETE', 'PARTIAL'] as const;
-

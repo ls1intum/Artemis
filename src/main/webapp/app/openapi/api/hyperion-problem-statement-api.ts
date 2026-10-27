@@ -35,10 +35,10 @@ export class HyperionProblemStatementApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param checklistAnalysisRequest 
+     *
+     *
+     * @param courseId
+     * @param checklistAnalysisRequest
      */
     analyzeChecklist(courseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest): Observable<ChecklistAnalysisResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/checklist-analysis`;
@@ -46,11 +46,11 @@ export class HyperionProblemStatementApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param section 
-     * @param checklistAnalysisRequest 
+     *
+     *
+     * @param courseId
+     * @param section
+     * @param checklistAnalysisRequest
      */
     analyzeChecklistSection(courseId: number, section: 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest): Observable<ChecklistAnalysisResponse> {
         const sectionPath = encodeURIComponent(String(section));
@@ -59,10 +59,10 @@ export class HyperionProblemStatementApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param checklistActionRequest 
+     *
+     *
+     * @param courseId
+     * @param checklistActionRequest
      */
     applyChecklistAction(courseId: number, checklistActionRequest: ChecklistActionRequest): Observable<ChecklistActionResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/checklist-actions`;
@@ -70,10 +70,10 @@ export class HyperionProblemStatementApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param skipThreadContext 
+     *
+     *
+     * @param exerciseId
+     * @param skipThreadContext
      */
     checkExerciseConsistency(exerciseId: number, skipThreadContext?: boolean): Observable<ConsistencyCheckResponse> {
         const queryParams = new URLSearchParams();
@@ -84,10 +84,10 @@ export class HyperionProblemStatementApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param problemStatementGenerationRequest 
+     *
+     *
+     * @param courseId
+     * @param problemStatementGenerationRequest
      */
     generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest): Observable<ProblemStatementGenerationResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/problem-statements/generate`;
@@ -95,10 +95,10 @@ export class HyperionProblemStatementApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param problemStatementGlobalRefinementRequest 
+     *
+     *
+     * @param courseId
+     * @param problemStatementGlobalRefinementRequest
      */
     refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest): Observable<ProblemStatementRefinementResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/problem-statements/refine/global`;
@@ -106,10 +106,10 @@ export class HyperionProblemStatementApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param problemStatementTargetedRefinementRequest 
+     *
+     *
+     * @param courseId
+     * @param problemStatementTargetedRefinementRequest
      */
     refineProblemStatementTargeted(courseId: number, problemStatementTargetedRefinementRequest: ProblemStatementTargetedRefinementRequest): Observable<ProblemStatementRefinementResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/problem-statements/refine/targeted`;
@@ -117,10 +117,10 @@ export class HyperionProblemStatementApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param problemStatementRewriteRequest 
+     *
+     *
+     * @param courseId
+     * @param problemStatementRewriteRequest
      */
     rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest): Observable<ProblemStatementRewriteResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/problem-statements/rewrite`;

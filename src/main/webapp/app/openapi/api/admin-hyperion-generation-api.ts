@@ -24,9 +24,9 @@ export class AdminHyperionGenerationApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param exerciseId 
+     *
+     *
+     * @param exerciseId
      */
     getWedgedSlot(exerciseId: number): Observable<ExerciseGenerationWedgedSlot> {
         const url = `${this.basePath}/api/hyperion/admin/exercises/${exerciseId}/wedged-slot`;
@@ -34,11 +34,11 @@ export class AdminHyperionGenerationApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param token 
-     * @param reason 
+     *
+     *
+     * @param exerciseId
+     * @param token
+     * @param reason
      */
     recoverWedgedSlot(exerciseId: number, token: string, reason: string): Observable<void> {
         const tokenPath = encodeURIComponent(String(token));

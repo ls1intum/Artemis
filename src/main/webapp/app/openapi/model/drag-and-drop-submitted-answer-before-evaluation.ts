@@ -25,4 +25,3 @@ export const DragAndDropSubmittedAnswerBeforeEvaluationTypeEnum = {
 } as const;
 
 export const DragAndDropSubmittedAnswerBeforeEvaluationTypeEnumValues = ['drag-and-drop'] as const;
-

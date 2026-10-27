@@ -34,4 +34,3 @@ export const ExerciseGenerationMetadataSuggestionRequestProjectTypeEnum = {
 } as const;
 
 export const ExerciseGenerationMetadataSuggestionRequestProjectTypeEnumValues = ['MAVEN_MAVEN', 'PLAIN_MAVEN', 'PLAIN', 'XCODE', 'FACT', 'GCC', 'PLAIN_GRADLE', 'GRADLE_GRADLE', 'MAVEN_BLACKBOX'] as const;
-

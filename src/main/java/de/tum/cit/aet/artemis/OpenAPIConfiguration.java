@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -42,26 +41,17 @@ public class OpenAPIConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAPIConfiguration.class);
 
-    /** A trailing underscore and digits, which springdoc appends to an operation id it had to make unique. */
-    private static final Pattern TRAILING_UNDERSCORE_DIGITS = Pattern.compile("_\\d+$");
-
     private static final String OK_STATUS_CODE = "200";
 
     private static final int RESOURCE_NUMBER_OF_CHARACTERS = 9;
 
     private static final int DTO_NUMBER_OF_CHARACTERS = 3;
 
-    /**
-     * The schema springdoc documents Spring's {@code Pageable} with ({@code page}, {@code size}, {@code sort}). It is kept next to
-     * the DTO schemas because paged endpoints take it as a query parameter.
-     */
-    private static final String PAGEABLE_SCHEMA = "Pageable";
-
     @Value("${artemis.version}")
     private String version;
 
     /**
-     * Creates an {@link OpenApiCustomizer} that applies a series of schema and operation name transformations
+     * Creates an {@link OpenApiCustomizer} that applies a series of schema and tag name transformations
      * to the generated OpenAPI definition for the Artemis Application Server API.
      *
      * <p>
@@ -69,14 +59,12 @@ public class OpenAPIConfiguration {
      * </p>
      * <ul>
      * <li>Set the API title, version, and contact information on the OpenAPI {@link Info} object.</li>
-     * <li>Filter component schemas to only include those ending in “Dto” (and Spring's Pageable), strip the “Dto” suffix
+     * <li>Filter component schemas to only include those ending in “Dto”, strip the “Dto” suffix
      * from their schema names, and remove the “Dto” suffix from all property names within those schemas.</li>
      * <li>Iterate over all paths and operations to:
      * <ul>
-     * <li>Remove any trailing underscore plus digit characters from operation IDs.</li>
      * <li>Remove the “Dto” suffix from any response schemas.</li>
      * <li>Remove the “Dto” suffix from any request-body schemas, if present.</li>
-     * <li>Remove the “Dto” suffix from any parameter schemas.</li>
      * <li>Remove any resource-name suffix from operation tags.</li>
      * </ul>
      * </li>
@@ -107,20 +95,13 @@ public class OpenAPIConfiguration {
             }
             paths.forEach((path, pathItem) -> {
                 pathItem.readOperations().forEach(operation -> {
-                    stripTrailingUnderscoreDigitCharacter(operation);
                     removeDtoSuffixFromResponseSchemas(operation);
                     removeDtoSuffixFromRequestBodyIfExisting(operation);
-                    removeDtoSuffixFromParameters(operation);
 
                     removeResourceSuffixFromTags(operation);
                 });
             });
         };
-    }
-
-    private static void stripTrailingUnderscoreDigitCharacter(Operation operation) {
-        String id = operation.getOperationId();
-        operation.setOperationId(TRAILING_UNDERSCORE_DIGITS.matcher(id).replaceAll(""));
     }
 
     private void removeDtoSuffixFromResponseSchemas(Operation operation) {
@@ -152,16 +133,12 @@ public class OpenAPIConfiguration {
     }
 
     private static Map<String, Schema> filterForSchemasWithDtoSuffixAndStripSuffix(Components components) {
-        return components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO") || PAGEABLE_SCHEMA.equals(entry.getKey()))
-                .collect(Collectors.toMap(entry -> stripDtoSuffix(entry.getKey()), entry -> {
+        return components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO"))
+                .collect(Collectors.toMap(entry -> entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS), entry -> {
                     Schema<?> schema = entry.getValue();
-                    schema.setName(stripDtoSuffix(entry.getKey()));
+                    schema.setName(entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS));
                     return schema;
                 }));
-    }
-
-    private static String stripDtoSuffix(String name) {
-        return name.endsWith("DTO") ? name.substring(0, name.length() - DTO_NUMBER_OF_CHARACTERS) : name;
     }
 
     private void removeDtoSuffixFromRequestBodyIfExisting(Operation operation) {
@@ -170,12 +147,6 @@ public class OpenAPIConfiguration {
             requestBodyContent.forEach((contentType, mediaType) -> {
                 removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
             });
-        }
-    }
-
-    private void removeDtoSuffixFromParameters(Operation operation) {
-        if (operation.getParameters() != null) {
-            operation.getParameters().forEach(parameter -> removeDTOSuffixesFromSchemaRecursively(parameter.getSchema()));
         }
     }
 

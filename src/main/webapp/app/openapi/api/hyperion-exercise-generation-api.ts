@@ -31,10 +31,10 @@ export class HyperionExerciseGenerationApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param jobId 
+     *
+     *
+     * @param exerciseId
+     * @param jobId
      */
     cancelExerciseGeneration(exerciseId: number, jobId: string): Observable<void> {
         const jobIdPath = encodeURIComponent(String(jobId));
@@ -43,10 +43,10 @@ export class HyperionExerciseGenerationApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param exerciseGenerationRequest 
+     *
+     *
+     * @param exerciseId
+     * @param exerciseGenerationRequest
      */
     generateExercise(exerciseId: number, exerciseGenerationRequest: ExerciseGenerationRequest): Observable<ExerciseGenerationJobStart> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-exercise`;
@@ -54,9 +54,9 @@ export class HyperionExerciseGenerationApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
+     *
+     *
+     * @param exerciseId
      */
     getExerciseGenerationStatus(exerciseId: number): Observable<ExerciseGenerationStatus> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/status`;
@@ -64,9 +64,9 @@ export class HyperionExerciseGenerationApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
+     *
+     *
+     * @param exerciseId
      */
     getGenerationCapabilities(exerciseId: number): Observable<ExerciseGenerationCapabilities> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generation/capabilities`;
@@ -74,8 +74,8 @@ export class HyperionExerciseGenerationApi {
     }
 
     /**
-     * 
-     * 
+     *
+     *
      */
     getGenerationEffortProfiles(): Observable<Array<ExerciseGenerationEffortProfile>> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/generation/effort-profiles`;
@@ -83,9 +83,9 @@ export class HyperionExerciseGenerationApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
+     *
+     *
+     * @param exerciseId
      */
     getRetainedGenerationArtifacts(exerciseId: number): Observable<ExerciseGenerationRetainedArtifacts> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/artifacts`;
@@ -93,8 +93,8 @@ export class HyperionExerciseGenerationApi {
     }
 
     /**
-     * 
-     * 
+     *
+     *
      */
     getSupportedGenerationLanguages(): Observable<Array<string>> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/generation/supported-languages`;
@@ -102,10 +102,10 @@ export class HyperionExerciseGenerationApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param runId 
+     *
+     *
+     * @param exerciseId
+     * @param runId
      */
     revertExerciseGeneration(exerciseId: number, runId: string): Observable<ExerciseGenerationRevertResult> {
         const runIdPath = encodeURIComponent(String(runId));
@@ -114,10 +114,10 @@ export class HyperionExerciseGenerationApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param exerciseGenerationMetadataSuggestionRequest 
+     *
+     *
+     * @param courseId
+     * @param exerciseGenerationMetadataSuggestionRequest
      */
     suggestGenerationMetadata(courseId: number, exerciseGenerationMetadataSuggestionRequest: ExerciseGenerationMetadataSuggestionRequest): Observable<ExerciseGenerationMetadataSuggestionResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/programming-exercises/generation/metadata-suggestion`;

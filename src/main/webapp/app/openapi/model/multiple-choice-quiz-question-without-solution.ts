@@ -41,4 +41,3 @@ export const MultipleChoiceQuizQuestionWithoutSolutionTypeEnum = {
 } as const;
 
 export const MultipleChoiceQuizQuestionWithoutSolutionTypeEnumValues = ['multiple-choice'] as const;
-

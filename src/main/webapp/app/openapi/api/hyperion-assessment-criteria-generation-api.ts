@@ -24,10 +24,10 @@ export class HyperionAssessmentCriteriaGenerationApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param assessmentCriteriaGenerationRequest 
+     *
+     *
+     * @param courseId
+     * @param assessmentCriteriaGenerationRequest
      */
     generateAssessmentCriteria(courseId: number, assessmentCriteriaGenerationRequest: AssessmentCriteriaGenerationRequest): Observable<AssessmentCriteriaGenerationResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/assessment-criteria/generate`;

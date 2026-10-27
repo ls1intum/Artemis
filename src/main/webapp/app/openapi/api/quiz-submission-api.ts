@@ -27,11 +27,11 @@ export class QuizSubmissionApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param quizSubmissionFromLiveClient 
-     * @param submit 
+     *
+     *
+     * @param exerciseId
+     * @param quizSubmissionFromLiveClient
+     * @param submit
      */
     saveOrSubmitForLiveMode(exerciseId: number, quizSubmissionFromLiveClient: QuizSubmissionFromLiveClient, submit?: boolean): Observable<QuizSubmissionBeforeEvaluation> {
         const queryParams = new URLSearchParams();
@@ -42,10 +42,10 @@ export class QuizSubmissionApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param quizSubmissionFromStudent 
+     *
+     *
+     * @param exerciseId
+     * @param quizSubmissionFromStudent
      */
     submitForPractice(exerciseId: number, quizSubmissionFromStudent: QuizSubmissionFromStudent): Observable<ResultAfterEvaluationWithSubmission> {
         const url = `${this.basePath}/api/quiz/exercises/${exerciseId}/submissions/practice`;
@@ -53,10 +53,10 @@ export class QuizSubmissionApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param quizSubmissionFromStudent 
+     *
+     *
+     * @param exerciseId
+     * @param quizSubmissionFromStudent
      */
     submitForPreview(exerciseId: number, quizSubmissionFromStudent: QuizSubmissionFromStudent): Observable<ResultAfterEvaluationWithSubmission> {
         const url = `${this.basePath}/api/quiz/exercises/${exerciseId}/submissions/preview`;
@@ -64,10 +64,10 @@ export class QuizSubmissionApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param quizSubmissionFromLiveClient 
+     *
+     *
+     * @param exerciseId
+     * @param quizSubmissionFromLiveClient
      */
     submitQuizForExam(exerciseId: number, quizSubmissionFromLiveClient: QuizSubmissionFromLiveClient): Observable<QuizSubmissionBeforeEvaluation> {
         const url = `${this.basePath}/api/quiz/exercises/${exerciseId}/submissions/exam`;

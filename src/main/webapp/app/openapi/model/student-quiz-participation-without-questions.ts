@@ -45,4 +45,3 @@ export const StudentQuizParticipationWithoutQuestionsQuizQuestionsTypeEnum = {
 } as const;
 
 export const StudentQuizParticipationWithoutQuestionsQuizQuestionsTypeEnumValues = ['before-quiz-start'] as const;
-

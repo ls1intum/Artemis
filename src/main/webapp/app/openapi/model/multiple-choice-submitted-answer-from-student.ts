@@ -22,4 +22,3 @@ export const MultipleChoiceSubmittedAnswerFromStudentTypeEnum = {
 } as const;
 
 export const MultipleChoiceSubmittedAnswerFromStudentTypeEnumValues = ['multiple-choice'] as const;
-

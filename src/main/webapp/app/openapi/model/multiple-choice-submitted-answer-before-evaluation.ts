@@ -25,4 +25,3 @@ export const MultipleChoiceSubmittedAnswerBeforeEvaluationTypeEnum = {
 } as const;
 
 export const MultipleChoiceSubmittedAnswerBeforeEvaluationTypeEnumValues = ['multiple-choice'] as const;
-

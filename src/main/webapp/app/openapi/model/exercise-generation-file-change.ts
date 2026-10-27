@@ -55,4 +55,3 @@ export const ExerciseGenerationFileChangeActionEnum = {
 } as const;
 
 export const ExerciseGenerationFileChangeActionEnumValues = ['write', 'edit', 'delete'] as const;
-

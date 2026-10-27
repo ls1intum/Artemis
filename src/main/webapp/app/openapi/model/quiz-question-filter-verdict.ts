@@ -34,4 +34,3 @@ export const QuizQuestionFilterVerdictModeEnum = {
 } as const;
 
 export const QuizQuestionFilterVerdictModeEnumValues = ['FACTUAL_ERROR', 'AMBIGUOUS_CORRECT_ANSWER', 'OFF_TOPIC', 'NEAR_DUPLICATE', 'ILL_FORMED_DISTRACTORS'] as const;
-

@@ -26,4 +26,3 @@ export const ExerciseGenerationRequestModeEnum = {
 } as const;
 
 export const ExerciseGenerationRequestModeEnumValues = ['GENERATE', 'ADAPT'] as const;
-

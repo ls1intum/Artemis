@@ -34,4 +34,3 @@ export const QuizSubmissionAfterEvaluationTypeEnum = {
 } as const;
 
 export const QuizSubmissionAfterEvaluationTypeEnumValues = ['MANUAL', 'TIMEOUT', 'TEST', 'OTHER', 'INSTRUCTOR', 'EXTERNAL'] as const;
-

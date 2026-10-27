@@ -12,7 +12,7 @@ import type { TutorialGroupSchedule } from './tutorial-group-schedule';
 
 export interface CreateOrUpdateTutorialGroupRequest {
     title: string;
-    tutorId: number;
+    tutorId?: number;
     language: string;
     isOnline?: boolean;
     campus?: string;

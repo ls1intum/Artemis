@@ -29,4 +29,3 @@ export const TutorialGroupSummarySessionStatusEnum = {
 } as const;
 
 export const TutorialGroupSummarySessionStatusEnumValues = ['ACTIVE', 'CANCELLED'] as const;
-

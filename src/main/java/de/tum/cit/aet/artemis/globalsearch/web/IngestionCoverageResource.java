@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Conditional;
@@ -45,10 +46,12 @@ import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 /**
  * Admin-only, read-only endpoints for the ingestion-observability dashboard: the index overview, the stored per-course
  * coverage projection (cross-course views), a live-per-page coverage view (default matrix view), and a manual refresh.
- * Only available when Weaviate is enabled; every endpoint requires admin.
+ * Only available when Weaviate is enabled; every endpoint requires admin. Left out while the OpenAPI specification is
+ * generated: the {@link WeaviateHealthIndicator} it needs does not exist then.
  */
 @Profile(PROFILE_CORE)
 @Conditional(WeaviateEnabled.class)
+@ConditionalOnProperty(name = "artemis.openapi-docs-generation", havingValue = "false", matchIfMissing = true)
 @EnforceAdmin
 @Lazy
 @RestController
@@ -74,7 +77,7 @@ public class IngestionCoverageResource {
             IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION, IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION,
             IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION);
 
-    private final Optional<WeaviateHealthIndicator> weaviateHealthIndicator;
+    private final WeaviateHealthIndicator weaviateHealthIndicator;
 
     private final IngestionCoverageWeaviateReadService weaviateReadService;
 
@@ -86,7 +89,7 @@ public class IngestionCoverageResource {
 
     private final Optional<IrisHealthApi> irisHealthApi;
 
-    public IngestionCoverageResource(Optional<WeaviateHealthIndicator> weaviateHealthIndicator, IngestionCoverageWeaviateReadService weaviateReadService,
+    public IngestionCoverageResource(WeaviateHealthIndicator weaviateHealthIndicator, IngestionCoverageWeaviateReadService weaviateReadService,
             CoverageRecomputeService coverageRecomputeService, Environment environment, Optional<IrisHealthApi> irisHealthApi) {
         this.weaviateHealthIndicator = weaviateHealthIndicator;
         this.weaviateReadService = weaviateReadService;
@@ -103,7 +106,7 @@ public class IngestionCoverageResource {
      */
     @GetMapping("index/overview")
     public ResponseEntity<IndexOverviewDTO> getIndexOverview() {
-        Health health = weaviateHealthIndicator.orElseThrow().health();
+        Health health = weaviateHealthIndicator.health();
         boolean reachable = health.getStatus() == Status.UP;
         String address = String.valueOf(health.getDetails().get("Address"));
         boolean irisEnabled = artemisConfigHelper.isIrisEnabled(environment);

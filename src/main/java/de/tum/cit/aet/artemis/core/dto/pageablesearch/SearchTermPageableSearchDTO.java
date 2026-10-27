@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Wrapper for a generic search for any list of entities matching a given search term. The result should be paged,
@@ -15,8 +14,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @see SearchResultPageDTO
  */
 // TODO: convert to Record, use composition for common attributes
-// Without a fixed name springdoc calls the String instantiation SearchTermPageableSearchDTOString, which the DTO schema filter drops.
-@Schema(name = "SearchTermPageableSearchDTO")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SearchTermPageableSearchDTO<T> extends PageableSearchDTO<T> {
 

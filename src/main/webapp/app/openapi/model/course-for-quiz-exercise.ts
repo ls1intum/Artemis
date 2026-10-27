@@ -88,4 +88,3 @@ export const CourseForQuizExerciseCourseInformationSharingConfigurationEnum = {
 } as const;
 
 export const CourseForQuizExerciseCourseInformationSharingConfigurationEnumValues = ['DISABLED', 'COMMUNICATION_AND_MESSAGING', 'COMMUNICATION_ONLY'] as const;
-

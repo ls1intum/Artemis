@@ -25,9 +25,9 @@ export class HyperionAuthoringRunApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param requestBody 
+     *
+     *
+     * @param requestBody
      */
     checkAuthoringRunAccess(requestBody: Array<string>): Observable<Array<string>> {
         const url = `${this.basePath}/api/hyperion/authoring-runs/access`;
@@ -35,10 +35,10 @@ export class HyperionAuthoringRunApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param runId 
+     *
+     *
+     * @param exerciseId
+     * @param runId
      */
     getAuthoringRunStatus(exerciseId: number, runId: string): Observable<ExerciseGenerationStatus> {
         const runIdPath = encodeURIComponent(String(runId));
@@ -47,9 +47,9 @@ export class HyperionAuthoringRunApi {
     }
 
     /**
-     * 
-     * 
-     * @param beforeId 
+     *
+     *
+     * @param beforeId
      */
     getAuthoringRuns(beforeId?: number): Observable<AuthoringRunPage> {
         const queryParams = new URLSearchParams();

@@ -26,9 +26,9 @@ export class HyperionExerciseVariantApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param jobId 
+     *
+     *
+     * @param jobId
      */
     cancelJob(jobId: string): Observable<void> {
         const jobIdPath = encodeURIComponent(String(jobId));
@@ -37,10 +37,10 @@ export class HyperionExerciseVariantApi {
     }
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param variantGenerationRequest 
+     *
+     *
+     * @param exerciseId
+     * @param variantGenerationRequest
      */
     generateVariant(exerciseId: number, variantGenerationRequest: VariantGenerationRequest): Observable<VariantJobStart> {
         const url = `${this.basePath}/api/hyperion/exercises/${exerciseId}/generate-variant`;
@@ -48,9 +48,9 @@ export class HyperionExerciseVariantApi {
     }
 
     /**
-     * 
-     * 
-     * @param jobId 
+     *
+     *
+     * @param jobId
      */
     getJobDetail(jobId: string): Observable<VariantJobDetail> {
         const jobIdPath = encodeURIComponent(String(jobId));
@@ -59,8 +59,8 @@ export class HyperionExerciseVariantApi {
     }
 
     /**
-     * 
-     * 
+     *
+     *
      */
     getJobsOfCurrentUser(): Observable<Array<VariantJob>> {
         const url = `${this.basePath}/api/hyperion/variant-jobs`;

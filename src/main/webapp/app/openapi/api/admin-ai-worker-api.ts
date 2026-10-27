@@ -23,8 +23,8 @@ export class AdminAiWorkerApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
+     *
+     *
      */
     getWorkers(): Observable<Array<WorkerStatus>> {
         const url = `${this.basePath}/api/aiworker/admin/workers`;

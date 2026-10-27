@@ -24,4 +24,3 @@ export const DragAndDropSubmittedAnswerFromLiveClientTypeEnum = {
 } as const;
 
 export const DragAndDropSubmittedAnswerFromLiveClientTypeEnumValues = ['drag-and-drop'] as const;
-

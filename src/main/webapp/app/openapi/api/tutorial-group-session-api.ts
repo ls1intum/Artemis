@@ -25,11 +25,11 @@ export class TutorialGroupSessionApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param sessionId 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param sessionId
      */
     activateSession(courseId: number, tutorialGroupId: number, sessionId: number): Observable<void> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/activate`;
@@ -37,12 +37,12 @@ export class TutorialGroupSessionApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param sessionId 
-     * @param explanation 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param sessionId
+     * @param explanation
      */
     cancelSession(courseId: number, tutorialGroupId: number, sessionId: number, explanation?: string): Observable<void> {
         const queryParams = new URLSearchParams();
@@ -53,11 +53,11 @@ export class TutorialGroupSessionApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param createOrUpdateTutorialGroupSessionRequest 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param createOrUpdateTutorialGroupSessionRequest
      */
     createSession(courseId: number, tutorialGroupId: number, createOrUpdateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest): Observable<TutorialGroupSession> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`;
@@ -65,11 +65,11 @@ export class TutorialGroupSessionApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param sessionId 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param sessionId
      */
     deleteSession(courseId: number, tutorialGroupId: number, sessionId: number): Observable<void> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`;
@@ -77,12 +77,12 @@ export class TutorialGroupSessionApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupId 
-     * @param sessionId 
-     * @param createOrUpdateTutorialGroupSessionRequest 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupId
+     * @param sessionId
+     * @param createOrUpdateTutorialGroupSessionRequest
      */
     updateSession(courseId: number, tutorialGroupId: number, sessionId: number, createOrUpdateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest): Observable<TutorialGroupSession> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`;

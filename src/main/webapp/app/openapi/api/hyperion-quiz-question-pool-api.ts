@@ -27,9 +27,9 @@ export class HyperionQuizQuestionPoolApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
+     *
+     *
+     * @param courseId
      */
     getQuizQuestionPoolProgress(courseId: number): Observable<QuizQuestionPoolProgress> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/progress`;
@@ -37,10 +37,10 @@ export class HyperionQuizQuestionPoolApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param competencyId 
+     *
+     *
+     * @param courseId
+     * @param competencyId
      */
     getQuizQuestionPoolQuestions(courseId: number, competencyId?: number): Observable<Array<QuizQuestionPoolItem>> {
         const queryParams = new URLSearchParams();
@@ -51,9 +51,9 @@ export class HyperionQuizQuestionPoolApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
+     *
+     *
+     * @param courseId
      */
     getQuizQuestionPoolSettings(courseId: number): Observable<HyperionCourseSettings> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/settings`;
@@ -61,9 +61,9 @@ export class HyperionQuizQuestionPoolApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
+     *
+     *
+     * @param courseId
      */
     startQuizQuestionPoolBuild(courseId: number): Observable<QuizQuestionPoolBuildStart> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/build`;
@@ -71,10 +71,10 @@ export class HyperionQuizQuestionPoolApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param hyperionCourseSettings 
+     *
+     *
+     * @param courseId
+     * @param hyperionCourseSettings
      */
     updateQuizQuestionPoolSettings(courseId: number, hyperionCourseSettings: HyperionCourseSettings): Observable<HyperionCourseSettings> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/settings`;

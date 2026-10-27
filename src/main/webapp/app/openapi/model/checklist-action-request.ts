@@ -30,4 +30,3 @@ export const ChecklistActionRequestActionTypeEnum = {
 } as const;
 
 export const ChecklistActionRequestActionTypeEnumValues = ['FIX_QUALITY_ISSUE', 'FIX_ALL_QUALITY_ISSUES', 'ADAPT_DIFFICULTY'] as const;
-
