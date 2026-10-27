@@ -10,6 +10,8 @@ import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdo
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { PageType } from 'app/communication/communication.util';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PostComponent } from 'app/communication/post/post.component';
@@ -38,13 +40,23 @@ describe('PostCreateEditModalComponent', () => {
                 MockModule(FormsModule),
                 MockModule(ReactiveFormsModule),
                 PostCreateEditModalComponent,
-                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisTranslatePipe, (key) => key ?? ''),
                 MockComponent(PostComponent),
                 MockComponent(PostingMarkdownEditorComponent),
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
-            providers: [provideHttpClient(), provideHttpClientTesting(), FormBuilder, { provide: CommunicationService, useClass: MockCommunicationService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                FormBuilder,
+                { provide: CommunicationService, useClass: MockCommunicationService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+        TestBed.overrideComponent(PostCreateEditModalComponent, {
+            remove: { imports: [PostingMarkdownEditorComponent] },
+            add: { imports: [MockComponent(PostingMarkdownEditorComponent)] },
         });
         fixture = TestBed.createComponent(PostCreateEditModalComponent);
         component = fixture.componentInstance;
@@ -59,6 +71,26 @@ describe('PostCreateEditModalComponent', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+    });
+
+    it('opens an accessible announcement dialog with a close action', () => {
+        component.posting.set({ ...communicationPostToCreateUser1 });
+        fixture.detectChanges();
+        component.open();
+        fixture.detectChanges();
+
+        const dialog = document.querySelector('[role="dialog"]');
+        expect(dialog).not.toBeNull();
+        expect(dialog?.getAttribute('aria-modal')).toBe('true');
+        const titleId = dialog?.getAttribute('aria-labelledby');
+        expect(document.getElementById(titleId!)?.textContent).toContain('artemisApp.communication.createModalTitlePost');
+        const closeButton = dialog?.querySelector('button[aria-label]') as HTMLButtonElement;
+        expect(closeButton).not.toBeNull();
+        closeButton.click();
+        fixture.detectChanges();
+
+        expect(component.isDialogVisible()).toBe(false);
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
     });
 
     it('should init modal with correct context, title and content for post without id', () => {

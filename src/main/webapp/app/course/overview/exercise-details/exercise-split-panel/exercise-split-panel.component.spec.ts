@@ -184,6 +184,7 @@ describe('ExerciseSplitPanelComponent', () => {
         beforeEach(() => {
             router = TestBed.inject(Router);
             route = TestBed.inject(ActivatedRoute);
+            (route as unknown as { firstChild: unknown }).firstChild = { snapshot: { url: [{ path: 'live' }], paramMap: convertToParamMap({}) } };
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.QUIZ } as Exercise);
             fixture.detectChanges();
             vi.mocked(router.navigate).mockClear();
@@ -194,14 +195,14 @@ describe('ExerciseSplitPanelComponent', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 7], { relativeTo: route.parent });
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 7], { relativeTo: route.parent, replaceUrl: false });
         });
 
         it('should start the first practice attempt when toggling to practice without an existing participation', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent });
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent, replaceUrl: false });
         });
 
         it('should start a fresh attempt rather than reopen a graded participation surfaced as a fallback', () => {
@@ -210,8 +211,8 @@ describe('ExerciseSplitPanelComponent', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent });
-            expect(router.navigate).not.toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 42], { relativeTo: route.parent });
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent, replaceUrl: false });
+            expect(router.navigate).not.toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 42], { relativeTo: route.parent, replaceUrl: false });
         });
 
         it('should not re-navigate while a fresh practice attempt is in progress (bare practice route)', () => {

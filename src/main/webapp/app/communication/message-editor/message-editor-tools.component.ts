@@ -3,6 +3,7 @@ import {
     Component,
     DestroyRef,
     ElementRef,
+    TemplateRef,
     afterRenderEffect,
     effect,
     inject,
@@ -58,7 +59,6 @@ export class MessageEditorToolsComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     readonly courseId = input.required<number>();
-    readonly controlsVisible = input(true);
     readonly conversationId = input<number>();
     /** Invalidates asynchronous insertions when external content replaces the editor document. */
     readonly editorRevision = input(0);
@@ -70,6 +70,10 @@ export class MessageEditorToolsComponent {
     readonly insert = output<MessageResourceInsertion>();
     readonly uploadingChange = output<boolean>();
     readonly closed = output<void>();
+    /** The attachment and resource buttons, which the editor renders in its bar of further options. */
+    readonly resourceControls = viewChild.required<TemplateRef<unknown>>('resourceControls');
+    /** The upload progress and error messages, which the editor renders below its toolbar row. */
+    readonly status = viewChild.required<TemplateRef<unknown>>('status');
     private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
     private readonly queryInput = viewChild<ElementRef<HTMLInputElement>>('queryInput');
     private readonly resourceContent = viewChild<ElementRef<HTMLElement>>('resourceContent');

@@ -65,7 +65,7 @@
                     <jhi-video-player
                         [videoUrl]="playlistUrl()!"
                         [transcriptSegments]="transcriptSegments()"
-                        [initialTimestamp]="targetTimestamp()"
+                        [initialTimestamp]="videoInitialTimestamp()"
                         (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
                         (playerFailed)="onPlayerFailed()"
                     />
@@ -75,7 +75,7 @@
                     <jhi-youtube-player
                         [videoId]="youtubeVideoId()!"
                         [transcriptSegments]="transcriptSegments()"
-                        [initialTimestamp]="targetTimestamp()"
+                        [initialTimestamp]="videoInitialTimestamp()"
                         (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
                         (playerFailed)="onPlayerFailed()"
                     />
@@ -119,7 +119,7 @@
                         [pdfUrl]="pdfUrl()!"
                         [uploadDate]="lectureUnit().attachment?.uploadDate"
                         [version]="lectureUnit().attachment?.version"
-                        [initialPage]="targetPdfPage()"
+                        [initialPage]="pdfInitialPage()"
                         (currentPageChange)="onPdfCurrentPageChange($event)"
                         (pageRendered)="onPdfPageRendered($event)"
                         (loadError)="onPdfLoadError($event)"

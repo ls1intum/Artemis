@@ -404,7 +404,7 @@ export class UserManagementUpdateComponent implements OnInit {
             firstName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
             lastName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
             password: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator]],
-            email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
+            email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH), Validators.email]],
             visibleRegistrationNumber: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
             activated: [''],
             isTestUser: [''],

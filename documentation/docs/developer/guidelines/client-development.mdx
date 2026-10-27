@@ -127,6 +127,21 @@ when native HTML, Angular Aria, or Angular CDK already provides the behavior. Fo
 [TUM AET UI package guide](/developer/guidelines/tum-aet-ui-kit) for ownership, public API, stories, and
 validation.
 
+#### Points inputs
+
+Every field in which a user enters points, bonus points or credits uses `jhi-points-input` (`PointsInputComponent` in
+`app/shared-ui/tum-aet-ui-integration/points-input`), never a native `<input type="number">` or a PrimeNG number input. It wraps
+`tumaet-ui-input-number` with one fixed setup, so that all of them accept and show a number in the same way: up to three fraction
+digits (a longer fraction is cut off while typing), `.` and `,` as decimal separator whatever the browser language, and no digit
+grouping. It works with `ngModel`, `formControlName` and `formControl`.
+
+Bind `[min]` and `[max]` on the component: a native `min` or `max` attribute does not validate a custom control. The bounds are
+applied when the field is left and reported as `min` and `max` errors of the control as long as the typed value violates them.
+Pass `inputId` for a `<label for>` and for end-to-end locators, because the id belongs to the inner `<input>`.
+
+Inputs for numbers that are not points, such as percentages, durations, counts and sizes, are not points inputs. They use
+`tumaet-ui-input-number` directly, with the integer or fraction setup that fits their meaning.
+
 <Callout variant={CalloutVariant.danger}>
 **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
 

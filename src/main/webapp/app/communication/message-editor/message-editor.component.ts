@@ -4,6 +4,7 @@ import {
     DestroyRef,
     ElementRef,
     ViewEncapsulation,
+    afterNextRender,
     afterRenderEffect,
     computed,
     effect,
@@ -13,12 +14,15 @@ import {
     signal,
     viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { CdkConnectedOverlay, ConnectedPosition } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
     faAt,
     faBold,
     faChevronUp,
+    faCircleQuestion,
     faCode,
     faEllipsis,
     faFileCode,
@@ -41,12 +45,27 @@ import { revealMessageEditorOption } from './message-editor-scroll';
 import { isMessageLinkSafe, normalizeMessageLink } from './message-editor-conversion';
 import { MessageEditorToolsComponent, MessageResourceInsertion } from './message-editor-tools.component';
 import { MESSAGE_CLIPBOARD_TYPE } from './message-editor-clipboard';
+import { barNeedsRoomBelow, clippingTop, showsWideHint, visibleToolbarItemCount } from './message-editor-toolbar-layout';
+
+type FormatTag = 'strong' | 'em' | 'ins' | 's' | 'code';
+
+/** A button of the toolbar line. The ones that do not fit the line are shown in the bar of further options instead. */
+type ToolbarItem = { id: string; kind: 'format'; tag: FormatTag; icon: IconDefinition; label: string } | { id: string; kind: 'link' | 'mention' | 'reference' };
 
 @Component({
     selector: 'jhi-message-editor',
     templateUrl: './message-editor.component.html',
     styleUrl: './message-editor.component.scss',
-    imports: [ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective, CdkConnectedOverlay, MessageEditorToolsComponent],
+    imports: [
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiTooltipDirective,
+        CdkConnectedOverlay,
+        NgTemplateOutlet,
+        MessageEditorToolsComponent,
+    ],
     providers: [MessageEditorSuggestions],
     encapsulation: ViewEncapsulation.None,
     host: { '(keydown)': 'toolbarKeydown($event)', '(document:selectionchange)': 'updateSelectionState()', '(window:resize)': 'dismissSuggestions()' },
@@ -62,6 +81,10 @@ export class MessageEditorComponent {
     readonly courseId = input.required<number>();
     readonly conversation = input<ConversationDTO>();
     readonly editing = input(false);
+    /** Names the conversation in the hint of the empty editor ("Message Katja"); the empty editor has no hint without it. */
+    readonly conversationName = input<string>();
+    /** Words the hint of the empty editor for a reply in a thread. */
+    readonly reply = input(false);
     /** Distinguishes drafts with identical text so thread switches discard history and pending upload insertions. */
     readonly draftIdentity = input<string>();
     readonly suppressNewlineOnEnter = input(true);
@@ -70,6 +93,10 @@ export class MessageEditorComponent {
     /** Reports pending attachment work so the parent form can block submission. */
     readonly uploadingChange = output<boolean>();
     private readonly editable = viewChild<ElementRef<HTMLElement>>('editable');
+    private readonly toolbar = viewChild('toolbar', { read: ElementRef<HTMLElement> });
+    private readonly advancedBar = viewChild('advancedBar', { read: ElementRef<HTMLElement> });
+    private readonly toolbarRow = viewChild('toolbarRow', { read: ElementRef<HTMLElement> });
+    private readonly toolbarToggle = viewChild('toolbarToggle', { read: ElementRef<HTMLElement> });
     protected readonly tools = viewChild(MessageEditorToolsComponent);
     private readonly completionOverlay = viewChild(CdkConnectedOverlay);
     private readonly completionList = viewChild<ElementRef<HTMLElement>>('completionList');
@@ -94,14 +121,35 @@ export class MessageEditorComponent {
 
     private readonly toolbarDisclosure = signal<'collapsed' | 'selection' | 'manual'>('collapsed');
     protected readonly toolbarExpanded = computed(() => this.toolbarDisclosure() !== 'collapsed');
-    protected readonly icons = { faLink, faAt, faHashtag, faXmark, faEllipsis, faChevronUp };
-    protected readonly basicFormats = [
-        { tag: 'strong' as const, icon: faBold, label: 'bold' },
-        { tag: 'em' as const, icon: faItalic, label: 'italic' },
-        { tag: 'ins' as const, icon: faUnderline, label: 'underline' },
-        { tag: 's' as const, icon: faStrikethrough, label: 'strikethrough' },
-        { tag: 'code' as const, icon: faCode, label: 'inlineCode' },
+    protected readonly icons = { faLink, faAt, faHashtag, faXmark, faEllipsis, faChevronUp, faCircleQuestion };
+    /** In the order of the toolbar line; when the line is too narrow, the last items move to the bar of further options. */
+    protected readonly toolbarItems: readonly ToolbarItem[] = [
+        { id: 'strong', kind: 'format', tag: 'strong', icon: faBold, label: 'bold' },
+        { id: 'em', kind: 'format', tag: 'em', icon: faItalic, label: 'italic' },
+        { id: 'ins', kind: 'format', tag: 'ins', icon: faUnderline, label: 'underline' },
+        { id: 's', kind: 'format', tag: 's', icon: faStrikethrough, label: 'strikethrough' },
+        { id: 'code', kind: 'format', tag: 'code', icon: faCode, label: 'inlineCode' },
+        { id: 'link', kind: 'link' },
+        { id: 'mention', kind: 'mention' },
+        { id: 'reference', kind: 'reference' },
     ];
+    /** How many toolbar items fit the line. Every item until the line has been measured. */
+    private readonly fittingItems = signal(Number.POSITIVE_INFINITY);
+    protected readonly lineItems = computed(() => this.toolbarItems.slice(0, this.fittingItems()));
+    protected readonly overflowItems = computed(() => this.toolbarItems.slice(this.fittingItems()));
+    /** The longer hint below the editor needs a wide line; a narrow one gets the short hint, so that the hint never needs more than two lines. */
+    protected readonly wideHint = signal(true);
+    /** The bar of further options opens above the toolbar, and below it when the ancestors would clip it there. */
+    protected readonly barBelow = signal(false);
+    /** The empty editor shows a hint. A document with only spaces or line breaks is not empty, because the caret is not at the start of the hint then. */
+    protected readonly empty = signal(true);
+    /** Composed text is not part of the content yet, so the hint must not be drawn behind it. */
+    protected readonly composingText = signal(false);
+    protected readonly placeholderKey = computed(() => {
+        if (this.editing() || !this.empty() || this.composingText()) return undefined;
+        if (this.reply()) return 'artemisApp.communication.formattedEditor.replyPlaceholder';
+        return this.conversationName() ? 'artemisApp.communication.formattedEditor.placeholder' : undefined;
+    });
     protected readonly blocks = [
         { tag: 'ul' as const, icon: faListUl, label: 'bulletedList' },
         { tag: 'ol' as const, icon: faListOl, label: 'orderedList' },
@@ -117,6 +165,7 @@ export class MessageEditorComponent {
     readonly hintId = `${this.listId}-hint`;
     protected readonly advancedToolbarId = `${this.listId}-advanced-toolbar`;
 
+    private toolbarObserver?: ResizeObserver;
     private editor?: MessageEditorDom;
     private lastValue?: string;
     private lastContext?: string;
@@ -146,9 +195,12 @@ export class MessageEditorComponent {
         });
         const dismissOnAncestorScroll = (event: Event) => {
             const element = this.editable()?.nativeElement;
-            if (element && (event.target === element.ownerDocument || (event.target instanceof Element && event.target.contains(element)))) this.dismissSuggestions();
+            if (element && (event.target === element.ownerDocument || (event.target instanceof Element && event.target.contains(element)))) {
+                this.dismissSuggestions();
+                this.placeBar();
+            }
         };
-        // A viewport-point origin cannot follow ancestor scrolling. Scrolling the popup itself must remain possible.
+        // A viewport-point origin cannot follow ancestor scrolling, and neither can the place of an open bar above the toolbar. Scrolling the popup itself must remain possible.
         document.addEventListener('scroll', dismissOnAncestorScroll, true);
         effect(() => {
             const element = this.editable()?.nativeElement;
@@ -165,6 +217,7 @@ export class MessageEditorComponent {
                 this.editor ??= new MessageEditorDom(element, (value) => {
                     this.linkOpen.set(false);
                     this.lastValue = value;
+                    this.empty.set(value === '');
                     this.contentChange.emit(value);
                     this.refreshFormatState();
                 });
@@ -172,8 +225,10 @@ export class MessageEditorComponent {
                     this.editor.load(content);
                     this.editorRevision.update((revision) => revision + 1);
                     this.lastValue = content;
+                    this.empty.set(content === '');
                     this.existingLink = undefined;
                     this.composing = false;
+                    this.composingText.set(false);
                     this.uploading.set(false);
                     this.dismissSuggestions();
                     this.linkOpen.set(false);
@@ -181,11 +236,48 @@ export class MessageEditorComponent {
                 }
             }
         });
+        // The first measurement happens before the first paint, so a narrow toolbar never shows all buttons for a frame.
+        afterNextRender(() => this.measureToolbarLine());
+        afterRenderEffect(() => {
+            // The height of the bar changes with its buttons. The scrolling of the ancestors is handled by their scroll listener.
+            this.toolbarExpanded();
+            this.fittingItems();
+            this.placeBar();
+        });
+        effect(() => {
+            const row = this.toolbarRow()?.nativeElement;
+            this.toolbarObserver?.disconnect();
+            this.toolbarObserver = undefined;
+            if (row && typeof ResizeObserver !== 'undefined') {
+                this.toolbarObserver = new ResizeObserver(() => this.measureToolbarLine());
+                this.toolbarObserver.observe(row);
+            }
+        });
         this.destroyRef.onDestroy(() => {
             document.removeEventListener('scroll', dismissOnAncestorScroll, true);
+            this.toolbarObserver?.disconnect();
             clearTimeout(this.searchTimer);
             this.request++;
         });
+    }
+
+    /** Opens the bar above the toolbar, or below it when an ancestor that clips or scrolls would cut it off above. */
+    private placeBar(): void {
+        const bar = this.advancedBar()?.nativeElement;
+        const toolbar = this.toolbar()?.nativeElement;
+        if (!bar || !toolbar || bar.hidden) return;
+        this.barBelow.set(barNeedsRoomBelow(bar.offsetHeight, toolbar.getBoundingClientRect().top, clippingTop(bar)));
+    }
+
+    /** Fits as many toolbar items on the line as its width allows next to the emoji and more options buttons. */
+    private measureToolbarLine(): void {
+        const row = this.toolbarRow()?.nativeElement;
+        const toggle = this.toolbarToggle()?.nativeElement;
+        if (!row || !toggle) return;
+        const gap = Number.parseFloat(getComputedStyle(row).columnGap) || 0;
+        // Layout widths, not the ones of getBoundingClientRect: an ancestor that is scaled while it opens, such as a dialog, must not change the count.
+        this.fittingItems.set(visibleToolbarItemCount(row.clientWidth, toggle.offsetWidth, gap, 2, this.toolbarItems.length));
+        this.wideHint.set(showsWideHint(row.clientWidth));
     }
 
     /** Keeps pointer toolbar activation from stealing the native editing selection. */
@@ -202,7 +294,7 @@ export class MessageEditorComponent {
     }
 
     /** Applies an inline mark after dismissing popup ranges that the DOM edit could invalidate. */
-    protected applyFormat(tag: 'strong' | 'em' | 'ins' | 's' | 'code'): void {
+    protected applyFormat(tag: FormatTag): void {
         this.dismissSuggestions();
         this.linkOpen.set(false);
         this.editor?.format(tag);
@@ -254,12 +346,14 @@ export class MessageEditorComponent {
     protected compositionStart(): void {
         this.editor?.beginComposition();
         this.composing = true;
+        this.composingText.set(true);
         this.dismissSuggestions();
     }
 
     /** Commits the composed text as one editor update before resuming completion searches. */
     protected compositionEnd(): void {
         this.composing = false;
+        this.composingText.set(false);
         this.editor?.endComposition();
         this.scheduleSuggestions();
     }

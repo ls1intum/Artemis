@@ -4,6 +4,7 @@
             formControlName="content"
             [draftIdentity]="'reply:' + posting()?.post?.id + ':' + (posting()?.id ?? 'new')"
             [activeConversation]="activeConversation()"
+            [isReply]="true"
             [maxContentLength]="maxContentLength"
             [isInputLengthDisplayed]="false"
             (keydown.enter)="confirm()"

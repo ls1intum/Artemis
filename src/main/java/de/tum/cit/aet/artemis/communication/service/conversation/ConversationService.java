@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationSummary;
@@ -132,11 +133,11 @@ public class ConversationService {
      * @return an optional conversation
      */
     public Optional<Conversation> isMemberOrCreateForCourseWideElseThrow(Long conversationId, User user, Optional<ZonedDateTime> lastReadDate) {
+        Conversation conversation = getConversationById(conversationId);
+        checkConversationVisibilityElseThrow(conversation, user);
         if (isMember(conversationId, user.getId())) {
             return Optional.empty();
         }
-
-        Conversation conversation = loadConversationWithParticipantsIfGroupChat(conversationId);
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
@@ -231,8 +232,10 @@ public class ConversationService {
      * @return true if the user has unread messages in that course, false otherwise
      */
     public boolean userHasUnreadMessages(Long courseId, User requestingUser) {
-        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId())
-                || conversationParticipantRepository.userHasConversationWithUnreadCountInCourse(courseId, requestingUser.getId());
+        boolean isTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, requestingUser);
+        ZonedDateTime now = ZonedDateTime.now();
+        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId(), isTutor, now)
+                || conversationParticipantRepository.userHasConversationWithUnreadCountInCourse(courseId, requestingUser.getId(), isTutor, now);
     }
 
     public void markAsRead(Long conversationId, Long userId) {
@@ -315,6 +318,28 @@ public class ConversationService {
     }
 
     /**
+     * Refreshes a channel after its linked item's visibility date changes. Hiding a course-wide channel also evicts
+     * caches of course members who never opened it and therefore have no participant row yet. Visible updates stay
+     * scoped to participants, whose personalized metadata is recalculated.
+     *
+     * @param channel the channel with its newly persisted exercise or exam
+     */
+    public void notifyChannelMembersAboutVisibilityChange(Channel channel) {
+        Set<User> usersToContact;
+        if (channel.getIsCourseWide() && !channel.isVisibleToStudents()) {
+            var logins = userRepository.findAllNotificationRecipientsInCourseForConversation(channel.getId(), channel.getCourse().getId()).stream()
+                    .map(recipient -> recipient.userLogin()).collect(Collectors.toSet());
+            // Preload roles and administrator authorities once: hidden channels otherwise cause one role query per recipient.
+            usersToContact = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(logins);
+        }
+        else {
+            usersToContact = conversationParticipantRepository.findConversationParticipantsWithUserCourseRolesByConversationId(channel.getId()).stream()
+                    .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+        }
+        broadcastOnConversationMembershipChannel(channel.getCourse(), CommunicationCrudAction.UPDATE, channel, usersToContact);
+    }
+
+    /**
      * Removes users from a conversation
      *
      * @param course       the course in which the conversation is located
@@ -360,6 +385,15 @@ public class ConversationService {
     }
 
     private void sendToConversationMembershipChannel(CommunicationCrudAction crudAction, Conversation conversation, User user, long courseId) {
+        if (!isConversationVisibleToUser(conversation, user)) {
+            // Remove a previously visible channel from the student's cache after its date is postponed, without
+            // disclosing its current name, description or linked item through the membership update.
+            var hiddenChannel = new ChannelDTO();
+            hiddenChannel.setId(conversation.getId());
+            websocketMessagingService.sendMessageToUser(user.getLogin(), CONVERSATION_MEMBERSHIP.at(courseId, user.getId()),
+                    new ConversationWebsocketDTO(hiddenChannel, CommunicationCrudAction.DELETE));
+            return;
+        }
         ConversationDTO dto;
         if (crudAction.equals(CommunicationCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
@@ -480,7 +514,9 @@ public class ConversationService {
         start = System.nanoTime();
 
         // Then, find all course-wide channels that the user has not yet accessed and create conversation participants for them
-        List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId);
+        boolean isTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, requestingUser);
+        List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId)
+                .stream().filter(channel -> isTutor || channel.isVisibleToStudents()).toList();
         List<ConversationParticipant> participants = new ArrayList<>();
         for (Channel channel : courseWideChannelsWithoutParticipants) {
             participants.add(createReadParticipant(requestingUser, channel, now));
@@ -597,12 +633,38 @@ public class ConversationService {
         return channel.isVisibleToStudents();
     }
 
+    /**
+     * Enforces the release gate even when a student already belongs to the channel or knows its id.
+     * Staff can prepare a channel before its exercise or exam becomes visible to students.
+     *
+     * @param conversation the conversation being accessed
+     * @param user         the requesting user
+     * @throws AccessForbiddenException if the conversation is not visible to the user yet
+     */
+    public void checkConversationVisibilityElseThrow(Conversation conversation, User user) {
+        if (!isConversationVisibleToUser(conversation, user)) {
+            throw new AccessForbiddenException("This channel is not visible to students yet");
+        }
+    }
+
+    /**
+     * Whether a conversation's metadata and notifications may be delivered to the given user.
+     *
+     * @param conversation the conversation whose visibility is checked
+     * @param user         the recipient
+     * @return whether the recipient may see the conversation
+     */
+    public boolean isConversationVisibleToUser(Conversation conversation, User user) {
+        return !(conversation instanceof Channel channel) || channel.isVisibleToStudents()
+                || authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), user);
+    }
+
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
         var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
+        var conversation = participation.map(ConversationParticipant::getConversation).orElseGet(() -> getConversationById(conversationId));
+        checkConversationVisibilityElseThrow(conversation, requestingUser);
 
         if (participation.isEmpty()) {
-            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
-
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 return ConversationParticipant.createWithDefaultValues(requestingUser, channel);
             }

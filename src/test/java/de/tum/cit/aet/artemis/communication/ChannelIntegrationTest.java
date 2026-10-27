@@ -34,8 +34,10 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics;
@@ -47,6 +49,8 @@ import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguratio
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.lecture.web.LectureResource;
+import de.tum.cit.aet.artemis.lecture.web.LectureResource.SimpleLectureDTO.CourseDTO;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -904,6 +908,30 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertThat(exerciseChannel.getSubType()).isEqualTo(ChannelSubType.EXERCISE);
 
         conversationRepository.deleteById(publicExerciseChannel.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "instructor1", "student1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void tutorialLectureChannelIsIncludedInMemberConversationsAndCanBeOpened(String login) throws Exception {
+        var lectureToCreate = new LectureResource.SimpleLectureDTO(null, "Tutorial without groups", null, null, null, true, "tutorial-without-groups",
+                CourseDTO.from(exampleCourse));
+        var lecture = request.postWithResponseBody("/api/lecture/lectures", lectureToCreate, LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
+        Channel channel = channelRepository.findChannelByLectureId(lecture.id());
+        userUtilService.changeUser(TEST_PREFIX + login);
+
+        var overview = request.getList("/api/communication/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
+        assertThat(overview).filteredOn(dto -> dto.getId().equals(channel.getId())).singleElement().satisfies(dto -> assertThat(dto.getIsMember()).isTrue());
+
+        var conversations = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
+        assertThat(conversations).filteredOn(dto -> dto.getId().equals(channel.getId())).singleElement().satisfies(dto -> assertThat(dto.getIsMember()).isTrue());
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", channel.getId().toString());
+        assertThat(request.getList("/api/communication/courses/" + exampleCourseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params)).isEmpty();
+        request.patch("/api/communication/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/mark-as-read", null, HttpStatus.OK);
+        var openedChannel = request.get("/api/communication/courses/" + exampleCourseId + "/lectures/" + lecture.id() + "/channel", HttpStatus.OK, ChannelDTO.class);
+        assertThat(openedChannel.getId()).isEqualTo(channel.getId());
+        assertThat(openedChannel.getIsMember()).isTrue();
     }
 
     @Test

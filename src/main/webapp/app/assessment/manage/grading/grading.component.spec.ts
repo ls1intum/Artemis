@@ -31,6 +31,7 @@ import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { DialogService } from 'primeng/dynamicdialog';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 
 vi.mock('app/foundation/util/csv-download.util', () => {
     return {
@@ -295,6 +296,117 @@ describe('GradingComponent', () => {
             const addedRows = mode === GradingViewMode.DETAILED ? 2 : 1;
             expect(comp.gradeStepsModel().gradeSteps).toHaveLength(before + addedRows);
             expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(rowsBefore + addedRows);
+        });
+
+        describe('points inputs', () => {
+            /** Renders the three grade steps with max points 100, so that the points of the steps are 0-40, 40-80 and 80-100. */
+            async function renderWithMaxPoints(mode: GradingViewMode, editMode = GradeEditMode.PERCENTAGE) {
+                fixture.detectChanges();
+                comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(gradeSteps) }));
+                comp.gradeEditMode = editMode;
+                comp.setViewMode(mode);
+                comp.maxPoints.set(100);
+                comp.onChangeMaxPoints(100);
+                await settle();
+            }
+
+            /** The outer ngModel and the inner input of each points input write a model value one microtask late. */
+            async function settle() {
+                for (let round = 0; round < 3; round++) {
+                    fixture.detectChanges();
+                    await fixture.whenStable();
+                }
+            }
+
+            /** The points inputs of the grade step rows, which come after the two rows of the special grades. */
+            const stepRowPointsInputs = () =>
+                (Array.from(fixture.nativeElement.querySelectorAll('tbody tr')) as HTMLTableRowElement[])
+                    .slice(2)
+                    .map((row) => Array.from(row.querySelectorAll<HTMLInputElement>('jhi-points-input input')));
+
+            /** Types the text, which the field applies when it is left, and leaves the field. */
+            async function typeAndLeave(input: HTMLInputElement, text: string) {
+                typeIntoInputNumber(input, text);
+                input.dispatchEvent(new Event('focusout', { bubbles: true }));
+                await settle();
+            }
+
+            it('recomputes the points of all grade steps when the typed max points change', async () => {
+                await renderWithMaxPoints(GradingViewMode.DETAILED);
+                const maxPointsInput = fixture.nativeElement.querySelector('.dropdown-container jhi-points-input input') as HTMLInputElement;
+                expect(maxPointsInput.value).toBe('100');
+                expect(stepRowPointsInputs()[1].map((input) => input.value)).toEqual(['40', '80']);
+
+                typeIntoInputNumber(maxPointsInput, '50');
+                await settle();
+
+                expect(comp.maxPoints()).toBe(50);
+                expect(comp.gradeStepsModel().gradeSteps.map((gradeStep) => [gradeStep.lowerBoundPoints, gradeStep.upperBoundPoints])).toEqual([
+                    [0, 20],
+                    [20, 40],
+                    [40, 50],
+                ]);
+                expect(stepRowPointsInputs()[1].map((input) => input.value)).toEqual(['20', '40']);
+            });
+
+            it('takes a typed fractional lower and upper points bound and derives the percentage', async () => {
+                await renderWithMaxPoints(GradingViewMode.DETAILED);
+                const [lowerInput, upperInput] = stepRowPointsInputs()[1];
+
+                await typeAndLeave(lowerInput, '12,5');
+                await typeAndLeave(upperInput, '37.25');
+
+                const gradeStep = comp.gradeStepsModel().gradeSteps[1];
+                expect(gradeStep.lowerBoundPoints).toBe(12.5);
+                expect(gradeStep.lowerBoundPercentage).toBe(12.5);
+                expect(gradeStep.upperBoundPoints).toBe(37.25);
+                expect(gradeStep.upperBoundPercentage).toBe(37.25);
+            });
+
+            it('treats an emptied points bound as missing', async () => {
+                await renderWithMaxPoints(GradingViewMode.DETAILED);
+
+                await typeAndLeave(stepRowPointsInputs()[1][0], '');
+
+                expect(comp.gradeStepsModel().gradeSteps[1].lowerBoundPoints).toBeUndefined();
+            });
+
+            it('disables the points bounds while no max points are set', async () => {
+                fixture.detectChanges();
+                comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(gradeSteps) }));
+                comp.setViewMode(GradingViewMode.DETAILED);
+                await settle();
+
+                expect(stepRowPointsInputs().flat().length).toBe(6);
+                expect(
+                    stepRowPointsInputs()
+                        .flat()
+                        .every((input) => input.disabled),
+                ).toBe(true);
+            });
+
+            it('takes a typed points interval and moves the upper bound', async () => {
+                await renderWithMaxPoints(GradingViewMode.INTERVAL, GradeEditMode.POINTS);
+                const intervalInput = stepRowPointsInputs()[0][0];
+                expect(intervalInput.value).toBe('40');
+
+                await typeAndLeave(intervalInput, '30.5');
+
+                expect(comp.gradeStepsModel().gradeSteps[0].upperBoundPoints).toBe(30.5);
+                expect(intervalInput.value).toBe('30.5');
+            });
+
+            it('keeps the points interval when it is left unchanged', async () => {
+                await renderWithMaxPoints(GradingViewMode.INTERVAL, GradeEditMode.POINTS);
+                const modelBefore = comp.gradeStepsModel();
+                const intervalInput = stepRowPointsInputs()[0][0];
+
+                intervalInput.focus();
+                intervalInput.dispatchEvent(new Event('focusout', { bubbles: true }));
+                await settle();
+
+                expect(comp.gradeStepsModel()).toBe(modelBefore);
+            });
         });
 
         it('announces the selected grading view after keyboard activation', () => {

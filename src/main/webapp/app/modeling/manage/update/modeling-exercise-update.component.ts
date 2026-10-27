@@ -62,6 +62,7 @@ import { ModelingMarkdownExplanationEditorComponent } from 'app/modeling/shared/
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -93,6 +94,7 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
         ModelingMarkdownExplanationEditorComponent,
         ExerciseGroupTimelineLockComponent,
         ExerciseGroupDateNoticeComponent,
+        PointsInputComponent,
     ],
     providers: [TumAetUiConfirmationService],
 })

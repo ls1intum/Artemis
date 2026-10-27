@@ -337,6 +337,29 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             TutorialGroupDetailDataDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailDataDTO.class);
             assertThat(response.tutorChatId()).isEqualTo(oneToOneChat.getId());
         }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
+        void shouldReturnOldestTutorChatIdIfThePairHasDuplicateChats() throws Exception {
+            TutorialGroup group = buildTutorialGroupWithoutSchedule("firstcoursetutor1");
+            tutorialGroupTestRepository.save(group);
+
+            Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+            Long oldestChatId = null;
+            for (int duplicate = 0; duplicate < 2; duplicate++) {
+                var oneToOneChat = new OneToOneChat();
+                oneToOneChat.setCourse(course);
+                oneToOneChat.setCreator(firstCourseStudent1);
+                oneToOneChatRepository.save(oneToOneChat);
+                conversationParticipantRepository.saveAll(List.of(ConversationParticipant.createWithDefaultValues(firstCourseStudent1, oneToOneChat),
+                        ConversationParticipant.createWithDefaultValues(firstCourseTutor1, oneToOneChat)));
+                oldestChatId = oldestChatId == null ? oneToOneChat.getId() : oldestChatId;
+            }
+
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + group.getId();
+            TutorialGroupDetailDataDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailDataDTO.class);
+            assertThat(response.tutorChatId()).isEqualTo(oldestChatId);
+        }
     }
 
     @Nested

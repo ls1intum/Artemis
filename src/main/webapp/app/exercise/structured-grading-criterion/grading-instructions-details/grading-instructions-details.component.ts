@@ -35,6 +35,7 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const GRADING_INSTRUCTION_PLACEHOLDER = 'Add Assessment Instruction text here';
@@ -70,6 +71,7 @@ type ReconciliationPlan = {
         TumAetUiInputDirective,
         TumAetUiSelectButtonComponent,
         TumAetUiTooltipDirective,
+        PointsInputComponent,
     ],
     providers: [TumAetUiConfirmationService],
 })

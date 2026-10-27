@@ -797,6 +797,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
+        // Create an ordered rubric before measuring a later update, as the exercise creation API does.
+        gradingCriteria = GradingCriterionDTO.toEntities(GradingCriterionDTO.ofAll(gradingCriteria));
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
         StudentParticipation participation = participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(fileUploadExercise, TEST_PREFIX + "instructor1");

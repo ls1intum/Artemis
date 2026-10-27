@@ -99,7 +99,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         });
     });
 
-    it('should sort criteria and their instructions alphabetically', () => {
+    it('should preserve the instructor order of criteria and their instructions', () => {
         const documentation = {
             id: 1,
             title: 'Documentation',
@@ -115,10 +115,10 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         } as GradingCriterion;
         fixture.componentRef.setInput('criteria', [documentation, camera]);
 
-        expect(comp.sortedCriteria().map((criterion) => criterion.title)).toEqual(['Camera', 'Documentation']);
-        expect(comp.sortedCriteria()[1].instructions.map((instruction) => instruction.instructionDescription)).toEqual([
-            'All methods have proper JavaDoc.',
+        expect(comp.sortedCriteria().map((criterion) => criterion.title)).toEqual(['Documentation', 'Camera']);
+        expect(comp.sortedCriteria()[0].instructions.map((instruction) => instruction.instructionDescription)).toEqual([
             'Not all methods have proper JavaDoc.',
+            'All methods have proper JavaDoc.',
         ]);
     });
 

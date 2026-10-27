@@ -315,7 +315,7 @@ public class ChannelResource extends ConversationManagementResource {
         });
 
         var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
-                .collect(Collectors.toSet());
+                .filter(user -> conversationService.isConversationVisibleToUser(channel, user)).collect(Collectors.toSet());
         channelService.deleteChannel(channel);
 
         var course = channel.getCourse();
@@ -454,7 +454,8 @@ public class ChannelResource extends ConversationManagementResource {
         var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
                 channelFromDatabase.getName(), channelFromDatabase.getId());
 
-        courseNotificationService.sendCourseNotification(addedToChannelNotification, registeredUsers.stream().toList());
+        courseNotificationService.sendCourseNotification(addedToChannelNotification,
+                registeredUsers.stream().filter(user -> conversationService.isConversationVisibleToUser(channelFromDatabase, user)).toList());
 
         return ResponseEntity.ok().build();
     }
@@ -496,7 +497,8 @@ public class ChannelResource extends ConversationManagementResource {
         var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
                 channelFromDatabase.getName(), channelFromDatabase.getId());
 
-        courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
+        courseNotificationService.sendCourseNotification(removedFromChannelNotification,
+                usersToDeRegister.stream().filter(user -> conversationService.isConversationVisibleToUser(channelFromDatabase, user)).toList());
         return ResponseEntity.ok().build();
     }
 
@@ -603,6 +605,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     private void checkChannelMembership(Channel channel, @NonNull User user) {
+        conversationService.checkConversationVisibilityElseThrow(channel, user);
         if (channel == null || channel.getIsCourseWide() || conversationService.isMember(channel.getId(), user.getId())) {
             return;
         }

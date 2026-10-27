@@ -123,6 +123,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'analytics/learning-analytics',
                 'analytics/adaptive-learning',
+                'analytics/atlas-agent',
             ],
         },
         {

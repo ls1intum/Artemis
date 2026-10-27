@@ -25,7 +25,7 @@ interface Composer {
 
 // Every test owns its course and conversations. Browser editing never depends on seed message IDs,
 // another worker's messages, or direct DOM content assignment that bypasses beforeinput/input.
-const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean }>({
+const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean; mentionUsers: { users: string[]; prefix: string } }>({
     expandedToolbar: [true, { option: true }],
     composer: async ({ page, login, courseManagementAPIRequests, communicationAPIRequests, expandedToolbar }, use) => {
         await login(admin);
@@ -51,7 +51,43 @@ const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean }
             await courseManagementAPIRequests.deleteCourse(course, admin);
         }
     },
+    mentionUsers: async ({ composer, login, courseManagementAPIRequests, userManagementAPIRequests }, use) => {
+        const users: string[] = [];
+        const prefix = `mention-${generateUUID().slice(0, 8)}`;
+        try {
+            await login(admin);
+            for (let index = 0; index < 10; index++) {
+                const username = `${prefix}-${index}`;
+                const response = await userManagementAPIRequests.createUser(username, username, UserRole.Student);
+                expect(response.status()).toBe(201);
+                users.push(username);
+                await courseManagementAPIRequests.addStudentToCourse(composer.course, { username, password: username });
+            }
+            await use({ users, prefix });
+        } finally {
+            // Depending on composer keeps its course/page alive until every account cleanup finishes.
+            // Fixture teardown uses Playwright's existing cleanup phase, rather than the keyboard test's body budget.
+            if (users.length) {
+                await login(admin);
+                const results: PromiseSettledResult<void>[] = [];
+                for (let offset = 0; offset < users.length; offset += 3) {
+                    results.push(
+                        ...(await Promise.allSettled(
+                            users.slice(offset, offset + 3).map(async (username) => expect((await userManagementAPIRequests.deleteUser(username)).ok()).toBe(true)),
+                        )),
+                    );
+                }
+                for (const result of results) expect(result.status, result.status === 'rejected' ? String(result.reason) : undefined).toBe('fulfilled');
+            }
+        }
+    },
 });
+
+/** Wait for CDK's asynchronous Handset observer to mount the composer for the current viewport. */
+async function waitForResponsiveComposer(page: Page) {
+    const handset = await page.evaluate(() => matchMedia('(max-width: 599.98px) and (orientation: portrait), (max-width: 959.98px) and (orientation: landscape)').matches);
+    await expect(page.locator('#scrollableDiv').getByTestId('formatted-message-input')).toHaveCount(handset ? 1 : 0);
+}
 
 /** Set a real browser selection, including across formatting elements, without changing its DOM. */
 async function selectText(editor: Locator, start: number, end: number, expectedText = '') {
@@ -168,6 +204,53 @@ async function saveEdited(page: Page, composer: Composer, posting: Locator, orig
 }
 
 test.describe('Formatted message editor native editing', { tag: '@fast' }, () => {
+    test('retains a live message when the initial HTTP page snapshot arrives later', async ({ page, composer, communicationAPIRequests }) => {
+        let captureSnapshot!: () => void;
+        let releaseSnapshot!: () => void;
+        const captured = new Promise<void>((resolve) => (captureSnapshot = resolve));
+        const released = new Promise<void>((resolve) => (releaseSnapshot = resolve));
+        let pageRequests = 0;
+        const matcher = `**/api/communication/courses/${composer.course.id}/messages?**`;
+        await page.route(matcher, async (route) => {
+            const url = new URL(route.request().url());
+            if (url.searchParams.get('conversationIds') !== String(composer.channel.id) || url.searchParams.get('pagingEnabled') !== 'true') {
+                await route.continue();
+                return;
+            }
+            pageRequests++;
+            const snapshot = await route.fetch();
+            expect(snapshot.ok()).toBe(true);
+            expect(await snapshot.json()).toEqual([]);
+            captureSnapshot();
+            await released;
+            await route.fulfill({ response: snapshot });
+        });
+        try {
+            await page.reload();
+            await captured;
+            await expect(composer.editor).toBeVisible();
+            const saved = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'Live arrival survives an older snapshot');
+            const posting = page.locator(`#item-${saved.id}`);
+            await expect(posting).toBeVisible();
+            const initialRequests = pageRequests;
+            const response = page.waitForResponse((result) => {
+                const url = new URL(result.url());
+                return url.pathname === `/api/communication/courses/${composer.course.id}/messages` && url.searchParams.get('pagingEnabled') === 'true';
+            });
+            releaseSnapshot();
+            await response;
+            // Let the response and Angular's next paint settle before checking that the live row survives.
+            await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+            await expect(postContent(page, saved.id!)).toHaveText(saved.content!);
+            expect(pageRequests).toBe(initialRequests);
+            const reopened = await reopen(page, saved);
+            await expectText(reopened.editor, saved.content!);
+        } finally {
+            releaseSnapshot();
+            await page.unroute(matcher);
+        }
+    });
+
     test('literal dollars stay text through keyboard sending, reopening and saving without a Markdown editor', async ({ page, composer }) => {
         await composer.editor.fill('$x^2$');
         await expect(page.locator('jhi-markdown-editor-monaco')).toHaveCount(0);
@@ -1348,81 +1431,59 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         }
     });
 
-    test('keyboard mention navigation scrolls the active option into view in both directions and wraps', async ({
-        page,
-        composer,
-        login,
-        courseManagementAPIRequests,
-        userManagementAPIRequests,
-    }) => {
-        const users: string[] = [];
-        const prefix = `mention-${generateUUID().slice(0, 8)}`;
-        await login(admin);
-        try {
-            for (let index = 0; index < 10; index++) {
-                const username = `${prefix}-${index}`;
-                const response = await userManagementAPIRequests.createUser(username, username, UserRole.Student);
-                expect(response.status()).toBe(201);
-                users.push(username);
-                await courseManagementAPIRequests.addStudentToCourse(composer.course, { username, password: username });
-            }
-            await login(studentOne, composer.route);
-            const { editor } = composer;
-            // Keep pointer hover from choosing a row while exercising keyboard-only navigation.
-            await page.mouse.move(0, 0);
-            await editor.pressSequentially(`@${prefix}`);
-            const popup = page.getByTestId('message-completion-list');
-            const options = popup.getByRole('option');
-            await expect(options).toHaveCount(10);
-            expect(await popup.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
-            const documentScroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
-            const selected = popup.getByRole('option', { selected: true });
-            const expectSelectionVisible = async (index: number) => {
-                await expect(options.nth(index)).toHaveAttribute('aria-selected', 'true');
-                await expect(selected).toHaveCount(1);
-                await expect(editor).toHaveAttribute('aria-activedescendant', (await selected.getAttribute('id'))!);
-                await expect
-                    .poll(() =>
-                        selected.evaluate((element) => {
-                            const bounds = element.getBoundingClientRect();
-                            const container = element.closest('[data-testid="message-completion-list"]')!.getBoundingClientRect();
-                            return bounds.top >= container.top && bounds.bottom <= container.bottom;
-                        }),
-                    )
-                    .toBe(true);
-                await expect(editor).toBeFocused();
-                expect(await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))).toEqual(documentScroll);
-            };
-            await expectSelectionVisible(0);
-            for (let index = 1; index < 10; index++) {
-                await editor.press('ArrowDown');
-                await expectSelectionVisible(index);
-            }
-            expect(await popup.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    test('keyboard mention navigation scrolls the active option into view in both directions and wraps', async ({ page, composer, login, mentionUsers }) => {
+        const { users, prefix } = mentionUsers;
+        await login(studentOne, composer.route);
+        const { editor } = composer;
+        // Keep pointer hover from choosing a row while exercising keyboard-only navigation.
+        await page.mouse.move(0, 0);
+        await editor.pressSequentially(`@${prefix}`);
+        const popup = page.getByTestId('message-completion-list');
+        const options = popup.getByRole('option');
+        await expect(options).toHaveCount(10);
+        expect(await popup.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+        const documentScroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+        const selected = popup.getByRole('option', { selected: true });
+        const expectSelectionVisible = async (index: number) => {
+            await expect(options.nth(index)).toHaveAttribute('aria-selected', 'true');
+            await expect(selected).toHaveCount(1);
+            await expect(editor).toHaveAttribute('aria-activedescendant', (await selected.getAttribute('id'))!);
+            await expect
+                .poll(() =>
+                    selected.evaluate((element) => {
+                        const bounds = element.getBoundingClientRect();
+                        const container = element.closest('[data-testid="message-completion-list"]')!.getBoundingClientRect();
+                        return bounds.top >= container.top && bounds.bottom <= container.bottom;
+                    }),
+                )
+                .toBe(true);
+            await expect(editor).toBeFocused();
+            expect(await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))).toEqual(documentScroll);
+        };
+        await expectSelectionVisible(0);
+        for (let index = 1; index < 10; index++) {
             await editor.press('ArrowDown');
-            await expectSelectionVisible(0);
-            await editor.press('ArrowUp');
-            await expectSelectionVisible(9);
-            for (let index = 8; index >= 0; index--) {
-                await editor.press('ArrowUp');
-                await expectSelectionVisible(index);
-            }
-            const label = (await selected.locator('span').first().textContent())!;
-            const selectedLogin = users.find((username) => label === `@${username} ${username}`);
-            expect(selectedLogin).toBeDefined();
-            await editor.press('Enter');
-            await expect(popup).toBeHidden();
-            await expect(editor.locator('[data-reference-type="user"]')).toHaveText(label);
-            await expect(page.locator('[id^="item-"]')).toHaveCount(0);
-            const saved = await send(page, composer);
-            expect(saved.content).toBe(`[user]${label.slice(1)}(${selectedLogin})[/user]`);
-            await expect(postContent(page, saved.id!)).toContainText(label.slice(1));
-        } finally {
-            await login(admin);
-            for (const username of users) {
-                expect((await userManagementAPIRequests.deleteUser(username)).ok()).toBe(true);
-            }
+            await expectSelectionVisible(index);
         }
+        expect(await popup.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+        await editor.press('ArrowDown');
+        await expectSelectionVisible(0);
+        await editor.press('ArrowUp');
+        await expectSelectionVisible(9);
+        for (let index = 8; index >= 0; index--) {
+            await editor.press('ArrowUp');
+            await expectSelectionVisible(index);
+        }
+        const label = (await selected.locator('span').first().textContent())!;
+        const selectedLogin = users.find((username) => label === `@${username} ${username}`);
+        expect(selectedLogin).toBeDefined();
+        await editor.press('Enter');
+        await expect(popup).toBeHidden();
+        await expect(editor.locator('[data-reference-type="user"]')).toHaveText(label);
+        await expect(page.locator('[id^="item-"]')).toHaveCount(0);
+        const saved = await send(page, composer);
+        expect(saved.content).toBe(`[user]${label.slice(1)}(${selectedLogin})[/user]`);
+        await expect(postContent(page, saved.id!)).toContainText(label.slice(1));
     });
 
     for (const kind of ['slides', 'faq'] as const) {
@@ -1551,6 +1612,7 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             await page.keyboard.type(`Later line ${line}`);
         }
         await forEachViewport(page, async () => {
+            await waitForResponsiveComposer(page);
             await editor.scrollIntoViewIfNeeded();
             await selectText(editor, 0, 0);
             await page.keyboard.type(`@${studentOne.username}`);
@@ -1727,15 +1789,35 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
 test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
     test.use({ expandedToolbar: false });
 
-    test('shows basic controls by default and expands inline or wraps to fit each viewport', async ({ page, composer }) => {
+    test('keeps the toolbar on one line at every viewport and shows the controls that do not fit in a bar above the editor', async ({ page, composer }) => {
         const host = page.locator('jhi-message-editor').filter({ has: composer.editor });
         const toggle = host.getByTestId('message-toolbar-toggle');
         const advanced = host.getByTestId('message-advanced-toolbar');
+        const line = host.getByTestId('message-toolbar-line');
         await forEachViewport(page, async (viewport) => {
+            await waitForResponsiveComposer(page);
             await host.scrollIntoViewIfNeeded();
             await expect(toggle).toHaveAttribute('aria-expanded', 'false');
             await expect(toggle).toHaveAccessibleName('More options');
             await expect(advanced).toBeHidden();
+            await expect(host.getByTestId('message-emoji-button')).toBeVisible();
+            await expect(host.getByTestId('message-format-strong')).toBeVisible();
+            await expect(host.getByTestId('message-attachment-button')).toBeHidden();
+            // Every button of the line is next to the others: the emoji button never takes a line of its own.
+            const lineButtons = await line.getByRole('button').all();
+            expect(lineButtons.length).toBeGreaterThanOrEqual(3);
+            await expectAligned(lineButtons, 'top', { name: `the toolbar is one line at ${viewport.width}px` });
+            for (const button of lineButtons) {
+                await expectWithinViewport(button, ['left', 'right'], { name: `toolbar button at ${viewport.width}px` });
+            }
+            const editorTop = (await composer.editor.boundingBox())!.y;
+            const { y: toolbarTop, height: toolbarHeight } = (await host.getByTestId('message-editor-toolbar').boundingBox())!;
+
+            await toggle.click();
+            await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+            await expect(toggle).toHaveAccessibleName('Fewer options');
+            await expect(toggle).toHaveAttribute('aria-controls', (await advanced.getAttribute('id'))!);
+            // Wherever it sits, each control is reachable: on the line or in the bar, and none is wider than the screen.
             for (const id of [
                 'message-format-strong',
                 'message-format-em',
@@ -1745,20 +1827,6 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
                 'message-link-button',
                 'message-mention-button',
                 'message-reference-button',
-                'message-emoji-button',
-            ]) {
-                await expect(host.getByTestId(id)).toBeVisible();
-                await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
-            }
-            await expect(host.getByTestId('message-attachment-button')).toBeHidden();
-            await toggle.click();
-            await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-            await expect(toggle).toHaveAccessibleName('Fewer options');
-            await expect(toggle).toHaveAttribute('aria-controls', (await advanced.getAttribute('id'))!);
-            for (const id of [
-                'message-format-ins',
-                'message-format-s',
-                'message-format-code',
                 'message-block-ul',
                 'message-block-ol',
                 'message-block-blockquote',
@@ -1771,16 +1839,15 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
                 await expect(host.getByTestId(id)).toBeVisible();
                 await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
             }
-            if (viewport.width === 1728) {
-                await expectAligned(await host.getByTestId('message-editor-toolbar').getByRole('button').all(), 'top', {
-                    name: 'all expanded formatting and resource controls share the basic toolbar row when space permits',
-                });
-            }
-            if (viewport.width === 480) {
-                await expectBelow([host.getByTestId('message-block-ul'), host.getByTestId('message-attachment-button')], toggle, {
-                    name: 'expanded controls wrap below the basic toolbar on a narrow screen',
-                });
-            }
+            // The bar floats above the toolbar, so opening it neither moves the editor nor adds a line to the toolbar.
+            // The buttons of the bar wrap one by one, not group by group, so it needs at most two rows at these widths.
+            const barRows = new Set(await advanced.getByRole('button').evaluateAll((buttons) => buttons.map((button) => Math.round(button.getBoundingClientRect().top))));
+            expect(barRows.size, `rows of the bar at ${viewport.width}px`).toBeLessThanOrEqual(2);
+            const bar = (await advanced.boundingBox())!;
+            expect(bar.y + bar.height, `the bar ends above the toolbar at ${viewport.width}px`).toBeLessThanOrEqual(toolbarTop + 1);
+            expect((await composer.editor.boundingBox())!.y).toBe(editorTop);
+            expect((await host.getByTestId('message-editor-toolbar').boundingBox())!.y).toBe(toolbarTop);
+            expect((await host.getByTestId('message-editor-toolbar').boundingBox())!.height, `toolbar height with the bar open at ${viewport.width}px`).toBe(toolbarHeight);
             await expectNoHorizontalOverflow(page, [host], { name: 'expanded message composer' });
             await expectNoHorizontalScrollAround(host, { name: 'expanded message composer' });
             await toggle.click();
@@ -1788,6 +1855,42 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
             await expectNoHorizontalOverflow(page, [host], { name: 'compact message composer' });
             await expectNoHorizontalScrollAround(host, { name: 'compact message composer' });
         });
+    });
+
+    test('shortens the hint below the editor to at most two lines and keeps the full text in a tooltip', async ({ page, composer }) => {
+        const host = page.locator('jhi-message-editor').filter({ has: composer.editor });
+        const hint = host.getByTestId('message-editor-hint');
+        await forEachViewport(page, async (viewport) => {
+            await waitForResponsiveComposer(page);
+            await host.scrollIntoViewIfNeeded();
+            await expect(hint).toBeVisible();
+            await expect(hint).not.toContainText('Ctrl+Enter');
+            await expect(hint).toContainText('Enter sends');
+            const { height, lineHeight } = await hint.evaluate((element) => ({
+                height:
+                    element.getBoundingClientRect().height - Number.parseFloat(getComputedStyle(element).paddingTop) - Number.parseFloat(getComputedStyle(element).paddingBottom),
+                lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+            }));
+            expect(Math.round(height / lineHeight), `hint lines at ${viewport.width}px`).toBeLessThanOrEqual(2);
+            await expectNoHorizontalOverflow(page, [host], { name: 'message editor hint' });
+        });
+        await host.getByTestId('message-editor-help').hover();
+        await expect(page.getByRole('tooltip')).toContainText('Shift+Enter adds a new line or the next list item');
+        await expect(page.getByRole('tooltip')).not.toContainText('Ctrl+Enter');
+    });
+
+    test('names the conversation in light grey while the editor is empty', async ({ page, composer }) => {
+        const placeholder = page.getByTestId('message-editor-placeholder');
+        await expect(placeholder).toHaveText(`Message ${composer.channel.name}`);
+        await composer.editor.pressSequentially('Hi');
+        await expect(placeholder).toBeHidden();
+        await composer.editor.press('ControlOrMeta+a');
+        await composer.editor.press('Backspace');
+        await expect(placeholder).toBeVisible();
+        // The hint is not a part of the message and does not take the pointer from the editor.
+        await expectText(composer.editor, '');
+        await placeholder.click({ force: true });
+        await expect(composer.editor).toBeFocused();
     });
 
     test('keeps the toolbar toggle clickable beneath a hoverable quote tooltip', async ({ page, composer }) => {

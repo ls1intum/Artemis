@@ -54,6 +54,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
@@ -801,6 +803,81 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercisePreservesGradingOrderAcrossReorderAndReload() throws Exception {
+        var mapper = request.getObjectMapper();
+        ObjectNode body = (ObjectNode) mapper.valueToTree(UpdateTextExerciseDTO.of(textExercise));
+        var zuluInstruction = new GradingInstructionDTO(null, 1, "Good", "Zulu instruction", "Zulu feedback", 0);
+        var alphaInstruction = new GradingInstructionDTO(null, 2, "Good", "Alpha instruction", "Alpha feedback", 0);
+        body.set("gradingCriteria", mapper.valueToTree(List.of(new GradingCriterionDTO(null, "Zulu category", List.of(zuluInstruction, alphaInstruction)),
+                new GradingCriterionDTO(null, "Alpha category", List.of()), new GradingCriterionDTO(null, "Middle category", List.of()))));
+
+        request.putWithResponseBody("/api/text/text-exercises", body, ObjectNode.class, HttpStatus.OK);
+        ObjectNode saved = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, ObjectNode.class);
+        var savedCriteria = saved.path("gradingCriteria");
+        assertThat(savedCriteria.get(0).path("title").asString()).isEqualTo("Zulu category");
+        assertThat(savedCriteria.get(1).path("title").asString()).isEqualTo("Alpha category");
+        assertThat(savedCriteria.get(2).path("title").asString()).isEqualTo("Middle category");
+        var zuluCriterion = (ObjectNode) savedCriteria.get(0);
+        var instructions = zuluCriterion.path("structuredGradingInstructions");
+        assertThat(instructions.get(0).path("instructionDescription").asString()).isEqualTo("Zulu instruction");
+        assertThat(instructions.get(1).path("instructionDescription").asString()).isEqualTo("Alpha instruction");
+        long referencedInstructionId = instructions.get(0).path("id").asLong();
+        long firstCriterionId = zuluCriterion.path("id").asLong();
+        long lastCriterionId = savedCriteria.get(2).path("id").asLong();
+
+        var persistedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(textExercise.getId());
+        GradingInstruction referencedInstruction = GradingCriterionUtil.findAnyInstructionWhere(persistedCriteria, instruction -> instruction.getId() == referencedInstructionId)
+                .orElseThrow();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("Answer", Language.ENGLISH, true));
+        Result result = participationUtilService.addResultToSubmission(participation, submission);
+        Feedback feedback = new Feedback();
+        feedback.setGradingInstruction(referencedInstruction);
+        feedback.setCredits(1.0);
+        participationUtilService.addFeedbackToResult(feedback, result);
+
+        zuluCriterion.set("structuredGradingInstructions", mapper.createArrayNode().add(instructions.get(1)).add(instructions.get(0)));
+        body.set("gradingCriteria", mapper.createArrayNode().add(savedCriteria.get(2)).add(savedCriteria.get(1)).add(zuluCriterion));
+        request.putWithResponseBody("/api/text/text-exercises", body, ObjectNode.class, HttpStatus.OK);
+
+        ObjectNode reloaded = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, ObjectNode.class);
+        var reordered = reloaded.path("gradingCriteria");
+        assertThat(reordered.get(0).path("id").asLong()).isEqualTo(lastCriterionId);
+        assertThat(reordered.get(0).path("title").asString()).isEqualTo("Middle category");
+        assertThat(reordered.get(1).path("title").asString()).isEqualTo("Alpha category");
+        assertThat(reordered.get(2).path("id").asLong()).isEqualTo(firstCriterionId);
+        assertThat(reordered.get(2).path("structuredGradingInstructions").get(0).path("instructionDescription").asString()).isEqualTo("Alpha instruction");
+        assertThat(reordered.get(2).path("structuredGradingInstructions").get(1).path("id").asLong()).isEqualTo(referencedInstructionId);
+        var reloadedFeedback = resultRepository.findResultWithFeedbacksById(result.getId()).orElseThrow().getFeedbacks();
+        assertThat(reloadedFeedback).singleElement().satisfies(retained -> {
+            assertThat(retained.getId()).isEqualTo(feedback.getId());
+            assertThat(retained.getGradingInstruction().getId()).isEqualTo(referencedInstructionId);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExerciseRetainsDuplicateValuedNewRubricRows() throws Exception {
+        var mapper = request.getObjectMapper();
+        ObjectNode body = (ObjectNode) mapper.valueToTree(UpdateTextExerciseDTO.of(textExercise));
+        var instruction = new GradingInstructionDTO(null, 1, "Good", "Same instruction", "Same feedback", 0);
+        var criterion = new GradingCriterionDTO(null, "Same category", List.of(instruction, instruction));
+        body.set("gradingCriteria", mapper.valueToTree(List.of(criterion, criterion)));
+
+        request.putWithResponseBody("/api/text/text-exercises", body, ObjectNode.class, HttpStatus.OK);
+        ObjectNode reloaded = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, ObjectNode.class);
+        var criteria = reloaded.path("gradingCriteria");
+        assertThat(criteria.size()).isEqualTo(2);
+        assertThat(criteria.get(0).path("id").asLong()).isNotEqualTo(criteria.get(1).path("id").asLong());
+        for (var row : criteria) {
+            var instructions = row.path("structuredGradingInstructions");
+            assertThat(instructions.size()).isEqualTo(2);
+            assertThat(instructions.get(0).path("id").asLong()).isNotEqualTo(instructions.get(1).path("id").asLong());
+        }
     }
 
     @Test

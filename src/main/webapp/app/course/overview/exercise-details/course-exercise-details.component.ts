@@ -311,8 +311,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Both modes are selected from the URL, not just practice: going back after a switch leaves the editor on the other
      * participation, and a mode that only ever moved towards practice would then describe the wrong one. A routed id
      * that belongs to neither participation (not loaded yet) leaves the mode untouched.
+     * Quiz routes name the mode directly; in particular, the live route has no participation id to match.
      */
     private syncModeWithRoutedParticipation(): void {
+        const targetUrl = this.router.currentNavigation()?.finalUrl?.toString() ?? this.router.url;
+        const targetPath = targetUrl.split(/[?#]/, 1)[0];
+        const quizMode = /\/quiz-exercises\/\d+\/(live|practice)(?:\/|;|$)/.exec(targetPath)?.[1];
+        if (quizMode) {
+            this.participationMode.set(quizMode === 'practice' ? 'practice' : 'graded');
+            return;
+        }
         const routedParticipationId = this.routedParticipationId();
         if (routedParticipationId === undefined) {
             return;

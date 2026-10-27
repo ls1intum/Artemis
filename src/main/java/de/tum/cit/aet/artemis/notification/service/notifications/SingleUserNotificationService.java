@@ -207,7 +207,7 @@ public class SingleUserNotificationService {
             // Only send a notification to the mentioned user if...
             // (for course-wide channels) ...the course-wide channel is visible
             // (for all other cases) ...the user is a member of the conversation
-            return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(conversation.getId(), user.getId());
+            return isChannelVisibleToMentionedUser && (isChannelAndCourseWide || conversationService.isMember(conversation.getId(), user.getId()));
         });
     }
 }

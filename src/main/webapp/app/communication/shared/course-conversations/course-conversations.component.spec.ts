@@ -10,7 +10,7 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
-import { SortDirection } from 'app/communication/communication.util';
+import { CommunicationCrudAction, SortDirection } from 'app/communication/communication.util';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
@@ -53,8 +53,16 @@ import { ConversationGlobalSearchComponent } from 'app/communication/shared/conv
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { provideTranslateService } from '@ngx-translate/core';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
+import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ConversationWebsocketDTO } from 'app/communication/shared/entities/conversation/conversation-websocket-dto.model';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -872,6 +880,23 @@ examples.forEach((activeConversation) => {
                 expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
             });
 
+            it('updates a direct chat after a membership update without fetching conversations', () => {
+                const updatedChat = { ...usedChat, isFavorite: true };
+                conversationsOfUser$.next([emptyChat, updatedChat]);
+
+                expect(component.sidebarConversations()[0].conversation).toBe(updatedChat);
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('adds a newly received direct chat immediately without a refresh', () => {
+                const receivedChat = { id: 103, type: ConversationType.ONE_TO_ONE, lastMessageDate: dayjs() } as ConversationDTO;
+                conversationsOfUser$.next([emptyChat, usedChat, receivedChat]);
+
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id, receivedChat.id]);
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
             it('should keep the chat out of the sidebar while it is still empty', () => {
                 conversationsOfUser$.next([emptyChat, usedChat]);
 
@@ -1386,5 +1411,77 @@ examples.forEach((activeConversation) => {
 
             expect(component.pageTitle()).toBe('overview.communication');
         });
+    });
+});
+
+describe('CourseConversationsComponent membership updates with the conversation service', () => {
+    let fixture: ComponentFixture<CourseConversationsComponent>;
+    let service: CourseConversationsService;
+
+    beforeEach(() => vi.useFakeTimers());
+
+    afterEach(() => {
+        fixture?.destroy();
+        service?.ngOnDestroy();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('shows a cached empty direct chat immediately on its first-message membership frame even when refreshes fail', async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                CourseConversationsService,
+                MockProvider(ConversationService),
+                MockProvider(GroupChatService),
+                MockProvider(OneToOneChatService),
+                MockProvider(ChannelService),
+                MockProvider(WebsocketService),
+                MockProvider(CourseOverviewService),
+                MockProvider(DialogService),
+                MockProvider(AlertService),
+                MockProvider(FaqService),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ActivatedRoute, useValue: {} },
+                { provide: BreakpointObserver, useValue: { observe: () => of({ matches: false, breakpoints: {} }), isMatched: () => false } },
+            ],
+        })
+            .overrideComponent(CourseConversationsComponent, {
+                set: { template: '', templateUrl: undefined, imports: [], providers: [{ provide: CommunicationService, useValue: {} }] },
+            })
+            .compileComponents();
+
+        const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
+        const emptyChat = generateOneToOneChatDTO({ id: 2 });
+        emptyChat.lastMessageDate = undefined;
+        const membership = new Subject<ConversationWebsocketDTO>();
+        const conversationService = TestBed.inject(ConversationService);
+        vi.spyOn(TestBed.inject(WebsocketService), 'subscribe').mockReturnValue(membership);
+        vi.spyOn(conversationService, 'convertServerDates').mockImplementation((conversation) => conversation);
+        const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [emptyChat] })));
+        const overview = TestBed.inject(CourseOverviewService);
+        vi.spyOn(overview, 'mapConversationsToSidebarCardElements').mockImplementation((conversations) =>
+            conversations.map((conversation) => ({ id: conversation.id!, title: 'chat', size: 'S', conversation })),
+        );
+        vi.spyOn(overview, 'groupConversationsByChannelType').mockReturnValue({ recents: { entityData: [] } });
+        service = TestBed.inject(CourseConversationsService);
+        // Only wire the sidebar consumer; zoneless rendering must not also initialize the whole communication page.
+        vi.spyOn(CourseConversationsComponent.prototype, 'ngOnInit').mockImplementation(() => {});
+        fixture = TestBed.createComponent(CourseConversationsComponent);
+        const component = fixture.componentInstance;
+        component.course.set(course);
+        component.messagingEnabled = true;
+        component['subscribeToConversationsOfUser']();
+        service.setUpConversationService(course).subscribe();
+        expect(component.sidebarConversations()).toEqual([]);
+        get.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 }))).mockClear();
+
+        membership.next({ action: CommunicationCrudAction.CREATE, conversation: { ...emptyChat, lastMessageDate: dayjs('2026-01-01T12:00:00Z') } });
+
+        expect(component.sidebarConversations().map((card) => card.id)).toEqual([2]);
+        expect(get).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(10_000);
+        expect(get).toHaveBeenCalledTimes(2);
+        expect(component.sidebarConversations().map((card) => card.id)).toEqual([2]);
     });
 });

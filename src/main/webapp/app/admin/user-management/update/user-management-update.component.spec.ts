@@ -1192,6 +1192,30 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         expect(save.disabled).toBe(false);
     });
 
+    it.each([true, false])('explains an invalid email and blocks saving until it is corrected (new user: %s)', async (isNew) => {
+        await render(new User(isNew ? undefined : 123, 'emailuser', 'Email', 'Test', 'valid@example.org', true, 'en', [Authority.STUDENT]));
+        const email = fixture.nativeElement.querySelector('input#email') as HTMLInputElement;
+        const save = fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement;
+
+        email.value = 'abcde';
+        email.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.editForm.get('email')!.hasError('email')).toBe(true);
+        expect(email.getAttribute('aria-invalid')).toBe('true');
+        expect(fixture.nativeElement.querySelector('[jhiTranslate="global.messages.validate.email.invalid"]')).not.toBeNull();
+        expect(save.disabled).toBe(true);
+
+        email.value = 'valid@example.org';
+        email.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.editForm.get('email')!.valid).toBe(true);
+        expect(email.getAttribute('aria-invalid')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[jhiTranslate="global.messages.validate.email.invalid"]')).toBeNull();
+        expect(save.disabled).toBe(false);
+    });
+
     it('marks every required field with a marker hidden from assistive technology', async () => {
         await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
 

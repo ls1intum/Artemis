@@ -1,72 +1,30 @@
-<div class="message-composer rounded-md">
-    <div class="message-editor-divider flex flex-wrap items-center gap-1 border-b p-1" data-testid="message-editor-toolbar">
-        <div class="flex max-w-full flex-wrap items-center gap-1" role="group" [attr.aria-label]="'artemisApp.communication.formattedEditor.formatting' | artemisTranslate">
-            @for (format of basicFormats; track format.tag) {
-                <button
-                    type="button"
-                    tumAetUiButton
-                    variant="text"
-                    severity="secondary"
-                    size="small"
-                    [attr.aria-label]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
-                    [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
-                    tumAetUiTooltipDescribesHost="false"
-                    [attr.data-testid]="'message-format-' + format.tag"
-                    [attr.aria-pressed]="activeFormatting().includes(format.tag)"
-                    (mousedown)="remember($event)"
-                    (click)="applyFormat(format.tag)"
-                >
-                    <fa-icon [icon]="format.icon" />
-                </button>
-            }
+<!-- isolate keeps the floating bar of further options from painting over parts of the page outside the composer, such as the drawer of the conversations. -->
+<div class="message-composer isolate rounded-md">
+    @let hintKey = placeholderKey();
+    <div #toolbar class="message-editor-divider relative border-b p-1" data-testid="message-editor-toolbar">
+        <!--
+            The toolbar is always one line. Items that do not fit move into the bar of further options above the editor, which the more options button opens.
+            The emoji and the more options button stay on the line, so the line holds as many of the other buttons as its width allows.
+        -->
+        <div #toolbarRow class="flex flex-nowrap items-center gap-1" data-testid="message-toolbar-line">
+            <div class="flex flex-nowrap items-center gap-1" role="group" [attr.aria-label]="'artemisApp.communication.formattedEditor.formatting' | artemisTranslate">
+                @for (item of lineItems(); track item.id) {
+                    <ng-container [ngTemplateOutlet]="toolbarButton" [ngTemplateOutletContext]="{ $implicit: item }" />
+                }
+            </div>
+            <jhi-message-editor-tools
+                class="contents"
+                [courseId]="courseId()"
+                [conversationId]="conversation()?.id"
+                [editorRevision]="editorRevision()"
+                [draftIdentity]="draftIdentity()"
+                [captureSelection]="captureEntitySelection"
+                (insert)="insertResource($event)"
+                (uploadingChange)="uploadStateChanged($event)"
+                (closed)="focus()"
+            />
             <button
-                type="button"
-                tumAetUiButton
-                variant="text"
-                severity="secondary"
-                size="small"
-                [attr.aria-label]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
-                [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
-                tumAetUiTooltipDescribesHost="false"
-                data-testid="message-link-button"
-                [disabled]="!linkAllowed()"
-                [attr.aria-expanded]="linkOpen()"
-                (mousedown)="remember($event)"
-                (click)="openLink()"
-            >
-                <fa-icon [icon]="icons.faLink" />
-            </button>
-            <button
-                type="button"
-                tumAetUiButton
-                variant="text"
-                severity="secondary"
-                size="small"
-                [attr.aria-label]="'artemisApp.communication.formattedEditor.mention' | artemisTranslate"
-                [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.mention' | artemisTranslate"
-                tumAetUiTooltipDescribesHost="false"
-                data-testid="message-mention-button"
-                (mousedown)="remember($event)"
-                (click)="insertTrigger('@')"
-            >
-                <fa-icon [icon]="icons.faAt" />
-            </button>
-            <button
-                type="button"
-                tumAetUiButton
-                variant="text"
-                severity="secondary"
-                size="small"
-                [attr.aria-label]="'artemisApp.communication.formattedEditor.reference' | artemisTranslate"
-                [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.reference' | artemisTranslate"
-                tumAetUiTooltipDescribesHost="false"
-                data-testid="message-reference-button"
-                (mousedown)="remember($event)"
-                (click)="insertTrigger('#')"
-            >
-                <fa-icon [icon]="icons.faHashtag" />
-            </button>
-            <button
+                #toolbarToggle
                 type="button"
                 tumAetUiButton
                 variant="text"
@@ -83,49 +41,137 @@
             >
                 <fa-icon [icon]="toolbarExpanded() ? icons.faChevronUp : icons.faEllipsis" />
             </button>
-        </div>
-        <div
-            class="message-editor-advanced-toolbar flex max-w-full flex-wrap items-center gap-1"
-            [id]="advancedToolbarId"
-            [hidden]="!toolbarExpanded()"
-            [attr.role]="toolbarExpanded() ? 'group' : null"
-            [attr.aria-label]="toolbarExpanded() ? ('artemisApp.communication.formattedEditor.moreOptions' | artemisTranslate) : null"
-            data-testid="message-advanced-toolbar"
-        >
-            <div class="message-editor-advanced-controls flex flex-wrap gap-1" [hidden]="!toolbarExpanded()">
-                @for (block of blocks; track block.tag) {
-                    <button
-                        type="button"
-                        tumAetUiButton
-                        variant="text"
-                        severity="secondary"
-                        size="small"
-                        [attr.aria-label]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
-                        [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
-                        tumAetUiTooltipDescribesHost="false"
-                        [attr.data-testid]="'message-block-' + block.tag"
-                        [attr.aria-pressed]="activeFormatting().includes(block.tag)"
-                        (mousedown)="remember($event)"
-                        (click)="applyBlock(block.tag)"
-                    >
-                        <fa-icon [icon]="block.icon" />
-                    </button>
+            <div
+                #advancedBar
+                class="message-editor-advanced-toolbar absolute start-0 z-10 flex max-w-full flex-wrap items-center gap-1 rounded-md border p-1 shadow-md"
+                [class]="barBelow() ? 'top-full mt-1' : 'bottom-full mb-1'"
+                [id]="advancedToolbarId"
+                [hidden]="!toolbarExpanded()"
+                [attr.role]="toolbarExpanded() ? 'group' : null"
+                [attr.aria-label]="toolbarExpanded() ? ('artemisApp.communication.formattedEditor.moreOptions' | artemisTranslate) : null"
+                data-testid="message-advanced-toolbar"
+            >
+                <!--
+                    The groups of buttons are display: contents, so that the buttons of all groups wrap one by one and a narrow bar needs as few rows as its buttons take.
+                    The dividers only show where the bar fits one row; in a narrower bar a divider could end a row.
+                -->
+                @if (overflowItems().length) {
+                    <div class="contents" role="group" data-testid="message-overflow-controls">
+                        @for (item of overflowItems(); track item.id) {
+                            <ng-container [ngTemplateOutlet]="toolbarButton" [ngTemplateOutletContext]="{ $implicit: item }" />
+                        }
+                    </div>
+                    @if (wideHint()) {
+                        <span class="message-editor-bar-separator" aria-hidden="true"></span>
+                    }
                 }
+                <div class="message-editor-advanced-controls contents">
+                    @for (block of blocks; track block.tag) {
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            variant="text"
+                            severity="secondary"
+                            size="small"
+                            [attr.aria-label]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
+                            [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
+                            tumAetUiTooltipDescribesHost="false"
+                            [attr.data-testid]="'message-block-' + block.tag"
+                            [attr.aria-pressed]="activeFormatting().includes(block.tag)"
+                            (mousedown)="remember($event)"
+                            (click)="applyBlock(block.tag)"
+                        >
+                            <fa-icon [icon]="block.icon" />
+                        </button>
+                    }
+                </div>
+                @if (wideHint()) {
+                    <span class="message-editor-bar-separator" aria-hidden="true"></span>
+                }
+                <ng-container [ngTemplateOutlet]="tools()?.resourceControls() ?? null" />
             </div>
         </div>
-        <jhi-message-editor-tools
-            class="contents"
-            [controlsVisible]="toolbarExpanded()"
-            [courseId]="courseId()"
-            [conversationId]="conversation()?.id"
-            [editorRevision]="editorRevision()"
-            [draftIdentity]="draftIdentity()"
-            [captureSelection]="captureEntitySelection"
-            (insert)="insertResource($event)"
-            (uploadingChange)="uploadStateChanged($event)"
-            (closed)="focus()"
-        />
+        <div class="flex flex-wrap items-center gap-1">
+            <ng-container [ngTemplateOutlet]="tools()?.status() ?? null" />
+        </div>
     </div>
+
+    <ng-template #toolbarButton let-item>
+        @switch (item.kind) {
+            @case ('format') {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    severity="secondary"
+                    size="small"
+                    [attr.aria-label]="'artemisApp.communication.formattedEditor.' + item.label | artemisTranslate"
+                    [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.' + item.label | artemisTranslate"
+                    tumAetUiTooltipDescribesHost="false"
+                    [attr.data-testid]="'message-format-' + item.tag"
+                    [attr.aria-pressed]="activeFormatting().includes(item.tag)"
+                    (mousedown)="remember($event)"
+                    (click)="applyFormat(item.tag)"
+                >
+                    <fa-icon [icon]="item.icon" />
+                </button>
+            }
+            @case ('link') {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    severity="secondary"
+                    size="small"
+                    [attr.aria-label]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
+                    [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
+                    tumAetUiTooltipDescribesHost="false"
+                    data-testid="message-link-button"
+                    [disabled]="!linkAllowed()"
+                    [attr.aria-expanded]="linkOpen()"
+                    (mousedown)="remember($event)"
+                    (click)="openLink()"
+                >
+                    <fa-icon [icon]="icons.faLink" />
+                </button>
+            }
+            @case ('mention') {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    severity="secondary"
+                    size="small"
+                    [attr.aria-label]="'artemisApp.communication.formattedEditor.mention' | artemisTranslate"
+                    [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.mention' | artemisTranslate"
+                    tumAetUiTooltipDescribesHost="false"
+                    data-testid="message-mention-button"
+                    (mousedown)="remember($event)"
+                    (click)="insertTrigger('@')"
+                >
+                    <fa-icon [icon]="icons.faAt" />
+                </button>
+            }
+            @case ('reference') {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    severity="secondary"
+                    size="small"
+                    [attr.aria-label]="'artemisApp.communication.formattedEditor.reference' | artemisTranslate"
+                    [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.reference' | artemisTranslate"
+                    tumAetUiTooltipDescribesHost="false"
+                    data-testid="message-reference-button"
+                    (mousedown)="remember($event)"
+                    (click)="insertTrigger('#')"
+                >
+                    <fa-icon [icon]="icons.faHashtag" />
+                </button>
+            }
+            @default {}
+        }
+    </ng-template>
 
     @if (linkOpen()) {
         <div
@@ -181,7 +227,12 @@
         </div>
     }
 
-    <div>
+    <div class="relative">
+        @if (placeholderKey(); as key) {
+            <span class="message-editor-placeholder message-editor-muted" aria-hidden="true" data-testid="message-editor-placeholder">{{
+                key | artemisTranslate: { name: conversationName() }
+            }}</span>
+        }
         <div
             #editable
             contenteditable="true"
@@ -192,6 +243,7 @@
             class="message-editor-content"
             data-testid="formatted-message-input"
             [attr.aria-label]="'artemisApp.communication.formattedEditor.message' | artemisTranslate"
+            [attr.aria-placeholder]="hintKey ? (hintKey | artemisTranslate: { name: conversationName() }) : null"
             [attr.aria-describedby]="hintId"
             [attr.aria-controls]="suggestionsOpen() ? listId : null"
             [attr.aria-activedescendant]="suggestionsOpen() && suggestions().length ? listId + '-' + activeIndex() : null"
@@ -214,7 +266,29 @@
             (scroll)="dismissSuggestions()"
         ></div>
     </div>
-    <p [id]="hintId" class="message-editor-divider message-editor-muted m-0 border-t p-2 text-xs">{{ 'artemisApp.communication.formattedEditor.hint' | artemisTranslate }}</p>
+    <!--
+        The visible hint is short, so it takes at most two lines at any width, and the full text sits in the tooltip of the help button.
+        Screen readers get the full text as the description of the editor.
+    -->
+    <div class="message-editor-divider message-editor-muted flex items-start gap-1 border-t py-1 ps-2 pe-1 text-xs">
+        <p class="m-0 min-w-0 flex-1 py-1" aria-hidden="true" data-testid="message-editor-hint">
+            {{ (wideHint() ? 'artemisApp.communication.formattedEditor.hint' : 'artemisApp.communication.formattedEditor.hintShort') | artemisTranslate }}
+        </p>
+        <span [id]="hintId" class="sr-only">{{ 'artemisApp.communication.formattedEditor.hintDetails' | artemisTranslate }}</span>
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            class="shrink-0"
+            data-testid="message-editor-help"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.help' | artemisTranslate"
+            [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.hintDetails' | artemisTranslate"
+        >
+            <fa-icon [icon]="icons.faCircleQuestion" />
+        </button>
+    </div>
 </div>
 
 <ng-template

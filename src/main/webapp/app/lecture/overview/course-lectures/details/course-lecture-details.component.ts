@@ -356,6 +356,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         downloadStream(blob.body, 'application/pdf', this.lecture()?.title ?? 'Lecture');
                         this.loadData();
                     }),
+                    catchError(() => {
+                        this.alertService.error('artemisApp.courseOverview.lectureDetails.downloadMergedPdfError');
+                        return EMPTY;
+                    }),
                 )
                 .subscribe();
         }

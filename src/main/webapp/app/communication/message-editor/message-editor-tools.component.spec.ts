@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { By } from '@angular/platform-browser';
 import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -11,8 +12,33 @@ import { FileUploaderService } from 'app/foundation/service/file-uploader.servic
 import { MessageEditorResources } from './message-editor-resources';
 import { MessageEditorToolsComponent } from './message-editor-tools.component';
 
+/** Places the resource buttons and the upload feedback where the message editor places them, in its own markup. */
+@Component({
+    selector: 'jhi-message-editor-tools-host',
+    imports: [MessageEditorToolsComponent, NgTemplateOutlet],
+    template: `
+        <jhi-message-editor-tools
+            #tools
+            [courseId]="courseId()"
+            [conversationId]="conversationId()"
+            [editorRevision]="editorRevision()"
+            [draftIdentity]="draftIdentity()"
+            [captureSelection]="captureSelection()"
+        />
+        <ng-container [ngTemplateOutlet]="tools.resourceControls()" />
+        <ng-container [ngTemplateOutlet]="tools.status()" />
+    `,
+})
+class ToolsHostComponent {
+    readonly courseId = input.required<number>();
+    readonly conversationId = input<number>();
+    readonly editorRevision = input(0);
+    readonly draftIdentity = input<string>();
+    readonly captureSelection = input.required<() => Range | undefined>();
+}
+
 describe('Formatted message attachment and resource controls', () => {
-    let fixture: ComponentFixture<MessageEditorToolsComponent>;
+    let fixture: ComponentFixture<ToolsHostComponent>;
     let component: MessageEditorToolsComponent;
     let root: HTMLDivElement;
     let range: Range;
@@ -23,7 +49,7 @@ describe('Formatted message attachment and resource controls', () => {
         upload.mockReset().mockResolvedValue({ path: '/api/files/image.png' });
         search.mockReset().mockResolvedValue([{ label: 'Lecture 2 › Slides › 1', kind: 'slide', markdown: '[slide]Slides Slide 1(#7)[/slide]' }]);
         await TestBed.configureTestingModule({
-            imports: [MessageEditorToolsComponent],
+            imports: [ToolsHostComponent],
             providers: [
                 MockProvider(TranslateService),
                 MockProvider(ThemeService, { currentTheme: signal(Theme.LIGHT) }),
@@ -40,13 +66,13 @@ describe('Formatted message attachment and resource controls', () => {
         range = document.createRange();
         range.setStart(root.firstChild!, 7);
         range.collapse(true);
-        fixture = TestBed.createComponent(MessageEditorToolsComponent);
-        component = fixture.componentInstance;
+        fixture = TestBed.createComponent(ToolsHostComponent);
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('conversationId', 2);
         fixture.componentRef.setInput('captureSelection', () => range.cloneRange());
         fixture.detectChanges();
         await fixture.whenStable();
+        component = fixture.debugElement.query(By.directive(MessageEditorToolsComponent)).componentInstance;
     });
     afterEach(() => {
         fixture.destroy();

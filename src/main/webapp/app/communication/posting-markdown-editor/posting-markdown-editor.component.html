@@ -21,6 +21,8 @@
         (uploadingChange)="formattedUploadStateChanged($event)"
         [courseId]="courseId"
         [conversation]="effectiveConversation()"
+        [conversationName]="conversationName()"
+        [reply]="isReply()"
         [editing]="isUpdating()"
         [draftIdentity]="draftIdentity()"
         [suppressNewlineOnEnter]="suppressNewlineOnEnter()"

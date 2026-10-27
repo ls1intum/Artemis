@@ -294,13 +294,11 @@
                                             <label class="new-group-settings__label" for="wiz-group-max-points">{{
                                                 'artemisApp.exerciseVariantGeneration.wizard.placement.maxPoints' | artemisTranslate
                                             }}</label>
-                                            <input
-                                                type="number"
-                                                id="wiz-group-max-points"
+                                            <jhi-points-input
+                                                fluid
+                                                inputId="wiz-group-max-points"
                                                 [ngModel]="newGroupMaxPoints()"
-                                                (ngModelChange)="newGroupMaxPoints.set($event !== '' ? +$event : undefined)"
-                                                tumAetUiInput
-                                                tumAetUiInputSize="small"
+                                                (ngModelChange)="newGroupMaxPoints.set($event ?? undefined)"
                                                 class="new-group-settings__pts"
                                             />
                                         </div>

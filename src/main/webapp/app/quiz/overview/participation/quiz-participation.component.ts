@@ -48,6 +48,7 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { formatQuizRelativeTime, quizCountdown } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { QuizParticipationBase } from './quiz-participation.base';
 
 @Component({
@@ -69,6 +70,7 @@ import { QuizParticipationBase } from './quiz-participation.base';
         FaIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
     ],
 })
 export class QuizParticipationComponent extends QuizParticipationBase implements OnInit, OnDestroy, ExerciseSubmission {
@@ -163,6 +165,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
 
     private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
     readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
+
+    readonly submissionConfirmationDismissed = signal(false);
+    private submissionConfirmationQuizId?: number;
 
     quizId!: number; // set in ngOnInit() from route params / inputs
     courseId!: number; // set in ngOnInit() from route params / inputs
@@ -290,6 +295,10 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads latest submission from server and sets up socket connection
      */
     initLiveMode() {
+        if (this.submissionConfirmationQuizId !== this.quizId) {
+            this.submissionConfirmationDismissed.set(false);
+            this.submissionConfirmationQuizId = this.quizId;
+        }
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             if (status.connected && this.disconnected) {
