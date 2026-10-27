@@ -27,7 +27,7 @@ const meta = {
         docs: {
             description: {
                 component:
-                    'The panel uses a backdrop: clicking outside dismisses it and consumes that click. Multi-select instead allows page scrolling and passes outside clicks through. Set matchTriggerWidth to false for a content-sized panel with wrapping option labels.',
+                    'The panel uses a backdrop: clicking outside dismisses it and consumes that click. Set matchTriggerWidth to false for a content-sized panel with wrapping option labels.',
             },
         },
     },

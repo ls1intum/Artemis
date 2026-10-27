@@ -46,9 +46,8 @@ let nextMultiSelectId = 0;
 
 /**
  * ControlValueAccessor that chooses any number of values from a listbox overlay. The value is an array of the chosen
- * options (or of their `optionValue` property); the panel stays open while options are toggled.
- * Unlike select, date picker and popover, it has no backdrop: the page remains scrollable and outside clicks
- * dismiss the panel without intercepting the clicked control.
+ * options (or of their `optionValue` property); the panel stays open while options are toggled, and a backdrop closes
+ * it on outside clicks.
  *
  * The trigger is a `div` with `role="combobox"` rather than a `button`, so that a projected `#selectedItems` template
  * may hold interactive content of its own (a chip with a remove button, say).
