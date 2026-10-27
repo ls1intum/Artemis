@@ -16,6 +16,10 @@ import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submis
 import { HttpResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
     let comp: CodeEditorStudentContainerComponent;
@@ -34,6 +38,7 @@ describe('CodeEditorStudentContainerComponent', () => {
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 {
                     provide: ActivatedRoute,
                     useValue: { params: of({ participationId: studentParticipation.id }) },
@@ -76,6 +81,31 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(getParticipationSubmissionCountSpy).not.toHaveBeenCalled();
         },
     );
+
+    it('should show the result of a newer push instead of the AI feedback of the earlier submission', () => {
+        const aiFeedback: Feedback = { id: 1, reference: 'file:BubbleSort.java_line:3', text: 'Use a for loop' };
+        const earlierSubmission = {
+            id: 7,
+            results: [{ id: 71, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [aiFeedback] }],
+        } as ProgrammingSubmission;
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(
+            of({ ...studentParticipation, submissions: [earlierSubmission] } as ProgrammingExerciseStudentParticipation),
+        );
+        vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+        const newResults = new Subject<Result | undefined>();
+        const subscribeSpy = vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(newResults);
+
+        comp.ngOnInit();
+        // the AI feedback of the newer push is still being generated, so the editor keeps what it shows
+        newResults.next({ id: 82, assessmentType: AssessmentType.AUTOMATIC_ATHENA, submission: { id: 8 } });
+        expect(comp.participation().submissions![0].id).toBe(7);
+
+        newResults.next({ id: 81, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [], submission: { id: 8 } });
+
+        expect(subscribeSpy).toHaveBeenCalledWith(studentParticipation.id, true, studentParticipation.exercise!.id);
+        expect(comp.participation().submissions).toEqual([expect.objectContaining({ id: 8, results: [expect.objectContaining({ id: 81, feedbacks: [] })] })]);
+        expect(comp.latestResult()?.id).toBe(81);
+    });
     describe('an earlier submission from the result history', () => {
         const commitHash = 'a'.repeat(40);
         let resultService: ResultService;

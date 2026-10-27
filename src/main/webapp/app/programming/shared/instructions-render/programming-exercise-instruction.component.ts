@@ -46,6 +46,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { isAthenaAIResult, isManualResult } from 'app/exercise/result/result.utils';
+import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { setInputs } from 'app/foundation/util/set-inputs.util';
 
@@ -295,7 +297,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         }
         this.participationSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id)
-            .pipe(filter((result) => !!result))
+            // AI feedback carries no test results, so the tasks keep showing the test result it was requested for
+            .pipe(filter((result): result is Result => !!result && !isAthenaAIResult(result)))
             .subscribe((result: Result) => {
                 this.latestResult = result;
                 this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
@@ -385,6 +388,10 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             if (!latestResult) {
                 return of(undefined);
             }
+            if (isAthenaAIResult(latestResult)) {
+                const submissionId = participation.submissions?.find((submission) => submission.results?.includes(latestResult))?.id;
+                return this.loadLatestTestResultOfSubmission(submissionId);
+            }
             return latestResult.feedbacks ? of(latestResult) : this.loadAndAttachResultDetails(latestResult);
         } else if (participation && participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
@@ -402,6 +409,23 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation()!.id!).pipe(
             catchError(() => of(undefined)),
             mergeMap((latestResult: Result | undefined) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
+        );
+    }
+
+    /**
+     * AI feedback carries no test results, so the tasks show the newest other result of the submission it was requested for, like
+     * the tutor assessment starts from. The participation only comes with the AI feedback then, so the other results are loaded.
+     * A manual result counts only once the assessment due date has passed, as for the latest result of the editor.
+     * @param submissionId the submission of the AI feedback
+     */
+    private loadLatestTestResultOfSubmission(submissionId: number | undefined): Observable<Result | undefined> {
+        const assessmentDueDate = this.exercise()?.assessmentDueDate;
+        const isVisible = (result: Result) =>
+            !isAthenaAIResult(result) && (!isManualResult(result) || (!!result.completionDate && (!assessmentDueDate || dayjs().isAfter(assessmentDueDate))));
+        return this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(this.participation()!.id!).pipe(
+            map((participation) => findLatestResult(participation.submissions?.find((submission) => submission.id === submissionId)?.results?.filter(isVisible))),
+            catchError(() => of(undefined)),
+            mergeMap((result) => (result ? this.loadAndAttachResultDetails(result) : of(undefined))),
         );
     }
 

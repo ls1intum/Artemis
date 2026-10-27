@@ -3,7 +3,7 @@ import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.inte
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -14,7 +14,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
+import { getManualUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -33,6 +33,8 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -56,6 +58,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private submissionPolicyService = inject(SubmissionPolicyService);
     private resultService = inject(ResultService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
     private route = inject(ActivatedRoute);
 
     readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
@@ -69,6 +72,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     paramSub?: Subscription;
+    private newResultSub?: Subscription;
     // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
     // signal-backed under zoneless change detection, otherwise the loaded editor never renders.
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
@@ -104,6 +108,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                     this.loadingParticipation.set(true);
                     this.participationCouldNotBeFetched.set(false);
                     this.viewedSubmission.set(undefined);
+                    this.newResultSub?.unsubscribe();
                     const participationId = this.participationId() ?? Number(params['participationId']);
                     const submissionId = params['submissionId'] === undefined ? undefined : Number(params['submissionId']);
                     const participation$ =
@@ -133,6 +138,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                             if (allResults && allResults[0] && allResults[0].feedbacks) {
                                 checkSubsequentFeedbackInAssessment(allResults[0].feedbacks);
                             }
+                            if (submissionId === undefined) {
+                                this.showNewResults(participationWithResults.id!, exercise.id!);
+                            }
                         }),
                         catchError(() => {
                             this.participationCouldNotBeFetched.set(true);
@@ -156,6 +164,30 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        this.newResultSub?.unsubscribe();
+    }
+
+    /**
+     * Shows each newer result of the latest code as it arrives, e.g. the tests of a newer push, so the file badges and the inline
+     * feedback show that result and not the AI feedback of an earlier submission. AI feedback counts once it is done, as after a reload.
+     * @param participationId the participation shown in the editor
+     * @param exerciseId      the exercise of the participation
+     */
+    private showNewResults(participationId: number, exerciseId: number) {
+        this.newResultSub = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(participationId, true, exerciseId)
+            .pipe(
+                filter((result): result is Result => !!result?.submission && !(isAthenaAIResult(result) && result.successful === undefined)),
+                switchMap((result) =>
+                    result.feedbacks
+                        ? of(result)
+                        : this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(map((response) => cloneWith(result, { feedbacks: response.body ?? [] }))),
+                ),
+            )
+            .subscribe((result) => {
+                this.participation.set(cloneWith(this.participation(), { submissions: [cloneWith(result.submission!, { results: [result] })] }));
+                this.latestResult.set(result);
+            });
     }
 
     /**
