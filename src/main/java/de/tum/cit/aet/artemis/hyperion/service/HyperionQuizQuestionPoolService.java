@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -167,12 +168,16 @@ public class HyperionQuizQuestionPoolService {
      * @param questionId  the pool item
      * @param reviewState the decision
      * @return the updated item
-     * @throws EntityNotFoundException if no such item exists in the course
+     * @throws EntityNotFoundException  if no such item exists in the course
+     * @throws BadRequestAlertException if the item has not been judged yet
      */
     public QuizQuestionPoolItemDTO updateReviewState(long courseId, long questionId, QuizQuestionReviewState reviewState) {
         QuizQuestionPoolItem item = itemRepository.findByIdElseThrow(questionId);
         if (!Objects.equals(item.getCourse().getId(), courseId)) {
             throw new EntityNotFoundException("QuizQuestionPoolItem", questionId);
+        }
+        if (item.getState() != QuizQuestionPoolItemState.FILTERED) {
+            throw new BadRequestAlertException("Only judged questions can be reviewed", "QuizQuestionPool", "notJudged");
         }
         item.setReviewState(reviewState);
         item.setUpdatedAt(ZonedDateTime.now());

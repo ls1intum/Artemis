@@ -367,7 +367,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void shouldRecordReviewDecisionsForEditor() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
-        QuizQuestionPoolItem item = savePendingItem(courseId);
+        QuizQuestionPoolItem item = saveJudgedItem(courseId);
 
         QuizQuestionPoolItemDTO approved = request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.getId() + "/review",
                 new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.APPROVED), QuizQuestionPoolItemDTO.class, HttpStatus.OK);
@@ -384,7 +384,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void shouldNotReviewAQuestionOfAnotherCourse() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
-        QuizQuestionPoolItem item = savePendingItem(courseId);
+        QuizQuestionPoolItem item = saveJudgedItem(courseId);
         Course other = CourseFactory.generateMinimalCourse();
         other.setTitle("Hyperion Pool Other Course");
         other = courseRepository.save(other);
@@ -396,13 +396,30 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
-    void shouldReturnForbiddenForTutorOnReview() throws Exception {
-        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldRejectAReviewOfAQuestionThatIsNotJudgedYet() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
         QuizQuestionPoolItem item = savePendingItem(courseId);
 
         request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.getId() + "/review",
+                new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.APPROVED), QuizQuestionPoolItemDTO.class, HttpStatus.BAD_REQUEST);
+        assertThat(itemRepository.findByIdElseThrow(item.getId()).getReviewState()).isEqualTo(QuizQuestionReviewState.PENDING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void shouldReturnForbiddenForTutorOnReview() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        QuizQuestionPoolItem item = saveJudgedItem(courseId);
+
+        request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.getId() + "/review",
                 new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.APPROVED), QuizQuestionPoolItemDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    private QuizQuestionPoolItem saveJudgedItem(long ownerCourseId) {
+        QuizQuestionPoolItem item = savePendingItem(ownerCourseId);
+        item.setState(QuizQuestionPoolItemState.FILTERED);
+        return itemRepository.save(item);
     }
 
     private QuizQuestionPoolItem savePendingItem(long ownerCourseId) {
