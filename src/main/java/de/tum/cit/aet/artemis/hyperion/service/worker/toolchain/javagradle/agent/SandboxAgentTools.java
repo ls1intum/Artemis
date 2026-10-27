@@ -87,8 +87,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * Matches the {@code List.toString()} render of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}), which is what arrives when the model sends {@code {"command":[...]}}
      * instead of a shell string. A POSIX {@code [ -f x ]} test has a space after the bracket and a single-element {@code [foo]} has no comma, so neither is caught.
      */
-    private static final Pattern RENDERED_ARGV_ARRAY = Pattern.compile("^\\[\\S.*,.*]$", Pattern.DOTALL);
-
     private static final String SELF_REPORTED_VERDICT_MARKER = "MECHANICAL PRECHECK:";
 
     private final InteractiveSandbox sandbox;
@@ -907,7 +905,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     static boolean isRenderedArgvArray(String command) {
-        return RENDERED_ARGV_ARRAY.matcher(command.strip()).matches();
+        String stripped = command.strip();
+        int comma = stripped.indexOf(',', 2);
+        return stripped.length() >= 4 && stripped.charAt(0) == '[' && " \t\n\u000B\f\r".indexOf(stripped.charAt(1)) < 0 && stripped.endsWith("]") && comma >= 0
+                && comma < stripped.length() - 1;
     }
 
     static boolean mutatesManagedBuildInfrastructure(String command) {

@@ -38,7 +38,7 @@ class ContractWitnessAuthor {
     private static final Pattern ASSERTION_CALL = Pattern.compile("\\b(assert\\w*|verify|expect(That)?)\\s*\\(");
 
     private static final Pattern TEST_METHOD_DECLARATION = Pattern.compile(
-            "(?m)^\\s*(?:(?:public|protected|private|static|final|synchronized)\\s+)*[\\w<>, ?\\[\\].]+\\s+([A-Za-z_$][A-Za-z0-9_$]*)\\s*\\([^;{}]*\\)\\s*(?:throws [^{]+)?\\{");
+            "(?m)^[ \\t]*+(?:[\\w<>,?\\[\\].$]++[ \\t]++)+([A-Za-z_$][A-Za-z0-9_$]*+)[ \\t]*+\\((?:[^;{}()]++|\\((?:[^;{}()]++|\\([^;{}()]*+\\))*+\\))*+\\)\\s*+(?:throws\\s[^{;]*+)?\\{");
 
     private record ContractWitnessResponse(@Nullable List<ContractWitnessItem> witnesses) {
     }
@@ -154,7 +154,7 @@ class ContractWitnessAuthor {
     }
 
     /** A probe copies the suite's imports, not its class body. An unqualified call to a method declared by that class would therefore make the throwaway probe uncompilable. */
-    private static boolean usesSuiteLocalHelper(String code, String testName, String testSources) {
+    static boolean usesSuiteLocalHelper(String code, String testName, String testSources) {
         Matcher declarations = TEST_METHOD_DECLARATION.matcher(testSources);
         while (declarations.find()) {
             String methodName = declarations.group(1);

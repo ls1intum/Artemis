@@ -117,12 +117,8 @@ class SemanticMutantAuthor {
                 .collect(Collectors.joining("\n"));
     }
 
-    List<SemanticMutant> parse(@Nullable String responseText, String specification, Map<String, String> solutionFiles) {
-        return parse(responseText, specification, solutionFiles, List.of());
-    }
-
-    List<SemanticMutant> parse(@Nullable String responseText, String specification, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets) {
-        if (responseText == null || responseText.isBlank()) {
+    List<SemanticMutant> parse(String responseText, String specification, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets) {
+        if (responseText.isBlank()) {
             throw new IllegalStateException("Semantic-mutant authoring returned no response");
         }
         Response response;

@@ -51,7 +51,7 @@
         @if (recent().length) {
             <section class="min-w-0" aria-labelledby="hyperion-run-activity-recent-title" data-testid="hyperion-run-activity-recent">
                 <!-- Sized by this component's own stylesheet, which is what removes the `!` the type utilities needed. -->
-                <h4 id="hyperion-run-activity-recent-title" class="hyperion-activity-title" jhiTranslate="artemisApp.hyperion.generation.activity.recent"></h4>
+                <h4 id="hyperion-run-activity-recent-title" class="hyperion-activity-title">{{ 'artemisApp.hyperion.generation.activity.recent' | artemisTranslate }}</h4>
                 <!--
                     The list reserves its full height, so a message arriving pushes nothing: the largest motion a page
                     can make is moving the text somebody is reading, and none of this is user-initiated.
