@@ -4,7 +4,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -43,13 +43,13 @@ describe('QuizQuestionPoolComponent', () => {
 
     const questions = (): PoolQuestion[] => [question(1, 9, 'Arrays'), question(2, 9, 'Arrays'), question(3, 10, 'Loops')];
 
-    function setup(course: Partial<Course>): void {
+    function setup(course: Partial<Course>, params: Observable<Record<string, string>> = of({ courseId: '1' })): void {
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ActivatedRoute, useValue: { params: of({ courseId: '1' }) } },
+                { provide: ActivatedRoute, useValue: { params } },
             ],
         });
         poolService = TestBed.inject(QuizQuestionPoolService);
@@ -107,6 +107,33 @@ describe('QuizQuestionPoolComponent', () => {
 
         component.selectCompetency(null);
         expect(component.groups()).toHaveLength(2);
+    });
+
+    it('should drop the previous course and its polling when the route moves to another course', () => {
+        vi.useFakeTimers();
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true }, params.asObservable());
+        const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValue(of({ ...progress, running: true }));
+        params.next({ courseId: '1' });
+        component.selectCompetency(9);
+        component.setQuestionsPerLectureUnit(30);
+        expect(component.courseId()).toBe(1);
+        expect(component.questions()).toHaveLength(3);
+        expect(component.isRunning()).toBe(true);
+        const pollsOfFirstCourse = progressSpy.mock.calls.filter((call) => call[0] === 1).length;
+
+        progressSpy.mockReturnValue(of({ ...progress, running: false }));
+        vi.spyOn(poolService, 'getQuestions').mockReturnValue(of([]));
+        params.next({ courseId: '2' });
+        vi.advanceTimersByTime(6000);
+
+        expect(component.courseId()).toBe(2);
+        expect(component.questions()).toEqual([]);
+        expect(component.selectedCompetencyId()).toBeUndefined();
+        expect(component.isSettingsDirty()).toBe(false);
+        expect(component.isRunning()).toBe(false);
+        expect(progressSpy.mock.calls.filter((call) => call[0] === 1)).toHaveLength(pollsOfFirstCourse);
+        expect(progressSpy).toHaveBeenCalledWith(2);
     });
 
     it('should compute the progress percentage from judged and failed items', () => {

@@ -157,9 +157,28 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
     ngOnInit(): void {
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const courseId = Number(params['courseId']);
+            this.resetCourseState();
             this.courseId.set(courseId);
             this.loadCourse(courseId);
         });
+    }
+
+    /**
+     * Drops the state of the course shown so far, including its polling, so that a course change never shows or refreshes the old one.
+     */
+    private resetCourseState(): void {
+        this.stopPolling();
+        this.course.set(undefined);
+        this.progress.set(undefined);
+        this.questions.set([]);
+        this.settings.set(undefined);
+        this.originalSettings.set(undefined);
+        this.selectedCompetencyId.set(undefined);
+        this.busyQuestionIds.set(new Set());
+    }
+
+    private isCurrent(courseId: number): boolean {
+        return this.courseId() === courseId;
     }
 
     ngOnDestroy(): void {
@@ -176,6 +195,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (response) => {
+                    if (!this.isCurrent(courseId)) {
+                        return;
+                    }
                     this.course.set(response.body ?? undefined);
                     this.loadPool(courseId);
                     if (response.body?.isAtLeastInstructor) {
@@ -196,6 +218,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (progress) => {
+                    if (!this.isCurrent(courseId)) {
+                        return;
+                    }
                     this.progress.set(progress);
                     if (progress.running) {
                         this.startPolling(courseId);
@@ -210,7 +235,11 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
-                next: (questions) => this.questions.set(questions),
+                next: (questions) => {
+                    if (this.isCurrent(courseId)) {
+                        this.questions.set(questions);
+                    }
+                },
                 error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed'),
             });
     }
@@ -221,6 +250,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (settings) => {
+                    if (!this.isCurrent(courseId)) {
+                        return;
+                    }
                     this.settings.set(deepClone(settings));
                     this.originalSettings.set(deepClone(settings));
                 },
@@ -314,7 +346,11 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
-                next: (updated) => this.questions.update((questions) => questions.map((question) => (question.id === updated.id ? updated : question))),
+                next: (updated) => {
+                    if (this.isCurrent(courseId)) {
+                        this.questions.update((questions) => questions.map((question) => (question.id === updated.id ? updated : question)));
+                    }
+                },
                 error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.list.reviewFailed'),
             });
     }
@@ -330,11 +366,19 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             )
             .subscribe({
                 next: (progress) => {
+                    if (!this.isCurrent(courseId)) {
+                        this.stopPolling();
+                        return;
+                    }
                     this.progress.set(progress);
                     this.poolService
                         .getQuestions(courseId)
                         .pipe(takeUntilDestroyed(this.destroyRef))
-                        .subscribe((questions) => this.questions.set(questions));
+                        .subscribe((questions) => {
+                            if (this.isCurrent(courseId)) {
+                                this.questions.set(questions);
+                            }
+                        });
                     if (!progress.running) {
                         this.stopPolling();
                     }
