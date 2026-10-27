@@ -4,6 +4,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
 
@@ -311,7 +312,7 @@ public class AgentSystemPrompt {
         String scaffoldGuidance = mode == Mode.ADAPT ? TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE : DIFF_DISCIPLINE;
         String prompt = INTRO + SECURITY_BOUNDARY + LEARNING_OWNERSHIP + workspaceSection(exercise, mode) + THE_CONTRACT + scaffoldGuidance + STUDENT_FACING_STATEMENT
                 + ARTEMIS_TASK_BINDINGS + layoutAndHarnessSection(mode, testSourceGuidance) + groundedWorkflowSection(groundedWorkflow) + safeToolUseSection(exercise);
-        return mode == Mode.ADAPT ? ADAPT_MODE_FRAMING + prompt : prompt;
+        return forBuildTool(exercise, mode == Mode.ADAPT ? ADAPT_MODE_FRAMING + prompt : prompt);
     }
 
     /**
@@ -327,9 +328,21 @@ public class AgentSystemPrompt {
      */
     public String buildStage(GenerationInput exercise, GenerationStage stage) {
         String dueDateGuidance = stage == GenerationStage.SPEC || stage == GenerationStage.TESTS ? dueDateGuidance(exercise) : "";
-        String languageGuidance = stage == GenerationStage.TESTS ? JAVA_GRADLE_GUIDANCE : "";
-        return STAGE_INTRO + SECURITY_BOUNDARY + LEARNING_OWNERSHIP + stageContract(stage) + stageWorkspaceSection(exercise, stage) + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE
-                + stageSection(stage) + dueDateGuidance + languageGuidance;
+        String languageGuidance = stage == GenerationStage.TESTS ? JAVA_GUIDANCE : "";
+        return forBuildTool(exercise, STAGE_INTRO + SECURITY_BOUNDARY + LEARNING_OWNERSHIP + stageContract(stage) + stageWorkspaceSection(exercise, stage) + STAGE_TOOLS_NOTE
+                + STAGE_VERIFICATION_CADENCE + stageSection(stage) + dueDateGuidance + languageGuidance);
+    }
+
+    /**
+     * The guidance is written for the Gradle harness; a Maven exercise names its own tool and harness file instead. Both harnesses share the source layout ({@code src/} and
+     * {@code test/}), Ares 2, and the reserved-package guard, so only these names differ. Besides the fixed guidance, the prompt carries only the package name and the
+     * canonical Maven phase commands, which name no Gradle artifact.
+     */
+    private static String forBuildTool(GenerationInput exercise, String prompt) {
+        if (exercise.buildTool() != GenerationBuildTool.MAVEN) {
+            return prompt;
+        }
+        return prompt.replace("tests/build.gradle", "tests/pom.xml").replace("Gradle harness, the wrapper,", "Maven harness (pom.xml),").replace("Gradle", "Maven");
     }
 
     private static String stageContract(GenerationStage stage) {
@@ -483,7 +496,7 @@ public class AgentSystemPrompt {
                 Never run repository Gradle directly or change build infrastructure
                 to work around offline dependency resolution. Do not edit file contents through bash; use write_file or edit_file (there is no apply_patch tool). Never fabricate build or test results.%s
                 """
-                .formatted(JAVA_GRADLE_GUIDANCE);
+                .formatted(JAVA_GUIDANCE);
     }
 
     /**
@@ -503,7 +516,9 @@ public class AgentSystemPrompt {
         }
         StringBuilder section = new StringBuilder(
                 "\n\nTHIS EXERCISE'S BUILD CONTEXT (resolved by Artemis — the grader runs exactly this; do NOT change how it builds or where reports are written):");
-        section.append("\n- Build tool: Gradle (Java); the template and solution keep their own build.gradle, and the tests project is the immutable harness");
+        section.append(exercise.buildTool() == GenerationBuildTool.MAVEN
+                ? "\n- Build tool: Maven (Java); the template and solution keep their own pom.xml, and the tests project's pom.xml is the immutable harness"
+                : "\n- Build tool: Gradle (Java); the template and solution keep their own build.gradle, and the tests project is the immutable harness");
         String packageName = exercise.packageName();
         if (packageName != null && !packageName.isBlank()) {
             section.append("\n- Module / package name: ").append(packageName).append("  (use this EXACT name across solution, template, and tests so the shared tests resolve)");
@@ -532,7 +547,7 @@ public class AgentSystemPrompt {
         return oneLine.length() > MAX_COMMAND_PREVIEW_CHARS ? oneLine.substring(0, MAX_COMMAND_PREVIEW_CHARS) + " …" : oneLine;
     }
 
-    private static final String JAVA_GRADLE_GUIDANCE = """
+    private static final String JAVA_GUIDANCE = """
 
 
             Java exercise layout (Gradle student sources and Gradle tests):

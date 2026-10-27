@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
 import de.tum.cit.aet.artemis.aiworker.config.telemetry.WorkerTelemetryConfiguration;
+import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.service.worker.DefaultGenerationEngineService;
 import de.tum.cit.aet.artemis.hyperion.service.worker.GenerationEngine;
 import io.micrometer.observation.Observation;
@@ -45,9 +46,8 @@ class WorkerModelConfigurationTest {
                     assertThat(context.getBean(GenerationEngine.class)).isInstanceOf(DefaultGenerationEngineService.class);
                     assertThat(context).hasNotFailed().hasSingleBean(ChatModel.class).hasSingleBean(JavaGradleGenerationAdapterService.class);
                     assertThat(context.getBean(ChatModel.class).getOptions().getModel()).isEqualTo("test-model");
-                    assertThat(context.getBean(JavaGradleGenerationAdapterService.class).requestCancel(
-                            new de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity("unused", 1, java.util.UUID.randomUUID(), "worker", java.util.UUID.randomUUID())))
-                            .isFalse();
+                    assertThat(context.getBean(JavaGradleGenerationAdapterService.class)
+                            .requestCancel(new ExecutionIdentity("unused", 1, java.util.UUID.randomUUID(), "worker", java.util.UUID.randomUUID()))).isFalse();
                     var registry = context.getBean(ObservationRegistry.class);
                     var chat = ChatModelObservationContext.builder().prompt(new Prompt("not for export")).provider("openai").build();
                     Observation.createNotStarted("gen_ai.client.operation", () -> chat, registry).observe(() -> {

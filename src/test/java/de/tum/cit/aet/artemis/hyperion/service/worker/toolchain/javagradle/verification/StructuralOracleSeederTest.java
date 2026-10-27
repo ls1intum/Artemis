@@ -23,6 +23,7 @@ import javax.tools.ToolProvider;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -36,6 +37,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
@@ -77,7 +79,7 @@ class StructuralOracleSeederTest {
     private Path tempDir;
 
     private static GenerationInput javaExercise() {
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         return exercise;
     }
 
@@ -241,7 +243,7 @@ class StructuralOracleSeederTest {
                 """);
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), registry).seedIfStructuralDiff(sandbox, "s",
-                new GenerationInput(0, "exercise", null, false, Set.of(), Set.of()));
+                new GenerationInput(0, "exercise", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE));
         String testSource = seeded.repositoryFiles().get("test/exercise/GenericTypeTest.java");
         String oracle = seeded.repositoryFiles().get("test/exercise/test.json");
         for (String exceptionType : List.of("Failure", "exercise.Failure")) {
@@ -343,8 +345,7 @@ class StructuralOracleSeederTest {
             constructor.setAccessible(true);
             var factory = provider.getDeclaredMethod("genericApi");
             factory.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            List<DynamicTest> tests = (List<DynamicTest>) factory.invoke(constructor.newInstance());
+            List<DynamicTest> tests = ((DynamicContainer) factory.invoke(constructor.newInstance())).getChildren().map(DynamicTest.class::cast).toList();
             assertThat(tests).singleElement().extracting(DynamicTest::getDisplayName).isEqualTo("testClass[GenericApi:Box]");
             assertThat(loader.loadClass(classPrefix + "Box").getTypeParameters()).isEmpty();
             tests.getFirst().getExecutable().execute();
@@ -365,7 +366,7 @@ class StructuralOracleSeederTest {
                     public int[] sort(int[] a);
                 }
                 """);
-        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SeededStructuralTests seededTests = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
@@ -399,7 +400,7 @@ class StructuralOracleSeederTest {
                     public double apply(double x);
                 }
                 """);
-        GenerationInput exercise = new GenerationInput(0, "navigation", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "navigation", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SeededStructuralTests seededTests = seederWith(sandbox, solution, template, harnessOnly, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
@@ -459,7 +460,7 @@ class StructuralOracleSeederTest {
         when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryRole.TESTS)).thenReturn(Map.of());
         StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, approvedSpecs);
 
-        GenerationInput exercise = new GenerationInput(0, "lift", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "lift", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SeededStructuralTests firstTests = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
         SeededStructuralTests laterTests = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
 
@@ -487,7 +488,7 @@ class StructuralOracleSeederTest {
                     public int[] sort(int[] a);
                 }
                 """);
-        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
@@ -602,7 +603,7 @@ class StructuralOracleSeederTest {
                 GENERATED_MARKER + "\nclass ClassTest {}", "test/sorting/MethodTest.java", GENERATED_MARKER + "\nclass MethodTest {}");
 
         ApprovedSpecRegistry approvedSpecs = approvedSpec("MergeSort", "public class MergeSort { public void sort(); }");
-        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SeededStructuralTests seededTests = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
