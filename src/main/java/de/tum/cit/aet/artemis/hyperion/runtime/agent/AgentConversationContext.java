@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -52,8 +53,8 @@ final class AgentConversationContext {
         if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
             return 0;
         }
-        // Usage is null-marked: providers report a missing prompt count as zero, never as null.
-        return response.getMetadata().getUsage().getPromptTokens().longValue();
+        // Usage is null-marked, but a provider implementation can still return null; count that as zero rather than failing the run.
+        return Objects.requireNonNullElse(response.getMetadata().getUsage().getPromptTokens(), 0).longValue();
     }
 
     static long estimateTokens(List<Message> conversation, int from, int to) {
