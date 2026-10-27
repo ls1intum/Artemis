@@ -278,7 +278,16 @@ public abstract class AssessmentResource {
         }
         // delete assessment
         assessmentService.deleteAssessment(submission, result);
+        onAssessmentDeleted(exercise);
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Called after {@link #deleteAssessment} deleted a result. Does nothing by default; exercise types that keep derived data up to date override it.
+     *
+     * @param exercise the exercise of the deleted result
+     */
+    protected void onAssessmentDeleted(Exercise exercise) {
     }
 }

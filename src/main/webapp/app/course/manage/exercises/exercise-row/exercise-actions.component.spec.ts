@@ -30,6 +30,7 @@ import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-featur
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, PROFILE_LOCALCI } from 'app/app.constants';
 import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
 class QuizLifecycleButtonsStubComponent {
@@ -457,7 +458,7 @@ describe('ExerciseActionsComponent', () => {
             const quiz = { id: 2, type: ExerciseType.QUIZ } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
             vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
-            vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quiz })));
+            vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quiz));
             const emitted: Exercise[] = [];
             component.exerciseUpdated.subscribe((e) => emitted.push(e));
 
@@ -492,14 +493,15 @@ describe('ExerciseActionsComponent', () => {
             [ExerciseType.QUIZ, 'quizExerciseListModification'],
             [ExerciseType.MODELING, 'modelingExerciseListModification'],
         ])('deletes a %s exercise and broadcasts %s', (type, eventName) => {
-            const services: Record<string, unknown> = {
-                [ExerciseType.TEXT]: textExerciseService,
-                [ExerciseType.FILE_UPLOAD]: fileUploadExerciseService,
-                [ExerciseType.QUIZ]: quizExerciseService,
-                [ExerciseType.MODELING]: modelingExerciseService,
+            // Quiz deletes through the generated client, whose method carries the operation name instead of `delete`.
+            const deleters: Record<string, [Record<string, (id: number) => unknown>, string]> = {
+                [ExerciseType.TEXT]: [textExerciseService as never, 'delete'],
+                [ExerciseType.FILE_UPLOAD]: [fileUploadExerciseService as never, 'delete'],
+                [ExerciseType.QUIZ]: [TestBed.inject(QuizExerciseDeletionApi) as never, 'deleteQuizExercise'],
+                [ExerciseType.MODELING]: [modelingExerciseService as never, 'delete'],
             };
-            const service = services[type] as { delete: (id: number) => unknown };
-            const deleteSpy = vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const [service, method] = deleters[type];
+            const deleteSpy = vi.spyOn(service, method).mockReturnValue(of(new HttpResponse<void>()));
             const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
             const exercise = textExercise({ id: 3, type });
             fixture.componentRef.setInput('exercise', exercise);

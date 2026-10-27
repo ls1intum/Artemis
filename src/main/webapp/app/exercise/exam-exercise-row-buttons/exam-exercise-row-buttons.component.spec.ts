@@ -27,6 +27,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 const setExerciseInput = (fixture: ComponentFixture<ExamExerciseRowButtonsComponent>, exercise: Exercise) => {
     fixture.componentRef.setInput('exercise', exercise);
@@ -52,7 +53,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
         programmingLanguage: ProgrammingLanguage.JAVA,
         projectType: ProjectType.PLAIN_GRADLE,
     } as ProgrammingExercise;
-    const quizResponse = { body: { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise };
+    const loadedQuiz = { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise;
 
     let deleteTextExerciseStub: ReturnType<typeof vi.spyOn>;
     let deleteModelingExerciseStub: ReturnType<typeof vi.spyOn>;
@@ -100,7 +101,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
 
         deleteTextExerciseStub = vi.spyOn(textExerciseService, 'delete');
         deleteModelingExerciseStub = vi.spyOn(modelingExerciseService, 'delete');
-        deleteQuizExerciseStub = vi.spyOn(quizExerciseService, 'delete');
+        deleteQuizExerciseStub = vi.spyOn(TestBed.inject(QuizExerciseDeletionApi), 'deleteQuizExercise');
         deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete');
         deleteProgrammingExerciseStub = vi.spyOn(programmingExerciseService, 'delete');
         quizExerciseServiceFindStub = vi.spyOn(quizExerciseService, 'find');
@@ -393,14 +394,14 @@ describe('ExamExerciseRowButtonsComponent', () => {
     });
     describe('exportQuizById', () => {
         it('should export Quiz, exportAll true', () => {
-            quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
+            quizExerciseServiceFindStub.mockReturnValue(of(loadedQuiz));
             setExerciseInput(fixture, quizExercise);
             component.exportQuizById(true);
             expect(quizExerciseExportSpy).toHaveBeenCalledOnce();
             expect(quizExerciseExportSpy).toHaveBeenCalledWith({}, true, quizExercise.title);
         });
         it('should export Quiz, exportAll false', () => {
-            quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
+            quizExerciseServiceFindStub.mockReturnValue(of(loadedQuiz));
             setExerciseInput(fixture, quizExercise);
             component.exportQuizById(false);
             expect(quizExerciseExportSpy).toHaveBeenCalledOnce();

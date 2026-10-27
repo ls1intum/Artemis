@@ -1,6 +1,6 @@
 import { Injector } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -355,7 +355,7 @@ describe('ExerciseImportComponent', () => {
             loadedQuiz = new QuizExercise(undefined, undefined);
             loadedQuiz.id = 5;
             loadedQuiz.title = 'Loaded quiz';
-            findStub = vi.spyOn(TestBed.inject(QuizExerciseService), 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: loadedQuiz })));
+            findStub = vi.spyOn(TestBed.inject(QuizExerciseService), 'find').mockReturnValue(of(loadedQuiz));
             alertErrorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
         });
 
@@ -369,7 +369,7 @@ describe('ExerciseImportComponent', () => {
         });
 
         it('should mark the row as loading until the quiz arrived', () => {
-            const response = new Subject<HttpResponse<QuizExercise>>();
+            const response = new Subject<QuizExercise>();
             findStub.mockReturnValue(response);
 
             comp.openPreview(quizExercise);
@@ -377,14 +377,14 @@ describe('ExerciseImportComponent', () => {
             expect(comp.previewLoadingId()).toBe(5);
             expect(comp.previewVisible()).toBe(false);
 
-            response.next(new HttpResponse<QuizExercise>({ body: loadedQuiz }));
+            response.next(loadedQuiz);
 
             expect(comp.previewLoadingId()).toBeUndefined();
             expect(comp.previewVisible()).toBe(true);
         });
 
         it('should load only one quiz at a time', () => {
-            findStub.mockReturnValue(new Subject<HttpResponse<QuizExercise>>());
+            findStub.mockReturnValue(new Subject<QuizExercise>());
             const otherExercise = new QuizExercise(undefined, undefined);
             otherExercise.id = 6;
 
@@ -411,15 +411,6 @@ describe('ExerciseImportComponent', () => {
             expect(comp.preview()).toBeUndefined();
             expect(comp.previewLoadingId()).toBeUndefined();
             expect(dialogRefCloseSpy).not.toHaveBeenCalled();
-        });
-
-        it('should alert when the response has no body', () => {
-            findStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: null })));
-
-            comp.openPreview(quizExercise);
-
-            expect(alertErrorStub).toHaveBeenCalledOnce();
-            expect(comp.previewVisible()).toBe(false);
         });
 
         it('should import the row of the previewed quiz and close the preview', () => {
@@ -531,7 +522,7 @@ describe('ExerciseImportComponent template', () => {
             quiz.title = 'Some quiz';
             quiz.duration = 5400;
             quiz.quizQuestions = [first, second];
-            findStub = vi.spyOn(TestBed.inject(QuizExerciseService), 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quiz })));
+            findStub = vi.spyOn(TestBed.inject(QuizExerciseService), 'find').mockReturnValue(of(quiz));
         });
 
         afterEach(() => {
@@ -629,7 +620,7 @@ describe('ExerciseImportComponent template', () => {
         });
 
         it('should not alert about a failed preview that was requested by a component that is gone', () => {
-            const response = new Subject<HttpResponse<QuizExercise>>();
+            const response = new Subject<QuizExercise>();
             findStub.mockReturnValue(response);
             const alertErrorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
             showRows([row]);
