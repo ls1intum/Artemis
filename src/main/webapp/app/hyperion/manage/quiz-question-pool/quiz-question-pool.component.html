@@ -87,6 +87,7 @@
                         inputId="pool-questions"
                         [ngModel]="settingsValue.questionsPerLectureUnit"
                         (ngModelChange)="setQuestionsPerLectureUnit($event)"
+                        [disabled]="isSavingSettings()"
                         [min]="minQuestionsPerLectureUnit"
                         [max]="maxQuestionsPerLectureUnit"
                         [showButtons]="true"
@@ -101,6 +102,7 @@
                         inputId="pool-generation-enabled"
                         [ngModel]="settingsValue.poolGenerationEnabled"
                         (ngModelChange)="setPoolGenerationEnabled($event)"
+                        [disabled]="isSavingSettings()"
                         [ariaLabel]="'artemisApp.hyperion.quizQuestionPool.settings.poolGenerationEnabled' | artemisTranslate"
                     />
                     <label for="pool-generation-enabled">

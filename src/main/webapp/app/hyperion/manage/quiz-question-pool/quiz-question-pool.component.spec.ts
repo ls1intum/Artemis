@@ -4,7 +4,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -181,6 +181,38 @@ describe('QuizQuestionPoolComponent', () => {
         expect(updateSpy).toHaveBeenCalledWith(1, { poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
         expect(component.isSettingsDirty()).toBe(false);
         expect(component.canDeactivate()).toBe(true);
+    });
+
+    it('should lock the settings controls while a save is pending', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const pending = new Subject<PoolSettings>();
+        vi.spyOn(poolService, 'updateSettings').mockReturnValue(pending.asObservable());
+        component.setQuestionsPerLectureUnit(30);
+        component.saveSettings();
+        fixture.detectChanges();
+
+        const lockedInput = fixture.nativeElement.querySelector('#pool-questions') as HTMLInputElement;
+        const lockedToggle = fixture.nativeElement.querySelector('#pool-generation-enabled') as HTMLInputElement;
+        expect({
+            saving: component.isSavingSettings(),
+            input: lockedInput?.disabled,
+            toggle: lockedToggle?.disabled,
+            inputTag: lockedInput?.tagName,
+            toggleTag: lockedToggle?.tagName,
+        }).toEqual({
+            saving: true,
+            input: true,
+            toggle: true,
+            inputTag: 'INPUT',
+            toggleTag: 'INPUT',
+        });
+
+        pending.next({ poolGenerationEnabled: false, questionsPerLectureUnit: 30 });
+        pending.complete();
+        fixture.detectChanges();
+
+        expect(component.isSavingSettings()).toBe(false);
+        expect((fixture.nativeElement.querySelector('#pool-questions') as HTMLInputElement).disabled).toBe(false);
     });
 
     it('should refuse to save settings outside the allowed range', () => {
