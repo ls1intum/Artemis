@@ -176,6 +176,13 @@ describe('HyperionRunInspectorComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-full-page"]')).toBeNull();
     });
 
+    it('reports expired run history but keeps undo when only the revert baseline remains', () => {
+        render(status({ jobId: 'j1', revertAvailable: true, revertJobId: 'j1', revertMode: 'GENERATE' }));
+        expect(fixture.componentInstance['status']()).toBe('historyExpired');
+        expect(testId('hyperion-run-not-started')).not.toBeNull();
+        expect(testId('hyperion-run-undo')).not.toBeNull();
+    });
+
     it('keeps the restored outcome after reloading its durable run', () => {
         render(
             status({
