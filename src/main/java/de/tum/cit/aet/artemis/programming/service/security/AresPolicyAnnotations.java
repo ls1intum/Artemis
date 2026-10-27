@@ -64,8 +64,8 @@ final class AresPolicyAnnotations {
             while (literal.length() >= 2 && literal.startsWith("(") && literal.endsWith(")")) {
                 literal = literal.substring(1, literal.length() - 1).strip();
             }
-            boolean plainString = literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"") && !literal.startsWith("\"\"\"")
-                    && literal.indexOf('\\') < 0 && literal.indexOf('"', 1) == literal.length() - 1;
+            boolean plainString = literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"") && !literal.startsWith("\"\"\"") && literal.indexOf('\\') < 0
+                    && literal.indexOf('"', 1) == literal.length() - 1;
             return plainString ? Optional.of(literal.substring(1, literal.length() - 1)) : Optional.empty();
         }
     }
