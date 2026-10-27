@@ -11,6 +11,7 @@ import {
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { By } from '@angular/platform-browser';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -977,6 +978,18 @@ describe('UnifiedFeedbackComponent', () => {
             expect(chip()?.textContent).toContain('Encapsulation');
             expect(chip()?.querySelector('.unified-feedback-criterion-suffix')?.textContent).toContain('artemisApp.assessment.linkedCriterionSuffix');
             expect(fixture.nativeElement.textContent).not.toContain('Fixed rubric text');
+        });
+
+        it('should arm the deletion, not the unlinking of the criterion, when the dismiss shortcut is used', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+            const [unlinkConfirm, deleteConfirm] = fixture.debugElement.queryAll(By.directive(ConfirmIconComponent)).map((icon) => icon.componentInstance as ConfirmIconComponent);
+
+            component.toggleDeleteConfirm();
+
+            expect(deleteConfirm.showConfirm()).toBe(true);
+            expect(unlinkConfirm.showConfirm()).toBe(false);
         });
 
         it('should show the grading scale of the linked instruction in its own segment of the chip', () => {

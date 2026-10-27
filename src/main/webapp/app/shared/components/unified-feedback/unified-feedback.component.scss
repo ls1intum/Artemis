@@ -322,6 +322,7 @@
     // The same solid ring on every page and theme, in the text colour: black on a light theme, and still visible on a dark one
     &:focus-visible {
         outline: 2px solid var(--body-color);
+
         // Drawn inside the box: the header around the title hides what overflows it, which cut the ring on three sides
         outline-offset: -2px;
     }

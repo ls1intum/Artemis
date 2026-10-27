@@ -14,10 +14,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType
 /**
  * DTO containing {@link Feedback} information.
  * This does not include large reference attributes (e.g. long feedback text) in order to send minimal data to the client.
+ * An empty detail text is kept: the client reads it as a title in {@code text} without a description, unlike legacy feedback without one.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
-        Visibility visibility, GradingInstructionDTO gradingInstruction, TestCaseDTO testCase) implements Serializable {
+public record FeedbackDTO(Long id, String text, @JsonInclude(JsonInclude.Include.NON_NULL) String detailText, boolean hasLongFeedbackText, String reference, Double credits,
+        Boolean positive, FeedbackType type, Visibility visibility, GradingInstructionDTO gradingInstruction, TestCaseDTO testCase) implements Serializable {
 
     /**
      * The test case an automatic programming feedback belongs to. The components are every scalar property

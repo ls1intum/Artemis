@@ -174,7 +174,8 @@ export class UnifiedFeedbackComponent {
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
-    private readonly confirmIcon = viewChild(ConfirmIconComponent);
+    // By reference: the unlink control of a linked criterion is a ConfirmIconComponent too, and comes first.
+    private readonly deleteConfirmIcon = viewChild('deleteConfirmIcon', { read: ConfirmIconComponent });
     private readonly titleText = viewChild<ElementRef<HTMLElement>>('titleText');
     /** Whether a read-only feedback cuts off its title, which its tooltip then repeats in full. */
     readonly titleTruncated = signal(false);
@@ -558,7 +559,7 @@ export class UnifiedFeedbackComponent {
         if (this.canDismissWithoutConfirm()) {
             this.handleDeleteConfirmed();
         } else {
-            this.confirmIcon()?.toggle();
+            this.deleteConfirmIcon()?.toggle();
         }
     }
 

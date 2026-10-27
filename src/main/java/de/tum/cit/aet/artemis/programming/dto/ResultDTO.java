@@ -29,9 +29,10 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Integer correctionRound, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount,
         Integer passedTestCaseCount, Integer codeIssueCount) implements Serializable {
 
+    // An empty detailText is kept: the client reads it as a title in text without a description, unlike legacy feedback without one.
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
-            Visibility visibility, TestCaseDTO testCase) implements Serializable {
+    public record FeedbackDTO(Long id, String text, @JsonInclude(JsonInclude.Include.NON_NULL) String detailText, boolean hasLongFeedbackText, String reference, Double credits,
+            Boolean positive, FeedbackType type, Visibility visibility, TestCaseDTO testCase) implements Serializable {
 
         public static FeedbackDTO of(Feedback feedback) {
             return new FeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
