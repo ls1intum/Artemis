@@ -76,8 +76,8 @@ export class UrlAction extends TextStyleTextEditorAction {
 
     /**
      * If the pasted text is a single http(s) URL and text on one line is selected, replaces the selection with "[selectedText](url)"
-     * and places the cursor after the link. The selection is left alone if it is itself a URL or consists only of characters the
-     * sanitizer removes.
+     * and places the cursor after the link. The selected text is kept as it is, only its square brackets are escaped. The paste is
+     * left to the editor if the selection is blank, is itself a URL, or lies inside an existing link or in code.
      * @param editor The editor in which the text was pasted.
      * @param pastedText The text the user pasted.
      * @return true if the selection was replaced by a link, false if the editor should paste the text as usual.
@@ -90,16 +90,45 @@ export class UrlAction extends TextStyleTextEditorAction {
             return false;
         }
         const selectedText = this.getTextAtRange(editor, selection) ?? '';
-        const label = sanitizeStringForMarkdownEditor(selectedText) ?? '';
-        if (!label.trim() || isHttpUrl(selectedText)) {
+        if (!selectedText.trim() || isHttpUrl(selectedText) || this.isInLinkOrCode(editor, selection)) {
             return false;
         }
+        const label = selectedText.replace(/[[\]]/g, '\\$&');
         // Keep the URL as copied; only encode the parentheses that would end the markdown link early.
         const url = pastedText.trim().replaceAll('(', '%28').replaceAll(')', '%29');
         const link = `[${label}](${url})`;
         this.replaceTextAtRange(editor, selection, link);
         editor.setPosition(start.withColumn(start.getColumn() + link.length));
         return true;
+    }
+
+    /**
+     * Checks whether a selection on one line lies where a pasted link would not work: inside an existing link, i.e. its label or its
+     * destination (such as the placeholder the link button selects), inside an inline code span, or inside a fenced code block.
+     * @param editor The editor that contains the selection.
+     * @param selection The selection, which starts and ends on the same line.
+     */
+    private isInLinkOrCode(editor: TextEditor, selection: TextEditorRange): boolean {
+        const lineNumber = selection.getStartPosition().getLineNumber();
+        const line = this.getLineText(editor, lineNumber) ?? '';
+        const startIndex = selection.getStartPosition().getColumn() - 1;
+        const endIndex = selection.getEndPosition().getColumn() - 1;
+        const overlapsSelection = (pattern: RegExp) => [...line.matchAll(pattern)].some((match) => match.index < endIndex && startIndex < match.index + match[0].length);
+        if (overlapsSelection(/\[[^\]]*\]\([^)]*\)/g) || overlapsSelection(/`[^`]*`/g)) {
+            return true;
+        }
+        const fence = /^\s*(```|~~~)/;
+        if (fence.test(line)) {
+            return true;
+        }
+        // Every fence line before this one opens or closes a code block.
+        let insideFence = false;
+        for (let previousLine = 1; previousLine < lineNumber; previousLine++) {
+            if (fence.test(this.getLineText(editor, previousLine) ?? '')) {
+                insideFence = !insideFence;
+            }
+        }
+        return insideFence;
     }
 
     /**

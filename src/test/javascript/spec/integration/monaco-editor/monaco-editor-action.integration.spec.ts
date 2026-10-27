@@ -446,6 +446,18 @@ describe('MonacoEditorActionIntegration', () => {
             expect(comp.getText()).toBe('see the docs here');
         });
 
+        it('should paste the URL into the placeholder the link button selects', () => {
+            const action = new UrlAction();
+            comp.registerAction(action);
+            selectDocs();
+            action.executeInCurrentEditor();
+            expect(comp.getText()).toBe('see the [docs](https://) here');
+
+            expect(dispatchPaste(comp.getActiveEditor(), url)).toBe(true);
+
+            expect(comp.getText()).toBe(`see the [docs](${url}) here`);
+        });
+
         it('should leave a paste of plain text to the editor', () => {
             comp.registerAction(new UrlAction());
             selectDocs();

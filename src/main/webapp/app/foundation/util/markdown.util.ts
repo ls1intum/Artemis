@@ -24,12 +24,13 @@ export function sanitizeStringForMarkdownEditor(str: string | undefined): string
 }
 
 /**
- * Checks whether the given text, ignoring surrounding whitespace, is exactly one http or https URL.
+ * Checks whether the given text, ignoring surrounding whitespace, is exactly one absolute http or https URL, i.e. one that starts with
+ * "http://" or "https://". A spelling like "https:example.org" is rejected, because a link to it would resolve relative to the page.
  * @param text The text to check.
  */
 export function isHttpUrl(text: string): boolean {
     const trimmed = text.trim();
-    if (!trimmed || /\s/.test(trimmed)) {
+    if (!/^https?:\/\//i.test(trimmed) || /\s/.test(trimmed)) {
         return false;
     }
     try {

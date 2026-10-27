@@ -65,11 +65,22 @@ describe('markdown.util', () => {
     });
 
     describe('isHttpUrl', () => {
-        it.each(['https://www.tum.de', 'http://example.org/path?q=1#top', '  https://example.org  '])('should accept %s', (text) => {
+        it.each(['https://www.tum.de', 'http://example.org/path?q=1#top', '  https://example.org  ', 'HTTPS://EXAMPLE.ORG'])('should accept %s', (text) => {
             expect(isHttpUrl(text)).toBe(true);
         });
 
-        it.each(['', '   ', 'example.org', 'ftp://example.org', 'mailto:a@b.org', 'https://a.org https://b.org', 'see https://a.org'])('should reject "%s"', (text) => {
+        it.each([
+            '',
+            '   ',
+            'example.org',
+            'ftp://example.org',
+            'mailto:a@b.org',
+            'https://a.org https://b.org',
+            'see https://a.org',
+            'https:example.org',
+            'http:/example.org',
+            'https://',
+        ])('should reject "%s"', (text) => {
             expect(isHttpUrl(text)).toBe(false);
         });
     });

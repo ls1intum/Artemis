@@ -75,10 +75,18 @@ describe('UrlAction', () => {
             action.dispose();
         });
 
-        function selectOnLine(text: string, line = 1, startColumn = 9): TextEditorRange {
+        /**
+         * Selects the given text on one line of a mocked document.
+         * @param text The selected text.
+         * @param lines The document's lines; by default one line "see the <text> here", in which the text starts at column 9.
+         * @param line The 1-based line the selection is on.
+         * @param startColumn The column the selection starts at.
+         */
+        function selectOnLine(text: string, lines = [`see the ${text} here`], line = 1, startColumn = lines[line - 1].indexOf(text) + 1): TextEditorRange {
             const selection = new TextEditorRange(new TextEditorPosition(line, startColumn), new TextEditorPosition(line, startColumn + text.length));
             vi.spyOn(editor, 'getSelection').mockReturnValue(selection);
             vi.spyOn(editor, 'getTextAtRange').mockReturnValue(text);
+            vi.spyOn(editor, 'getLineText').mockImplementation((lineNumber) => lines[lineNumber - 1]);
             return selection;
         }
 
@@ -109,12 +117,16 @@ describe('UrlAction', () => {
             expect(editor.replaceTextAtRange).toHaveBeenCalledExactlyOnceWith(selection, '[docs](https://x.org/a)');
         });
 
-        it('should remove link syntax characters from the label', () => {
-            const selection = selectOnLine('[Java] (language)');
+        it.each([
+            { selectedText: 'Java (programming language)', label: 'Java (programming language)' },
+            { selectedText: '[Java] (language)', label: '\\[Java\\] (language)' },
+            { selectedText: '()', label: '()' },
+        ])('should keep the selected text $selectedText as the label and only escape its square brackets', ({ selectedText, label }) => {
+            const selection = selectOnLine(selectedText);
 
-            pasteHandler('https://x.org');
+            expect(pasteHandler('https://x.org')).toBe(true);
 
-            expect(editor.replaceTextAtRange).toHaveBeenCalledExactlyOnceWith(selection, '[Java language](https://x.org)');
+            expect(editor.replaceTextAtRange).toHaveBeenCalledExactlyOnceWith(selection, `[${label}](https://x.org)`);
         });
 
         it('should not handle the paste if nothing is selected', () => {
@@ -164,11 +176,33 @@ describe('UrlAction', () => {
             expect(() => action.register(editor, translateService)).not.toThrow();
         });
 
-        it('should not handle the paste if the label is empty after removing link syntax characters', () => {
-            selectOnLine('()');
+        it('should not handle the paste if only whitespace is selected', () => {
+            selectOnLine('   ');
 
             expect(pasteHandler('https://x.org')).toBe(false);
             expect(editor.replaceTextAtRange).not.toHaveBeenCalled();
+        });
+
+        it.each([
+            { where: 'the label of an existing link', text: 'univ', lines: ['see the [university](https://a.example) site'] },
+            { where: 'the URL placeholder the link button selects', text: 'https://', lines: ['see the [docs](https://) here'] },
+            { where: 'an inline code span', text: 'docs', lines: ['run `open docs` here'] },
+            { where: 'a fenced code block', text: 'docs', lines: ['intro', '```', 'open docs', '```'], line: 3 },
+            { where: 'the fence line of a code block', text: 'docs', lines: ['```docs'] },
+        ])('should not handle the paste if the selection lies in $where', ({ text, lines, line }) => {
+            selectOnLine(text, lines, line);
+
+            expect(pasteHandler('https://b.example')).toBe(false);
+            expect(editor.replaceTextAtRange).not.toHaveBeenCalled();
+        });
+
+        it('should handle the paste next to an existing link and after a closed code block', () => {
+            const lines = ['```', 'code', '```', 'see the docs and [tum](https://www.tum.de) and `code`'];
+            const selection = selectOnLine('docs', lines, 4);
+
+            expect(pasteHandler('https://b.example')).toBe(true);
+
+            expect(editor.replaceTextAtRange).toHaveBeenCalledExactlyOnceWith(selection, '[docs](https://b.example)');
         });
     });
 });
