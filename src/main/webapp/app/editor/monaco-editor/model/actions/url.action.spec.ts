@@ -72,6 +72,7 @@ describe('UrlAction', () => {
         });
 
         afterEach(() => {
+            action.setExecutionGuard(() => true);
             action.dispose();
         });
 
@@ -121,7 +122,8 @@ describe('UrlAction', () => {
             { selectedText: 'Java (programming language)', label: 'Java (programming language)' },
             { selectedText: '[Java] (language)', label: '\\[Java\\] (language)' },
             { selectedText: '()', label: '()' },
-        ])('should keep the selected text $selectedText as the label and only escape its square brackets', ({ selectedText, label }) => {
+            { selectedText: 'C:\\temp\\', label: 'C:\\\\temp\\\\' },
+        ])('should keep the selected text $selectedText as the label and only escape its backslashes and square brackets', ({ selectedText, label }) => {
             const selection = selectOnLine(selectedText);
 
             expect(pasteHandler('https://x.org')).toBe(true);
@@ -189,8 +191,31 @@ describe('UrlAction', () => {
             { where: 'an inline code span', text: 'docs', lines: ['run `open docs` here'] },
             { where: 'a fenced code block', text: 'docs', lines: ['intro', '```', 'open docs', '```'], line: 3 },
             { where: 'the fence line of a code block', text: 'docs', lines: ['```docs'] },
+            { where: 'a four-backtick block after a three-backtick line inside it', text: 'docs', lines: ['````', '```', 'open docs', '````'], line: 3 },
+            { where: 'a tilde block after a backtick line inside it', text: 'docs', lines: ['~~~', '```', 'open docs', '~~~'], line: 3 },
+            { where: 'a block after a line that only looks like its closing fence', text: 'docs', lines: ['```', '``` java', 'open docs', '```'], line: 3 },
         ])('should not handle the paste if the selection lies in $where', ({ text, lines, line }) => {
             selectOnLine(text, lines, line);
+
+            expect(pasteHandler('https://b.example')).toBe(false);
+            expect(editor.replaceTextAtRange).not.toHaveBeenCalled();
+        });
+
+        it.each([
+            { after: 'a four-backtick block that contains a three-backtick line', lines: ['````', '```', '````', 'see the docs'] },
+            { after: 'a closing fence longer than the opening one', lines: ['```', 'code', '`````', 'see the docs'] },
+            { after: 'a line indented by four spaces, which is no fence', lines: ['    ```', 'see the docs'] },
+        ])('should handle the paste in text after $after', ({ lines }) => {
+            const selection = selectOnLine('docs', lines, lines.length);
+
+            expect(pasteHandler('https://b.example')).toBe(true);
+
+            expect(editor.replaceTextAtRange).toHaveBeenCalledExactlyOnceWith(selection, '[docs](https://b.example)');
+        });
+
+        it('should not handle the paste while the execution guard forbids the action', () => {
+            action.setExecutionGuard(() => false);
+            selectOnLine('docs');
 
             expect(pasteHandler('https://b.example')).toBe(false);
             expect(editor.replaceTextAtRange).not.toHaveBeenCalled();

@@ -6,6 +6,38 @@ import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { TranslateService } from '@ngx-translate/core';
 
+interface CodeFence {
+    marker: string;
+    length: number;
+    info: string;
+}
+
+/**
+ * Reads a Markdown code fence line: at most three spaces, then at least three backticks or tildes, then an optional info string,
+ * which may not contain a backtick after a backtick fence.
+ * @param line The line to read.
+ * @return the fence's character, length and the text after it, or undefined if the line is no code fence.
+ */
+function readCodeFence(line: string): CodeFence | undefined {
+    let indent = 0;
+    while (line[indent] === ' ') {
+        indent++;
+    }
+    const marker = line[indent];
+    if (indent > 3 || (marker !== '`' && marker !== '~')) {
+        return undefined;
+    }
+    let end = indent;
+    while (line[end] === marker) {
+        end++;
+    }
+    const info = line.slice(end);
+    if (end - indent < 3 || (marker === '`' && info.includes('`'))) {
+        return undefined;
+    }
+    return { marker, length: end - indent, info };
+}
+
 interface UrlArguments {
     text: string;
     url: string;
@@ -82,8 +114,9 @@ export class UrlAction extends TextStyleTextEditorAction {
 
     /**
      * If the pasted text is a single http(s) URL and text on one line is selected, replaces the selection with "[selectedText](url)"
-     * and places the cursor after the link. The selected text is kept as it is, only its square brackets are escaped. The paste is
-     * left to the editor if the selection is blank, is itself a URL, or lies inside an existing link or in code.
+     * and places the cursor after the link. The selected text is kept as it is, only its backslashes and square brackets are escaped.
+     * The paste is left to the editor if the action may not run, or if the selection is blank, is itself a URL, or lies inside an
+     * existing link or in code.
      * @param editor The editor in which the text was pasted.
      * @param pastedText The text the user pasted.
      * @return true if the selection was replaced by a link, false if the editor should paste the text as usual.
@@ -92,14 +125,14 @@ export class UrlAction extends TextStyleTextEditorAction {
         const selection = editor.getSelection();
         const start = selection.getStartPosition();
         const end = selection.getEndPosition();
-        if (!isHttpUrl(pastedText) || start.getLineNumber() !== end.getLineNumber() || start.getColumn() === end.getColumn()) {
+        if (!this.canExecute() || !isHttpUrl(pastedText) || start.getLineNumber() !== end.getLineNumber() || start.getColumn() === end.getColumn()) {
             return false;
         }
         const selectedText = this.getTextAtRange(editor, selection) ?? '';
         if (!selectedText.trim() || isHttpUrl(selectedText) || this.isInLinkOrCode(editor, selection)) {
             return false;
         }
-        const label = selectedText.replace(/[[\]]/g, '\\$&');
+        const label = selectedText.replace(/[\\[\]]/g, '\\$&');
         // Keep the URL as copied; only encode the parentheses that would end the markdown link early.
         const url = pastedText.trim().replaceAll('(', '%28').replaceAll(')', '%29');
         const link = `[${label}](${url})`;
@@ -123,21 +156,17 @@ export class UrlAction extends TextStyleTextEditorAction {
         if (overlapsSelection(/\[[^\]]*\]\([^)]*\)/g) || overlapsSelection(/`[^`]*`/g)) {
             return true;
         }
-        const isFenceLine = (text: string) => {
-            const trimmed = text.trimStart();
-            return trimmed.startsWith('```') || trimmed.startsWith('~~~');
-        };
-        if (isFenceLine(line)) {
-            return true;
-        }
-        // Every fence line before this one opens or closes a code block.
-        let insideFence = false;
+        // A code block is closed only by a fence of the same character, at least as long as the opening one and with no info string.
+        let openFence: CodeFence | undefined;
         for (let previousLine = 1; previousLine < lineNumber; previousLine++) {
-            if (isFenceLine(this.getLineText(editor, previousLine) ?? '')) {
-                insideFence = !insideFence;
+            const fence = readCodeFence(this.getLineText(editor, previousLine) ?? '');
+            if (!openFence) {
+                openFence = fence;
+            } else if (fence && fence.marker === openFence.marker && fence.length >= openFence.length && !fence.info.trim()) {
+                openFence = undefined;
             }
         }
-        return insideFence;
+        return openFence !== undefined || readCodeFence(line) !== undefined;
     }
 
     /**
