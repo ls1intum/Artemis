@@ -19,8 +19,8 @@
             <h6 class="pool-section-title" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.needsReview" [translateValues]="{ count: needsReview().length }"></h6>
             <p class="pool-section-hint" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.needsReviewHint"></p>
             <div class="pool-question-list">
-                @for (question of needsReview(); track question.id) {
-                    <ng-container *ngTemplateOutlet="poolItem; context: { $implicit: question }" />
+                @for (item of needsReviewViews(); track item.question.id) {
+                    <ng-container *ngTemplateOutlet="poolItem; context: { $implicit: item }" />
                 }
             </div>
         </section>
@@ -30,8 +30,8 @@
         <section class="pool-section" data-testid="pool-section-accepted">
             <h6 class="pool-section-title" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.accepted" [translateValues]="{ count: accepted().length }"></h6>
             <div class="pool-question-list">
-                @for (question of accepted(); track question.id) {
-                    <ng-container *ngTemplateOutlet="poolItem; context: { $implicit: question }" />
+                @for (item of acceptedViews(); track item.question.id) {
+                    <ng-container *ngTemplateOutlet="poolItem; context: { $implicit: item }" />
                 }
             </div>
         </section>
@@ -42,8 +42,8 @@
             <h6 class="pool-section-title" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.rejected" [translateValues]="{ count: rejected().length }"></h6>
             <p class="pool-section-hint" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.rejectedHint"></p>
             <div class="pool-question-list">
-                @for (question of rejected(); track question.id) {
-                    <ng-container *ngTemplateOutlet="poolItem; context: { $implicit: question }" />
+                @for (item of rejectedViews(); track item.question.id) {
+                    <ng-container *ngTemplateOutlet="poolItem; context: { $implicit: item }" />
                 }
             </div>
         </section>
@@ -54,47 +54,47 @@
     }
 </div>
 
-<ng-template #poolItem let-question>
+<ng-template #poolItem let-item>
+    @let question = item.question;
     <div
         class="pool-item"
         [class.pool-item-approved]="question.reviewState === 'APPROVED'"
         [class.pool-item-excluded]="question.reviewState === 'EXCLUDED'"
         [attr.data-testid]="'pool-item-' + question.id"
     >
-        <jhi-quiz-ai-generated-question-card [question]="question.question" [questionIndex]="displayIndex(question.id)" />
+        <jhi-quiz-ai-generated-question-card [question]="question.question" [questionIndex]="item.index" />
         <div class="pool-item-meta">
             <span class="pool-item-cell">
                 <span [jhiTranslate]="'artemisApp.hyperion.quizQuestionPool.list.difficulty.' + question.difficulty"></span>
             </span>
-            @for (verdict of flaggedVerdicts(question.decision); track verdict.mode) {
-                <span class="verdict-badge" [class.verdict-badge-triggered]="verdict.triggered" [tumAetUiTooltip]="verdict.justification ?? ''" tumAetUiTooltipPlacement="top">
-                    <span [jhiTranslate]="getFailureModeLabelKey(verdict.mode)"></span>
-                    <span class="verdict-severity">{{ asPercent(verdict.severity) }}</span>
+            @for (flagged of item.flaggedVerdicts; track flagged.verdict.mode) {
+                <span
+                    class="verdict-badge"
+                    [class.verdict-badge-triggered]="flagged.verdict.triggered"
+                    [tumAetUiTooltip]="flagged.verdict.justification ?? ''"
+                    tumAetUiTooltipPlacement="top"
+                >
+                    <span [jhiTranslate]="flagged.labelKey"></span>
+                    <span class="verdict-severity">{{ flagged.percent }}</span>
                 </span>
             }
             <button tumAetUiButton type="button" severity="secondary" variant="text" size="small" class="rationale-toggle" (click)="toggleRationale(question.id)">
-                <span
-                    [jhiTranslate]="isExpanded(question.id) ? 'artemisApp.hyperion.quizQuestionPool.list.hideRationale' : 'artemisApp.hyperion.quizQuestionPool.list.showRationale'"
-                ></span>
+                <span [jhiTranslate]="item.expanded ? 'artemisApp.hyperion.quizQuestionPool.list.hideRationale' : 'artemisApp.hyperion.quizQuestionPool.list.showRationale'"></span>
             </button>
         </div>
-        @if (isExpanded(question.id)) {
+        @if (item.expanded) {
             <div class="pool-rationale" [attr.data-testid]="'pool-rationale-' + question.id">
-                <p
-                    class="pool-rationale-score"
-                    jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.score"
-                    [translateValues]="{ score: asPercent(question.decision.aggregateScore) }"
-                ></p>
+                <p class="pool-rationale-score" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.score" [translateValues]="{ score: item.scorePercent }"></p>
                 @if (question.decision.rationale) {
                     <p class="pool-rationale-text">{{ question.decision.rationale }}</p>
                 }
                 <ul class="pool-rationale-verdicts">
-                    @for (verdict of question.decision.verdicts; track verdict.mode) {
+                    @for (entry of item.verdicts; track entry.verdict.mode) {
                         <li>
-                            <span class="fw-semibold" [jhiTranslate]="getFailureModeLabelKey(verdict.mode)"></span>
-                            <span class="verdict-severity">{{ asPercent(verdict.severity) }}</span>
-                            @if (verdict.justification) {
-                                <span class="pool-rationale-justification">{{ verdict.justification }}</span>
+                            <span class="fw-semibold" [jhiTranslate]="entry.labelKey"></span>
+                            <span class="verdict-severity">{{ entry.percent }}</span>
+                            @if (entry.verdict.justification) {
+                                <span class="pool-rationale-justification">{{ entry.verdict.justification }}</span>
                             }
                         </li>
                     }
@@ -102,8 +102,8 @@
             </div>
         }
         <div class="pool-item-review">
-            <tumaet-ui-tag [severity]="getReviewStateSeverity(question.reviewState)" [attr.data-testid]="'pool-review-state-' + question.id">
-                <span [jhiTranslate]="getReviewStateLabelKey(question.reviewState)"></span>
+            <tumaet-ui-tag [severity]="item.reviewSeverity" [attr.data-testid]="'pool-review-state-' + question.id">
+                <span [jhiTranslate]="item.reviewLabelKey"></span>
             </tumaet-ui-tag>
             @if (canReview()) {
                 <button
@@ -112,7 +112,7 @@
                     size="small"
                     [severity]="question.reviewState === 'APPROVED' ? 'success' : 'secondary'"
                     [variant]="question.reviewState === 'APPROVED' ? 'solid' : 'outlined'"
-                    [disabled]="isBusy(question.id)"
+                    [disabled]="item.busy"
                     [attr.data-testid]="'pool-approve-' + question.id"
                     (click)="setReview(question, 'APPROVED')"
                 >
@@ -124,7 +124,7 @@
                     size="small"
                     [severity]="question.reviewState === 'EXCLUDED' ? 'danger' : 'secondary'"
                     [variant]="question.reviewState === 'EXCLUDED' ? 'solid' : 'outlined'"
-                    [disabled]="isBusy(question.id)"
+                    [disabled]="item.busy"
                     [attr.data-testid]="'pool-exclude-' + question.id"
                     (click)="setReview(question, 'EXCLUDED')"
                 >

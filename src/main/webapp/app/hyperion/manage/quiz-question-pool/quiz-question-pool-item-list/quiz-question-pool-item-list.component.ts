@@ -4,14 +4,56 @@ import { Component, ViewEncapsulation, computed, input, output, signal } from '@
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizAiGeneratedQuestionCardComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generated-question-card/quiz-ai-generated-question-card.component';
-import { PoolFailureMode, PoolFilterDecision, PoolFilterVerdict, PoolQuestion, PoolReviewState, isFlagged } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
+import { PoolFilterVerdict, PoolQuestion, PoolReviewState, isFlagged } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
 
 export interface PoolReviewRequest {
     questionId: number;
     reviewState: PoolReviewState;
 }
 
+/** One verdict as the template shows it: its label key and its severity as an integer percentage. */
+export interface PoolVerdictView {
+    verdict: PoolFilterVerdict;
+    labelKey: string;
+    percent: number;
+}
+
+/** One listed question with everything the template shows, computed once per change. */
+export interface PoolQuestionView {
+    question: PoolQuestion;
+    /** Position across all three sections, starting at 0. */
+    index: number;
+    /** The verdicts worth a badge, worst first. */
+    flaggedVerdicts: PoolVerdictView[];
+    verdicts: PoolVerdictView[];
+    scorePercent: number;
+    expanded: boolean;
+    busy: boolean;
+    reviewSeverity: 'success' | 'secondary' | 'contrast';
+    reviewLabelKey: string;
+}
+
 const IN_PROGRESS_STATES = new Set(['PENDING', 'GENERATING', 'GENERATED', 'FILTERING']);
+
+/** Renders a value in [0, 1] as an integer percentage. */
+function asPercent(value: number): number {
+    return Math.round(value * 100);
+}
+
+function toVerdictView(verdict: PoolFilterVerdict): PoolVerdictView {
+    return { verdict, labelKey: `artemisApp.hyperion.quizQuestionPool.list.failureModes.${verdict.mode}`, percent: asPercent(verdict.severity) };
+}
+
+function reviewStateSeverity(reviewState: PoolReviewState): 'success' | 'secondary' | 'contrast' {
+    switch (reviewState) {
+        case 'APPROVED':
+            return 'success';
+        case 'EXCLUDED':
+            return 'contrast';
+        default:
+            return 'secondary';
+    }
+}
 
 /**
  * Lists the judged questions of one part of the pool in three sections (needs review, accepted, rejected by filter) and lets a
@@ -47,13 +89,26 @@ export class QuizQuestionPoolItemListComponent {
     readonly inProgressCount = computed(() => this.questions().filter((question) => IN_PROGRESS_STATES.has(question.state)).length);
     readonly failedCount = computed(() => this.questions().filter((question) => question.state === 'FAILED_GENERATION' || question.state === 'FAILED_FILTER').length);
     private readonly displayIndexById = computed(() => new Map([...this.needsReview(), ...this.accepted(), ...this.rejected()].map((question, index) => [question.id, index])));
+    readonly needsReviewViews = computed(() => this.needsReview().map((question) => this.toView(question)));
+    readonly acceptedViews = computed(() => this.accepted().map((question) => this.toView(question)));
+    readonly rejectedViews = computed(() => this.rejected().map((question) => this.toView(question)));
 
-    displayIndex(id: number): number {
-        return this.displayIndexById().get(id) ?? 0;
-    }
-
-    isExpanded(id: number): boolean {
-        return this.expandedIds().has(id);
+    private toView(question: PoolQuestion): PoolQuestionView {
+        const verdicts = question.decision!.verdicts;
+        return {
+            question,
+            index: this.displayIndexById().get(question.id) ?? 0,
+            flaggedVerdicts: verdicts
+                .filter((verdict) => verdict.triggered || verdict.severity > 0)
+                .sort((a, b) => b.severity - a.severity)
+                .map(toVerdictView),
+            verdicts: verdicts.map(toVerdictView),
+            scorePercent: asPercent(question.decision!.aggregateScore),
+            expanded: this.expandedIds().has(question.id),
+            busy: this.busyQuestionIds().has(question.id),
+            reviewSeverity: reviewStateSeverity(question.reviewState),
+            reviewLabelKey: `artemisApp.hyperion.quizQuestionPool.list.reviewState.${question.reviewState}`,
+        };
     }
 
     toggleRationale(id: number): void {
@@ -66,39 +121,6 @@ export class QuizQuestionPoolItemListComponent {
             }
             return next;
         });
-    }
-
-    isBusy(id: number): boolean {
-        return this.busyQuestionIds().has(id);
-    }
-
-    /** The verdicts worth a badge, worst first. */
-    flaggedVerdicts(decision: PoolFilterDecision): PoolFilterVerdict[] {
-        return decision.verdicts.filter((verdict) => verdict.triggered || verdict.severity > 0).sort((a, b) => b.severity - a.severity);
-    }
-
-    getFailureModeLabelKey(mode: PoolFailureMode): string {
-        return `artemisApp.hyperion.quizQuestionPool.list.failureModes.${mode}`;
-    }
-
-    getReviewStateLabelKey(reviewState: PoolReviewState): string {
-        return `artemisApp.hyperion.quizQuestionPool.list.reviewState.${reviewState}`;
-    }
-
-    getReviewStateSeverity(reviewState: PoolReviewState): 'success' | 'secondary' | 'contrast' {
-        switch (reviewState) {
-            case 'APPROVED':
-                return 'success';
-            case 'EXCLUDED':
-                return 'contrast';
-            default:
-                return 'secondary';
-        }
-    }
-
-    /** Renders a value in [0, 1] as an integer percentage. */
-    asPercent(value: number): number {
-        return Math.round(value * 100);
     }
 
     /** Approving an approved question, or excluding an excluded one, returns it to "not reviewed". */
