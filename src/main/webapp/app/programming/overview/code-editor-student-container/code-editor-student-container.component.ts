@@ -174,10 +174,14 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
      * @param exerciseId      the exercise of the participation
      */
     private showNewResults(participationId: number, exerciseId: number) {
+        // The newest submission shown or on its way, so a result of an older submission that arrives late, e.g. its AI feedback, is ignored
+        let newestSubmissionId = Math.max(0, ...(this.participation().submissions ?? []).map((submission) => submission.id ?? 0));
         this.newResultSub = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(participationId, true, exerciseId)
             .pipe(
                 filter((result): result is Result => !!result?.submission && !(isAthenaAIResult(result) && result.successful === undefined)),
+                filter((result) => (result.submission!.id ?? 0) >= newestSubmissionId),
+                tap((result) => (newestSubmissionId = result.submission!.id ?? 0)),
                 switchMap((result) =>
                     result.feedbacks
                         ? of(result)

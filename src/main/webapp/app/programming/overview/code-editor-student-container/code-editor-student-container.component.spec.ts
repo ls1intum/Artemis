@@ -106,6 +106,29 @@ describe('CodeEditorStudentContainerComponent', () => {
         expect(comp.participation().submissions).toEqual([expect.objectContaining({ id: 8, results: [expect.objectContaining({ id: 81, feedbacks: [] })] })]);
         expect(comp.latestResult()?.id).toBe(81);
     });
+
+    it('should keep the result of a newer push when the AI feedback of an earlier submission arrives later', () => {
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(
+            of({
+                ...studentParticipation,
+                submissions: [{ id: 7, results: [{ id: 71, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [] }] }],
+            } as ProgrammingExerciseStudentParticipation),
+        );
+        vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+        const newResults = new Subject<Result | undefined>();
+        vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(newResults);
+
+        comp.ngOnInit();
+        newResults.next({ id: 81, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [], submission: { id: 8 } });
+        newResults.next({ id: 72, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [], submission: { id: 7 } });
+
+        expect(comp.participation().submissions).toEqual([expect.objectContaining({ id: 8 })]);
+        expect(comp.latestResult()?.id).toBe(81);
+
+        // the AI feedback of the shown submission still replaces its test result
+        newResults.next({ id: 82, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [], submission: { id: 8 } });
+        expect(comp.latestResult()?.id).toBe(82);
+    });
     describe('an earlier submission from the result history', () => {
         const commitHash = 'a'.repeat(40);
         let resultService: ResultService;

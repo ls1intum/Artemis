@@ -326,6 +326,22 @@ describe('ExerciseHeadersInformationComponent', () => {
             expect(component.achievedPoints()).toBe(0);
         });
 
+        it('should take the points of a selected programming AI feedback from the test result of its submission', () => {
+            // Feedback requested before the first build keeps a copied score of 0, while the tests of that submission later report 60%.
+            const earlyAiFeedback = { ...aiFeedback, id: 3, score: 0 };
+            const laterTestResult = { ...testResult, id: 4, score: 60 };
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', {
+                submissions: [{ results: [testResult] }, { results: [earlyAiFeedback, laterTestResult] }],
+            } as StudentParticipation);
+            fixture.detectChanges();
+
+            component.displayedResult.set(earlyAiFeedback);
+
+            expect(component.relevantResult()).toEqual(earlyAiFeedback);
+            expect(component.achievedPoints()).toBe(6);
+        });
+
         it('should still take the points of a text exercise from its latest AI feedback', () => {
             fixture.componentRef.setInput('exercise', { ...baseExercise, maxPoints: 10 });
             fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [testResult, aiFeedback] }] } as StudentParticipation);
