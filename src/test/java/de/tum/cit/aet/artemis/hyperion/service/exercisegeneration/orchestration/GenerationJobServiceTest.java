@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
 import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
@@ -211,7 +212,7 @@ class GenerationJobServiceTest {
     void terminalStatusIncludesTransientCompleteJobUsageOnlyForOwner() {
         GenerationTokenUsageService tokenUsageService = mock(GenerationTokenUsageService.class);
         GenerationJobService meteredJobService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, tokenUsageService);
+        }, tokenUsageService, null, new HyperionAgentProperties(), mock(HyperionEffortProfileService.class), Runnable::run, Duration.ofHours(4));
         meteredJobService.init();
         ProgrammingExercise exercise = exercise(47L);
         User owner = user("owner");
@@ -295,21 +296,6 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void providerRetriesMakeRunLevelAccountingIncompleteFromTheStart() {
-        GenerationJobService retryingProviderService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, Duration.ofHours(4), false);
-        retryingProviderService.init();
-        ProgrammingExercise exercise = exercise(49L);
-        User owner = user("owner");
-
-        String jobId = retryingProviderService.startJob(owner, exercise, "do it", GenerationMode.GENERATE);
-        retryingProviderService.recordEvent(exercise.getId(), jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "failed"), true);
-
-        assertThat(retryingProviderService.getStatus(owner, exercise))
-                .hasValueSatisfying(status -> assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE));
-    }
-
-    @Test
     void startJob_simultaneousStartsForSameExercise_admitsExactlyOne() throws Exception {
         ProgrammingExercise exercise = exercise(420L);
         ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -378,8 +364,7 @@ class GenerationJobServiceTest {
     void cancellationFenceUsesTheLongestEffortProfileDeadline() {
         var provider = spy(HyperionDistributedDataTestProvider.provider(hazelcastInstance));
         var service = new GenerationJobService(provider, event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofHours(3).plusMinutes(1), Duration.ofMinutes(30), Runnable::run, Duration.ofHours(4), true,
-                Duration.ofHours(3));
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofHours(3).plusMinutes(1), Duration.ofMinutes(30), Runnable::run, Duration.ofHours(4), Duration.ofHours(3));
         service.init();
 
         String jobId = service.startJob(user("owner"), exercise(446L), "generate", GenerationMode.GENERATE);
@@ -1132,12 +1117,12 @@ class GenerationJobServiceTest {
     void initRejectsAnEffortProfileDeadlineThatOutlastsTheStaleJobTimeout() {
         // The deployment default (45m) fits inside the 50m stale timeout, but the run a profile hands out lasts 55m and its slot would be reclaimed before it can finish.
         GenerationJobService raisedByProfile = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, Duration.ofHours(4), true, Duration.ofMinutes(55));
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, Duration.ofHours(4), Duration.ofMinutes(55));
 
         assertThatThrownBy(raisedByProfile::init).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("stale-job-timeout").hasMessageContaining("profiles");
 
         GenerationJobService withinTheTimeout = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, Duration.ofHours(4), true, Duration.ofMinutes(48));
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, Duration.ofHours(4), Duration.ofMinutes(48));
 
         assertThatCode(withinTheTimeout::init).doesNotThrowAnyException();
     }

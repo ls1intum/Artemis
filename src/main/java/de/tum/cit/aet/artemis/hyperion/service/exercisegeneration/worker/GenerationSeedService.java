@@ -81,11 +81,15 @@ public class GenerationSeedService {
         ProgrammingExercise readable = withTestIdsRenderedAsNames(exercise);
         String statement = requests.isAuthoritativeProblemStatement(readable) ? readable.getProblemStatement() : "";
         files.add(new WorkspaceFile("problem-statement.md", statement.getBytes(StandardCharsets.UTF_8), false));
-        var baseline = testCases.findByExerciseId(exercise.getId()).stream().filter(test -> Boolean.TRUE.equals(test.isActive()) && !test.isInvisible())
+        var savedTests = testCases.findByExerciseId(exercise.getId());
+        var baseline = savedTests.stream().filter(test -> Boolean.TRUE.equals(test.isActive()) && !test.isInvisible())
                 .filter(test -> test.getType() != ProgrammingExerciseTestCaseType.STRUCTURAL)
                 .filter(test -> test.getBonusPoints() > 0 || (test.getWeight() != null && test.getWeight() > 0 && test.getBonusMultiplier() > 0)).map(test -> test.getTestName())
                 .filter(name -> name != null && !name.isBlank()).collect(Collectors.toSet());
-        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline));
+        var hidden = savedTests.stream().filter(test -> Boolean.TRUE.equals(test.isActive()) && test.isAfterDueDate())
+                .filter(test -> test.getType() != ProgrammingExerciseTestCaseType.STRUCTURAL).map(test -> test.getTestName()).filter(name -> name != null && !name.isBlank())
+                .collect(Collectors.toSet());
+        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline, hidden));
     }
 
     /**
