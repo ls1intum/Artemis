@@ -194,8 +194,11 @@ export class CourseHomeComponent {
                 if (!snapshot.welcome.aiEligible) this.cancelWelcome();
                 this.scheduleBoundary(snapshot);
                 this.loading.set(false);
+                this.teamSubscription?.unsubscribe();
+                this.team.set(cloneWith(snapshot.teachingTeam, { page: -1 }));
+                this.teamLoading.set(false);
+                this.teamFailed.set(false);
                 if (!previous) {
-                    this.team.set(cloneWith(snapshot.teachingTeam, { page: -1 }));
                     const rendered = snapshot;
                     afterNextRender(
                         () => {

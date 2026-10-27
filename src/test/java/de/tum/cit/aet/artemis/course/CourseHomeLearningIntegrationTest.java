@@ -14,6 +14,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -44,6 +46,9 @@ class CourseHomeLearningIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private TextExerciseUtilService textExercises;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService programmingExercises;
 
     @Autowired
     private StudentParticipationTestRepository participations;
@@ -234,6 +239,34 @@ class CourseHomeLearningIntegrationTest extends AbstractSpringIntegrationIndepen
         var released = learning.load(course.getId(), student, Instant.now(), base.minusHours(1).toInstant());
         assertThat(released.candidates()).anyMatch(c -> c.welcomeCase() == CourseHomeWelcomeCase.NEW_FEEDBACK);
         assertThat(released.progress().submittedExercises()).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void completedAthenaFeedbackIsAvailableBeforeManualAssessmentPublication(boolean programming) {
+        Exercise exercise = programming ? programmingExercises.createProgrammingExercise(course, base.minusDays(2), base.minusDays(2), base.minusDays(1), base.plusDays(7))
+                : exercise(base.minusDays(2), base.minusDays(1));
+        StudentParticipation participation = programming ? new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation() : new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(student);
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation = participations.saveAndFlush(participation);
+        de.tum.cit.aet.artemis.exercise.domain.Submission submission = programming ? new de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission() : new TextSubmission();
+        submission.setParticipation(participation);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(base.minusMinutes(30));
+        submission = submissions.saveAndFlush(submission);
+        var feedback = new de.tum.cit.aet.artemis.assessment.domain.Result();
+        feedback.setExerciseId(exercise.getId());
+        feedback.setSubmission(submission);
+        feedback.setAssessmentType(de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA);
+        feedback.setRated(true);
+        feedback.setCompletionDate(base.minusMinutes(10));
+        resultRepository.saveAndFlush(feedback);
+
+        var result = learning.load(course.getId(), student, base.toInstant(), base.minusHours(1).toInstant());
+        assertThat(result.candidates()).filteredOn(candidate -> candidate.welcomeCase() == CourseHomeWelcomeCase.NEW_FEEDBACK).singleElement()
+                .satisfies(candidate -> assertThat(candidate.item().updatedAt()).isEqualTo(base.minusMinutes(10).toInstant()));
     }
 
     @Test

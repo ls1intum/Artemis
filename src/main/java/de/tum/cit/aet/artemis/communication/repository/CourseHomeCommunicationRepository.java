@@ -28,9 +28,11 @@ public interface CourseHomeCommunicationRepository extends ArtemisJpaRepository<
             AND (p.visibleForStudents IS NULL OR p.visibleForStudents=TRUE) AND p.creationDate<=:asOf
             """;
 
-    String UNREAD = "SUM(CASE WHEN a.author.id<>:userId AND a.creationDate>cp.lastRead THEN 1 ELSE 0 END)";
+    String ANSWER_PUBLICATION = "CASE WHEN a.author.login='iris_bot' THEN COALESCE(a.verifiedAt,a.creationDate) ELSE a.creationDate END";
 
-    String ACTIVITY = "COALESCE(MAX(a.creationDate),p.creationDate)";
+    String UNREAD = "SUM(CASE WHEN a.author.id<>:userId AND " + ANSWER_PUBLICATION + ">cp.lastRead THEN 1 ELSE 0 END)";
+
+    String ACTIVITY = "COALESCE(MAX(" + ANSWER_PUBLICATION + "),p.creationDate)";
 
     interface Question {
 
@@ -60,14 +62,18 @@ public interface CourseHomeCommunicationRepository extends ArtemisJpaRepository<
             COUNT(a.id) AS replies,p.resolved AS resolved,SUM(CASE WHEN a.author.id<>:userId THEN 1 ELSE 0 END) AS externalReplies,
             CASE WHEN cp.lastRead IS NULL THEN NULL ELSE
             """ + UNREAD + """
-            END AS unread,MIN(CASE WHEN a.author.id<>:userId AND a.creationDate>cp.lastRead THEN a.id END) AS focusReplyId,
+            END AS unread,MIN(CASE WHEN a.author.id<>:userId AND
+            """ + ANSWER_PUBLICATION + """
+            >cp.lastRead THEN a.id END) AS focusReplyId,
             """ + ACTIVITY + """
                        AS activityAt FROM Post p JOIN TREAT(p.conversation AS Channel) c
                        LEFT JOIN c.exercise linkedExercise LEFT JOIN c.exam linkedExam
             LEFT JOIN c.conversationParticipants cp ON cp.user.id=:userId
-                       LEFT JOIN p.answers a ON a.creationDate<=:asOf AND (a.verified=TRUE OR a.author.login<>'iris_bot' OR a.author IS NULL)
-                       WHERE
-                       """ + ACCESS + """
+                       LEFT JOIN p.answers a ON (a.verified=TRUE OR a.author.login<>'iris_bot' OR a.author IS NULL) AND
+                       """ + ANSWER_PUBLICATION + """
+            <=:asOf
+            WHERE
+            """ + ACCESS + """
             AND p.author.id=:userId AND c.isAnnouncementChannel=FALSE
             GROUP BY p.id,c.id,p.title,p.content,p.resolved,p.creationDate,cp.lastRead
             ORDER BY CASE WHEN
@@ -95,11 +101,10 @@ public interface CourseHomeCommunicationRepository extends ArtemisJpaRepository<
                        """ + ACCESS + """
             AND c.isAnnouncementChannel=TRUE AND c.isArchived=FALSE
             AND p.displayPriority=de.tum.cit.aet.artemis.communication.domain.DisplayPriority.PINNED
-            AND COALESCE(p.updatedDate,p.creationDate)>:since AND COALESCE(p.updatedDate,p.creationDate)<=:asOf
+            AND COALESCE(p.updatedDate,p.creationDate)<=:asOf
             ORDER BY COALESCE(p.updatedDate,p.creationDate) DESC,p.id DESC
             """)
-    List<Announcement> findAnnouncements(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, @Param("since") ZonedDateTime since,
-            Pageable pageable);
+    List<Announcement> findAnnouncements(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, Pageable pageable);
 
     interface FaqItem {
 

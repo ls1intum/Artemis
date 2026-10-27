@@ -1,4 +1,5 @@
-import { Component, Injector, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { RouterLink } from '@angular/router';
@@ -30,6 +31,7 @@ export class AiExperienceSettingsComponent implements OnInit {
     private readonly userService = inject(UserService);
     private readonly alertService = inject(AlertService);
     private readonly llmModalService = inject(LLMSelectionModalService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
 
@@ -40,6 +42,7 @@ export class AiExperienceSettingsComponent implements OnInit {
     selectionDate = signal<dayjs.Dayjs | undefined>(undefined);
     sessionCount = signal(0);
     messageCount = signal(0);
+    readonly selectionPending = signal(false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -52,22 +55,28 @@ export class AiExperienceSettingsComponent implements OnInit {
     }
 
     async openSelectionModal(): Promise<void> {
-        const choice = await this.llmModalService.open(this.currentSelection());
-
-        if (choice && choice !== LLM_MODAL_DISMISSED) {
+        if (this.selectionPending()) return;
+        const userId = this.accountService.userIdentity()?.id;
+        this.selectionPending.set(true);
+        try {
+            const choice = await this.llmModalService.open(this.currentSelection());
+            if (this.destroyRef.destroyed || this.accountService.userIdentity()?.id !== userId || choice === LLM_MODAL_DISMISSED) return;
             if (this.irisEnabled) {
                 this.injector.get(IrisChatService).updateLLMUsageConsent(choice);
                 this.accountService.setUserLLMSelectionDecision(choice);
                 this.updateSelectionFromUser();
             } else {
-                try {
-                    await firstValueFrom(this.userService.updateLLMSelectionDecision(choice));
-                    this.accountService.setUserLLMSelectionDecision(choice);
-                    this.updateSelectionFromUser();
-                } catch {
-                    this.alertService.error('artemisApp.userSettings.aiExperienceSettingsPage.updateFailure');
-                }
+                await firstValueFrom(this.userService.updateLLMSelectionDecision(choice).pipe(takeUntilDestroyed(this.destroyRef)));
+                if (this.destroyRef.destroyed || this.accountService.userIdentity()?.id !== userId) return;
+                this.accountService.setUserLLMSelectionDecision(choice);
+                this.updateSelectionFromUser();
             }
+        } catch {
+            if (!this.destroyRef.destroyed && this.accountService.userIdentity()?.id === userId) {
+                this.alertService.error('artemisApp.userSettings.aiExperienceSettingsPage.updateFailure');
+            }
+        } finally {
+            this.selectionPending.set(false);
         }
     }
 

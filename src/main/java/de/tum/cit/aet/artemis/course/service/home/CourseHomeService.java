@@ -119,18 +119,13 @@ public class CourseHomeService {
         work.candidates().forEach(c -> candidates.add(candidate(c.welcomeCase(), c.item(), c.actionable())));
         lectures.items().forEach(i -> candidates.add(candidate(CourseHomeWelcomeCase.NEW_LECTURE, i, "NEW_LECTURE".equals(i.reason()))));
         exams.items().forEach(i -> candidates.add(candidate(CourseHomeWelcomeCase.EXAM_SOON, i, true)));
-        if (discussions.announcement() != null) {
+        if (discussions.announcement() != null && discussions.announcement().updatedAt() != null && discussions.announcement().updatedAt().isAfter(since)) {
             candidates.add(candidate(CourseHomeWelcomeCase.IMPORTANT_ANNOUNCEMENT, discussions.announcement(), true));
         }
         discussions.faqs().forEach(i -> candidates.add(candidate(CourseHomeWelcomeCase.NEW_FAQ, i, true)));
         discussions.questions().items().stream().filter(q -> q.unreadReplies() != null && q.unreadReplies() > 0)
                 .forEach(q -> candidates.add(new CourseHomeContext.Candidate(CourseHomeWelcomeCase.UNREAD_REPLY,
                         new CourseHomeTargetDTO(CourseHomeTargetKind.THREAD, q.postId(), q.conversationId(), q.focusReplyId()), q.title(), null, q.latestActivity(), true)));
-        if (work.candidates().stream().noneMatch(c -> c.welcomeCase() == CourseHomeWelcomeCase.CAUGHT_UP) && !chats.items().isEmpty()) {
-            var chat = chats.items().getFirst();
-            candidates.add(new CourseHomeContext.Candidate(CourseHomeWelcomeCase.CAUGHT_UP, new CourseHomeTargetDTO(CourseHomeTargetKind.IRIS_SESSION, chat.id(), null, null),
-                    chat.title() == null ? "" : chat.title(), null, chat.lastActivity(), true));
-        }
         var selection = context.select(new CourseHomeContext(snapshot, info.startDate(), info.endDate(), previous == null, previous, candidates));
         var meaningful = context.select(new CourseHomeContext(snapshot, info.startDate(), info.endDate(), false, snapshot, candidates));
         var sections = Map.of("lectures", lectures.status(), "exams", exams.status(), "faq",

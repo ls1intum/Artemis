@@ -4,12 +4,12 @@ title: Courses
 sidebar_label: Courses
 ---
 
-import Image, {ImageSize} from "../../../src/components/Image/Image";
+import Image, { ImageSize } from '../../../src/components/Image/Image';
 
-import homeOrientation from "./assets/course-home/home-orientation.png";
-import homeUpdates from "./assets/course-home/home-updates.png";
+import homeOrientation from './assets/course-home/home-orientation.png';
+import homeUpdates from './assets/course-home/home-updates.png';
 
-import courseEnrollmentImg from "../assets/courses/course-enrollment-placeholder.png";
+import courseEnrollmentImg from '../assets/courses/course-enrollment-placeholder.png';
 
 Courses in Artemis contain exercises, exams, and lectures. As a student, you can enroll in courses, access learning materials, and track your progress.
 
@@ -20,7 +20,8 @@ If the instructor has enabled student enrollment, you can enroll in a course dir
 Some courses may have **prerequisites**, i.e. competencies you should have mastered before enrolling. You can view these prerequisites before enrolling by clicking the prerequisites button next to the course.
 
 {/* TODO: Replace with a current screenshot of the course enrollment page */}
-<Image src={courseEnrollmentImg} alt={"Course Enrollment"} size={ImageSize.large} />
+
+<Image src={courseEnrollmentImg} alt={'Course Enrollment'} size={ImageSize.large} />
 
 ## My Courses
 
@@ -38,13 +39,25 @@ If you have an upcoming exam in any course, a prominent banner appears at the to
 
 Opening a course takes you to **Home**. On your first visit, you can meet the teaching team and read the course's learning guidance when your instructor has provided it. Later visits highlight a useful next step, newly available exercises and lecture material, important announcements, and new FAQs.
 
-<Image src={homeOrientation} alt="An example course Home with an introduction, teaching team and available work" size={ImageSize.large} caption="Home on a first visit to an example course" />
+<Image
+    src={homeOrientation}
+    alt="An example course Home with an introduction, teaching team and available work"
+    size={ImageSize.large}
+    caption="Home on a first visit to an example course"
+/>
 
 **Your submitted work** counts the exercises available to you and the ones you have submitted. Alternative variants count as one task. This describes submissions, not how well you have mastered the material; use feedback and the course's learning objectives to reflect on your understanding. An ended course can still have unfinished work.
 
 When communication is enabled, **My latest questions** shows your recent questions and whether they await a reply, have an answer, or are resolved. Unread replies appear separately. Open a question to go directly to its thread and unread reply. Visiting Home does not mark replies as read.
 
-<Image src={homeUpdates} alt="An example Home with a next action and an answered question with unread replies" size={ImageSize.large} caption="Later visits bring course updates and your conversations into view" />
+The latest currently pinned announcement stays visible under **From your course team**. Only announcements created or edited since your previous visit can take priority as a new next step.
+
+<Image
+    src={homeUpdates}
+    alt="An example Home with a next action and an answered question with unread replies"
+    size={ImageSize.large}
+    caption="Later visits bring course updates and your conversations into view"
+/>
 
 When Iris is enabled and your AI preference permits it, **My recent Iris conversations** links to your existing course conversations. Opening a listed conversation resumes it without creating another chat. All Home actions open the existing course pages.
 

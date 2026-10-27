@@ -27,11 +27,15 @@ export class TumAetUiAvatarComponent {
         return this.name().trim() || this.translator.translate('tumAetUi.avatar.unknown');
     });
     protected readonly initials = computed(() => {
-        const words = this.name().trim().split(/\s+/).filter(Boolean);
         const graphemes = (text: string) => Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text), (part) => part.segment);
+        const words = this.name()
+            .trim()
+            .split(/\s+/)
+            .map((word) => graphemes(word).filter((part) => /\p{L}/u.test(part)))
+            .filter((letters) => letters.length);
         if (!words.length) {
             return '?';
         }
-        return (words.length > 1 ? [graphemes(words[0])[0], graphemes(words[words.length - 1])[0]] : graphemes(words[0]).slice(0, 2)).join('').toLocaleUpperCase();
+        return (words.length > 1 ? [words[0][0], words[words.length - 1][0]] : words[0].slice(0, 2)).join('').toLocaleUpperCase();
     });
 }
