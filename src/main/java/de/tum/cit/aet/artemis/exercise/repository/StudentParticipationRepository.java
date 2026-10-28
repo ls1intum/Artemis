@@ -421,7 +421,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND((r.completionDate IS NULL) OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r2.successful = TRUE)))
+                AND NOT EXISTS (
+                    SELECT 1 FROM Result newer
+                    WHERE newer.submission = s
+                        AND (newer.assessmentType IS NULL OR newer.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR newer.successful = TRUE)
+                        AND (
+                            (r.completionDate IS NULL AND newer.completionDate IS NOT NULL)
+                            OR newer.completionDate > r.completionDate
+                            OR ((newer.completionDate = r.completionDate OR (newer.completionDate IS NULL AND r.completionDate IS NULL)) AND newer.id > r.id)
+                        )
+                )
             """)
     Set<ExamGradeScoreDTO> findGradesByExamIdAndStudentIdForTestRun(@Param("examId") long examId, @Param("studentId") long studentId);
 

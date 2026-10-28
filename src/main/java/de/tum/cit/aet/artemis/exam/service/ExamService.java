@@ -514,14 +514,14 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(examId);
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(examId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(examId);
         List<Long> studentIds = studentExams.stream().map(studentExam -> studentExam.getUser().getId()).toList();
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
 
         Map<Long, List<StudentParticipation>> participationsByStudentId = new HashMap<>();
 
-        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && !se.isTestExam()).toList();
+        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestExam()).toList();
 
         if (!regularStudentExams.isEmpty()) {
             var regularStudentIds = regularStudentExams.stream().map(se -> se.getUser().getId()).toList();
@@ -534,14 +534,13 @@ public class ExamService {
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResultDTO>();
         var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
-        Map<Long, Set<ExamGradeScoreDTO>> testRunGradesByUser = new HashMap<>();
 
-        // Resolve the participations of every student exam first. A test run and a test exam load theirs individually,
+        // Resolve the participations of every student exam first. A test exam loads its participations individually,
         // and they have to be part of the preload below as much as the regular ones.
         Map<Long, List<StudentParticipation>> participationsByStudentExamId = new LinkedHashMap<>();
         for (StudentExam studentExam : studentExams) {
             List<StudentParticipation> participations;
-            if (studentExam.isTestRun() || studentExam.isTestExam()) {
+            if (studentExam.isTestExam()) {
                 participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
             }
             else {
@@ -555,12 +554,7 @@ public class ExamService {
         // submissions once here so the statistic can name the earlier round without widening that fetch.
         Map<Long, List<CorrectionRoundResultDTO>> manualResultsBySubmissionId = loadManualResultsForFirstCorrection(exam, participationsByStudentExamId.values());
         for (StudentExam studentExam : studentExams) {
-            // An instructor can also have a regular participation. Reuse their test-run grade projection across runs,
-            // keeping it separate from the cohort's regular grades and avoiding repeated queries for the same instructor.
-            var studentGrades = new HashSet<>(studentExam.isTestRun()
-                    ? testRunGradesByUser.computeIfAbsent(studentExam.getUser().getId(),
-                            userId -> studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(examId, userId))
-                    : gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
+            var studentGrades = new HashSet<>(gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
             var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
 
             List<StudentParticipation> participations = participationsByStudentExamId.getOrDefault(studentExam.getId(), List.of());
