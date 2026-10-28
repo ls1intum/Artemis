@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.UnaryOperator;
 
 import org.apache.commons.io.FileUtils;
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.TransportException;
@@ -473,6 +474,28 @@ class SecurityFrameworkServiceTest {
         assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user))
                 .matches(exception -> "securityFrameworkNotActive".equals(exception.getErrorKey()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "value = \"Security\" + \"Policy.yaml\"", "value = \"SecurityPolicy.yaml\", activated = !true" })
+    void aRepositoryWithAnnotationsThatCannotBeEvaluatedIsNeitherReportedNorChanged(String arguments) throws Exception {
+        pushTestClassChange(source -> source.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, "@de.tum.cit.ase.ares.api.Policy(" + arguments + ")"));
+        String headBefore = pushedHead();
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        assertRejectedAsUnevaluable(() -> securityFrameworkService.getConfig(exercise));
+        assertRejectedAsUnevaluable(() -> securityFrameworkService.activate(exercise, "2.2.1", user));
+        assertRejectedAsUnevaluable(() -> securityFrameworkService.deactivate(exercise, user));
+        assertRejectedAsUnevaluable(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user));
+
+        assertThat(pushedHead()).isEqualTo(headBefore);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
+        verifyNoInteractions(localVCServletService);
+    }
+
+    private static void assertRejectedAsUnevaluable(ThrowingCallable call) {
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(call)
+                .matches(exception -> "securityFrameworkUnevaluableAnnotation".equals(exception.getErrorKey()) && exception.getMessage().contains("SortingTest.java"));
     }
 
     @Test

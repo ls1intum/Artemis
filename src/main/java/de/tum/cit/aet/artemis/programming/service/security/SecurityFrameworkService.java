@@ -7,7 +7,6 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -299,6 +298,7 @@ public class SecurityFrameworkService {
             repository = gitService.getOrCheckoutRepositoryOnBranch(testRepositoryUri, temporaryCheckout.resolve("repository"), branch);
             String checkedOutHead = gitService.getLocalHeadHash(repository);
             rejectSymbolicLinks(exercise, repository);
+            rejectUnevaluableAnnotations(SecurityPolicyRepositoryFiles.findUnevaluableAnnotations(repository.getLocalPath()));
             change.accept(repository);
             if (gitService.stageAllChanges(repository)) {
                 String commitHash = gitService.commitStagedChanges(repository, commitMessage + COMMIT_TRAILER, user);
@@ -391,6 +391,18 @@ public class SecurityFrameworkService {
     }
 
     /**
+     * An annotation whose {@code value} or {@code activated} argument is an expression, such as {@code "Security" + "Policy.yaml"} or {@code !true}, is
+     * valid Java, but its effect is not evaluated here. Reporting a state for it or changing it could then be wrong, e.g. report ACTIVE for tests that run
+     * without a sandbox, so such a repository is neither reported nor changed until the annotation is written with literals.
+     */
+    private static void rejectUnevaluableAnnotations(List<String> sources) {
+        if (!sources.isEmpty()) {
+            throw new BadRequestAlertException("The @Policy annotations of these tests use expressions the Security Framework does not evaluate. Write value as a "
+                    + "plain string literal and activated as true or false: " + String.join(", ", sources), ENTITY_NAME, "securityFrameworkUnevaluableAnnotation");
+        }
+    }
+
+    /**
      * The map is requested on first use rather than in the constructor, so creating the service never contacts the distributed data provider.
      */
     private DistributedMap<String, String> pendingProcessing() {
@@ -446,14 +458,15 @@ public class SecurityFrameworkService {
                 }
             }
         }
-        List<String> javaSources = new ArrayList<>();
+        Map<String, String> javaSources = new TreeMap<>();
         for (Map.Entry<String, ObjectId> file : files.entrySet()) {
             if (SecurityPolicyRepositoryFiles.isJavaSourcePath(file.getKey(), files::containsKey)) {
-                javaSources.add(new String(repository.open(file.getValue()).getBytes(), StandardCharsets.UTF_8));
+                javaSources.put(file.getKey(), new String(repository.open(file.getValue()).getBytes(), StandardCharsets.UTF_8));
             }
         }
+        rejectUnevaluableAnnotations(SecurityPolicyRepositoryFiles.findUnevaluableAnnotations(javaSources));
         // The policy paths of the annotations are already normalized relative to the repository root, see AresPolicyAnnotations.Annotation#policyPath.
-        return SecurityPolicyRepositoryFiles.isEnforcing(javaSources, files::containsKey);
+        return SecurityPolicyRepositoryFiles.isEnforcing(javaSources.values(), files::containsKey);
     }
 
     private static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {

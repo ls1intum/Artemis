@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,6 +41,8 @@ final class AresPolicyAnnotations {
 
     private static final String VALUE_ARGUMENT = "value";
 
+    private static final Set<String> BOOLEAN_LITERALS = Set.of("true", "false");
+
     /**
      * One argument of an annotation.
      *
@@ -65,8 +68,23 @@ final class AresPolicyAnnotations {
     record Annotation(int start, int end, String name, Map<String, Argument> arguments) {
 
         /**
-         * @return whether the annotation enforces its policy, i.e. its {@code activated} argument is not the literal {@code false}, also when it is written
-         *         in parentheses like {@code activated = (false)}
+         * Whether the arguments that decide the enforcement are written in a form this class evaluates. Only then do {@link #isActivated()} and
+         * {@link #policyPath()} describe what Ares does: {@code value} must be absent or a plain string literal, and {@code activated} must be absent or the
+         * literal {@code true} or {@code false}, each optionally in parentheses and with comments. Any other expression, such as
+         * {@code "Security" + "Policy.yaml"}, {@code !true} or a constant, is valid Java that this class does not evaluate.
+         *
+         * @return whether the annotation can be evaluated
+         */
+        boolean isEvaluable() {
+            Argument value = arguments.get(VALUE_ARGUMENT);
+            Argument activated = arguments.get(ACTIVATED_ARGUMENT);
+            return (value == null || plainStringContent(value).isPresent()) && (activated == null || BOOLEAN_LITERALS.contains(withoutOuterParentheses(activated.expression())));
+        }
+
+        /**
+         * Requires {@link #isEvaluable()}.
+         *
+         * @return whether the annotation enforces its policy, i.e. its {@code activated} argument is absent or {@code true}
          */
         boolean isActivated() {
             Argument activated = arguments.get(ACTIVATED_ARGUMENT);
@@ -74,22 +92,26 @@ final class AresPolicyAnnotations {
         }
 
         /**
-         * Ares resolves the policy path relative to the root of the tests repository, so the path is returned in its normalized form relative to that
-         * root: {@code ./SecurityPolicy.yaml} and {@code test/../SecurityPolicy.yaml} both are {@code SecurityPolicy.yaml}.
+         * Requires {@link #isEvaluable()}. Ares resolves the policy path relative to the root of the tests repository, so the path is returned in its
+         * normalized form relative to that root: {@code ./SecurityPolicy.yaml} and {@code test/../SecurityPolicy.yaml} both are {@code SecurityPolicy.yaml}.
          *
-         * @return the policy file the annotation points to, if its {@code value} is a plain string literal; empty if it has no {@code value}, in which
-         *         case Ares applies its strict default policy, or if the value is an expression this class does not evaluate
+         * @return the policy file the annotation points to; empty if it has no {@code value}, in which case Ares applies its strict default policy
          */
         Optional<String> policyPath() {
             Argument value = arguments.get(VALUE_ARGUMENT);
-            if (value == null) {
-                return Optional.empty();
-            }
-            String literal = withoutOuterParentheses(value.expression());
-            boolean plainString = literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"") && !literal.startsWith("\"\"\"") && literal.indexOf('\\') < 0
-                    && literal.indexOf('"', 1) == literal.length() - 1;
-            return plainString ? Optional.of(normalizePath(literal.substring(1, literal.length() - 1))) : Optional.empty();
+            return value == null ? Optional.empty() : plainStringContent(value).map(AresPolicyAnnotations::normalizePath);
         }
+    }
+
+    /**
+     * @return the content of the argument if it is a plain string literal, i.e. one without escape sequences and not a text block, optionally in
+     *         parentheses; empty for any other expression
+     */
+    private static Optional<String> plainStringContent(Argument argument) {
+        String literal = withoutOuterParentheses(argument.expression());
+        boolean plainString = literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"") && !literal.startsWith("\"\"\"") && literal.indexOf('\\') < 0
+                && literal.indexOf('"', 1) == literal.length() - 1;
+        return plainString ? Optional.of(literal.substring(1, literal.length() - 1)) : Optional.empty();
     }
 
     /**

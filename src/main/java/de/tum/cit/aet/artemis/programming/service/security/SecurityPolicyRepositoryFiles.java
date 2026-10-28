@@ -12,8 +12,10 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -106,15 +108,22 @@ public final class SecurityPolicyRepositoryFiles {
      * <li>without any annotation, the framework is on if {@link #POLICY_FILE_NAME} exists.</li>
      * </ul>
      *
+     * The state can only be determined if every annotation can be evaluated, see {@link #findUnevaluableAnnotations(Map)}; callers reject other
+     * repositories first.
+     *
      * @param javaSources the contents of the Java files of the repository
      * @param fileExists  whether a path, relative to the repository root, is a file of the repository
      * @return whether the Security Framework is active
+     * @throws IllegalArgumentException if an annotation cannot be evaluated, because the state is then unknown
      */
     public static boolean isEnforcing(Iterable<String> javaSources, Predicate<String> fileExists) {
         boolean anyAnnotation = false;
         boolean anyEnforcingAnnotation = false;
         for (String javaSource : javaSources) {
             for (AresPolicyAnnotations.Annotation annotation : AresPolicyAnnotations.find(javaSource)) {
+                if (!annotation.isEvaluable()) {
+                    throw new IllegalArgumentException("A @Policy annotation uses an expression that is not evaluated: " + annotation.name());
+                }
                 if (!annotation.isActivated()) {
                     return false;
                 }
@@ -123,6 +132,31 @@ public final class SecurityPolicyRepositoryFiles {
             }
         }
         return anyAnnotation ? anyEnforcingAnnotation : fileExists.test(POLICY_FILE_NAME);
+    }
+
+    /**
+     * Lists the Java sources with an Ares {@code @Policy} annotation that cannot be evaluated, see {@link AresPolicyAnnotations.Annotation#isEvaluable()}.
+     * For such a source, the state cannot be determined and a change could not be applied correctly, so a repository that has one is neither reported
+     * nor changed.
+     *
+     * @param javaSources the contents of the Java sources of the repository by their path relative to its root
+     * @return the paths of the sources with an annotation that cannot be evaluated, sorted; empty if there are none
+     */
+    public static List<String> findUnevaluableAnnotations(Map<String, String> javaSources) {
+        return javaSources.entrySet().stream().filter(source -> AresPolicyAnnotations.find(source.getValue()).stream().anyMatch(annotation -> !annotation.isEvaluable()))
+                .map(Map.Entry::getKey).sorted().toList();
+    }
+
+    /**
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @return the paths of the Java sources with an annotation that cannot be evaluated, see {@link #findUnevaluableAnnotations(Map)}
+     */
+    public static List<String> findUnevaluableAnnotations(Path repositoryRoot) {
+        Map<String, String> javaSources = new TreeMap<>();
+        for (Path javaFile : javaFiles(repositoryRoot)) {
+            javaSources.put(repositoryRoot.relativize(javaFile).toString().replace('\\', '/'), readFile(javaFile));
+        }
+        return findUnevaluableAnnotations(javaSources);
     }
 
     /**

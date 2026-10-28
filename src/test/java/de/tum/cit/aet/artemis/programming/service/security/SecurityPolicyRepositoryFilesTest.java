@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
@@ -184,6 +185,19 @@ class SecurityPolicyRepositoryFilesTest {
 
         assertThat(files.stream().filter(path -> SecurityPolicyRepositoryFiles.isJavaSourcePath(path, files::contains)).sorted()).containsExactly("other/build/OtherTest.java",
                 "test/de/example/SortingTest.java", "test/de/example/build/BuildTest.java", "test/de/example/target/TargetTest.java");
+    }
+
+    @Test
+    void listsTheSourcesWithAnnotationsThatCannotBeEvaluated() throws IOException {
+        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
+        FileUtils.writeStringToFile(root.resolve("test/de/example/ConcatenatedTest.java").toFile(),
+                TEST_CLASS.formatted("de.example", "ConcatenatedTest").replace("value = \"SecurityPolicy.yaml\"", "value = \"Security\" + \"Policy.yaml\""),
+                StandardCharsets.UTF_8);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "policy");
+
+        assertThat(SecurityPolicyRepositoryFiles.findUnevaluableAnnotations(root)).containsExactly("test/de/example/ConcatenatedTest.java");
+        // The state of such a repository is unknown, so it is never reported as active or inactive.
+        assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyRepositoryFiles.isEnforcing(root));
     }
 
     @Test
