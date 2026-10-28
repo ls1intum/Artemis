@@ -56,7 +56,9 @@ $discussion-section-card-min-width: 370px;
     flex-flow: column nowrap;
     border: 2px solid $border-color;
     border-radius: 0.25em 0 0 0.25em;
-    margin-left: auto;
+
+    // No divider is rendered while collapsed, so the bar keeps the distance a divider has.
+    margin-left: var(--spacing-divider);
     cursor: pointer;
 
     span {
@@ -79,6 +81,9 @@ $discussion-section-card-min-width: 370px;
 @media screen and (max-width: 832px) {
     .expanded-discussion {
         max-width: $discussion-section-card-min-width-sm !important;
+
+        // The divider is hidden here, so the card keeps the distance a divider has.
+        margin-left: var(--spacing-divider);
 
         .draggable-left {
             display: none;

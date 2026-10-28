@@ -75,4 +75,23 @@
     :host ::ng-deep .version-history-splitter {
         flex-direction: column;
     }
+
+    // The panels are stacked here, so the divider between them is horizontal.
+    :host ::ng-deep .version-history-splitter .p-splitter-gutter {
+        width: 100% !important;
+        height: var(--spacing-divider) !important;
+        cursor: row-resize;
+    }
+
+    :host ::ng-deep .version-history-splitter .p-splitter-gutter-handle {
+        flex-direction: column;
+        width: 12px;
+        height: var(--spacing-divider);
+
+        &::before,
+        &::after {
+            width: 12px;
+            height: 2px;
+        }
+    }
 }
