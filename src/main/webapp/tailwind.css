@@ -90,6 +90,7 @@
 @source './app/exercise/example-solution';
 @source './app/localci/build-queue';
 @source './app/course/request';
+@source './app/course/overview/course-statistics';
 @source './app/shared-ui/user-import';
 @source './app/shared-ui/user-registration-modal';
 @source './app/shared-ui/confirm-entity-name';

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitVideoSourceDTO;
@@ -59,6 +61,21 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             ORDER BY lectureUnit.id ASC
             """)
     List<Long> findIndexableUnitIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO(
+                unit.lecture.id, unit.lecture.title,
+                CASE WHEN TYPE(unit) = AttachmentVideoUnit THEN 'attachment' WHEN TYPE(unit) = TextUnit THEN 'text' ELSE 'online' END,
+                COUNT(unit.id), SUM(CASE WHEN completion.user.id IS NOT NULL THEN 1 ELSE 0 END))
+            FROM LectureUnit unit
+                LEFT JOIN unit.completedUsers completion ON completion.user.id = :userId
+                LEFT JOIN Attachment attachment ON attachment.attachmentVideoUnit.id = unit.id
+            WHERE unit.lecture.course.id = :courseId
+                AND TYPE(unit) IN (AttachmentVideoUnit, TextUnit, OnlineUnit)
+                AND (COALESCE(unit.releaseDate, attachment.releaseDate) IS NULL OR COALESCE(unit.releaseDate, attachment.releaseDate) < :now)
+            GROUP BY unit.lecture.id, unit.lecture.title, TYPE(unit)
+            """)
+    List<LectureLearningStatisticsDTO> findLearningStatistics(@Param("courseId") long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT lu
