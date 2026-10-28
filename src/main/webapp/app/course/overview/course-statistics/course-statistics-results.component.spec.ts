@@ -6,6 +6,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStatisticsResultsComponent } from './course-statistics-results.component';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('CourseStatisticsResultsComponent', () => {
     let fixture: ComponentFixture<CourseStatisticsResultsComponent>;
@@ -73,6 +78,64 @@ describe('CourseStatisticsResultsComponent', () => {
         expect(fixture.componentInstance.rows()[0].state).toBe('graded');
         expect(formatResult).toHaveBeenCalledWith(expect.objectContaining({ score: 0 }), exercise, expect.objectContaining({ id: 2 }), true);
         expect(fixture.nativeElement.textContent).toContain('0%, 0 points');
+    });
+
+    it.each([
+        {
+            name: 'successful compilation without visible tests',
+            assessmentType: AssessmentType.AUTOMATIC,
+            score: 0,
+            testCaseCount: 0,
+            buildFailed: false,
+            icon: faCheckCircle,
+            color: 'var(--tumaet-ui-state-success-foreground)',
+        },
+        {
+            name: 'a preliminary automatic result',
+            assessmentType: AssessmentType.SEMI_AUTOMATIC,
+            score: 80,
+            testCaseCount: 1,
+            buildFailed: false,
+            icon: faQuestionCircle,
+            color: 'var(--tumaet-ui-muted-color)',
+        },
+        {
+            name: 'a compilation failure',
+            assessmentType: AssessmentType.AUTOMATIC,
+            score: 0,
+            testCaseCount: 0,
+            buildFailed: true,
+            icon: faTimesCircle,
+            color: 'var(--tumaet-ui-state-danger-foreground)',
+        },
+        {
+            name: 'an assessed zero with visible tests',
+            assessmentType: AssessmentType.AUTOMATIC,
+            score: 0,
+            testCaseCount: 1,
+            buildFailed: false,
+            icon: faTimesCircle,
+            color: 'var(--tumaet-ui-state-danger-foreground)',
+        },
+    ])('uses standard programming styling for $name without an embedded exercise', ({ assessmentType, score, testCaseCount, buildFailed, icon, color }) => {
+        const result = { id: 3, rated: true, score, testCaseCount, successful: !buildFailed, assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs('2026-01-01') };
+        const submission = { id: 4, submitted: true, submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed, results: [result] };
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 1;
+        exercise.maxPoints = 10;
+        exercise.assessmentType = assessmentType;
+        exercise.studentParticipations = [{ id: 2, type: ParticipationType.PROGRAMMING, submissions: [submission] }];
+        const course = { id: 589, accuracyOfScores: 1 };
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercises', [exercise]);
+        fixture.detectChanges();
+
+        const row = fixture.componentInstance.rows()[0];
+        expect(exercise.studentParticipations![0].exercise).toBeUndefined();
+        expect(exercise.course).toBeUndefined();
+        expect(row.resultIcon).toBe(icon);
+        expect(row.resultColor).toBe(color);
+        expect(formatResult).toHaveBeenLastCalledWith(result, expect.objectContaining({ id: 1, type: ExerciseType.PROGRAMMING, course }), exercise.studentParticipations![0], true);
     });
 
     it('distinguishes pending submissions from no submission and filters them visibly', () => {

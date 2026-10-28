@@ -68,7 +68,7 @@ export class CourseStatisticsResultsComponent {
                 const submitted = hasSubmittedForStatistics(participation);
                 const state: ResultState = result?.score !== undefined ? 'graded' : submitted ? 'pending' : 'notSubmitted';
                 const context = this.course() ? cloneWith(exercise, { course: this.course() }) : exercise;
-                const color = getTextColorClass(result, participation, ResultTemplateStatus.HAS_RESULT);
+                const color = getTextColorClass(result, participation, ResultTemplateStatus.HAS_RESULT, context);
                 return {
                     exercise,
                     exerciseIcon: exercise.type ? getIcon(exercise.type) : undefined,
@@ -88,7 +88,7 @@ export class CourseStatisticsResultsComponent {
                               : color === 'result-orange'
                                 ? 'var(--tumaet-ui-state-warning-foreground)'
                                 : 'var(--tumaet-ui-muted-color)',
-                    resultIcon: getResultIconClass(result, participation, result?.score !== undefined ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT),
+                    resultIcon: getResultIconClass(result, participation, result?.score !== undefined ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT, context),
                     successful: result?.successful,
                 };
             })
