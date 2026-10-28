@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -36,6 +37,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import io.micrometer.core.instrument.MeterRegistry;
 
+// Roll back the global date and submission changes so shared demo fixtures remain intact.
+@Transactional
 class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "metricsbeans";
@@ -439,6 +442,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testEnsureCourseInformationIsSet() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setTitle(null);
         course.setShortName("metricCourseShort");
