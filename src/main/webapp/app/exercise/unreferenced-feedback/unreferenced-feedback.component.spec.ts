@@ -206,14 +206,14 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.appliedInstructionCounts()).toEqual(new Map([[2, 1]]));
         });
 
-        it('should group the feedback by criterion, with uncategorized feedback last', () => {
+        it('should group feedback in the instructor criterion order, with uncategorized feedback last', () => {
             comp.applyInstruction(cameraInstruction);
             comp.applyInstruction(documentationInstruction);
             comp.addUnreferencedFeedback();
 
             const groups = comp.feedbackGroups();
-            expect(groups.map((group) => group.title)).toEqual(['Camera', 'Documentation', 'artemisApp.assessment.detail.otherFeedback']);
-            expect(groups.map((group) => group.points)).toEqual([-2, 4, 0]);
+            expect(groups.map((group) => group.title)).toEqual(['Documentation', 'Camera', 'artemisApp.assessment.detail.otherFeedback']);
+            expect(groups.map((group) => group.points)).toEqual([4, -2, 0]);
             expect(groups[2].translateTitle).toBe(true);
             expect(comp.showGroupHeaders()).toBe(true);
         });

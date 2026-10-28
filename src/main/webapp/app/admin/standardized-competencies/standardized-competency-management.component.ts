@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faGripLinesVertical, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -108,7 +108,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly faEye = faEye;
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
-    protected readonly faGripLinesVertical = faGripLinesVertical;
     // Other constants for template
     protected readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'StandardizedCompetencies';

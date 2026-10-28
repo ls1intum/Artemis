@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,11 +15,15 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -68,6 +73,18 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
         return TEST_PREFIX;
     }
 
+    @BeforeEach
+    @AfterEach
+    void clearResultQueues() {
+        // A result worker can defer an item after polling it, so finish submitted work before clearing either queue.
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) ReflectionTestUtils.getField(localCIResultProcessingService, "resultProcessingExecutor");
+        await().atMost(Duration.ofSeconds(30)).until(() -> executor.getActiveCount() == 0 && executor.getQueue().isEmpty());
+        // This lane shares its queues between classes. Each explicit processing call polls only one item,
+        // so a result left by another test must not consume the trigger intended for this test's race.
+        distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
+    }
+
     private BuildResult buildResult() {
         String branch = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId()).getBranch();
         return new BuildResult(branch, "template-commit", "tests-commit", List.of(), true);
@@ -110,6 +127,7 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
     void aBuildResultThatIsProcessedWhileTheExerciseIsBeingDeletedIsDropped() {
         long exerciseId = programmingExercise.getId();
         String buildJobId = "deletion-race-job";
+        long templateParticipationId = templateParticipation.getId();
         AtomicBoolean markerSeen = new AtomicBoolean();
         doAnswer(invocation -> {
             markerSeen.set(programmingExerciseDeletionService.isBeingDeleted(exerciseId));
@@ -120,13 +138,15 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
 
         exerciseDeletionService.delete(exerciseId, false);
 
-        // Scheduling is disabled in this context. Wait until admission either completed or deferred the item, then simulate the next sweep.
-        await().atMost(Duration.ofSeconds(30))
-                .until(() -> buildJobRepository.findByBuildJobId(buildJobId).isPresent() || !distributedDataAccessService.getDistributedDeferredBuildResultQueue().isEmpty());
-        localCIResultProcessingService.processDeferredResultAsync();
-        await().atMost(Duration.ofSeconds(30)).until(() -> buildJobRepository.findByBuildJobId(buildJobId).isPresent());
+        // Scheduling is disabled; each poll may consume an earlier result rather than this test's job.
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
+            localCIResultProcessingService.processResultAsync();
+            localCIResultProcessingService.processDeferredResultAsync();
+            return buildJobRepository.findByBuildJobId(buildJobId).isPresent();
+        });
         assertThat(markerSeen).as("the marker is set while the deletion runs").isTrue();
-        verify(programmingExerciseGradingService, never()).processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean());
+        verify(programmingExerciseGradingService, never()).processNewProgrammingExerciseResult(
+                argThat(participation -> participation != null && participation.getId().equals(templateParticipationId)), any(BuildResult.class), anyBoolean());
         assertThat(programmingExerciseRepository.findById(exerciseId)).isEmpty();
         assertThat(resultRepository.existsByExerciseId(exerciseId)).isFalse();
     }
@@ -135,6 +155,7 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
     void anAdmittedResultAndFinalDeletionExcludeEachOther() throws Exception {
         long exerciseId = programmingExercise.getId();
         String buildJobId = "admitted-deletion-race-job";
+        long templateParticipationId = templateParticipation.getId();
         CountDownLatch admitted = new CountDownLatch(1);
         CountDownLatch allowPersistence = new CountDownLatch(1);
         AtomicBoolean deletionLockSeen = new AtomicBoolean();
@@ -142,7 +163,8 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
             admitted.countDown();
             assertThat(allowPersistence.await(30, TimeUnit.SECONDS)).isTrue();
             return invocation.callRealMethod();
-        }).when(programmingExerciseGradingService).processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean());
+        }).when(programmingExerciseGradingService).processNewProgrammingExerciseResult(
+                argThat(participation -> participation != null && participation.getId().equals(templateParticipationId)), any(BuildResult.class), anyBoolean());
 
         try (var workers = Executors.newCachedThreadPool()) {
             doAnswer(invocation -> {
@@ -166,7 +188,11 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
             try {
                 distributedDataAccessService.getDistributedBuildResultQueue().add(new ResultQueueItem(buildResult(), templateBuildJob(buildJobId), List.of(), null));
                 localCIResultProcessingService.processResultAsync();
-                assertThat(admitted.await(30, TimeUnit.SECONDS)).as("processing passed the marker check before deletion started").isTrue();
+                await().atMost(Duration.ofSeconds(30)).until(() -> {
+                    localCIResultProcessingService.processResultAsync();
+                    localCIResultProcessingService.processDeferredResultAsync();
+                    return admitted.getCount() == 0;
+                });
                 var deletion = workers.submit(() -> SecurityUtils.runAsSystem(() -> exerciseDeletionService.delete(exerciseId, false)));
                 await().atMost(Duration.ofSeconds(10)).until(() -> programmingExerciseDeletionService.isBeingDeleted(exerciseId));
                 verify(repositoryVcsAccessTokenService, never()).deleteByExerciseId(exerciseId);
@@ -178,7 +204,11 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
             }
             finally {
                 allowPersistence.countDown();
-                await().atMost(Duration.ofSeconds(30)).until(() -> buildJobRepository.findByBuildJobId(buildJobId).isPresent());
+                await().atMost(Duration.ofSeconds(30)).until(() -> {
+                    localCIResultProcessingService.processResultAsync();
+                    localCIResultProcessingService.processDeferredResultAsync();
+                    return buildJobRepository.findByBuildJobId(buildJobId).isPresent();
+                });
             }
         }
     }

@@ -69,6 +69,7 @@
                 "preview": {
                     "title": "Preview: {{ title }}",
                     "buttonLabel": "Preview {{ title }}",
+                    "backToList": "Back to list",
                     "loadFailed": "The preview could not be loaded."
                 },
                 "table": {

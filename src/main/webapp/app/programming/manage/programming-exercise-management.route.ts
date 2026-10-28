@@ -5,7 +5,8 @@ import {
     programmingExerciseUpdateRoute,
     programmingExerciseVersionHistoryRoute,
 } from 'app/programming/manage/programming-exercise-shared.route';
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
@@ -25,6 +26,26 @@ export const routes: Routes = [
     programmingExerciseUpdateRoute('programming-exercises/import-from-sharing', 'artemisApp.programmingExercise.home.importLabel'),
     programmingExerciseDetailRoute('programming-exercises/:exerciseId'),
     programmingExerciseVersionHistoryRoute('programming-exercises/:exerciseId/version-history'),
+    {
+        path: 'programming-exercises/:exerciseId/generation/runs/:runId',
+        canActivate: [
+            ({ params }) =>
+                inject(Router).createUrlTree(['/course-management', params['courseId'], 'programming-exercises', params['exerciseId']], {
+                    queryParams: { aiRun: `authoring:${params['exerciseId']}:${params['runId']}` },
+                }),
+        ],
+        children: [],
+    },
+    {
+        path: 'programming-exercises/:exerciseId/generation',
+        canActivate: [
+            ({ params, queryParams }) =>
+                inject(Router).createUrlTree(['/course-management', params['courseId'], 'programming-exercises', params['exerciseId']], {
+                    queryParams: { aiRun: `authoring:${params['exerciseId']}:${queryParams['run'] ?? 'latest'}` },
+                }),
+        ],
+        children: [],
+    },
     {
         path: 'programming-exercises/:exerciseId/plagiarism',
         loadComponent: () => import('app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
