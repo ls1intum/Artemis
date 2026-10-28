@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseBuildWindowNoticeComponent } from 'app/programming/shared/build-window-notice/programming-exercise-build-window-notice.component';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { BuildTimeWindow } from 'app/programming/shared/entities/programming-exercise-build-advanced-settings';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -75,6 +76,21 @@ describe('ProgrammingExerciseBuildWindowNoticeComponent', () => {
         expect(notice('after')?.textContent).toContain('artemisApp.programmingExercise.buildTimeWindow.notice.after');
         expect(notice('before')).toBeNull();
         expect(notice('during')).toBeNull();
+    });
+
+    it('tells a student with an individual due date extension that builds are active until the extended end', () => {
+        const exercise = exerciseWith({ start, end });
+        exercise.dueDate = end;
+        const participation = new ProgrammingExerciseStudentParticipation();
+        participation.individualDueDate = end.add(3, 'hour');
+        vi.setSystemTime(end.add(1, 'hour').toDate());
+        fixture = TestBed.createComponent(ProgrammingExerciseBuildWindowNoticeComponent);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
+
+        expect(notice('during')?.textContent).toContain('artemisApp.programmingExercise.buildTimeWindow.notice.during');
+        expect(notice('after')).toBeNull();
     });
 
     it('says nothing while builds are active and nothing ends them', () => {

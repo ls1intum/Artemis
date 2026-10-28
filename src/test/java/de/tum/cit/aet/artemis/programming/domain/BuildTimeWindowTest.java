@@ -44,6 +44,30 @@ class BuildTimeWindowTest {
     }
 
     @Test
+    void extendedByDueDateExtension_movesOnlyTheEndByTheExtension() {
+        var window = new BuildTimeWindow(START, END);
+        var dueDate = END.plusDays(1);
+
+        var extended = window.extendedByDueDateExtension(dueDate, dueDate.plusHours(5));
+
+        assertThat(extended).isEqualTo(new BuildTimeWindow(START, END.plusHours(5)));
+        assertThat(extended.isBuildAllowedAt(END.plusHours(5))).isTrue();
+        assertThat(extended.isBuildAllowedAt(END.plusHours(5).plusNanos(1))).isFalse();
+    }
+
+    @Test
+    void extendedByDueDateExtension_keepsTheWindowWithoutAnExtension() {
+        var window = new BuildTimeWindow(START, END);
+
+        assertThat(window.extendedByDueDateExtension(END, null)).isSameAs(window);
+        assertThat(window.extendedByDueDateExtension(null, END.plusDays(1))).isSameAs(window);
+        assertThat(window.extendedByDueDateExtension(END, END)).isSameAs(window);
+        // an individual due date before the due date of the exercise never shortens the window
+        assertThat(window.extendedByDueDateExtension(END, END.minusDays(1))).isSameAs(window);
+        assertThat(new BuildTimeWindow(START, null).extendedByDueDateExtension(END, END.plusDays(1))).isEqualTo(new BuildTimeWindow(START, null));
+    }
+
+    @Test
     void isWithin_checksBothBoundsAgainstBothDates() {
         var window = new BuildTimeWindow(START, END);
 

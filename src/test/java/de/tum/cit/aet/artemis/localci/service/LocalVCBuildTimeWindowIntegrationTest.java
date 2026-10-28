@@ -116,6 +116,52 @@ class LocalVCBuildTimeWindowIntegrationTest extends AbstractProgrammingIntegrati
         assertThat(programmingSubmissionRepository.existsByParticipationIdAndCommitHash(outcome.participationId(), outcome.commit())).isFalse();
     }
 
+    /**
+     * Lets the window end before the due date of the exercise and gives the student of the test an individual due date, so that the extension is the time between both due
+     * dates. Both due dates lie in the future, as students cannot push after their due date at all.
+     */
+    private void setWindowWithExtension(ZonedDateTime windowEnd, ZonedDateTime dueDate, ZonedDateTime individualDueDate) {
+        setBuildTimeWindow(windowEnd.minusDays(1), windowEnd);
+        programmingExercise.setDueDate(dueDate);
+        programmingExerciseRepository.save(programmingExercise);
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setIndividualDueDate(individualDueDate);
+        programmingExerciseStudentParticipationRepository.save(participation);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void pushAfterTheWindowIsBuiltWhileTheEndExtendedByTheIndividualDueDateLasts() throws Exception {
+        // without the extension of 2 hours the window would have ended an hour ago, with it, it lasts for another hour
+        setWindowWithExtension(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(3));
+
+        PushOutcome outcome = commitAndPushAs(student1Login);
+
+        assertThat(outcome.pushResult().getMessages()).doesNotContain("not built or graded");
+        await().until(() -> programmingSubmissionRepository.existsByParticipationIdAndCommitHash(outcome.participationId(), outcome.commit()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void pushAfterTheExtendedEndOfTheWindowIsKeptButNotBuilt() throws Exception {
+        // the extension of an hour moves the end of the window to an hour ago
+        setWindowWithExtension(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2));
+
+        PushOutcome outcome = commitAndPushAs(student1Login);
+
+        assertThat(outcome.pushResult().getMessages()).contains("not built or graded");
+        assertThat(programmingSubmissionRepository.existsByParticipationIdAndCommitHash(outcome.participationId(), outcome.commit())).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void aStudentWithAnExtensionCanTriggerABuildAfterTheWindow() throws Exception {
+        setWindowWithExtension(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(3));
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        request.postWithoutResponseBody("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void pushBeforeAWindowWithOnlyAStartMentionsTheStart() throws Exception {

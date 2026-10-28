@@ -239,7 +239,7 @@
             "buildTimeWindow": {
                 "title": "Build Time Window",
                 "message": "Optionally limit when pushes to student repositories are built. Pushes outside the window are saved, but not built, and do not create a submission. Leave both fields empty to build every push.",
-                "description": "Pushes of students outside of this window are accepted into the repository, but not built, tested or graded. Either bound can stay empty: with only a start, builds begin at that time, with only an end, builds stop at that time. Both bounds are inclusive. Editors and instructors, the practice mode and builds triggered by instructors are not affected. The window must lie between the start date (or release date) and the due date of the exercise.",
+                "description": "Pushes of students outside of this window are accepted into the repository, but not built, tested or graded. Either bound can stay empty: with only a start, builds begin at that time, with only an end, builds stop at that time. Both bounds are inclusive. Editors and instructors, the practice mode and builds triggered by instructors are not affected. The window must lie between the start date (or release date) and the due date of the exercise. For a student with an individual due date extension, the end of the window moves by the same extension.",
                 "start": "Build window start",
                 "end": "Build window end",
                 "endNotAfterStart": "The end of the build time window must be after its start.",

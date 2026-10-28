@@ -200,7 +200,7 @@ describe('TriggerBuildButtonSpec', () => {
         const windowStart = dayjs('2026-10-01T10:00:00Z');
         const windowEnd = dayjs('2026-10-01T12:00:00Z');
 
-        const setUp = (now: dayjs.Dayjs, options: { isAtLeastEditor?: boolean; testRun?: boolean } = {}) => {
+        const setUp = (now: dayjs.Dayjs, options: { isAtLeastEditor?: boolean; testRun?: boolean; individualDueDateExtension?: number } = {}) => {
             vi.useFakeTimers();
             vi.setSystemTime(now.toDate());
             const exerciseWithWindow = new ProgrammingExercise(undefined, undefined);
@@ -211,6 +211,10 @@ describe('TriggerBuildButtonSpec', () => {
             studentParticipation.id = 2;
             studentParticipation.testRun = options.testRun;
             studentParticipation.initializationState = InitializationState.INITIALIZED;
+            if (options.individualDueDateExtension) {
+                exerciseWithWindow.dueDate = windowEnd;
+                studentParticipation.individualDueDate = windowEnd.add(options.individualDueDateExtension, 'hour');
+            }
             fixture.componentRef.setInput('exercise', exerciseWithWindow);
             fixture.componentRef.setInput('participation', studentParticipation);
             comp.showForSuccessfulSubmissions.set(true);
@@ -238,6 +242,19 @@ describe('TriggerBuildButtonSpec', () => {
             expect(comp.isBlockedByBuildWindow()).toBe(false);
             expect(getTriggerButton().disabled).toBe(false);
             expect(debugElement.query(By.css('jhi-button')).componentInstance.tooltip()).toBe('artemisApp.programmingExercise.resubmit');
+        });
+
+        it('should keep the button enabled while the individual due date extension keeps the window open', () => {
+            setUp(windowEnd.add(1, 'hour'), { individualDueDateExtension: 3 });
+
+            expect(comp.isBlockedByBuildWindow()).toBe(false);
+            expect(getTriggerButton().disabled).toBe(false);
+        });
+
+        it('should disable the button after the window extended by the individual due date', () => {
+            setUp(windowEnd.add(4, 'hour'), { individualDueDateExtension: 3 });
+
+            expect(comp.isBlockedByBuildWindow()).toBe(true);
         });
 
         it.each([

@@ -455,7 +455,7 @@ public class ProgrammingExerciseParticipationResource {
             return false;
         }
         var window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(exercise.getId());
-        return window != null && !window.isBuildAllowedAt(ZonedDateTime.now());
+        return window != null && !window.extendedByDueDateExtension(exercise.getDueDate(), participation.getIndividualDueDate()).isBuildAllowedAt(ZonedDateTime.now());
     }
 
     /**

@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { BuildWindowPhase, getBuildTimeWindow, injectBuildWindowPhase, isBuildWindowEnforcedFor } from 'app/programming/shared/utils/build-time-window.utils';
+import { BuildWindowPhase, getBuildTimeWindowFor, injectBuildWindowPhase, isBuildWindowEnforcedFor } from 'app/programming/shared/utils/build-time-window.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
@@ -18,7 +18,7 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
     private alertService = inject(AlertService);
     readonly triggerLastGraded = input(false);
 
-    private readonly buildWindowPhase = injectBuildWindowPhase(computed(() => getBuildTimeWindow(this.exercise())));
+    private readonly buildWindowPhase = injectBuildWindowPhase(computed(() => getBuildTimeWindowFor(this.exercise(), this.participation())));
 
     /**
      * A manual build outside of the build time window is refused by the server, so the button is disabled.

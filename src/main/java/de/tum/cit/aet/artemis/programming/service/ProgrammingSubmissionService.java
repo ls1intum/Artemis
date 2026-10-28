@@ -132,7 +132,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     /**
      * Gets the build time window that keeps the given user's push or manual trigger from being built, if one applies.
-     * It applies to students working on their own non-practice participation. Editors and instructors, practice mode and the template, solution and test repositories
+     * It applies to students working on their own non-practice participation, and its end moves with the individual due date of the participation. Editors and instructors,
+     * practice mode and the template, solution and test repositories
      * are never restricted, and neither is a push by an unknown user.
      *
      * @param participation the participation that is pushed to or built
@@ -146,6 +147,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         Exercise exercise = studentParticipation.getExercise();
         BuildTimeWindow window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(exercise.getId());
+        if (window != null) {
+            window = window.extendedByDueDateExtension(exercise.getDueDate(), studentParticipation.getIndividualDueDate());
+        }
         if (window == null || window.isBuildAllowedAt(instant) || authCheckService.isAtLeastEditorForExercise(exercise, user)) {
             return Optional.empty();
         }
