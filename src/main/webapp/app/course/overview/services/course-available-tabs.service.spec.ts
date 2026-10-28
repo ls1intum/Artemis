@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -30,7 +31,7 @@ describe('CourseAvailableTabsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: AccountService, useClass: MockAccountService }, provideHttpClient(), MockProvider(AlertService)],
+            providers: [{ provide: AccountService, useClass: MockAccountService }, provideHttpClient(), provideHttpClientTesting(), MockProvider(AlertService)],
         });
         service = TestBed.inject(CourseAvailableTabsService);
         service.clear();
@@ -39,6 +40,7 @@ describe('CourseAvailableTabsService', () => {
     });
 
     afterEach(() => {
+        TestBed.inject(HttpTestingController).verify();
         vi.restoreAllMocks();
     });
 
@@ -61,6 +63,54 @@ describe('CourseAvailableTabsService', () => {
         service.loadIfNeeded(1).subscribe();
         service.loadIfNeeded(1).subscribe();
         expect(fetchSpy).toHaveBeenCalledOnce();
+    });
+
+    it('shares one HTTP request between concurrent tab readers and delivers the response to both', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        const first: CourseAvailableTabs[] = [];
+        const second: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => first.push(value));
+        service.loadIfNeeded(589).subscribe((value) => second.push(value));
+
+        const requests = http.match('api/course/courses/589/available-tabs');
+        expect(requests).toHaveLength(1);
+        const response = tabs({ lectures: true, competencies: true });
+        requests[0].flush(response);
+
+        expect(first).toEqual([response]);
+        expect(second).toEqual([response]);
+        expect(service.tabsFor(589)).toEqual(response);
+    });
+
+    it('starts a fresh request after every reader cancels an unfinished load', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        const subscription = service.loadIfNeeded(589).subscribe();
+        const cancelled = http.expectOne('api/course/courses/589/available-tabs');
+        subscription.unsubscribe();
+        expect(cancelled.cancelled).toBe(true);
+
+        const values: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => values.push(value));
+        const response = tabs({ lectures: true });
+        http.expectOne('api/course/courses/589/available-tabs').flush(response);
+        expect(values).toEqual([response]);
+    });
+
+    it('does not retain a response from a request cleared before it completes', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        service.loadIfNeeded(589).subscribe();
+        const previous = http.expectOne('api/course/courses/589/available-tabs');
+        service.clear();
+        previous.flush(tabs({ lectures: true }));
+        expect(service.tabsFor(589)).toBeUndefined();
+
+        service.loadIfNeeded(589).subscribe();
+        const response = tabs({ competencies: true });
+        http.expectOne('api/course/courses/589/available-tabs').flush(response);
+        expect(service.tabsFor(589)).toEqual(response);
     });
 
     it('should refetch for a different course and drop the previous one', () => {

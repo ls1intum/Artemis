@@ -1,6 +1,6 @@
 import { OnDestroy, Service, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, Subscription, of, tap } from 'rxjs';
+import { Observable, Subscription, finalize, of, shareReplay, tap } from 'rxjs';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -24,6 +24,7 @@ export class CourseAvailableTabsService implements OnDestroy {
     private readonly router = inject(Router);
 
     private readonly state = signal<{ courseId: number; navigationId: number; tabs: CourseAvailableTabs } | undefined>(undefined);
+    private inFlightRequest?: { courseId: number; observable: Observable<CourseAvailableTabs> };
 
     private currentUserId?: number;
     private readonly authenticationStateSubscription: Subscription;
@@ -39,6 +40,7 @@ export class CourseAvailableTabsService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.clear();
         this.authenticationStateSubscription?.unsubscribe();
     }
 
@@ -59,25 +61,41 @@ export class CourseAvailableTabsService implements OnDestroy {
      * @param courseId the course to fetch the tabs for
      */
     load(courseId: number): Observable<CourseAvailableTabs> {
-        return this.courseManagementService
-            .getCourseAvailableTabs(courseId)
-            .pipe(tap((tabs) => this.state.set({ courseId, navigationId: currentNavigationId(this.router), tabs })));
+        const observable = this.courseManagementService.getCourseAvailableTabs(courseId).pipe(
+            tap((tabs) => {
+                if (this.inFlightRequest?.observable === observable) {
+                    this.state.set({ courseId, navigationId: currentNavigationId(this.router), tabs });
+                }
+            }),
+            finalize(() => {
+                if (this.inFlightRequest?.observable === observable) {
+                    this.inFlightRequest = undefined;
+                }
+            }),
+            shareReplay({ bufferSize: 1, refCount: true }),
+        );
+        this.inFlightRequest = { courseId, observable };
+        return observable;
     }
 
     /**
-     * Returns the held tabs when they belong to the given course and fetches them otherwise. This is what makes a course
-     * visit cost a single request no matter which tab the user enters through.
+     * Returns this navigation's held tabs or shares an unfinished request for the course. Concurrent readers therefore
+     * cost one request, while a later navigation still fetches fresh availability.
      * @param courseId the course to get the tabs for
      */
     loadIfNeeded(courseId: number): Observable<CourseAvailableTabs> {
         const tabs = this.tabsFor(courseId);
-        return tabs ? of(tabs) : this.load(courseId);
+        if (tabs) {
+            return of(tabs);
+        }
+        return this.inFlightRequest?.courseId === courseId ? this.inFlightRequest.observable : this.load(courseId);
     }
 
     /**
-     * Drops the held tabs so the next course visit fetches them again.
+     * Drops the held tabs and prevents an older request from replacing them, so the next visit fetches again.
      */
     clear(): void {
         this.state.set(undefined);
+        this.inFlightRequest = undefined;
     }
 }
