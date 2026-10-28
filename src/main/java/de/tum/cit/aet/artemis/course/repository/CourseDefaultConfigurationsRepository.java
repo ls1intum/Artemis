@@ -255,7 +255,7 @@ public interface CourseDefaultConfigurationsRepository {
     @Transactional // ok because of the insert
     @Query(value = """
             INSERT INTO hyperion_course_settings (course_id, settings)
-            VALUES (:courseId, '{"poolGenerationEnabled":false,"questionsPerLectureUnit":12}')
+            VALUES (:courseId, '{"poolGenerationEnabled":false,"singleChoiceQuestionsPerLectureUnit":12,"multipleChoiceEnabled":false,"multipleChoiceQuestionsPerLectureUnit":12,"easyPercent":20,"mediumPercent":50,"hardPercent":30}')
             """, nativeQuery = true)
     void initializeHyperionCourseSettings(@Param("courseId") long courseId);
 }

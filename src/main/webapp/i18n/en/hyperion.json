@@ -1,0 +1,87 @@
+{
+    "artemisApp": {
+        "hyperion": {
+            "quizQuestionPool": {
+                "title": "Smart Quizzes",
+                "sidebarTitle": "Smart Quizzes",
+                "intro": "Hyperion generates multiple-choice questions for every lecture unit linked to a competency of this course, grounded in that unit's slides, transcript or text, and judges each one before you see it. Approve the questions you want to use in quizzes and exclude the ones you do not. The approved questions will later also drive personalised learning: students practise with questions tailored to their strengths and weaknesses.",
+                "progress": {
+                    "title": "Pool",
+                    "total": "{{ count }} questions planned",
+                    "ready": "{{ count }} generated and checked",
+                    "pending": "{{ count }} still being generated",
+                    "failed": "{{ count }} could not be generated in three attempts",
+                    "running": "A build is running",
+                    "idle": "No build is running.",
+                    "empty": "No questions yet. Start a build to fill the pool.",
+                    "build": "Build now",
+                    "refresh": "Refresh",
+                    "started": "Build started, {{ count }} new questions will be generated.",
+                    "alreadyRunning": "A build of this pool is already running.",
+                    "buildFailed": "The build could not be started."
+                },
+                "settings": {
+                    "title": "Settings",
+                    "singleChoiceQuestionsPerLectureUnit": "Single-choice questions per lecture unit",
+                    "singleChoiceHelp": "Each single-choice question has exactly one correct answer option. The number applies to every lecture unit that is linked to a competency. Takes effect at the next build.",
+                    "multipleChoiceEnabled": "Also generate multiple-choice questions",
+                    "multipleChoiceHelp": "Multiple-choice questions can have several correct answer options.",
+                    "multipleChoiceQuestionsPerLectureUnit": "Multiple-choice questions per lecture unit",
+                    "difficultyMix": "Difficulty mix",
+                    "difficultyMixHelp": "Share of each lecture unit's questions generated at each difficulty. The three shares must add up to 100 %.",
+                    "difficultyMixSum": "The shares add up to {{ sum }} % instead of 100 %.",
+                    "easyPercent": "Easy (%)",
+                    "mediumPercent": "Medium (%)",
+                    "hardPercent": "Hard (%)",
+                    "poolGenerationEnabled": "Generate overnight for new lecture material",
+                    "poolGenerationHelp": "Applies to scheduled builds.",
+                    "save": "Save settings",
+                    "saved": "Settings saved.",
+                    "saveFailed": "The settings could not be saved.",
+                    "unsaved": "Unsaved changes"
+                },
+                "filter": {
+                    "competency": "Competency",
+                    "allCompetencies": "All competencies"
+                },
+                "list": {
+                    "needsReview": "Needs review ({{ count }})",
+                    "needsReviewHint": "These questions passed the filter but were flagged on at least one criterion. Check them before approving.",
+                    "accepted": "Accepted by the filter ({{ count }})",
+                    "rejected": "Rejected by the filter ({{ count }})",
+                    "rejectedHint": "These questions failed the filter. You can still approve one if you disagree with the verdict.",
+                    "inProgress": "{{ count }} questions are still being generated or judged.",
+                    "failed": "{{ count }} questions could not be generated or judged.",
+                    "empty": "No questions in this group yet.",
+                    "lectureUnit": "Lecture unit:",
+                    "showRationale": "Show filter verdict",
+                    "hideRationale": "Hide filter verdict",
+                    "score": "Filter score: {{ score }} / 100",
+                    "approve": "Approve",
+                    "exclude": "Exclude",
+                    "reviewFailed": "The decision could not be saved.",
+                    "reviewState": {
+                        "PENDING": "Not reviewed",
+                        "APPROVED": "Approved",
+                        "EXCLUDED": "Excluded"
+                    },
+                    "difficulty": {
+                        "EASY": "Easy",
+                        "MEDIUM": "Medium",
+                        "HARD": "Hard"
+                    },
+                    "failureModes": {
+                        "FACTUAL_ERROR": "Factual error",
+                        "AMBIGUOUS_CORRECT_ANSWER": "Ambiguous answer",
+                        "OFF_TOPIC": "Off topic",
+                        "NEAR_DUPLICATE": "Recall only",
+                        "ILL_FORMED_DISTRACTORS": "Weak distractors"
+                    }
+                },
+                "errors": {
+                    "loadFailed": "The quiz question pool could not be loaded."
+                }
+            }
+        }
+    }
+}

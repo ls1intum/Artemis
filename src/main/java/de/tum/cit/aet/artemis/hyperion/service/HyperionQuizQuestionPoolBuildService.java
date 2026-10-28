@@ -9,7 +9,6 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -63,8 +62,8 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Builds a course's quiz question pool: one cell per combination of competency, lecture unit linked to it, language, question type
- * and difficulty, each filled with a fixed number of questions that are generated in batches from the unit's material and judged one
- * by one by the filter.
+ * and difficulty, sized by the course's settings and filled with questions that are generated in batches from the unit's material and
+ * judged one by one by the filter. A question the filter rejects is replaced by a newly generated one while the item has attempts left.
  * <p>
  * {@link #enqueue} tops every cell up to its target and is idempotent. {@link #build} works the pool to completion in a loop of
  * conditional claims, so a build can be resumed after an interruption and several nodes can share one pool. The generator model
@@ -83,7 +82,7 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private static final String GENERATION_PIPELINE_ID = "HYPERION_QUIZ_POOL_GENERATION";
 
-    /** Attempts an item gets per stage within one build before it is marked as failed. */
+    /** Attempts an item gets per stage before it is marked as failed, and questions it may use up before a rejected one is kept. */
     static final int MAX_ATTEMPTS = 3;
 
     /** The generation call itself failed; the item is revived at the next build. */
@@ -138,10 +137,6 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private final String generatorModel;
 
-    private final Set<QuizQuestionGenerationType> questionTypes;
-
-    private final Set<QuizQuestionDifficulty> difficulties;
-
     private final int generationBatchSize;
 
     private final Duration staleClaimAge;
@@ -156,8 +151,6 @@ public class HyperionQuizQuestionPoolBuildService {
             HyperionQuizQuestionPoolMaterialService materialService, Optional<CourseCompetencyApi> courseCompetencyApi, HyperionQuizQuestionFilterService filterService,
             LLMTokenUsageService llmTokenUsageService, QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService,
             CourseRepository courseRepository, DistributedDataProvider distributedDataProvider, @Value("${artemis.hyperion.quiz-pool.generator-model:}") String generatorModel,
-            @Value("${artemis.hyperion.quiz-pool.question-types:single-choice,multiple-choice}") List<String> questionTypes,
-            @Value("${artemis.hyperion.quiz-pool.difficulties:easy,medium,hard}") List<String> difficulties,
             @Value("${artemis.hyperion.quiz-pool.generation-batch-size:8}") int generationBatchSize,
             @Value("${artemis.hyperion.quiz-pool.stale-claim-minutes:30}") int staleClaimMinutes,
             @Value("${artemis.hyperion.quiz-pool.build-lease-minutes:10}") int buildLeaseMinutes) {
@@ -171,8 +164,6 @@ public class HyperionQuizQuestionPoolBuildService {
         this.settingsService = settingsService;
         this.courseRepository = courseRepository;
         this.generatorModel = generatorModel == null ? "" : generatorModel.trim();
-        this.questionTypes = parseQuestionTypes(questionTypes);
-        this.difficulties = parseDifficulties(difficulties);
         if (generationBatchSize < 1) {
             throw new IllegalArgumentException("artemis.hyperion.quiz-pool.generation-batch-size must be at least 1, got " + generationBatchSize);
         }
@@ -196,38 +187,71 @@ public class HyperionQuizQuestionPoolBuildService {
     }
 
     /**
-     * Derives every cell of the grid, in a fixed order.
+     * Plans the target size of every cell of the grid, in a fixed order: for each competency and lecture unit, the single-choice count
+     * and, while multiple-choice questions are enabled, the multiple-choice count are split over the difficulties by the course's
+     * shares. A difficulty whose share comes to no question gets no cell.
      *
      * @param unitIdsByCompetency the groundable lecture units linked to each competency
      * @param language            the language to generate in
-     * @param questionTypes       the question types to generate
-     * @param difficulties        the difficulties to generate at
-     * @return the cells, ordered by competency, lecture unit, question type, then difficulty
+     * @param settings            the course's settings
+     * @return the target per cell, ordered by competency, lecture unit, question type, then difficulty
      */
-    static List<Cell> deriveCells(Map<Long, ? extends List<Long>> unitIdsByCompetency, QuizQuestionGenerationLanguage language, Set<QuizQuestionGenerationType> questionTypes,
-            Set<QuizQuestionDifficulty> difficulties) {
-        List<Cell> cells = new ArrayList<>();
+    static Map<Cell, Integer> planCells(Map<Long, ? extends List<Long>> unitIdsByCompetency, QuizQuestionGenerationLanguage language, HyperionCourseSettings settings) {
+        Map<QuizQuestionGenerationType, Integer> countsByType = new EnumMap<>(QuizQuestionGenerationType.class);
+        countsByType.put(QuizQuestionGenerationType.SINGLE_CHOICE, settings.singleChoiceQuestionsPerLectureUnit());
+        if (settings.multipleChoiceEnabled()) {
+            countsByType.put(QuizQuestionGenerationType.MULTIPLE_CHOICE, settings.multipleChoiceQuestionsPerLectureUnit());
+        }
+        QuizQuestionDifficulty[] difficulties = QuizQuestionDifficulty.values();
+        int[] percents = new int[difficulties.length];
+        for (int index = 0; index < difficulties.length; index++) {
+            percents[index] = settings.percentOf(difficulties[index]);
+        }
+        Map<Cell, Integer> targets = new LinkedHashMap<>();
         for (Map.Entry<Long, ? extends List<Long>> entry : new TreeMap<>(unitIdsByCompetency).entrySet()) {
             for (Long lectureUnitId : entry.getValue().stream().sorted().toList()) {
-                for (QuizQuestionGenerationType questionType : EnumSet.copyOf(questionTypes)) {
-                    for (QuizQuestionDifficulty difficulty : EnumSet.copyOf(difficulties)) {
-                        cells.add(new Cell(entry.getKey(), lectureUnitId, language, questionType, difficulty));
+                for (Map.Entry<QuizQuestionGenerationType, Integer> typeCount : countsByType.entrySet()) {
+                    int[] perDifficulty = splitByPercent(typeCount.getValue(), percents);
+                    for (int index = 0; index < difficulties.length; index++) {
+                        if (perDifficulty[index] > 0) {
+                            targets.put(new Cell(entry.getKey(), lectureUnitId, language, typeCount.getKey(), difficulties[index]), perDifficulty[index]);
+                        }
                     }
                 }
             }
         }
-        return List.copyOf(cells);
+        return targets;
     }
 
     /**
-     * Spreads a lecture unit's question count over its cells, rounding up so every cell holds at least one question.
+     * Splits a count over shares given in percent so that the parts add up to the count: every part receives the whole number of its
+     * share, and the remainder goes one by one to the parts with the largest fractions, earlier parts first on a tie.
      *
-     * @param questionsPerLectureUnit questions wanted per lecture unit and competency
-     * @param cellsPerLectureUnit     cells each lecture unit has per competency
-     * @return questions per cell
+     * @param count    the count to split
+     * @param percents the shares in percent, adding up to 100
+     * @return one part per share, in the order of the shares
      */
-    static int itemsPerCell(int questionsPerLectureUnit, int cellsPerLectureUnit) {
-        return (questionsPerLectureUnit + cellsPerLectureUnit - 1) / cellsPerLectureUnit;
+    static int[] splitByPercent(int count, int[] percents) {
+        int[] parts = new int[percents.length];
+        int[] fractions = new int[percents.length];
+        int assigned = 0;
+        for (int index = 0; index < percents.length; index++) {
+            int scaled = count * percents[index];
+            parts[index] = scaled / 100;
+            fractions[index] = scaled % 100;
+            assigned += parts[index];
+        }
+        for (int remainder = count - assigned; remainder > 0; remainder--) {
+            int largest = 0;
+            for (int index = 1; index < percents.length; index++) {
+                if (fractions[index] > fractions[largest]) {
+                    largest = index;
+                }
+            }
+            parts[largest]++;
+            fractions[largest] = -1;
+        }
+        return parts;
     }
 
     /**
@@ -323,16 +347,15 @@ public class HyperionQuizQuestionPoolBuildService {
         List<Long> competencyIds = api.findAllForCourse(course.getId()).stream().map(CourseCompetency::getId).sorted().toList();
         Map<Long, List<Long>> unitIdsByCompetency = new LinkedHashMap<>();
         materialService.findGroundableUnits(competencyIds).forEach((competencyId, units) -> unitIdsByCompetency.put(competencyId, units.stream().map(LectureUnit::getId).toList()));
-        HyperionCourseSettings settings = settingsService.getSettings(course.getId());
-        int target = itemsPerCell(settings.questionsPerLectureUnit(), questionTypes.size() * difficulties.size());
-        List<Cell> cells = deriveCells(unitIdsByCompetency, languageOf(course), questionTypes, difficulties);
+        Map<Cell, Integer> targets = planCells(unitIdsByCompetency, languageOf(course), settingsService.getSettings(course.getId()));
 
         Map<Cell, Integer> existingByCell = itemRepository.countByCellForCourse(course.getId()).stream().collect(Collectors
                 .toMap(count -> new Cell(count.competencyId(), count.lectureUnitId(), count.language(), count.questionType(), count.difficulty()), count -> (int) count.count()));
         List<QuizQuestionPoolItem> created = new ArrayList<>();
-        for (Cell cell : cells) {
+        for (Map.Entry<Cell, Integer> target : targets.entrySet()) {
+            Cell cell = target.getKey();
             int existing = existingByCell.getOrDefault(cell, 0);
-            for (int index = existing; index < target; index++) {
+            for (int index = existing; index < target.getValue(); index++) {
                 QuizQuestionPoolItem item = new QuizQuestionPoolItem();
                 item.setCourse(course);
                 item.setCompetencyId(cell.competencyId());
@@ -346,7 +369,7 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         itemRepository.saveAll(created);
         log.info("Quiz question pool of course [{}]: {} of {} competencies have lecture material, {} cells, {} new items", course.getId(), unitIdsByCompetency.size(),
-                competencyIds.size(), cells.size(), created.size());
+                competencyIds.size(), targets.size(), created.size());
         return created.size();
     }
 
@@ -481,7 +504,7 @@ public class HyperionQuizQuestionPoolBuildService {
                 Map.ofEntries(Map.entry("courseTitle", getSanitizedCourseTitle(course)), Map.entry("courseDescription", getSanitizedCourseDescription(course)),
                         Map.entry("groundingBlock", material.groundingBlock()), Map.entry("competency", material.competencyBlock()),
                         Map.entry("language", first.getLanguage().getValue()), Map.entry("questionType", first.getQuestionType().getValue()),
-                        Map.entry("numberOfQuestions", batch.size()), Map.entry("optionCount", HyperionQuizQuestionChecks.OPTION_COUNT),
+                        Map.entry("numberOfQuestions", batch.size()), Map.entry("optionCount", HyperionQuizQuestionChecks.optionCountFor(first.getQuestionType())),
                         Map.entry("difficulty", first.getDifficulty().getPromptValue()), Map.entry("format", outputConverter.getFormat())));
 
         ChatResponse chatResponse;
@@ -600,7 +623,18 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         else {
             Optional<QuizQuestionFilterDecisionDTO> decision = filterService.evaluate(course, userId, item.getQuestion(), material.groundingBlock());
-            if (decision.isPresent()) {
+            if (decision.isPresent() && !decision.get().accepted() && item.getGenerationAttempts() < MAX_ATTEMPTS) {
+                log.debug("Quiz question pool item [{}] of course [{}]: the filter rejected generation attempt {}, generating another question", item.getId(), course.getId(),
+                        item.getGenerationAttempts());
+                item.setQuestion(null);
+                item.setDecision(null);
+                item.setAccepted(null);
+                item.setGeneratorModel(null);
+                item.setFailure(null);
+                item.setFilterAttempts(0);
+                item.setState(QuizQuestionPoolItemState.PENDING);
+            }
+            else if (decision.isPresent()) {
                 item.setDecision(decision.get());
                 item.setAccepted(decision.get().accepted());
                 item.setJudgeModel(filterService.getJudgeModel().isEmpty() ? null : filterService.getJudgeModel());
@@ -711,32 +745,6 @@ public class HyperionQuizQuestionPoolBuildService {
         String explanation = sanitizeInput(generated.explanation());
         return Optional.of(new GeneratedQuizQuestionDTO(questionType, sanitizeInput(generated.title()), sanitizeInput(generated.questionText()), options, null,
                 explanation.isBlank() ? null : explanation));
-    }
-
-    private static Set<QuizQuestionGenerationType> parseQuestionTypes(List<String> values) {
-        Set<QuizQuestionGenerationType> types = EnumSet.noneOf(QuizQuestionGenerationType.class);
-        for (String value : values) {
-            if (!value.isBlank()) {
-                types.add(QuizQuestionGenerationType.fromValue(value.trim()));
-            }
-        }
-        if (types.isEmpty()) {
-            throw new IllegalArgumentException("artemis.hyperion.quiz-pool.question-types must name at least one question type");
-        }
-        return types;
-    }
-
-    private static Set<QuizQuestionDifficulty> parseDifficulties(List<String> values) {
-        Set<QuizQuestionDifficulty> difficulties = EnumSet.noneOf(QuizQuestionDifficulty.class);
-        for (String value : values) {
-            if (!value.isBlank()) {
-                difficulties.add(QuizQuestionDifficulty.fromValue(value));
-            }
-        }
-        if (difficulties.isEmpty()) {
-            throw new IllegalArgumentException("artemis.hyperion.quiz-pool.difficulties must name at least one difficulty");
-        }
-        return difficulties;
     }
 
     private record PoolQuestionsOutput(List<PoolQuestionOutput> questions) {

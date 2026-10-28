@@ -1,0 +1,87 @@
+{
+    "artemisApp": {
+        "hyperion": {
+            "quizQuestionPool": {
+                "title": "Smart Quizzes",
+                "sidebarTitle": "Smart Quizzes",
+                "intro": "Hyperion generiert Multiple-Choice-Fragen zu jeder Vorlesungseinheit, die mit einer Kompetenz dieses Kurses verknüpft ist, gestützt auf die Folien, das Transkript oder den Text der Einheit, und prüft jede Frage, bevor du sie siehst. Übernimm die Fragen, die du in Quizzen verwenden willst, und schließe die anderen aus. Die übernommenen Fragen ermöglichen später außerdem personalisiertes Lernen: Studierende üben mit Fragen, die auf ihre Stärken und Schwächen zugeschnitten sind.",
+                "progress": {
+                    "title": "Pool",
+                    "total": "{{ count }} Fragen geplant",
+                    "ready": "{{ count }} generiert und geprüft",
+                    "pending": "{{ count }} werden noch generiert",
+                    "failed": "{{ count }} konnten in drei Versuchen nicht generiert werden",
+                    "running": "Ein Lauf ist aktiv",
+                    "idle": "Kein Lauf ist aktiv.",
+                    "empty": "Noch keine Fragen. Starte einen Lauf, um den Pool zu füllen.",
+                    "build": "Jetzt generieren",
+                    "refresh": "Aktualisieren",
+                    "started": "Lauf gestartet, {{ count }} neue Fragen werden generiert.",
+                    "alreadyRunning": "Für diesen Pool läuft bereits ein Lauf.",
+                    "buildFailed": "Der Lauf konnte nicht gestartet werden."
+                },
+                "settings": {
+                    "title": "Einstellungen",
+                    "singleChoiceQuestionsPerLectureUnit": "Single-Choice-Fragen pro Vorlesungseinheit",
+                    "singleChoiceHelp": "Bei einer Single-Choice-Frage ist genau eine Antwortoption richtig. Die Zahl gilt für jede Vorlesungseinheit, die mit einer Kompetenz verknüpft ist. Wirkt beim nächsten Lauf.",
+                    "multipleChoiceEnabled": "Zusätzlich Multiple-Choice-Fragen generieren",
+                    "multipleChoiceHelp": "Bei einer Multiple-Choice-Frage können mehrere Antwortoptionen richtig sein.",
+                    "multipleChoiceQuestionsPerLectureUnit": "Multiple-Choice-Fragen pro Vorlesungseinheit",
+                    "difficultyMix": "Schwierigkeitsverteilung",
+                    "difficultyMixHelp": "Anteil der Fragen jeder Vorlesungseinheit, die in der jeweiligen Schwierigkeit generiert werden. Die drei Anteile müssen zusammen 100 % ergeben.",
+                    "difficultyMixSum": "Die Anteile ergeben zusammen {{ sum }} % statt 100 %.",
+                    "easyPercent": "Leicht (%)",
+                    "mediumPercent": "Mittel (%)",
+                    "hardPercent": "Schwer (%)",
+                    "poolGenerationEnabled": "Über Nacht für neues Vorlesungsmaterial generieren",
+                    "poolGenerationHelp": "Gilt für geplante Läufe.",
+                    "save": "Einstellungen speichern",
+                    "saved": "Einstellungen gespeichert.",
+                    "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
+                    "unsaved": "Ungespeicherte Änderungen"
+                },
+                "filter": {
+                    "competency": "Kompetenz",
+                    "allCompetencies": "Alle Kompetenzen"
+                },
+                "list": {
+                    "needsReview": "Prüfung empfohlen ({{ count }})",
+                    "needsReviewHint": "Diese Fragen haben den Filter bestanden, wurden aber in mindestens einem Kriterium markiert. Prüfe sie, bevor du sie übernimmst.",
+                    "accepted": "Vom Filter akzeptiert ({{ count }})",
+                    "rejected": "Vom Filter abgelehnt ({{ count }})",
+                    "rejectedHint": "Diese Fragen sind am Filter gescheitert. Du kannst eine Frage trotzdem übernehmen, wenn du dem Urteil nicht zustimmst.",
+                    "inProgress": "{{ count }} Fragen werden noch generiert oder geprüft.",
+                    "failed": "{{ count }} Fragen konnten nicht generiert oder geprüft werden.",
+                    "empty": "Noch keine Fragen in dieser Gruppe.",
+                    "lectureUnit": "Vorlesungseinheit:",
+                    "showRationale": "Filterurteil anzeigen",
+                    "hideRationale": "Filterurteil ausblenden",
+                    "score": "Filterwert: {{ score }} / 100",
+                    "approve": "Übernehmen",
+                    "exclude": "Ausschließen",
+                    "reviewFailed": "Die Entscheidung konnte nicht gespeichert werden.",
+                    "reviewState": {
+                        "PENDING": "Nicht geprüft",
+                        "APPROVED": "Übernommen",
+                        "EXCLUDED": "Ausgeschlossen"
+                    },
+                    "difficulty": {
+                        "EASY": "Leicht",
+                        "MEDIUM": "Mittel",
+                        "HARD": "Schwer"
+                    },
+                    "failureModes": {
+                        "FACTUAL_ERROR": "Sachlicher Fehler",
+                        "AMBIGUOUS_CORRECT_ANSWER": "Mehrdeutige Antwort",
+                        "OFF_TOPIC": "Nicht zum Thema",
+                        "NEAR_DUPLICATE": "Reines Abfragen",
+                        "ILL_FORMED_DISTRACTORS": "Schwache Distraktoren"
+                    }
+                },
+                "errors": {
+                    "loadFailed": "Der Quizfragen-Pool konnte nicht geladen werden."
+                }
+            }
+        }
+    }
+}

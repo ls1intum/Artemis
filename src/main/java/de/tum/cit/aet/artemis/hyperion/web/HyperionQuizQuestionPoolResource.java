@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolReviewDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
 
 /**
@@ -137,8 +138,28 @@ public class HyperionQuizQuestionPoolResource {
     @PutMapping("courses/{courseId}/quiz-question-pool/settings")
     public ResponseEntity<HyperionCourseSettingsDTO> updateQuizQuestionPoolSettings(@PathVariable long courseId, @Valid @RequestBody HyperionCourseSettingsDTO settings) {
         log.debug("REST request to update the Hyperion settings of course [{}]", courseId);
+        if (!settings.hasCompleteDifficultyMix()) {
+            throw new BadRequestAlertException("The difficulty shares must add up to 100 percent", "QuizQuestionPool", "difficultyMix");
+        }
         courseRepository.findByIdElseThrow(courseId);
         return ResponseEntity.ok(poolService.updateSettings(courseId, settings));
+    }
+
+    /**
+     * PUT /courses/{courseId}/quiz-question-pool/questions/{questionId}/review : Record the review decision on one pool question.
+     *
+     * @param courseId   the id of the course
+     * @param questionId the id of the pool item
+     * @param review     the decision
+     * @return the updated item
+     */
+    @EnforceAtLeastEditorInCourse
+    @PutMapping("courses/{courseId}/quiz-question-pool/questions/{questionId}/review")
+    public ResponseEntity<QuizQuestionPoolItemDTO> updateQuizQuestionPoolReview(@PathVariable long courseId, @PathVariable long questionId,
+            @Valid @RequestBody QuizQuestionPoolReviewDTO review) {
+        log.debug("REST request to review quiz question pool item [{}] of course [{}]", questionId, courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(poolService.updateReviewState(courseId, questionId, review.reviewState()));
     }
 
     private void requireCompetencies(long courseId) {

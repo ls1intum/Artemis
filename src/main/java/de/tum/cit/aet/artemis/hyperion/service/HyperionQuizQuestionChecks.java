@@ -20,6 +20,16 @@ final class HyperionQuizQuestionChecks {
 
     private static final int TRUE_FALSE_OPTION_COUNT = 2;
 
+    /**
+     * Returns how many answer options a question of the given type carries: two for true-false, four otherwise.
+     *
+     * @param type the question type
+     * @return the option count the generator is asked for and the checks require
+     */
+    static int optionCountFor(QuizQuestionGenerationType type) {
+        return type == QuizQuestionGenerationType.TRUE_FALSE ? TRUE_FALSE_OPTION_COUNT : OPTION_COUNT;
+    }
+
     /** Length limits matching the size constraints of {@code GeneratedQuizQuestionDTO} and {@code GeneratedQuizAnswerOptionDTO}. */
     private static final int MAX_QUESTION_TITLE_LENGTH = 500;
 
@@ -110,7 +120,7 @@ final class HyperionQuizQuestionChecks {
             return Optional.of(Defect.DANGLING_REFERENCE);
         }
         List<GeneratedQuizAnswerOptionDTO> options = question.options();
-        int requiredOptions = question.type() == QuizQuestionGenerationType.TRUE_FALSE ? TRUE_FALSE_OPTION_COUNT : OPTION_COUNT;
+        int requiredOptions = optionCountFor(question.type());
         if (options == null || options.size() != requiredOptions) {
             return Optional.of(Defect.OPTION_COUNT);
         }
