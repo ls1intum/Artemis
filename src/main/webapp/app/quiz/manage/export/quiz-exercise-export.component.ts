@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, output, signal, untracked } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -67,21 +67,21 @@ export class QuizExerciseExportComponent {
                 this.course.set(courseResponse.body!);
                 // List the course's quizzes, then load each quiz's questions in parallel.
                 this.quizExerciseService.findForCourse(courseId).subscribe({
-                    next: (res: HttpResponse<QuizExercise[]>) => {
-                        const quizExercises = (res.body ?? []).filter((quizExercise): quizExercise is QuizExercise & { id: number } => quizExercise.id !== undefined);
+                    next: (courseQuizExercises) => {
+                        const quizExercises = courseQuizExercises.filter((quizExercise): quizExercise is QuizExercise & { id: number } => quizExercise.id !== undefined);
                         if (quizExercises.length === 0) {
                             this.questions.set([]);
                             this.isLoading.set(false);
                             return;
                         }
                         forkJoin(quizExercises.map((quizExercise) => this.quizExerciseService.find(quizExercise.id))).subscribe({
-                            next: (responses: HttpResponse<QuizExercise>[]) => {
+                            next: (loadedQuizExercises) => {
                                 const collected: QuizQuestion[] = [];
-                                responses.forEach((response, index) => {
+                                loadedQuizExercises.forEach((loadedQuizExercise, index) => {
                                     const quizExercise = quizExercises[index];
                                     // reconnect course and exercise in case we need this information later
                                     quizExercise.course = this.course();
-                                    response.body?.quizQuestions?.forEach((question) => {
+                                    loadedQuizExercise.quizQuestions?.forEach((question) => {
                                         question.exercise = quizExercise;
                                         collected.push(question);
                                     });

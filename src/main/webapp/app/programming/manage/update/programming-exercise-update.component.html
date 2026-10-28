@@ -9,6 +9,24 @@
         }
         <jhi-documentation-button [type]="documentationType" />
     </div>
+    <tumaet-ui-confirm-dialog key="hyperionSettingsReloadConfirmation" />
+    @if (generationSaveBlocked()) {
+        <div role="status" class="my-3 flex flex-wrap items-center gap-2" data-testid="hyperion-settings-save-blocked">
+            @if (generationActivity.statusLoadFailed()) {
+                <span jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"></span>
+                <button type="button" tumAetUiButton variant="outlined" (click)="generationActivity.retryStatus()" data-testid="hyperion-settings-retry-status">
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.retryStatus"></span>
+                </button>
+            } @else if (generationRefreshRequired()) {
+                <span jhiTranslate="artemisApp.hyperion.generationActivity.settingsContentNotValidated"></span>
+                <button type="button" tumAetUiButton variant="outlined" (click)="reloadSavedSettings()" data-testid="hyperion-settings-reload-saved">
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
+                </button>
+            } @else {
+                <span jhiTranslate="artemisApp.hyperion.generationActivity.checkingStatus"></span>
+            }
+        </div>
+    }
     <jhi-form-status-bar [formStatusSections]="formStatusSections()" />
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
         <jhi-exercise-group-timeline-lock #variantLock [exercise]="programmingExercise" [courseId]="courseId()" (exerciseChange)="programmingExercise = $event" />
@@ -60,10 +78,13 @@
                 <hr class="mb-5" />
             }
             <jhi-programming-exercise-problem
+                [editingLocked]="generationEditingLocked()"
+                [beforeStatementSave]="generationExerciseId() !== undefined ? beforeStatementSave : undefined"
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 (problemStatementChange)="calculateFormStatusSections()"
+                (problemStatementSaved)="onCanonicalStatementSaved($event)"
                 (programmingExerciseChange)="programmingExercise = $event"
             />
             <hr class="mb-5" />
@@ -83,12 +104,19 @@
                     <jhi-exercise-update-plagiarism [(exercise)]="programmingExercise" />
                 </jhi-feature-overlay>
             }
+            @if (programmingExercise.id && !isImportFromExistingExercise && !isImportFromFile && !isImportFromSharing) {
+                <div class="mb-4! flex flex-wrap items-start gap-2" data-testid="programming-settings-ai-actions">
+                    <jhi-create-variant-with-ai-button
+                        [exercise]="programmingExercise"
+                        [disabledReason]="editForm.dirty || variantSourceHasUnsavedChanges || isSaving() ? 'artemisApp.hyperion.generation.blocker.saveBeforeVariant' : undefined"
+                    />
+                </div>
+            }
             <jhi-form-footer
                 [isCreation]="!programmingExercise.id"
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [isSaving]="isSaving()"
-                [isGeneratingWithAi]="isGeneratingWithAi()"
-                [showGenerateWithAi]="showGenerateWithAi()"
+                [isDisabled]="generationFullSaveBlocked()"
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"
                 [switchEditMode]="switchEditMode"
@@ -96,7 +124,6 @@
                 [invalidReasons]="getInvalidReasons()"
                 [revalidate]="revalidate"
                 (save)="save()"
-                (generateWithAi)="saveWithAi()"
                 (onCancel)="previousState()"
             />
         </div>
