@@ -66,7 +66,7 @@
                 <hr class="mb-5" />
             }
             <!-- An existing window is also shown in the simple mode, as a date change there can invalidate it, which blocks saving, and the instructor must be able to fix it -->
-            @if (!isExamMode() && (isEditFieldDisplayedRecord().buildTimeWindow || programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow)) {
+            @if (isBuildTimeWindowDisplayed()) {
                 <jhi-programming-exercise-build-time-window
                     [programmingExercise]="programmingExercise"
                     [buildTimeWindow]="programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow"

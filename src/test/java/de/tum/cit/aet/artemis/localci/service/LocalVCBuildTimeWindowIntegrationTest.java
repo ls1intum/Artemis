@@ -164,6 +164,19 @@ class LocalVCBuildTimeWindowIntegrationTest extends AbstractProgrammingIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void pushOutsideTheWindowStaysInTheAccessLogWithItsCommitHash() throws Exception {
+        setBuildTimeWindow(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2));
+
+        PushOutcome outcome = commitAndPushAs(student1Login);
+
+        assertThat(outcome.pushResult().getMessages()).contains("not built or graded");
+        // the entry is finished after the hook answered, so wait for it
+        await().untilAsserted(() -> assertThat(vcsAccessLogRepository.findNewestUserEntryByParticipationId(outcome.participationId())).isPresent().get()
+                .satisfies(accessLog -> assertThat(accessLog.getCommitHash()).isEqualTo(outcome.commit())));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void pushBeforeAWindowWithOnlyAStartMentionsTheStart() throws Exception {
         setBuildTimeWindow(ZonedDateTime.now().plusHours(1), null);
 
