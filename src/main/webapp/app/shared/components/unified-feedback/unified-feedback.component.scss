@@ -333,6 +333,10 @@
     border-top: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
 }
 
+:host(.unified-feedback-inline-editor) .unified-feedback--assessment .unified-feedback-assessment-points {
+    width: 7rem;
+}
+
 .unified-feedback--assessment {
     padding: 0.75rem;
     border-radius: 1rem;
