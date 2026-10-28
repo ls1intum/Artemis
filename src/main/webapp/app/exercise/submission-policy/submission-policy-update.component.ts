@@ -36,10 +36,7 @@ import { KeyValuePipe } from '@angular/common';
                 <div class="grid grid-cols-12 gap-4 mb-3">
                     <div class="col-span-12 md:col-span-6">
                         <ng-container>
-                            <label
-                                class="label-narrow"
-                                jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle"
-                                for="field_submissionLimitExceededPenalty"
+                            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimit"
                                 >Submission limit</label
                             >
                             <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription" />
