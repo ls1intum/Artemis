@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.tutorialgroup;
 
 import static de.tum.cit.aet.artemis.tutorialgroup.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -325,6 +327,8 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
         // leaving its row in the list without a number.
         assertThat(counts).containsExactlyInAnyOrder(new TutorialGroupFreePeriodSessionCountDTO(morningOnly.getId(), 1),
                 new TutorialGroupFreePeriodSessionCountDTO(quietDay.getId(), 0));
+        String body = request.performMvcRequest(get(countsPerPeriodPath())).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(body).contains("\"count\":0");
     }
 
     /**

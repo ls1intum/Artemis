@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal }
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/foundation/util/global.utils';
-import { TutorialGroupsConfigurationFormData } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -11,8 +10,8 @@ import { Subject } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
-import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupsConfigurationService, TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({
     selector: 'jhi-create-tutorial-groups-configuration',
@@ -30,7 +29,6 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
 
     ngUnsubscribe = new Subject<void>();
 
-    newTutorialGroupsConfiguration: TutorialGroupConfigurationDTO = {};
     readonly isLoading = signal<boolean>(false);
     readonly course = signal<Course>(undefined!);
 
@@ -50,20 +48,16 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                 next: (courseResult) => {
                     if (courseResult.body) {
                         this.course.set(courseResult.body);
-                        this.newTutorialGroupsConfiguration = {};
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
 
-    createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationFormData) {
-        const { period, usePublicTutorialGroupChannels, useTutorialGroupChannels } = formData;
+    createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationSettings) {
         this.isLoading.set(true);
-        this.newTutorialGroupsConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
-        this.newTutorialGroupsConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
         this.tutorialGroupsConfigurationService
-            .create(this.newTutorialGroupsConfiguration, this.course().id!, period ?? [])
+            .create(this.course().id!, formData)
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);
@@ -71,8 +65,8 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (resp) => {
-                    this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
+                next: (configuration) => {
+                    this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configuration);
                     this.courseStorageService.updateCourse(this.course());
                     void this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups-checklist']);
                 },
