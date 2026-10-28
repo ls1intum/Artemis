@@ -64,14 +64,15 @@
             @if (!isSimpleMode()) {
                 <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
                 <hr class="mb-5" />
-                @if (isEditFieldDisplayedRecord().buildTimeWindow && !isExamMode()) {
-                    <jhi-programming-exercise-build-time-window
-                        [programmingExercise]="programmingExercise"
-                        [buildTimeWindow]="programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow"
-                        [error]="getBuildTimeWindowError()"
-                    />
-                    <hr class="mb-5" />
-                }
+            }
+            <!-- An existing window is also shown in the simple mode, as a date change there can invalidate it, which blocks saving, and the instructor must be able to fix it -->
+            @if (!isExamMode() && (isEditFieldDisplayedRecord().buildTimeWindow || programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow)) {
+                <jhi-programming-exercise-build-time-window
+                    [programmingExercise]="programmingExercise"
+                    [buildTimeWindow]="programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow"
+                    [error]="getBuildTimeWindowError()"
+                />
+                <hr class="mb-5" />
             }
             <jhi-programming-exercise-problem
                 [editingLocked]="generationEditingLocked()"

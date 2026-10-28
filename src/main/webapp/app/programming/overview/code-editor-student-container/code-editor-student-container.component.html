@@ -19,7 +19,6 @@
     }
 
     @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
-        <jhi-programming-exercise-build-window-notice [exercise]="exercise()" [practiceMode]="!!participation()?.testRun" />
         <jhi-code-editor-container
             [isProblemStatementVisible]="false"
             [editable]="!repositoryIsLocked()"

@@ -1095,13 +1095,21 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.dueDate = undefined;
         });
 
-        it('is only displayed in the advanced mode', () => {
+        it('is displayed in the advanced mode, but in the simple mode only if the exercise has a window', () => {
             comp.isSimpleMode.set(true);
             fixture.detectChanges();
             expect(windowComponent()).toBeNull();
 
             comp.isSimpleMode.set(false);
             fixture.detectChanges();
+            expect(windowComponent()).not.toBeNull();
+        });
+
+        it('is displayed in the simple mode if the exercise has a window, so that a window invalidated by a date change can be fixed', () => {
+            comp.isSimpleMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            fixture.detectChanges();
+
             expect(windowComponent()).not.toBeNull();
         });
 

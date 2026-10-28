@@ -16,6 +16,7 @@ import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.service.vcs.AbstractVersionControlService;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 
 /**
  * Aspect for logging execution of service and repository Spring components.
@@ -101,6 +102,11 @@ public class LoggingAspect {
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
         if (AbstractVersionControlService.isReadFullyShortReadOfBlockException(e)) {
             // ignore
+            return;
+        }
+
+        if (e instanceof BuildOutsideTimeWindowException) {
+            // ignore, a push outside of the build time window is an expected case that is kept but not built, and would otherwise flood the error log
             return;
         }
 
