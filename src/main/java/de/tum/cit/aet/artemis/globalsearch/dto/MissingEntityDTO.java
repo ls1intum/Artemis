@@ -20,6 +20,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *                      stored for such a unit is indistinguishable from content whose unit the database has lost
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MissingEntityDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, long entityId, @Nullable @Schema(nullable = true) String title,
-        @Nullable @Schema(nullable = true) Long lectureId) {
+public record MissingEntityDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long entityId,
+        @Nullable @Schema(nullable = true) String title, @Nullable @Schema(nullable = true) Long lectureId) {
 }

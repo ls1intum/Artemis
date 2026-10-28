@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.course.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * A course the global search {@code course:} filter can offer.
  *
@@ -11,5 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *                   active, since the people who can see it before its start are the staff preparing it
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseForSearchFilterDTO(long id, String title, boolean active) {
+public record CourseForSearchFilterDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, String title,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean active) {
 }
