@@ -12,23 +12,23 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 
 describe('ExternalSubmissionDialogComponent', () => {
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;
     let component: ExternalSubmissionDialogComponent;
     let externalSubmissionService: ExternalSubmissionService;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(async () => {
         dialogRefCloseSpy = vi.fn();
-        dialogRef = { close: dialogRefCloseSpy, onClose: new Subject<any>() } as unknown as DynamicDialogRef;
+        dialogRef = { close: dialogRefCloseSpy, dismiss: dialogRefCloseSpy, onClose: new Subject<any>() } as unknown as TumAetUiDialogRef;
 
         await TestBed.configureTestingModule({
             imports: [ExternalSubmissionDialogComponent],
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogRef, useValue: dialogRef },
                 MockProvider(EventManager),
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),

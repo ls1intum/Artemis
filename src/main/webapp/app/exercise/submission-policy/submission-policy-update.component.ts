@@ -1,3 +1,7 @@
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+import { TumAetUiInputDirective, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
 import { Component, effect, input, output, signal, untracked } from '@angular/core';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -9,27 +13,28 @@ import { KeyValuePipe } from '@angular/common';
 @Component({
     selector: 'jhi-submission-policy-update',
     template: `
-        <div class="form-group-narrow mb-3">
+        <div class="mb-3 flex flex-col gap-1">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title" for="field_submissionPolicy">Submission Policy</label>
-            <select
-                #policy="ngModel"
+            <tumaet-ui-select
                 required
-                class="form-select"
+                [options]="[
+                    { value: 'none', label: 'artemisApp.programmingExercise.submissionPolicy.none.optionLabel' | artemisTranslate },
+                    { value: 'lock_repository', label: 'artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel' | artemisTranslate },
+                    { value: 'submission_penalty', label: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel' | artemisTranslate },
+                ]"
+                optionValue="value"
+                optionLabel="label"
                 [ngModel]="selectedSubmissionPolicyType()"
                 (ngModelChange)="onSubmissionPolicyTypeChanged($event)"
                 name="submissionPolicyType"
-                id="field_submissionPolicy"
+                inputId="field_submissionPolicy"
                 [disabled]="!editable()"
-            >
-                <option value="none" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.none.optionLabel"></option>
-                <option value="lock_repository" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel"></option>
-                <option value="submission_penalty" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel"></option>
-            </select>
+            />
         </div>
         @if (!isNonePolicy()) {
             <form [formGroup]="form">
-                <div class="row mb-3">
-                    <div class="col">
+                <div class="grid grid-cols-12 gap-4 mb-3">
+                    <div class="col-span-12 md:col-span-6">
                         <ng-container>
                             <label
                                 class="label-narrow"
@@ -38,12 +43,13 @@ import { KeyValuePipe } from '@angular/common';
                                 >Submission limit</label
                             >
                             <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription" />
-                            <div class="input-group">
+                            <div class="flex items-center gap-2">
                                 <input
+                                    tumAetUiInput
                                     required
                                     type="number"
                                     formControlName="submissionLimit"
-                                    class="form-control"
+                                    class=""
                                     step="1"
                                     name="submissionLimit"
                                     id="field_submissionLimit"
@@ -52,14 +58,14 @@ import { KeyValuePipe } from '@angular/common';
                             </div>
                             @for (e of submissionLimitControl.errors! | keyvalue; track e) {
                                 @if (submissionLimitControl.invalid && (submissionLimitControl.dirty || submissionLimitControl.touched)) {
-                                    <div class="alert alert-danger">
+                                    <div class="rounded-md border p-4 border-state-danger text-state-danger bg-state-danger/10">
                                         <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning' + '.' + e.key"></div>
                                     </div>
                                 }
                             }
                         </ng-container>
                     </div>
-                    <div class="col">
+                    <div class="col-span-12 md:col-span-6">
                         @if (this.isSubmissionPenaltyPolicy) {
                             <label
                                 class="label-narrow"
@@ -68,20 +74,18 @@ import { KeyValuePipe } from '@angular/common';
                                 >Penalty after Exceeding Submission limit</label
                             >
                             <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription" />
-                            <div class="input-group">
-                                <input
+                            <div class="flex items-center gap-2">
+                                <jhi-points-input
                                     required
-                                    type="number"
-                                    class="form-control"
                                     formControlName="exceedingPenalty"
                                     name="submissionLimitExceededPenalty"
-                                    id="field_submissionLimitExceededPenalty"
+                                    inputId="field_submissionLimitExceededPenalty"
                                     (input)="updateExceedingPenalty()"
                                 />
                             </div>
                             @for (e of exceedingPenaltyControl.errors! | keyvalue; track e) {
                                 @if (exceedingPenaltyControl.invalid && (exceedingPenaltyControl.dirty || exceedingPenaltyControl.touched)) {
-                                    <div class="alert alert-danger">
+                                    <div class="rounded-md border p-4 border-state-danger text-state-danger bg-state-danger/10">
                                         <div
                                             [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning' + '.' + e.key"
                                         ></div>
@@ -95,7 +99,17 @@ import { KeyValuePipe } from '@angular/common';
         }
     `,
     styleUrls: ['../../programming/shared/programming-exercise-form.scss'],
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, HelpIconComponent, KeyValuePipe],
+    imports: [
+        PointsInputComponent,
+        TumAetUiSelectComponent,
+        ArtemisTranslatePipe,
+        TumAetUiInputDirective,
+        TranslateDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        HelpIconComponent,
+        KeyValuePipe,
+    ],
 })
 export class SubmissionPolicyUpdateComponent {
     // Not input.required: the grading page binds [formInvalid]="policyUpdate.invalid" before this

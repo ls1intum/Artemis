@@ -13,7 +13,7 @@
                     @if (selectable()) {
                         <tumaet-ui-tag
                             severity="secondary"
-                            styleClass="applied-count-tag"
+                            class="applied-count-tag"
                             [value]="'artemisApp.assessmentInstructions.appliedCount' | artemisTranslate: appliedInstructionCount()"
                         />
                     }
@@ -47,7 +47,7 @@
     @switch (exercise().type) {
         @case (ExerciseType.PROGRAMMING) {
             @let programmingExerciseValue = this.programmingExercise();
-            <div class="mb-3">
+            <div class="mb-4!">
                 <a jhiSecureLink [href]="programmingExerciseValue?.solutionParticipation?.repositoryUri">
                     <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
                 </a>

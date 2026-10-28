@@ -1,15 +1,16 @@
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgClass } from '@angular/common';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-included-in-score-badge',
     templateUrl: './included-in-score-badge.component.html',
     styleUrls: ['./included-in-score-badge.component.scss'],
-    imports: [NgClass, NgbTooltip],
+    imports: [TumAetUiTooltipDirective, NgClass],
 })
 export class IncludedInScoreBadgeComponent {
     private translateService = inject(TranslateService);
@@ -24,18 +25,18 @@ export class IncludedInScoreBadgeComponent {
     readonly badgeClass = computed<string | undefined>(() => {
         switch (this.includedInOverallScore()) {
             case IncludedInOverallScore.INCLUDED_AS_BONUS:
-                return 'bg-warning';
+                return 'bg-state-warning';
             case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                return 'bg-success';
+                return 'bg-state-success';
             case IncludedInOverallScore.NOT_INCLUDED:
-                return 'bg-secondary';
+                return 'bg-surface-sunken';
             default:
                 return undefined;
         }
     });
 
     readonly translatedEnum = computed<string>(() => this.translateBadge(''));
-    readonly translatedTooltip = computed<string>(() => this.translateBadge('Tooltip'));
+    readonly translatedTooltip = computed<string>(() => this.translateBadge('TumAetUiTooltipDirective'));
 
     private translateBadge(suffix: string): string {
         this.currentLang(); // register the language dependency so the label re-translates on a language switch

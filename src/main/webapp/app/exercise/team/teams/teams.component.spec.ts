@@ -23,7 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
  * The component under test uses signal-based state (`teams`, `exercise`, `isLoading`, ...).
  * The mocked services emit synchronously and we assert against signal values directly.
  * We replace the standalone imports of `TeamsComponent` with a minimal set so the test
- * doesn't pull in real child components (which would otherwise require `DialogService`,
+ * doesn't pull in real child components (which would otherwise require `TumAetUiDialogService`,
  * `localStorage`, etc.).
  */
 describe('TeamsComponent', () => {

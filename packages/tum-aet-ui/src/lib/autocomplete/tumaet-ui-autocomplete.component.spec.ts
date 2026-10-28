@@ -52,6 +52,33 @@ describe('TumAetUiAutoCompleteComponent (multiple mode)', () => {
         fixture.detectChanges();
     }
 
+    it('announces disabled suggestions and skips them during keyboard and pointer selection', async () => {
+        fixture.componentRef.setInput('optionLabel', 'label');
+        fixture.componentRef.setInput('optionDisabled', 'disabled');
+        const disabled = { label: 'Assigned student', disabled: true };
+        const enabled = { label: 'Available student', disabled: false };
+        const selected = vi.fn();
+        component.optionSelected.subscribe(selected);
+        await search('student', [disabled, enabled]);
+        expect(options()[0].getAttribute('aria-disabled')).toBe('true');
+        options()[0].click();
+        expect(selected).not.toHaveBeenCalled();
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(selected).toHaveBeenCalledWith(expect.objectContaining({ value: enabled }));
+    });
+
+    it('clears the form value and closes suggestions without reopening from a pending search', async () => {
+        const changed = vi.fn();
+        component.registerOnChange(changed);
+        await search('student', ['student']);
+        component.clear();
+        fixture.detectChanges();
+        expect(input().value).toBe('');
+        expect(listbox()).toBeNull();
+        expect(changed).toHaveBeenLastCalledWith([]);
+    });
+
     it('emits the debounced complete query once rapid keystrokes settle', () => {
         vi.useFakeTimers();
         fixture.componentRef.setInput('debounceMs', 300);

@@ -1,10 +1,11 @@
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -32,19 +33,19 @@ describe('ExampleSubmissionImportComponent', () => {
     let exampleSubmissionService: ExampleSubmissionService;
     let getSubmissionSizeSpy: ReturnType<typeof vi.spyOn>;
     let exercise: Exercise;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     beforeEach(() => {
         dialogRef = {
             close: vi.fn(),
             onClose: new Subject<Submission | undefined>(),
-        } as unknown as DynamicDialogRef;
+        } as unknown as TumAetUiDialogRef;
 
         TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: TumAetUiDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),

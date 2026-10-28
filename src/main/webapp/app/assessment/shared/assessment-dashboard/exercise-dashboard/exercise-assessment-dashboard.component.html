@@ -13,14 +13,14 @@
 @if (exercise()) {
     <div>
         @if (!isTestRun()) {
-            <div class="row my-3 d-flex justify-content-between">
-                <div class="col-12 col-md-7 col-xl-4">
-                    <p class="h3">
+            <div class="flex flex-wrap gap-y-2 my-4! justify-between">
+                <div class="w-full md:w-7/12 xl:w-4/12">
+                    <p class="text-2xl font-semibold">
                         {{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:
                         {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.title.' + yourStatusTitle | artemisTranslate }}
                     </p>
                     <jhi-tutor-participation-graph
-                        class="d-block"
+                        class="block"
                         [exercise]="exercise()"
                         [tutorParticipation]="tutorParticipation()"
                         [numberOfSubmissions]="numberOfSubmissions()"
@@ -37,7 +37,7 @@
                 </div>
 
                 @if (numberOfSubmissions().total > 0) {
-                    <div class="col-12 col-md-5 col-xl-4 d-flex justify-content-center justify-content-lg-end chart-col">
+                    <div class="w-full md:w-5/12 xl:w-4/12 flex justify-center lg:justify-end chart-col">
                         <div class="chart overflow-hidden">
                             <tumaet-ui-doughnut-chart
                                 class="h-[150px] w-[330px]"
@@ -50,20 +50,20 @@
                     </div>
                 }
 
-                <div class="col-12 col-lg-7 col-xl-4 table-col">
+                <div class="w-full lg:w-7/12 xl:w-4/12 table-col">
                     <jhi-side-panel
                         [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate"
                         [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
                     >
-                        <div class="row g-0 mb-1">
-                            <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.submissions"></div>
-                            <div class="col-5">
-                                <span class="text-success">{{ numberOfSubmissions().inTime }}</span>
+                        <div class="flex flex-wrap gap-y-2 gap-0 mb-1">
+                            <div class="w-7/12" jhiTranslate="artemisApp.assessmentDashboard.submissions"></div>
+                            <div class="w-5/12">
+                                <span class="text-state-success">{{ numberOfSubmissions().inTime }}</span>
                                 @if (numberOfSubmissions().late > 0) {
                                     <span> - </span>
                                 }
                                 @if (numberOfSubmissions().late > 0) {
-                                    <span class="text-danger">{{ numberOfSubmissions().late }}</span>
+                                    <span class="text-state-danger">{{ numberOfSubmissions().late }}</span>
                                 }
                                 |
                                 {{ numberOfTutorAssessments() }} ({{ tutorAssessmentPercentage() }}%)
@@ -71,9 +71,9 @@
                         </div>
 
                         @if (complaintsEnabled()) {
-                            <div class="row g-0 mb-1">
-                                <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.complaints"></div>
-                                <div class="col-5">
+                            <div class="flex flex-wrap gap-y-2 gap-0 mb-1">
+                                <div class="w-7/12" jhiTranslate="artemisApp.assessmentDashboard.complaints"></div>
+                                <div class="w-5/12">
                                     @if (exercise().isAtLeastInstructor) {
                                         <div>
                                             <a [routerLink]="complaintsLink()">
@@ -98,9 +98,9 @@
                         }
 
                         @if (feedbackRequestEnabled()) {
-                            <div class="row g-0 mb-1">
-                                <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.moreFeedbackRequests"></div>
-                                <div class="col-5">
+                            <div class="flex flex-wrap gap-y-2 gap-0 mb-1">
+                                <div class="w-7/12" jhiTranslate="artemisApp.assessmentDashboard.moreFeedbackRequests"></div>
+                                <div class="w-5/12">
                                     @if (exercise().isAtLeastInstructor) {
                                         <div>
                                             <a [routerLink]="moreFeedbackRequestsLink()">
@@ -128,9 +128,9 @@
                             </div>
                         }
 
-                        <div class="row g-0 mb-1">
-                            <div class="col-7" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></div>
-                            <div class="col-5">{{ ratingsDashboardInfo().total }} | {{ ratingsDashboardInfo().tutor }}</div>
+                        <div class="flex flex-wrap gap-y-2 gap-0 mb-1">
+                            <div class="w-7/12" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></div>
+                            <div class="w-5/12">{{ ratingsDashboardInfo().total }} | {{ ratingsDashboardInfo().tutor }}</div>
                         </div>
                         <div class="mt-1 grid gap-2" [class.grid-cols-2]="complaintsEnabled()">
                             <a tumAetUiButton severity="secondary" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
@@ -153,14 +153,14 @@
                         </div>
                     </jhi-side-panel>
 
-                    <div class="me-2 d-block float-end">
+                    <div class="me-2 block float-right">
                         <div>
-                            <div class="square bg-success d-inline-block"></div>
+                            <div class="square bg-state-success inline-block"></div>
                             <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.stats.intime"></span>
                         </div>
                         @if (numberOfSubmissions().late > 0) {
                             <div>
-                                <div class="square bg-danger d-inline-block"></div>
+                                <div class="square bg-state-danger inline-block"></div>
                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.stats.late"></span>
                             </div>
                         }
@@ -207,7 +207,7 @@
                 }
 
                 @if (exercise().type === ExerciseType.PROGRAMMING) {
-                    <div class="col-12">
+                    <div class="w-full">
                         <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.exampleSolution"></h4>
                         <!-- The exercise ID is needed for the repository-scoped token, while the online IDE is intentionally disabled for the solution clone. -->
                         <jhi-code-button
@@ -228,7 +228,7 @@
                 }
 
                 @if (exercise().gradingCriteria && exercise().gradingCriteria!.length > 0) {
-                    <div class="col-md-6 mt-4">
+                    <div class="w-full md:w-6/12 mt-6!">
                         <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.structuredGradingInstructions"></h4>
                         <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise().gradingCriteria || []" />
                     </div>
@@ -237,10 +237,10 @@
         }
 
         @if (tutorParticipationStatus() === NOT_PARTICIPATED && !isTestRun()) {
-            <div class="col-12 text-center mt-2 mb-4">
+            <div class="w-full text-center mt-2 mb-6!">
                 <p jhiTranslate="artemisApp.exerciseAssessmentDashboard.pleaseContactIfUnclear"></p>
 
-                <button type="button" data-testid="participate-in-assessment" class="btn btn-primary p-1" (click)="readInstruction()" [disabled]="isLoading()">
+                <button type="button" data-testid="participate-in-assessment" class="p-1" (click)="readInstruction()" [disabled]="isLoading()" tumAetUiButton severity="primary">
                     @if (exercise().gradingInstructions && exercise().gradingInstructions!.length > 0) {
                         <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.readAndUnderstood"></span>
                     }
@@ -260,13 +260,13 @@
             isExamMode() &&
             !isTestRun()
         ) {
-            <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-1">
+            <div class="mb-4! flex w-full items-center justify-between gap-2" data-testid="correction-round-1">
                 <div class="flex items-center gap-1">
                     <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
                     <fa-icon
                         class="text-muted-color"
                         [icon]="faQuestionCircle"
-                        ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                        tumAetUiTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
                     />
                 </div>
                 <jhi-second-correction-enable-button
@@ -279,10 +279,10 @@
         }
 
         @if (tutorParticipationStatus() !== NOT_PARTICIPATED || isTestRun()) {
-            <div class="d-flex">
-                <div class="flex-grow-1">
+            <div class="flex">
+                <div class="grow">
                     @if (tutorParticipationStatus() === REVIEWED_INSTRUCTIONS && !isTestRun()) {
-                        <div class="alert alert-warning row" role="alert">
+                        <tumaet-ui-message class="flex flex-wrap gap-y-2" role="alert" severity="warn">
                             <span
                                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.totalExampleSubmissions"
                                 [translateValues]="{
@@ -291,22 +291,24 @@
                                     toAssess: stats.toAssess.total,
                                 }"
                             ></span>
-                        </div>
+                        </tumaet-ui-message>
                     }
 
                     @if (tutorParticipationStatus() !== NOT_PARTICIPATED && !isTestRun()) {
-                        <div class="row">
+                        <div class="flex flex-wrap gap-y-2">
                             @if (stats.toReview.total > 0) {
-                                <div class="col-6">
-                                    <p class="h3">
+                                <div class="w-6/12">
+                                    <p class="text-2xl font-semibold">
                                         {{ 'artemisApp.exerciseAssessmentDashboard.readSubmissions' | artemisTranslate }} ({{ stats.toReview.done }} / {{ stats.toReview.total }})
                                     </p>
 
                                     @if (stats.toReview.done < stats.toReview.total) {
                                         <button
                                             type="button"
-                                            class="btn btn-primary review-example-submission mb-4"
+                                            class="review-example-submission mb-6!"
                                             (click)="openExampleSubmission(nextExampleSubmissionId(), true, false)"
+                                            tumAetUiButton
+                                            severity="primary"
                                         >
                                             @if (stats.toReview.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
@@ -324,13 +326,16 @@
                                                 <li>
                                                     <button
                                                         type="button"
-                                                        class="btn btn-link review-example-submission"
+                                                        class="review-example-submission"
                                                         (click)="openExampleSubmission(exampleSubmission.id!, true, false)"
+                                                        tumAetUiButton
+                                                        severity="primary"
+                                                        variant="text"
                                                     >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.readExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
-                                                        <fa-icon class="text-success" [icon]="faCheckCircle" />
+                                                        <fa-icon class="text-state-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>
                                             }
@@ -340,16 +345,18 @@
                             }
 
                             @if (stats.toAssess.total > 0 && stats.toReview.done >= stats.toReview.total) {
-                                <div class="col-6">
-                                    <p class="h3">
+                                <div class="w-6/12">
+                                    <p class="text-2xl font-semibold">
                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessedSubmissions' | artemisTranslate }} ({{ stats.toAssess.done }} /
                                         {{ stats.toAssess.total }})
                                     </p>
                                     @if (stats.toAssess.done < stats.toAssess.total) {
                                         <button
                                             type="button"
-                                            class="btn btn-primary assess-example-submission mb-4"
+                                            class="assess-example-submission mb-6!"
                                             (click)="openExampleSubmission(nextExampleSubmissionId(), false, true)"
+                                            tumAetUiButton
+                                            severity="primary"
                                         >
                                             @if (stats.toAssess.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
@@ -367,13 +374,16 @@
                                                 <li>
                                                     <button
                                                         type="button"
-                                                        class="btn btn-link assess-example-submission"
+                                                        class="assess-example-submission"
                                                         (click)="openExampleSubmission(exampleSubmission.id!, false, true)"
+                                                        tumAetUiButton
+                                                        severity="primary"
+                                                        variant="text"
                                                     >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
-                                                        <fa-icon class="text-success" [icon]="faCheckCircle" />
+                                                        <fa-icon class="text-state-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>
                                             }
@@ -384,17 +394,17 @@
                         </div>
                     }
                     @if (submissionLockLimitReached() && tutorParticipationStatus() !== REVIEWED_INSTRUCTIONS) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></div>
+                        <tumaet-ui-message severity="error"><span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></span></tumaet-ui-message>
                     }
                     @if (assessmentNotPossibleYetReason(); as assessmentNotPossibleYet) {
-                        <p-message severity="info" id="assessment-not-possible-yet" class="flex items-center gap-1 mb-3">
+                        <tumaet-ui-message severity="info" id="assessment-not-possible-yet" class="flex items-center gap-1 mb-4!">
                             <span [jhiTranslate]="assessmentNotPossibleYet.translationKey" [translateValues]="{ date: assessmentNotPossibleYet.date | artemisDate }"></span>
-                        </p-message>
+                        </tumaet-ui-message>
                     }
                     @for (correctionRound of correctionRoundIndices(); track correctionRound) {
                         <div [attr.data-testid]="'correction-round-' + correctionRound">
                             @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
-                                <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-header">
+                                <div class="mb-4! flex w-full items-center justify-between gap-2" data-testid="correction-round-header">
                                     <div class="flex items-center gap-1">
                                         @if (!isExamMode()) {
                                             <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
@@ -410,7 +420,7 @@
                                             <fa-icon
                                                 class="text-muted-color"
                                                 [icon]="faQuestionCircle"
-                                                ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                                                tumAetUiTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
                                             />
                                         }
                                     </div>
@@ -435,9 +445,9 @@
                                     <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.testRunSubmissions"></h4>
                                 }
                                 @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {
-                                    <div class="table-responsive">
+                                    <div class="overflow-x-auto">
                                         @if (showSubmissionsForRound(correctionRound)) {
-                                            <table class="table exercise-table">
+                                            <table class="w-full text-left exercise-table" tumAetUiTable>
                                                 <thead>
                                                     <tr
                                                         jhiSort
@@ -478,15 +488,19 @@
                                                                 </td>
                                                             }
                                                             <td>
-                                                                <span [pTooltip]="assessmentNotPossibleYetTooltip()">
+                                                                <span [tumAetUiTooltip]="assessmentNotPossibleYetTooltip()">
                                                                     <a
                                                                         data-testid="start-new-assessment"
-                                                                        class="btn btn-success btn-sm"
                                                                         [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink('new')"
                                                                         [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                        [class.disabled]="openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()"
+                                                                        [class.pointer-events-none]="
+                                                                            openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()
+                                                                        "
                                                                         [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
                                                                         [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
+                                                                        tumAetUiButton
+                                                                        severity="success"
+                                                                        size="small"
                                                                     >
                                                                         @if (openingAssessmentEditorForNewSubmission()) {
                                                                             <fa-icon [icon]="faSpinner" animation="spin" />
@@ -517,16 +531,18 @@
                                                             }
                                                             <td>
                                                                 @if ((isTestRun() && complaints().length === 0) || !isTestRun()) {
-                                                                    <span [pTooltip]="assessmentNotPossibleYetTooltip()">
+                                                                    <span [tumAetUiTooltip]="assessmentNotPossibleYetTooltip()">
                                                                         @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
                                                                             <a
                                                                                 [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
                                                                                 [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                                class="btn btn-warning btn-sm"
                                                                                 id="continue-assessment"
-                                                                                [class.disabled]="!!assessmentNotPossibleYetReason()"
+                                                                                [class.pointer-events-none]="!!assessmentNotPossibleYetReason()"
                                                                                 [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
                                                                                 [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
+                                                                                tumAetUiButton
+                                                                                severity="warn"
+                                                                                size="small"
                                                                             >
                                                                                 <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{
                                                                                     'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
@@ -537,11 +553,13 @@
                                                                                 <a
                                                                                     [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
                                                                                     [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                                    class="btn btn-primary btn-sm"
                                                                                     data-testid="open-assessment"
-                                                                                    [class.disabled]="!!assessmentNotPossibleYetReason()"
+                                                                                    [class.pointer-events-none]="!!assessmentNotPossibleYetReason()"
                                                                                     [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
                                                                                     [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
+                                                                                    tumAetUiButton
+                                                                                    severity="primary"
+                                                                                    size="small"
                                                                                 >
                                                                                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                                                     &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
@@ -559,9 +577,13 @@
                                         } @else {
                                             <jhi-assessment-warning [exercise]="exercise()" />
                                             @if (!exercise().teamMode) {
-                                                <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></div>
+                                                <tumaet-ui-message severity="info"
+                                                    ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></span
+                                                ></tumaet-ui-message>
                                             } @else {
-                                                <div class="alert alert-warning" jhiTranslate="artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages"></div>
+                                                <tumaet-ui-message severity="warn"
+                                                    ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages"></span
+                                                ></tumaet-ui-message>
                                             }
                                         }
                                         @if (
@@ -569,7 +591,7 @@
                                             (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun()) &&
                                             numberOfSubmissions().inTime !== numberOfAssessmentsOfCorrectionRounds()[correctionRound].inTime
                                         ) {
-                                            <div class="alert alert-info">
+                                            <tumaet-ui-message severity="info">
                                                 <span
                                                     jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfo"
                                                     [translateValues]="{
@@ -583,23 +605,29 @@
                                                         [translateValues]="{ firstRoundAssessments: firstRoundAssessments() }"
                                                     ></span>
                                                 }
-                                            </div>
+                                            </tumaet-ui-message>
                                         }
                                     </div>
                                 }
                             }
                             @if (numberOfCorrectionRoundsEnabled() <= correctionRound) {
-                                <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></div>
+                                <tumaet-ui-message severity="info"
+                                    ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></span
+                                ></tumaet-ui-message>
                             }
                         </div>
                     }
                     <!-- Complaints -->
                     @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {
-                        <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.complaints"></h4>
-                        <fa-icon class="text-secondary" [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate" />
-                        <div class="table-responsive">
+                        <h4 class="inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.complaints"></h4>
+                        <fa-icon
+                            class="text-(--tumaet-ui-muted-color)"
+                            [icon]="faQuestionCircle"
+                            [tumAetUiTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"
+                        />
+                        <div class="overflow-x-auto">
                             @if (submissionsWithComplaints() && submissionsWithComplaints()!.length > 0) {
-                                <table class="table exercise-table">
+                                <table class="w-full text-left exercise-table" tumAetUiTable>
                                     <thead>
                                         <tr jhiSort [(predicate)]="sortPredicates[1]" [(ascending)]="reverseOrders[1]" (sortChange)="sortComplaintRows()">
                                             <th>#</th>
@@ -643,30 +671,32 @@
                                                     @if (complaintService.shouldHighlightComplaint(submissionWithComplaint.complaint)) {
                                                         <fa-icon
                                                             [icon]="faExclamationTriangle"
-                                                            class="text-warning"
-                                                            ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
+                                                            class="text-state-warning"
+                                                            tumAetUiTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
                                                         />
                                                     }
                                                 </td>
                                                 <td>
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
-                                                        <span class="text-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
+                                                        <span class="text-state-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
                                                     }
                                                     @if (submissionWithComplaint.complaint.accepted === true) {
-                                                        <span class="text-success" jhiTranslate="artemisApp.complaint.listOfComplaints.accepted"></span>
+                                                        <span class="text-state-success" jhiTranslate="artemisApp.complaint.listOfComplaints.accepted"></span>
                                                     }
                                                     @if (submissionWithComplaint.complaint.accepted === false) {
-                                                        <span class="text-danger" jhiTranslate="artemisApp.complaint.listOfComplaints.rejected"></span>
+                                                        <span class="text-state-danger" jhiTranslate="artemisApp.complaint.listOfComplaints.rejected"></span>
                                                     }
                                                 </td>
                                                 <td>
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
                                                         <a
-                                                            [class.disabled]="isComplaintLocked(submissionWithComplaint.complaint)"
+                                                            [class.pointer-events-none]="isComplaintLocked(submissionWithComplaint.complaint)"
                                                             [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
                                                             [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
-                                                            class="btn btn-success btn-sm"
                                                             data-testid="evaluate-complaint"
+                                                            tumAetUiButton
+                                                            severity="success"
+                                                            size="small"
                                                         >
                                                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                             {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
@@ -675,7 +705,9 @@
                                                         <a
                                                             [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
                                                             [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
-                                                            class="btn btn-primary btn-sm"
+                                                            tumAetUiButton
+                                                            severity="primary"
+                                                            size="small"
                                                         >
                                                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                             {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
@@ -689,10 +721,10 @@
                                 </table>
                             } @else {
                                 @if (complaintsDashboardInfo().total === 0) {
-                                    <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaints"></div>
+                                    <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaints"></span></tumaet-ui-message>
                                 }
                                 @if (complaintsDashboardInfo().total !== 0) {
-                                    <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaintsDisplayed"></div>
+                                    <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaintsDisplayed"></span></tumaet-ui-message>
                                 }
                             }
                         </div>
@@ -700,15 +732,15 @@
 
                     <!-- More Feedback Requests -->
                     @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isExamMode()) {
-                        <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.moreFeedback"></h4>
+                        <h4 class="inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.moreFeedback"></h4>
                         <fa-icon
-                            class="text-secondary"
+                            class="text-(--tumaet-ui-muted-color)"
                             [icon]="faQuestionCircle"
-                            [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
+                            [tumAetUiTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
                         />
-                        <div class="table-responsive">
+                        <div class="overflow-x-auto">
                             @if (submissionsWithMoreFeedbackRequests() && submissionsWithMoreFeedbackRequests()!.length > 0) {
-                                <table class="table exercise-table">
+                                <table class="w-full text-left exercise-table" tumAetUiTable>
                                     <thead>
                                         <tr jhiSort [(predicate)]="sortPredicates[2]" [(ascending)]="reverseOrders[2]" (sortChange)="sortMoreFeedbackRows()">
                                             <th>#</th>
@@ -747,26 +779,28 @@
                                                     @if (complaintService.shouldHighlightComplaint(moreFeedbackRequest.complaint)) {
                                                         <fa-icon
                                                             [icon]="faExclamationTriangle"
-                                                            class="text-warning"
-                                                            ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
+                                                            class="text-state-warning"
+                                                            tumAetUiTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
                                                         />
                                                     }
                                                 </td>
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
-                                                        <span class="text-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
+                                                        <span class="text-state-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
                                                     }
                                                     @if (moreFeedbackRequest.complaint.accepted === true) {
-                                                        <span class="text-success" jhiTranslate="artemisApp.moreFeedback.accepted"></span>
+                                                        <span class="text-state-success" jhiTranslate="artemisApp.moreFeedback.accepted"></span>
                                                     }
                                                 </td>
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
                                                         <a
-                                                            class="btn btn-success btn-sm"
-                                                            [class.disabled]="isComplaintLocked(moreFeedbackRequest.complaint)"
+                                                            [class.pointer-events-none]="isComplaintLocked(moreFeedbackRequest.complaint)"
                                                             [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                                             [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                                            tumAetUiButton
+                                                            severity="success"
+                                                            size="small"
                                                         >
                                                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                             {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
@@ -774,9 +808,11 @@
                                                     } @else {
                                                         <button
                                                             type="button"
-                                                            class="btn btn-primary btn-sm"
                                                             [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                                             [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                                            tumAetUiButton
+                                                            severity="primary"
+                                                            size="small"
                                                         >
                                                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                             {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
@@ -790,10 +826,14 @@
                                 </table>
                             } @else {
                                 @if (moreFeedbackRequestsDashboardInfo().total === 0) {
-                                    <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests"></div>
+                                    <tumaet-ui-message severity="info"
+                                        ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests"></span
+                                    ></tumaet-ui-message>
                                 }
                                 @if (moreFeedbackRequestsDashboardInfo().total !== 0) {
-                                    <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequestsDisplayed"></div>
+                                    <tumaet-ui-message severity="info"
+                                        ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequestsDisplayed"></span
+                                    ></tumaet-ui-message>
                                 }
                             }
                         </div>

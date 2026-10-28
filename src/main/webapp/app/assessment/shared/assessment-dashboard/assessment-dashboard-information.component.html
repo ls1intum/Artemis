@@ -1,7 +1,7 @@
-<div class="mt-2 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1.1fr_1fr]">
+<div class="mt-2 grid grid-cols-1 items-stretch gap-6! lg:grid-cols-[1.1fr_1fr]">
     <tumaet-ui-panel class="h-full min-w-0">
         <span tumAetUiPanelHeader class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.progressTitle"></span>
-        <div class="mb-3 flex flex-wrap items-baseline gap-2">
+        <div class="mb-4! flex flex-wrap items-baseline gap-2">
             <span class="text-4xl font-bold leading-none text-color">{{ assessedSubmissions() }} / {{ totalProgressItems() }}</span>
             <span class="text-base text-muted-color">
                 <span jhiTranslate="artemisApp.assessmentDashboard.assessmentsCompleted"></span>
@@ -24,7 +24,7 @@
                           }
             "
         >
-            <span class="absolute inset-y-0 left-0 bg-state-success" [style.width.%]="assessedPercentage()" aria-hidden="true"></span>
+            <span class="absolute inset-y-0 left-0 bg-state-success text-(--tumaet-ui-state-success-contrast)" [style.width.%]="assessedPercentage()" aria-hidden="true"></span>
             <span
                 class="pointer-events-none absolute inset-y-0 bg-state-warning"
                 [style.left.%]="assessedPercentage()"
@@ -32,9 +32,9 @@
                 aria-hidden="true"
             ></span>
         </div>
-        <div class="flex flex-wrap gap-x-4 gap-y-3 text-sm text-muted-color">
+        <div class="flex flex-wrap gap-x-6! gap-y-4! text-sm text-muted-color">
             <span class="inline-flex items-center gap-1.5">
-                <span class="h-3 w-3 rounded-sm bg-state-success"></span>
+                <span class="h-3 w-3 rounded-sm bg-state-success text-(--tumaet-ui-state-success-contrast)"></span>
                 <span jhiTranslate="artemisApp.assessmentDashboard.assessed"></span>
                 {{ assessedSubmissions() }}
             </span>
@@ -53,7 +53,7 @@
 
     <tumaet-ui-panel class="h-full min-w-0 overflow-hidden [&_.tumaet-ui-panel-header]:!hidden">
         <div class="-mx-[calc(var(--tumaet-ui-spacing)*4.5)] -mb-[calc(var(--tumaet-ui-spacing)*4.5)]">
-            <table class="w-full table-fixed border-collapse text-base text-muted-color">
+            <table class="w-full table-fixed border-collapse text-base text-muted-color" tumAetUiTable>
                 <colgroup>
                     <col class="w-[60%]" />
                     <col class="w-[23%]" />
@@ -62,17 +62,17 @@
                 <thead>
                     <tr>
                         <th
-                            class="border-b border-surface bg-(--surface-ground) px-6 py-3 text-start text-base font-semibold text-color"
+                            class="border-b border-surface bg-(--surface-ground) px-6 py-4! text-start text-base font-semibold text-color"
                             scope="col"
                             jhiTranslate="artemisApp.assessmentDashboard.assessmentInformation"
                         ></th>
                         <th
-                            class="border-b border-surface bg-(--surface-ground) px-6 py-3 text-end text-base font-semibold text-color"
+                            class="border-b border-surface bg-(--surface-ground) px-6 py-4! text-end text-base font-semibold text-color"
                             scope="col"
                             jhiTranslate="artemisApp.assessmentDashboard.course"
                         ></th>
                         <th
-                            class="border-b border-surface bg-(--surface-ground) px-6 py-3 text-end text-base font-semibold text-color"
+                            class="border-b border-surface bg-(--surface-ground) px-6 py-4! text-end text-base font-semibold text-color"
                             scope="col"
                             jhiTranslate="artemisApp.assessmentDashboard.yours"
                         ></th>

@@ -10,16 +10,13 @@
     </section>
 </ng-template>
 
-<p-splitter
+<tumaet-ui-splitter
     class="assessment-workspace assessment-workspace__primary-split"
     [class.assessment-workspace__split--vertical]="primaryVertical()"
     [layout]="primaryLayout()"
     [panelSizes]="primarySizes()"
     [minSizes]="[36, 24]"
-    [gutterSize]="6"
-    [pt]="primaryPassThrough()"
     [stateKey]="storageKey()"
-    stateStorage="local"
 >
     <ng-template #panel>
         <div class="assessment-workspace__canvas">
@@ -29,16 +26,13 @@
 
     <ng-template #panel>
         @if (showDetails()) {
-            <p-splitter
+            <tumaet-ui-splitter
                 class="assessment-workspace__support-split"
                 [class.assessment-workspace__split--horizontal]="supportHorizontal()"
                 [layout]="supportLayout()"
                 [panelSizes]="[52, 48]"
                 [minSizes]="[24, 24]"
-                [gutterSize]="6"
-                [pt]="supportPassThrough()"
                 [stateKey]="sidebarStorageKey()"
-                stateStorage="local"
             >
                 <ng-template #panel>
                     <ng-container [ngTemplateOutlet]="instructionsSection" />
@@ -54,9 +48,9 @@
                         </div>
                     </section>
                 </ng-template>
-            </p-splitter>
+            </tumaet-ui-splitter>
         } @else {
             <ng-container [ngTemplateOutlet]="instructionsSection" />
         }
     </ng-template>
-</p-splitter>
+</tumaet-ui-splitter>

@@ -6,7 +6,7 @@
                     ? ('artemisApp.complaint.alreadySubmittedSubmissionAuthor' | artemisTranslate)
                     : ('artemisApp.moreFeedback.alreadySubmittedSubmissionAuthor' | artemisTranslate)
             }}
-            <span [ngbTooltip]="complaint().submittedTime | artemisDate">{{ complaint().submittedTime | artemisTimeAgo }}</span>
+            <span [tumAetUiTooltip]="complaint().submittedTime | artemisDate">{{ complaint().submittedTime | artemisTimeAgo }}</span>
         </p>
         @if (complaint().accepted === true) {
             <tumaet-ui-tag severity="success" data-testid="complaint-status-badge">

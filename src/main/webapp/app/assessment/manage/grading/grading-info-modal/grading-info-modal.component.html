@@ -1,51 +1,42 @@
-<p-dialog
+<tumaet-ui-dialog
     [header]="'artemisApp.gradingSystem.info.title' | artemisTranslate"
-    [modal]="true"
     [visible]="visible()"
     (visibleChange)="visible.set($event)"
-    [style]="{ width: '50rem' }"
-    appendTo="body"
-    [draggable]="false"
+    size="large"
     [closable]="true"
     [closeOnEscape]="true"
     [dismissableMask]="true"
-    [baseZIndex]="10000"
 >
-    <table class="table">
+    <table class="w-full text-left" tumAetUiTable>
         <tr>
             <th jhiTranslate="artemisApp.gradingSystem.info.general.title"></th>
             <td jhiTranslate="artemisApp.gradingSystem.info.general.explanation"></td>
         </tr>
-        <hr />
         <tr>
             <th jhiTranslate="artemisApp.gradingSystem.info.maxPoints.title"></th>
             <td jhiTranslate="artemisApp.gradingSystem.info.maxPoints.explanation"></td>
         </tr>
-        <hr />
         <tr>
             <th jhiTranslate="artemisApp.gradingSystem.info.gradeType.title"></th>
             <td jhiTranslate="artemisApp.gradingSystem.info.gradeType.explanation"></td>
         </tr>
-        <hr />
         <tr>
             <th jhiTranslate="artemisApp.gradingSystem.info.inclusivity.title"></th>
             <td jhiTranslate="artemisApp.gradingSystem.info.inclusivity.explanation"></td>
         </tr>
-        <hr />
         <tr>
             <th jhiTranslate="artemisApp.gradingSystem.info.firstPassingGrade.title"></th>
             <td jhiTranslate="artemisApp.gradingSystem.info.firstPassingGrade.explanation"></td>
         </tr>
-        <hr />
         <tr>
             <th jhiTranslate="artemisApp.gradingSystem.info.importExport.title"></th>
             <td jhiTranslate="artemisApp.gradingSystem.info.importExport.explanation"></td>
         </tr>
     </table>
     <ng-template #footer>
-        <button type="button" pButton severity="secondary" (click)="close()">{{ 'entity.action.close' | artemisTranslate }}</button>
+        <button type="button" tumAetUiButton severity="secondary" (click)="close()">{{ 'entity.action.close' | artemisTranslate }}</button>
     </ng-template>
-</p-dialog>
+</tumaet-ui-dialog>
 <button tumAetUiButton variant="outlined" size="small" (click)="open()" type="button" [attr.aria-label]="'artemisApp.gradingSystem.info.title' | artemisTranslate">
     <fa-icon [icon]="farQuestionCircle" />
 </button>

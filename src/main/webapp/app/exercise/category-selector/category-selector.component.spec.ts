@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
-import { AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-describe('CategorySelectorPrimengComponent', () => {
-    let comp: CategorySelectorPrimengComponent;
-    let fixture: ComponentFixture<CategorySelectorPrimengComponent>;
+describe('CategorySelectorComponent', () => {
+    let comp: CategorySelectorComponent;
+    let fixture: ComponentFixture<CategorySelectorComponent>;
     let emitSpy: ReturnType<typeof vi.spyOn>;
 
     const category1 = {
@@ -45,7 +45,7 @@ describe('CategorySelectorPrimengComponent', () => {
     } as ExerciseCategory;
 
     /** Builds an AutoComplete select event carrying the picked suggestion label. */
-    const selectEvent = (value: string) => ({ value }) as AutoCompleteSelectEvent;
+    const selectEvent = (value: string) => ({ value }) as TumAetUiAutoCompleteOptionEvent;
 
     /** Builds a real keydown event carrying the key, on a real input target so the onSeparatorKeydown
      * HTMLInputElement guard passes (mirrors a keydown emitted by the autocomplete input). */
@@ -62,11 +62,11 @@ describe('CategorySelectorPrimengComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CategorySelectorPrimengComponent],
+            imports: [CategorySelectorComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CategorySelectorPrimengComponent);
+        fixture = TestBed.createComponent(CategorySelectorComponent);
         comp = fixture.componentInstance;
 
         emitSpy = vi.spyOn(comp.selectedCategories, 'emit');
@@ -74,30 +74,6 @@ describe('CategorySelectorPrimengComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-    });
-
-    it('should remove category', () => {
-        fixture.detectChanges();
-        fixture.componentRef.setInput('categories', [category1, category2, category3]);
-        fixture.changeDetectorRef.detectChanges();
-        const cancelColorSelectorSpy = vi.spyOn(comp.colorSelector(), 'cancelColorSelector');
-        comp.onItemRemove(category2);
-
-        expect(comp.selectedCategoryItems()).toEqual([category1, category3]);
-        expect(cancelColorSelectorSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
-    });
-
-    it('should remove category via the chip remove (onUnselect)', () => {
-        fixture.detectChanges();
-        fixture.componentRef.setInput('categories', [category1, category2, category3]);
-        fixture.changeDetectorRef.detectChanges();
-        const cancelColorSelectorSpy = vi.spyOn(comp.colorSelector(), 'cancelColorSelector');
-        comp.onItemUnselect({ value: 'category2' } as AutoCompleteUnselectEvent);
-
-        expect(comp.selectedCategoryItems()).toEqual([category1, category3]);
-        expect(cancelColorSelectorSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
     });
 
     it('should remove the category and stop propagation via the in-chip remove icon (removeChip)', () => {
@@ -117,8 +93,7 @@ describe('CategorySelectorPrimengComponent', () => {
     it('renders the in-chip remove control as a non-submitting, labelled button inside the colored pill', async () => {
         fixture.detectChanges();
         fixture.componentRef.setInput('categories', [category1]);
-        // Push the value into PrimeNG's AutoComplete so it renders the chip token via the selecteditem template.
-        comp.autoComplete().writeValue([category1.category]);
+
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -134,7 +109,7 @@ describe('CategorySelectorPrimengComponent', () => {
     it('removes the category and emits when the rendered remove button is clicked', async () => {
         fixture.detectChanges();
         fixture.componentRef.setInput('categories', [category1, category2]);
-        comp.autoComplete().writeValue([category1.category, category2.category]);
+
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -220,7 +195,7 @@ describe('CategorySelectorPrimengComponent', () => {
         fixture.componentRef.setInput('categories', [category6]);
         fixture.changeDetectorRef.detectChanges();
         // hide() needs the rendered AutoComplete; stub it so the free-text add path runs in isolation
-        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
         comp.onEnter(enterEvent('category6'));
 
         expect(comp.selectedCategoryItems()).toEqual([category6]);
@@ -231,7 +206,7 @@ describe('CategorySelectorPrimengComponent', () => {
         fixture.componentRef.setInput('categories', [category6]);
         fixture.componentRef.setInput('existingCategories', [category7, category8]);
         fixture.changeDetectorRef.detectChanges();
-        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
         comp.onEnter(enterEvent('category8'));
 
         expect(comp.selectedCategoryItems()).toEqual([category6, category8]);
@@ -242,7 +217,7 @@ describe('CategorySelectorPrimengComponent', () => {
         fixture.componentRef.setInput('categories', [category6]);
         fixture.componentRef.setInput('existingCategories', []);
         fixture.changeDetectorRef.detectChanges();
-        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
         comp.onEnter(enterEvent('category9'));
 
         const categoryColor = comp.selectedCategoryItems()[1].color;
@@ -253,7 +228,7 @@ describe('CategorySelectorPrimengComponent', () => {
     it('should create new item on add for empty categories', () => {
         fixture.componentRef.setInput('existingCategories', []);
         fixture.changeDetectorRef.detectChanges();
-        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
         comp.onEnter(enterEvent('category6'));
 
         const categoryColor = comp.selectedCategoryItems()[0].color;
@@ -264,7 +239,7 @@ describe('CategorySelectorPrimengComponent', () => {
     it('should cancel the Enter event to prevent form submission', () => {
         fixture.componentRef.setInput('existingCategories', []);
         fixture.changeDetectorRef.detectChanges();
-        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
         const event = enterEvent('newcat');
         const stopSpy = vi.spyOn(event, 'stopPropagation');
         comp.onEnter(event);
@@ -273,10 +248,54 @@ describe('CategorySelectorPrimengComponent', () => {
         expect(stopSpy).toHaveBeenCalledOnce();
     });
 
+    it('adds only the keyboard-selected suggestion instead of also adding its typed prefix', async () => {
+        fixture.componentRef.setInput('existingCategories', [{ category: 'algorithms', color: '#6ae8ac' }]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const input = fixture.nativeElement.querySelector('#field_categories') as HTMLInputElement;
+        vi.useFakeTimers();
+        try {
+            input.focus();
+            input.value = 'alg';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            await vi.advanceTimersByTimeAsync(300);
+            fixture.detectChanges();
+
+            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+            const selectedOption = document.getElementById(input.getAttribute('aria-activedescendant')!);
+            expect(selectedOption?.textContent?.trim()).toBe('algorithms');
+
+            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+
+            expect(comp.selectedCategoryItems().map((category) => category.category)).toEqual(['algorithms']);
+            expect(input.value).toBe('');
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it.each(['Enter', ',', 'Tab'])('commits free text from the rendered input on %s', (key) => {
+        fixture.componentRef.setInput('existingCategories', []);
+        fixture.detectChanges();
+        const input = fixture.nativeElement.querySelector('#field_categories') as HTMLInputElement;
+        input.focus();
+        input.value = 'new category';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+
+        expect(comp.selectedCategoryItems().map((category) => category.category)).toEqual(['new category']);
+        expect(input.value).toBe('');
+    });
+
     it('should commit the typed category on a comma separator key', () => {
         fixture.componentRef.setInput('existingCategories', []);
         fixture.changeDetectorRef.detectChanges();
-        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
 
         comp.onSeparatorKeydown(separatorEvent(',', 'newcat'));
 
@@ -286,7 +305,7 @@ describe('CategorySelectorPrimengComponent', () => {
     it('should commit the typed category on a Tab separator key', () => {
         fixture.componentRef.setInput('existingCategories', []);
         fixture.changeDetectorRef.detectChanges();
-        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
 
         comp.onSeparatorKeydown(separatorEvent('Tab', 'newcat'));
 
@@ -360,7 +379,7 @@ describe('CategorySelectorPrimengComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         // sanity check: the preset matches the component's MAX
         expect(comp.selectedCategoryItems()).toHaveLength(3);
-        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
 
         comp.onEnter(enterEvent('newCat'));
 
@@ -375,32 +394,32 @@ describe('CategorySelectorPrimengComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         expect(comp.selectedCategoryItems()).toHaveLength(3);
         // resync target after rejection; stub so the rejection branch runs in isolation
-        const writeValueSpy = vi.spyOn(comp.autoComplete(), 'writeValue').mockImplementation(() => undefined);
+        const writeValueSpy = vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
 
         comp.onItemSelect(selectEvent('newCat'));
 
         expect(comp.selectedCategoryItems()).toEqual([category1, category2, category3]);
         expect(comp.selectedCategoryItems()).toHaveLength(3);
         expect(emitSpy).not.toHaveBeenCalled();
-        expect(writeValueSpy).toHaveBeenCalledWith(comp.selectedCategoryLabels());
+        expect(writeValueSpy).toHaveBeenCalledOnce();
     });
 
     it('should resync the autocomplete model when onItemSelect rejects a duplicate', () => {
         fixture.componentRef.setInput('categories', [category6, category7]);
         fixture.changeDetectorRef.detectChanges();
-        const writeValueSpy = vi.spyOn(comp.autoComplete(), 'writeValue').mockImplementation(() => undefined);
+        const writeValueSpy = vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
 
         comp.onItemSelect(selectEvent('category6'));
 
         expect(comp.selectedCategoryItems()).toEqual([category6, category7]);
         expect(emitSpy).not.toHaveBeenCalled();
-        expect(writeValueSpy).toHaveBeenCalledWith(comp.selectedCategoryLabels());
+        expect(writeValueSpy).toHaveBeenCalledOnce();
     });
 
     it('should reject a case-insensitive duplicate on add via onEnter', () => {
         fixture.componentRef.setInput('categories', [category6]);
         fixture.changeDetectorRef.detectChanges();
-        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
 
         comp.onEnter(enterEvent('Category6'));
 
@@ -412,7 +431,7 @@ describe('CategorySelectorPrimengComponent', () => {
         fixture.componentRef.setInput('categories', [category6]);
         fixture.componentRef.setInput('existingCategories', []);
         fixture.changeDetectorRef.detectChanges();
-        const hideSpy = vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        const hideSpy = vi.spyOn(comp.autoComplete(), 'clear').mockImplementation(() => undefined);
         const event = enterEvent('newValidCat');
 
         comp.onEnter(event);
