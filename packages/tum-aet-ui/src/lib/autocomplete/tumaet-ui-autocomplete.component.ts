@@ -17,7 +17,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { TumAetUiOverlayService } from '../overlay/tumaet-ui-overlay.service';
@@ -42,7 +42,7 @@ let nextAutoCompleteId = 0;
     selector: 'tumaet-ui-autocomplete',
     templateUrl: './tumaet-ui-autocomplete.component.html',
     styleUrl: './tumaet-ui-autocomplete.component.scss',
-    imports: [TumAetUiChipComponent, TumAetUiTranslatePipe],
+    imports: [TumAetUiChipComponent, TumAetUiTranslatePipe, NgTemplateOutlet],
     host: {
         class: 'tumaet-ui-autocomplete',
     },
@@ -61,6 +61,10 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
 
     /** Property name used as the visible label for object values. */
     readonly optionLabel = input<string>();
+    /** Boolean property marking suggestions that remain visible but cannot be selected. */
+    readonly optionDisabled = input<string>();
+    /** Optional rich suggestion content. Selection and accessibility remain owned by the control. */
+    readonly optionTemplate = input<TemplateRef<{ $implicit: unknown }>>();
 
     readonly multiple = input(false, { transform: booleanAttribute });
 
@@ -185,6 +189,28 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
     setDisabledState(isDisabled: boolean): void {
         this.disabledByForm.set(isDisabled);
     }
+
+    /** Clear the query and selected value, notify the form, and dismiss pending suggestions. */
+    clear(): void {
+        this.selectedValues.set([]);
+        this.singleValue.set(undefined);
+        this.query.set('');
+        this.hide();
+        this.onChangeCallback(this.multiple() ? [] : undefined);
+    }
+
+    /** Dismiss suggestions and cancel a search that has not emitted yet. */
+    hide(): void {
+        clearTimeout(this.debounceTimer);
+        this.hasSearched.set(false);
+        this.activeIndex.set(-1);
+        this.closePanel();
+    }
+
+    protected isOptionDisabled(option: unknown): boolean {
+        const key = this.optionDisabled();
+        return !!(key && option !== null && typeof option === 'object' && (option as Record<string, unknown>)[key]);
+    }
     protected valueLabel(value: unknown): string {
         const key = this.labelKey();
         const raw = key && value !== null && typeof value === 'object' ? (value as Record<string, unknown>)[key] : value;
@@ -265,13 +291,13 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
             case 'ArrowDown':
                 if (this.panelVisible() && count > 0) {
                     event.preventDefault();
-                    this.setActive(Math.min(count - 1, this.activeIndex() + 1));
+                    this.moveActive(1);
                 }
                 break;
             case 'ArrowUp':
                 if (this.panelVisible() && count > 0) {
                     event.preventDefault();
-                    this.setActive(Math.max(0, this.activeIndex() - 1));
+                    this.moveActive(-1);
                 }
                 break;
             case 'Enter':
@@ -295,11 +321,17 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
     }
 
     protected setActive(index: number): void {
+        if (this.isOptionDisabled(this.suggestions()[index])) {
+            return;
+        }
         this.activeIndex.set(index);
         this.document.getElementById(this.optionId(index))?.scrollIntoView?.({ block: 'nearest' });
     }
 
     protected selectOption(option: unknown, event?: Event): void {
+        if (this.isDisabled() || this.isOptionDisabled(option)) {
+            return;
+        }
         if (this.multiple()) {
             if (!this.isAlreadySelected(option)) {
                 const next = [...this.selectedValues(), option];
@@ -335,6 +367,19 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
         this.activeIndex.set(-1);
     }
 
+    private moveActive(direction: 1 | -1): void {
+        const options = this.suggestions();
+        const current = this.activeIndex();
+        let index = current < 0 ? (direction === 1 ? 0 : options.length - 1) : current + direction;
+        while (index >= 0 && index < options.length) {
+            if (!this.isOptionDisabled(options[index])) {
+                this.setActive(index);
+                return;
+            }
+            index += direction;
+        }
+    }
+
     private openPanel(): void {
         if (this.overlayRef) {
             return;
@@ -351,6 +396,9 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
     protected optionClasses(option: unknown, index: number): string {
         const base = 'tumaet-ui-autocomplete-option tumaet:flex tumaet:cursor-pointer tumaet:items-center tumaet:px-3 tumaet:py-2';
         const active = this.activeIndex() === index;
+        if (this.isOptionDisabled(option)) {
+            return `${base} tumaet:cursor-not-allowed tumaet:text-disabled`;
+        }
         if (this.isAlreadySelected(option)) {
             const background = active ? 'tumaet:bg-highlight-focus-background' : 'tumaet:bg-highlight-background';
             return `${base} tumaet:text-highlight ${background}`;

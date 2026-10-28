@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
@@ -16,14 +17,13 @@ import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { combineLatest } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-assessment-locks',
     templateUrl: './assessment-locks.component.html',
-    imports: [TranslateDirective, FaIconComponent, NgbTooltip, RouterLink, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, TumAetUiTooltipDirective, RouterLink, ArtemisDatePipe, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiTableDirective],
 })
 export class AssessmentLocksComponent implements OnInit {
     private route = inject(ActivatedRoute);

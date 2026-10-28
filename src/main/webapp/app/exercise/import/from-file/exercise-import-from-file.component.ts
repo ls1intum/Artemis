@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
@@ -9,7 +9,8 @@ import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/progra
 import { strFromU8 } from 'fflate';
 import { parseJson } from 'app/foundation/util/json.util';
 import { readZipEntries } from 'app/foundation/util/zip.util';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseImportDialogData } from '../exercise-import.component';
@@ -19,15 +20,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-exercise-import-from-file',
     templateUrl: './exercise-import-from-file.component.html',
-    imports: [ButtonComponent, HelpIconComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonComponent, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
 })
 export class ExerciseImportFromFileComponent implements OnInit {
-    private dialogRef = inject(DynamicDialogRef, { optional: true });
-    private dialogConfig = inject(DynamicDialogConfig, { optional: true });
+    private dialogRef = inject(TumAetUiDialogRef, { optional: true });
+    private dialogConfig = inject(TumAetUiDialogConfig, { optional: true });
     private alertService = inject(AlertService);
 
     exerciseType = input<ExerciseType | undefined>();
-    /** Emits the exercise read from the file, for hosts that embed the component without a PrimeNG dialog reference. */
+    /** Emits the exercise read from the file, for hosts that embed the component without a dialog reference. */
     readonly imported = output<Exercise>();
     private readonly selectedExerciseType = computed(() => (this.dialogConfig?.data as ExerciseImportDialogData | undefined)?.exerciseType ?? this.exerciseType());
 

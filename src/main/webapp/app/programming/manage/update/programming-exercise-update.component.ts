@@ -41,7 +41,7 @@ import {
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
@@ -121,7 +121,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
-    private readonly modalService = inject(NgbModal);
+    private readonly modalService = inject(TumAetUiDialogService);
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly courseService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
@@ -888,8 +888,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.saveWithModalCheck(
             () => this.saveExercise(),
             (reference) => {
-                const requestOptions: { deleteFeedback?: unknown } = {};
-                requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
+                const requestOptions = { deleteFeedback: reference.componentInstance.deleteFeedback() };
                 if (this.generationFullSaveBlocked()) return;
                 this.revalidateGenerationContents().subscribe((valid) => {
                     if (valid && !this.generationFullSaveBlocked())
@@ -914,7 +913,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode());
         this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 
-        if (!this.modalService.hasOpenModals()) {
+        if (!this.modalService.hasOpenDialogs()) {
             onConfirmed();
             return;
         }

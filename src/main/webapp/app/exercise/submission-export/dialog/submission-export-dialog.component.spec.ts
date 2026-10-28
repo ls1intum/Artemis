@@ -9,7 +9,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import * as DownloadUtil from 'app/foundation/util/download.util';
 import { Subject, of, throwError } from 'rxjs';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 
 describe('Submission Export Dialog Component', () => {
@@ -47,7 +47,7 @@ describe('Submission Export Dialog Component', () => {
                 { provide: SubmissionExportService, useValue: submissionExportService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AlertService, useValue: alertService },
-                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy, onClose: new Subject<unknown>() } as unknown as DynamicDialogRef },
+                { provide: TumAetUiDialogRef, useValue: { close: dialogRefCloseSpy, dismiss: dialogRefCloseSpy, onClose: new Subject<unknown>() } as unknown as TumAetUiDialogRef },
             ],
         })
             .overrideTemplate(SubmissionExportDialogComponent, '')

@@ -1,8 +1,10 @@
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
@@ -23,11 +25,11 @@ import { ExerciseMetadataConflictModalResult } from 'app/exercise/synchronizatio
 import { AlertService } from 'app/foundation/service/alert.service';
 
 /**
- * Creates a mock DynamicDialogRef whose onClose Subject can be resolved or completed externally.
+ * Creates a mock TumAetUiDialogRef whose onClose Subject can be resolved or completed externally.
  */
-const createMockDialogRef = (): { ref: DynamicDialogRef; onClose: Subject<ExerciseMetadataConflictModalResult | undefined> } => {
+const createMockDialogRef = (): { ref: TumAetUiDialogRef; onClose: Subject<ExerciseMetadataConflictModalResult | undefined> } => {
     const onClose = new Subject<ExerciseMetadataConflictModalResult | undefined>();
-    const ref = { onClose } as unknown as DynamicDialogRef;
+    const ref = { onClose } as unknown as TumAetUiDialogRef;
     return { ref, onClose };
 };
 
@@ -99,7 +101,8 @@ describe('ExerciseMetadataSyncService', () => {
                         disconnect: vi.fn(),
                     },
                 },
-                { provide: DialogService, useValue: dialogService },
+                { provide: TumAetUiDialogService, useValue: dialogService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: alertService },
             ],
         });

@@ -1,10 +1,11 @@
 <form id="teamUpdateDialogForm" name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-    <div class="modal-body">
-        <div class="form-group">
+    <div class="p-4!">
+        <div class="mb-4!">
             <label class="label-narrow" jhiTranslate="artemisApp.team.name.label" for="teamName"></label>
             <input
+                tumAetUiInput
                 type="text"
-                class="form-control"
+                class="w-full"
                 name="name"
                 id="teamName"
                 required
@@ -15,20 +16,21 @@
             />
             @for (e of name.errors! | keyvalue | removekeys: ['required']; track e) {
                 @if (name.invalid && (name.dirty || name.touched)) {
-                    <div class="form-control-error text-danger">
+                    <div class="control-error text-state-danger">
                         <span [jhiTranslate]="'artemisApp.team.name' + '.' + e.key"></span>
                     </div>
                 }
             }
         </div>
-        <div class="form-group">
+        <div class="mb-4!">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName"></label>
                 <jhi-help-icon text="artemisApp.team.shortName.tooltip" />
             </div>
             <input
+                tumAetUiInput
                 type="text"
-                class="form-control"
+                class="w-full"
                 name="shortName"
                 id="teamShortName"
                 required
@@ -42,14 +44,14 @@
             />
             @for (e of shortName.errors! | keyvalue | removekeys: ['required']; track e) {
                 @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                    <div class="form-control-error text-danger">
+                    <div class="control-error text-state-danger">
                         <span [jhiTranslate]="'artemisApp.team.shortName' + '.' + e.key"></span>
                     </div>
                 }
             }
         </div>
-        <div class="form-group">
-            <div class="d-flex align-items-end">
+        <div class="mb-4!">
+            <div class="flex items-end">
                 <div>
                     <label class="label-narrow" for="teamOwnerInput" jhiTranslate="artemisApp.team.owner.label"></label>
                     <jhi-help-icon text="artemisApp.team.owner.tooltip" class="me-1" />
@@ -58,19 +60,19 @@
                     <fa-icon class="search-searching" [icon]="faSpinner" animation="spin" />
                 }
                 @if (searchingOwnerQueryTooShort) {
-                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort"></span>
+                    <span class="label-inline-message text-state-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort"></span>
                 }
                 @if (searchingOwnerNoResultsForQuery) {
-                    <span class="label-inline-message text-danger">
+                    <span class="label-inline-message text-state-danger">
                         <span jhiTranslate="artemisApp.team.ownerSearch.noResults"></span>
                         <strong>{{ searchingOwnerNoResultsForQuery }}</strong>
                     </span>
                 }
                 @if (searchingOwnerFailed) {
-                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.failed"></span>
+                    <span class="label-inline-message text-state-danger" jhiTranslate="artemisApp.team.ownerSearch.failed"></span>
                 }
                 @if (team().id && team().owner?.id !== pendingTeam.owner?.id) {
-                    <span jhiTranslate="artemisApp.team.ownerChangeWarning" [translateValues]="{ shortName: team().shortName }" class="label-inline-message text-danger">
+                    <span jhiTranslate="artemisApp.team.ownerChangeWarning" [translateValues]="{ shortName: team().shortName }" class="label-inline-message text-state-danger">
                         This will change the tutor for the team {{ team().shortName }} in the whole course!
                     </span>
                 }
@@ -88,23 +90,23 @@
                 (searchFailed)="searchingOwnerFailed = $event"
             />
         </div>
-        <div class="form-group">
-            <div class="d-flex align-items-end">
-                <label class="label-narrow me-1" for="teamStudentsInput" jhiTranslate="artemisApp.team.students"></label>
+        <div class="mb-4!">
+            <div class="flex items-end">
+                <label for="teamStudentsInput" class="label-narrow me-1" jhiTranslate="artemisApp.team.students"></label>
                 @if (searchingStudents) {
                     <fa-icon class="search-searching" [icon]="faSpinner" animation="spin" />
                 }
                 @if (searchingStudentsQueryTooShort) {
-                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort"></span>
+                    <span class="label-inline-message text-state-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort"></span>
                 }
                 @if (searchingStudentsNoResultsForQuery) {
-                    <span class="label-inline-message text-danger">
+                    <span class="label-inline-message text-state-danger">
                         <span jhiTranslate="artemisApp.team.studentSearch.noResults"></span>
                         <strong>{{ searchingStudentsNoResultsForQuery }}</strong>
                     </span>
                 }
                 @if (searchingStudentsFailed) {
-                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.failed"></span>
+                    <span class="label-inline-message text-state-danger" jhiTranslate="artemisApp.team.studentSearch.failed"></span>
                 }
             </div>
             <jhi-team-student-search
@@ -119,20 +121,28 @@
                 (searchNoResults)="searchingStudentsNoResultsForQuery = $event"
                 (searchFailed)="searchingStudentsFailed = $event"
             />
-            <ul class="list-group list-group--students my-3">
+            <ul class="flex flex-col list-none p-0 team-list--students my-4!">
                 @for (student of pendingTeam.students; track student; let i = $index) {
-                    <li class="list-group-item-container d-flex align-items-center">
-                        <div class="list-group-item-index">
+                    <li class="team-list-item-container flex items-center">
+                        <div class="team-list-item-index">
                             {{ i + 1 }}
                         </div>
-                        <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
+                        <div class="border border-border px-3! py-2 flex items-center" [class.has-error]="hasConflictingTeam(student)">
                             <div class="student-name">{{ student.name }} ({{ student.login }})</div>
-                            <button type="button" class="student-remove-link ms-4" (click)="onRemoveStudent(student)">
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="danger"
+                                variant="text"
+                                [attr.aria-label]="('entity.action.delete' | artemisTranslate) + ' ' + student.name"
+                                class="student-remove-link ms-6!"
+                                (click)="onRemoveStudent(student)"
+                            >
                                 <fa-icon [icon]="faTrashAlt" />
                             </button>
                         </div>
                         @if (hasConflictingTeam(student)) {
-                            <div class="list-group-item-error hidden-md-down">
+                            <div class="team-list-item-error hidden lg:block">
                                 <fa-icon class="me-1" [icon]="faExclamationTriangle" />
                                 Already assigned to team with id {{ getConflictingTeam(student) }}.
                             </div>
@@ -140,32 +150,35 @@
                     </li>
                 }
                 @if (pendingTeam.students && pendingTeam.students.length === 0) {
-                    <li class="list-group-item-container d-flex align-items-center">
-                        <div class="list-group-item-index text-body-secondary">1</div>
-                        <div class="list-group-item d-flex align-items-center">
-                            <div class="text-body-secondary" jhiTranslate="artemisApp.team.noStudentsAddedYet"></div>
+                    <li class="team-list-item-container flex items-center">
+                        <div class="team-list-item-index text-text-secondary">1</div>
+                        <div class="border border-border px-3! py-2 flex items-center">
+                            <div class="text-text-secondary" jhiTranslate="artemisApp.team.noStudentsAddedYet"></div>
                         </div>
                     </li>
                 }
             </ul>
-            <div class="alert mt-3" [class.alert-info]="!showIgnoreTeamSizeRecommendationOption" [class.alert-warning]="showIgnoreTeamSizeRecommendationOption" role="alert">
-                <div class="d-flex justify-content-between">
+            <div
+                class="rounded-md border border-border p-4! mt-4!"
+                [class.border-state-info]="!showIgnoreTeamSizeRecommendationOption"
+                [class.border-state-warning]="showIgnoreTeamSizeRecommendationOption"
+                role="alert"
+            >
+                <div class="flex justify-between">
                     <div>
-                        <span class="font-weight-bold" jhiTranslate="artemisApp.team.teamSizeNote"></span>
+                        <span class="font-bold" jhiTranslate="artemisApp.team.teamSizeNote"></span>
                         {{ config.minTeamSize }} - {{ config.maxTeamSize }}
                         <span jhiTranslate="artemisApp.team.teamSizeUnit"></span>
                     </div>
                     @if (showIgnoreTeamSizeRecommendationOption) {
-                        <div class="form-check">
-                            <input
-                                id="ignoreTeamSizeRecommendation"
-                                class="form-check-input"
-                                type="checkbox"
-                                value=""
+                        <div class="inline-flex items-center gap-2">
+                            <tumaet-ui-checkbox
+                                inputId="ignoreTeamSizeRecommendation"
+                                class="accent-primary"
                                 [(ngModel)]="ignoreTeamSizeRecommendation"
                                 [ngModelOptions]="{ standalone: true }"
                             />
-                            <label class="form-check-label" for="ignoreTeamSizeRecommendation">
+                            <label class="cursor-pointer" for="ignoreTeamSizeRecommendation">
                                 <span jhiTranslate="artemisApp.team.ignoreTeamSizeRecommendation"></span>
                                 <fa-icon class="ms-1" [icon]="faExclamationTriangle" />
                             </label>
@@ -175,11 +188,11 @@
             </div>
         </div>
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary cancel" data-dismiss="modal" (click)="clear()">
+    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+        <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="cancel" (click)="clear()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button type="submit" [disabled]="editForm.invalid || isSaving() || teamSizeViolationUnconfirmed" class="btn btn-primary">
+        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || isSaving() || teamSizeViolationUnconfirmed" class="">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>

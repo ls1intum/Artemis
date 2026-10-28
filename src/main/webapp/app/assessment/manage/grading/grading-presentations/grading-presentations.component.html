@@ -1,7 +1,7 @@
 @if (gradingScale().course) {
-    <div class="form-group">
-        <div class="row">
-            <div class="col-auto">
+    <div class="field-group mb-4!">
+        <div class="flex flex-wrap gap-y-2">
+            <div class="w-auto">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.presentationType.title"></label>
                     <jhi-help-icon text="artemisApp.gradingSystem.presentationType.description" />
@@ -11,14 +11,17 @@
                 </div>
             </div>
             @if (presentationsConfig().presentationType === BASIC && gradingScale().course !== undefined) {
-                <div class="col-auto">
+                <div class="w-auto">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.basicPresentation.label"></label>
                     </div>
                     <div>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <label class="input-group-text" for="field_numberBasicPresentations" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.number"
+                        <div class="flex items-stretch">
+                            <div class="flex items-center">
+                                <label
+                                    class="inline-flex items-center rounded-l-md border border-border bg-surface-hover px-4! py-2"
+                                    for="field_numberBasicPresentations"
+                                    jhiTranslate="artemisApp.gradingSystem.gradedPresentation.number"
                                     >Number</label
                                 >
                             </div>
@@ -31,23 +34,28 @@
                                 pattern="\d*"
                                 required
                                 [max]="MAX_PRESENTATION_SCORE"
-                                class="form-control input-number-short"
+                                class="w-full input-number-short"
                                 [ngModel]="gradingScale().course!.presentationScore"
                                 (ngModelChange)="updatePresentationScore($event)"
+                                tumAetUiInput
                             />
                         </div>
                     </div>
                 </div>
             }
             @if (presentationsConfig().presentationType === GRADED) {
-                <div class="col-auto">
+                <div class="w-auto">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.label"></label>
                     </div>
                     <div>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <label class="input-group-text" for="field_numberPresentations" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.number"></label>
+                        <div class="flex items-stretch">
+                            <div class="flex items-center">
+                                <label
+                                    class="inline-flex items-center rounded-l-md border border-border bg-surface-hover px-4! py-2"
+                                    for="field_numberPresentations"
+                                    jhiTranslate="artemisApp.gradingSystem.gradedPresentation.number"
+                                ></label>
                             </div>
                             <input
                                 name="numPresentations"
@@ -58,12 +66,16 @@
                                 pattern="\d*"
                                 required
                                 [max]="MAX_PRESENTATION_COUNT"
-                                class="form-control input-number-short"
+                                class="w-full input-number-short"
                                 [ngModel]="presentationsConfig().presentationsNumber"
                                 (ngModelChange)="updatePresentationsNumber($event)"
+                                tumAetUiInput
                             />
-                            <div class="input-group-prepend">
-                                <label class="input-group-text" for="field_weightPresentations" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.weight"
+                            <div class="flex items-center">
+                                <label
+                                    class="inline-flex items-center rounded-l-md border border-border bg-surface-hover px-4! py-2"
+                                    for="field_weightPresentations"
+                                    jhiTranslate="artemisApp.gradingSystem.gradedPresentation.weight"
                                     >Combined Weight</label
                                 >
                             </div>
@@ -74,9 +86,10 @@
                                 min="0"
                                 max="99"
                                 required
-                                class="form-control input-number-short"
+                                class="w-full input-number-short"
                                 [ngModel]="presentationsConfig().presentationsWeight"
                                 (ngModelChange)="updatePresentationsWeight($event)"
+                                tumAetUiInput
                             />
                         </div>
                     </div>

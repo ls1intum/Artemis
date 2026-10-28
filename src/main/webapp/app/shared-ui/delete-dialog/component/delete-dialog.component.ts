@@ -1,9 +1,17 @@
 import { Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogConfig,
+    TumAetUiDialogRef,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiTableDirective,
+} from '@tumaet/ui-angular';
 import { mapValues } from 'lodash-es';
 import {
     ActionType,
+    DeleteDialogData,
     DeleteDialogDeleteHandler,
     EntitySummary,
     EntitySummaryCategory,
@@ -19,21 +27,27 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ConfirmEntityNameComponent } from '../../confirm-entity-name/confirm-entity-name.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
     styleUrls: ['./delete-dialog.component.scss'],
-    imports: [FormsModule, TranslateDirective, ConfirmEntityNameComponent, FaIconComponent, ArtemisTranslatePipe, TableModule, ButtonModule, CheckboxModule, ProgressSpinnerModule],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        ConfirmEntityNameComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        TumAetUiTableDirective,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiProgressSpinnerComponent,
+    ],
 })
 export class DeleteDialogComponent implements OnInit {
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+    private dialogRef = inject(TumAetUiDialogRef);
+    private dialogConfig = inject<TumAetUiDialogConfig<DeleteDialogData>>(TumAetUiDialogConfig);
     private alertService = inject(AlertService);
     private destroyRef = inject(DestroyRef);
 
@@ -45,6 +59,7 @@ export class DeleteDialogComponent implements OnInit {
     protected readonly faUndo = faUndo;
 
     readonly actionTypes = ActionType;
+    protected readonly ButtonType = ButtonType;
     private delete!: DeleteDialogDeleteHandler; // set in ngOnInit() from dialog config data
 
     // Signals for reactive state
@@ -92,12 +107,14 @@ export class DeleteDialogComponent implements OnInit {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit(): void {
-        // Get data from DynamicDialogConfig
         const data = this.dialogConfig.data;
-        this.entityTitle.set(data.entityTitle);
-        this.deleteQuestion.set(data.deleteQuestion);
+        if (!data) {
+            throw new Error('Delete dialog requires its entity and action configuration');
+        }
+        this.entityTitle.set(data.entityTitle ?? '');
+        this.deleteQuestion.set(data.deleteQuestion ?? 'entity.action.deleteQuestion');
         this.translateValues.set(data.translateValues);
-        this.deleteConfirmationText.set(data.deleteConfirmationText);
+        this.deleteConfirmationText.set(data.deleteConfirmationText ?? '');
         this.additionalChecks.set(data.additionalChecks);
         this.entitySummaryTitle.set(data.entitySummaryTitle);
         this.actionType.set(data.actionType);

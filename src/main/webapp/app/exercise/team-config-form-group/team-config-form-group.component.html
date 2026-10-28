@@ -1,7 +1,7 @@
-<div class="form-group">
+<div class="flex flex-col gap-1 mb-3">
     @if (exercise(); as exercise) {
-        <div class="row">
-            <div class="col-auto">
+        <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12 md:col-auto">
                 <div>
                     <label jhiTranslate="artemisApp.exercise.participation"></label>
                     <jhi-help-icon text="artemisApp.exercise.modeTooltip" />
@@ -11,39 +11,41 @@
                 </div>
             </div>
             @if (exercise.mode === TEAM) {
-                <div class="col-auto">
+                <div class="col-span-12 md:col-auto">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize"></label>
                         <jhi-help-icon text="artemisApp.exercise.teamAssignmentConfig.teamSizeTooltip" />
                     </div>
                     <div>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <label class="input-group-text" for="field_minTeamSize">Min</label>
+                        <div class="flex items-center gap-2">
+                            <div class="inline-flex">
+                                <label class="rounded-md border border-border bg-surface-sunken px-3 py-2" for="field_minTeamSize">Min</label>
                             </div>
                             <input
+                                tumAetUiInput
                                 name="minTeamSize"
                                 id="field_minTeamSize"
                                 type="number"
                                 min="1"
                                 max="99"
                                 required
-                                class="form-control input-number-short"
+                                class="input-number-short"
                                 [(ngModel)]="config.minTeamSize"
                                 (ngModelChange)="updateMinTeamSize($event)"
                                 #minTeamSize="ngModel"
                             />
-                            <div class="input-group-append">
-                                <label class="input-group-text" for="field_maxTeamSize">Max</label>
+                            <div class="inline-flex">
+                                <label class="rounded-md border border-border bg-surface-sunken px-3 py-2" for="field_maxTeamSize">Max</label>
                             </div>
                             <input
+                                tumAetUiInput
                                 name="maxTeamSize"
                                 id="field_maxTeamSize"
                                 type="number"
                                 min="1"
                                 max="99"
                                 required
-                                class="form-control input-number-short"
+                                class="input-number-short"
                                 [(ngModel)]="config.maxTeamSize"
                                 (ngModelChange)="updateMaxTeamSize($event)"
                                 #maxTeamSize="ngModel"
@@ -51,14 +53,14 @@
                         </div>
                         @for (e of minTeamSize.errors! | keyvalue | removekeys: ['required']; track e) {
                             @if (minTeamSize.invalid && (minTeamSize.dirty || minTeamSize.touched)) {
-                                <div class="alert alert-danger">
+                                <div class="rounded-md border p-4 border-state-danger text-state-danger bg-state-danger/10">
                                     <div [jhiTranslate]="'artemisApp.exercise.form.minTeamSize' + '.' + e.key"></div>
                                 </div>
                             }
                         }
                         @for (e of maxTeamSize.errors! | keyvalue | removekeys: ['required']; track e) {
                             @if (maxTeamSize.invalid && (maxTeamSize.dirty || maxTeamSize.touched)) {
-                                <div class="alert alert-danger">
+                                <div class="rounded-md border p-4 border-state-danger text-state-danger bg-state-danger/10">
                                     <div [jhiTranslate]="'artemisApp.exercise.form.maxTeamSize' + '.' + e.key"></div>
                                 </div>
                             }

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Type, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -78,7 +78,7 @@ export class ExerciseAddModalComponent {
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly router = inject(Router);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
 
     readonly visible = input<boolean>(false);
     readonly mode = input<AddModalMode>('create');
@@ -179,13 +179,11 @@ export class ExerciseAddModalComponent {
         const dialogData: ExerciseImportDialogData & { headerKey: string } = { exerciseType: type, headerKey };
         const componentToOpen: Type<unknown> = type === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
 
-        const dialogRef = this.dialogService.open(componentToOpen, {
-            width: '50rem',
-            modal: true,
+        const dialogRef = this.dialogService.open<unknown, Exercise | string, ExerciseImportDialogData & { headerKey: string }>(componentToOpen, {
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
             data: dialogData,
             // Reactive title (re-translates on a language switch) and a "Back" button in the footer that returns to this
             // modal's exercise-type selection (see onClose). PrimeNG's static `header` string would not re-translate.

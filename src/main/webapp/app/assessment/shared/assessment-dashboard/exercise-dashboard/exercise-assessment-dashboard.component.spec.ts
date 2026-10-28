@@ -67,7 +67,7 @@ import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/language-table-cell/language-table-cell.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
@@ -254,7 +254,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
         MockProvider(ArtemisNavigationUtilService),
-        { provide: DialogService, useClass: MockDialogService },
+        { provide: TumAetUiDialogService, useClass: MockDialogService },
         provideHttpClient(),
         provideHttpClientTesting(),
     ];
@@ -833,7 +833,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(firstCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBeNull();
         expect(secondCorrectionToggles).toHaveLength(1);
         expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBe(secondCorrectionToggles[0]);
-        expect(secondCorrectionRound.querySelector('[data-testid="correction-round-header"].mb-3.flex.w-full.items-center.justify-between')).not.toBeNull();
+        const header = secondCorrectionRound.querySelector('[data-testid="correction-round-header"]');
+        expect(header?.contains(secondCorrectionToggles[0])).toBe(true);
     });
 
     it('should show the second correction toggle before the instructor participates', () => {
@@ -1028,8 +1029,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             const continueAssessment = fixture.nativeElement.querySelector('#continue-assessment');
             expect(continueAssessment).not.toBeNull();
-            expect(continueAssessment.classList).toContain('disabled');
-            // the disabled class only stops mouse clicks, so the route must be gone and the link out of the tab order
+            // Disabled links have no route and are excluded from keyboard navigation.
             expect(continueAssessment.getAttribute('href')).toBeNull();
             expect(continueAssessment.getAttribute('aria-disabled')).toBe('true');
             expect(continueAssessment.getAttribute('tabindex')).toBe('-1');

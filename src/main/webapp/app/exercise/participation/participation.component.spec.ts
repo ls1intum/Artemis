@@ -1,3 +1,4 @@
+import { TumAetUiDatePickerComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { signal } from '@angular/core';
 import { ParticipationPrivacyService } from './participation-privacy.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -27,11 +28,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { By } from '@angular/platform-browser';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -102,7 +103,7 @@ describe('ParticipationComponent', () => {
                 MockProvider(EventManager),
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

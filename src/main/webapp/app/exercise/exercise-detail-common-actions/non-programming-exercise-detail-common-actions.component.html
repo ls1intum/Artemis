@@ -1,17 +1,17 @@
 @if (exercise(); as exercise) {
-    <div class="d-flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2">
         <!-- Edit -->
         @if (exercise.isAtLeastEditor) {
-            <a [routerLink]="baseResource() + 'edit'" class="btn btn-warning btn-sm">
+            <a size="small" severity="warn" tumAetUiButton [routerLink]="baseResource() + 'edit'">
                 <fa-icon [icon]="faWrench" />
-                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
             </a>
         }
         <!-- Participations  -->
         @if (course() && canAccessParticipationsAndScores()) {
-            <a [routerLink]="baseResource() + 'participations'" class="btn btn-primary btn-sm">
+            <a size="small" severity="primary" tumAetUiButton [routerLink]="baseResource() + 'participations'">
                 <fa-icon [icon]="faListAlt" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
+                <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.participations"></span>
             </a>
         }
         <!-- Slot for extra host-provided actions (e.g. the Atlas "Suggest competencies" trigger).
@@ -20,31 +20,33 @@
         <ng-content />
         <!-- Teams -->
         @if (exercise.teamMode && exercise.isAtLeastTutor) {
-            <a [routerLink]="teamBaseResource() + 'teams'" class="btn btn-primary btn-sm">
+            <a size="small" severity="primary" tumAetUiButton [routerLink]="teamBaseResource() + 'teams'">
                 <fa-icon [icon]="faUsers" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams"></span>
+                <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.teams"></span>
             </a>
         }
         <!-- Exercise Dashboard -->
         @if (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments) {
-            <a [routerLink]="shortBaseResource() + 'assessment-dashboard/' + exercise.id" class="btn btn-info btn-sm">
+            <a size="small" severity="info" tumAetUiButton [routerLink]="shortBaseResource() + 'assessment-dashboard/' + exercise.id">
                 <fa-icon [icon]="faUserCheck" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exerciseAssessmentDashboard"></span>
+                <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.exerciseAssessmentDashboard"></span>
             </a>
         }
         @if (course() && canAccessParticipationsAndScores()) {
             <!--Statistics -->
-            <a [routerLink]="baseResource() + 'exercise-statistics'" class="btn btn-info btn-sm">
+            <a size="small" severity="info" tumAetUiButton [routerLink]="baseResource() + 'exercise-statistics'">
                 <fa-icon [icon]="faChartBar" />
-                <span class="d-none d-md-inline" jhiTranslate="statistics.statistics-title"></span>
+                <span class="hidden md:inline" jhiTranslate="statistics.statistics-title"></span>
             </a>
         }
         @if (irisEnabled() && exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor && exercise.course && !isExamExercise()) {
             <!-- Iris Settings -->
             <a
+                size="small"
+                severity="warn"
+                tumAetUiButton
                 [routerLink]="baseResource() + 'iris-settings'"
-                ngbTooltip="{{ 'artemisApp.iris.settings.button.textExercise.tooltip' | artemisTranslate }}"
-                class="btn btn-warning btn-sm"
+                tumAetUiTooltip="{{ 'artemisApp.iris.settings.button.textExercise.tooltip' | artemisTranslate }}"
             >
                 <fa-icon [icon]="faRobot" />
                 <span jhiTranslate="artemisApp.iris.settings.button.textExercise.title"></span>
@@ -52,22 +54,22 @@
         }
         <!-- Example Submission -->
         @if (exercise.isAtLeastEditor && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT)) {
-            <a [routerLink]="baseResource() + 'example-submissions'" class="btn btn-success btn-sm" data-testid="example-submissions-button">
+            <a size="small" severity="success" tumAetUiButton [routerLink]="baseResource() + 'example-submissions'" data-testid="example-submissions-button">
                 <fa-icon [icon]="faBook" />
-                <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions"></span>
+                <span class="hidden md:inline" jhiTranslate="entity.action.exampleSubmissions"></span>
             </a>
         }
         <!-- Tutor Effort Statistics -->
         @if (exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT) {
-            <a [routerLink]="baseResource() + 'tutor-effort-statistics'" class="btn btn-success btn-sm">
+            <a size="small" severity="success" tumAetUiButton [routerLink]="baseResource() + 'tutor-effort-statistics'">
                 <fa-icon [icon]="faChartBar" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></span>
+                <span class="hidden md:inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></span>
             </a>
         }
         <!-- Plagiarism -->
         @if (exercise.type === ExerciseType.TEXT && exercise.isAtLeastEditor) {
             <jhi-feature-overlay [enabled]="plagiarismEnabled()">
-                <a class="btn btn-info btn-sm" id="check-plagiarism-download" routerLink="plagiarism">
+                <a size="small" severity="info" tumAetUiButton id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism"></span>
                 </a>
             </jhi-feature-overlay>

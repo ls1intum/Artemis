@@ -1,7 +1,8 @@
+import { TranslateService } from '@ngx-translate/core';
 import { Service, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription, firstValueFrom } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import isEqual from 'lodash-es/isEqual';
 
@@ -176,7 +177,8 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
 export class ExerciseMetadataSyncService {
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly http = inject(HttpClient);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
+    private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
 
     private context?: ExerciseMetadataSyncContext<Exercise>;
@@ -477,30 +479,23 @@ export class ExerciseMetadataSyncService {
             exerciseType: this.context?.exerciseType,
         };
 
-        const dialogRef = this.dialogService.open(ExerciseMetadataConflictModalComponent, {
-            width: '80rem',
-            breakpoints: {
-                '1400px': '75vw',
-                '1200px': '85vw',
-                '992px': '95vw',
+        const dialogRef = this.dialogService.open<ExerciseMetadataConflictModalComponent, ExerciseMetadataConflictModalResult, ExerciseMetadataConflictModalData>(
+            ExerciseMetadataConflictModalComponent,
+            {
+                size: 'large',
+                header: this.translateService.instant('artemisApp.exercise.metadataSync.conflictTitle'),
+                closable: false,
+                closeOnEscape: false,
+                dismissableMask: false,
+                data,
             },
-            // Allow reopening the same component type for consecutive queued alerts.
-            // PrimeNG's DialogService deduplicates by component type and removes the
-            // entry from its internal map only after the close animation completes,
-            // which races with the queue immediately opening the next modal.
-            duplicate: true,
-            modal: true,
-            closable: false,
-            closeOnEscape: false,
-            dismissableMask: false,
-            data,
-        });
+        );
 
         if (!dialogRef) {
             return undefined;
         }
         try {
-            return (await firstValueFrom(dialogRef.onClose)) as ExerciseMetadataConflictModalResult | undefined;
+            return await firstValueFrom(dialogRef.onClose);
         } catch {
             // firstValueFrom rejects if the Observable completes without emitting (e.g. dialog destroyed externally)
             return undefined;

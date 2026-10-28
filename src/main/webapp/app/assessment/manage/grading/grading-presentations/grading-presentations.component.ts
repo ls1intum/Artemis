@@ -1,3 +1,4 @@
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { Component, DestroyRef, effect, inject, input, output, untracked } from '@angular/core';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -59,7 +60,7 @@ export interface PresentationsConfig {
     selector: 'jhi-grading-presentations',
     templateUrl: './grading-presentations.component.html',
     styleUrls: ['./grading-presentations.component.scss'],
-    imports: [TranslateDirective, FormsModule, ModePickerComponent, HelpIconComponent],
+    imports: [TranslateDirective, FormsModule, ModePickerComponent, HelpIconComponent, TumAetUiInputDirective],
 })
 export class GradingPresentationsComponent {
     // =========================================================================
@@ -93,17 +94,14 @@ export class GradingPresentationsComponent {
         {
             value: PresentationType.NONE,
             labelKey: 'artemisApp.gradingSystem.presentationType.none',
-            btnClass: 'btn-secondary',
         },
         {
             value: PresentationType.BASIC,
             labelKey: 'artemisApp.gradingSystem.presentationType.basic',
-            btnClass: 'btn-secondary',
         },
         {
             value: PresentationType.GRADED,
             labelKey: 'artemisApp.gradingSystem.presentationType.graded',
-            btnClass: 'btn-secondary',
         },
     ];
 

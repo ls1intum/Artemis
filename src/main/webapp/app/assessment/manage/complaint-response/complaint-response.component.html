@@ -8,7 +8,7 @@
                             ? ('artemisApp.complaint.responseExists' | artemisTranslate)
                             : ('artemisApp.moreFeedback.responseExists' | artemisTranslate)
                     }}
-                    <span [ngbTooltip]="response.submittedTime | artemisDate">{{ response.submittedTime | artemisTimeAgo }}</span>
+                    <span [tumAetUiTooltip]="response.submittedTime | artemisDate">{{ response.submittedTime | artemisTimeAgo }}</span>
                 </p>
             </div>
             <textarea

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
@@ -13,12 +12,12 @@ describe('Mode Picker Component', () => {
         {
             value: 'Option 0',
             labelKey: 'labelKey 0',
-            btnClass: 'btn-secondary',
+            severity: 'secondary',
         },
         {
             value: 'Option 1',
             labelKey: 'labelKey 1',
-            btnClass: 'btn-info',
+            severity: 'info',
         },
     ];
 
@@ -76,20 +75,17 @@ describe('Mode Picker Component', () => {
         expect(valueChangeCalledWith).toBeUndefined();
     });
 
-    it('should set mode classes according to the chosen value', () => {
+    it('exposes selection and emits from the rendered buttons', () => {
         fixture.componentRef.setInput('options', modePickerOptions);
+        fixture.componentRef.setInput('value', modePickerOptions[0].value);
         fixture.detectChanges();
-        let modes = fixture.debugElement.queryAll(By.css('.btn'));
-        let actualClassesForNodes = modes.map((node) => node.nativeNode.getAttribute('class').split(' '));
-
-        actualClassesForNodes.forEach((actualClassesForNode) => expect(actualClassesForNode).toEqual(['btn', 'btn-default']));
-
-        const chosenOption = modePickerOptions[0];
-        fixture.componentRef.setInput('value', chosenOption.value);
-        fixture.detectChanges();
-        modes = fixture.debugElement.queryAll(By.css('.btn'));
-        actualClassesForNodes = modes.map((node) => node.nativeNode.getAttribute('class').split(' '));
-
-        expect(actualClassesForNodes[0]).toEqual(['btn', chosenOption.btnClass]);
+        const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+        expect(buttons).toHaveLength(2);
+        expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
+        expect(buttons[1].getAttribute('aria-pressed')).toBe('false');
+        let nextValue: string | undefined;
+        comp.valueChange.subscribe((value) => (nextValue = value));
+        buttons[1].click();
+        expect(nextValue).toBe(modePickerOptions[1].value);
     });
 });
