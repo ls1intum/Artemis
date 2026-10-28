@@ -26,6 +26,7 @@ export interface TutorialGroupSummary {
     isUserRegistered?: boolean;
     isUserTutor?: boolean;
     numberOfRegisteredUsers?: number;
+    capacityReached?: boolean;
     teachingAssistantName?: string;
     teachingAssistantId?: number;
     teachingAssistantImageUrl?: string;
