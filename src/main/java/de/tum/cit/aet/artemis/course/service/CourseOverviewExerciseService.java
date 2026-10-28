@@ -249,8 +249,10 @@ public class CourseOverviewExerciseService {
                 .sorted((first, second) -> compareSubmissions(second.getFirst(), first.getFirst())).map(rows -> visibleSubmission(rows.getFirst(), rows, exercise, calculationTime))
                 .flatMap(Optional::stream).findFirst().map(Set::of).orElse(Set.of());
 
+        boolean hasSubmitted = participationRows.stream().anyMatch(row -> row.submissionId() != null && (Boolean.TRUE.equals(row.submitted())
+                || exercise.type() == ExerciseType.PROGRAMMING && row.submissionDate() != null || row.resultId() != null && Boolean.TRUE.equals(row.resultRated())));
         return new ParticipationOverviewDTO(firstRow.participationId(), firstRow.participationType(), firstRow.initializationState(), firstRow.initializationDate(),
-                firstRow.testRun(), firstRow.individualDueDate(), firstRow.repositoryUri(), submissions);
+                firstRow.testRun(), firstRow.individualDueDate(), firstRow.repositoryUri(), submissions, hasSubmitted);
     }
 
     private Optional<SubmissionOverviewDTO> visibleSubmission(ParticipationOverviewRowDTO submissionRow, List<ParticipationOverviewRowDTO> submissionRows,
