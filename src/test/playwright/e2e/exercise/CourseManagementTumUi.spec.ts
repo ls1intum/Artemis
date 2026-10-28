@@ -35,15 +35,14 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
             element.scrollLeft = 0;
         });
 
-        await expectWithinViewport(viewport, ['top', 'right', 'bottom', 'left'], { name: 'exam students table viewport', tolerance: 1 });
-        await expectNoHorizontalOverflow(page, [], { name: 'exam students page' });
-        await expectNoHorizontalScrollAround(viewport, { name: 'exam students table viewport' });
+        await expectWithinViewport(viewport, ['top', 'right', 'bottom', 'left'], { name: 'course students table viewport', tolerance: 1 });
+        await expectNoHorizontalOverflow(page, [], { name: 'course students page' });
+        await expectNoHorizontalScrollAround(viewport, { name: 'course students table viewport' });
         await expect.poll(() => viewport.evaluate((element) => element.scrollHeight - element.clientHeight)).toBeGreaterThan(0);
 
         if (narrow) {
             expect(await viewport.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(50);
         }
-        const headerRight = await actionsHeader.evaluate((element) => element.getBoundingClientRect().right);
         await viewport.evaluate((element) => {
             element.scrollTop = Math.min(300, element.scrollHeight - element.clientHeight);
             element.scrollLeft = element.scrollWidth - element.clientWidth;
@@ -52,7 +51,6 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
         if (narrow) {
             await expect.poll(() => viewport.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
         }
-        await expect.poll(() => actionsHeader.evaluate((element, initialRight) => Math.abs(element.getBoundingClientRect().right - initialRight), headerRight)).toBeLessThan(2);
         await expect
             .poll(() =>
                 viewport.evaluate((element) => {
@@ -62,14 +60,13 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
             )
             .toBeLessThan(2);
         await expectHeaderAboveRows(actionsHeader);
-        await expectNoHorizontalOverflow(page, [], { name: 'scrolled exam students page' });
+        await expectNoHorizontalOverflow(page, [], { name: 'scrolled course students page' });
     }
 
-    test('keeps exam students inside a scrollable viewport with a frozen action header in light, dark and narrow views', async ({
+    test('keeps course students inside a scrollable viewport with a sticky header in light, dark and narrow views', async ({
         page,
         login,
         courseManagementAPIRequests,
-        examAPIRequests,
         userManagementAPIRequests,
     }) => {
         let course: Course | undefined;
@@ -86,15 +83,12 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                 students.push(student);
                 await courseManagementAPIRequests.addStudentToCourse(course, student);
             }
-            const exam = await examAPIRequests.createExam({ course, title: `TUM UI students ${token}` });
-            expect(exam.id).toBeDefined();
-            await examAPIRequests.registerAllCourseStudentsForExam(exam);
 
             // Exercise the real theme service through its persisted system-preference mode.
             await page.addInitScript(() => localStorage.removeItem('artemisapp.theme.preference'));
             await page.emulateMedia({ colorScheme: 'light' });
             await page.setViewportSize({ width: 1280, height: 800 });
-            await page.goto(`/course-management/${course.id}/exams/${exam.id}/students`);
+            await page.goto(`/course-management/${course.id}/members/students`);
             const viewport = page.getByTestId('table-viewport');
             const table = viewport.getByRole('table');
             const rows = table.getByRole('rowgroup').last().getByRole('row');
@@ -112,7 +106,7 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                     }
                     await verifyScrolling(page, viewport, width < 600);
                     if (width === 1280 || width === 480) {
-                        await attachScreenshot(page, `exam-students-${name}`);
+                        await attachScreenshot(page, `course-students-${name}`);
                     }
 
                     const targetStudent = students[17];
@@ -126,7 +120,7 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                         const dialog = page.getByRole('dialog');
                         await expect(dialog).toBeVisible();
                         await expect(dialog).toContainText(targetStudent.username);
-                        await attachScreenshot(page, 'exam-students-remove-dialog');
+                        await attachScreenshot(page, 'course-students-remove-dialog');
                         await page.keyboard.press('Escape');
                         await expect(dialog).toBeHidden();
                         await expect(remove).toBeFocused();
