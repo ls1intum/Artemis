@@ -77,7 +77,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
             SubmissionService submissionService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
-        super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -236,8 +236,4 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         return super.deleteAssessment(participationId, submissionId, resultId);
     }
 
-    @Override
-    protected String getEntityName() {
-        return ENTITY_NAME;
-    }
 }

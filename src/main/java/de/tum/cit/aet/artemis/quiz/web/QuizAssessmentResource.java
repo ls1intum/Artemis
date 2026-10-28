@@ -42,7 +42,7 @@ public class QuizAssessmentResource extends AssessmentResource {
     public QuizAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AssessmentService assessmentService, ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, QuizStatisticsService quizStatisticsService) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.quizStatisticsService = quizStatisticsService;
     }
 
@@ -73,8 +73,4 @@ public class QuizAssessmentResource extends AssessmentResource {
         quizStatisticsService.notifyStatisticsChanged(exercise.getId());
     }
 
-    @Override
-    protected String getEntityName() {
-        return ENTITY_NAME;
-    }
 }

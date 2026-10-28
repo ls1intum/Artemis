@@ -33,6 +33,8 @@ public abstract class AssessmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(AssessmentResource.class);
 
+    private final String entityName;
+
     protected final AuthorizationCheckService authCheckService;
 
     protected final UserRepository userRepository;
@@ -47,8 +49,10 @@ public abstract class AssessmentResource {
 
     protected final SubmissionRepository submissionRepository;
 
-    public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
-            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+    public AssessmentResource(String entityName, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
+            AssessmentService assessmentService, ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository) {
+        this.entityName = entityName;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -57,8 +61,6 @@ public abstract class AssessmentResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
     }
-
-    protected abstract String getEntityName();
 
     /**
      * Get the latest result using an endpoint-selected owner or instructor audience. Owner reads require current course access, ownership and a published, finished result.
@@ -219,7 +221,7 @@ public abstract class AssessmentResource {
     void validateExercise(Exercise exercise) throws BadRequestAlertException {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course == null) {
-            throw new BadRequestAlertException("The course belonging to this exercise or its exercise group and exam does not exist", getEntityName(), "courseNotFound");
+            throw new BadRequestAlertException("The course belonging to this exercise or its exercise group and exam does not exist", entityName, "courseNotFound");
         }
     }
 

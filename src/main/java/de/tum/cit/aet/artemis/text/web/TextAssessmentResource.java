@@ -135,7 +135,7 @@ public class TextAssessmentResource extends AssessmentResource {
             GradingCriterionRepository gradingCriterionRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
             FeedbackRepository feedbackRepository, ResultService resultService, LongFeedbackTextRepository longFeedbackTextRepository,
             Optional<AthenaFeedbackApi> athenaFeedbackApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
-        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
 
         this.textAssessmentService = textAssessmentService;
@@ -559,11 +559,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
         final List<FeedbackDTO> feedbackDTOs = result.getFeedbacks().stream().map(FeedbackDTO::of).toList();
         return ResponseEntity.ok().body(new TextExampleResultDTO(result.getId(), feedbackDTOs, submissionDTO));
-    }
-
-    @Override
-    protected String getEntityName() {
-        return ENTITY_NAME;
     }
 
     /**
