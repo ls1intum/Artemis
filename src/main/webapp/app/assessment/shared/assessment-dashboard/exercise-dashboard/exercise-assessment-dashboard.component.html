@@ -280,7 +280,7 @@
 
         @if (tutorParticipationStatus() !== NOT_PARTICIPATED || isTestRun()) {
             <div class="flex">
-                <div class="grow">
+                <div class="min-w-0 grow">
                     @if (tutorParticipationStatus() === REVIEWED_INSTRUCTIONS && !isTestRun()) {
                         <tumaet-ui-message class="flex flex-wrap gap-y-2" role="alert" severity="warn">
                             <span
