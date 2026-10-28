@@ -541,7 +541,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     @ParameterizedTest
     @MethodSource("gradeRelevantResultStates")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGradingCriteriaPointsIgnoreUnfinishedAthenaRequests(AssessmentType latestType, Boolean successful, boolean expectedLatest) throws Exception {
         var submission = studentParticipation.findLatestSubmission().orElseThrow();
         submission.setSubmitted(true);
