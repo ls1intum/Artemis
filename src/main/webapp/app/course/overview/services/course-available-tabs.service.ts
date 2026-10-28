@@ -24,7 +24,7 @@ export class CourseAvailableTabsService implements OnDestroy {
     private readonly router = inject(Router);
 
     private readonly state = signal<{ courseId: number; navigationId: number; tabs: CourseAvailableTabs } | undefined>(undefined);
-    private inFlightRequest?: { courseId: number; observable: Observable<CourseAvailableTabs> };
+    private inFlightRequest?: { courseId: number; navigationId: number; observable: Observable<CourseAvailableTabs> };
 
     private currentUserId?: number;
     private readonly authenticationStateSubscription: Subscription;
@@ -61,10 +61,11 @@ export class CourseAvailableTabsService implements OnDestroy {
      * @param courseId the course to fetch the tabs for
      */
     load(courseId: number): Observable<CourseAvailableTabs> {
+        const navigationId = currentNavigationId(this.router);
         const observable = this.courseManagementService.getCourseAvailableTabs(courseId).pipe(
             tap((tabs) => {
-                if (this.inFlightRequest?.observable === observable) {
-                    this.state.set({ courseId, navigationId: currentNavigationId(this.router), tabs });
+                if (this.inFlightRequest?.observable === observable && currentNavigationId(this.router) === navigationId) {
+                    this.state.set({ courseId, navigationId, tabs });
                 }
             }),
             finalize(() => {
@@ -74,7 +75,7 @@ export class CourseAvailableTabsService implements OnDestroy {
             }),
             shareReplay({ bufferSize: 1, refCount: true }),
         );
-        this.inFlightRequest = { courseId, observable };
+        this.inFlightRequest = { courseId, navigationId, observable };
         return observable;
     }
 
@@ -88,7 +89,8 @@ export class CourseAvailableTabsService implements OnDestroy {
         if (tabs) {
             return of(tabs);
         }
-        return this.inFlightRequest?.courseId === courseId ? this.inFlightRequest.observable : this.load(courseId);
+        const request = this.inFlightRequest;
+        return request?.courseId === courseId && request.navigationId === currentNavigationId(this.router) ? request.observable : this.load(courseId);
     }
 
     /**
