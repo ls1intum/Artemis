@@ -130,11 +130,14 @@ describe('CourseStatisticsResultsComponent', () => {
         fixture.componentRef.setInput('exercises', [exercise]);
         fixture.detectChanges();
 
-        const row = fixture.componentInstance.rows()[0];
         expect(exercise.studentParticipations![0].exercise).toBeUndefined();
         expect(exercise.course).toBeUndefined();
-        expect(row.resultIcon).toBe(icon);
-        expect(row.resultColor).toBe(color);
+        const resultLink: HTMLAnchorElement | null = fixture.nativeElement.querySelector('tbody tr td:nth-child(2) a');
+        expect(resultLink?.getAttribute('href')).toBe('/courses/589/exercises/1');
+        expect(resultLink?.textContent).toContain('0%, 0 points');
+        const renderedIcon = resultLink?.querySelector<HTMLElement>('fa-icon');
+        expect(renderedIcon?.querySelector('svg')?.getAttribute('data-icon')).toBe(icon.iconName);
+        expect(renderedIcon?.style.color).toBe(color);
         expect(formatResult).toHaveBeenLastCalledWith(result, expect.objectContaining({ id: 1, type: ExerciseType.PROGRAMMING, course }), exercise.studentParticipations![0], true);
     });
 
