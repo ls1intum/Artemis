@@ -4,6 +4,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * The payload of the new mention notification.
  *
@@ -24,5 +26,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record NewMentionPayloadDTO(@Nullable String postMarkdownContent, @Nullable String postCreationDate, @Nullable String postAuthorName, @Nullable Long postId,
         @Nullable String replyMarkdownContent, @Nullable String replyCreationDate, @Nullable String replyAuthorName, @Nullable Long replyAuthorId, @Nullable String replyImageUrl,
-        @Nullable Long replyId, @Nullable String channelName, @Nullable Long channelId, boolean replyIsBot) implements CourseNotificationPayloadDTO {
+        @Nullable Long replyId, @Nullable String channelName, @Nullable Long channelId, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean replyIsBot)
+        implements CourseNotificationPayloadDTO {
 }

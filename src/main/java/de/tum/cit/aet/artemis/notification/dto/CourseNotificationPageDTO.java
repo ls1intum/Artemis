@@ -7,6 +7,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * REST page with the same JSON fields as the internal cached page. Failed notification reconstruction leaves a null item.
  *
@@ -17,7 +19,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param totalPages    number of pages
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseNotificationPageDTO(List<@Nullable CourseNotificationDTO> content, int pageNumber, int pageSize, long totalElements, int totalPages) implements Serializable {
+public record CourseNotificationPageDTO(List<@Nullable CourseNotificationDTO> content, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int pageNumber,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int pageSize, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long totalElements,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int totalPages) implements Serializable {
 
     /**
      * Copies page metadata without filtering entries or changing totals.

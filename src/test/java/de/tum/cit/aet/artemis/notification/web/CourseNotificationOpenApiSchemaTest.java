@@ -21,7 +21,7 @@ import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 
-/** Exercises the actual ordered register → required → compose → filter pipeline, not an independently ordered bean list. */
+/** Exercises the actual ordered explicit DTO metadata → register → compose → filter pipeline, not an independently ordered bean list. */
 class CourseNotificationOpenApiSchemaTest {
 
     @Test
@@ -63,7 +63,12 @@ class CourseNotificationOpenApiSchemaTest {
             Schema<?> payload = schemas.get(payloadType.getSimpleName().replaceFirst("DTO$", ""));
             assertThat(payload.getProperties().keySet())
                     .containsExactlyInAnyOrderElementsOf(Arrays.stream(payloadType.getRecordComponents()).map(component -> component.getName()).toList());
-            var primitives = Arrays.stream(payloadType.getRecordComponents()).filter(component -> component.getType().isPrimitive()).map(component -> component.getName()).toList();
+            var primitives = Arrays.stream(payloadType.getRecordComponents()).filter(component -> component.getType().isPrimitive()).map(component -> {
+                var annotation = component.getAccessor().getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
+                assertThat(annotation).as(payloadType.getSimpleName() + "." + component.getName()).isNotNull();
+                assertThat(annotation.requiredMode()).isEqualTo(io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED);
+                return component.getName();
+            }).toList();
             if (primitives.isEmpty()) {
                 assertThat(payload.getRequired()).isNullOrEmpty();
             }

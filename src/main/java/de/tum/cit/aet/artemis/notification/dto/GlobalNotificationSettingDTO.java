@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GlobalNotificationSettingDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long userId,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) GlobalNotificationType notificationType, boolean enabled) {
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) GlobalNotificationType notificationType, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean enabled) {
 
     /**
      * Creates a response DTO from a global notification setting entity.
