@@ -23,6 +23,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param properties the stored properties, minus the ones this row has no value for
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IndexedEntityRecordDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, long entityId, @Nullable @Schema(nullable = true) String title,
-        @Nullable @Schema(nullable = true) Instant ingestedAt, Map<String, Object> properties) {
+public record IndexedEntityRecordDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long entityId,
+        @Nullable @Schema(nullable = true) String title, @Nullable @Schema(nullable = true) Instant ingestedAt, Map<String, Object> properties) {
 }

@@ -51,11 +51,13 @@ class IngestionCoverageResourceTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "getStoredCoverage", "getLiveCoveragePage" })
-    void coverageEndpointsDeclareTotalCountHeader(String methodName) {
+    void coverageEndpointsDeclareTotalCountHeaderAndPaginationParameters(String methodName) {
         var method = Arrays.stream(IngestionCoverageResource.class.getDeclaredMethods()).filter(candidate -> candidate.getName().equals(methodName)).findFirst().orElseThrow();
         var response = method.getAnnotation(io.swagger.v3.oas.annotations.responses.ApiResponse.class);
         assertThat(response).isNotNull();
         assertThat(response.responseCode()).isEqualTo("200");
+        var pageable = Arrays.stream(method.getParameters()).filter(parameter -> parameter.getType() == org.springframework.data.domain.Pageable.class).findFirst().orElseThrow();
+        assertThat(pageable.isAnnotationPresent(org.springdoc.core.annotations.ParameterObject.class)).isTrue();
         assertThat(response.headers()).singleElement().satisfies(header -> {
             assertThat(header.name()).isEqualTo("X-Total-Count");
             assertThat(header.schema().type()).isEqualTo("integer");

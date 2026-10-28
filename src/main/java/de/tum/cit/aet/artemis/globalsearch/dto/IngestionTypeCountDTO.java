@@ -18,5 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 // Rows outlive the shape that wrote them: this is read back by whatever the record looks like when the projection is
 // next read, so a component removed in a later release must not make the rows written before it unreadable.
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record IngestionTypeCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, long expected, long indexed, long missing, long orphaned) {
+public record IngestionTypeCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long expected,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long indexed, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long missing,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long orphaned) {
 }

@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param kind          which content is absent: {@code slides} or {@code transcript}
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MissingContentDTO(long lectureUnitId, @Nullable @Schema(nullable = true) String title, @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {
-        "slides", "transcript" }) String kind){
+public record MissingContentDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long lectureUnitId, @Nullable @Schema(nullable = true) String title,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {
+                "slides", "transcript" }) String kind){
 }

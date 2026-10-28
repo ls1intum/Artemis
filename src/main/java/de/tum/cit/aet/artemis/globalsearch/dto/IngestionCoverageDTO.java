@@ -26,10 +26,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param lastIngestedAt   the most recent index write across the course's objects, or {@code null} if nothing is indexed
  * @param typeCounts       the per-type expected/indexed/missing/orphaned counts
  */
-public record IngestionCoverageDTO(long courseId, @Nullable @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String courseTitle,
-        @Nullable @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) ZonedDateTime releaseDate, boolean active,
-        @Nullable @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String semester,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) IngestionCoverageStatus status, int coverageGapScore,
+public record IngestionCoverageDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long courseId,
+        @Nullable @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String courseTitle,
+        @Nullable @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) ZonedDateTime releaseDate,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean active, @Nullable @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String semester,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) IngestionCoverageStatus status, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int coverageGapScore,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ZonedDateTime computedAt,
         @Nullable @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) ZonedDateTime lastIngestedAt,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<IngestionTypeCountDTO> typeCounts) {

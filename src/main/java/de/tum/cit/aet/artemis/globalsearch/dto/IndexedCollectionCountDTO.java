@@ -16,7 +16,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param readable   whether the count could be read
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IndexedCollectionCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String collection, @Nullable Long count, boolean readable) {
+public record IndexedCollectionCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String collection, @Nullable Long count,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean readable) {
 
     public static IndexedCollectionCountDTO of(String collection, long count) {
         return new IndexedCollectionCountDTO(collection, count, true);

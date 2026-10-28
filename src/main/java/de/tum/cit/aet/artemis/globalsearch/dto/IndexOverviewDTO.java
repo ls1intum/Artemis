@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param irisReachable     whether Iris is actually answering; always {@code false} when the module is disabled
  * @param collections       the per-collection live object counts
  */
-public record IndexOverviewDTO(boolean weaviateReachable, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String weaviateAddress, boolean irisEnabled, boolean irisReachable,
+public record IndexOverviewDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean weaviateReachable,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String weaviateAddress, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean irisEnabled,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean irisReachable,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<IndexedCollectionCountDTO> collections) {
 }

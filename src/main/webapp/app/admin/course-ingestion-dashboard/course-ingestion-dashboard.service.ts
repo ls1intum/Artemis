@@ -2,7 +2,6 @@ import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
-import { Pageable } from 'app/openapi/model/pageable';
 import { IngestionBrowserApi } from 'app/openapi/api/ingestion-browser-api';
 import { IngestionCoverageApi } from 'app/openapi/api/ingestion-coverage-api';
 import { IndexOverview } from 'app/openapi/model/index-overview';
@@ -54,7 +53,9 @@ export class CourseIngestionDashboardService {
      * is active, and by a case-insensitive title search.
      */
     getStoredCoverage(request: StoredCoverageRequest = {}): Observable<PageableResult<IngestionCoverage>> {
-        return this.ingestionCoverageApi.getStoredCoverage(this.toPageable(request), request.status, request.active, request.search || undefined).pipe(map(toPageableResult));
+        return this.ingestionCoverageApi
+            .getStoredCoverage(request.status, request.active, request.search || undefined, request.page, request.size, request.sort ? [request.sort] : undefined)
+            .pipe(map(toPageableResult));
     }
 
     /**
@@ -62,7 +63,9 @@ export class CourseIngestionDashboardService {
      * sorted on course columns (e.g. `title`, `startDate`) and optionally filtered by a case-insensitive title search.
      */
     getLiveCoveragePage(request: LiveCoverageRequest = {}): Observable<PageableResult<IngestionCoverage>> {
-        return this.ingestionCoverageApi.getLiveCoveragePage(this.toPageable(request), request.search || undefined).pipe(map(toPageableResult));
+        return this.ingestionCoverageApi
+            .getLiveCoveragePage(request.search || undefined, request.page, request.size, request.sort ? [request.sort] : undefined)
+            .pipe(map(toPageableResult));
     }
 
     /**
@@ -95,20 +98,5 @@ export class CourseIngestionDashboardService {
     /** POST to force a full recompute, waiting for completion and surfacing a failed attempt through the error channel. */
     refreshCoverage(): Observable<void> {
         return this.ingestionCoverageApi.refreshCoverage();
-    }
-
-    /** Adapts the UI's single Spring sort criterion without overriding server pagination defaults. */
-    private toPageable(request: CoveragePageRequest): Pageable {
-        const pageable: Pageable = {};
-        if (request.page !== undefined) {
-            pageable.page = request.page;
-        }
-        if (request.size !== undefined) {
-            pageable.size = request.size;
-        }
-        if (request.sort !== undefined && request.sort !== '') {
-            pageable.sort = [request.sort];
-        }
-        return pageable;
     }
 }
