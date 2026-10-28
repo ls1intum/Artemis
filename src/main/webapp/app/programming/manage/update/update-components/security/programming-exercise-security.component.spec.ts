@@ -21,12 +21,7 @@ const VERSIONS: SecurityFrameworkVersions = {
 };
 
 const inactiveConfig = (): SecurityFrameworkConfig => ({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '3.4.1' });
-const activeConfig = (version = '3.4.1', hash = 'abc1234'): SecurityFrameworkConfig => ({
-    status: SecurityActivationStatus.ACTIVE,
-    frameworkVersion: version,
-    lastCommitHash: hash,
-    lastSyncedAt: '2026-09-15T10:00:00Z',
-});
+const activeConfig = (version = '3.4.1'): SecurityFrameworkConfig => ({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: version });
 
 /**
  * Logic-focused spec: the component's status machine and its single server contract (getConfig /
@@ -128,7 +123,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     });
 
     it('loads the persisted config from the server in edit mode', () => {
-        initEdit(activeConfig('3.3.0', 'aaa1111'));
+        initEdit(activeConfig('3.3.0'));
         expect(service.getConfig).toHaveBeenCalledWith(42);
         expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
         expect(comp.config().frameworkVersion).toBe('3.3.0');
@@ -291,7 +286,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         comp.onFrameworkVersionChanged('3.3.0');
         expect(comp.status()).toBe(SecurityActivationStatus.GENERATING);
         expect(service.updateFrameworkVersion).toHaveBeenCalledWith(42, '3.3.0');
-        update$.next(activeConfig('3.3.0', 'def5678'));
+        update$.next(activeConfig('3.3.0'));
         update$.complete();
         expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
         expect(comp.config().frameworkVersion).toBe('3.3.0');

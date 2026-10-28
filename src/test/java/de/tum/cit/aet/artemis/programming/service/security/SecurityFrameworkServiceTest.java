@@ -297,8 +297,6 @@ class SecurityFrameworkServiceTest {
 
         assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
         assertThat(config.frameworkVersion()).isEqualTo("2.2.1");
-        assertThat(config.lastCommitHash()).hasSize(7);
-        assertThat(config.lastSyncedAt()).isNotBlank();
     }
 
     @Test

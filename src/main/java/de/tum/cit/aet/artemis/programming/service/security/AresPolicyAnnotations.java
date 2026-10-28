@@ -122,14 +122,6 @@ final class AresPolicyAnnotations {
     }
 
     /**
-     * @param source the content of a Java file
-     * @return whether the file contains an Ares {@code @Policy} annotation that switches enforcement off
-     */
-    static boolean containsDeactivated(String source) {
-        return find(source).stream().anyMatch(annotation -> !annotation.isActivated());
-    }
-
-    /**
      * Switches every Ares {@code @Policy} annotation of the source on or off. Only the {@code activated} argument changes; the policy path and every other
      * argument are kept, so switching an annotation off and on again restores it exactly. An annotation that already has the requested state is not touched.
      *

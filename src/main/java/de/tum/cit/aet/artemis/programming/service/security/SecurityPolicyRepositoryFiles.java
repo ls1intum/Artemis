@@ -209,7 +209,7 @@ public final class SecurityPolicyRepositoryFiles {
      * @param mavenPom    content of {@code pom.xml}, if the repository has one
      * @return the build tool whose build file pins an Ares version
      */
-    static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
+    private static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
         if (gradleBuild != null && GRADLE_ARES_VERSION.matcher(gradleBuild).find()) {
             return Optional.of(BuildTool.GRADLE);
         }

@@ -50,10 +50,6 @@ export interface SecurityFrameworkConfig {
     status: SecurityActivationStatus;
     /** Ares version pinned in the build file of the tests repository; absent if the repository does not use Ares. */
     frameworkVersion?: string;
-    /** Short hash of the last commit that changed the security policy, if any. */
-    lastCommitHash?: string;
-    /** ISO timestamp of that commit, if any. */
-    lastSyncedAt?: string;
     /** Human-readable reason for the ERROR status, if any (shown in the error line). */
     errorDetail?: string;
 }

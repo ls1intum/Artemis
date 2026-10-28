@@ -11,6 +11,13 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class AresPolicyAnnotationsTest {
 
+    /**
+     * @return whether the source contains an Ares {@code @Policy} annotation that switches enforcement off
+     */
+    private static boolean isDeactivated(String source) {
+        return AresPolicyAnnotations.find(source).stream().anyMatch(annotation -> !annotation.isActivated());
+    }
+
     private static String source(String imports, String annotation) {
         return "package de.example;\n\n" + imports + "\n" + annotation + "\nclass SortingTest {\n}\n";
     }
@@ -25,7 +32,7 @@ class AresPolicyAnnotationsTest {
         String original = source("", annotation);
 
         String deactivated = AresPolicyAnnotations.setActive(original, false);
-        assertThat(AresPolicyAnnotations.containsDeactivated(deactivated)).isTrue();
+        assertThat(isDeactivated(deactivated)).isTrue();
         assertThat(AresPolicyAnnotations.setActive(deactivated, false)).isEqualTo(deactivated);
 
         assertThat(AresPolicyAnnotations.setActive(deactivated, true)).isEqualTo(original);
@@ -56,7 +63,7 @@ class AresPolicyAnnotationsTest {
     void recognizesAParenthesizedFlag(String flag) {
         String original = source("", "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", " + flag + ")");
 
-        assertThat(AresPolicyAnnotations.containsDeactivated(original)).isTrue();
+        assertThat(isDeactivated(original)).isTrue();
         assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
         assertThat(AresPolicyAnnotations.setActive(original, true)).contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")").doesNotContain("activated");
     }
@@ -82,7 +89,7 @@ class AresPolicyAnnotationsTest {
         String deactivated = AresPolicyAnnotations.setActive(source(imports, "@Policy(\"SecurityPolicy.yaml\")"), false);
 
         assertThat(deactivated).contains("@Policy(value = \"SecurityPolicy.yaml\", activated = false)");
-        assertThat(AresPolicyAnnotations.containsDeactivated(deactivated)).isTrue();
+        assertThat(isDeactivated(deactivated)).isTrue();
         assertThat(AresPolicyAnnotations.setActive(deactivated, true)).contains("@Policy(value = \"SecurityPolicy.yaml\")").doesNotContain("activated");
     }
 
@@ -92,7 +99,7 @@ class AresPolicyAnnotationsTest {
         String original = source(imports, "@Policy(activated = false)");
 
         assertThat(AresPolicyAnnotations.setActive(original, true)).isEqualTo(original);
-        assertThat(AresPolicyAnnotations.containsDeactivated(original)).isFalse();
+        assertThat(isDeactivated(original)).isFalse();
     }
 
     @Test
@@ -109,7 +116,7 @@ class AresPolicyAnnotationsTest {
 
         assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
         assertThat(AresPolicyAnnotations.setActive(original, true)).isEqualTo(original);
-        assertThat(AresPolicyAnnotations.containsDeactivated(original)).isFalse();
+        assertThat(isDeactivated(original)).isFalse();
     }
 
     @Test

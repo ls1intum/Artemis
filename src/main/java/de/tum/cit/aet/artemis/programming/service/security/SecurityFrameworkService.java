@@ -7,7 +7,6 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -212,7 +211,7 @@ public class SecurityFrameworkService {
             if (!isEnforcing(repository, tree)) {
                 return inactiveConfig(frameworkVersion);
             }
-            return activeConfig(frameworkVersion, lastCommitTouchingPolicy(repository, head));
+            return activeConfig(frameworkVersion);
         }
         catch (IOException e) {
             log.error("Could not read the tests repository of exercise {}", exercise.getId(), e);
@@ -406,27 +405,15 @@ public class SecurityFrameworkService {
     private SecurityFrameworkConfigDTO readConfig(Repository repository) {
         Path root = repository.getLocalPath();
         String frameworkVersion = SecurityPolicyRepositoryFiles.readAresVersion(root).orElse(null);
-        if (!SecurityPolicyRepositoryFiles.isEnforcing(root)) {
-            return inactiveConfig(frameworkVersion);
-        }
-        try {
-            ObjectId head = repository.resolve(Constants.HEAD);
-            return activeConfig(frameworkVersion, head == null ? Optional.empty() : lastCommitTouchingPolicy(repository, head));
-        }
-        catch (IOException e) {
-            log.warn("Could not resolve the head of {}", repository.getLocalPath(), e);
-            return activeConfig(frameworkVersion, Optional.empty());
-        }
+        return SecurityPolicyRepositoryFiles.isEnforcing(root) ? activeConfig(frameworkVersion) : inactiveConfig(frameworkVersion);
     }
 
-    private SecurityFrameworkConfigDTO activeConfig(@Nullable String frameworkVersion, Optional<RevCommit> lastPolicyCommit) {
-        return new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion,
-                lastPolicyCommit.map(commit -> commit.getId().abbreviate(7).name()).orElse(null),
-                lastPolicyCommit.map(commit -> Instant.ofEpochSecond(commit.getCommitTime()).toString()).orElse(null));
+    private static SecurityFrameworkConfigDTO activeConfig(@Nullable String frameworkVersion) {
+        return new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion);
     }
 
-    private SecurityFrameworkConfigDTO inactiveConfig(@Nullable String frameworkVersion) {
-        return new SecurityFrameworkConfigDTO(SecurityActivationStatus.INACTIVE.name(), frameworkVersion, null, null);
+    private static SecurityFrameworkConfigDTO inactiveConfig(@Nullable String frameworkVersion) {
+        return new SecurityFrameworkConfigDTO(SecurityActivationStatus.INACTIVE.name(), frameworkVersion);
     }
 
     private LocalVCRepositoryUri testRepositoryUri(ProgrammingExercise exercise) {
@@ -497,18 +484,6 @@ public class SecurityFrameworkService {
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
-        }
-    }
-
-    private Optional<RevCommit> lastCommitTouchingPolicy(Repository repository, ObjectId head) {
-        try (Git git = new Git(repository)) {
-            List<RevCommit> commits = new ArrayList<>();
-            git.log().add(head).addPath(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).setMaxCount(1).call().forEach(commits::add);
-            return commits.stream().findFirst();
-        }
-        catch (GitAPIException | IOException e) {
-            log.warn("Could not read the policy history of {}", repository.getLocalPath(), e);
-            return Optional.empty();
         }
     }
 
