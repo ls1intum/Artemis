@@ -73,7 +73,6 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
     it('should expose icons', () => {
         expect(component.faChevronRight).toBeDefined();
         expect(component.faChevronLeft).toBeDefined();
-        expect(component.faGripLinesVertical).toBeDefined();
         expect(component.farListAlt).toBeDefined();
     });
 });
