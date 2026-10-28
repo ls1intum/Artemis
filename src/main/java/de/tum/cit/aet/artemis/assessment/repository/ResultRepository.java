@@ -488,11 +488,17 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Returns whether a result exists for the given participation.
+     *
+     * @param participationId the participation ID
+     * @return whether a result exists
      */
     boolean existsBySubmissionParticipationId(long participationId);
 
     /**
      * Returns whether a result exists for the given submission.
+     *
+     * @param submissionId the submission ID
+     * @return whether a result exists
      */
     boolean existsBySubmissionId(long submissionId);
 
