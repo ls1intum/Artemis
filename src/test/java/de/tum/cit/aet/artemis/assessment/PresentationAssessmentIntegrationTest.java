@@ -1279,6 +1279,17 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void updatePresentationAssessmentInstance_asAdminWithoutCourseRole_shouldStoreAdminAsAssessor() throws Exception {
+        PresentationAssessmentInstance instance = saveInstanceWithAssessor("student1", null);
+
+        request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(), gradeRequest(instance, "admin"),
+                PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+
+        assertThat(storedAssessorLogin(instance.getId())).isEqualTo("admin");
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updatePresentationAssessmentInstance_asTutorForOwnInstance_shouldRecordResult() throws Exception {
         PresentationAssessmentInstance instance = saveInstanceWithAssessor("student1", "tutor1");

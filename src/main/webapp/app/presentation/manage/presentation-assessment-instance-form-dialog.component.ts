@@ -33,6 +33,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const resultPoints = control.get('resultPoints')?.value;
@@ -73,6 +74,7 @@ export type PresentationAssessmentInstanceFormResult =
         TumAetUiDatePickerComponent,
         TumAetUiInputDirective,
         PointsInputComponent,
+        ProfilePictureComponent,
         TumAetUiMessageComponent,
         TumAetUiSelectComponent,
     ],

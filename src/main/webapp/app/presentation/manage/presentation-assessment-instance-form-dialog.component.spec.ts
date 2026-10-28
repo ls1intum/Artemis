@@ -223,12 +223,22 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         });
     });
 
-    it('should prefill the current user as assessor and show it read-only for tutors', () => {
+    it('should prefill the current user as assessor and show it disabled for tutors', () => {
         const assessorField = query('[data-testid="presentation-instance-assessor"]') as HTMLInputElement;
 
-        expect(assessorField.readOnly).toBe(true);
+        expect(assessorField.disabled).toBe(true);
         expect(assessorField.value).toBe('Tutor One (tutor1)');
         expect(query('[data-testid="presentation-instance-assessor-search"]')).toBeNull();
+    });
+
+    it('should show the initials of the assessor only while one is set', () => {
+        expect(query('#presentation-instance-assessor-default-picture')?.textContent?.trim()).toBe('TO');
+
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        component.editForm.controls.assessorOption.setValue(undefined);
+        fixture.detectChanges();
+
+        expect(query('#presentation-instance-assessor-default-picture')).toBeNull();
     });
 
     it('should keep the existing assessor of an instance', () => {
