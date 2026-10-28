@@ -1,7 +1,6 @@
 import { Component, OnDestroy, effect, inject, input, model, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 import type { TumAetUiInputSize } from '@tumaet/ui-angular';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Subscription, distinctUntilChanged, filter } from 'rxjs';
@@ -50,8 +49,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         SearchFilterPipe,
         CourseTitleBarTitleComponent,
         CourseSidebarToggleButtonComponent,
-        TumAetUiToggleSwitchComponent,
-        FormsModule,
+        TumAetUiCheckboxComponent,
     ],
 })
 export class SidebarComponent implements OnDestroy {

@@ -98,21 +98,21 @@ describe('SidebarComponent', () => {
         expect(host.classList.contains('fit-container-height')).toBe(false);
     });
 
-    describe('inline filter toggle', () => {
-        it('should not render the toggle without a label', () => {
+    describe('inline filter checkbox', () => {
+        it('should not render the checkbox without a label', () => {
             fixture.changeDetectorRef.detectChanges();
             expect(fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'))).toBeNull();
         });
 
-        it('should render the toggle with a label and reflect its changes', () => {
+        it('should render the checkbox with a label and reflect its changes', () => {
             fixture.componentRef.setInput('inlineFilterLabel', 'artemisApp.courseOverview.sidebar.freeSpotsOnly');
             fixture.changeDetectorRef.detectChanges();
 
-            const toggle = fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'));
-            expect(toggle).not.toBeNull();
+            const checkbox = fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'));
+            expect(checkbox).not.toBeNull();
             expect(component.inlineFilterActive()).toBe(false);
 
-            toggle.componentInstance.changed.emit(true);
+            checkbox.componentInstance.checked.set(true);
             fixture.changeDetectorRef.detectChanges();
             expect(component.inlineFilterActive()).toBe(true);
         });

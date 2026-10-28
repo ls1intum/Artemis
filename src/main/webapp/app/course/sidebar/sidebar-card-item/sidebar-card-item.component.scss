@@ -30,11 +30,11 @@
 .attendance-chip {
     // Fixed width so every chip is the same size; a rare long value (e.g. 100 / 100) clips with an ellipsis instead of widening it.
     flex-shrink: 0;
-    width: 3.5rem;
-    padding-block: 0.3rem;
-    border-radius: 0.75rem;
-    font-size: 0.7rem;
-    line-height: 0.85rem;
+    width: 3.25rem;
+    padding-block: 0.2rem;
+    border-radius: 0.625rem;
+    font-size: 0.65rem;
+    line-height: 0.75rem;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
