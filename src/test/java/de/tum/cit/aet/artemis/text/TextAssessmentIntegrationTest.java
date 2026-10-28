@@ -629,6 +629,37 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(result.participation()).as("participation of result is present (student is structurally omitted)").isNotNull();
     }
 
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @ValueSource(booleans = { true, false })
+    void saveOrSubmitTextAssessment_privateNoteSurvivesReload(boolean submit) throws Exception {
+        TextSubmissionWithoutAssessmentDTO submission = prepareSubmission();
+        String note = "Private tutor note.\nThis must survive reopening the assessment and stay hidden from the student.";
+        ResultDTO saved = saveOrSubmitTextAssessment(participationId(submission), latestResultId(submission), new TextAssessmentDTO(List.of(), null, note), submit, HttpStatus.OK);
+        assertThat(saved.assessmentNote()).isNotNull();
+
+        TextParticipationDTO reloaded = request.get("/api/text/text-submissions/" + submissionId(submission) + "/for-assessment", HttpStatus.OK, TextParticipationDTO.class);
+        ResultDTO reloadedResult = reloaded.submissions().getLast().results().getLast();
+        assertThat(reloadedResult.id()).isEqualTo(saved.id());
+        assertThat(reloadedResult.assessmentNote()).as("the assessment reload includes the saved private tutor note").isNotNull();
+        assertThat(reloadedResult.assessmentNote().id()).isEqualTo(saved.assessmentNote().id());
+        assertThat(reloadedResult.assessmentNote().note()).isEqualTo(note);
+
+        TextExercise persistedExercise = textExerciseRepository.findByIdElseThrow(textExercise.getId());
+        persistedExercise.setAssessmentDueDate(now().minusMinutes(1));
+        textExerciseRepository.save(persistedExercise);
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        TextParticipationDTO studentParticipation = request.get("/api/text/participations/" + participationId(submission) + "/text-editor", HttpStatus.OK,
+                TextParticipationDTO.class);
+        List<ResultDTO> visibleResults = studentParticipation.submissions().getLast().results();
+        if (submit) {
+            assertThat(visibleResults).isNotEmpty();
+        }
+        if (visibleResults != null) {
+            assertThat(visibleResults).allSatisfy(result -> assertThat(result.assessmentNote()).isNull());
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void submitTextAssessment_withOmittedFeedbacks_doesNotFail() throws Exception {
