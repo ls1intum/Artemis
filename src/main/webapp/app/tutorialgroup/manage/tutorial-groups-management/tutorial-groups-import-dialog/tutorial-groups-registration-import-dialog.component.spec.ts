@@ -48,9 +48,6 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         fixture = TestBed.createComponent(TutorialGroupsRegistrationImportDialogComponent);
         component = fixture.componentInstance;
         component.selectedFile = generateDummyFile();
-        // Note: We don't call component.open() or set dialogVisible to true to avoid triggering
-        // PrimeNG's dialog animation which causes issues in the jsdom test environment.
-        // The dialog visibility is tested separately, and other tests focus on the component logic.
         fixture.detectChanges();
     });
 
@@ -60,6 +57,59 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should require both fixed-place fields through the rendered form before parsing', async () => {
+        component.open();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const checkbox = document.getElementById('checkbox') as HTMLInputElement;
+        const status = document.getElementById('status-header') as HTMLInputElement;
+        const value = document.getElementById('fixed-place') as HTMLInputElement;
+        const parseButton = document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-import-parse"]')!;
+        expect(status.disabled).toBe(true);
+        expect(value.disabled).toBe(true);
+        expect(parseButton.disabled).toBe(false);
+
+        checkbox.click();
+        fixture.detectChanges();
+        expect(status.disabled).toBe(false);
+        expect(parseButton.disabled).toBe(true);
+        status.value = 'Status';
+        status.dispatchEvent(new Event('input'));
+        value.value = 'Fixed';
+        value.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(parseButton.disabled).toBe(false);
+
+        checkbox.click();
+        fixture.detectChanges();
+        expect(component.statusHeaderControl?.value).toBe('');
+        expect(component.fixedPlaceValueControl?.value).toBe('');
+        expect(status.disabled).toBe(true);
+        expect(value.disabled).toBe(true);
+    });
+
+    it('should filter rendered import results and finish through the dialog footer', async () => {
+        component.open();
+        const imported = { ...generateImportDTO('Imported'), importSuccessful: true };
+        const failed = { ...generateImportDTO('Failed'), importSuccessful: false, errorMessage: 'error' };
+        component.onSaveSuccess([imported, failed]);
+        const finished = vi.spyOn(component.importCompleted, 'emit');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const filter = document.querySelector('[data-testid="tutorial-groups-import-filter"]')!;
+        const buttons = filter.querySelectorAll('button');
+        buttons[1].click();
+        fixture.detectChanges();
+        expect(component.registrationsDisplayedInTable()).toEqual([failed]);
+        buttons[0].click();
+        fixture.detectChanges();
+        expect(component.registrationsDisplayedInTable()).toEqual([imported]);
+        document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-import-finish"]')!.click();
+        fixture.detectChanges();
+        expect(component.dialogVisible()).toBe(false);
+        expect(finished).toHaveBeenCalledOnce();
     });
 
     it('should reset dialog when selecting a new file', () => {

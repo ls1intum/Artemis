@@ -1,0 +1,57 @@
+<div class="flex flex-col gap-4!">
+    <label class="flex flex-col gap-2" for="lecture-import-search">
+        <span jhiTranslate="artemisApp.lecture.import.search"></span>
+        <input tumAetUiInput id="lecture-import-search" [(ngModel)]="searchTerm" name="search" type="search" />
+    </label>
+    @if (loading()) {
+        <span role="status" jhiTranslate="artemisApp.lecture.import.loading"></span>
+    }
+    <div class="overflow-x-auto">
+        <table
+            tumAetUiTable
+            [striped]="true"
+            [sortField]="sortedColumn"
+            [sortOrder]="listSorting ? 1 : -1"
+            (sortChange)="sortedColumn = $event.field; listSorting = $event.order > 0"
+        >
+            <thead>
+                <tr>
+                    <th tumAetUiSortableColumn="ID"><span>#</span></th>
+                    @for (column of columns; track column.name) {
+                        <th [tumAetUiSortableColumn]="column.name"><span [jhiTranslate]="'artemisApp.lecture.import.table.' + column.name"></span></th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (lecture of content().resultsOnPage; track lecture.id) {
+                    <tr>
+                        <td>{{ lecture.id }}</td>
+                        @for (column of columns; track column.name) {
+                            <td class="break-words">
+                                @for (part of highlight(column.getProperty(lecture)); track $index) {
+                                    @if (part.match) {
+                                        <mark class="rounded bg-state-warning/20 text-inherit">{{ part.text }}</mark>
+                                    } @else {
+                                        {{ part.text }}
+                                    }
+                                }
+                            </td>
+                        }
+                        <td>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                size="small"
+                                [attr.data-testid]="'import-lecture-' + lecture.id"
+                                (click)="selectImport(lecture)"
+                                jhiTranslate="artemisApp.lecture.import.table.doImport"
+                            ></button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <tumaet-ui-paginator [page]="state.page - 1" [pageSize]="state.pageSize" [totalRecords]="total()" [showRowsPerPage]="false" (pageChange)="onPageChange($event + 1)" />
+</div>

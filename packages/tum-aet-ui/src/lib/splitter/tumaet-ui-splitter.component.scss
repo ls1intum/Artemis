@@ -1,0 +1,55 @@
+:host {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tumaet-ui-splitter-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tumaet-ui-splitter-separator {
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: col-resize;
+    touch-action: none;
+    user-select: none;
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: -2px;
+    }
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.tumaet-ui-splitter-grip {
+    width: 4px;
+    height: 16px;
+    border-inline: 1px solid var(--tumaet-ui-muted-color);
+    pointer-events: none;
+}
+
+:host(.vertical) {
+    .tumaet-ui-splitter-separator {
+        cursor: row-resize;
+    }
+
+    .tumaet-ui-splitter-grip {
+        width: 16px;
+        height: 4px;
+        border-inline: 0;
+        border-block: 1px solid var(--tumaet-ui-muted-color);
+    }
+}

@@ -44,16 +44,28 @@ describe('TutorialGroupsImportButtonComponent', () => {
     });
 
     it('should show warning dialog when import is completed', () => {
-        // Test the component method directly without rendering the dialog
         expect(component.warningDialogVisible()).toBe(false);
         component.onImportCompleted();
         expect(component.warningDialogVisible()).toBe(true);
     });
 
+    it('should render the completion warning and emit refresh only from its close action', async () => {
+        const finished = vi.spyOn(component.importFinished, 'emit');
+        component.onImportCompleted();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const dialog = document.querySelector('[role="dialog"]')!;
+        expect(dialog.textContent).toContain('artemisApp.tutorialGroupImportDialog.finishedWarning');
+        const close = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button')).find((button) => button.textContent?.includes('entity.action.close'))!;
+        close.click();
+        fixture.detectChanges();
+        expect(component.warningDialogVisible()).toBe(false);
+        expect(finished).toHaveBeenCalledOnce();
+    });
+
     it('should close warning dialog and emit importFinished when closeWarningDialog is called', () => {
         const importFinishedSpy = vi.spyOn(component.importFinished, 'emit');
-        // Set the signal directly without triggering dialog render
-        (component as any).warningDialogVisible.set(true);
+        component.warningDialogVisible.set(true);
 
         component.closeWarningDialog();
 

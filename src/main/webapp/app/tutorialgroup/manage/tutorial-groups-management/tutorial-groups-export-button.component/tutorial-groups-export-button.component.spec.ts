@@ -65,13 +65,42 @@ describe('TutorialGroupsExportButtonComponent', () => {
     });
 
     it('should open the export dialog when the button is clicked', () => {
-        // Test the method directly to avoid jsdom CSS parsing issues with PrimeNG dialog
         const mockEvent = new MouseEvent('click');
         const stopPropagationSpy = vi.spyOn(mockEvent, 'stopPropagation');
         expect(component.dialogVisible()).toBe(false);
         component.openExportDialog(mockEvent);
         expect(component.dialogVisible()).toBe(true);
         expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    it('should keep rendered checkboxes and export availability in sync and reset them on reopen', async () => {
+        component.openExportDialog(new MouseEvent('click'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const selectAll = document.getElementById('selectAllId') as HTMLInputElement;
+        const firstField = document.getElementById('fieldId-0') as HTMLInputElement;
+        const csvButton = document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-export-csv"]')!;
+        expect(csvButton.disabled).toBe(true);
+        selectAll.click();
+        fixture.detectChanges();
+        expect(component.selectedFields()).toHaveLength(12);
+        expect(firstField.checked).toBe(true);
+        expect(csvButton.disabled).toBe(false);
+
+        firstField.click();
+        fixture.detectChanges();
+        expect(selectAll.checked).toBe(false);
+        expect(component.selectedFields()).not.toContain('ID');
+
+        component.closeDialog();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.openExportDialog(new MouseEvent('click'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect((document.getElementById('selectAllId') as HTMLInputElement).checked).toBe(false);
+        expect(document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-export-json"]')!.disabled).toBe(true);
     });
 
     it('should select all fields when toggleSelectAll is called', () => {

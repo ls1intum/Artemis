@@ -3,7 +3,7 @@
     height from the filled shell rather than from `dynamic-content-height`'s viewport arithmetic, which ends 3px short
     of the divider above the footer.
 -->
-<div class="d-flex horizontal-scroll justify-content-between">
+<div class="flex horizontal-scroll justify-between">
     @if (course()) {
         @if (sidebarData(); as currentSidebarData) {
             <div [class.sidebar-collapsed]="isCollapsed()">
@@ -27,13 +27,13 @@
                 <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
-            <div class="vw-100 module-bg rounded-3 p-3 d-flex flex-column">
+            <div class="w-screen module-bg rounded-lg p-4! flex flex-col">
                 @if (isCollapsed()) {
                     <div>
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
                     </div>
                 }
-                <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.lectureDetails.selectLecture"></div>
+                <div class="w-full text-center my-auto" jhiTranslate="artemisApp.courseOverview.lectureDetails.selectLecture"></div>
             </div>
         }
     }

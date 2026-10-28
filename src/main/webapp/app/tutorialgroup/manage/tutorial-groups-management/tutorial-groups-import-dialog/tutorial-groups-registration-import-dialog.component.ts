@@ -11,7 +11,15 @@ import { CsvDownloadService } from 'app/foundation/util/CsvDownloadService';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DialogModule } from 'primeng/dialog';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiSelectButtonComponent,
+    TumAetUiTableDirective,
+} from '@tumaet/ui-angular';
 import { TutorialGroupImportData } from 'app/openapi/model/tutorial-group-import-data';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
@@ -43,7 +51,20 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
     selector: 'jhi-tutorial-groups-import-dialog',
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
     styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, DialogModule],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        FormsModule,
+        ReactiveFormsModule,
+        ArtemisTranslatePipe,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
+        TumAetUiTableDirective,
+    ],
 })
 export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {
     private fb = inject(FormBuilder);

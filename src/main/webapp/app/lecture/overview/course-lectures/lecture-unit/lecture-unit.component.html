@@ -1,43 +1,59 @@
-<div class="lecture-unit-card col clickable">
-    <div class="lecture-unit-header row px-4 m-0">
-        <div class="d-flex p-0 justify-content-between align-items-center">
+<div class="lecture-unit-card min-w-0 flex-1 clickable">
+    <div class="lecture-unit-header flex flex-wrap px-6! m-0">
+        <div class="flex w-full min-w-0 flex-wrap gap-2 p-0 justify-between items-center">
             <h5 class="m-0 flex min-w-0 flex-1">
                 <button
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="text"
+                    size="small"
                     type="button"
                     id="lecture-unit-toggle-button"
                     (click)="toggleCollapse()"
                     [attr.aria-expanded]="!isCollapsed()"
                     class="flex min-w-0 flex-1 items-center border-0 bg-transparent p-0 text-start text-base text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
-                    <fa-icon class="me-3" size="lg" [icon]="icon()" />
+                    <fa-icon class="me-4!" size="lg" [icon]="icon()" />
                     <span class="text-xl font-medium leading-tight" [attr.data-testid]="'lecture-unit-' + lectureUnit().id + '-name'">{{ lectureUnit().name ?? '' }}</span>
                     @if (!isVisibleToStudents()) {
-                        <span
-                            class="badge bg-warning ms-2 me-2"
-                            ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ lectureUnit().releaseDate | artemisDate }}"
+                        <tumaet-ui-tag
+                            severity="warn"
+                            class="mx-2"
+                            tumAetUiTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ lectureUnit().releaseDate | artemisDate }}"
                             jhiTranslate="artemisApp.courseOverview.exerciseList.notReleased"
-                        ></span>
+                        />
                     }
                 </button>
             </h5>
-            <div class="d-flex align-items-center gap-2">
+            <div class="flex items-center gap-2">
                 @if (showOriginalVersionButton() && !isStudentPath()) {
-                    <button type="button" id="view-original-version-button" class="btn btn-sm btn-primary" (click)="handleOriginalVersionView($event)">
+                    <button
+                        tumAetUiButton
+                        severity="primary"
+                        variant="solid"
+                        size="small"
+                        type="button"
+                        id="view-original-version-button"
+                        (click)="handleOriginalVersionView($event)"
+                    >
                         <fa-icon [icon]="faDownload" />
-                        <span class="d-none d-md-inline" [jhiTranslate]="'artemisApp.textUnit.originalVersion'"></span>
+                        <span class="hidden md:inline" [jhiTranslate]="'artemisApp.textUnit.originalVersion'"></span>
                     </button>
                 }
                 @if (showViewIsolatedButton()) {
-                    <button type="button" id="view-isolated-button" class="btn btn-sm btn-primary" (click)="handleIsolatedView($event)">
+                    <button tumAetUiButton severity="primary" variant="solid" size="small" type="button" id="view-isolated-button" (click)="handleIsolatedView($event)">
                         <fa-icon [icon]="viewIsolatedButtonIcon()" />
-                        <span class="d-none d-md-inline" [jhiTranslate]="viewIsolatedButtonLabel()"></span>
+                        <span class="hidden md:inline" [jhiTranslate]="viewIsolatedButtonLabel()"></span>
                     </button>
                 }
                 @if (showFullscreenButton()) {
                     <button
+                        tumAetUiButton
+                        severity="primary"
+                        variant="solid"
+                        size="small"
                         type="button"
                         id="fullscreen-button"
-                        class="btn btn-sm btn-primary"
                         [attr.aria-label]="'artemisApp.lectureUnit.openFullscreen' | artemisTranslate"
                         (click)="handleFullscreen($event)"
                     >
@@ -45,21 +61,31 @@
                     </button>
                 }
                 @if (this.lectureUnit().completed !== undefined && !isPresentationMode() && isVisibleToStudents()) {
-                    <fa-icon
-                        data-testid="lecture-unit-completion-icon"
-                        [attr.data-completed]="!!this.lectureUnit().completed"
-                        [ngClass]="{ 'text-body-secondary': !this.lectureUnit().completed, 'text-success': this.lectureUnit().completed }"
-                        size="lg"
-                        [icon]="this.lectureUnit().completed ? faCheckCircle : faCircle"
-                        [ngbTooltip]="(this.lectureUnit().completed ? 'artemisApp.lectureUnit.completedTooltip' : 'artemisApp.lectureUnit.uncompletedTooltip') | artemisTranslate"
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="secondary"
+                        variant="text"
+                        size="small"
                         (click)="toggleCompletion($event)"
-                    />
+                        [attr.aria-pressed]="!!lectureUnit().completed"
+                        [attr.aria-label]="(lectureUnit().completed ? 'artemisApp.lectureUnit.completedTooltip' : 'artemisApp.lectureUnit.uncompletedTooltip') | artemisTranslate"
+                        [tumAetUiTooltip]="(lectureUnit().completed ? 'artemisApp.lectureUnit.completedTooltip' : 'artemisApp.lectureUnit.uncompletedTooltip') | artemisTranslate"
+                    >
+                        <fa-icon
+                            data-testid="lecture-unit-completion-icon"
+                            [attr.data-completed]="!!this.lectureUnit().completed"
+                            [ngClass]="{ 'text-muted-color': !this.lectureUnit().completed, 'text-state-success': this.lectureUnit().completed }"
+                            size="lg"
+                            [icon]="this.lectureUnit().completed ? faCheckCircle : faCircle"
+                        />
+                    </button>
                 }
             </div>
         </div>
     </div>
     @if (!isCollapsed()) {
-        <div id="lecture-unit-body" class="lecture-unit-body px-4 py-2">
+        <div id="lecture-unit-body" class="lecture-unit-body px-6! py-2">
             <ng-content />
             <jhi-competency-contribution [courseId]="courseId()" [learningObjectId]="this.lectureUnit().id!" [isExercise]="false" />
         </div>

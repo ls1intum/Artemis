@@ -4,7 +4,7 @@ import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -14,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [
         TranslateDirective,
         TutorialGroupsRegistrationImportDialogComponent,
-        DialogModule,
+        TumAetUiDialogComponent,
         FaIconComponent,
         TumAetUiButtonDirective,
         TumAetUiTooltipDirective,

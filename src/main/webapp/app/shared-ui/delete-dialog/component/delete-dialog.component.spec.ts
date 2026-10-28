@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { EventEmitter } from '@angular/core';
@@ -8,7 +7,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -16,7 +14,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('DeleteDialogComponent', () => {
     let comp: DeleteDialogComponent;
     let fixture: ComponentFixture<DeleteDialogComponent>;
-    let dialogRef: DynamicDialogRef;
     let dialogErrorSource: Subject<string>;
 
     const createMockDialogConfig = (overrides = {}) => {
@@ -42,38 +39,27 @@ describe('DeleteDialogComponent', () => {
     };
 
     beforeEach(async () => {
-        const mockDialogRef = {
-            close: vi.fn(),
-        };
-
         await TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, DeleteDialogComponent],
-            providers: [
-                JhiLanguageHelper,
-                AlertService,
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: mockDialogRef },
-                { provide: DynamicDialogConfig, useValue: createMockDialogConfig() },
-                provideTranslateService(),
-            ],
+            providers: [JhiLanguageHelper, AlertService, { provide: TranslateService, useClass: MockTranslateService }, provideTranslateService()],
         }).compileComponents();
         fixture = TestBed.createComponent(DeleteDialogComponent);
         comp = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        fixture.componentRef.setInput('data', createMockDialogConfig().data);
+        fixture.componentRef.setInput('header', 'Delete');
     });
 
     it('Dialog is correctly initialized', () => {
         fixture.detectChanges();
-        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         expect(comp.entityTitle()).toBe('title');
         expect(comp.deleteQuestion()).toBe('artemisApp.exercise.delete.question');
         expect(comp.warningTextColor).toBe('text-state-danger');
         expect(comp.useFaCheckIcon()).toBe(false);
 
-        // Check that clear method calls dialogRef.close
+        // Dismissing the dialog must not submit the delete action.
         comp.clear();
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(comp.visible()).toBe(false);
     });
 
     it('Form properly checked before submission', async () => {
@@ -98,14 +84,13 @@ describe('DeleteDialogComponent', () => {
 
     it('Dialog closes immediately when confirmDelete is called', () => {
         fixture.detectChanges();
-        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         // external component delete method was executed
         comp.confirmDelete();
 
         // submit should be disabled and dialog should close immediately
         expect(comp.submitDisabled()).toBe(true);
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(comp.visible()).toBe(false);
 
         // Note: Error handling is now done in DeleteDialogService, not in the component.
         // The dialog closes immediately so the progress bar can be shown during deletion.

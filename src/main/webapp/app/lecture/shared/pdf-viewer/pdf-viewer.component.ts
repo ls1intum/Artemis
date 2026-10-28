@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { HttpClient } from '@angular/common/http';
 import {
     ChangeDetectionStrategy,
@@ -33,8 +34,6 @@ import {
     faTimes,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -85,7 +84,16 @@ const INITIAL_EAGER_PAGES = 3;
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [FormsModule, FaIconComponent, InputTextModule, InputNumberModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiProgressSpinnerComponent,
+        FormsModule,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -118,7 +126,6 @@ export class PdfViewerComponent {
     readonly fullscreenWindow = viewChild<ElementRef<HTMLDivElement>>('fullscreenWindow');
     readonly pagesContainer = viewChild<ElementRef<HTMLDivElement>>('pagesContainer');
     readonly toolbarCenter = viewChild<ElementRef<HTMLDivElement>>('toolbarCenter');
-    readonly pageInputElement = viewChild<InputNumber>('pageInput');
     readonly pageElements = viewChildren<ElementRef<HTMLDivElement>>('pageRef');
     readonly pageCanvasElements = viewChildren<ElementRef<HTMLCanvasElement>>('pageCanvas');
 
@@ -633,11 +640,16 @@ export class PdfViewerComponent {
 
     protected onPageInputEnter(event: Event): void {
         event.preventDefault();
-        this.pageInputElement()?.input?.nativeElement?.blur();
+        if (event.target instanceof HTMLInputElement) {
+            event.target.blur();
+        }
     }
 
-    protected onPageInputFocus(): void {
-        window.setTimeout(() => this.pageInputElement()?.input?.nativeElement?.select(), 0);
+    protected onPageInputFocus(event: Event): void {
+        const input = event.target;
+        if (input instanceof HTMLInputElement) {
+            window.setTimeout(() => input.select(), 0);
+        }
     }
 
     protected confirmPageNavigation(): void {

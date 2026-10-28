@@ -29,7 +29,8 @@ for (const name of ['@angular/compiler', '@angular/platform-browser']) {
 }
 dependencies[manifest.name] = `file:${tarball}`;
 const devDependencies = {
-    '@angular/build': mode === 'minimum' ? catalog['@angular/build'] : `^${catalog['@angular/build']}`,
+    // Vary the library peers, keeping builder-only transitive dependencies outside this peer matrix.
+    '@angular/build': catalog['@angular/build'],
     '@angular/cli': mode === 'minimum' ? catalog['@angular/cli'] : `^${catalog['@angular/cli']}`,
     '@angular/compiler-cli': dependencies['@angular/core'],
 };
