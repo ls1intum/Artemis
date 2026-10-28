@@ -14,6 +14,7 @@ import {
     convertBuildConfigDatesFromServer,
     getBuildTimeWindow,
     getBuildTimeWindowError,
+    getBuildTimeWindowFor,
     getBuildWindowPhase,
     injectBuildWindowPhase,
     isBuildWindowEnforcedFor,
@@ -65,6 +66,45 @@ describe('build time window utils', () => {
             const textExercise = exerciseWith({ start, end });
             textExercise.type = ExerciseType.TEXT;
             expect(getBuildTimeWindow(textExercise)).toBeUndefined();
+        });
+    });
+
+    describe('getBuildTimeWindowFor', () => {
+        const dueDate = end.add(1, 'day');
+
+        const exerciseWithDueDate = (buildTimeWindow?: BuildTimeWindow): ProgrammingExercise => {
+            const exercise = exerciseWith(buildTimeWindow);
+            exercise.dueDate = dueDate;
+            return exercise;
+        };
+
+        const participationWithExtension = (individualDueDate?: dayjs.Dayjs): ProgrammingExerciseStudentParticipation => {
+            const participation = studentParticipation();
+            participation.individualDueDate = individualDueDate;
+            return participation;
+        };
+
+        it('moves only the end of the window by the individual due date extension', () => {
+            const window = getBuildTimeWindowFor(exerciseWithDueDate({ start, end }), participationWithExtension(dueDate.add(5, 'hour')));
+
+            expect(window?.start?.isSame(start)).toBe(true);
+            expect(window?.end?.isSame(end.add(5, 'hour'))).toBe(true);
+        });
+
+        it('keeps the window of the exercise without an extension', () => {
+            const exercise = exerciseWithDueDate({ start, end });
+
+            expect(getBuildTimeWindowFor(exercise, undefined)).toEqual({ start, end });
+            expect(getBuildTimeWindowFor(exercise, participationWithExtension())).toEqual({ start, end });
+            expect(getBuildTimeWindowFor(exercise, participationWithExtension(dueDate))).toEqual({ start, end });
+            // an individual due date before the due date never shortens the window
+            expect(getBuildTimeWindowFor(exercise, participationWithExtension(dueDate.subtract(1, 'hour')))).toEqual({ start, end });
+            expect(getBuildTimeWindowFor(exerciseWith({ start, end }), participationWithExtension(dueDate.add(1, 'hour')))).toEqual({ start, end });
+        });
+
+        it('keeps an open end and returns nothing without a window', () => {
+            expect(getBuildTimeWindowFor(exerciseWithDueDate({ start }), participationWithExtension(dueDate.add(1, 'hour')))).toEqual({ start, end: undefined });
+            expect(getBuildTimeWindowFor(exerciseWithDueDate(), participationWithExtension(dueDate.add(1, 'hour')))).toBeUndefined();
         });
     });
 
@@ -144,6 +184,17 @@ describe('build time window utils', () => {
             expect(isPushOutsideBuildWindow(exercise, studentParticipation(), start)).toBe(false);
             expect(isPushOutsideBuildWindow(exerciseWith(), studentParticipation(), end.add(1, 'year'))).toBe(false);
             expect(isPushOutsideBuildWindow(Object.assign(exerciseWith({ start, end }), { isAtLeastEditor: true }), studentParticipation(), end.add(1, 'year'))).toBe(false);
+        });
+
+        it('does not count a push as outside while the individual due date extension keeps the window open', () => {
+            const exerciseWithDueDate = exerciseWith({ start, end });
+            exerciseWithDueDate.dueDate = end;
+            const participation = studentParticipation();
+            participation.individualDueDate = end.add(3, 'hour');
+
+            expect(isPushOutsideBuildWindow(exerciseWithDueDate, participation, end.add(2, 'hour'))).toBe(false);
+            expect(isPushOutsideBuildWindow(exerciseWithDueDate, participation, end.add(4, 'hour'))).toBe(true);
+            expect(isPushOutsideBuildWindow(exerciseWithDueDate, studentParticipation(), end.add(2, 'hour'))).toBe(true);
         });
 
         it('uses the current time by default', () => {

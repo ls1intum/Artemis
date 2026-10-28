@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -40,6 +41,21 @@ public record BuildTimeWindow(@Nullable @JsonFormat(shape = JsonFormat.Shape.STR
      */
     public boolean isBuildAllowedAt(ZonedDateTime instant) {
         return (start == null || !instant.isBefore(start)) && (end == null || !instant.isAfter(end));
+    }
+
+    /**
+     * Gets the window that applies to a student with an individual due date. Like the due date, the end of the window moves later by the extension, which is the time
+     * between the due date of the exercise and the individual due date. The start does not move.
+     *
+     * @param dueDate           the due date of the exercise, or {@code null} if it has none
+     * @param individualDueDate the individual due date of the student, or {@code null} if there is none
+     * @return this window if there is no end or no extension, otherwise the window with the extended end
+     */
+    public BuildTimeWindow extendedByDueDateExtension(@Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime individualDueDate) {
+        if (end == null || dueDate == null || individualDueDate == null || !individualDueDate.isAfter(dueDate)) {
+            return this;
+        }
+        return new BuildTimeWindow(start, end.plus(Duration.between(dueDate, individualDueDate)));
     }
 
     /**

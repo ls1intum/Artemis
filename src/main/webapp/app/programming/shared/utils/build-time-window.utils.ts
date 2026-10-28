@@ -71,6 +71,24 @@ export const getBuildTimeWindow = (exercise: Exercise | undefined): BuildTimeWin
 };
 
 /**
+ * Reads the build time window that applies to a participation. Like the due date, the end of the window moves later by the
+ * individual due date extension of the participation (the time between the exercise due date and the individual due date).
+ *
+ * @param exercise any exercise, only programming exercises can have a window
+ * @param participation the participation of the student, undefined when the window of the exercise is wanted
+ * @return the window, or undefined when the exercise has none
+ */
+export const getBuildTimeWindowFor = (exercise: Exercise | undefined, participation: Participation | undefined): BuildTimeWindow | undefined => {
+    const buildTimeWindow = getBuildTimeWindow(exercise);
+    const dueDate = toValidDayjs(exercise?.dueDate);
+    const individualDueDate = toValidDayjs(participation?.individualDueDate);
+    if (!buildTimeWindow?.end || !dueDate || !individualDueDate || !individualDueDate.isAfter(dueDate)) {
+        return buildTimeWindow;
+    }
+    return { start: buildTimeWindow.start, end: buildTimeWindow.end.add(individualDueDate.diff(dueDate), 'millisecond') };
+};
+
+/**
  * Converts the dates of the advanced settings of a build config, which the server sends as strings, to dayjs objects in place.
  *
  * @param buildConfig the build config of a response
@@ -127,7 +145,7 @@ export const isPushOutsideBuildWindow = (exercise: Exercise | undefined, partici
     if (!isBuildWindowEnforcedFor(exercise, participation)) {
         return false;
     }
-    const phase = getBuildWindowPhase(getBuildTimeWindow(exercise), now);
+    const phase = getBuildWindowPhase(getBuildTimeWindowFor(exercise, participation), now);
     return phase === BuildWindowPhase.BEFORE || phase === BuildWindowPhase.AFTER;
 };
 
