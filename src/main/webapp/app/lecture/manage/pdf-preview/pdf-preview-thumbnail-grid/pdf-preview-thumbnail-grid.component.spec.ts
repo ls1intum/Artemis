@@ -98,7 +98,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         component.hiddenPagesOutput.subscribe(emitted);
         expect(document.querySelector('#date-box-checkbox')).toBeNull();
 
-        (fixture.nativeElement.querySelector('#hide-show-button-slide1') as HTMLButtonElement).click();
+        const visibilityButton = fixture.nativeElement.querySelector('#hide-show-button-slide1') as HTMLButtonElement;
+        expect(visibilityButton.getAttribute('aria-label')).toBe('artemisApp.attachment.pdfPreview.dateBox.hidePage');
+        visibilityButton.click();
         await fixture.whenStable();
         expect(component.isPopoverOpen()).toBe(true);
         expect(component.activeButtonPage()?.slideId).toBe('slide1');
@@ -114,6 +116,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         expect(emitted).toHaveBeenCalledWith(expect.objectContaining({ slide1: expect.objectContaining({ date: expect.anything() }) }));
         expect(component.isPopoverOpen()).toBe(false);
         expect(component.activeButtonPage()).toBeUndefined();
+        fixture.componentRef.setInput('hiddenPages', emitted.mock.calls[0][0]);
+        await fixture.whenStable();
+        expect(visibilityButton.getAttribute('aria-label')).toBe('artemisApp.attachment.pdfPreview.thumbnailGrid.showPage');
     });
 
     it('should render every ordered page through the engine', async () => {

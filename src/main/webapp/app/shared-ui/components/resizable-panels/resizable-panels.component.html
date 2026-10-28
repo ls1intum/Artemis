@@ -49,9 +49,9 @@
                             <fa-icon [icon]="faChevronRight" />
                         </button>
                     </div>
-                    <tumaet-ui-tab-panels class="min-h-0 grow overflow-y-auto p-2" cdkScrollable>
+                    <tumaet-ui-tab-panels data-testid="resizable-panel-container" class="min-h-0 grow overflow-y-auto" style="padding: 0.5rem" cdkScrollable>
                         @for (panel of rightPanels(); track panel; let i = $index) {
-                            <tumaet-ui-tab-panel [value]="i" preserveContent>
+                            <tumaet-ui-tab-panel data-testid="resizable-panel-content" [value]="i" preserveContent fill>
                                 <ng-container [ngTemplateOutlet]="panel.templateRef" />
                             </tumaet-ui-tab-panel>
                         }
@@ -96,9 +96,14 @@
                 }
             </tumaet-ui-tab-list>
         }
-        <tumaet-ui-tab-panels class="grow min-h-0 overflow-y-auto" [class.p-2]="!flushLeftPanel() || activeSingleIndex() !== 0" cdkScrollable>
+        <tumaet-ui-tab-panels
+            data-testid="resizable-panel-container"
+            class="grow min-h-0 overflow-y-auto"
+            [style.padding]="flushLeftPanel() && activeSingleIndex() === 0 ? '0' : '0.5rem'"
+            cdkScrollable
+        >
             @for (panel of panels(); track panel; let i = $index) {
-                <tumaet-ui-tab-panel [value]="i" preserveContent>
+                <tumaet-ui-tab-panel data-testid="resizable-panel-content" [value]="i" preserveContent fill>
                     <ng-container [ngTemplateOutlet]="panel.templateRef" />
                 </tumaet-ui-tab-panel>
             }

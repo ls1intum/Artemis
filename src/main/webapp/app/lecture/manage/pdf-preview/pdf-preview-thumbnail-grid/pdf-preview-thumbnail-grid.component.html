@@ -51,6 +51,10 @@
                     [severity]="hiddenPages()[page.slideId] ? 'success' : 'secondary'"
                     (click)="togglePagePopover(page.slideId, $event, popover)"
                     aria-haspopup="dialog"
+                    [attr.aria-label]="
+                        (hiddenPages()[page.slideId] ? 'artemisApp.attachment.pdfPreview.thumbnailGrid.showPage' : 'artemisApp.attachment.pdfPreview.dateBox.hidePage')
+                            | artemisTranslate: { param: getPageOrder(page.slideId) }
+                    "
                     [attr.aria-expanded]="popover.isOpen()"
                 >
                     <fa-icon [icon]="hiddenPages()[page.slideId] ? faEye : faEyeSlash" />

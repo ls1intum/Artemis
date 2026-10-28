@@ -4,6 +4,7 @@ import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT } from '@angular/common';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent } from '@tumaet/ui-angular';
 import { faAlignLeft, faComment } from '@fortawesome/free-solid-svg-icons';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -12,8 +13,12 @@ import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/componen
 class ResizeObserverMock {
     static instances: ResizeObserverMock[] = [];
 
-    constructor() {
+    constructor(private readonly callback: ResizeObserverCallback) {
         ResizeObserverMock.instances.push(this);
+    }
+
+    resize(width: number): void {
+        this.callback([{ contentRect: { width } } as ResizeObserverEntry], this as unknown as ResizeObserver);
     }
 
     observe = vi.fn();
@@ -109,6 +114,9 @@ describe('ResizablePanelsComponent', () => {
         expect(component.isNarrow()).toBe(false);
         expect(component.isRightPanelCollapsed()).toBe(false);
         expect(fixture.nativeElement.querySelector('tumaet-ui-splitter')).not.toBeNull();
+        fixture.debugElement.queryAll(By.directive(TumAetUiTabPanelComponent)).forEach((panel) => {
+            expect(panel.componentInstance.fill()).toBe(true);
+        });
     });
 
     it('should remove only the primary panel gutter in full-bleed mode', () => {
@@ -118,7 +126,33 @@ describe('ResizablePanelsComponent', () => {
 
         const panelBodies = fixture.nativeElement.querySelectorAll('[data-testid="splitter-panel"] .overflow-y-auto');
         expect(panelBodies[0].classList.contains('p-2')).toBe(false);
-        expect(panelBodies[1].classList.contains('p-2')).toBe(true);
+        expect(panelBodies[1].style.padding).toBe('0.5rem');
+    });
+
+    it('removes the kit gutter from the first narrow flush panel and restores it for secondary tabs', async () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.flushLeftPanel = true;
+        fixture.detectChanges();
+        const host = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).nativeElement;
+        const observer = ResizeObserverMock.instances.find((instance) => instance.observe.mock.calls.some(([target]) => target === host))!;
+        observer.resize(600);
+        fixture.detectChanges();
+        let container = fixture.debugElement.query(By.directive(TumAetUiTabPanelsComponent)).nativeElement as HTMLElement;
+        expect(container.style.padding).toBe('0px');
+        fixture.debugElement.queryAll(By.directive(TumAetUiTabPanelComponent)).forEach((panel) => {
+            expect(panel.componentInstance.fill()).toBe(true);
+        });
+
+        const tabs = fixture.nativeElement.querySelectorAll('[data-testid="resizable-panel-tab"]') as NodeListOf<HTMLElement>;
+        tabs[1].click();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        container = fixture.debugElement.query(By.directive(TumAetUiTabPanelsComponent)).nativeElement;
+        expect(container.style.padding).toBe('0.5rem');
+        tabs[0].click();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(container.style.padding).toBe('0px');
     });
 
     it('should keep the splitter mounted but show the icon rail when the right panel is collapsed', () => {
