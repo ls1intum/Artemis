@@ -76,19 +76,30 @@
                 align-items: center;
                 justify-content: center;
                 margin-top: 0.75rem;
-                position: relative;
 
-                .doughnut-chart-text {
-                    position: absolute;
-                    font-size: 1.4rem;
-                }
-
-                // Sized here rather than with Tailwind classes, which this folder is not scanned for
-                tumaet-ui-doughnut-chart {
-                    flex: none;
+                // Wraps the ring and its centred label, sized to the chart so the label can scale with it
+                .chart-wrapper {
+                    position: relative;
                     width: min(122px, 100%);
-                    height: auto;
                     aspect-ratio: 1;
+                    container-type: inline-size;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    .doughnut-chart-text {
+                        position: absolute;
+
+                        // Scales with the chart width so the label shrinks with the ring instead of overlapping it on a narrow card
+                        font-size: 16cqw;
+                    }
+
+                    // Sized here rather than with Tailwind classes, which this folder is not scanned for
+                    tumaet-ui-doughnut-chart {
+                        width: 100%;
+                        height: auto;
+                        aspect-ratio: 1;
+                    }
                 }
             }
 
