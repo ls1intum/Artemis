@@ -1,13 +1,14 @@
-import { Component, Injector, OnInit, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, OnInit, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
-import { catchError, map, switchMap, take, tap } from 'rxjs/operators';
-import { EMPTY, of, throwError } from 'rxjs';
-import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/localci/shared/entities/build-log.model';
-import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
+import { catchError, finalize, map, take } from 'rxjs/operators';
+import { EMPTY, of } from 'rxjs';
+import { BuildLogEntryArray, BuildLogType } from 'app/localci/shared/entities/build-log.model';
+import { checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -41,7 +42,7 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 const CODE_REFERENCE_CONTEXT_LINES = 2;
 const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
@@ -54,6 +55,7 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
         TranslateDirective,
         FaIconComponent,
         TumAetUiBarChartComponent,
+        TumAetUiButtonDirective,
         TagModule,
         ButtonModule,
         TooltipModule,
@@ -72,6 +74,7 @@ export class FeedbackComponent implements OnInit {
     private feedbackChartService = inject(FeedbackChartService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private injector = inject(Injector);
+    private readonly destroyRef = inject(DestroyRef);
     readonly dialogRef = inject(DynamicDialogRef, { optional: true });
 
     readonly BuildLogType = BuildLogType;
@@ -130,6 +133,8 @@ export class FeedbackComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     readonly isLoading = signal(false);
     readonly loadingFailed = signal(false);
+    readonly buildLogsLoading = signal(false);
+    readonly buildLogsFailed = signal(false);
     readonly buildLogs = signal<BuildLogEntryArray | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
     readonly isOnlyCompilationTested = signal<boolean>(undefined!);
@@ -204,24 +209,27 @@ export class FeedbackComponent implements OnInit {
      * Fetches additional information about feedbacks and build logs if required.
      */
     private initFeedbackInformation() {
-        const result = this.result();
-        const participation = this.participation();
-        of(result.feedbacks)
-            .pipe(
-                switchMap((feedbacks: Feedback[] | undefined | null) => {
-                    // don't query the server if feedback already exists
-                    if (feedbacks?.length) {
-                        // ensure connection to result, required for FeedbackItems in the next step
-                        feedbacks.forEach((feedback) => (feedback.result = result));
-                        return of(feedbacks);
-                    } else {
-                        return this.resultService.getFeedbackDetailsForResult(participation?.id, result).pipe(map((response) => response.body));
-                    }
-                }),
-                switchMap((feedbacks: Feedback[] | undefined | null) => {
-                    if (feedbacks?.length) {
-                        result.feedbacks = feedbacks!;
+        this.loadFeedbackDetails();
+        this.loadBuildLogs();
+    }
 
+    /** Retry a failed details request without discarding already available build logs. */
+    loadFeedbackDetails(): void {
+        this.isLoading.set(true);
+        this.loadingFailed.set(false);
+        const result = this.result();
+        const feedbacks = result.feedbacks;
+        const request = feedbacks?.length ? of(feedbacks) : this.resultService.getFeedbackDetailsForResult(this.participation().id, result).pipe(map((response) => response.body));
+        request
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.isLoading.set(false)),
+            )
+            .subscribe({
+                next: (feedbacks) => {
+                    if (feedbacks?.length) {
+                        feedbacks.forEach((feedback) => (feedback.result = result));
+                        result.feedbacks = feedbacks;
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter());
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
@@ -234,39 +242,49 @@ export class FeedbackComponent implements OnInit {
                             this.expandFeedbackItemGroups();
                         }
                     }
-
-                    // prefer the potentially newer result.submission when available (so that buildFailed is up-to-date)
-                    const submission = (result.submission ?? getLatestSubmission(participation)) as ProgrammingSubmission;
-                    // If the submission is marked with buildFailed, fetch the build logs.
-                    const buildFailed = submission?.buildFailed;
-
-                    const participationId = participation.id;
-                    if (
-                        result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
-                        this.exerciseType() === ExerciseType.PROGRAMMING &&
-                        buildFailed &&
-                        participationId !== undefined
-                    ) {
-                        return this.fetchAndSetBuildLogs(participationId, result.id);
-                    }
-
                     if (this.scoreChartVisible() && this.feedbackItemNodes() !== undefined) {
                         this.updateChart(this.feedbackItemNodes()!);
                     }
-
-                    if (isStudentParticipation(participation)) {
-                        this.badge.set(ResultService.evaluateBadge(participation, result));
+                    if (isStudentParticipation(this.participation())) {
+                        this.badge.set(ResultService.evaluateBadge(this.participation(), result));
                     }
+                },
+                error: () => this.loadingFailed.set(true),
+            });
+    }
 
-                    return of(null);
-                }),
-                catchError(() => {
-                    this.loadingFailed.set(true);
-                    return of(null);
-                }),
+    /** Load or explicitly retry the logs of the selected result independently of feedback details. */
+    loadBuildLogs(): void {
+        const result = this.result();
+        const participation = this.participation();
+        const submission = result.submission ?? getLatestSubmission(participation);
+        const buildFailed = submission && 'buildFailed' in submission && submission.buildFailed === true;
+        if (
+            result.assessmentType === AssessmentType.AUTOMATIC_ATHENA ||
+            this.exerciseType() !== ExerciseType.PROGRAMMING ||
+            participation.id === undefined ||
+            (!buildFailed && result.successful !== false)
+        ) {
+            return;
+        }
+        this.buildLogsLoading.set(true);
+        this.buildLogsFailed.set(false);
+        this.buildLogService
+            .getBuildLogs(participation.id, result.id)
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.buildLogsLoading.set(false)),
             )
-            .subscribe(() => {
-                this.isLoading.set(false);
+            .subscribe({
+                next: (logs) => this.buildLogs.set(BuildLogEntryArray.fromBuildLogs(logs)),
+                error: (error: HttpErrorResponse) => {
+                    // Older servers return 403 when no failed-build logs are available. Other failures stay visible.
+                    if (error.status === 403) {
+                        this.buildLogs.set(BuildLogEntryArray.fromBuildLogs([]));
+                    } else {
+                        this.buildLogsFailed.set(true);
+                    }
+                },
             });
     }
 
@@ -310,30 +328,6 @@ export class FeedbackComponent implements OnInit {
             return { line, code, referenced: line >= lineStart && line <= lineEnd };
         });
     }
-
-    /**
-     * Fetches build logs for a participation
-     * @param participationId The active participation
-     * @param resultId The current result
-     */
-    private fetchAndSetBuildLogs = (participationId: number, resultId?: number) => {
-        return this.buildLogService.getBuildLogs(participationId, resultId).pipe(
-            tap((repoResult: BuildLogEntry[]) => {
-                this.buildLogs.set(BuildLogEntryArray.fromBuildLogs(repoResult));
-            }),
-            catchError((error: HttpErrorResponse) => {
-                /**
-                 * The request returns 403 if the build was successful and therefore no build logs exist.
-                 * If no submission is available, the client will attempt to fetch the build logs anyway.
-                 * We catch the error here as it would prevent the displaying of feedback.
-                 */
-                if (error.status === 403) {
-                    return of(null);
-                }
-                return throwError(() => error);
-            }),
-        );
-    };
 
     private updateChart(feedbackItemNodes: FeedbackNode[]) {
         const exercise = this.resolvedExercise();
