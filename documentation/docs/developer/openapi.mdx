@@ -9,20 +9,20 @@ import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 We migrate the Artemis server to an API-driven development approach using OpenAPI specifications. This especially helps us with client generation to avoid subtle bugs that are often unnoticed in code reviews.
 
-Currently, the OpenAPI specs are generated for the `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, and `quiz` modules, plus notification global settings. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
+Currently, the OpenAPI specs are generated for the `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, and `quiz` modules, plus the entire `notification` module, including global settings, system/admin/public operations, course preferences/feed/state and native push registration/unregistration. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
 
 <Callout variant={CalloutVariant.info}>
     If you want to make use of the OpenAPI specs, you need to ensure that the endpoint you are working on is a DTO-only endpoint. This means that the endpoint should not return or
     expect any domain objects, but only Data Transfer Objects (DTOs) or primitives.
 </Callout>
 
-The schema customizer marks primitive record components as required by default. For an input whose omitted value is deliberately accepted, declare `@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)` on that component and document its default and null handling. The customizer respects this explicit override; it does not change request validation or Jackson defaults.
+Declare required DTO properties explicitly with `@Schema(requiredMode = Schema.RequiredMode.REQUIRED)`, including primitive response flags and counts that are always serialized. No global primitive-field inference runs. Inputs whose omitted values are deliberately accepted remain optional, with their existing defaults/null handling documented; schema metadata does not add runtime validation or change Jackson defaults.
 
-The Angular generator enables `observeResponseHeaders`. An Observable operation with declared success response headers returns `HttpResponse<T>`, retaining pagination, Location and alert headers for its callers. Declare the headers actually produced by the endpoint. System notification alert header names follow `jhipster.clientApp.name` during export. The pruning step preserves literal null values in nullable enums.
+The Angular generator uses Observable HttpClient services (`useHttpResource=false`, `separateResources=false`) and enables `observeResponseHeaders`. An Observable operation with declared success response headers returns `HttpResponse<T>`, retaining pagination, Location and alert headers for its callers. Declare the headers actually produced by the endpoint. System notification alert header names follow `jhipster.clientApp.name` during export. The pruning step preserves literal null values in nullable enums.
 
 Course notification preference schemas distinguish complete effective channel flags in responses from partial, nullable channel overrides in requests. The settings adapter normalizes an omitted empty response map for its UI subjects; channel flags remain the generated booleans without new defaults.
 
-Course feed schemas use the outer `notificationType` to discriminate 28 flat envelope variants. The ordered shared pipeline registers sealed payload records, marks primitive fields required, composes complete envelope branches, then filters and strips DTO suffixes. This changes only OpenAPI metadata; Jackson, legacy read-only `parameters` and flat push JSON retain their existing shape. Optional payload references remain optional, while primitive payload flags and counts remain required.
+Course feed schemas use the outer `notificationType` to discriminate 28 flat envelope variants. The ordered shared pipeline registers sealed payload records with their explicit required annotations, composes complete envelope branches, then filters and strips DTO suffixes. This changes only OpenAPI metadata; Jackson, legacy read-only `parameters` and flat push JSON retain their existing shape. Optional payload references remain optional, while primitive payload flags and counts remain required.
 
 `CourseNotificationPage` preserves the internal cached page's fields and totals, including null reconstruction results. Its item schema references a named union containing all envelope branches and a literal null branch. With the pinned generator this emits a nullable item alias; wrapping only the envelope reference and null would collapse during normalization. The client date/state adapter rejects a null item before committing converted content and never silently removes it or changes totals.
 
