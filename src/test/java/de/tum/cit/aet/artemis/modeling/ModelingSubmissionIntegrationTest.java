@@ -1168,9 +1168,12 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @ParameterizedTest
-    @CsvSource({ "none, false", "none, true", "past, false", "past, true", "future, false", "future, true" })
+    @CsvSource({ "student1, none, false", "student1, none, true", "student1, past, false", "student1, past, true", "student1, future, false", "student1, future, true",
+            "instructor1, none, false", "instructor1, none, true", "instructor1, past, false", "instructor1, past, true", "instructor1, future, false",
+            "instructor1, future, true" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void studentReloadWithAthenaRequestHidesEachUnfinishedManualAssessment(String publication, boolean failed) throws Exception {
+    void studentReloadWithAthenaRequestHidesEachUnfinishedManualAssessment(String owner, String publication, boolean failed) throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + owner);
         classExercise.setAssessmentDueDate(switch (publication) {
             case "past" -> ZonedDateTime.now().minusDays(1);
             case "future" -> ZonedDateTime.now().plusDays(1);
@@ -1178,7 +1181,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         });
         exerciseRepository.save(classExercise);
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmission(classExercise, ParticipationFactory.generateModelingSubmission(validModel, true),
-                TEST_PREFIX + "student1");
+                TEST_PREFIX + owner);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
 
