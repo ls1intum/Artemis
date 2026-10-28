@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param expected   whether the database still expects this metadata identity; {@code false} labels a retained row as orphaned
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IndexedEntityDTO(String type, long entityId, @Nullable @Schema(nullable = true) String title, @Nullable @Schema(nullable = true) Long lectureId,
-        @Nullable @Schema(nullable = true) Instant ingestedAt, boolean expected) {
+public record IndexedEntityDTO(String type, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long entityId, @Nullable @Schema(nullable = true) String title,
+        @Nullable @Schema(nullable = true) Long lectureId, @Nullable @Schema(nullable = true) Instant ingestedAt,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean expected) {
 }
