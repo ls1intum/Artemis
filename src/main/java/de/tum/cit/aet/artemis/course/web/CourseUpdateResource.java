@@ -209,7 +209,7 @@ public class CourseUpdateResource {
         CourseValidator.validateUnenrollmentEndDate(existingCourse);
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
-            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            Path savePath = FileUtil.saveImageFile(file, basePath, FilePathType.COURSE_ICON);
             existingCourse.setCourseIcon(savePath.getFileName().toString());
             if (existingCourseIcon != null) {
                 // delete old course icon

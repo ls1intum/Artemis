@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,7 +37,9 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -243,6 +246,72 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userTestRepository.save(user);
 
         request.get("/api/core/files/users/" + user.getId() + "/profile-pictures/ProfilePicture_removed.jpeg", HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    private static final String SCRIPTED_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(document.domain)</script></svg>";
+
+    private static final byte[] PNG_IMAGE = { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n', 0, 0, 0, 13 };
+
+    private int uploadProfilePicture(MockMultipartFile file) throws Exception {
+        return mockMvc.perform(multipart(HttpMethod.PUT, "/api/account/profile-picture").file(file)).andReturn().getResponse().getStatus();
+    }
+
+    /**
+     * The declared content type and the filename both come from the client, so neither may turn a document with scripts into a stored profile picture.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "picture.png", "picture.svg", "picture.html" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUploadProfilePictureRejectsScriptedDocumentDeclaredAsImage(String filename) throws Exception {
+        var file = new MockMultipartFile("file", filename, "image/png", SCRIPTED_SVG.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(uploadProfilePicture(file)).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getImageUrl()).isNull();
+    }
+
+    /**
+     * The stored extension decides the content type the picture is served with, so it follows from the content and not from the uploaded filename.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUploadProfilePictureTakesExtensionFromContent() throws Exception {
+        var file = new MockMultipartFile("file", "picture.svg", "image/png", PNG_IMAGE);
+
+        assertThat(uploadProfilePicture(file)).isEqualTo(HttpStatus.OK.value());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getImageUrl()).endsWith(".png");
+    }
+
+    /**
+     * A file stored with an active content type, such as an SVG profile picture uploaded before uploads were checked, must render without scripts when opened directly. That
+     * holds for the REST endpoint and for the static handler that still serves the upload directory.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStoredScriptedSvgIsServedInSandbox() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        String filename = "ProfilePicture_" + TEST_PREFIX + ".svg";
+        FileUtils.writeByteArrayToFile(FilePathConverter.getProfilePictureFilePath().resolve(filename).toFile(), SCRIPTED_SVG.getBytes(StandardCharsets.UTF_8));
+        user.setImageUrl(filename);
+        userTestRepository.save(user);
+
+        for (String url : List.of("/api/core/files/users/" + user.getId() + "/profile-pictures/" + filename, "/user/profile-pictures/" + filename)) {
+            String policy = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("image/svg+xml")).andReturn().getResponse()
+                    .getHeader("Content-Security-Policy");
+            assertThat(policy).as("policy of %s", url).contains("sandbox", "default-src 'none'").doesNotContain("unsafe-inline' 'unsafe-eval'");
+        }
+    }
+
+    /**
+     * Browsers refuse to show a PDF in a sandboxed document, so a PDF keeps the application-wide policy.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testPdfIsNotServedInSandbox() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        String policy = mockMvc.perform(get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf")).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF)).andReturn().getResponse().getHeader("Content-Security-Policy");
+        assertThat(policy).doesNotContain("sandbox");
     }
 
     /**

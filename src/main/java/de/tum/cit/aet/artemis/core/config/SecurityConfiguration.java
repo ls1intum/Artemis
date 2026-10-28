@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProv
 import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.UploadedFileHeaderWriter;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -346,7 +347,9 @@ public class SecurityConfiguration {
                 // Disables HTTP Strict Transport Security as it is managed at the reverse proxy level (typically nginx).
                 .httpStrictTransportSecurity((HeadersConfigurer.HstsConfig::disable))
                 // Defines Permissions Policy to restrict what features the browser is allowed to use.
-                .permissionsPolicyHeader(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
+                .permissionsPolicyHeader(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()"))
+                // Replaces the policy above for uploaded files, which must never run scripts in the Artemis origin. Added last so it overrides the policy above.
+                .addHeaderWriter(new UploadedFileHeaderWriter()))
             // Configures sessions to be stateless; appropriate for REST APIs where no session is required.
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // Configures authorization for various URL patterns. The patterns are considered in order.
