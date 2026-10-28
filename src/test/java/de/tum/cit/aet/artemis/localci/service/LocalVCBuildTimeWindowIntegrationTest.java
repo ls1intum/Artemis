@@ -18,6 +18,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,6 +70,14 @@ class LocalVCBuildTimeWindowIntegrationTest extends AbstractProgrammingIntegrati
         doReturn(true).when(ldapTemplate).compare(anyString(), anyString(), any());
 
         dockerClientTestService.mockInspectImage(dockerClient);
+    }
+
+    @AfterEach
+    void removeRepository() throws IOException {
+        // Guarded, because a failure inside initRepositories leaves the field unassigned and the resulting NullPointerException would replace the real cause in the report.
+        if (assignmentRepository != null) {
+            assignmentRepository.deleteWorkingCopy();
+        }
     }
 
     private void setBuildTimeWindow(ZonedDateTime start, ZonedDateTime end) {
