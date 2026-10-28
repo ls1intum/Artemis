@@ -483,8 +483,8 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
             assertThat(validator.validate(config)).extracting(violation -> violation.getPropertyPath().toString()).containsExactly("likertScaleSupported");
         }
 
-        // The database refuses six too, for the writes that do not pass through validation: the server disables it on persist, the row is inserted by a native
-        // statement, and settings are changed by modifying queries.
+        // The database refuses six too, for the writes that do not pass through validation: the server disables it on persist, the row is inserted by a JPQL
+        // insert, and settings are changed by modifying queries.
         assertThatThrownBy(() -> jdbcTemplate.update("UPDATE metis_exercise_config SET likert_scale_points = ? WHERE exercise_id = ?", 6, exercise.getId()))
                 .isInstanceOf(DataAccessException.class)
                 .satisfies(refusal -> assertThat(refusal.getMessage().toLowerCase(Locale.ROOT)).contains("ck_metis_exercise_config_likert_scale_points"));

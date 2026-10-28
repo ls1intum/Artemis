@@ -527,9 +527,12 @@ configuration, created together with its owner and updated in place from then on
 inserts or deletes anything and no flow needs a lock or a transaction around it. A course gets its rows from
 `CourseRepository.saveWithDefaultConfigurations`; an exercise gets its team assignment and plagiarism detection rows, and a
 programming exercise also its Metis configuration row, from `ExerciseConfigurationService.initialize`, which every path that
-stores a new exercise calls right after the first save.
-The rows are inserted with a plain insert after an unlocked existence read, so a path that already ran it is not an error, and a row that is
-missing is reported with an `EntityNotFoundException` rather than created behind the caller's back.
+stores a new exercise calls right after the first save; the programming import makes the same repository calls itself.
+The rows are inserted with a plain insert after an unlocked existence read, so a path that already ran it is not an error. A row
+that a creation which failed half-way left out is added by the next update of its owner: the course update calls
+`CourseRepository.ensureDefaultConfigurations`, the update of a programming, text, modeling or file upload exercise calls
+`ensureExistsFor` through `applyTo`, and for the Metis row of a programming exercise
+`ExerciseDefaultConfigurationsRepository.ensureDefaultConfigurations`.
 
 Two of them carry a further constraint. `BuildPlan` is shared rather than owned: several
 programming exercises point at one build plan, so there is no single parent for it to name, and "at

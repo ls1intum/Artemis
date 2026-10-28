@@ -58,7 +58,8 @@ unchecked, so a `catch (IOException)` no longer catches a parse failure.
 Course and exercise settings use permanent default rows. Create courses with
 `CourseRepository.saveWithDefaultConfigurations`; this initializes settings even when an optional module is disabled.
 Every path that stores a new exercise (creation, every kind of import, copies) calls
-`ExerciseConfigurationService.initialize` right after the first save; it inserts the team and plagiarism rows, and for a
+`ExerciseConfigurationService.initialize` right after the first save (the programming import makes the same repository calls
+itself); it inserts the team and plagiarism rows, and for a
 programming exercise the Metis configuration row, with a plain INSERT after an unlocked existence read, and applies the request's settings in place. Later, only the
 update of a programming, text, modeling or file upload exercise adds a row that a failed creation left out. Programming
 creation/import also persists build settings. A row of an optional module is written by its owner without any class of the
