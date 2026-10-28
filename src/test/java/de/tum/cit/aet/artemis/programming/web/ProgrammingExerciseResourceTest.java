@@ -1359,6 +1359,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     /**
      * The DTO mapper must not pull additional sub-graphs (test cases, tasks, plagiarism cases) into the update path.
+     * One of the statements is the existence read of the exercise's Metis configuration, which the update adds when a
+     * creation left it out.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
@@ -1369,7 +1371,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
 
         assertThatDb(() -> request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK))
-                .hasBeenCalledAtMostTimes(49);
+                .hasBeenCalledAtMostTimes(50);
     }
 
     /**
