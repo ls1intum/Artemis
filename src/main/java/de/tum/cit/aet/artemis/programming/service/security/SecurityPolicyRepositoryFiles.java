@@ -374,8 +374,9 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static List<Path> javaFiles(Path repositoryRoot) {
         try (Stream<Path> files = Files.walk(repositoryRoot)) {
-            return files.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) && path.getFileName().toString().endsWith(".java")
-                    && isScannedSource(repositoryRoot, path)).sorted().toList();
+            return files.filter(
+                    path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) && path.getFileName().toString().endsWith(".java") && isScannedSource(repositoryRoot, path))
+                    .sorted().toList();
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
