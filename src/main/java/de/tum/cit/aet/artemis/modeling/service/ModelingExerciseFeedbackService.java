@@ -15,18 +15,15 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.assessment.repository.AthenaFeedbackRequestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -48,17 +45,14 @@ public class ModelingExerciseFeedbackService {
 
     private final ParticipationService participationService;
 
-    private final ResultService resultService;
-
-    private final ResultRepository resultRepository;
+    private final AthenaFeedbackRequestRepository athenaFeedbackRequestRepository;
 
     private final UserRepository userRepository;
 
-    public ModelingExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, ResultService resultService, ResultRepository resultRepository,
+    public ModelingExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, AthenaFeedbackRequestRepository athenaFeedbackRequestRepository,
             ResultWebsocketService resultWebsocketService, ParticipationService participationService, UserRepository userRepository) {
         this.athenaFeedbackApi = athenaFeedbackApi;
-        this.resultService = resultService;
-        this.resultRepository = resultRepository;
+        this.athenaFeedbackRequestRepository = athenaFeedbackRequestRepository;
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
         this.userRepository = userRepository;
@@ -92,7 +86,12 @@ public class ModelingExerciseFeedbackService {
         }
         // Capture the user on the calling (request) thread — SecurityContext is not propagated into the async executor.
         User requestingUser = userRepository.getUser();
-        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise, requestingUser));
+        try {
+            scheduleFeedback(modelingSubmission, participation, modelingExercise, requestingUser);
+        }
+        catch (BadRequestAlertException duplicateOrLimit) {
+            log.debug("Skipping duplicate or rate-limited test-exam feedback for submission {}", submission.getId());
+        }
     }
 
     /**
@@ -124,9 +123,27 @@ public class ModelingExerciseFeedbackService {
             }
 
             User requestingUser = userRepository.getUser();
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise, requestingUser));
+            scheduleFeedback(modelingSubmission, participation, modelingExercise, requestingUser);
         }
         return participation;
+    }
+
+    private void scheduleFeedback(ModelingSubmission submission, StudentParticipation participation, ModelingExercise exercise, User requestingUser) {
+        Result pending = athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(submission);
+        submission.addResult(pending);
+        participation.getSubmissions().stream().filter(existing -> existing.getId().equals(submission.getId())).forEach(existing -> existing.addResult(pending));
+        notifyResult(participation, pending);
+        CompletableFuture.runAsync(() -> generateAutomaticNonGradedFeedback(submission, participation, exercise, requestingUser, pending));
+    }
+
+    private void notifyResult(StudentParticipation participation, Result result) {
+        try {
+            resultWebsocketService.broadcastNewResult(participation, result);
+        }
+        catch (RuntimeException notificationFailure) {
+            // The durable state is authoritative. A disconnected websocket must not prevent work or invalidate success.
+            log.warn("Could not broadcast Athena feedback state for result {}", result.getId(), notificationFailure);
+        }
     }
 
     /**
@@ -137,58 +154,37 @@ public class ModelingExerciseFeedbackService {
      * @param participation      the student participation associated with the exercise.
      * @param modelingExercise   the modeling exercise object.
      * @param requestingUser     the user that requested the feedback generation
+     * @param automaticResult    the durable reservation owned by this worker
      */
-    public void generateAutomaticNonGradedFeedback(ModelingSubmission modelingSubmission, StudentParticipation participation, ModelingExercise modelingExercise,
-            User requestingUser) {
+    private void generateAutomaticNonGradedFeedback(ModelingSubmission modelingSubmission, StudentParticipation participation, ModelingExercise modelingExercise,
+            User requestingUser, Result automaticResult) {
         log.debug("Using athena to generate (modeling exercise) feedback request: {}", modelingExercise.getId());
 
-        Result automaticResult = createInitialResult(modelingSubmission);
-
         try {
-            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
-
             log.debug("Submission id: {}", modelingSubmission.getId());
 
             List<Feedback> feedbacks = getAthenaFeedback(modelingExercise, modelingSubmission, requestingUser);
 
             double totalFeedbackScore = calculateTotalFeedbackScore(feedbacks, modelingExercise);
 
-            automaticResult.setCompletionDate(ZonedDateTime.now());
-            automaticResult.setScore(Math.max(0, Math.min(totalFeedbackScore, 100)));
-            automaticResult.setSuccessful(true);
-
-            automaticResult = this.resultRepository.save(automaticResult);
-            resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
-            // Only the result: it owns the association, and merging the detached submission could undo a newer save.
-            automaticResult = this.resultRepository.save(automaticResult);
-            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
+            double score = Math.max(0, Math.min(totalFeedbackScore, 100));
+            if (athenaFeedbackRequestRepository.completeAthenaFeedbackRequest(automaticResult, score, feedbacks, java.util.Set.of())) {
+                automaticResult.setCompletionDate(ZonedDateTime.now());
+                automaticResult.setScore(score);
+                automaticResult.setRated(true);
+                automaticResult.setSuccessful(true);
+                automaticResult.setFeedbacks(feedbacks);
+                notifyResult(participation, automaticResult);
+            }
         }
         catch (Exception e) {
             log.error("Could not generate feedback for exercise ID: {} and participation ID: {}", modelingExercise.getId(), participation.getId(), e);
-            automaticResult.setSuccessful(false);
-            automaticResult.setCompletionDate(null);
-            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
-            throw new InternalServerErrorException("Something went wrong... AI Feedback could not be generated");
+            if (athenaFeedbackRequestRepository.failAthenaFeedbackRequest(automaticResult)) {
+                automaticResult.setSuccessful(false);
+                automaticResult.setCompletionDate(ZonedDateTime.now());
+                notifyResult(participation, automaticResult);
+            }
         }
-    }
-
-    /**
-     * Creates an initial Result object for the automatic feedback.
-     *
-     * @param submission the submission to which the result is associated
-     * @return the initial Result object
-     */
-    private Result createInitialResult(Submission submission) {
-        Result result = new Result();
-        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            result.setExerciseId(submission.getParticipation().getExercise().getId());
-        }
-        result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
-        result.setRated(true);
-        result.setScore(0.0);
-        result.setSuccessful(null);
-        result.setSubmission(submission);
-        return result;
     }
 
     /**

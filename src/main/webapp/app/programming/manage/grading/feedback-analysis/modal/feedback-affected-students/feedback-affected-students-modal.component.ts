@@ -6,6 +6,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-affected-students-modal',
@@ -25,6 +26,7 @@ export class AffectedStudentsModalComponent {
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.affectedStudentsModal';
 
     readonly faSpinner = faSpinner;
+    protected readonly RepositoryType = RepositoryType;
     readonly isLoading = signal<boolean>(false);
 
     constructor() {

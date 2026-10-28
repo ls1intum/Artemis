@@ -84,13 +84,15 @@
                     }
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
-                            [loading]="isLoading()"
-                            [smallButtons]="smallButtons()"
-                            [participations]="studentParticipations()"
-                            [exercise]="exercise()"
-                            [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"
+                            [disabled]="isLoading()"
+                            [size]="smallButtons() ? 'small' : 'default'"
+                            [programmingLanguage]="programmingExercise()?.programmingLanguage"
+                            [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
+                            [exerciseId]="exercise().id!"
+                            [repositoryViewLink]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', programmingParticipationForCodeButton()!.id!]"
                             [hideLabelMobile]="true"
-                            [repositoryUri]="''"
+                            [repositoryUri]="gradedRepositoryUri()"
+                            [vcsAccessTokenSourceInfo]="{ returnedTokenType: 'participation-token', participationId: programmingParticipationForCodeButton()!.id! }"
                         />
                     }
                     @if (
@@ -107,7 +109,6 @@
                             [participationId]="gradedParticipation()?.id"
                         />
                     }
-                    <!--                    </ng-container>-->
                 }
             </div>
         }
@@ -139,7 +140,7 @@
                             [buttonLoading]="isLoading()"
                             [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
-                            [overwriteDisabled]="isBeforeStartDateAndStudent"
+                            [forceDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
                     }

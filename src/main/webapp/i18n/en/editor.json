@@ -133,7 +133,15 @@
                 "exerciseHasNoIssues": "No issues were identified in the repositories."
             },
             "repo": "Repo",
-            "switchEditors": "Switch code editor"
+            "switchEditors": "Switch code editor",
+            "buildOutputTab": "Build Output",
+            "collapseBottomPanel": "Collapse bottom panel",
+            "expandBottomPanel": "Expand bottom panel",
+            "resizeBottomPanel": "Resize bottom panel",
+            "resizeFileBrowser": "Resize file browser",
+            "resizeInstructions": "Resize instructions panel",
+            "resizeMainEditor": "Resize main editor",
+            "bottomPanels": "Editor bottom panels"
         }
     }
 }

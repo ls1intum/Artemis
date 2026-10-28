@@ -1,15 +1,22 @@
-import { ActivatedRoute, Params, Router } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
+import { isEqual } from 'lodash-es';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
+import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
+import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import { ActivatedRoute, Params } from '@angular/router';
+import { AfterViewInit, Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, defer, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { TranslateService } from '@ngx-translate/core';
-import { switchMap, take, tap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -40,7 +47,7 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
@@ -50,7 +57,7 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
@@ -61,13 +68,11 @@ import { FileService } from 'app/foundation/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
 
 /**
  * Reasons that already name a field rendered inside the grading form. Each of these also turns the grading
@@ -92,7 +97,11 @@ const GRADING_FIELD_REASON_KEYS = new Set([
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../../shared/programming-exercise-form.scss'],
+    providers: [HyperionGenerationActivityFacade, TumAetUiConfirmationService],
     imports: [
+        TumAetUiButtonDirective,
+        TumAetUiConfirmDialogComponent,
+        CreateVariantWithAiButtonComponent,
         TranslateDirective,
         DocumentationButtonComponent,
         FormStatusBarComponent,
@@ -124,11 +133,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
-    private readonly router = inject(Router);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
+    protected readonly generationActivity = inject(HyperionGenerationActivityFacade);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
+    private readonly destroyRef = inject(DestroyRef);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -143,6 +154,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly maxProblemStatementLength = MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH;
     private readonly maxNameLength = PROGRAMMING_EXERCISE_NAME_MAX_LENGTH;
 
+    exerciseProblemComponent = viewChild(ProgrammingExerciseProblemComponent);
     exerciseInfoComponent = viewChild(ProgrammingExerciseInformationComponent);
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
@@ -184,38 +196,32 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoryDuplicateNames = false;
     auxiliaryRepositoryDuplicateDirectories = false;
     auxiliaryRepositoryNamedCorrectly = false;
-    private isImportFromExistingExerciseValue = false;
-    private isImportFromFileValue = false;
-    private isImportFromSharingValue = false;
-    isImportFromExistingExerciseForAi = signal<boolean>(false);
-    isImportFromFileForAi = signal<boolean>(false);
-    isImportFromSharingForAi = signal<boolean>(false);
+    private readonly isImportFromExistingExerciseState = signal(false);
 
     get isImportFromExistingExercise(): boolean {
-        return this.isImportFromExistingExerciseValue;
+        return this.isImportFromExistingExerciseState();
     }
 
     set isImportFromExistingExercise(value: boolean) {
-        this.isImportFromExistingExerciseValue = value;
-        this.isImportFromExistingExerciseForAi.set(value);
+        this.isImportFromExistingExerciseState.set(value);
     }
+    private readonly isImportFromFileState = signal(false);
 
     get isImportFromFile(): boolean {
-        return this.isImportFromFileValue;
+        return this.isImportFromFileState();
     }
 
     set isImportFromFile(value: boolean) {
-        this.isImportFromFileValue = value;
-        this.isImportFromFileForAi.set(value);
+        this.isImportFromFileState.set(value);
     }
+    private readonly isImportFromSharingState = signal(false);
 
     get isImportFromSharing(): boolean {
-        return this.isImportFromSharingValue;
+        return this.isImportFromSharingState();
     }
 
     set isImportFromSharing(value: boolean) {
-        this.isImportFromSharingValue = value;
-        this.isImportFromSharingForAi.set(value);
+        this.isImportFromSharingState.set(value);
     }
 
     isEdit = false;
@@ -228,8 +234,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // is backed by a signal to schedule change detection under zoneless. The getter/setter facade keeps the existing
     // synchronous reads/writes (this.programmingExercise = ... assignments, template bindings) unchanged.
     private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!);
-    programmingExerciseIdForAi = signal<number | undefined>(undefined);
-    programmingExerciseLanguageForAi = signal<ProgrammingLanguage | undefined>(undefined);
 
     get programmingExercise(): ProgrammingExercise {
         return this._programmingExercise();
@@ -238,9 +242,57 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     set programmingExercise(value: ProgrammingExercise) {
         value.id = value.id ?? undefined;
         this._programmingExercise.set(value);
-        this.programmingExerciseIdForAi.set(value.id);
-        this.programmingExerciseLanguageForAi.set(value.programmingLanguage);
     }
+
+    private readonly settingsMetadataFields = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+
+    /** Compare editable metadata, not hydrated course, participation, result or presentation state. */
+    get variantSourceHasUnsavedChanges(): boolean {
+        if (this.hasUnsavedChanges || !this.backupExercise) return true;
+        return this.editableSettingsDiffer(this.programmingExercise, this.backupExercise);
+    }
+
+    private editableSettingsDiffer(current: ProgrammingExercise, baseline: ProgrammingExercise): boolean {
+        if (current.problemStatement !== baseline.problemStatement) return true;
+        if (
+            !isEqual(
+                [current.programmingLanguage, current.projectType, current.packageName, current.staticCodeAnalysisEnabled],
+                [baseline.programmingLanguage, baseline.projectType, baseline.packageName, baseline.staticCodeAnalysisEnabled],
+            )
+        )
+            return true;
+        return this.settingsMetadataFields.some((field) => {
+            const currentValue = field.getCurrentValue(current);
+            const baselineValue = field.getBaselineValue(baseline);
+            // The settings page initializes absent category/repository lists to an empty array.
+            const list = field.key === 'categories' || field.key === 'programmingData.auxiliaryRepositories';
+            return !isEqual(list ? (currentValue ?? []) : currentValue, list ? (baselineValue ?? []) : baselineValue);
+        });
+    }
+
+    protected readonly generationExerciseId = signal<number | undefined>(undefined);
+    private readonly settingsForm = viewChild<NgForm>('editForm');
+    readonly generationRefreshRequired = signal(false);
+    readonly generationRefreshPending = signal(false);
+    private readonly generationReloading = signal(false);
+    private generationRefreshSequence = 0;
+    readonly generationEditingLocked = computed(
+        () => this.generationExerciseId() !== undefined && (this.generationActivity.running() || this.generationActivity.statusLoading() || this.generationReloading()),
+    );
+    readonly generationStatementSaveBlocked = computed(
+        () =>
+            this.generationExerciseId() !== undefined &&
+            (this.generationActivity.running() ||
+                this.generationActivity.statusLoading() ||
+                this.generationActivity.statusLoadFailed() ||
+                this.generationRefreshRequired() ||
+                this.generationReloading()),
+    );
+    readonly generationSaveBlocked = computed(() => this.generationStatementSaveBlocked() || this.generationRefreshPending());
+    readonly generationFullSaveBlocked = computed(
+        () => this.generationSaveBlocked() || (this.generationExerciseId() !== undefined && !!this.exerciseProblemComponent()?.editableInstructions()?.savingInstructions()),
+    );
+    readonly beforeStatementSave = () => this.revalidateGenerationContents();
 
     backupExercise!: ProgrammingExercise; // set in ngOnInit() from the loaded programming exercise, before any edit/update action reads it
     readonly isSaving = signal<boolean>(undefined!);
@@ -280,18 +332,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public theiaEnabled = false;
     readonly plagiarismEnabled = signal(false);
-    private _hyperionEnabled = false;
-    hyperionEnabledForAi = signal<boolean>(false);
-
-    public get hyperionEnabled(): boolean {
-        return this._hyperionEnabled;
-    }
-
-    public set hyperionEnabled(value: boolean) {
-        this._hyperionEnabled = value;
-        this.hyperionEnabledForAi.set(value);
-    }
-    public isGeneratingWithAi = signal<boolean>(false);
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -311,6 +351,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     constructor() {
+        this.generationActivity.connect({ exerciseId: this.generationExerciseId, refreshingEditor: this.generationReloading });
+        this.generationActivity.generationCompleted.pipe(takeUntilDestroyed()).subscribe((event) => {
+            if (event.liveExerciseChanged !== false) this.refreshAfterGeneration();
+        });
+        this.generationActivity.generationReverted.pipe(takeUntilDestroyed()).subscribe(() => this.refreshAfterGeneration());
+        this.generationActivity.exerciseContentsInvalidated.pipe(takeUntilDestroyed()).subscribe(() => this.refreshAfterGeneration());
         const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
         this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
 
@@ -325,17 +371,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         });
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
     }
-
-    showGenerateWithAi = computed(() => {
-        return (
-            this.hyperionEnabledForAi() &&
-            this.programmingExerciseIdForAi() === undefined &&
-            !this.isImportFromExistingExerciseForAi() &&
-            !this.isImportFromFileForAi() &&
-            !this.isImportFromSharingForAi() &&
-            this.programmingExerciseLanguageForAi() === ProgrammingLanguage.JAVA
-        );
-    });
 
     /**
      * Updates the name of the editedAuxiliaryRepository.
@@ -653,10 +688,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
             this.isLocalCIEnabled = true;
         }
-
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
-        this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -671,11 +704,22 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         for (const subscription of this.inputFieldSubscriptions) {
             subscription?.unsubscribe();
         }
+        this.confirmationService.close('hyperionSettingsReloadConfirmation');
         this.metadataSyncService.destroy();
         this.exerciseEditorSyncService.disconnect();
     }
 
     private setupMetadataSync(): void {
+        // Pin to the persisted configuration: changing the form's language must not turn off save protection.
+        this.generationExerciseId.set(
+            this.isEdit &&
+                !this.isImportFromExistingExercise &&
+                !this.isImportFromFile &&
+                !this.isImportFromSharing &&
+                usesCanonicalProblemStatementSync(this.backupExercise, this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION))
+                ? this.backupExercise.id
+                : undefined,
+        );
         if (!this.programmingExercise?.id || this.isImportFromExistingExercise || this.isImportFromFile || this.isImportFromSharing || !this.isEdit) {
             return;
         }
@@ -846,23 +890,20 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             (reference) => {
                 const requestOptions: { deleteFeedback?: unknown } = {};
                 requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
-                this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
+                if (this.generationFullSaveBlocked()) return;
+                this.revalidateGenerationContents().subscribe((valid) => {
+                    if (valid && !this.generationFullSaveBlocked())
+                        this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
+                });
             },
         );
-    }
-
-    /**
-     * Saves the programming exercise with AI preparation.
-     */
-    saveWithAi() {
-        this.saveWithModalCheck(() => this.saveExerciseWithAi());
     }
 
     private saveWithModalCheck(
         onConfirmed: () => void,
         onReEvaluated: (reference: Awaited<ReturnType<ExerciseUpdateWarningService['checkExerciseBeforeUpdate']>>) => void = () => onConfirmed(),
     ) {
-        if (this.isSaving() || this.isGeneratingWithAi()) {
+        if (this.isSaving() || this.generationFullSaveBlocked()) {
             return;
         }
         // Flush before isSaving / modal so pending Monaco text is on the DTO even if the user confirms
@@ -884,34 +925,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         });
     }
 
-    /**
-     * Saves the programming exercise with the provided input.
-     */
     saveExercise() {
-        this.saveExerciseWithOptions(false);
+        if (this.generationFullSaveBlocked()) return;
+        this.revalidateGenerationContents().subscribe((valid) => {
+            if (valid && !this.generationFullSaveBlocked()) this.persistExercise();
+        });
     }
 
-    /**
-     * Saves the programming exercise with cleared sources and navigates to the code editor.
-     */
-    saveExerciseWithAi() {
-        if (this.isSaving() || this.isGeneratingWithAi()) {
-            return;
-        }
-        if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id !== undefined || !this.hyperionEnabled) {
-            this.saveExercise();
-            return;
-        }
-        this.isGeneratingWithAi.set(true);
-        this.saveExerciseWithOptions(true);
-    }
-
-    /**
-     * Saves the programming exercise with optional source cleanup for AI generation.
-     *
-     * @param emptyRepositories if true, clear sources after setup
-     */
-    private saveExerciseWithOptions(emptyRepositories: boolean) {
+    private persistExercise() {
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
             this.programmingExercise.buildConfig.timeoutSeconds = 0;
         }
@@ -963,36 +984,98 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
-        } else if (emptyRepositories) {
-            this.subscribeToSaveResponseWithAi(this.programmingExerciseService.automaticSetup(this.programmingExercise, true));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe({
-            next: (response: HttpResponse<ProgrammingExercise>) => {
-                this.onSaveSuccess(response.body!);
-            },
-            error: (error: HttpErrorResponse) => {
-                this.onSaveError(error);
+    protected onCanonicalStatementSaved(content: string | undefined): void {
+        if (this.generationExerciseId() !== undefined && this.generationExerciseId() === this.programmingExercise.id) this.backupExercise.problemStatement = content;
+    }
+
+    private refreshAfterGeneration(): void {
+        if (this.generationExerciseId() === undefined) return;
+        this.generationRefreshRequired.set(true);
+        this.revalidateGenerationContents(true).subscribe();
+    }
+
+    private revalidateGenerationContents(refresh = false): Observable<boolean> {
+        return defer(() => {
+            const exerciseId = this.generationExerciseId();
+            if (exerciseId === undefined) return of(true);
+            if (!refresh && this.generationSaveBlocked()) return of(false);
+            const sequence = ++this.generationRefreshSequence;
+            this.generationRefreshPending.set(true);
+            return this.programmingExerciseService.find(exerciseId, true).pipe(
+                take(1),
+                takeUntilDestroyed(this.destroyRef),
+                map((response) => {
+                    if (sequence !== this.generationRefreshSequence || this.generationExerciseId() !== exerciseId) return false;
+                    if (!response.body) throw new Error('The saved exercise could not be loaded');
+                    this.generationRefreshPending.set(false);
+                    if (!this.editableSettingsDiffer(response.body, this.backupExercise)) {
+                        this.generationRefreshRequired.set(false);
+                        return !this.generationSaveBlocked();
+                    }
+                    this.generationRefreshRequired.set(true);
+                    if (refresh && !this.hasLocalSettingsChanges()) this.reloadSettings();
+                    return false;
+                }),
+                catchError(() => {
+                    if (sequence === this.generationRefreshSequence && this.generationExerciseId() === exerciseId) {
+                        this.generationRefreshRequired.set(true);
+                    }
+                    return of(false);
+                }),
+                finalize(() => {
+                    if (sequence === this.generationRefreshSequence) this.generationRefreshPending.set(false);
+                }),
+            );
+        });
+    }
+
+    private hasLocalSettingsChanges(): boolean {
+        return (
+            this.hasUnsavedChanges ||
+            !this.backupExercise ||
+            this.editableSettingsDiffer(this.programmingExercise, this.backupExercise) ||
+            !!this.settingsForm()?.dirty ||
+            !!this.exerciseProblemComponent()?.editableInstructions()?.unsavedChangesValue()
+        );
+    }
+
+    protected reloadSavedSettings(): void {
+        const exerciseId = this.generationExerciseId();
+        const sequence = this.generationRefreshSequence;
+        if (exerciseId === undefined || !this.generationRefreshRequired() || this.generationReloading()) return;
+        this.confirmationService.confirm({
+            key: 'hyperionSettingsReloadConfirmation',
+            header: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmHeader'),
+            message: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmMessage'),
+            acceptLabel: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExercise'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptSeverity: 'danger',
+            accept: () => {
+                if (this.generationExerciseId() === exerciseId && this.generationRefreshSequence === sequence && this.generationRefreshRequired()) this.reloadSettings();
             },
         });
     }
 
-    /**
-     * Subscribes to the save response and navigates to the code editor on success.
-     *
-     * @param result save request observable
-     */
-    private subscribeToSaveResponseWithAi(result: Observable<HttpResponse<ProgrammingExercise>>) {
+    private reloadSettings(): void {
+        this.generationReloading.set(true);
+        this.hasUnsavedChanges = false;
+        this.settingsForm()?.form.markAsPristine();
+        window.location.reload();
+    }
+
+    private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
+        const acknowledgeCanonicalSave = this.exerciseProblemComponent()?.editableInstructions()?.createCanonicalSaveAcknowledgement();
         result.subscribe({
             next: (response: HttpResponse<ProgrammingExercise>) => {
-                this.onSaveSuccessWithAi(response.body!);
+                acknowledgeCanonicalSave?.(response.body?.problemStatement);
+                this.onSaveSuccess(response.body!);
             },
             error: (error: HttpErrorResponse) => {
-                this.isGeneratingWithAi.set(false);
                 this.onSaveError(error);
             },
         });
@@ -1009,64 +1092,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
         this.calendarService.reloadEvents();
-    }
-
-    /**
-     * Handles successful save and navigates to the template repository in the code editor.
-     *
-     * @param exercise the created exercise
-     */
-    private onSaveSuccessWithAi(exercise: ProgrammingExercise) {
-        this.isSaving.set(false);
-        this.isGeneratingWithAi.set(false);
-
-        if (!exercise?.id) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-
-        this.openCodeEditorForTemplate(exercise);
-    }
-
-    /**
-     * Navigates to the code editor for the template repository of the exercise.
-     *
-     * @param exercise the created exercise
-     */
-    private openCodeEditorForTemplate(exercise: ProgrammingExercise) {
-        if (!exercise?.id || !exercise.templateParticipation?.id) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-        const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
-        if (!courseId) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-        const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
-        if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
-            void this.router.navigate(
-                [
-                    'course-management',
-                    courseId,
-                    'exams',
-                    exercise.exerciseGroup.exam.id,
-                    'exercise-groups',
-                    exercise.exerciseGroup.id,
-                    'programming-exercises',
-                    exercise.id,
-                    'code-editor',
-                    RepositoryType.TEMPLATE,
-                    exercise.templateParticipation.id,
-                ],
-                navigationExtras,
-            );
-        } else {
-            void this.router.navigate(
-                ['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id],
-                navigationExtras,
-            );
-        }
     }
 
     private onSaveError(error: HttpErrorResponse) {
@@ -1086,7 +1111,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             disableTranslation: disableTranslation,
         });
         this.isSaving.set(false);
-        this.isGeneratingWithAi.set(false);
         window.scrollTo(0, 0);
     }
 
@@ -1108,7 +1132,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         // Select the correct pattern
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
-        this.programmingExerciseLanguageForAi.set(language);
         return language;
     }
 
@@ -1203,8 +1226,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.programmingExerciseLanguageForAi.set(language);
-        this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+        if (
+            this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION) &&
+            !this.programmingExercise.id &&
+            !this.isImportFromExistingExercise &&
+            !this.isImportFromFile &&
+            !this.isImportFromSharing
+        ) {
+            this.programmingExercise = deepClone(this.programmingExercise);
+        }
+        this.fileService.getTemplateFile(language, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
@@ -1598,13 +1629,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.programmingExercise.exerciseGroup = undefined;
         this.programmingExercise.course = undefined;
         this.programmingExercise.projectKey = undefined;
-        this.programmingExerciseIdForAi.set(undefined);
 
         resetProgrammingForImport(this.programmingExercise);
 
         this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!; // avoid detecting language as changed
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
-        this.programmingExerciseLanguageForAi.set(this.programmingExercise.programmingLanguage);
         // we need to get it from the history object as setting the programming language
         // sets the project type of the programming exercise to the default value for the programming language.
         const importedProjectType: ProjectType | undefined = history.state.programmingExerciseForImportFromFile.projectType;

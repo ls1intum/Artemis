@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -11,7 +11,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
@@ -33,6 +33,7 @@ import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('RepositoryViewComponent', () => {
@@ -69,6 +70,7 @@ describe('RepositoryViewComponent', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
             ],
         })
             .overrideComponent(RepositoryViewComponent, {
@@ -123,6 +125,21 @@ describe('RepositoryViewComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should request a participation token for a team repository outside course management', () => {
+        component.repositoryType.set(RepositoryType.USER);
+        component.participation.set({ id: 1, team: { id: 3 } } as ProgrammingExerciseStudentParticipation);
+
+        expect(component.vcsAccessTokenDataForCodeButton()).toEqual({ returnedTokenType: 'participation-token', participationId: 1 });
+    });
+
+    it('should request a repository token for a user repository in course management', () => {
+        component.repositoryType.set(RepositoryType.USER);
+        component.participation.set({ id: 1 } as ProgrammingExerciseStudentParticipation);
+        (TestBed.inject(Router) as unknown as MockRouter).setUrl('/course-management');
+
+        expect(component.vcsAccessTokenDataForCodeButton()).toEqual({ returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId: 1 });
     });
 
     it('should load participation for TEMPLATE repository type', () => {
