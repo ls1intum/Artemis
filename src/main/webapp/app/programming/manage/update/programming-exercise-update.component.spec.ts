@@ -1113,6 +1113,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(windowComponent()).not.toBeNull();
         });
 
+        it('stays displayed in the simple mode after the last date of the window was cleared, so that it can be replaced', () => {
+            comp.isSimpleMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart } };
+            fixture.detectChanges();
+            expect(windowComponent()).not.toBeNull();
+
+            // the change comes from an event of the picker, which marks the form as changed
+            comp.programmingExercise.buildConfig!.advancedSettings = undefined;
+            fixture.componentRef.changeDetectorRef.markForCheck();
+            fixture.detectChanges();
+
+            expect(windowComponent()).not.toBeNull();
+        });
+
         it('is not displayed for exam exercises', () => {
             comp.isSimpleMode.set(false);
             comp.isExamMode.set(true);

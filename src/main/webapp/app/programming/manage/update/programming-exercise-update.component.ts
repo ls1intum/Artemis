@@ -167,6 +167,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     packageNamePattern = '';
     isSimpleMode = signal<boolean>(true);
+    private buildTimeWindowKeptVisible = false;
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
 
     isEditFieldDisplayedRecord = computed(() => {
@@ -1326,6 +1327,21 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
             translateValues: {},
         });
+    }
+
+    /**
+     * Whether the build time window is edited in the form. It is a setting of the advanced mode, but a window that exists is also shown in the simple mode,
+     * as a date change there can invalidate it, which blocks saving. Once shown for an existing window, it stays visible for the rest of the editing session,
+     * so that clearing the last date to replace it does not remove the fields.
+     */
+    isBuildTimeWindowDisplayed(): boolean {
+        if (this.isExamMode()) {
+            return false;
+        }
+        if (this.programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow) {
+            this.buildTimeWindowKeptVisible = true;
+        }
+        return this.isEditFieldDisplayedRecord().buildTimeWindow || this.buildTimeWindowKeptVisible;
     }
 
     /**
