@@ -164,6 +164,22 @@ class ProgrammingExerciseBuildConfigAdvancedSettingsTest {
     }
 
     @Test
+    void anEmptyRegexSurvivesAJsonRoundTripInsteadOfBecomingTheDefaultRegex() {
+        var mapper = JsonMapper.builder().build();
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("");
+
+        String json = mapper.writeValueAsString(buildConfig.getAdvancedSettings());
+        assertThat(json).contains("\"regex\":\"\"");
+
+        var reloaded = new ProgrammingExerciseBuildConfig();
+        reloaded.setAdvancedSettings(mapper.readValue(json, BuildConfigAdvancedSettings.class));
+        assertThat(reloaded.isAllowBranching()).isTrue();
+        assertThat(reloaded.getBranchRegex()).isEmpty();
+    }
+
+    @Test
     void theSettingsSurviveAJsonRoundTripAndIgnoreUnknownProperties() {
         var mapper = JsonMapper.builder().build();
         var settings = new BuildConfigAdvancedSettings(new BranchingSettings(true, "^x$"), WINDOW);
