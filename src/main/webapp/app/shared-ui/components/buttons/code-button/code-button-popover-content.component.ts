@@ -176,7 +176,7 @@ export class CodeButtonPopoverContentComponent {
     /**
      * Returns the URL if Angular's URL sanitizer accepts it, otherwise undefined so the link is not rendered.
      *
-     * The sanitizer only rejects script-bearing schemes, so the application schemes of the IDE deep links such as
+     * Angular's URL sanitizer only rejects `javascript:` URLs, so the application schemes of the IDE deep links such as
      * `vscode://` and `sourcetree://` pass. The `[href]` binding sanitizes the string again, which is why the result
      * is not marked as trusted.
      */
