@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RepositoryAuthenticationMethod } from './code-button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
@@ -29,7 +29,7 @@ export type AuthenticationMethodData =
     | { authenticationMethod: RepositoryAuthenticationMethod.Token; url: string }
     | { authenticationMethod: RepositoryAuthenticationMethod.Password; url: string };
 type LabeledAuthenticationMethodData = { authenticationMethodData: AuthenticationMethodData; label: string };
-type IdeLinkData = { url: SafeUrl; name: string };
+type IdeLinkData = { url: string; name: string };
 export type TheiaLinkData = { theiaPortalURL: string; theiaImage: string; repositoryUrl: string; userName: string; userEmail: string };
 
 @Component({
@@ -158,33 +158,35 @@ export class CodeButtonPopoverContentComponent {
         const preferredIde = this.preferredIde();
 
         const ideUrl = this.externalCloningService.buildIdeUrl(this.selectedLabeledAuthenticationMethodData().authenticationMethodData.url, preferredIde);
-        if (!ideUrl) {
-            return undefined;
-        }
-        const sanitizedUrl = this.sanitizer.sanitize(SecurityContext.URL, ideUrl);
-        if (!sanitizedUrl || sanitizedUrl.startsWith('unsafe:')) {
+        const sanitizedUrl = this.sanitizeUrl(ideUrl);
+        if (!sanitizedUrl) {
             return undefined;
         }
 
-        return {
-            url: this.sanitizer.bypassSecurityTrustUrl(sanitizedUrl),
-            name: preferredIde.name,
-        };
+        return { url: sanitizedUrl, name: preferredIde.name };
     }
 
-    private getSourceTreeUrl(): SafeUrl | undefined {
+    private getSourceTreeUrl(): string | undefined {
         const versionControlUrl = this.profileService.getProfileInfo().versionControlUrl;
         const selectedAuthenticationMethodData = this.selectedLabeledAuthenticationMethodData().authenticationMethodData;
         const sourceTreeUrl = this.externalCloningService.buildSourceTreeUrl(versionControlUrl, selectedAuthenticationMethodData.url);
-        if (!sourceTreeUrl) {
-            return undefined;
-        }
-        const sanitizedUrl = this.sanitizer.sanitize(SecurityContext.URL, sourceTreeUrl);
-        if (!sanitizedUrl || sanitizedUrl.startsWith('unsafe:')) {
-            return undefined;
-        }
+        return this.sanitizeUrl(sourceTreeUrl);
+    }
 
-        return this.sanitizer.bypassSecurityTrustUrl(sanitizedUrl);
+    /**
+     * Returns the URL if Angular's URL sanitizer accepts it, otherwise undefined so the link is not rendered.
+     *
+     * The sanitizer only rejects script-bearing schemes, so the application schemes of the IDE deep links such as
+     * `vscode://` and `sourcetree://` pass. The `[href]` binding sanitizes the string again, which is why the result
+     * is not marked as trusted.
+     */
+    private sanitizeUrl(url: string | undefined): string | undefined {
+        if (!url) {
+            return undefined;
+        }
+        const sanitizedUrl = this.sanitizer.sanitize(SecurityContext.URL, url);
+        // Angular rewrites a rejected URL to an inert `unsafe:` form rather than dropping it.
+        return !sanitizedUrl || sanitizedUrl.startsWith('unsafe:') ? undefined : sanitizedUrl;
     }
 
     private getAuthenticationMechanismLabel(authenticationMechanism: RepositoryAuthenticationMethod): string {
