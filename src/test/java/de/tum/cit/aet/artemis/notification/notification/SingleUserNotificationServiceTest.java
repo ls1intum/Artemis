@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -32,7 +33,9 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -80,6 +83,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ResultTestRepository resultRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
 
     private User user;
 
@@ -226,6 +232,33 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
                     .map(status -> status.getUser().getId()).toList();
             assertThat(notifiedUserIds).containsExactlyInAnyOrderElementsOf(recipients.stream().map(User::getId).toList());
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 4 })
+    void shouldLoadPublicationRecipientsWithoutAssessmentEntities(int teamCount) {
+        String prefix = TEST_PREFIX + "publicationload";
+        userUtilService.addUsers(prefix, teamCount * 2, 0, 0, 0);
+        var now = ZonedDateTime.now();
+        var assessedExercise = textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.minusDays(2), now.minusDays(1));
+        Set<AssessmentPublicationRecipientDTO> expectedRecipients = new HashSet<>();
+        for (int i = 0; i < teamCount; i++) {
+            Set<User> members = Set.of(userUtilService.getUserByLogin(prefix + "student" + (i * 2 + 1)), userUtilService.getUserByLogin(prefix + "student" + (i * 2 + 2)));
+            var team = teamUtilService.createTeam(members, null, assessedExercise, prefix + i);
+            var participation = participationUtilService.addTeamParticipationForExercise(assessedExercise, team.getId());
+            Result result = participationUtilService.createSubmissionAndResult(participation, 60 + i, true);
+            result.setAssessmentType(AssessmentType.MANUAL);
+            resultRepository.saveAndFlush(result);
+            for (User member : members) {
+                expectedRecipients.add(new AssessmentPublicationRecipientDTO(member.getId(), 60.0 + i));
+            }
+        }
+
+        var recipients = assertThatDb(() -> studentParticipationRepository.findAssessmentPublicationRecipients(assessedExercise.getId())).hasBeenCalledTimes(1);
+        assertThat(recipients).containsExactlyInAnyOrderElementsOf(expectedRecipients);
+        String sql = queryInterceptor.getStatements().getFirst();
+        String selectedColumns = sql.substring(0, sql.indexOf(" from "));
+        assertThat(selectedColumns).doesNotContain("password_hash", "repository_url", "submission_date", "completion_date");
     }
 
     @Test

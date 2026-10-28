@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseAssessedNotification;
@@ -35,43 +37,38 @@ public class SingleUserNotificationService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final UserRepository userRepository;
+
     private final ConversationService conversationService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     private final CourseNotificationService courseNotificationService;
 
-    public SingleUserNotificationService(StudentParticipationRepository studentParticipationRepository, ConversationService conversationService,
+    public SingleUserNotificationService(StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, ConversationService conversationService,
             AuthorizationCheckService authorizationCheckService, CourseNotificationService courseNotificationService) {
         this.studentParticipationRepository = studentParticipationRepository;
+        this.userRepository = userRepository;
         this.conversationService = conversationService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseNotificationService = courseNotificationService;
     }
 
     /**
-     * Notify all users with available assessments about the finished assessment for an exercise submission.
-     * This is an auxiliary method that finds all relevant users and initiates the process for sending SingleUserNotifications and emails
+     * Notify students with an eligible completed assessment, including every member of an assessed team.
      *
      * @param exercise which assessmentDueDate is the trigger for the notification process
      */
-    // TODO: Should by a general method and not be in the single user service
     public void notifyUsersAboutAssessedExerciseSubmission(Exercise exercise) {
-        // This process can not be replaces via a GroupNotification (can only notify ALL students of the course)
-        // because we want to notify only the students that have a valid assessed submission.
+        var recipientsByUserId = studentParticipationRepository.findAssessmentPublicationRecipients(exercise.getId()).stream()
+                .collect(Collectors.toMap(AssessmentPublicationRecipientDTO::userId, recipient -> recipient, (first, duplicate) -> first));
+        if (recipientsByUserId.isEmpty()) {
+            return;
+        }
 
-        // Find student participations with eager legal submissions and latest results that have a completion date
-        Set<StudentParticipation> filteredStudentParticipations = Set
-                .copyOf(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsAndLatestResultWithCompletionDate(exercise.getId(), false));
-
-        // Load and assign all studentParticipations with results (this information is needed for the emails later)
-        exercise.setStudentParticipations(filteredStudentParticipations);
-
-        // Extract all users that should be notified from the previously loaded student participations
-        Set<User> relevantStudents = filteredStudentParticipations.stream().flatMap(participation -> participation.getStudents().stream()).collect(Collectors.toSet());
-
-        // notify all relevant users
-        relevantStudents.forEach(student -> notifyUserAboutAssessedExerciseSubmission(exercise, student));
+        // The dispatcher needs user delivery fields, but none of their entity associations.
+        userRepository.findAllByIdIn(recipientsByUserId.keySet())
+                .forEach(recipient -> sendAssessmentNotification(exercise, recipient, recipientsByUserId.get(recipient.getId()).score()));
     }
 
     /**
@@ -84,16 +81,17 @@ public class SingleUserNotificationService {
      * @param recipient who should be notified
      */
     public void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
-
         var studentParticipation = exercise.getStudentParticipations().stream().filter(participation -> participation.getStudents().contains(recipient)).findFirst();
 
         if (studentParticipation.isEmpty() || studentParticipation.get().findLatestResult() == null) {
             return;
         }
 
-        Double score = studentParticipation.get().findLatestResult().getScore();
+        sendAssessmentNotification(exercise, recipient, studentParticipation.get().findLatestResult().getScore());
+    }
 
+    private void sendAssessmentNotification(Exercise exercise, User recipient, Double score) {
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         Long examId = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam().getId() : null;
         var exerciseAssessedNotification = new ExerciseAssessedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getExerciseNotificationTitle(), exercise.getType(), exercise.getMaxPoints().longValue(), score.longValue(), examId);
