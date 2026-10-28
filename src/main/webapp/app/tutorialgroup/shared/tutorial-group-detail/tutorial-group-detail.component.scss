@@ -1,10 +1,13 @@
 .frame {
+    // Breakpoints below follow the page's own width, which the course sidebar narrows independently of the viewport
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 
     .header {
         display: flex;
+        flex-wrap: wrap;
         gap: 0.5rem;
         align-items: end;
 
@@ -147,8 +150,38 @@
         }
     }
 
+    @container (max-width: 48rem) {
+        .card-row {
+            flex-direction: column;
+
+            .card {
+                min-height: 0;
+
+                &.narrow {
+                    width: auto;
+                }
+
+                .info-card-content {
+                    margin-top: 1rem;
+                    padding: 0;
+                }
+            }
+        }
+    }
+
+    @container (max-width: 30rem) {
+        .card-row .card .info-card-content {
+            flex-direction: column;
+
+            .info-stack {
+                gap: 1rem;
+            }
+        }
+    }
+
     .list-controls-row {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 0.5rem;
 
@@ -160,6 +193,15 @@
 
         .spacer {
             flex: 1;
+        }
+    }
+
+    .session-table-scroll {
+        overflow-x: auto;
+
+        table {
+            width: 100%;
+            min-width: 40rem;
         }
     }
 
