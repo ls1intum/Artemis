@@ -56,7 +56,7 @@
     parsed on the way out and no query has to work around a type that cannot be compared or made distinct.
     -->
 
-    <changeSet id="20261012160502-01-create-metis-exercise-config" author="eduardfrankford">
+    <changeSet id="20261028153908-01-create-metis-exercise-config" author="eduardfrankford">
         <comment>Create the per-exercise Metis configuration, keyed by the exercise it configures.</comment>
         <createTable tableName="metis_exercise_config">
             <column name="exercise_id" type="bigint">
@@ -112,7 +112,7 @@
                                  referencedColumnNames="id" referencedTableName="exercise" onDelete="CASCADE" onUpdate="RESTRICT"/>
     </changeSet>
 
-    <changeSet id="20261012160502-02-create-metis-group-window" author="eduardfrankford">
+    <changeSet id="20261028153908-02-create-metis-group-window" author="eduardfrankford">
         <comment>Create the per-tutorial-group answering window that overrides the default of the configuration.</comment>
         <createTable tableName="metis_group_window">
             <column name="id" type="bigint" autoIncrement="true">
@@ -144,7 +144,7 @@
                                  referencedColumnNames="id" referencedTableName="tutorial_group" onDelete="CASCADE" onUpdate="RESTRICT"/>
     </changeSet>
 
-    <changeSet id="20261012160502-03-create-metis-check" author="eduardfrankford">
+    <changeSet id="20261028153908-03-create-metis-check" author="eduardfrankford">
         <comment>Create the per-participation check that records the state of one student's questions.</comment>
         <createTable tableName="metis_check">
             <column name="id" type="bigint" autoIncrement="true">
@@ -179,7 +179,7 @@
                                  referencedColumnNames="id" referencedTableName="participation" onDelete="CASCADE" onUpdate="RESTRICT"/>
     </changeSet>
 
-    <changeSet id="20261012160502-04-create-metis-question" author="eduardfrankford">
+    <changeSet id="20261028153908-04-create-metis-question" author="eduardfrankford">
         <comment>Create the question table, which holds main questions and follow-ups together with their answers and ratings.</comment>
         <createTable tableName="metis_question">
             <column name="id" type="bigint" autoIncrement="true">
@@ -254,7 +254,7 @@
                                  referencedColumnNames="id, check_id" referencedTableName="metis_question" onDelete="CASCADE" onUpdate="RESTRICT"/>
     </changeSet>
 
-    <changeSet id="20261012160502-05-metis-likert-scale-five-or-seven-points" author="eduardfrankford">
+    <changeSet id="20261028153908-05-metis-likert-scale-five-or-seven-points" author="eduardfrankford">
         <comment>A Likert scale has five or seven points; refuse any other number, six included.</comment>
         <!--
             MetisExerciseConfig states the same rule for Bean Validation, but nothing that writes this row runs it in
@@ -270,7 +270,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261012160502-06-backfill-metis-exercise-config" author="eduardfrankford">
+    <changeSet id="20261028153908-06-backfill-metis-exercise-config" author="eduardfrankford">
         <comment>Give every programming exercise that already exists its permanent Metis configuration, switched off and with the defaults.</comment>
         <!--
             New programming exercises get their row when they are stored (ExerciseConfigurationService.initialize); this
