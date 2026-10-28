@@ -1,7 +1,9 @@
 import { ProgrammingExerciseParticipationActionsComponent } from 'app/exercise/participation/programming-exercise-participation-actions/programming-exercise-participation-actions.component';
 import { StudentExerciseActionsDirective } from 'app/exercise/participation/student-exercise-actions.directive';
-import { Component, ElementRef, HostListener, computed, effect, inject, input, output, viewChild, viewChildren } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import dayjs from 'dayjs/esm';
+
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faEye, faFileSignature, faListAlt, faPaperPlane, faPlayCircle, faRobot, faSignal, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -30,6 +32,7 @@ import {
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -132,6 +135,21 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
     readonly repositoryUriForCodeButton = computed(() => this.getRepositoryUriForCodeButton());
     readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
+    private readonly feedbackDeadlineClock = signal(Date.now());
+    private readonly pendingAthenaFeedbackDeadline = computed(() => {
+        const type = this.exercise().type;
+        if (type !== ExerciseType.TEXT && type !== ExerciseType.MODELING) {
+            return 0;
+        }
+        return getAllResultsOfAllSubmissions(this.activeParticipationForCode()?.submissions).reduce((deadline, result) => {
+            if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || result.successful !== undefined) {
+                return deadline;
+            }
+            return Math.max(deadline, result.completionDate ? dayjs(result.completionDate).valueOf() : Infinity);
+        }, 0);
+    });
+    protected readonly hasPendingAthenaFeedback = computed(() => this.pendingAthenaFeedbackDeadline() > this.feedbackDeadlineClock());
+
     readonly repositoryViewLink = computed(() => {
         const participation = this.activeParticipationForCode();
         if (!participation?.id) {
@@ -163,6 +181,16 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
 
     constructor() {
         super();
+        // A reloaded pending request must unlock at its lease deadline, even without a result notification.
+        effect((onCleanup) => {
+            const deadline = this.pendingAthenaFeedbackDeadline();
+            const now = Date.now();
+            this.feedbackDeadlineClock.set(now);
+            if (Number.isFinite(deadline) && deadline > now) {
+                const timeout = setTimeout(() => this.feedbackDeadlineClock.set(Date.now()), deadline - now + 1);
+                onCleanup(() => clearTimeout(timeout));
+            }
+        });
         // Automatically make the rightmost action button primary, all others secondary
         effect(() => {
             const buttons = [...this.actionButtons(), ...this.programmingActions().flatMap((actions) => actions.actionButtons())];
@@ -324,6 +352,9 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
     }
 
     submitAndShowPopover() {
+        if (this.hasPendingAthenaFeedback()) {
+            return;
+        }
         this.onSubmitExercise()?.();
         if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
