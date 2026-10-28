@@ -3,7 +3,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-        The assessor is the course staff member who graded the presentation. Instances graded before this change have no known assessor, and
+        The assessor is the course staff member responsible for grading the presentation. Instances graded before this change have no known assessor, and
         deleting the assessor's account detaches them, so the column stays nullable.
     -->
     <changeSet id="20261027133812-01-add-presentation-instance-assessor" author="suckart">

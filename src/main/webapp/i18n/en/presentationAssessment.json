@@ -26,7 +26,7 @@
                 "pointsMax": "Points must not exceed {{ max }}.",
                 "exerciseNotSelected": "Select an exercise from the list or clear the field.",
                 "meetingLinkInvalid": "Please enter a link that starts with http:// or https://.",
-                "assessorRequired": "Please select an assessor."
+                "assessorRequired": "Please select a responsible person."
             },
             "presentationDate": "Presentation date",
             "presentationTime": "Time",
@@ -42,7 +42,7 @@
             "status": "Status",
             "assessment": "Assessment",
             "remark": "Remark",
-            "assessor": "Assessor",
+            "assessor": "Responsible person",
             "remarkTooLong": "The remark must not exceed {{ max }} characters.",
             "assessed": "Assessed",
             "pending": "Pending",
@@ -51,7 +51,7 @@
             "searchOverview": "Search name, email, or presentation",
             "noMatchingStudents": "No students match your search.",
             "studentSearchFailed": "An error occurred while searching for students.",
-            "assessorSearchFailed": "An error occurred while searching for assessors.",
+            "assessorSearchFailed": "An error occurred while searching for responsible persons.",
             "date": "Date",
             "type": "Type",
             "typeStandalone": "Standalone",

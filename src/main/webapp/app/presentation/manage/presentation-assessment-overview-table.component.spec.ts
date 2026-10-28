@@ -28,6 +28,7 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
             rowKey: '10:student1',
             displayName: 'Student One',
             assessed: true,
+            editable: true,
             ...overrides,
         };
     }

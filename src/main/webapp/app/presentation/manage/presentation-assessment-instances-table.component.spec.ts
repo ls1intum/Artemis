@@ -27,6 +27,7 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
             rowKey: '10:student1',
             displayName: 'Student One',
             assessed: true,
+            editable: true,
             ...overrides,
         };
     }
@@ -85,6 +86,12 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
 
         render([createRow()], true);
         expect(query('[data-testid="delete-instance-button"]')).not.toBeNull();
+    });
+
+    it('should hide the edit button of rows that may not be edited', () => {
+        render([createRow({ editable: false })]);
+
+        expect(query('[data-testid="edit-instance-button"]')).toBeNull();
     });
 
     it('should emit the instance when edit is clicked', () => {
