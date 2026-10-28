@@ -539,6 +539,54 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         }
     }
 
+    @ParameterizedTest
+    @MethodSource("gradeRelevantResultStates")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGradingCriteriaPointsIgnoreUnfinishedAthenaRequests(AssessmentType latestType, Boolean successful, boolean expectedLatest) throws Exception {
+        var submission = studentParticipation.findLatestSubmission().orElseThrow();
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now().minusHours(2));
+        submissionRepository.save(submission);
+        var criteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
+        gradingCriterionRepository.saveAll(criteria);
+        modelingExerciseRepository.save(modelingExercise);
+        var criterion = GradingCriterionUtil.findGradingCriterionByTitle(modelingExercise, "test title");
+        var instruction = criterion.getStructuredGradingInstructions().iterator().next();
+
+        var manual = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now().minusMinutes(5), submission);
+        manual.setScore(70D);
+        resultRepository.save(manual);
+        var manualFeedback = new Feedback().credits(3D);
+        manualFeedback.setGradingInstruction(instruction);
+        participationUtilService.addFeedbackToResult(manualFeedback, manual);
+
+        var requestResult = participationUtilService.addResultToSubmission(latestType,
+                successful == null ? ZonedDateTime.now().plusMinutes(5) : ZonedDateTime.now().minusMinutes(1), submission);
+        requestResult.setRated(expectedLatest);
+        requestResult.setScore(20D);
+        requestResult.setSuccessful(successful);
+        resultRepository.save(requestResult);
+        var requestFeedback = new Feedback().credits(1D);
+        requestFeedback.setGradingInstruction(instruction);
+        participationUtilService.addFeedbackToResult(requestFeedback, requestResult);
+        assertThat(resultRepository.findByIdElseThrow(requestResult.getId()).isSuccessful()).isEqualTo(successful);
+
+        var resultsWithPoints = request.getList("/api/assessment/exercises/" + modelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK,
+                ResultWithPointsPerGradingCriterionDTO.class);
+
+        assertThat(resultsWithPoints).hasSize(1);
+        var gradedResult = resultsWithPoints.getFirst();
+        assertThat(gradedResult.result().id()).isEqualTo(expectedLatest ? requestResult.getId() : manual.getId());
+        assertThat(gradedResult.result().score()).isEqualTo(expectedLatest ? 20D : 70D);
+        assertThat(gradedResult.totalPoints()).isEqualTo(expectedLatest ? 1D : 3D);
+        assertThat(gradedResult.pointsPerCriterion()).containsExactlyEntriesOf(Map.of(criterion.getId(), expectedLatest ? 1D : 3D));
+    }
+
+    private static Stream<Arguments> gradeRelevantResultStates() {
+        return Stream.of(Arguments.of(AssessmentType.AUTOMATIC_ATHENA, null, false), Arguments.of(AssessmentType.AUTOMATIC_ATHENA, false, false),
+                Arguments.of(AssessmentType.AUTOMATIC_ATHENA, true, true), Arguments.of(AssessmentType.AUTOMATIC, false, true));
+    }
+
     private FileUploadExercise setupFileUploadExerciseWithResults() {
         var now = ZonedDateTime.now();
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);

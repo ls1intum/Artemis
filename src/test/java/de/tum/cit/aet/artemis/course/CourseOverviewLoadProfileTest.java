@@ -16,6 +16,8 @@ import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.AthenaFeedbackRequestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
@@ -41,8 +44,10 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -54,6 +59,8 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -140,6 +147,12 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private AthenaFeedbackRequestRepository athenaFeedbackRequestRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -580,6 +593,203 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
                 .orElseThrow(() -> new AssertionError("the assessed exercise must be part of the overview")).studentParticipations().iterator().next().submissions();
         assertThat(assessedSubmissions).as("the assessed submission must be visible").hasSize(1);
         assertThat(assessedSubmissions.iterator().next().submissionExerciseType()).as("and it must carry the discriminator its exercise implies").isEqualTo("text");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false, false, none", "false, true, none", "true, false, none", "true, true, none", "false, false, pending", "false, true, pending", "true, false, pending",
+            "true, true, pending", "false, false, failed", "false, true, failed", "true, false, failed", "true, true, failed" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRetainTheAutomaticResultUntilTheNewManualSubmissionIsReleased(boolean teamMode, boolean draft, String requestState) throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        exercise.setReleaseDate(ZonedDateTime.now().minusDays(4));
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
+        exercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(1));
+        exercise.setMode(teamMode ? ExerciseMode.TEAM : ExerciseMode.INDIVIDUAL);
+        exercise = exerciseRepository.save(exercise);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(
+                teamMode ? teamUtilService.createTeam(Set.of(student), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), exercise, TEST_PREFIX + "assessmentfallbackteam")
+                        : student);
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation = studentParticipationTestRepository.save(participation);
+
+        var automaticSubmission = new ProgrammingSubmission();
+        automaticSubmission.setParticipation(participation);
+        automaticSubmission.setType(SubmissionType.MANUAL);
+        automaticSubmission.setSubmitted(true);
+        automaticSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(3));
+        automaticSubmission = submissionTestRepository.saveAndFlush(automaticSubmission);
+        var automaticResult = new Result();
+        automaticResult.setSubmission(automaticSubmission);
+        automaticResult.setExerciseId(exercise.getId());
+        automaticResult.setAssessmentType(AssessmentType.AUTOMATIC);
+        automaticResult.setRated(true);
+        automaticResult.setScore(80.0);
+        automaticResult.setCompletionDate(ZonedDateTime.now().minusDays(3));
+        automaticResult = resultTestRepository.saveAndFlush(automaticResult);
+        String endpoint = "/api/course/courses/" + course.getId() + "/exercises-for-overview";
+        long participationId = participation.getId();
+        var beforeManual = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        var manualSubmission = automaticSubmission;
+        if (requestState.equals("none")) {
+            manualSubmission = new ProgrammingSubmission();
+            manualSubmission.setParticipation(participation);
+            manualSubmission.setType(SubmissionType.MANUAL);
+            manualSubmission.setSubmitted(true);
+            // Keep the newer submission timely so the aggregate query cannot hide the publication bug as a late submission.
+            manualSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(2).minusHours(1));
+            manualSubmission = submissionTestRepository.saveAndFlush(manualSubmission);
+        }
+        else {
+            // Programming feedback requests are rated even while pending or failed. Neither may replace the actual grade
+            // when a tutor subsequently locks or assesses the same submission.
+            var athenaRequest = new Result();
+            athenaRequest.setSubmission(automaticSubmission);
+            athenaRequest.setExerciseId(exercise.getId());
+            athenaRequest.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            athenaRequest.setRated(true);
+            athenaRequest.setScore(0.0);
+            athenaRequest.setSuccessful(requestState.equals("pending") ? null : false);
+            athenaRequest.setCompletionDate(requestState.equals("pending") ? ZonedDateTime.now().plusMinutes(5) : ZonedDateTime.now().minusMinutes(5));
+            resultTestRepository.saveAndFlush(athenaRequest);
+        }
+        var manualResult = new Result();
+        manualResult.setSubmission(manualSubmission);
+        manualResult.setExerciseId(exercise.getId());
+        manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        manualResult.setRated(!draft);
+        manualResult.setScore(draft ? null : 50.0);
+        manualResult.setCompletionDate(draft ? null : ZonedDateTime.now().minusHours(1));
+        manualResult = resultTestRepository.saveAndFlush(manualResult);
+        long exerciseId = exercise.getId();
+        long automaticResultId = automaticResult.getId();
+        var overview = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+        var visibleSubmissions = overview.exercises().stream().filter(entry -> entry.id().equals(exerciseId)).findFirst().orElseThrow().studentParticipations().iterator().next()
+                .submissions();
+        assertThat(visibleSubmissions).singleElement().satisfies(submission -> assertThat(submission.results()).singleElement().satisfies(result -> {
+            assertThat(result.id()).isEqualTo(automaticResultId);
+            assertThat(result.score()).isEqualTo(80.0);
+        }));
+        assertThat(overview.participationResults()).filteredOn(result -> result.participationId().equals(participationId)).singleElement().satisfies(result -> {
+            assertThat(result.score()).isEqualTo(80.0);
+            assertThat(result.rated()).isTrue();
+        });
+        assertThat(overview.programmingScores().studentScores()).isEqualTo(beforeManual.programmingScores().studentScores());
+        assertThat(overview.totalScores().studentScores()).isEqualTo(beforeManual.totalScores().studentScores());
+
+        exercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(1));
+        exerciseRepository.saveAndFlush(exercise);
+        manualResult.setRated(true);
+        manualResult.setScore(50.0);
+        manualResult.setCompletionDate(ZonedDateTime.now());
+        manualResult = resultTestRepository.saveAndFlush(manualResult);
+        long manualResultId = manualResult.getId();
+        var released = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+        var releasedSubmissions = released.exercises().stream().filter(entry -> entry.id().equals(exerciseId)).findFirst().orElseThrow().studentParticipations().iterator().next()
+                .submissions();
+        assertThat(releasedSubmissions).singleElement().satisfies(submission -> assertThat(submission.results()).singleElement().satisfies(result -> {
+            assertThat(result.id()).isEqualTo(manualResultId);
+            assertThat(result.score()).isEqualTo(50.0);
+        }));
+        assertThat(released.participationResults()).filteredOn(result -> result.participationId().equals(participationId)).singleElement().satisfies(result -> {
+            assertThat(result.score()).isEqualTo(50.0);
+            assertThat(result.rated()).isTrue();
+        });
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "text, false, pending", "text, false, failed", "text, false, expired", "text, true, pending", "text, true, failed", "text, true, expired",
+            "modeling, false, pending", "modeling, false, failed", "modeling, false, expired", "modeling, true, pending", "modeling, true, failed", "modeling, true, expired" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRetainTheReleasedManualGradeWhenAthenaFeedbackIsUnrated(String exerciseType, boolean teamMode, String requestState) throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        ZonedDateTime released = ZonedDateTime.now().minusDays(4);
+        Exercise exercise = exerciseType.equals("text") ? textExerciseUtilService.createIndividualTextExercise(course, released, null, null)
+                : modelingExerciseUtilService.addModelingExercise(course, released, released, null, null);
+        exercise.setMode(teamMode ? ExerciseMode.TEAM : ExerciseMode.INDIVIDUAL);
+        exercise = exerciseRepository.saveAndFlush(exercise);
+        var participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(
+                teamMode ? teamUtilService.createTeam(Set.of(student), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), exercise, TEST_PREFIX + "athenagradefallbackteam")
+                        : student);
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation = studentParticipationTestRepository.saveAndFlush(participation);
+
+        Submission submission = exerciseType.equals("text") ? new TextSubmission() : new ModelingSubmission();
+        submission.setParticipation(participation);
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now().minusDays(2));
+        submission = submissionTestRepository.saveAndFlush(submission);
+        // A rated automatic fallback alone is insufficient: the more recent released manual grade must stay visible.
+        var automaticResult = new Result();
+        automaticResult.setSubmission(submission);
+        automaticResult.setExerciseId(exercise.getId());
+        automaticResult.setAssessmentType(AssessmentType.AUTOMATIC);
+        automaticResult.setRated(true);
+        automaticResult.setScore(60.0);
+        automaticResult.setCompletionDate(ZonedDateTime.now().minusDays(2));
+        automaticResult = resultTestRepository.saveAndFlush(automaticResult);
+        for (int index = 0; index < 4; index++) {
+            var supersededResult = new Result();
+            supersededResult.setSubmission(submission);
+            supersededResult.setExerciseId(exercise.getId());
+            supersededResult.setAssessmentType(AssessmentType.MANUAL);
+            supersededResult.setRated(true);
+            supersededResult.setScore(70.0);
+            supersededResult.setCompletionDate(ZonedDateTime.now().minusDays(1).minusHours(1));
+            resultTestRepository.saveAndFlush(supersededResult);
+        }
+        var manualResult = new Result();
+        manualResult.setSubmission(submission);
+        manualResult.setExerciseId(exercise.getId());
+        manualResult.setAssessmentType(AssessmentType.MANUAL);
+        manualResult.setRated(true);
+        manualResult.setScore(80.0);
+        manualResult.setCompletionDate(ZonedDateTime.now().minusDays(1));
+        manualResult = resultTestRepository.saveAndFlush(manualResult);
+        String endpoint = "/api/course/courses/" + course.getId() + "/exercises-for-overview";
+        var beforeAthena = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        Result athenaRequest = athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(submission);
+        if (requestState.equals("failed")) {
+            assertThat(athenaFeedbackRequestRepository.failAthenaFeedbackRequest(athenaRequest)).isTrue();
+        }
+        else if (requestState.equals("expired")) {
+            athenaRequest.setCompletionDate(ZonedDateTime.now().minusMinutes(1));
+            resultTestRepository.saveAndFlush(athenaRequest);
+        }
+
+        long exerciseId = exercise.getId();
+        long participationId = participation.getId();
+        long submissionId = submission.getId();
+        long manualResultId = manualResult.getId();
+        var candidateRows = teamMode ? studentParticipationTestRepository.findTeamRowsForCourseOverview(student.getId(), Set.of(exerciseId))
+                : studentParticipationTestRepository.findIndividualRowsForCourseOverview(student.getId(), Set.of(exerciseId), true);
+        assertThat(candidateRows).as("result history is reduced to the request, released grade, and automatic fallback").extracting(row -> row.resultId())
+                .containsExactlyInAnyOrder(athenaRequest.getId(), manualResultId, automaticResult.getId());
+        var overview = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+        assertThat(overview.participationResults()).filteredOn(result -> result.participationId().equals(participationId)).singleElement().satisfies(result -> {
+            assertThat(result.score()).isEqualTo(80.0);
+            assertThat(result.rated()).isTrue();
+        });
+        assertThat(overview.totalScores().studentScores()).isEqualTo(beforeAthena.totalScores().studentScores());
+        assertThat(exerciseType.equals("text") ? overview.textScores().studentScores() : overview.modelingScores().studentScores())
+                .isEqualTo(exerciseType.equals("text") ? beforeAthena.textScores().studentScores() : beforeAthena.modelingScores().studentScores());
+        var visibleSubmissions = overview.exercises().stream().filter(entry -> entry.id().equals(exerciseId)).findFirst().orElseThrow().studentParticipations().iterator().next()
+                .submissions();
+        assertThat(visibleSubmissions).as("the released grade remains visible for %s Athena feedback", requestState).singleElement().satisfies(visibleSubmission -> {
+            assertThat(visibleSubmission.id()).isEqualTo(submissionId);
+            assertThat(visibleSubmission.results()).singleElement().satisfies(result -> {
+                assertThat(result.id()).isEqualTo(manualResultId);
+                assertThat(result.assessmentType()).isEqualTo(AssessmentType.MANUAL);
+                assertThat(result.score()).isEqualTo(80.0);
+            });
+        });
     }
 
     /**
