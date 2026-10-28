@@ -1,0 +1,373 @@
+@if (declined()) {
+    <tumaet-ui-message severity="warn" data-testid="metis-ai-declined" [text]="'artemisApp.metis.student.aiDeclined' | artemisTranslate" />
+} @else {
+    <!-- The view is read once into a variable: a switch on the signal call itself could not be narrowed, so its exhaustiveness check would fail. -->
+    @let currentView = view();
+    <div class="flex h-10 shrink-0 items-center gap-2" data-testid="metis-panel-header">
+        <svg class="metis-mark shrink-0" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path
+                d="M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-7l-5 4v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linejoin="round"
+            />
+            <path d="m8 10.5 2.5 2.5L16 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="font-semibold" jhiTranslate="artemisApp.metis.student.title"></span>
+        @if (check(); as loadedCheck) {
+            @switch (currentView) {
+                @case ('consent') {
+                    <tumaet-ui-tag severity="warn" data-testid="metis-status-tag" [value]="'artemisApp.metis.student.consentTag' | artemisTranslate" />
+                }
+                @case ('before') {
+                    <tumaet-ui-tag
+                        severity="info"
+                        data-testid="metis-status-tag"
+                        [value]="'artemisApp.metis.student.opensAt' | artemisTranslate: { date: (loadedCheck.windowStart | artemisDate: 'short') }"
+                    />
+                }
+                @case ('preparing') {
+                    <tumaet-ui-tag severity="info" data-testid="metis-status-tag" [value]="'artemisApp.metis.student.preparing' | artemisTranslate" />
+                }
+                @case ('review') {
+                    <tumaet-ui-tag severity="info" data-testid="metis-status-tag" [value]="'artemisApp.metis.student.preparing' | artemisTranslate" />
+                }
+                @case ('ready') {
+                    <tumaet-ui-tag
+                        severity="success"
+                        data-testid="metis-status-tag"
+                        [value]="'artemisApp.metis.student.openUntil' | artemisTranslate: { time: (loadedCheck.windowEnd | artemisDate: 'time') }"
+                    />
+                }
+                @case ('answering') {
+                    <tumaet-ui-tag
+                        severity="success"
+                        data-testid="metis-status-tag"
+                        [value]="'artemisApp.metis.student.openUntil' | artemisTranslate: { time: (loadedCheck.windowEnd | artemisDate: 'time') }"
+                    />
+                }
+                @case ('done') {
+                    @if (waiting()) {
+                        <tumaet-ui-tag
+                            severity="success"
+                            data-testid="metis-status-tag"
+                            [value]="'artemisApp.metis.student.openUntil' | artemisTranslate: { time: (loadedCheck.windowEnd | artemisDate: 'time') }"
+                        />
+                    } @else {
+                        <tumaet-ui-tag severity="secondary" data-testid="metis-status-tag" [value]="'artemisApp.metis.student.completed' | artemisTranslate" />
+                    }
+                }
+                @case ('results') {
+                    <tumaet-ui-tag severity="secondary" data-testid="metis-status-tag" [value]="'artemisApp.metis.student.closedRated' | artemisTranslate" />
+                }
+                @case ('closed') {
+                    <tumaet-ui-tag severity="danger" data-testid="metis-status-tag" [value]="'artemisApp.metis.student.closed' | artemisTranslate" />
+                }
+                @case ('unavailable') {
+                    <tumaet-ui-tag severity="danger" data-testid="metis-status-tag" [value]="'artemisApp.metis.student.closed' | artemisTranslate" />
+                }
+                @case ('loading') {}
+                @default never;
+            }
+        }
+        <button
+            tumAetUiButton
+            type="button"
+            severity="secondary"
+            variant="text"
+            size="small"
+            class="ml-auto"
+            data-testid="metis-info-button"
+            [tumAetUiTooltip]="'artemisApp.metis.student.info' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.metis.student.info' | artemisTranslate"
+        >
+            <fa-icon [icon]="faCircleInfo" />
+        </button>
+    </div>
+    @if (check(); as loadedCheck) {
+        <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto" data-testid="metis-panel-body">
+            @if (showThread()) {
+                @if (currentEntry(); as entry) {
+                    <div class="flex shrink-0 flex-col gap-1" data-testid="metis-current-question">
+                        @if (entry.mainNumber) {
+                            <span
+                                class="text-sm font-semibold"
+                                jhiTranslate="artemisApp.metis.student.questionOf"
+                                [translateValues]="{ current: entry.mainNumber, total: mainCount() }"
+                            ></span>
+                        } @else {
+                            <span class="text-sm font-semibold" jhiTranslate="artemisApp.metis.student.followUp"></span>
+                        }
+                        @if (currentDeadline(); as deadline) {
+                            <jhi-question-timer [endDate]="deadline" [totalSeconds]="currentLimitSeconds()" (expired)="onTimerExpired()" />
+                        }
+                    </div>
+                }
+                <ol class="m-0 flex list-none flex-col gap-3 p-0" data-testid="metis-thread">
+                    @for (entry of thread(); track entry.question.id) {
+                        <li class="flex flex-col gap-2">
+                            <div class="bubble-question flex max-w-[85%] flex-col gap-1 self-start" data-testid="metis-question-bubble">
+                                @if (entry.mainNumber) {
+                                    <div
+                                        class="text-xs font-semibold text-muted-color"
+                                        jhiTranslate="artemisApp.metis.student.questionOf"
+                                        [translateValues]="{ current: entry.mainNumber, total: mainCount() }"
+                                    ></div>
+                                } @else {
+                                    <div class="text-xs font-semibold text-muted-color" jhiTranslate="artemisApp.metis.student.followUp"></div>
+                                }
+                                @if (entry.question.focusFilePath; as focusFilePath) {
+                                    <jhi-focus-chip class="self-start" [path]="focusFilePath" [changedLines]="entry.question.focusFileChangedLines ?? 0" />
+                                }
+                                <div [jhiMarkdown]="entry.question.questionText" [markdownLineBreaks]="true"></div>
+                            </div>
+                            @if (entry.answered) {
+                                @if (entry.question.answerText) {
+                                    <div
+                                        class="bubble-answer max-w-[85%] self-end"
+                                        data-testid="metis-answer-bubble"
+                                        [jhiMarkdown]="entry.question.answerText"
+                                        [markdownLineBreaks]="true"
+                                    ></div>
+                                } @else {
+                                    <div
+                                        class="bubble-answer max-w-[85%] self-end text-sm text-muted-color"
+                                        data-testid="metis-answer-bubble"
+                                        jhiTranslate="artemisApp.metis.student.noAnswer"
+                                    ></div>
+                                }
+                                @if ($index === lastAnsweredIndex()) {
+                                    @if (lastAnswerExpired()) {
+                                        <div class="self-end text-xs text-muted-color" data-testid="metis-answer-timeup" jhiTranslate="artemisApp.metis.student.timeUp"></div>
+                                    } @else {
+                                        <div class="self-end text-xs text-muted-color" data-testid="metis-answer-received" jhiTranslate="artemisApp.metis.student.received"></div>
+                                    }
+                                }
+                            }
+                        </li>
+                    }
+                </ol>
+                @if (currentEntry(); as entry) {
+                    <div class="flex shrink-0 flex-col gap-2" data-testid="metis-answer-box">
+                        <textarea
+                            #answerField
+                            tumAetUiTextarea
+                            id="metis-answer"
+                            rows="3"
+                            data-testid="metis-answer-field"
+                            [attr.aria-label]="'artemisApp.metis.student.answerLabel' | artemisTranslate"
+                            [placeholder]="(entry.mainNumber ? 'artemisApp.metis.student.placeholder' : 'artemisApp.metis.student.placeholderFollowUp') | artemisTranslate"
+                            [value]="draft()"
+                            [disabled]="submitting()"
+                            (input)="draft.set(answerField.value)"
+                            (keydown)="onAnswerKeydown($event)"
+                        ></textarea>
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="text-sm text-muted-color" jhiTranslate="artemisApp.metis.student.characters" [translateValues]="{ count: draft().length }"></div>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="success"
+                                variant="outlined"
+                                size="small"
+                                data-testid="metis-submit-button"
+                                [disabled]="submitting() || !draft().trim()"
+                                (click)="submit()"
+                            >
+                                <span jhiTranslate="artemisApp.metis.student.submit"></span>
+                            </button>
+                        </div>
+                        <p class="m-0 text-xs text-muted-color" jhiTranslate="artemisApp.metis.student.disclaimer"></p>
+                    </div>
+                } @else if (waiting()) {
+                    <div class="flex shrink-0 flex-col gap-1" data-testid="metis-state-waiting">
+                        <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.waitingTitle"></h4>
+                        <p class="m-0" jhiTranslate="artemisApp.metis.student.waitingText"></p>
+                    </div>
+                } @else {
+                    <div class="flex shrink-0 flex-col gap-1" data-testid="metis-state-done">
+                        <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.doneTitle" [translateValues]="{ count: mainCount() }"></h4>
+                        @if (loadedCheck.windowEnd) {
+                            <p class="m-0" jhiTranslate="artemisApp.metis.student.doneText" [translateValues]="{ end: (loadedCheck.windowEnd | artemisDate: 'short') }"></p>
+                        } @else {
+                            <p class="m-0" jhiTranslate="artemisApp.metis.student.doneTextNoDate"></p>
+                        }
+                    </div>
+                }
+            } @else {
+                @switch (currentView) {
+                    @case ('consent') {
+                        <div class="flex flex-col gap-2" data-testid="metis-state-consent">
+                            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.consentTitle"></h4>
+                            @if (cloudConsentRequired()) {
+                                <p class="m-0" jhiTranslate="artemisApp.metis.student.cloudConsentText"></p>
+                            } @else {
+                                <p class="m-0" jhiTranslate="artemisApp.metis.student.consentText"></p>
+                            }
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="primary"
+                                size="small"
+                                class="self-start"
+                                data-testid="metis-consent-button"
+                                (click)="openConsentDialog()"
+                            >
+                                <span jhiTranslate="artemisApp.metis.student.consentButton"></span>
+                            </button>
+                        </div>
+                    }
+                    @case ('preparing') {
+                        <div class="flex flex-col gap-2" data-testid="metis-state-preparing">
+                            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.reviewTitle"></h4>
+                            <p class="m-0" jhiTranslate="artemisApp.metis.student.preparingText"></p>
+                        </div>
+                    }
+                    @case ('review') {
+                        <div class="flex flex-col gap-2" data-testid="metis-state-review">
+                            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.reviewTitle"></h4>
+                            @if (loadedCheck.windowStart) {
+                                <p
+                                    class="m-0"
+                                    jhiTranslate="artemisApp.metis.student.reviewText"
+                                    [translateValues]="{ start: (loadedCheck.windowStart | artemisDate: 'short') }"
+                                ></p>
+                            } @else {
+                                <p class="m-0" jhiTranslate="artemisApp.metis.student.reviewTextNoDate"></p>
+                            }
+                        </div>
+                    }
+                    @case ('before') {
+                        <div class="flex flex-col gap-2" data-testid="metis-state-before">
+                            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.beforeTitle"></h4>
+                            @if (loadedCheck.tutorialGroupTitle; as group) {
+                                <p
+                                    class="m-0"
+                                    jhiTranslate="artemisApp.metis.student.beforeTextGroup"
+                                    [translateValues]="{
+                                        count: mainCount(),
+                                        group,
+                                        start: (loadedCheck.windowStart | artemisDate: 'short'),
+                                        end: (loadedCheck.windowEnd | artemisDate: 'time'),
+                                    }"
+                                ></p>
+                            } @else {
+                                <p
+                                    class="m-0"
+                                    jhiTranslate="artemisApp.metis.student.beforeText"
+                                    [translateValues]="{
+                                        count: mainCount(),
+                                        start: (loadedCheck.windowStart | artemisDate: 'short'),
+                                        end: (loadedCheck.windowEnd | artemisDate: 'time'),
+                                    }"
+                                ></p>
+                            }
+                            <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.metis.student.beforeHint"></p>
+                            <button tumAetUiButton type="button" severity="primary" size="small" class="self-start" data-testid="metis-start-button" disabled>
+                                {{ 'artemisApp.metis.student.startOpensIn' | artemisTranslate: { relative: (loadedCheck.windowStart | artemisTimeAgo) } }}
+                            </button>
+                        </div>
+                    }
+                    @case ('ready') {
+                        <div class="flex flex-col gap-2" data-testid="metis-state-ready">
+                            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.readyTitle" [translateValues]="{ count: mainCount() }"></h4>
+                            <p class="m-0" jhiTranslate="artemisApp.metis.student.readyText"></p>
+                            <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.metis.student.readyHint"></p>
+                            <button tumAetUiButton type="button" severity="primary" size="small" class="self-start" data-testid="metis-start-button" (click)="start()">
+                                <span jhiTranslate="artemisApp.metis.student.start"></span>
+                            </button>
+                            <p class="m-0 text-xs text-muted-color" jhiTranslate="artemisApp.metis.student.disclaimer"></p>
+                        </div>
+                    }
+                    @case ('results') {
+                        <div class="flex flex-col gap-3" data-testid="metis-results">
+                            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.resultsTitle"></h4>
+                            <ng-container *ngTemplateOutlet="resultCards" />
+                            <p class="m-0 text-xs text-muted-color" jhiTranslate="artemisApp.metis.student.resultsHint"></p>
+                        </div>
+                    }
+                    @case ('closed') {
+                        <div class="flex flex-col gap-2" data-testid="metis-state-closed">
+                            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.closedTitle"></h4>
+                            @if (loadedCheck.tutorialGroupTitle; as group) {
+                                <p
+                                    class="m-0"
+                                    jhiTranslate="artemisApp.metis.student.closedTextGroup"
+                                    [translateValues]="{ group, end: (loadedCheck.windowEnd | artemisDate: 'short'), answered: answeredMainCount(), total: mainCount() }"
+                                ></p>
+                            } @else {
+                                <p
+                                    class="m-0"
+                                    jhiTranslate="artemisApp.metis.student.closedText"
+                                    [translateValues]="{ end: (loadedCheck.windowEnd | artemisDate: 'short'), answered: answeredMainCount(), total: mainCount() }"
+                                ></p>
+                            }
+                            <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.metis.student.closedHint"></p>
+                        </div>
+                        @if (showClosedResults()) {
+                            <div class="flex flex-col gap-3" data-testid="metis-closed-results">
+                                <ng-container *ngTemplateOutlet="resultCards" />
+                                <p class="m-0 text-xs text-muted-color" jhiTranslate="artemisApp.metis.student.resultsHint"></p>
+                            </div>
+                        }
+                    }
+                    @case ('unavailable') {
+                        <ng-container *ngTemplateOutlet="unavailableState" />
+                    }
+                    @default {}
+                }
+            }
+        </div>
+    } @else if (currentView === 'unavailable') {
+        <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto" data-testid="metis-panel-body">
+            <ng-container *ngTemplateOutlet="unavailableState" />
+        </div>
+    }
+
+    <!-- The ratings of the answered questions: the results after the window, and the part a student answered of a check that closed before it was complete. -->
+    <ng-template #resultCards>
+        @for (entry of resultEntries(); track entry.question.id) {
+            <div class="result-card flex flex-col gap-2" data-testid="metis-result-card">
+                <div class="flex flex-wrap items-center gap-2">
+                    @if (entry.question.llmScore; as score) {
+                        <jhi-rating-square [score]="score" [points]="points()" />
+                    }
+                    @if (entry.mainNumber) {
+                        <div
+                            class="text-xs font-semibold text-muted-color"
+                            jhiTranslate="artemisApp.metis.student.questionOf"
+                            [translateValues]="{ current: entry.mainNumber, total: mainCount() }"
+                        ></div>
+                    } @else {
+                        <div class="text-xs font-semibold text-muted-color" jhiTranslate="artemisApp.metis.student.followUp"></div>
+                    }
+                    @if (entry.question.focusFilePath; as focusFilePath) {
+                        <jhi-focus-chip [path]="focusFilePath" [changedLines]="entry.question.focusFileChangedLines ?? 0" />
+                    }
+                </div>
+                <div [jhiMarkdown]="entry.question.questionText" [markdownLineBreaks]="true"></div>
+                @if (entry.question.answerText) {
+                    <div class="bubble-answer" [jhiMarkdown]="entry.question.answerText" [markdownLineBreaks]="true"></div>
+                }
+                @if (entry.question.llmScore; as score) {
+                    <div class="flex flex-wrap gap-1 text-sm">
+                        <div jhiTranslate="artemisApp.metis.student.rating" [translateValues]="{ score, points: points() }"></div>
+                        <div>{{ entry.question.llmRationale }}</div>
+                    </div>
+                }
+            </div>
+        }
+    </ng-template>
+
+    <!-- No check for the student: skipped, failed, or not loadable at all; the reason is shown when the server names one. -->
+    <ng-template #unavailableState>
+        <div class="flex flex-col gap-2" data-testid="metis-state-unavailable">
+            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.student.unavailableTitle"></h4>
+            <p class="m-0" jhiTranslate="artemisApp.metis.student.unavailableText"></p>
+            @if (check()?.failureReason; as reason) {
+                <p class="m-0 text-sm text-muted-color" data-testid="metis-failure-reason">{{ 'artemisApp.metis.failureReason.' + reason | artemisTranslate }}</p>
+            }
+        </div>
+    </ng-template>
+}

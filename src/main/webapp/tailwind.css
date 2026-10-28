@@ -150,6 +150,8 @@
 
 /* Holidays page: TUM AET UI + Tailwind throughout, but it renders the shared Bootstrap course title bar like the list above. */
 @source './app/tutorialgroup/manage/holidays';
+/* Metis comprehension checks: a new module, built on TUM AET UI and Tailwind from the start. */
+@source './app/metis';
 
 /* The submit-button forms describe why they are blocked, and dim the blocked button, with these utilities. They are
    still Bootstrap-heavy, so scanning them would also emit .col-11/.col-12/.bg-primary as Tailwind utilities on top of

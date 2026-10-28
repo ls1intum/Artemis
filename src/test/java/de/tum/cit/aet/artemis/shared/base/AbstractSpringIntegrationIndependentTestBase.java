@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
+import de.tum.cit.aet.artemis.metis.service.MetisLlmService;
 import de.tum.cit.aet.artemis.notification.service.NotificationScheduleService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
@@ -104,6 +105,11 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @MockitoBean
     protected AthenaScheduleService athenaScheduleService;
 
+    // The transport of the Metis module: integration tests stub its completions instead of calling an LLM endpoint, while
+    // prompt building, parsing, clamping and persistence run for real
+    @MockitoBean
+    protected MetisLlmService metisLlmService;
+
     // Mock PasskeyAuthenticationService to allow super admin operations in tests
     // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
     @MockitoSpyBean
@@ -166,6 +172,9 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
         }
         if (chatMemory != null) {
             Mockito.reset(chatMemory);
+        }
+        if (metisLlmService != null) {
+            Mockito.reset(metisLlmService);
         }
         super.resetSpyBeans();
     }

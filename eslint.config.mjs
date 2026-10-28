@@ -759,6 +759,8 @@ export default tseslint.config(
             'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
             'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
             'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
+            // Metis comprehension checks: a new module, built on TUM AET UI and Tailwind from the start.
+            'src/main/webapp/app/metis/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
         ],
         languageOptions: {
@@ -809,6 +811,7 @@ export default tseslint.config(
             'src/main/webapp/app/atlas/shared/competency-selection/**/*.ts',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.ts',
             'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.ts',
+            'src/main/webapp/app/metis/**/*.ts',
         ],
         rules: {
             'no-restricted-imports': [

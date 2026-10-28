@@ -1,0 +1,8 @@
+// Layout is Tailwind on the host and in the template; the frame and the muted text come from the Artemis theme properties.
+:host {
+    padding: 0.125rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: var(--text-body-secondary);
+}

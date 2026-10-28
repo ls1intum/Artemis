@@ -1,0 +1,247 @@
+<div *titleBarTitle class="flex items-center gap-2">
+    <jhi-course-title-bar-title title="artemisApp.metis.review.title" />
+    <span class="text-muted-color">· {{ exercise.title }}</span>
+</div>
+<div *titleBarActions class="flex flex-wrap justify-end gap-1">
+    <button
+        type="button"
+        tumAetUiButton
+        severity="success"
+        size="small"
+        data-testid="review-approve-all"
+        [disabled]="counts().AWAITING === 0"
+        [tumAetUiTooltip]="'artemisApp.metis.review.approveAll' | artemisTranslate"
+        tumAetUiTooltipPlacement="top"
+        (click)="approveAllRemaining()"
+    >
+        <fa-icon [icon]="faCheckDouble" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.metis.review.approveAll"></span>
+    </button>
+    <a
+        [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id, 'comprehension-check']"
+        tumAetUiButton
+        severity="secondary"
+        size="small"
+        data-testid="review-back"
+        [tumAetUiTooltip]="'artemisApp.metis.review.back' | artemisTranslate"
+        tumAetUiTooltipPlacement="top"
+    >
+        <fa-icon [icon]="faArrowLeft" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.metis.review.back"></span>
+    </a>
+</div>
+
+<div class="flex flex-col gap-6" data-testid="metis-question-review">
+    <div class="flex flex-wrap items-center gap-2" data-testid="review-summary">
+        <tumaet-ui-tag severity="warn" data-testid="review-count-awaiting" [value]="'artemisApp.metis.review.awaiting' | artemisTranslate: { count: counts().AWAITING }" />
+        <tumaet-ui-tag severity="success" data-testid="review-count-released" [value]="'artemisApp.metis.review.released' | artemisTranslate: { count: counts().RELEASED }" />
+        @if (counts().PREPARING > 0) {
+            <tumaet-ui-tag severity="info" data-testid="review-count-preparing" [value]="'artemisApp.metis.review.preparing' | artemisTranslate: { count: counts().PREPARING }" />
+        }
+        <tumaet-ui-tag severity="secondary" data-testid="review-count-skipped" [value]="'artemisApp.metis.review.skipped' | artemisTranslate: { count: counts().SKIPPED }" />
+        <tumaet-ui-tag severity="danger" data-testid="review-count-failed" [value]="'artemisApp.metis.review.failed' | artemisTranslate: { count: counts().FAILED }" />
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+        <tumaet-ui-select
+            class="min-w-48"
+            inputId="metis-review-group-filter"
+            data-testid="review-group-filter"
+            size="small"
+            optionLabel="label"
+            optionValue="value"
+            [ariaLabel]="'artemisApp.metis.review.filters.group' | artemisTranslate"
+            [options]="groupOptions()"
+            [ngModel]="groupFilter()"
+            (ngModelChange)="onGroupFilterChange($event)"
+        />
+        <tumaet-ui-select
+            class="min-w-40"
+            inputId="metis-review-status-filter"
+            data-testid="review-status-filter"
+            size="small"
+            optionLabel="label"
+            optionValue="value"
+            [ariaLabel]="'artemisApp.metis.review.filters.status' | artemisTranslate"
+            [options]="statusOptions()"
+            [ngModel]="statusFilter()"
+            (ngModelChange)="onStatusFilterChange($event)"
+        />
+    </div>
+
+    @for (view of visibleStudents(); track view.row.participationId) {
+        <section class="metis-review-card flex flex-col gap-4" [attr.data-testid]="'review-student-' + view.row.participationId">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="m-0 text-base font-semibold">{{ view.row.studentName }}</h3>
+                    @if (view.row.tutorialGroupTitle) {
+                        <tumaet-ui-tag severity="secondary" [value]="view.row.tutorialGroupTitle" />
+                    }
+                    <tumaet-ui-tag
+                        [severity]="statusSeverity(view.status)"
+                        [value]="'artemisApp.metis.review.status.' + view.status | artemisTranslate"
+                        [attr.data-testid]="'review-status-' + view.row.participationId"
+                    />
+                </div>
+                <!-- Only a check in review waits for an approval: without a review the questions are released at once, and a started check is past its review. -->
+                @if (view.status === 'AWAITING' && view.unapproved.length > 0) {
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="success"
+                        variant="outlined"
+                        size="small"
+                        [attr.data-testid]="'review-approve-student-' + view.row.participationId"
+                        (click)="approveStudent(view)"
+                    >
+                        <fa-icon [icon]="faCheckDouble" />
+                        <span jhiTranslate="artemisApp.metis.review.approveStudent" [translateValues]="{ count: view.unapproved.length }"></span>
+                    </button>
+                }
+            </div>
+            @if (view.mainQuestions.length > 0) {
+                <p
+                    class="m-0 text-sm text-muted-color"
+                    jhiTranslate="artemisApp.metis.review.generated"
+                    [translateValues]="{ count: view.mainQuestions.length, date: (view.row.check.generatedAt | artemisDate: 'short'), files: view.files, lines: view.changedLines }"
+                ></p>
+            }
+            @if (view.status === 'FAILED') {
+                <tumaet-ui-message
+                    severity="error"
+                    [attr.data-testid]="'review-failure-' + view.row.participationId"
+                    [text]="failureReasonKey(view.row) ?? 'artemisApp.metis.review.failedHint' | artemisTranslate"
+                />
+            }
+            @if (view.status === 'PREPARING') {
+                <p
+                    class="m-0 text-sm text-muted-color"
+                    [attr.data-testid]="'review-preparing-' + view.row.participationId"
+                    jhiTranslate="artemisApp.metis.review.preparingHint"
+                ></p>
+            }
+            @if (view.status === 'SKIPPED') {
+                <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.metis.review.skippedHint"></p>
+                @if (failureReasonKey(view.row); as reasonKey) {
+                    <p class="m-0 text-sm text-muted-color" [attr.data-testid]="'review-skip-reason-' + view.row.participationId">{{ reasonKey | artemisTranslate }}</p>
+                }
+            }
+            @if (view.mainQuestions.length > 0) {
+                <ol class="m-0 flex list-none flex-col gap-4 p-0">
+                    @for (question of view.mainQuestions; track question.id) {
+                        <li class="flex flex-col gap-2" [attr.data-testid]="'review-question-' + question.id">
+                            <div class="flex flex-wrap items-center gap-2 text-sm">
+                                <span class="font-semibold" jhiTranslate="artemisApp.metis.review.question" [translateValues]="{ order: question.questionOrder }"></span>
+                                @if (question.focusFilePath; as focusFilePath) {
+                                    <jhi-focus-chip [path]="focusFilePath" [changedLines]="question.focusFileChangedLines ?? 0" />
+                                }
+                                <span
+                                    class="text-muted-color"
+                                    jhiTranslate="artemisApp.metis.review.limit"
+                                    [translateValues]="{ limit: (question.timeLimitSeconds | artemisDurationFromSeconds) }"
+                                ></span>
+                                @if (question.regenerationCount > 0) {
+                                    <span
+                                        class="text-muted-color"
+                                        [attr.data-testid]="'review-regeneration-count-' + question.id"
+                                        jhiTranslate="artemisApp.metis.review.regenerationCount"
+                                        [translateValues]="{ count: question.regenerationCount }"
+                                    ></span>
+                                }
+                            </div>
+                            @if (editingQuestionId() === question.id) {
+                                <textarea
+                                    tumAetUiTextarea
+                                    rows="3"
+                                    [attr.aria-label]="'artemisApp.metis.review.edit' | artemisTranslate"
+                                    [attr.data-testid]="'review-edit-' + question.id"
+                                    [ngModel]="editDraft()"
+                                    (ngModelChange)="editDraft.set($event)"
+                                ></textarea>
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        severity="primary"
+                                        size="small"
+                                        [disabled]="!editDraft().trim()"
+                                        [attr.data-testid]="'review-save-' + question.id"
+                                        (click)="saveText(question)"
+                                    >
+                                        <span jhiTranslate="artemisApp.metis.review.saveText"></span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        severity="secondary"
+                                        variant="text"
+                                        size="small"
+                                        [attr.data-testid]="'review-cancel-' + question.id"
+                                        (click)="cancelEditing()"
+                                    >
+                                        <span jhiTranslate="artemisApp.metis.review.cancel"></span>
+                                    </button>
+                                </div>
+                            } @else {
+                                <p class="m-0" [attr.data-testid]="'review-text-' + question.id">{{ question.questionText }}</p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    @if (question.approvedAt) {
+                                        <span class="text-state-success inline-flex items-center gap-1 text-sm font-semibold" [attr.data-testid]="'review-approved-' + question.id">
+                                            <fa-icon [icon]="faCheck" />
+                                            <span jhiTranslate="artemisApp.metis.review.approved"></span>
+                                        </span>
+                                    } @else {
+                                        @if (view.status === 'AWAITING') {
+                                            <button
+                                                type="button"
+                                                tumAetUiButton
+                                                severity="success"
+                                                variant="outlined"
+                                                size="small"
+                                                [attr.data-testid]="'review-approve-' + question.id"
+                                                (click)="approveQuestion(question)"
+                                            >
+                                                <fa-icon [icon]="faCheck" />
+                                                <span jhiTranslate="artemisApp.metis.review.approve"></span>
+                                            </button>
+                                        }
+                                        <!-- Only while the server still changes the question: nobody has seen it and the student has not started. -->
+                                        @if (isEditable(view.row, question)) {
+                                            <button
+                                                type="button"
+                                                tumAetUiButton
+                                                severity="secondary"
+                                                variant="outlined"
+                                                size="small"
+                                                [attr.data-testid]="'review-edit-button-' + question.id"
+                                                (click)="startEditing(question)"
+                                            >
+                                                <fa-icon [icon]="faPen" />
+                                                <span jhiTranslate="artemisApp.metis.review.edit"></span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                tumAetUiButton
+                                                severity="secondary"
+                                                variant="outlined"
+                                                size="small"
+                                                [disabled]="regeneratingIds().has(question.id)"
+                                                [attr.data-testid]="'review-regenerate-' + question.id"
+                                                (click)="regenerate(question)"
+                                            >
+                                                <fa-icon [icon]="faSync" [animation]="regeneratingIds().has(question.id) ? 'spin' : undefined" />
+                                                <span [jhiTranslate]="regenerateLabelKey(question.id)"></span>
+                                            </button>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+    } @empty {
+        <p class="m-0 text-muted-color" data-testid="review-empty" jhiTranslate="artemisApp.metis.review.empty"></p>
+    }
+</div>

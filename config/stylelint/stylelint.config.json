@@ -83,6 +83,7 @@
                 "src/main/webapp/app/communication/saved-posting-banner/**/*.scss",
                 "src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.scss",
                 "src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.scss",
+                "src/main/webapp/app/metis/**/*.scss",
                 "packages/tum-aet-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",

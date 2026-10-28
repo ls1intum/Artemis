@@ -1,0 +1,5 @@
+<!-- Screen readers read the full path; the shortened name and the separator are for the eye only. -->
+<span class="sr-only" data-testid="metis-focus-chip-path">{{ path() }}</span>
+<span class="min-w-0 truncate font-mono" aria-hidden="true" data-testid="metis-focus-chip-file">{{ fileName() }}</span>
+<span class="shrink-0" aria-hidden="true">&middot;</span>
+<span class="shrink-0 whitespace-nowrap" jhiTranslate="artemisApp.metis.focusChip.changedLines" [translateValues]="{ count: changedLines() }"></span>

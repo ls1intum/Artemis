@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
+import de.tum.cit.aet.artemis.metis.service.MetisLlmService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -187,6 +188,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoBean
     protected ChatModel azureOpenAiChatModel;
 
+    // The transport of the Metis module: integration tests stub its completions instead of calling an LLM endpoint, while
+    // prompt building, parsing, clamping and persistence run for real
+    @MockitoBean
+    protected MetisLlmService metisLlmService;
+
     protected URI localVCBaseUri;
 
     @Value("${artemis.version-control.url}")
@@ -261,7 +267,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService,
                 competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService, pyrisEventService,
-                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, repositoryVcsAccessTokenService);
+                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, repositoryVcsAccessTokenService, metisLlmService);
         buildAgentConfigurationOverrides.reset();
         // Preserve startup answers while discarding calls recorded by scheduled and build threads.
         Mockito.clearInvocations(buildAgentConfiguration);
