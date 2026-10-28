@@ -28,7 +28,7 @@ import io.swagger.v3.oas.models.media.StringSchema;
 
 /**
  * Builds schema-only envelope variants from the real record fields and annotated notification classes.
- * Called explicitly by the shared schema pipeline: register payloads, mark primitive fields, compose envelopes, then filter/strip DTO suffixes.
+ * Called explicitly by the shared schema pipeline: register payloads with their explicit required metadata, compose envelopes, then filter/strip DTO suffixes.
  * No Jackson polymorphism or notification JSON is changed.
  */
 public final class CourseNotificationOpenApiSchema {
@@ -43,7 +43,7 @@ public final class CourseNotificationOpenApiSchema {
     }
 
     /**
-     * Registers all sealed payload records before the shared primitive-required and DTO-filter passes.
+     * Registers all sealed payload records, including explicit required metadata, before composition and DTO filtering.
      *
      * @param components schemas exported by springdoc
      */
@@ -57,7 +57,7 @@ public final class CourseNotificationOpenApiSchema {
     }
 
     /**
-     * Derives flat discriminated branches after required flags are marked, before DTO suffix processing.
+     * Derives flat discriminated branches from explicit required metadata before DTO suffix processing.
      *
      * @param components schemas exported and registered in the first phase
      */
