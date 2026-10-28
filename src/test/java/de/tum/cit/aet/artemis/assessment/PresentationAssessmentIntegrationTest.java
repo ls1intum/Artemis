@@ -1268,15 +1268,26 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void updatePresentationAssessmentInstance_asTutorKeepingTheAssessor_shouldRecordResult() throws Exception {
+    void updatePresentationAssessmentInstance_asTutorForInstanceOfAnotherAssessor_shouldReturnForbidden() throws Exception {
         PresentationAssessmentInstance instance = saveInstanceWithAssessor("student1", "editor1");
 
+        request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(), gradeRequest(instance, TEST_PREFIX + "editor1"),
+                PresentationAssessmentInstanceDTO.class, HttpStatus.FORBIDDEN);
+
+        assertThat(storedAssessorLogin(instance.getId())).isEqualTo(TEST_PREFIX + "editor1");
+        assertThat(presentationAssessmentInstanceRepository.findByIdElseThrow(instance.getId()).getResultPoints()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updatePresentationAssessmentInstance_asTutorForOwnInstance_shouldRecordResult() throws Exception {
+        PresentationAssessmentInstance instance = saveInstanceWithAssessor("student1", "tutor1");
+
         PresentationAssessmentInstanceDTO updated = request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(),
-                gradeRequest(instance, TEST_PREFIX + "editor1"), PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+                gradeRequest(instance, TEST_PREFIX + "tutor1"), PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
 
         assertThat(updated.resultPoints()).isEqualTo(10.0);
-        assertThat(updated.assessor().login()).isEqualTo(TEST_PREFIX + "editor1");
-        assertThat(storedAssessorLogin(instance.getId())).isEqualTo(TEST_PREFIX + "editor1");
+        assertThat(storedAssessorLogin(instance.getId())).isEqualTo(TEST_PREFIX + "tutor1");
     }
 
     @Test

@@ -44,6 +44,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -586,6 +587,34 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND user.deleted = FALSE
             """)
     Optional<User> findOneByCourseIdAndCourseRolesInAndLogin(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles, @Param("login") String login);
+
+    /**
+     * Searches the non-deleted users with any of the given roles in the course by login or full name.
+     * Selects only the name and login so that no further personal data leaves the database.
+     *
+     * @param courseId      the ID of the course
+     * @param roles         the course roles to filter by
+     * @param searchPattern the prepared LIKE pattern
+     * @param pageable      limits the number of results
+     * @return the matching users ordered by name
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO(user.login, user.firstName, user.lastName)
+            FROM User user
+            WHERE user.deleted = FALSE
+                AND EXISTS (
+                    SELECT 1
+                    FROM UserCourseRole ucr
+                    WHERE ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
+                )
+                AND (
+                    LOWER(user.login) LIKE LOWER(:searchPattern) ESCAPE '\\'
+                    OR LOWER(TRIM(CONCAT(COALESCE(user.firstName, ''), ' ', COALESCE(user.lastName, '')))) LIKE LOWER(:searchPattern) ESCAPE '\\'
+                )
+            ORDER BY user.firstName, user.lastName, user.login
+            """)
+    List<UserNameAndLoginDTO> searchNameAndLoginByLoginOrNameInCourseWithRoles(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
+            @Param("searchPattern") String searchPattern, Pageable pageable);
 
     /**
      * Finds all non-deleted users enrolled in a course with the given role whose registration number is in the given set.

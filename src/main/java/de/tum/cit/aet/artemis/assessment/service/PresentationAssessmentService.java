@@ -122,7 +122,7 @@ public class PresentationAssessmentService {
         }
         checkPresentationAssessmentsEnabled(courseId);
         String searchPattern = "%" + StringUtil.escapeForLikeLowerCase(searchTerm) + "%";
-        return presentationAssessmentInstanceRepository.searchAssessorOptions(courseId, ASSESSOR_ROLES, searchPattern, PageRequest.of(0, ASSESSOR_SEARCH_RESULT_LIMIT));
+        return userRepository.searchNameAndLoginByLoginOrNameInCourseWithRoles(courseId, ASSESSOR_ROLES, searchPattern, PageRequest.of(0, ASSESSOR_SEARCH_RESULT_LIMIT));
     }
 
     private PresentationAssessment findByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
@@ -327,8 +327,8 @@ public class PresentationAssessmentService {
     }
 
     /**
-     * Editors choose any tutor, editor or instructor of the course as the assessor. A tutor always assesses as themselves and cannot change the assessor of an instance
-     * that already has one. Like the presenter, an unchanged assessor is kept even if they left the course.
+     * Editors choose any tutor, editor or instructor of the course as the assessor; like the presenter, an unchanged assessor is kept even if they left the course.
+     * A tutor always assesses as themselves and cannot edit an instance that someone else assesses.
      *
      * @param courseId        the owning course id
      * @param currentAssessor the assessor of the instance being updated, or null for a new instance or one without an assessor
@@ -337,15 +337,16 @@ public class PresentationAssessmentService {
      */
     private User resolveAssessor(long courseId, User currentAssessor, String assessorLogin) {
         String login = assessorLogin.trim();
-        if (currentAssessor != null && currentAssessor.getLogin().equals(login)) {
-            return currentAssessor;
-        }
         if (!authorizationCheckService.isAtLeastEditorInCourse(courseId)) {
             User currentUser = userRepository.getUser();
-            if (currentAssessor != null || !currentUser.getLogin().equals(login)) {
-                throw new AccessForbiddenException("Only editors and instructors can choose the assessor of a presentation");
+            boolean assessedBySomeoneElse = currentAssessor != null && !currentAssessor.getId().equals(currentUser.getId());
+            if (assessedBySomeoneElse || !currentUser.getLogin().equals(login)) {
+                throw new AccessForbiddenException("Tutors only assess presentations as themselves and cannot edit presentations assessed by someone else");
             }
             return currentUser;
+        }
+        if (currentAssessor != null && currentAssessor.getLogin().equals(login)) {
+            return currentAssessor;
         }
         return userRepository.findOneByCourseIdAndCourseRolesInAndLogin(courseId, ASSESSOR_ROLES, login).orElseThrow(
                 () -> new BadRequestAlertException("The assessor must be at least a tutor in the course", PresentationAssessmentInstance.ENTITY_NAME, "assessorNotInCourse"));
