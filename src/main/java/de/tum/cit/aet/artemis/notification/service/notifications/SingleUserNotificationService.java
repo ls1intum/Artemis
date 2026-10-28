@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -69,13 +68,7 @@ public class SingleUserNotificationService {
         exercise.setStudentParticipations(filteredStudentParticipations);
 
         // Extract all users that should be notified from the previously loaded student participations
-        Set<User> relevantStudents = filteredStudentParticipations.stream().flatMap(participation -> {
-            if (participation.getParticipant() instanceof Team team) {
-                return team.getStudents().stream();
-            }
-
-            return Stream.of(participation.getStudent().orElseThrow());
-        }).collect(Collectors.toSet());
+        Set<User> relevantStudents = filteredStudentParticipations.stream().flatMap(participation -> participation.getStudents().stream()).collect(Collectors.toSet());
 
         // notify all relevant users
         relevantStudents.forEach(student -> notifyUserAboutAssessedExerciseSubmission(exercise, student));
@@ -93,7 +86,7 @@ public class SingleUserNotificationService {
     public void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
-        var studentParticipation = exercise.getStudentParticipations().stream().filter(participation -> participation.getStudent().orElseThrow().equals(recipient)).findFirst();
+        var studentParticipation = exercise.getStudentParticipations().stream().filter(participation -> participation.getStudents().contains(recipient)).findFirst();
 
         if (studentParticipation.isEmpty() || studentParticipation.get().findLatestResult() == null) {
             return;

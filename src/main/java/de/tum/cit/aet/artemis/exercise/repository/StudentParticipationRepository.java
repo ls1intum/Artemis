@@ -740,9 +740,20 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultsAndParticipant(@Param("exerciseId") long exerciseId, @Param("testRun") boolean testRun);
 
+    /**
+     * Loads completed manual assessments and their notification recipients, including all team members.
+     * The recipients are read after the repository session closes.
+     *
+     * @param exerciseId the exercise whose assessments are published
+     * @param testRun    whether to include test run participations
+     * @return participations with completed assessments and initialized recipients
+     */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.team team
+                LEFT JOIN FETCH team.students
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :exerciseId

@@ -11,12 +11,16 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.DataExport;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -27,6 +31,9 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
@@ -40,6 +47,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -60,6 +68,18 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private UserCourseNotificationStatusTestRepository userCourseNotificationStatusTestRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ResultTestRepository resultRepository;
 
     private User user;
 
@@ -173,6 +193,39 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
         DataExport dataExport = new DataExport();
         dataExport.setUser(user);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void shouldNotifyAllParticipantsWhenPublishingAssessments(boolean teamMode) {
+        var now = ZonedDateTime.now();
+        TextExercise assessedExercise = teamMode ? textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.minusDays(2), now.minusDays(1))
+                : textExerciseUtilService.createIndividualTextExercise(course, now.minusDays(3), now.minusDays(2), now.minusDays(1));
+        Set<User> recipients = teamMode ? Set.of(user, userUtilService.getUserByLogin(TEST_PREFIX + "student2")) : Set.of(user);
+        StudentParticipation participation;
+        if (teamMode) {
+            var team = teamUtilService.createTeam(recipients, null, assessedExercise, TEST_PREFIX + "publicationteam");
+            participation = participationUtilService.addTeamParticipationForExercise(assessedExercise, team.getId());
+        }
+        else {
+            participation = participationUtilService.createAndSaveParticipationForExercise(assessedExercise, user.getLogin());
+        }
+        Result result = participationUtilService.createSubmissionAndResult(participation, 60, true);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.saveAndFlush(result);
+
+        // No surrounding transaction: recipient loading must also work after the repository session closes.
+        singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(assessedExercise);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            var notifications = courseNotificationRepository.findAll().stream()
+                    .filter(notification -> notification.getCourse().getId().equals(course.getId()) && notification.getType() == 7).toList();
+            assertThat(notifications).hasSize(recipients.size());
+            var notifiedUserIds = notifications.stream()
+                    .flatMap(notification -> userCourseNotificationStatusTestRepository.findAllByCourseNotificationId(notification.getId()).stream())
+                    .map(status -> status.getUser().getId()).toList();
+            assertThat(notifiedUserIds).containsExactlyInAnyOrderElementsOf(recipients.stream().map(User::getId).toList());
+        });
     }
 
     @Test
