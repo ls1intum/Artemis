@@ -113,6 +113,15 @@ export class ProgrammingExerciseOverviewPage {
         }
     }
 
+    /** Dismisses the repository dialog and waits for its backdrop to leave. */
+    async closeCloneMenu() {
+        const dialog = this.getRepositoryActionsDialog();
+        if (await dialog.isVisible()) {
+            await dialog.press('Escape');
+        }
+        await expect(dialog).toBeHidden();
+    }
+
     /**
      * Reads the clone URL from the code popover, waiting until it belongs to the selected clone method.
      * <p>
@@ -159,8 +168,7 @@ export class ProgrammingExerciseOverviewPage {
         try {
             await expect(button).toBeEnabled({ timeout: 30000 });
         } catch {
-            await codeButtonLocator.click();
-            await this.page.waitForTimeout(500);
+            await this.closeCloneMenu();
             await codeButtonLocator.click();
             await this.getRepositoryActionsDialog().waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
