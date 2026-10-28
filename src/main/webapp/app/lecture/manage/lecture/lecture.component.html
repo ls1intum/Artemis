@@ -138,15 +138,12 @@
                                     @if (lecture.isAtLeastInstructor) {
                                         <button
                                             tumAetUiButton
-                                            severity="secondary"
+                                            severity="danger"
                                             variant="text"
                                             size="small"
                                             type="button"
                                             jhiDeleteButton
                                             [renderButtonStyle]="false"
-                                            tumAetUiButton
-                                            severity="danger"
-                                            size="small"
                                             data-testid="delete-lecture"
                                             [entityTitle]="lecture.title || ''"
                                             deleteQuestion="artemisApp.lecture.delete.question"

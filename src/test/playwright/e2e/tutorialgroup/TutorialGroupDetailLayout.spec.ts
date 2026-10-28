@@ -41,7 +41,8 @@ test.describe('Tutorial group detail layout', { tag: '@fast' }, () => {
     });
 
     test('cancels and reactivates a session, and requires confirmation before deleting it', async ({ login, page }) => {
-        await login(tutor, `/courses/${course!.id}/tutorial-groups/${tutorialGroupId}`);
+        // The course overview deliberately uses the student view; session actions belong to management.
+        await login(tutor, `/course-management/${course!.id}/tutorial-groups/${tutorialGroupId}`);
         await page.getByTestId('cancel-session-button').click();
         await expect(page.getByTestId('activate-session-button')).toBeVisible();
         await page.getByTestId('activate-session-button').click();

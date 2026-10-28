@@ -63,6 +63,27 @@ describe('TutorialGroupsImportButtonComponent', () => {
         expect(finished).toHaveBeenCalledOnce();
     });
 
+    it('should restore the import trigger after the import finish action opens the completion warning', async () => {
+        const trigger = fixture.nativeElement.querySelector('[data-testid="tutorial-groups-import-open"]') as HTMLButtonElement;
+        trigger.focus();
+        trigger.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.importDialog()!.isImportDone.set(true);
+        fixture.detectChanges();
+        const finish = document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-import-finish"]')!;
+        finish.focus();
+        finish.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const closeWarning = document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-import-warning-close"]')!;
+        closeWarning.focus();
+        closeWarning.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(document.activeElement).toBe(trigger);
+    });
+
     it('should close warning dialog and emit importFinished when closeWarningDialog is called', () => {
         const importFinishedSpy = vi.spyOn(component.importFinished, 'emit');
         component.warningDialogVisible.set(true);

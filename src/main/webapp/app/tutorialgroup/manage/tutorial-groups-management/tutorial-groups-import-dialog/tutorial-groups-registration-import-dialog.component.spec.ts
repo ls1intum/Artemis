@@ -190,6 +190,36 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(component.isCSVParsing()).toBe(false);
     });
 
+    it.each<[string | undefined, boolean | undefined]>([
+        ['true', true],
+        ['TRUE', true],
+        ['  TrUe  ', true],
+        ['false', false],
+        ['FALSE', false],
+        ['  FaLsE  ', false],
+        ['', undefined],
+        ['   ', undefined],
+        [undefined, undefined],
+    ])('should parse the optional isOnline CSV value %j as %j', async (value, expected) => {
+        mockParserWithRawCSVRows([{ group: 'Boolean Group', registrationnumber: '', login: '', firstname: '', lastname: '', isonline: value }], []);
+
+        await component.onParseClicked();
+
+        expect(component.validationErrors()).toEqual([]);
+        expect(component.registrationsDisplayedInTable()).toHaveLength(1);
+        expect(component.registrationsDisplayedInTable()[0].isOnline).toBe(expected);
+    });
+
+    it.each(['yes', '0', 'online'])('should reject an invalid isOnline CSV value %j instead of importing it as online', async (value) => {
+        mockParserWithRawCSVRows([{ group: 'Boolean Group', registrationnumber: '', login: '', firstname: '', lastname: '', isonline: value }], []);
+
+        await component.onParseClicked();
+
+        expect(component.registrationsDisplayedInTable()).toEqual([]);
+        expect(component.validationErrors()).toEqual(['artemisApp.tutorialGroupImportDialog.errorMessages.invalidIsOnline2']);
+        expect(component.selectedFile).toBeUndefined();
+    });
+
     it('should filter out unconfirmed registrations', async () => {
         const exampleOne = generateImportDTO('Tutorial Group 1');
         const exampleTwo = generateImportDTO('Tutorial Group 2');
@@ -490,6 +520,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         additionalInformation?: string;
         capacity?: number;
         isOnline?: boolean;
+        isonline?: string;
         status?: string;
     }
 

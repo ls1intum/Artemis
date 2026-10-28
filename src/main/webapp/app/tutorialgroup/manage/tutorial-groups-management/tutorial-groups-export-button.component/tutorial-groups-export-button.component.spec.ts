@@ -103,6 +103,28 @@ describe('TutorialGroupsExportButtonComponent', () => {
         expect(document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-export-json"]')!.disabled).toBe(true);
     });
 
+    it('should export just the chosen field after selecting and clearing all fields', async () => {
+        component.openExportDialog(new MouseEvent('click'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const selectAll = document.getElementById('selectAllId') as HTMLInputElement;
+        const title = document.getElementById('fieldId-1') as HTMLInputElement;
+        selectAll.click();
+        await fixture.whenStable();
+        expect(title.checked).toBe(true);
+        selectAll.click();
+        await fixture.whenStable();
+        expect(title.checked).toBe(false);
+        title.click();
+        await fixture.whenStable();
+        const csv = document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-export-csv"]')!;
+        expect(csv.disabled).toBe(false);
+        csv.click();
+        await fixture.whenStable();
+        expect(mockTutorialGroupApiService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, ['Title']);
+        expect(component.dialogVisible()).toBe(false);
+    });
+
     it('should select all fields when toggleSelectAll is called', () => {
         component.toggleSelectAll();
         expect(component.selectAll()).toBe(true);

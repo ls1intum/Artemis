@@ -68,9 +68,16 @@ test.describe('Tutorial group import and export dialogs', { tag: '@fast' }, () =
         await dialog.getByTestId('tutorial-groups-export-select-all').getByRole('checkbox').check();
         await expect(dialog.getByTestId('tutorial-groups-export-field-0').getByRole('checkbox')).toBeChecked();
         await dialog.getByTestId('tutorial-groups-export-select-all').getByRole('checkbox').uncheck();
-        await dialog.getByTestId('tutorial-groups-export-field-1').getByRole('checkbox').check();
+        // Wait for the select-all update to reach the row before check(), which skips an already checked input.
+        const title = dialog.getByTestId('tutorial-groups-export-field-1').getByRole('checkbox');
+        await expect(title).not.toBeChecked();
+        await title.check();
+        await expect(title).toBeChecked();
+        await expect(dialog.getByTestId('tutorial-groups-export-csv')).toBeEnabled();
+        const csvResponse = page.waitForResponse((response) => response.url().includes(`/courses/${course!.id}/tutorial-groups/export/csv`));
         const csvDownload = page.waitForEvent('download');
         await dialog.getByTestId('tutorial-groups-export-csv').click();
+        expect((await csvResponse).ok()).toBeTruthy();
         const csvFile = await csvDownload;
         expect(csvFile.suggestedFilename()).toBe('tutorial-groups.csv');
         const [header, ...rows] = parseCsv(await readFile(await csvFile.path(), 'utf8'));

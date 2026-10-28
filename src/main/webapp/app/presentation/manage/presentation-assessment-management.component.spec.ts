@@ -1413,17 +1413,16 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(instanceDialog().presentationAssessment()).toEqual(presentationAssessment);
     });
 
-    it('should delete an instance only after the deletion was confirmed', () => {
+    it('should delete an instance only after the deletion was confirmed', async () => {
         presentationAssessmentService.deleteInstance.mockReturnValue(of(new HttpResponse<void>()));
-
         clickByTestId('delete-instance-button');
+        await fixture.whenStable();
 
-        // The confirmation dialog is open, nothing is deleted yet.
-        expect(dialogService.open).toHaveBeenCalledOnce();
         expect(presentationAssessmentService.deleteInstance).not.toHaveBeenCalled();
-
-        // Confirming in the dialog calls the delete handler it was given.
-        dialogService.open.mock.calls[0][1].data.delete({});
+        const confirm = document.querySelector<HTMLButtonElement>('[data-testid="delete-dialog-confirm-button"]')!;
+        expect(confirm).not.toBeNull();
+        confirm.click();
+        await fixture.whenStable();
 
         expect(presentationAssessmentService.deleteInstance).toHaveBeenCalledExactlyOnceWith(courseId, presentationAssessment.id, instances[0].id);
     });

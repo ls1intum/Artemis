@@ -1,4 +1,5 @@
 <button
+    #importButton
     tumAetUiButton
     size="small"
     severity="secondary"
@@ -22,6 +23,7 @@
     [visible]="warningDialogVisible()"
     [closable]="true"
     (visibleChange)="warningDialogVisible.set($event)"
+    (hidden)="restoreImportFocus()"
     size="small"
 >
     <p jhiTranslate="artemisApp.tutorialGroupImportDialog.finishedWarning"></p>

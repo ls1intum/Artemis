@@ -250,6 +250,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const fixedPlaceValue = cleanString(this.fixedPlaceValueControl?.value);
 
         const csvFixedPlaceRows = csvRows.filter((row) => !statusColumn || !fixedPlaceValue || cleanString(row[statusColumn]) === fixedPlaceValue);
+        const invalidIsOnlineRows: number[] = [];
         // convert the 'raw' csv rows into a list of TutorialGroupImportData
         const registrations = csvFixedPlaceRows
             .map((csvRow) => {
@@ -266,12 +267,20 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 registration.capacity = csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined;
                 registration.language = csvRow[usedLanguageHeader]?.trim() || '';
                 registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
-                registration.isOnline = csvRow[usedIsOnlineHeader] ? Boolean(csvRow[usedIsOnlineHeader]?.trim().toLowerCase()) : undefined;
+                const isOnline = csvRow[usedIsOnlineHeader]?.trim().toLowerCase();
+                if (isOnline && isOnline !== 'true' && isOnline !== 'false') {
+                    invalidIsOnlineRows.push(csvRows.indexOf(csvRow) + 2);
+                }
+                registration.isOnline = isOnline ? isOnline === 'true' : undefined;
 
                 return registration;
             })
             .sort((a, b) => this.compareTitle(a, b));
 
+        if (invalidIsOnlineRows.length > 0) {
+            const message = this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.invalidIsOnline') + invalidIsOnlineRows.join(', ');
+            this.validationErrors.update((errors) => [...errors, message]);
+        }
         this.performExtraDTOValidation(registrations);
         if (this.validationErrors().length > 0) {
             this.resetFileUpload();
