@@ -22,6 +22,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -380,6 +381,24 @@ describe('CourseTutorialGroupsComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
             expect(component.sidebarData()!.groupedData!.allGroups.entityData.map((card) => card.id)).toEqual([10, 11, 12]);
+        });
+
+        it('should keep the availability flag through the API conversion and hide full groups', async () => {
+            // No cached groups, so the component loads from the API and runs the response through the converter.
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ lectures: [] });
+            // Student response contract: capacityReached is sent, the registration count is not.
+            const fullSummary: TutorialGroupSummary = { id: 20, title: 'Full', capacityReached: true };
+            const openSummary: TutorialGroupSummary = { id: 21, title: 'Open', capacityReached: false };
+            vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([fullSummary, openSummary]));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.sidebarData()!.ungroupedData!.map((card) => card.id)).toEqual([20, 21]);
+
+            component.freeSpotsOnly.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.sidebarData()!.ungroupedData!.map((card) => card.id)).toEqual([21]);
         });
 
         it('should not navigate when the filter is toggled', async () => {
