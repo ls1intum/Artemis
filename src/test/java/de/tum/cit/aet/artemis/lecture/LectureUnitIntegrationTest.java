@@ -354,22 +354,21 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion() throws Exception {
+        Long lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
         // Set lecture unit as completed for current user
-        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true",
-                null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId + "/completion?completed=true", null, HttpStatus.OK, null);
 
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId());
-        LectureUnit lectureUnit = this.lecture1.getLectureUnits().getFirst();
+        LectureUnit lectureUnit = this.lecture1.getLectureUnits().stream().filter(unit -> unit.getId().equals(lectureUnitId)).findFirst().orElseThrow();
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
         assertThat(lectureUnit.isCompletedFor(userTestRepository.getUser())).isTrue();
 
         // Set lecture unit as uncompleted for user
-        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=false",
-                null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId + "/completion?completed=false", null, HttpStatus.OK, null);
 
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId());
-        lectureUnit = this.lecture1.getLectureUnits().getFirst();
+        lectureUnit = this.lecture1.getLectureUnits().stream().filter(unit -> unit.getId().equals(lectureUnitId)).findFirst().orElseThrow();
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();
         assertThat(lectureUnit.isCompletedFor(userTestRepository.getUser())).isFalse();
