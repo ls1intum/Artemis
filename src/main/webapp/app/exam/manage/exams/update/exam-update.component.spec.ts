@@ -1185,6 +1185,7 @@ describe('ExamUpdateComponent', () => {
         examForImport.publishResultsDate = timeNow.add(1, 'days');
         examForImport.examStudentReviewStart = timeNow.add(2, 'days');
         examForImport.examStudentReviewEnd = timeNow.add(3, 'days');
+        examForImport.exampleSolutionPublicationDate = timeNow.add(4, 'days');
         examForImport.numberOfCorrectionRoundsInExam = 2;
         examForImport.startText = 'Hello World';
         examForImport.endText = 'Goodbye World';
