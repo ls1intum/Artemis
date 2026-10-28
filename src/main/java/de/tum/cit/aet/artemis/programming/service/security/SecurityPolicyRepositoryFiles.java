@@ -52,12 +52,13 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w.]+)\\s*;", Pattern.MULTILINE);
 
-    private static final Pattern TEST_CLASS_MARKER = Pattern.compile("@(org\\.junit\\.jupiter\\.api\\.)?Test\\b|@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy\\b");
-
-    static final String ACTIVE_ANNOTATION = "@de.tum.cit.ase.ares.api.Policy(value = \"" + POLICY_FILE_NAME + "\")";
-
-    /** How {@link #ACTIVE_ANNOTATION} reads after deactivation: only the activation flag changes, so reactivating restores the original annotation. */
-    static final String INACTIVE_ANNOTATION = "@de.tum.cit.ase.ares.api.Policy(value = \"" + POLICY_FILE_NAME + "\", activated = false)";
+    /**
+     * Marks a test class: an Ares {@code @Policy} annotation, or a JUnit Jupiter annotation that makes a method a test, i.e. {@code @Test},
+     * {@code @RepeatedTest}, {@code @TestFactory} and {@code @TestTemplate} from {@code org.junit.jupiter.api} and {@code @ParameterizedTest} from
+     * {@code org.junit.jupiter.params}, each with or without its package.
+     */
+    private static final Pattern TEST_CLASS_MARKER = Pattern.compile("@(org\\.junit\\.jupiter\\.api\\.)?(Test|RepeatedTest|TestFactory|TestTemplate)\\b"
+            + "|@(org\\.junit\\.jupiter\\.params\\.)?ParameterizedTest\\b|@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy\\b");
 
     /** Directories that never contain test sources of the exercise, wherever they appear. */
     private static final Set<String> IGNORED_DIRECTORIES = Set.of(".git", ".gradle", ".idea", "node_modules");
@@ -160,19 +161,39 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * @param path a path inside the repository, relative to its root
-     * @return whether the path is a Java file outside the tool directories, i.e. one that {@link #setPolicyAnnotationsActive} would also rewrite
+     * Decides which files are scanned as Java sources. Both the scan of a checkout and the scan of a committed tree use it, so both see the same sources.
+     *
+     * @param path   a regular file of the repository, relative to its root, with forward slashes
+     * @param isFile whether a path, relative to the root, is a regular file of the repository
+     * @return whether the path is a Java file outside the tool and build output directories, i.e. one that {@link #setPolicyAnnotationsActive} would also
+     *         rewrite
      */
-    public static boolean isJavaSourcePath(String path) {
+    public static boolean isJavaSourcePath(String path, Predicate<String> isFile) {
         if (!path.endsWith(".java")) {
             return false;
         }
-        for (String segment : path.split("/")) {
-            if (IGNORED_DIRECTORIES.contains(segment)) {
+        String[] segments = path.split("/");
+        StringBuilder directory = new StringBuilder();
+        // The last segment is the file itself; only the directories above it can hold tool or build output.
+        for (int index = 0; index < segments.length - 1; index++) {
+            String name = segments[index];
+            if (name.isEmpty()) {
+                continue;
+            }
+            if (IGNORED_DIRECTORIES.contains(name) || (BUILD_OUTPUT_DIRECTORIES.contains(name) && containsBuildFile(directory.toString(), isFile))) {
                 return false;
             }
+            directory.append(name).append('/');
         }
         return true;
+    }
+
+    /**
+     * @param directory a directory of the repository, relative to its root, empty or ending with a slash
+     * @return whether the directory is the root of a (sub)project, i.e. it contains a build file
+     */
+    private static boolean containsBuildFile(String directory, Predicate<String> isFile) {
+        return BUILD_FILES.stream().anyMatch(buildFile -> isFile.test(directory + buildFile));
     }
 
     /**
@@ -374,36 +395,13 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static List<Path> javaFiles(Path repositoryRoot) {
         try (Stream<Path> files = Files.walk(repositoryRoot)) {
-            return files.filter(
-                    path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) && path.getFileName().toString().endsWith(".java") && isScannedSource(repositoryRoot, path))
-                    .sorted().toList();
+            Predicate<String> isFile = relativePath -> Files.isRegularFile(repositoryRoot.resolve(relativePath), LinkOption.NOFOLLOW_LINKS);
+            return files.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)
+                    && isJavaSourcePath(repositoryRoot.relativize(path).toString().replace('\\', '/'), isFile)).sorted().toList();
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    /**
-     * @return false if the file lies below a directory that holds tool or build output instead of sources
-     */
-    private static boolean isScannedSource(Path repositoryRoot, Path file) {
-        Path directory = repositoryRoot;
-        Path relativeDirectory = repositoryRoot.relativize(file.getParent());
-        for (Path segment : relativeDirectory) {
-            String name = segment.toString();
-            if (name.isEmpty()) {
-                continue;
-            }
-            if (IGNORED_DIRECTORIES.contains(name) || (BUILD_OUTPUT_DIRECTORIES.contains(name) && containsBuildFile(directory))) {
-                return false;
-            }
-            directory = directory.resolve(name);
-        }
-        return true;
-    }
-
-    private static boolean containsBuildFile(Path directory) {
-        return BUILD_FILES.stream().anyMatch(buildFile -> Files.isRegularFile(directory.resolve(buildFile)));
     }
 
     private static Path buildFile(Path repositoryRoot, BuildTool buildTool) {

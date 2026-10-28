@@ -12,12 +12,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -25,6 +25,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -442,28 +443,30 @@ public class SecurityFrameworkService {
     }
 
     /**
-     * Applies {@link SecurityPolicyRepositoryFiles#isEnforcing(Iterable, Predicate)} to a commit of the repository.
+     * Applies {@link SecurityPolicyRepositoryFiles#isEnforcing(Iterable, Predicate)} to a commit of the repository. Like the scan of a checkout, it only
+     * considers regular files, never symbolic links, and selects the Java sources with {@link SecurityPolicyRepositoryFiles#isJavaSourcePath}, so build
+     * output is skipped in the same way.
      */
     private static boolean isEnforcing(Repository repository, RevTree tree) throws IOException {
-        List<String> javaSources = new ArrayList<>();
+        Map<String, ObjectId> files = new TreeMap<>();
         try (TreeWalk treeWalk = new TreeWalk(repository)) {
             treeWalk.addTree(tree);
             treeWalk.setRecursive(true);
             while (treeWalk.next()) {
-                if (SecurityPolicyRepositoryFiles.isJavaSourcePath(treeWalk.getPathString())) {
-                    javaSources.add(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8));
+                // TYPE_FILE covers regular and executable files, but not symbolic links, whose type is TYPE_SYMLINK.
+                if ((treeWalk.getRawMode(0) & FileMode.TYPE_MASK) == FileMode.TYPE_FILE) {
+                    files.put(treeWalk.getPathString(), treeWalk.getObjectId(0));
                 }
             }
         }
-        Set<String> files = new HashSet<>();
-        try (TreeWalk treeWalk = new TreeWalk(repository)) {
-            treeWalk.addTree(tree);
-            treeWalk.setRecursive(true);
-            while (treeWalk.next()) {
-                files.add(treeWalk.getPathString());
+        List<String> javaSources = new ArrayList<>();
+        for (Map.Entry<String, ObjectId> file : files.entrySet()) {
+            if (SecurityPolicyRepositoryFiles.isJavaSourcePath(file.getKey(), files::containsKey)) {
+                javaSources.add(new String(repository.open(file.getValue()).getBytes(), StandardCharsets.UTF_8));
             }
         }
-        return SecurityPolicyRepositoryFiles.isEnforcing(javaSources, path -> files.contains(Path.of(path).normalize().toString().replace('\\', '/')));
+        // The policy paths of the annotations are already normalized relative to the repository root, see AresPolicyAnnotations.Annotation#policyPath.
+        return SecurityPolicyRepositoryFiles.isEnforcing(javaSources, files::containsKey);
     }
 
     private static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {

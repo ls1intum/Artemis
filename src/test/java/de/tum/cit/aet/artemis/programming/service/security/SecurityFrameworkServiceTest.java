@@ -307,7 +307,7 @@ class SecurityFrameworkServiceTest {
         try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
             Path testFile = checkout.resolve("test/de/example/SortingTest.java");
             FileUtils.writeStringToFile(testFile.toFile(),
-                    Files.readString(testFile).replace(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION, SecurityPolicyRepositoryFiles.INACTIVE_ANNOTATION), StandardCharsets.UTF_8);
+                    Files.readString(testFile).replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8);
             git.add().addFilepattern(".").call();
             GitService.commit(git).setMessage("Switch the policy off by hand").setAuthor("Instructor", "instructor@example.org").call();
             git.push().call();
@@ -326,7 +326,7 @@ class SecurityFrameworkServiceTest {
         try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
             Path testFile = checkout.resolve("test/de/example/SortingTest.java");
             FileUtils.writeStringToFile(testFile.toFile(),
-                    Files.readString(testFile).replace(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION, SecurityPolicyRepositoryFiles.INACTIVE_ANNOTATION), StandardCharsets.UTF_8);
+                    Files.readString(testFile).replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8);
             git.add().addFilepattern(".").call();
             GitService.commit(git).setMessage("Switch the policy off by hand").setAuthor("Instructor", "instructor@example.org").call();
             git.push().call();
@@ -379,7 +379,7 @@ class SecurityFrameworkServiceTest {
     @Test
     void aParenthesizedActivatedFlagMakesTheFrameworkInactive() throws Exception {
         String parenthesized = "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", activated = (false))";
-        pushTestClassChange(source -> source.replace(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION, parenthesized));
+        pushTestClassChange(source -> source.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, parenthesized));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
 
         assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
@@ -453,6 +453,31 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void committedBuildOutputDoesNotDecideTheState() throws Exception {
+        // The root of the tests repository has a build.gradle, so build/ is build output there, even though it was committed by mistake.
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("build/generated/de/example/GeneratedTest.java").toFile(),
+                TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
+    }
+
+    @Test
+    void aSourcePackageNamedBuildDecidesTheState() throws Exception {
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/build/BuildTest.java").toFile(),
+                TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION).replace("package de.example;",
+                        "package de.example.build;"),
+                StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user))
+                .matches(exception -> "securityFrameworkNotActive".equals(exception.getErrorKey()));
+    }
+
+    @Test
     void readingTheStateNeverTouchesAWorkingCopy() throws Exception {
         securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA));
 
@@ -466,7 +491,7 @@ class SecurityFrameworkServiceTest {
         assertThat(config.status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
         assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(
-                content -> assertThat(content).contains(SecurityPolicyRepositoryFiles.INACTIVE_ANNOTATION).doesNotContain(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION));
+                content -> assertThat(content).contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION).doesNotContain(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION));
         assertThat(pushedCommitCount()).isEqualTo(2);
         assertThat(securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA)).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
     }
@@ -575,7 +600,7 @@ class SecurityFrameworkServiceTest {
 
     @Test
     void theTemplateTestsUseTheAnnotationThatIsToggled() throws IOException {
-        assertThat(Files.readString(MAIN_RESOURCES.resolve("templates/java/test/testFiles/structural/ClassTest.java"))).contains(SecurityPolicyRepositoryFiles.ACTIVE_ANNOTATION);
+        assertThat(Files.readString(MAIN_RESOURCES.resolve("templates/java/test/testFiles/structural/ClassTest.java"))).contains(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION);
     }
 
     @Test

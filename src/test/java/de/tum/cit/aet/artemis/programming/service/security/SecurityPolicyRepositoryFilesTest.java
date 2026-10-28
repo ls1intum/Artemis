@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,7 @@ class SecurityPolicyRepositoryFilesTest {
 
         assertThat(SecurityPolicyRepositoryFiles.findTestClasses(root)).containsExactly("de.example.build.BuildTest", "de.example.target.TargetTest");
         assertThat(SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false)).isEqualTo(2);
-        assertThat(Files.readString(root.resolve("test/de/example/build/BuildTest.java"))).contains(SecurityPolicyRepositoryFiles.INACTIVE_ANNOTATION);
+        assertThat(Files.readString(root.resolve("test/de/example/build/BuildTest.java"))).contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
     }
 
     @Test
@@ -137,6 +138,52 @@ class SecurityPolicyRepositoryFilesTest {
 
         assertThat(SecurityPolicyRepositoryFiles.findSymbolicLinks(repository)).containsExactly("linked", "test/de/example/Other.java");
         assertThat(SecurityPolicyRepositoryFiles.findTestClasses(repository)).containsExactly("de.example.SortingTest");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "import org.junit.jupiter.params.ParameterizedTest;|@ParameterizedTest", "|@org.junit.jupiter.params.ParameterizedTest",
+            "import org.junit.jupiter.api.RepeatedTest;|@RepeatedTest(3)", "|@org.junit.jupiter.api.TestFactory", "import org.junit.jupiter.api.TestTemplate;|@TestTemplate",
+            "import org.junit.jupiter.api.Test;|@Test" })
+    void recognizesEveryKindOfJUnitTest(String importAndAnnotation) throws IOException {
+        String[] parts = importAndAnnotation.split("\\|");
+        FileUtils.writeStringToFile(root.resolve("test/de/example/SortingTest.java").toFile(), """
+                package de.example;
+
+                %s
+
+                class SortingTest {
+
+                    %s
+                    void sorts(int size) {
+                    }
+                }
+                """.formatted(parts[0], parts[1]), StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(root.resolve("test/de/example/SortingTestHelper.java").toFile(), """
+                package de.example;
+
+                import org.junit.jupiter.api.TestInstance;
+
+                // Not a test class: @TestInstance configures a test class, and @Testing is no JUnit annotation.
+                @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+                class SortingTestHelper {
+
+                    @Testing
+                    void helps() {
+                    }
+                }
+                """, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.findTestClasses(root)).containsExactly("de.example.SortingTest");
+    }
+
+    @Test
+    void skipsBuildOutputInTheSameWayForCheckoutsAndCommittedTrees() {
+        Set<String> files = Set.of("build.gradle", "module/pom.xml", "build/generated/GeneratedTest.java", "module/target/generated/ModuleTest.java",
+                "test/de/example/build/BuildTest.java", "test/de/example/target/TargetTest.java", "other/build/OtherTest.java", ".gradle/cache/CachedTest.java",
+                "test/de/example/SortingTest.java");
+
+        assertThat(files.stream().filter(path -> SecurityPolicyRepositoryFiles.isJavaSourcePath(path, files::contains)).sorted()).containsExactly(
+                "other/build/OtherTest.java", "test/de/example/SortingTest.java", "test/de/example/build/BuildTest.java", "test/de/example/target/TargetTest.java");
     }
 
     @Test
