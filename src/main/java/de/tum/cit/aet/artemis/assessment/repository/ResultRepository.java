@@ -487,18 +487,12 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<Result> findAllByLastModifiedDateAfter(Instant lastModifiedDate);
 
     /**
-     * Checks if a result for the given participation exists.
-     *
-     * @param participationId the id of the participation to check.
-     * @return true if a result for the given participation exists, false otherwise.
+     * Returns whether a result exists for the given participation.
      */
     boolean existsBySubmissionParticipationId(long participationId);
 
     /**
-     * Checks if a result exists for the given submission ID.
-     *
-     * @param submissionId the ID of the submission to check.
-     * @return true if a result exists for the given submission ID, false otherwise.
+     * Returns whether a result exists for the given submission.
      */
     boolean existsBySubmissionId(long submissionId);
 
@@ -519,13 +513,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsManualResultBySubmissionIdAndCorrectionRound(@Param("submissionId") long submissionId, @Param("correctionRound") int correctionRound);
 
     /**
-     * Returns the manual results of the given submissions together with the correction round each belongs to.
-     * <p>
-     * Two callers need this. The participation page renders assessment actions per correction round, so it needs one entry
-     * per round rather than only the newest result, and the exam score statistics report what the first round scored.
-     * Automatic and Athena results are left out because they are not correction rounds, which matches
-     * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment
-     * type is not set yet.
+     * Returns manual results per correction round for participation actions and exam score statistics.
+     * Excludes automatic and Athena results but retains results with no assessment type, matching
+     * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()}.
      *
      * @param submissionIds    the submissions whose manual results should be read
      * @param currentUserLogin the user whose correction-round ownership should be included
