@@ -1,7 +1,7 @@
-<div class="flex flex-col gap-1 mb-3">
+<div class="flex flex-col gap-1 mb-3" data-testid="team-configuration">
     @if (exercise(); as exercise) {
-        <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-12 md:col-auto">
+        <div class="flex flex-wrap gap-4">
+            <div class="w-full md:w-auto" data-testid="team-mode-options">
                 <div>
                     <label jhiTranslate="artemisApp.exercise.participation"></label>
                     <jhi-help-icon text="artemisApp.exercise.modeTooltip" />
@@ -11,7 +11,7 @@
                 </div>
             </div>
             @if (exercise.mode === TEAM) {
-                <div class="col-span-12 md:col-auto">
+                <div class="w-full md:w-auto" data-testid="team-size-options">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize"></label>
                         <jhi-help-icon text="artemisApp.exercise.teamAssignmentConfig.teamSizeTooltip" />

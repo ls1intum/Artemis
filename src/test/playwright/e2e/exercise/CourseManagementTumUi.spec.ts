@@ -287,7 +287,7 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                     await expectInside(panel, workspace, ['top', 'right', 'bottom', 'left'], { name, tolerance: 1 });
                 }
                 await expectNoOverlap([canvas, instructions, details], { name: 'assessment panels', tolerance: 1 });
-                const primary = workspace.getByRole('separator').first();
+                const primary = workspace.getByRole('separator', { name: 'Resize panels', exact: true }).first();
                 const stacked = await workspace.evaluate((element) => element.clientWidth < 840);
                 await expect(primary).toHaveAttribute('aria-orientation', stacked ? 'horizontal' : 'vertical');
                 await expect(workspace.getByRole('heading', { name: 'Instructions', exact: true })).toBeVisible();
@@ -297,7 +297,7 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
 
             // Unlike the existing workspace's pointer-drag test, this checks the native keyboard path in a browser.
             // Do it after the viewport matrix, since resizing persists an absolute user-selected split.
-            const primary = workspace.getByRole('separator').first();
+            const primary = workspace.getByRole('separator', { name: 'Resize panels', exact: true }).first();
             const previousSize = Number(await primary.getAttribute('aria-valuenow'));
             await primary.focus();
             await expect(primary).toBeFocused();
@@ -336,6 +336,44 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                     await expect(help).toBeFocused();
                 },
             );
+        } finally {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+        }
+    });
+
+    test('keeps team mode and team-size controls separate across form widths and themes', async ({ page, login, courseManagementAPIRequests }) => {
+        let course: Course | undefined;
+        await page.addInitScript(() => localStorage.removeItem('artemisapp.theme.preference'));
+        await login(admin);
+        try {
+            course = await courseManagementAPIRequests.createCourse({ courseName: `TUM UI team configuration ${generateUUID()}`, allowCommunication: false });
+            await page.goto(`/course-management/${course.id}/modeling-exercises/new`);
+            const configuration = page.getByTestId('team-configuration');
+            const modes = configuration.getByTestId('team-mode-options');
+            const sizes = configuration.getByTestId('team-size-options');
+            await modes.getByRole('button', { name: 'Team', exact: true }).click();
+            await expect(sizes).toBeVisible();
+            await sizes.getByLabel('Min', { exact: true }).fill('2');
+            await sizes.getByLabel('Max', { exact: true }).fill('4');
+            for (const theme of ['light', 'dark'] as const) {
+                await page.emulateMedia({ colorScheme: theme });
+                await forEachViewport(page, async ({ width, height }) => {
+                    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+                    await expectNoHorizontalOverflow(page, [], { name: 'team exercise configuration page' });
+                    await expectNoHorizontalScrollAround(configuration, { name: 'team configuration' });
+                    await expectInside(modes, configuration, ['left', 'right'], { name: 'exercise mode choices', tolerance: 1 });
+                    await expectInside(sizes, configuration, ['left', 'right'], { name: 'team-size controls', tolerance: 1 });
+                    await expectNoOverlap([modes, sizes], { name: 'mode and team-size control groups', tolerance: 1 });
+                    await expectInside(sizes.getByLabel('Min', { exact: true }), sizes, ['left', 'right'], { name: 'minimum team size', tolerance: 1 });
+                    await expectInside(sizes.getByLabel('Max', { exact: true }), sizes, ['left', 'right'], { name: 'maximum team size', tolerance: 1 });
+                    await expect(modes.getByRole('button', { name: 'Team', exact: true })).toHaveAttribute('aria-pressed', 'true');
+                    await expect(sizes.getByLabel('Min', { exact: true })).toHaveValue('2');
+                    await expect(sizes.getByLabel('Max', { exact: true })).toHaveValue('4');
+                    if (width === 1280 || width === 480) {
+                        await attachScreenshot(page, `team-configuration-${theme}-${width}x${height}`);
+                    }
+                });
+            }
         } finally {
             await courseManagementAPIRequests.deleteCourse(course, admin);
         }
