@@ -4,6 +4,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * The payload of the Atlas competency update notification, sent after an automatic competency orchestration run.
  * <p>
@@ -23,6 +25,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param omittedCount    the number of applied changes left out of {@code changesMarkdown} to bound the e-mail
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasCompetencyUpdatePayloadDTO(@Nullable String outcome, int exerciseCount, int appliedCount, int createdCount, int editedCount, int deletedCount, int assignedCount,
-        int unassignedCount, @Nullable String changesMarkdown, int omittedCount) implements CourseNotificationPayloadDTO {
+public record AtlasCompetencyUpdatePayloadDTO(@Nullable String outcome, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int exerciseCount,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int appliedCount, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int createdCount,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int editedCount, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int deletedCount,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int assignedCount, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int unassignedCount,
+        @Nullable String changesMarkdown, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int omittedCount) implements CourseNotificationPayloadDTO {
 }

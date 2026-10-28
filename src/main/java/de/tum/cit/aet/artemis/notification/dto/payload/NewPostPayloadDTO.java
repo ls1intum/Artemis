@@ -4,6 +4,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * The payload of the new post notification.
  *
@@ -19,5 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record NewPostPayloadDTO(@Nullable Long postId, @Nullable String postMarkdownContent, @Nullable Long channelId, @Nullable String channelName, @Nullable String channelType,
-        @Nullable String authorName, @Nullable String authorImageUrl, @Nullable Long authorId, boolean authorIsBot) implements CourseNotificationPayloadDTO {
+        @Nullable String authorName, @Nullable String authorImageUrl, @Nullable Long authorId, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean authorIsBot)
+        implements CourseNotificationPayloadDTO {
 }
