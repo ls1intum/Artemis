@@ -40,9 +40,9 @@ export class TutorialGroupDetailData {
     language: string;
     isOnline: boolean;
     sessions: TutorialGroupSession[];
-    tutorName: string;
-    tutorLogin: string;
-    tutorId: number;
+    tutorName?: string;
+    tutorLogin?: string;
+    tutorId?: number;
     tutorImageUrl?: string;
     capacity?: number;
     campus?: string;

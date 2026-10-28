@@ -247,6 +247,7 @@
                     "averageAttendanceCardTitle": "Attendance",
                     "nextSessionCardTitle": "Next Session"
                 },
+                "noTutorAssigned": "No tutor assigned",
                 "language": "Language:",
                 "capacity": "Capacity:",
                 "mode": "Mode:",

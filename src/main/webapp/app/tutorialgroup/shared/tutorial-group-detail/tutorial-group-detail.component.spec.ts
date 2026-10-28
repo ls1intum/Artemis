@@ -161,6 +161,15 @@ describe('TutorialGroupDetailComponent', () => {
         expect(tutorChatButton).not.toBeNull();
     });
 
+    it('should display a no-tutor message and hide the tutor chat button when no tutor is assigned', () => {
+        const tutorialGroup = createTutorialGroupDetailData({ tutorName: undefined, tutorLogin: undefined, tutorId: undefined });
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[data-testid="no-tutor-assigned"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="tutor-name"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="tutor-chat-button"]'))).toBeNull();
+    });
+
     it('should display current lesson button if currentTutorialLectureId available', () => {
         const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);

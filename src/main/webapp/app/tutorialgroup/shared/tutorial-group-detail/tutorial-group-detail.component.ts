@@ -193,7 +193,7 @@ export class TutorialGroupDetailComponent {
     createTutorChat() {
         const courseId = this.courseId();
         const tutorLogin = this.tutorialGroup().tutorLogin;
-        if (courseId) {
+        if (courseId && tutorLogin) {
             this.oneToOneChatService.create(courseId, tutorLogin).subscribe({
                 next: (response) => {
                     const chatId = response.body?.id;

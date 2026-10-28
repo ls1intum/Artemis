@@ -61,9 +61,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentImportDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupScheduleDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupImportErrors;
 
 @Conditional(TutorialGroupEnabled.class)
@@ -79,6 +81,8 @@ public class TutorialGroupService {
 
     private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
+    private final TutorialGroupScheduleRepository tutorialGroupScheduleRepository;
+
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
     private final ConversationDTOService conversationDTOService;
@@ -90,13 +94,14 @@ public class TutorialGroupService {
     private final TutorialGroupRegistrationApi tutorialGroupRegistrationApi;
 
     public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
-            UserRepository userRepository, TutorialGroupSessionRepository tutorialGroupSessionRepository,
+            UserRepository userRepository, TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupScheduleRepository tutorialGroupScheduleRepository,
             TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService,
             CourseNotificationService courseNotificationService, OneToOneChatRepository oneToOneChatRepository, TutorialGroupRegistrationApi tutorialGroupRegistrationApi) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
+        this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
         this.courseNotificationService = courseNotificationService;
@@ -601,18 +606,21 @@ public class TutorialGroupService {
         String tutorLogin = rawGroupDTO.tutorLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
         Long tutorChatId = null;
-        if (!tutorLogin.equals(currentUserLogin)) {
+        if (tutorLogin != null && !tutorLogin.equals(currentUserLogin)) {
             tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
         }
 
         List<RawTutorialGroupDetailSessionDTO> rawSessionDTOs = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
+        // A tutorial group is mapped one-to-one to a schedule, but nothing at the database level enforces this, so a corrupted group may hold several. Picking the first keeps the
+        // detail endpoint resilient instead of failing with a non-unique result.
+        Optional<RawTutorialGroupScheduleDTO> schedule = tutorialGroupScheduleRepository.findScheduleData(tutorialGroupId).stream().findFirst();
         List<TutorialGroupSessionDTO> sessionDTOs;
-        // The schedule related properties are null if and only if there is no schedule for the tutorial group.
-        if (rawGroupDTO.scheduleDayOfWeek() != null) {
-            int scheduleDayOfWeek = rawGroupDTO.scheduleDayOfWeek();
-            LocalTime scheduleStart = LocalTime.parse(rawGroupDTO.scheduleStartTime());
-            LocalTime scheduleEnd = LocalTime.parse(rawGroupDTO.scheduleEndTime());
-            String scheduleLocation = rawGroupDTO.scheduleLocation();
+        if (schedule.isPresent()) {
+            RawTutorialGroupScheduleDTO scheduleData = schedule.get();
+            int scheduleDayOfWeek = scheduleData.dayOfWeek();
+            LocalTime scheduleStart = LocalTime.parse(scheduleData.startTime());
+            LocalTime scheduleEnd = LocalTime.parse(scheduleData.endTime());
+            String scheduleLocation = scheduleData.location();
             sessionDTOs = rawSessionDTOs.stream().map(data -> TutorialGroupSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone))
                     .toList();
         }

@@ -32,7 +32,7 @@
                 >
                     <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"></span>
                 </a>
-            } @else if (userIsNotTutor()) {
+            } @else if (userIsNotTutor() && tutorialGroup().tutorLogin) {
                 <button tumAetUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="tutor-chat-button" (click)="createTutorChat()">
                     <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"></span>
                 </button>
@@ -76,15 +76,19 @@
         <section class="card narrow" aria-labelledby="tutor-card-title">
             <h3 id="tutor-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h3>
             <div class="tutor-card-content">
-                <jhi-profile-picture
-                    imageSizeInRem="6"
-                    fontSizeInRem="2"
-                    imageId="tutor-profile-picture"
-                    defaultPictureId="tutor-default-profile-picture"
-                    [authorName]="tutorialGroup().tutorName"
-                    [imageUrl]="teachingAssistantImageUrl()"
-                />
-                <span aria-hidden="true">{{ tutorialGroup().tutorName }}</span>
+                @if (tutorialGroup().tutorName; as tutorName) {
+                    <jhi-profile-picture
+                        imageSizeInRem="6"
+                        fontSizeInRem="2"
+                        imageId="tutor-profile-picture"
+                        defaultPictureId="tutor-default-profile-picture"
+                        [authorName]="tutorName"
+                        [imageUrl]="teachingAssistantImageUrl()"
+                    />
+                    <span aria-hidden="true" data-testid="tutor-name">{{ tutorName }}</span>
+                } @else {
+                    <span data-testid="no-tutor-assigned" jhiTranslate="artemisApp.pages.tutorialGroupDetail.noTutorAssigned"></span>
+                }
             </div>
         </section>
         <section class="card broad" aria-labelledby="general-info-card-title">

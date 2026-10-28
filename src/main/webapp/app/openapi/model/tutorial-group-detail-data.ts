@@ -15,9 +15,9 @@ export interface TutorialGroupDetailData {
     title: string;
     language: string;
     isOnline: boolean;
-    tutorName: string;
-    tutorLogin: string;
-    tutorId: number;
+    tutorName?: string;
+    tutorLogin?: string;
+    tutorId?: number;
     tutorImageUrl?: string;
     capacity?: number;
     campus?: string;

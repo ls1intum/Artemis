@@ -130,20 +130,16 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                 tutorialGroup.isOnline,
                 tutorialGroup.capacity,
                 tutorialGroup.campus,
-                CONCAT(tutorialGroup.teachingAssistant.firstName, CONCAT(' ', tutorialGroup.teachingAssistant.lastName)),
-                tutorialGroup.teachingAssistant.login,
-                tutorialGroup.teachingAssistant.id,
-                tutorialGroup.teachingAssistant.imageUrl,
+                CONCAT(teachingAssistant.firstName, CONCAT(' ', teachingAssistant.lastName)),
+                teachingAssistant.login,
+                teachingAssistant.id,
+                teachingAssistant.imageUrl,
                 tutorialGroup.additionalInformation,
-                channel.id,
-                schedule.dayOfWeek,
-                schedule.startTime,
-                schedule.endTime,
-                schedule.location
+                channel.id
             )
             FROM TutorialGroup tutorialGroup
+                LEFT JOIN tutorialGroup.teachingAssistant teachingAssistant
                 LEFT JOIN tutorialGroup.tutorialGroupChannel channel
-                LEFT JOIN tutorialGroup.tutorialGroupSchedule schedule
             WHERE tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
             """)
     Optional<RawTutorialGroupDTO> getRawTutorialGroupDTO(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);

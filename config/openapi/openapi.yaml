@@ -2739,7 +2739,7 @@ components:
         sessions:
           type: array
           items: {$ref: '#/components/schemas/TutorialGroupSession'}
-      required: [id, isOnline, language, sessions, title, tutorId, tutorLogin, tutorName]
+      required: [id, isOnline, language, sessions, title]
     DragAndDropSubmittedAnswerFromLiveClient:
       required: [type]
       type: object

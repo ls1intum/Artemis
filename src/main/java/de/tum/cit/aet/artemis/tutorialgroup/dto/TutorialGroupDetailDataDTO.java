@@ -11,8 +11,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupDetailDataDTO(@NotNull Long id, @NotNull String title, @NotNull String language, @NotNull Boolean isOnline, @NotNull String tutorName,
-        @NotNull String tutorLogin, @NotNull Long tutorId, @Nullable String tutorImageUrl, @Nullable Integer capacity, @Nullable String campus,
+public record TutorialGroupDetailDataDTO(@NotNull Long id, @NotNull String title, @NotNull String language, @NotNull Boolean isOnline, @Nullable String tutorName,
+        @Nullable String tutorLogin, @Nullable Long tutorId, @Nullable String tutorImageUrl, @Nullable Integer capacity, @Nullable String campus,
         @Nullable String additionalInformation, @Nullable Long groupChannelId, @Nullable Long tutorChatId, @NotNull List<TutorialGroupSessionDTO> sessions) {
 
     public static TutorialGroupDetailDataDTO from(RawTutorialGroupDTO rawDto, List<TutorialGroupSessionDTO> sessions, Long tutorChatId) {
