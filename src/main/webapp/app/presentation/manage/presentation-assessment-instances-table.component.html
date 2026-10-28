@@ -4,6 +4,7 @@
             <th><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.assessor"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.remark"></span></th>
             <th></th>
@@ -35,6 +36,16 @@
                         -
                     }
                 </td>
+                <td data-testid="instance-assessor">
+                    @if (row.instance.assessor; as assessor) {
+                        <div class="flex flex-col">
+                            <span>{{ assessor.name }}</span>
+                            <small class="text-muted-color">{{ assessor.login }}</small>
+                        </div>
+                    } @else {
+                        -
+                    }
+                </td>
                 <td>{{ row.instance.presentationDate ? (row.instance.presentationDate | artemisDate) : '-' }}</td>
                 <td class="text-muted-color">{{ row.instance.remark || '-' }}</td>
                 <td>
@@ -43,14 +54,14 @@
             </tr>
             @if (expanded) {
                 <tr class="presentation-detail-row" [id]="'presentation-detail-' + row.rowKey">
-                    <td colspan="6">
+                    <td colspan="7">
                         <jhi-presentation-assessment-instance-details [instance]="row.instance" />
                     </td>
                 </tr>
             }
         } @empty {
             <tr>
-                <td colspan="6" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
+                <td colspan="7" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
             </tr>
         }
     </tbody>

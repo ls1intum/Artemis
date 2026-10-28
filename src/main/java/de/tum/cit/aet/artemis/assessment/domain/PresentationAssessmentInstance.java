@@ -54,6 +54,10 @@ public class PresentationAssessmentInstance extends DomainObject {
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assessor_id")
+    private User assessor;
+
     public PresentationAssessment getPresentationAssessment() {
         return presentationAssessment;
     }
@@ -124,5 +128,13 @@ public class PresentationAssessmentInstance extends DomainObject {
 
     public void setStudent(User student) {
         this.student = student;
+    }
+
+    public User getAssessor() {
+        return assessor;
+    }
+
+    public void setAssessor(User assessor) {
+        this.assessor = assessor;
     }
 }

@@ -61,7 +61,16 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
         expect(bodyRows()).toHaveLength(2);
 
         render([]);
-        expect(query('tbody td[colspan="7"]')?.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.noMatchingStudents');
+        expect(query('tbody td[colspan="8"]')?.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.noMatchingStudents');
+    });
+
+    it('should show the assessor name and login and a dash without one', () => {
+        render([createRow({ instance: { id: 10, resultPoints: 12, assessor: { login: 'tutor1', name: 'Tutor One' } } }), exerciseRow()]);
+
+        const [assessed, unassessed] = Array.from(element().querySelectorAll<HTMLElement>('[data-testid="overview-assessor"]'));
+        expect(assessed.querySelector('span')?.textContent?.trim()).toBe('Tutor One');
+        expect(assessed.querySelector('small')?.textContent?.trim()).toBe('tutor1');
+        expect(unassessed.textContent?.trim()).toBe('-');
     });
 
     it('should show the result points against the maximum of the row presentation', () => {

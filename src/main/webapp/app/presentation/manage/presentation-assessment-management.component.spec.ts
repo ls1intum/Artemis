@@ -684,6 +684,7 @@ describe('PresentationAssessmentManagementComponent', () => {
             studentLogins: ['student1', 'student2'],
             language: 'en',
             mode: PresentationAssessmentMode.IN_PERSON,
+            assessorLogin: 'tutor1',
         };
         component.handleInstanceDialogSave({ kind: 'create', request });
 
@@ -702,6 +703,7 @@ describe('PresentationAssessmentManagementComponent', () => {
             studentLogin: 'student1',
             language: 'en',
             mode: PresentationAssessmentMode.IN_PERSON,
+            assessorLogin: 'tutor1',
         };
         presentationAssessmentService.updateInstance.mockReturnValue(of(new HttpResponse({ body: updatedInstance })));
         component.startEditInstance(presentationAssessment, instance);
@@ -934,7 +936,7 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         component.handleInstanceDialogSave({
             kind: 'create',
-            request: { presentationDate, resultPoints: 10, studentLogins: ['student1'], language: 'en', mode: PresentationAssessmentMode.IN_PERSON },
+            request: { presentationDate, resultPoints: 10, studentLogins: ['student1'], language: 'en', mode: PresentationAssessmentMode.IN_PERSON, assessorLogin: 'tutor1' },
         });
 
         expect(alertService.addAlert).toHaveBeenCalledTimes(expectedAlerts);
@@ -966,6 +968,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 studentLogins: ['student1'],
                 language: 'en',
                 mode: PresentationAssessmentMode.IN_PERSON,
+                assessorLogin: 'tutor1',
             },
         });
 
@@ -996,6 +999,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                           studentLogins: ['student1'],
                           language: 'en',
                           mode: PresentationAssessmentMode.IN_PERSON,
+                          assessorLogin: 'tutor1',
                       },
                   }
                 : {
@@ -1007,6 +1011,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                           studentLogin: 'student1',
                           language: 'en',
                           mode: PresentationAssessmentMode.IN_PERSON,
+                          assessorLogin: 'tutor1',
                       },
                   };
 
@@ -1065,6 +1070,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 studentLogins: ['student1'],
                 language: 'en',
                 mode: PresentationAssessmentMode.IN_PERSON,
+                assessorLogin: 'tutor1',
             },
         });
 

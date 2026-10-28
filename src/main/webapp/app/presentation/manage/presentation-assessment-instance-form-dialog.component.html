@@ -65,6 +65,41 @@
             }
         </div>
         <div class="flex flex-col gap-2">
+            <label for="presentation-instance-assessor">
+                <span jhiTranslate="artemisApp.presentationAssessment.assessor"></span>
+                <span aria-hidden="true">*</span>
+            </label>
+            @if (canChooseAssessor()) {
+                <tumaet-ui-autocomplete
+                    inputId="presentation-instance-assessor"
+                    data-testid="presentation-instance-assessor-search"
+                    class="w-full"
+                    optionLabel="label"
+                    formControlName="assessorOption"
+                    [required]="true"
+                    [suggestions]="assessorOptions()"
+                    [minLength]="0"
+                    [debounceMs]="0"
+                    [placeholder]="'artemisApp.presentationAssessment.searchAssessor' | artemisTranslate"
+                    (searchRequested)="searchAssessorsByQuery($event.query)"
+                />
+                @if (editForm.controls.assessorOption.invalid && editForm.controls.assessorOption.touched) {
+                    <tumaet-ui-message severity="error" data-testid="presentation-instance-assessor-missing">
+                        <span jhiTranslate="artemisApp.presentationAssessment.validation.assessorRequired"></span>
+                    </tumaet-ui-message>
+                }
+            } @else {
+                <input
+                    id="presentation-instance-assessor"
+                    tumAetUiInput
+                    class="w-full"
+                    readonly
+                    data-testid="presentation-instance-assessor"
+                    [value]="editForm.controls.assessorOption.value?.label ?? ''"
+                />
+            }
+        </div>
+        <div class="flex flex-col gap-2">
             <label for="presentation-instance-language" jhiTranslate="artemisApp.presentationAssessment.language"></label>
             <tumaet-ui-select inputId="presentation-instance-language" [options]="languageOptions()" optionLabel="label" optionValue="value" formControlName="language" />
         </div>

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +24,8 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentExportDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -37,14 +40,14 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
 
     /**
      * Finds an instance within the given presentation assessment and course.
-     * Fetches the student so its identity information remains available for DTO mapping.
+     * Fetches the student and the assessor so their identity information remains available for DTO mapping.
      *
      * @param id           the instance id
      * @param assessmentId the presentation assessment id
      * @param courseId     the owning course id
      * @return the matching instance, or empty if it does not belong to the specified presentation and course
      */
-    @EntityGraph(attributePaths = { "student" })
+    @EntityGraph(attributePaths = { "student", "assessor" })
     Optional<PresentationAssessmentInstance> findByIdAndPresentationAssessmentIdAndPresentationAssessmentCourseId(long id, long assessmentId, long courseId);
 
     /**
@@ -80,7 +83,7 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
     }
 
     /**
-     * Loads presentation, instance, and student data for the given instance IDs.
+     * Loads presentation, instance, student, and assessor data for the given instance IDs.
      * The returned rows have no guaranteed order.
      *
      * @param instanceIds the instance IDs to load
@@ -92,10 +95,12 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
                 assessment.course.id, exercise.id, exercise.title,
                 instance.id, instance.presentationDate, instance.resultPoints,
                 instance.language, instance.mode, instance.location, instance.meetingLink, instance.remark,
-                student.login, student.firstName, student.lastName, student.email)
+                student.login, student.firstName, student.lastName, student.email,
+                assessor.login, assessor.firstName, assessor.lastName)
             FROM PresentationAssessmentInstance instance
             JOIN instance.presentationAssessment assessment
             JOIN instance.student student
+            LEFT JOIN instance.assessor assessor
             LEFT JOIN assessment.exercise exercise
             WHERE instance.id IN :instanceIds
             """)
@@ -114,6 +119,34 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
             WHERE instance.presentationAssessment.course.id = :courseId
             """)
     PresentationAssessmentStatisticsDTO findStatisticsByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Searches the course members that can be chosen as the assessor of a presentation by login or full name.
+     * Selects only the name and login so that no further personal data of the course staff leaves the database.
+     *
+     * @param courseId      the owning course id
+     * @param roles         the course roles that may assess a presentation
+     * @param searchPattern the prepared LIKE pattern
+     * @param pageable      limits the number of results
+     * @return the matching users ordered by name
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO(user.login, user.firstName, user.lastName)
+            FROM User user
+            WHERE user.deleted = FALSE
+                AND EXISTS (
+                    SELECT 1
+                    FROM UserCourseRole ucr
+                    WHERE ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
+                )
+                AND (
+                    LOWER(user.login) LIKE LOWER(:searchPattern) ESCAPE '\\'
+                    OR LOWER(TRIM(CONCAT(COALESCE(user.firstName, ''), ' ', COALESCE(user.lastName, '')))) LIKE LOWER(:searchPattern) ESCAPE '\\'
+                )
+            ORDER BY user.firstName, user.lastName, user.login
+            """)
+    List<UserNameAndLoginDTO> searchAssessorOptions(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles, @Param("searchPattern") String searchPattern,
+            Pageable pageable);
 
     long countByPresentationAssessmentCourseId(long courseId);
 

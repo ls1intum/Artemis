@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceReque
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -53,6 +55,12 @@ public class PresentationAssessmentService {
 
     private static final LocalDate EARLIEST_PRESENTATION_DATE = LocalDate.of(1970, 1, 1);
 
+    private static final Set<CourseRole> ASSESSOR_ROLES = Set.copyOf(CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+
+    private static final int ASSESSOR_SEARCH_MIN_LENGTH = 3;
+
+    private static final int ASSESSOR_SEARCH_RESULT_LIMIT = 25;
+
     private final PresentationAssessmentRepository presentationAssessmentRepository;
 
     private final UserRepository userRepository;
@@ -65,15 +73,18 @@ public class PresentationAssessmentService {
 
     private final CourseConfigurationRepository courseConfigurationRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository, CourseRepository courseRepository,
-            CourseConfigurationRepository courseConfigurationRepository) {
+            CourseConfigurationRepository courseConfigurationRepository, AuthorizationCheckService authorizationCheckService) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.presentationAssessmentInstanceRepository = presentationAssessmentInstanceRepository;
         this.courseRepository = courseRepository;
         this.courseConfigurationRepository = courseConfigurationRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -96,6 +107,22 @@ public class PresentationAssessmentService {
     public PresentationAssessmentStatisticsDTO getStatistics(long courseId) {
         checkPresentationAssessmentsEnabled(courseId);
         return presentationAssessmentInstanceRepository.findStatisticsByCourseId(courseId);
+    }
+
+    /**
+     * Searches the course staff that can be chosen as the assessor of a presentation.
+     *
+     * @param courseId   the course id
+     * @param searchTerm text to search in the login or full name, at least three characters long
+     * @return the name and login of the matching tutors, editors and instructors ordered by name, at most 25
+     */
+    public List<UserNameAndLoginDTO> searchAssessorOptions(long courseId, String searchTerm) {
+        if (searchTerm.trim().length() < ASSESSOR_SEARCH_MIN_LENGTH) {
+            throw new BadRequestAlertException("The search term must be at least three characters long", PresentationAssessmentInstance.ENTITY_NAME, "searchTermTooShort");
+        }
+        checkPresentationAssessmentsEnabled(courseId);
+        String searchPattern = "%" + StringUtil.escapeForLikeLowerCase(searchTerm) + "%";
+        return presentationAssessmentInstanceRepository.searchAssessorOptions(courseId, ASSESSOR_ROLES, searchPattern, PageRequest.of(0, ASSESSOR_SEARCH_RESULT_LIMIT));
     }
 
     private PresentationAssessment findByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
@@ -261,8 +288,9 @@ public class PresentationAssessmentService {
         }
         rejectAlreadyAssignedStudents(assessmentId, students);
 
-        List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student))
-                .toList();
+        User assessor = resolveAssessor(courseId, null, dto.assessorLogin());
+        List<PresentationAssessmentInstance> instances = students.stream()
+                .map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, assessor)).toList();
         return presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances);
     }
 
@@ -295,6 +323,32 @@ public class PresentationAssessmentService {
         }
         applyInstanceData(assessment, instance, dto);
         instance.setStudent(student);
+        instance.setAssessor(resolveAssessor(courseId, instance.getAssessor(), dto.assessorLogin()));
+    }
+
+    /**
+     * Editors choose any tutor, editor or instructor of the course as the assessor. A tutor always assesses as themselves and cannot change the assessor of an instance
+     * that already has one. Like the presenter, an unchanged assessor is kept even if they left the course.
+     *
+     * @param courseId        the owning course id
+     * @param currentAssessor the assessor of the instance being updated, or null for a new instance or one without an assessor
+     * @param assessorLogin   the requested assessor login
+     * @return the assessor to store
+     */
+    private User resolveAssessor(long courseId, User currentAssessor, String assessorLogin) {
+        String login = assessorLogin.trim();
+        if (currentAssessor != null && currentAssessor.getLogin().equals(login)) {
+            return currentAssessor;
+        }
+        if (!authorizationCheckService.isAtLeastEditorInCourse(courseId)) {
+            User currentUser = userRepository.getUser();
+            if (currentAssessor != null || !currentUser.getLogin().equals(login)) {
+                throw new AccessForbiddenException("Only editors and instructors can choose the assessor of a presentation");
+            }
+            return currentUser;
+        }
+        return userRepository.findOneByCourseIdAndCourseRolesInAndLogin(courseId, ASSESSOR_ROLES, login).orElseThrow(
+                () -> new BadRequestAlertException("The assessor must be at least a tutor in the course", PresentationAssessmentInstance.ENTITY_NAME, "assessorNotInCourse"));
     }
 
     /**
@@ -331,11 +385,12 @@ public class PresentationAssessmentService {
         instance.setRemark(dto.remark());
     }
 
-    private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student) {
+    private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student, User assessor) {
         PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
         instance.setPresentationAssessment(assessment);
         applyInstanceData(assessment, instance, dto);
         instance.setStudent(student);
+        instance.setAssessor(assessor);
         return instance;
     }
 

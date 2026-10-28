@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { User } from 'app/account/user/user.model';
+import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
 
 export interface PresentationAssessment {
     id?: number;
@@ -16,6 +16,7 @@ export interface PresentationAssessmentInstance {
     presentationDate?: dayjs.Dayjs;
     resultPoints?: number | null;
     student?: Pick<User, 'login' | 'name' | 'firstName' | 'lastName' | 'email'>;
+    assessor?: UserNameAndLoginDTO;
     language?: string;
     mode?: PresentationAssessmentMode;
     location?: string;
@@ -33,6 +34,7 @@ export interface PresentationAssessmentInstanceRequest {
     location?: string;
     meetingLink?: string;
     remark?: string;
+    assessorLogin: string;
 }
 
 export interface PresentationAssessmentInstancesCreate {
@@ -44,6 +46,7 @@ export interface PresentationAssessmentInstancesCreate {
     location?: string;
     meetingLink?: string;
     remark?: string;
+    assessorLogin: string;
 }
 
 export interface PresentationAssessmentStudentRow {

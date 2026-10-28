@@ -89,6 +89,8 @@
         "concurrentModification": "The presentation changed while your update was being checked. Please reload the page and try again.",
         "studentNotInCourse": "The selected user is not a student of this course.",
         "maxPointsBelowExistingResult": "The maximum points cannot be lower than a result that was already entered.",
+        "assessorNotInCourse": "The assessor must be at least a tutor in this course.",
+        "searchTermTooShort": "The search term must be at least three characters long.",
         "maxScoreInvalid": "The maximum points of an exercise must be greater than 0.",
         "resultPointsExceedMaxPoints": "The result points cannot exceed the maximum points.",
         "exerciseNotInCourse": "The linked exercise must belong to this course.",

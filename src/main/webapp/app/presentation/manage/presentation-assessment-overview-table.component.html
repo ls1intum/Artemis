@@ -7,6 +7,7 @@
             <th tumAetUiSortableColumn="presentationDate"><span jhiTranslate="artemisApp.presentationAssessment.date"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
             <th tumAetUiSortableColumn="resultPoints"><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.assessor"></span></th>
             <th></th>
         </tr>
     </thead>
@@ -50,20 +51,30 @@
                         -
                     }
                 </td>
+                <td data-testid="overview-assessor">
+                    @if (row.instance.assessor; as assessor) {
+                        <div class="flex flex-col">
+                            <span>{{ assessor.name }}</span>
+                            <small class="text-muted-color">{{ assessor.login }}</small>
+                        </div>
+                    } @else {
+                        -
+                    }
+                </td>
                 <td>
                     <jhi-presentation-instance-actions [canDelete]="canDelete()" (editRequested)="editInstance.emit(row)" (deleteRequested)="deleteInstance.emit(row)" />
                 </td>
             </tr>
             @if (expanded) {
                 <tr class="presentation-detail-row" [id]="'presentation-overview-detail-' + row.rowKey">
-                    <td colspan="7">
+                    <td colspan="8">
                         <jhi-presentation-assessment-instance-details [instance]="row.instance" [presentationAssessment]="row.presentationAssessment" />
                     </td>
                 </tr>
             }
         } @empty {
             <tr>
-                <td colspan="7" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
+                <td colspan="8" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
             </tr>
         }
     </tbody>

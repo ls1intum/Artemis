@@ -569,6 +569,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> findAllByCourseIdAndRoleAndLoginIn(@Param("courseId") long courseId, @Param("role") CourseRole role, @Param("logins") Set<String> logins);
 
     /**
+     * Finds the non-deleted user with the given login if they have any of the given roles in the course.
+     *
+     * @param courseId the ID of the course
+     * @param roles    the course roles to filter by
+     * @param login    the login of the user
+     * @return the matching user, or empty if they have none of the roles in the course
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role IN :roles
+                AND user.login = :login
+                AND user.deleted = FALSE
+            """)
+    Optional<User> findOneByCourseIdAndCourseRolesInAndLogin(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles, @Param("login") String login);
+
+    /**
      * Finds all non-deleted users enrolled in a course with the given role whose registration number is in the given set.
      *
      * @param courseId            the ID of the course
