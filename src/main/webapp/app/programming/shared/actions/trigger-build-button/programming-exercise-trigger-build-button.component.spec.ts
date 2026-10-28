@@ -9,7 +9,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -23,7 +23,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('TriggerBuildButtonSpec', () => {
     let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
@@ -160,6 +161,39 @@ describe('TriggerBuildButtonSpec', () => {
         fixture.detectChanges();
         triggerButton = getTriggerButton();
         expect(triggerButton).toBeNull();
+    });
+
+    describe('refused triggers', () => {
+        const triggerFailedWithError = (error: HttpErrorResponse) => {
+            const newParticipation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+            fixture.componentRef.setInput('exercise', { id: 6 } as ProgrammingExercise);
+            fixture.componentRef.setInput('participation', newParticipation);
+            fixture.detectChanges();
+            getLatestPendingSubmissionSubject.next({
+                submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+                submission: undefined,
+                participationId: newParticipation.id!,
+            });
+            fixture.detectChanges();
+            triggerFailedBuildSpy.mockReturnValue(throwError(() => error));
+            getTriggerButton().click();
+        };
+
+        it('should not add a generic alert when the server refused because of the build time window, as it explains the reason itself', () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            triggerFailedWithError(new HttpErrorResponse({ status: 400, headers: new HttpHeaders({ 'X-artemisApp-error': 'error.buildOutsideTimeWindow' }) }));
+
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should still show the generic alert for other errors', () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            triggerFailedWithError(new HttpErrorResponse({ status: 500 }));
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.resubmitUnsuccessful');
+        });
     });
 
     describe('build time window', () => {

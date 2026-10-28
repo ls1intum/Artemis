@@ -48,8 +48,10 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -94,6 +96,9 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -428,6 +433,57 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         ProgrammingExercise reloadedExercise = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
         assertThat(reloadedExercise.getAssessmentDueDate().toInstant()).isEqualTo(assessmentDue.toInstant());
         assertThat(reloadedExercise.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).isEqualTo(due.plusHours(1).toInstant());
+    }
+
+    private void storeBuildTimeWindow(ProgrammingExercise programmingExercise, BuildTimeWindow window) {
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(window);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateGroupDueDateBeforeMemberBuildTimeWindowEnd_badRequestLeavesEverythingUnchanged() throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = release.plusDays(6);
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, null, null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        assignToGroup(programmingExercise.getId(), created.id());
+        storeBuildTimeWindow(programmingExercise, new BuildTimeWindow(release.plusDays(1), release.plusDays(5)));
+
+        // the new due date lies before the end of the window of the member, which would stop all builds before the exercise ends
+        UpdateExerciseVariantGroupDTO invalidUpdate = new UpdateExerciseVariantGroupDTO(created.id(), "Programming variants", null, release, null, release.plusDays(3), null, null);
+        request.put(groupsUrl() + "/" + created.id(), invalidUpdate, HttpStatus.BAD_REQUEST);
+
+        ExerciseVariantGroupDTO reloadedGroup = request.get(groupsUrl() + "/" + created.id(), HttpStatus.OK, ExerciseVariantGroupDTO.class);
+        assertThat(reloadedGroup.dueDate().toInstant()).as("the group was not saved before the member was rejected").isEqualTo(due.toInstant());
+        ProgrammingExercise reloadedExercise = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloadedExercise.getDueDate().toInstant()).isEqualTo(due.toInstant());
+        assertThat(programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(programmingExercise.getId()))
+                .isEqualTo(new BuildTimeWindow(release.plusDays(1), release.plusDays(5)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignProgrammingExerciseWithBuildTimeWindowOutsideGroupTimeline_badRequestLeavesExerciseUngrouped() throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = release.plusDays(2);
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, null, null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        ZonedDateTime originalDueDate = programmingExercise.getDueDate().truncatedTo(ChronoUnit.MILLIS);
+        programmingExercise.setDueDate(originalDueDate);
+        exerciseRepository.save(programmingExercise);
+        // the window ends after the due date that the group would impose
+        storeBuildTimeWindow(programmingExercise, new BuildTimeWindow(release, release.plusDays(5)));
+
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/variant-group";
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+
+        ProgrammingExercise reloadedExercise = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloadedExercise.getExerciseVariantGroup()).isNull();
+        assertThat(reloadedExercise.getDueDate().toInstant()).isEqualTo(originalDueDate.toInstant());
     }
 
     @Test

@@ -1,4 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-exercise-trigger-build-button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError } from 'rxjs/operators';
@@ -45,8 +46,11 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
         const triggerAction = this.participationHasLatestSubmissionWithoutResult() ? super.triggerFailed(this.triggerLastGraded()) : super.triggerWithType(SubmissionType.MANUAL);
         triggerAction
             .pipe(
-                catchError(() => {
-                    this.alertService.error('artemisApp.programmingExercise.resubmitUnsuccessful');
+                catchError((error: HttpErrorResponse) => {
+                    // the buttons of the exercise list do not know the window, so the server refuses and explains it, which needs no further alert
+                    if (error?.headers?.get('X-artemisApp-error') !== 'error.buildOutsideTimeWindow') {
+                        this.alertService.error('artemisApp.programmingExercise.resubmitUnsuccessful');
+                    }
                     return of(undefined);
                 }),
             )
