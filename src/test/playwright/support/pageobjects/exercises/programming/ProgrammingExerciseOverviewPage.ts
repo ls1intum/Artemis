@@ -113,9 +113,11 @@ export class ProgrammingExerciseOverviewPage {
         }
     }
 
+    /** Close the modal popover through its keyboard handler; its backdrop covers the trigger while open. */
     async closeCloneMenu() {
-        await this.page.keyboard.press('Escape');
-        await expect(this.getRepositoryActionsDialog()).toBeHidden();
+        const popover = this.getRepositoryActionsDialog();
+        await popover.press('Escape');
+        await expect(popover).toBeHidden();
     }
 
     /**
@@ -157,16 +159,20 @@ export class ProgrammingExerciseOverviewPage {
         }
         const codeButtonLocator = codeButton ?? this.getCodeButton();
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+        const popover = this.getRepositoryActionsDialog();
         const button = this.getCloneUrlButton();
-        if (!(await button.isVisible())) {
+        if (!(await popover.isVisible())) {
             await codeButtonLocator.click();
+            await popover.waitFor({ state: 'visible' });
         }
         try {
             await expect(button).toBeEnabled({ timeout: 30000 });
         } catch {
-            await this.closeCloneMenu();
+            if (await popover.isVisible()) {
+                await this.closeCloneMenu();
+            }
             await codeButtonLocator.click();
-            await this.getRepositoryActionsDialog().waitFor({ state: 'visible' });
+            await popover.waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
         }
         await button.click();

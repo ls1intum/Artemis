@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -112,6 +113,31 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     private Competency competency;
 
     private final String lectureTitle = "Lecture 7349";
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void learningStatisticsCountsOnlyReleasedNonExerciseUnitsAndOwnCompletions() throws Exception {
+        attachmentVideoUnit.setReleaseDate(null);
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        attachmentOfAttachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentRepository.save(attachmentOfAttachmentVideoUnit);
+        var text = lecture1.getLectureUnits().stream().filter(unit -> unit instanceof TextUnit).findFirst().orElseThrow();
+        text.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        lectureUnitRepository.save(text);
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + text.getId() + "/completion?completed=true", null, HttpStatus.OK, null);
+
+        var statistics = request.getList("/api/lecture/courses/" + course1.getId() + "/learning-statistics", HttpStatus.OK, LectureLearningStatisticsDTO.class);
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + text.getId() + "/completion?completed=false", null, HttpStatus.OK, null);
+        assertThat(statistics).noneMatch(row -> row.type().equals("exercise") || row.type().equals("attachment"));
+        assertThat(statistics.stream().filter(row -> row.type().equals("text")).mapToLong(row -> row.completed()).sum()).isEqualTo(1);
+        assertThat(statistics.stream().mapToLong(row -> row.total()).sum()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void learningStatisticsRejectsStudentsOutsideTheCourse() throws Exception {
+        request.getList("/api/lecture/courses/" + course1.getId() + "/learning-statistics", HttpStatus.FORBIDDEN, LectureLearningStatisticsDTO.class);
+    }
 
     @BeforeEach
     void initTestCase() throws Exception {
