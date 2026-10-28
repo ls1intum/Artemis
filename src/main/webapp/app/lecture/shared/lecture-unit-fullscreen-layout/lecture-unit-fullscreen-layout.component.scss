@@ -150,12 +150,12 @@
     // Horizontal layout (side-by-side) => vertical divider => col-resize and vertical grip bars.
     &.p-splitter-horizontal {
         > .p-splitter-gutter {
-            min-width: 12px;
+            min-width: var(--spacing-divider);
             cursor: col-resize;
 
             > .p-splitter-gutter-handle {
                 flex-direction: row;
-                width: 12px;
+                width: var(--spacing-divider);
                 height: 12px;
 
                 &::before,
@@ -170,13 +170,13 @@
     // Vertical layout (stacked) => horizontal divider => row-resize and horizontal grip bars.
     &.p-splitter-vertical {
         > .p-splitter-gutter {
-            min-height: 12px;
+            min-height: var(--spacing-divider);
             cursor: row-resize;
 
             > .p-splitter-gutter-handle {
                 flex-direction: column;
                 width: 12px;
-                height: 12px;
+                height: var(--spacing-divider);
 
                 &::before,
                 &::after {
