@@ -80,7 +80,6 @@ import { KeyValuePipe } from '@angular/common';
                                     formControlName="exceedingPenalty"
                                     name="submissionLimitExceededPenalty"
                                     inputId="field_submissionLimitExceededPenalty"
-                                    (input)="updateExceedingPenalty()"
                                 />
                             </div>
                             @for (e of exceedingPenaltyControl.errors! | keyvalue; track e) {
@@ -181,6 +180,20 @@ export class SubmissionPolicyUpdateComponent {
                 }
             });
         });
+        effect((onCleanup) => {
+            const form = this.policyForm();
+            if (!form) {
+                return;
+            }
+            // Keyboard stepping and other CVA changes update the control without a native input event.
+            const subscription = form.get('exceedingPenalty')!.valueChanges.subscribe((value: number | undefined) => {
+                const policy = this.programmingExercise()?.submissionPolicy;
+                if (policy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
+                    policy.exceedingPenalty = value ?? undefined;
+                }
+            });
+            onCleanup(() => subscription.unsubscribe());
+        });
     }
 
     /**
@@ -242,8 +255,8 @@ export class SubmissionPolicyUpdateComponent {
 
     /**
      * A rejected emission still swaps the object behind programmingExercise(), and the parent saves that
-     * object. The controls only write into the model on (input) events, so the preserved on-screen state
-     * has to be copied into the incoming exercise here or saving would silently persist the stale values.
+     * object. Copy the preserved on-screen state into the incoming exercise here so saving cannot persist
+     * stale values before the user edits the controls again.
      */
     private syncFormIntoExercise(programmingExercise: ProgrammingExercise): void {
         if (!this.form) {
@@ -372,13 +385,5 @@ export class SubmissionPolicyUpdateComponent {
      */
     updateSubmissionLimit() {
         this.programmingExercise()!.submissionPolicy!.submissionLimit = this.submissionLimitControl.value as number;
-    }
-
-    /**
-     * Ensures synchronization between the submission policy model and the input controller, since
-     * using ngModel with reactive forms has been deprecated in Angular v6
-     */
-    updateExceedingPenalty() {
-        this.programmingExercise()!.submissionPolicy!.exceedingPenalty = this.exceedingPenaltyControl.value as number;
     }
 }

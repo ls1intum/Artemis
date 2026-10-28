@@ -36,7 +36,7 @@ export class IncludedInScoreBadgeComponent {
     });
 
     readonly translatedEnum = computed<string>(() => this.translateBadge(''));
-    readonly translatedTooltip = computed<string>(() => this.translateBadge('TumAetUiTooltipDirective'));
+    readonly translatedTooltip = computed<string>(() => this.translateBadge('Tooltip'));
 
     private translateBadge(suffix: string): string {
         this.currentLang(); // register the language dependency so the label re-translates on a language switch

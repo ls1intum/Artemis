@@ -1,5 +1,5 @@
 <ng-template #instructionsSection>
-    <section class="assessment-workspace__section">
+    <section class="assessment-workspace__section" data-testid="assessment-workspace-instructions">
         <header class="assessment-workspace__section-header">
             <fa-icon [icon]="faInstructions" aria-hidden="true" />
             <h2 jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></h2>
@@ -12,6 +12,7 @@
 
 <tumaet-ui-splitter
     class="assessment-workspace assessment-workspace__primary-split"
+    data-testid="assessment-workspace"
     [class.assessment-workspace__split--vertical]="primaryVertical()"
     [layout]="primaryLayout()"
     [panelSizes]="primarySizes()"
@@ -19,7 +20,7 @@
     [stateKey]="storageKey()"
 >
     <ng-template #panel>
-        <div class="assessment-workspace__canvas">
+        <div class="assessment-workspace__canvas" data-testid="assessment-workspace-canvas">
             <ng-content select="[assessmentWorkspaceCanvas]" />
         </div>
     </ng-template>
@@ -38,7 +39,7 @@
                     <ng-container [ngTemplateOutlet]="instructionsSection" />
                 </ng-template>
                 <ng-template #panel>
-                    <section class="assessment-workspace__section">
+                    <section class="assessment-workspace__section" data-testid="assessment-workspace-details">
                         <header class="assessment-workspace__section-header">
                             <fa-icon [icon]="faDetails" aria-hidden="true" />
                             <h2 [jhiTranslate]="detailsLabelKey()"></h2>

@@ -133,6 +133,22 @@ describe('Submission Policy Update Form Component', () => {
         expect(component.exceedingPenaltyControl.valid).toBe(true);
     });
 
+    it.each([
+        { key: 'ArrowUp', expectedPenalty: 3.5 },
+        { key: 'ArrowDown', expectedPenalty: 1.5 },
+    ])('keeps the saved policy model in sync when $key steps the penalty', async ({ key, expectedPenalty }) => {
+        programmingExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, submissionLimit: 5, exceedingPenalty: 2.5 };
+        await detectChanges();
+        const input = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty') as HTMLInputElement;
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+        await detectChanges();
+
+        expect(component.exceedingPenaltyControl.value).toBe(expectedPenalty);
+        expect(programmingExercise.submissionPolicy.exceedingPenalty).toBe(expectedPenalty);
+        expect(input.value).toBe(String(expectedPenalty));
+    });
+
     it('should display correct input fields when penalty policy (lock repo) is already set', async () => {
         programmingExercise.submissionPolicy = lockRepositoryPolicy;
         await detectChanges();

@@ -1,4 +1,4 @@
-import { TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { Component, inject, input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +24,7 @@ import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submi
     selector: 'jhi-example-submission-import',
     templateUrl: './example-submission-import.component.html',
     imports: [
+        TumAetUiButtonDirective,
         TumAetUiTooltipDirective,
         TumAetUiPaginatorComponent,
         TumAetUiInputDirective,

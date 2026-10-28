@@ -1,4 +1,3 @@
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, effect, input, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -16,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-assessment-warning',
     templateUrl: './assessment-warning.component.html',
-    imports: [FaIconComponent, TranslateDirective, TumAetUiTooltipDirective],
+    imports: [FaIconComponent, TranslateDirective],
 })
 export class AssessmentWarningComponent {
     readonly exercise = input.required<Exercise>();

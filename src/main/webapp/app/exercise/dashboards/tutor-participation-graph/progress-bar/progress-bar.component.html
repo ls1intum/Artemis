@@ -1,8 +1,11 @@
 <div class="relative" [tumAetUiTooltip]="tooltip()">
     <tumaet-ui-progress-bar
+        [ariaLabel]="tooltip()"
         [value]="normalizedPercentage()"
         [showValue]="false"
         [severity]="normalizedPercentage() < 50 ? 'danger' : normalizedPercentage() < 100 ? 'warn' : 'success'"
     />
-    <span class="absolute inset-0 flex items-center justify-center text-sm font-medium">{{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})</span>
+    <span class="absolute inset-0 flex items-center justify-center text-sm font-medium">
+        <span class="rounded-sm bg-surface-raised px-1 text-text">{{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})</span>
+    </span>
 </div>
