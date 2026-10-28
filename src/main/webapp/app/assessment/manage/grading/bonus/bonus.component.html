@@ -40,6 +40,8 @@
                 <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusSource.helpText' }" />
                 <tumaet-ui-select
                     class="mt-1"
+                    data-testid="bonus-source-grading-scale"
+                    inputId="bonus-source-grading-scale"
                     [options]="sourceGradingScaleOptions()"
                     optionLabel="label"
                     optionValue="value"

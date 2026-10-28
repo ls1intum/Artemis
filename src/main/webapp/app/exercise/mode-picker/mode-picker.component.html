@@ -4,6 +4,7 @@
             tumAetUiButton
             type="button"
             [severity]="value() === option.value ? (option.severity ?? 'primary') : 'secondary'"
+            [variant]="value() === option.value ? 'solid' : 'outlined'"
             [disabled]="disabled()"
             [attr.aria-pressed]="value() === option.value"
             (click)="setMode(option.value)"

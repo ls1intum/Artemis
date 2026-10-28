@@ -127,7 +127,7 @@
                         <div class="team-list-item-index">
                             {{ i + 1 }}
                         </div>
-                        <div class="border border-border px-3! py-2 flex items-center" [class.has-error]="hasConflictingTeam(student)">
+                        <div class="team-list-item border border-border px-3! py-2 flex items-center" [class.has-error]="hasConflictingTeam(student)">
                             <div class="student-name">{{ student.name }} ({{ student.login }})</div>
                             <button
                                 tumAetUiButton
@@ -152,7 +152,7 @@
                 @if (pendingTeam.students && pendingTeam.students.length === 0) {
                     <li class="team-list-item-container flex items-center">
                         <div class="team-list-item-index text-text-secondary">1</div>
-                        <div class="border border-border px-3! py-2 flex items-center">
+                        <div class="team-list-item border border-border px-3! py-2 flex items-center">
                             <div class="text-text-secondary" jhiTranslate="artemisApp.team.noStudentsAddedYet"></div>
                         </div>
                     </li>

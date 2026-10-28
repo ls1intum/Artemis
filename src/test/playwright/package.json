@@ -40,7 +40,7 @@
         "merge-junit-reports": "junit-merge ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml -o ./test-reports/results.xml",
         "merge-coverage-reports": "node ./merge-coverage-reports.mjs",
         "update": "ncu -i --format group",
-        "typecheck": "tsc -p tsconfig.json",
+        "typecheck": "pnpm --dir ../../.. run tum-aet-ui:build && tsc -p tsconfig.json",
         "lint": "eslint .",
         "lint:fix": "eslint --fix ."
     }

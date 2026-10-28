@@ -2,11 +2,16 @@
     <div class="flex items-center justify-between gap-3 border-b border-border p-4">
         <h4 class="text-lg font-semibold" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmissionLabel"></h4>
         <button
+            tumAetUiButton
             type="button"
-            class="inline-flex items-center justify-center rounded-md p-2 hover:bg-surface-hover"
+            variant="text"
+            severity="secondary"
+            data-testid="example-submission-import-close"
             [attr.aria-label]="'entity.action.close' | artemisTranslate"
             (click)="dismiss()"
-        ></button>
+        >
+            <span jhiTranslate="entity.action.close"></span>
+        </button>
     </div>
     @if (exercise(); as exercise) {
         <div class="p-4">

@@ -1,7 +1,7 @@
 <h6>
     @if (showWarning()) {
         <div class="feedback-panel-header border-b border-border bg-surface-hover px-6! py-4!">
-            <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-state-warning" tumAetUiTooltipPlacement="bottom" />
+            <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-state-warning" />
             @if (isBeforeExerciseDueDate()) {
                 <span jhiTranslate="artemisApp.assessment.dashboard.warning"></span>
             }

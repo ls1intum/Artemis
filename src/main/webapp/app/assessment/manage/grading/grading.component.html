@@ -137,6 +137,7 @@
             @if (gradingScale.gradeType === GradeType.GRADE) {
                 <span class="colon-suffix shrink-0" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade"></span>
                 <tumaet-ui-select
+                    data-testid="grading-first-passing-grade"
                     [options]="gradeStepsWithNonemptyNames()"
                     optionLabel="gradeName"
                     optionValue="gradeName"

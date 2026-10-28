@@ -52,6 +52,10 @@ describe('ExampleSubmissionImportComponent', () => {
             ],
         }).compileComponents();
 
+        const translateService = TestBed.inject(TranslateService);
+        vi.spyOn(translateService, 'get').mockImplementation((key) => of(key === 'entity.action.close' ? 'Close' : key.toString()));
+        vi.spyOn(translateService, 'instant').mockImplementation((key) => (key === 'entity.action.close' ? 'Close' : key.toString()));
+
         fixture = TestBed.createComponent(ExampleSubmissionImportComponent);
         component = fixture.componentInstance;
         pagingService = TestBed.inject(ExampleSubmissionImportPagingService);
@@ -109,8 +113,12 @@ describe('ExampleSubmissionImportComponent', () => {
         expect(component.content().resultsOnPage[0].submissionSize).toBe(2);
     });
 
-    it('should close the dialog on dismiss', () => {
-        component.dismiss();
+    it('renders a visible translated Close button that closes the dialog', () => {
+        const closeButton = fixture.nativeElement.querySelector('button[aria-label="Close"]') as HTMLButtonElement;
+
+        expect(closeButton.textContent?.trim()).toBe('Close');
+        expect(closeButton.dataset.testid).toBe('example-submission-import-close');
+        closeButton.click();
 
         expect(dialogRef.close).toHaveBeenCalledOnce();
     });
