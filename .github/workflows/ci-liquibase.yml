@@ -84,3 +84,5 @@ jobs:
         run: python3 supporting_scripts/liquibase/verify_schema.py --database ${{ matrix.database }}
       - name: Reset-key migration with existing data
         run: python3 supporting_scripts/liquibase/test_reset_key_migration.py --database ${{ matrix.database }}
+      - name: Memiris cleanup with existing data
+        run: python3 supporting_scripts/liquibase/test_memiris_cleanup_migration.py --database ${{ matrix.database }}

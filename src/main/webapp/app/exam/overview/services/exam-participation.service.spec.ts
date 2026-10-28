@@ -6,7 +6,6 @@ import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +26,6 @@ describe('ExamParticipationService', () => {
     let httpMock: HttpTestingController;
     let exam: Exam;
     let studentExam: StudentExam;
-    let quizSubmission: QuizSubmission;
     let localStorageService: LocalStorageService;
 
     beforeEach(() => {
@@ -42,7 +40,6 @@ describe('ExamParticipationService', () => {
         exam = new Exam();
         studentExam = new StudentExam();
         studentExam.exercises = [];
-        quizSubmission = new QuizSubmission();
     });
 
     it('should load a StudentExam with exercises for conduction', async () => {
@@ -271,18 +268,6 @@ describe('ExamParticipationService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(null);
         expect(received).toBeNull();
-    });
-
-    it('should update a QuizSubmission', async () => {
-        const returnedFromService = Object.assign({}, quizSubmission);
-        const expected = Object.assign({}, returnedFromService);
-        service
-            .updateQuizSubmission(1, expected)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(expected));
-
-        const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(returnedFromService);
     });
 
     it('should load testRun with exercises for conduction', async () => {

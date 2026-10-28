@@ -38,6 +38,10 @@ export class MockCourseConversationsService {
 
     setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {}
 
+    getCachedConversation(conversationId: number): ConversationDTO | undefined {
+        return undefined;
+    }
+
     setConversationViewOpen(isOpen: boolean): void {}
 
     isConversationMarkedAsUnread(conversationId: number | undefined): boolean {

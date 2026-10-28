@@ -7,7 +7,6 @@ import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.mode
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
@@ -350,17 +349,6 @@ export class ExamParticipationService {
      */
     public saveExamSessionTokenToSessionStorage(examSessionToken: string): void {
         this.sessionStorageService.store('ExamSessionToken', examSessionToken);
-    }
-
-    /**
-     * Update a quizSubmission
-     *
-     * @param exerciseId
-     * @param quizSubmission
-     */
-    public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
-        const url = `api/quiz/exercises/${exerciseId}/submissions/exam`;
-        return this.httpClient.put<QuizSubmission>(url, quizSubmission);
     }
 
     public setLastSaveFailed(saveFailed: boolean, courseId: number, examId: number): void {

@@ -113,9 +113,7 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
      */
     public static ImportProgrammingExerciseRequestDTO of(ProgrammingExercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfig) {
         // Every collection below is lazy: a detached exercise carries an uninitialized handle the request must not read.
-        List<GradingCriterionDTO> gradingCriteria = Hibernate.isInitialized(exercise.getGradingCriteria())
-                ? exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList()
-                : null;
+        List<GradingCriterionDTO> gradingCriteria = Hibernate.isInitialized(exercise.getGradingCriteria()) ? GradingCriterionDTO.ofAll(exercise.getGradingCriteria()) : null;
         Set<CompetencyLinkDTO> competencyLinks = Hibernate.isInitialized(exercise.getCompetencyLinks())
                 ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
                 : null;
@@ -179,8 +177,7 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         // A list, not a set, on the wire: the export nulls the criterion and instruction ids, and GradingCriterionDTO
         // is a record with value equality, so a set would merge two criteria that only differ by id and drop a rubric
         // row. The entities are distinct even without ids, so they only go into a set once they are built.
-        exercise.setGradingCriteria(
-                gradingCriteria == null ? new HashSet<>() : gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toCollection(HashSet::new)));
+        exercise.setGradingCriteria(GradingCriterionDTO.toEntities(gradingCriteria));
         exercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         if (auxiliaryRepositories != null) {
             List<AuxiliaryRepository> repositories = auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::toEntity).toList();

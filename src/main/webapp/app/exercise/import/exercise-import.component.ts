@@ -1,4 +1,6 @@
-import { Component, Injector, OnInit, computed, inject, input, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, DestroyRef, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
@@ -6,7 +8,7 @@ import { ModelingExercisePagingService } from 'app/modeling/manage/services/mode
 import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
-import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
+import { PagingService } from 'app/exercise/services/paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
 import { ImportComponent } from 'app/shared-ui/import/import.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -19,10 +21,23 @@ import { PaginatorModule } from 'primeng/paginator';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { faArrowLeft, faEye } from '@fortawesome/free-solid-svg-icons';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 export interface ExerciseImportDialogData {
     exerciseType: ExerciseType;
     programmingLanguage?: ProgrammingLanguage;
+}
+
+/** The row the user asked a preview for, together with the complete quiz loaded for it. */
+interface ExerciseImportPreview {
+    exercise: Exercise;
+    quiz: QuizExercise;
 }
 
 const DEFAULT_SORT_COLUMN = 'ID';
@@ -41,10 +56,19 @@ const DEFAULT_SORT_COLUMN = 'ID';
         PaginatorModule,
         ExerciseCourseTitlePipe,
         ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+        TumAetUiButtonComponent,
+        TumAetUiTooltipDirective,
+        QuizQuestionPreviewComponent,
     ],
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     private injector = inject(Injector);
+    private quizExerciseService = inject(QuizExerciseService);
+    private alertService = inject(AlertService);
+    private previewDestroyRef = inject(DestroyRef);
+    private host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private document = inject(DOCUMENT);
     readonly ExerciseType = ExerciseType;
 
     exerciseType = input<ExerciseType | undefined>();
@@ -63,6 +87,19 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     readonly isCourseFilter = signal(true);
     readonly isExamFilter = signal(true);
 
+    protected readonly faEye = faEye;
+    protected readonly faArrowLeft = faArrowLeft;
+    /** A preview shows the questions of a quiz, which the other exercise types do not have. */
+    protected readonly isPreviewAvailable = computed(() => this.selectedExerciseType() === ExerciseType.QUIZ);
+    /** The quiz shown instead of the list, if any. */
+    readonly preview = signal<ExerciseImportPreview | undefined>(undefined);
+    /** The id of the exercise whose quiz is currently loaded for the preview. */
+    readonly previewLoadingId = signal<number | undefined>(undefined);
+    /** The button that opened the preview, which gets the focus back when the preview is closed. */
+    private previewTrigger?: HTMLElement;
+    private readonly previewHeading = viewChild('previewHeading', { read: ElementRef<HTMLElement> });
+    protected readonly previewTotalPoints = computed(() => (this.preview()?.quiz.quizQuestions ?? []).reduce((total, question) => total + (question.points ?? 0), 0));
+
     titleKey?: string;
 
     constructor() {
@@ -70,6 +107,12 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         // This gets determined based on the exercise type, which is not set when invoking the constructor
         // Therefore we temporally use this empty paging service which directly gets overwritten in ngOnInit().
         super(undefined);
+
+        // Escape closes the dialog that hosts this component, whichever of its controls has the focus. While the preview is shown,
+        // it leads back to the list instead. The capture phase of the document sees the key before the handler of the dialog does.
+        const onKeydown = (event: KeyboardEvent) => this.onPreviewEscape(event);
+        this.document.addEventListener('keydown', onKeydown, true);
+        this.previewDestroyRef.onDestroy(() => this.document.removeEventListener('keydown', onKeydown, true));
     }
 
     override ngOnInit(): void {
@@ -90,7 +133,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         this.search.next();
     }
 
-    private getPagingService(exerciseType: ExerciseType, programmingLanguage?: ProgrammingLanguage): ExercisePagingService<Exercise> {
+    private getPagingService(exerciseType: ExerciseType, programmingLanguage?: ProgrammingLanguage): PagingService<Exercise> {
         switch (exerciseType) {
             case ExerciseType.MODELING:
                 return this.injector.get(ModelingExercisePagingService);
@@ -148,6 +191,88 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         if (this.sortedColumn === 'COURSE_TITLE' || this.sortedColumn === 'EXAM_TITLE') {
             this.sortedColumn = DEFAULT_SORT_COLUMN;
         }
+    }
+
+    /**
+     * Loads the complete quiz of the given row, which the paged search does not contain, and shows it instead of the list.
+     * Only one quiz is loaded at a time.
+     *
+     * @param exercise the row the user wants to preview
+     * @param event    the click on the preview button of the row, whose button gets the focus back when the preview is closed
+     */
+    openPreview(exercise: Exercise, event?: MouseEvent): void {
+        if (exercise.id === undefined || this.previewLoadingId() !== undefined) {
+            return;
+        }
+        this.previewTrigger = event?.currentTarget instanceof HTMLElement ? event.currentTarget : undefined;
+        this.previewLoadingId.set(exercise.id);
+        this.quizExerciseService
+            .find(exercise.id)
+            .pipe(takeUntilDestroyed(this.previewDestroyRef))
+            .subscribe({
+                next: (quiz) => {
+                    this.previewLoadingId.set(undefined);
+                    this.preview.set({ exercise, quiz });
+                    // The heading exists after the next render. Moving the focus there keeps it from staying on the now hidden row.
+                    afterNextRender(() => this.previewHeading()?.nativeElement.focus(), { injector: this.injector });
+                },
+                error: () => {
+                    this.previewLoadingId.set(undefined);
+                    this.alertService.error('artemisApp.exercise.import.preview.loadFailed');
+                    // The button was disabled while loading, which moved the focus away from it.
+                    this.restoreFocusToList();
+                },
+            });
+    }
+
+    /**
+     * Shows the list again and gives the focus back to the button that opened the preview.
+     */
+    protected closePreview(): void {
+        this.preview.set(undefined);
+        // The list is only visible after the next render, and an element of a hidden list cannot take the focus.
+        this.restoreFocusToList();
+    }
+
+    /**
+     * Keeps Escape from closing the import dialog while the preview is shown, and shows the list instead.
+     * Without a preview, Escape is left to the dialog that hosts this component.
+     *
+     * @param event the keydown event, which only matters if it is the Escape key
+     */
+    private onPreviewEscape(event: KeyboardEvent): void {
+        if (!this.preview() || event.key !== 'Escape' || event.isComposing) {
+            return;
+        }
+        event.stopPropagation();
+        this.closePreview();
+    }
+
+    /**
+     * Focuses the preview button that was clicked last. The row of that button is gone if the list has changed in the meantime,
+     * so the first preview button of the list takes the focus then.
+     */
+    private restoreFocusToList(): void {
+        const trigger = this.previewTrigger;
+        this.previewTrigger = undefined;
+        afterNextRender(
+            () => {
+                const target = trigger?.isConnected ? trigger : this.host.nativeElement.querySelector<HTMLElement>('[data-testid^="preview-exercise-"] button');
+                target?.focus();
+            },
+            { injector: this.injector },
+        );
+    }
+
+    /**
+     * Imports the previewed exercise, as if the user had pressed the import button of its row.
+     */
+    importPreviewed(): void {
+        const preview = this.preview();
+        if (!preview) {
+            return;
+        }
+        this.selectImport(preview.exercise);
     }
 
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {

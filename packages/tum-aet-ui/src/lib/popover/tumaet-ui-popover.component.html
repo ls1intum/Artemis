@@ -1,6 +1,7 @@
 <ng-template #panel>
     <div
-        class="tumaet-ui-popover-panel tumaet:rounded-md tumaet:border tumaet:border-border tumaet:bg-overlay-background tumaet:p-3 tumaet:text-text tumaet:shadow-lg"
+        class="tumaet-ui-popover-panel tumaet:rounded-md tumaet:border tumaet:border-border tumaet:bg-overlay-background tumaet:text-text tumaet:shadow-lg"
+        [class.tumaet:p-3]="padding() === 'default'"
         role="dialog"
         aria-modal="true"
         [attr.aria-label]="ariaLabel()"

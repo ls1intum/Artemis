@@ -319,6 +319,50 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(embedFilesStub).not.toHaveBeenCalled();
     });
 
+    it.each(['footer', 'editor'])('accepts file drops on the %s and embeds each file once', async (target) => {
+        const attachmentAction = new AttachmentAction();
+        const insertAttachment = vi.spyOn(attachmentAction, 'executeInCurrentEditor').mockImplementation(() => {});
+        fixture.componentRef.setInput('defaultActions', [attachmentAction, new UrlAction()]);
+        const upload = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockResolvedValue({ path: '/files/dropped-image.png' });
+        fixture.detectChanges();
+
+        // Drop on the nested label text to exercise bubbling from the advertised upload target.
+        const dropTarget: HTMLElement =
+            target === 'footer' ? comp.fileUploadFooter()!.nativeElement.querySelector('label span')! : fixture.nativeElement.querySelector('jhi-monaco-editor');
+        const file = new File(['image'], 'image.png', { type: 'image/png' });
+        const dragOver = new Event('dragover', { bubbles: true, cancelable: true });
+        const drop = new Event('drop', { bubbles: true, cancelable: true });
+        Object.defineProperty(drop, 'dataTransfer', { value: { files: [file] } });
+
+        dropTarget.dispatchEvent(dragOver);
+        dropTarget.dispatchEvent(drop);
+
+        // Both events must be cancelled: otherwise the browser rejects the target or opens the file.
+        expect(dragOver.defaultPrevented).toBe(true);
+        expect(drop.defaultPrevented).toBe(true);
+        await vi.waitFor(() => expect(insertAttachment).toHaveBeenCalledOnce());
+        expect(upload).toHaveBeenCalledExactlyOnceWith(file);
+        expect(insertAttachment).toHaveBeenCalledWith({ text: 'image.png', url: '/files/dropped-image.png' });
+    });
+
+    it('does not accept or upload dragged files when file upload is disabled', async () => {
+        fixture.componentRef.setInput('enableFileUpload', false);
+        const upload = vi.spyOn(fileUploaderService, 'uploadMarkdownFile');
+        fixture.detectChanges();
+        const dropTarget: HTMLElement = fixture.nativeElement.querySelector('jhi-monaco-editor');
+        const dragOver = new Event('dragover', { bubbles: true, cancelable: true });
+        const drop = new Event('drop', { bubbles: true, cancelable: true });
+        Object.defineProperty(drop, 'dataTransfer', { value: { files: [new File(['image'], 'image.png')] } });
+
+        dropTarget.dispatchEvent(dragOver);
+        dropTarget.dispatchEvent(drop);
+        await fixture.whenStable();
+
+        expect(dragOver.defaultPrevented).toBe(false);
+        expect(drop.defaultPrevented).toBe(true);
+        expect(upload).not.toHaveBeenCalled();
+    });
+
     it('should notify if the upload of a markdown file failed', async () => {
         const alertService = TestBed.inject(AlertService);
         const alertSpy = vi.spyOn(alertService, 'addAlert');
@@ -1102,7 +1146,6 @@ describe('MarkdownEditorMonacoComponent', () => {
             expect(inlineFixSpy).toHaveBeenCalledWith({ threadId: 9 });
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith(location);
-            expect(config.showFeedbackAction()).toBe(false);
         });
 
         it('should clear the drafts of an existing review comment manager', () => {

@@ -21,7 +21,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { convertTutorialGroupSummaryArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
@@ -145,7 +145,7 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     private loadAndSetTutorialGroups(courseId: number) {
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(courseId)
-            .pipe(map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)))
+            .pipe(map((tutorialGroups) => convertTutorialGroupSummaryArrayDatesFromServer(tutorialGroups)))
             .subscribe({
                 next: (tutorialGroups) => {
                     this.tutorialGroups.set(tutorialGroups);
@@ -206,13 +206,15 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     }
 
     private createAccordionGroups(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]): AccordionGroups {
+        // The sidebar renders the sections in key order. The lessons come first as they are opened far more often
+        // than the group overview, which would otherwise push them below a long list of groups.
         const accordionGroups: AccordionGroups = {
-            allGroups: { entityData: [] },
-            registeredGroups: { entityData: [] },
-            furtherGroups: { entityData: [] },
             allTutorialLectures: { entityData: [] },
             currentTutorialLecture: { entityData: [] },
             furtherTutorialLectures: { entityData: [] },
+            allGroups: { entityData: [] },
+            registeredGroups: { entityData: [] },
+            furtherGroups: { entityData: [] },
         };
         let tutorialGroupCategory: TutorialGroupCategory;
 

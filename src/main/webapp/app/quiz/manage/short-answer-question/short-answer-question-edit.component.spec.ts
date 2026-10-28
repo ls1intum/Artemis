@@ -1,3 +1,4 @@
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApplicationRef } from '@angular/core';
@@ -305,6 +306,15 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.shortAnswerQuestion.text).toEqual(question.text);
 
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should take points with a decimal separator and cut off the fraction after three digits', () => {
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
+
+        typeIntoInputNumber(input, '5.5555');
+
+        expect(input.value).toBe('5.555');
+        expect(component.shortAnswerQuestion.points).toBe(5.555);
     });
 
     describe('telling the parent when validity changes', () => {
