@@ -396,8 +396,9 @@ public final class SecurityPolicyRepositoryFiles {
     private static List<Path> javaFiles(Path repositoryRoot) {
         try (Stream<Path> files = Files.walk(repositoryRoot)) {
             Predicate<String> isFile = relativePath -> Files.isRegularFile(repositoryRoot.resolve(relativePath), LinkOption.NOFOLLOW_LINKS);
-            return files.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)
-                    && isJavaSourcePath(repositoryRoot.relativize(path).toString().replace('\\', '/'), isFile)).sorted().toList();
+            return files
+                    .filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) && isJavaSourcePath(repositoryRoot.relativize(path).toString().replace('\\', '/'), isFile))
+                    .sorted().toList();
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
