@@ -46,7 +46,8 @@
 
 .collapsed-instructions {
     width: 50px;
-    height: 170px;
+    height: max-content;
+    min-height: 170px;
     justify-content: space-between;
     flex-flow: column nowrap;
     margin-left: 15px;
@@ -54,6 +55,7 @@
 
     span {
         writing-mode: vertical-rl;
+        white-space: nowrap;
         margin: auto;
     }
 

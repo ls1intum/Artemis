@@ -123,14 +123,12 @@ export class TeamParticipationTableComponent implements OnInit {
                 : [];
 
         return [
-            { field: 'title', headerKey: 'artemisApp.exercise.exercise', sort: true, width: '12rem', frozen: true, alignFrozen: 'left', templateRef: this.titleTemplate() },
+            { field: 'title', headerKey: 'artemisApp.exercise.exercise', sort: true, width: '12rem', templateRef: this.titleTemplate() },
             {
                 field: 'releaseDate',
                 headerKey: 'artemisApp.exercise.releaseDate',
                 sort: true,
                 width: '10rem',
-                frozen: true,
-                alignFrozen: 'left',
                 templateRef: this.releaseDateTemplate(),
             },
             {
@@ -138,11 +136,9 @@ export class TeamParticipationTableComponent implements OnInit {
                 headerKey: 'artemisApp.exercise.dueDate',
                 sort: true,
                 width: '10rem',
-                frozen: true,
-                alignFrozen: 'left',
                 templateRef: this.dueDateTemplate(),
             },
-            { header: '', width: '8rem', frozen: true, alignFrozen: 'left', templateRef: this.viewTemplate() },
+            { header: '', width: '8rem', templateRef: this.viewTemplate() },
             ...participationCol,
             {
                 field: 'participation.initializationDate',

@@ -2065,6 +2065,29 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(commitMessage));
     }
 
+    @ParameterizedTest
+    @CsvSource({ "tutor1,OK", "tutor2,FORBIDDEN" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void retrieveCommitHistoryForAssessedTeam(String ownerLogin, HttpStatus expectedStatus) throws Exception {
+        var result = createResultForParticipationPrivacyTest(true);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        resultRepository.save(result);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        var team = participation.getTeam().orElseThrow();
+        team.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + ownerLogin));
+        teamRepository.save(team);
+        String commitMessage = "Assessed team commit";
+        commitToParticipationRepository(participation, Map.of("src/Team.java", "class Team {}"), commitMessage);
+
+        var response = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results");
+        assertNestedParticipantIdentity(response, participation, true, expectedStatus == HttpStatus.OK);
+        var commits = request.getList(participationsBaseUrl + participation.getId() + "/commit-history", expectedStatus, CommitInfoDTO.class);
+        if (expectedStatus == HttpStatus.OK) {
+            assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(commitMessage));
+        }
+    }
+
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
