@@ -258,7 +258,7 @@
         <comment>A Likert scale has five or seven points; refuse any other number, six included.</comment>
         <!--
             MetisExerciseConfig states the same rule for Bean Validation, but nothing that writes this row runs it in
-            production: the row is inserted with the column defaults by a native statement, settings change it with
+            production: the row is inserted with the column defaults by a JPQL insert, settings change it with
             modifying queries, and the server disables validation on persist (jakarta.persistence.validation.mode none).
             The check is evaluated on insert and update only, on a column of the row being written. Liquibase's
             addCheckConstraint is a Pro change type, so the DDL is raw SQL; the statement is the same on every engine.
