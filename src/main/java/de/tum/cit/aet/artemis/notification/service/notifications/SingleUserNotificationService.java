@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
@@ -27,6 +26,7 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseA
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewCpcPlagiarismCaseNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPlagiarismCaseNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.PlagiarismCaseVerdictNotification;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
@@ -37,18 +37,15 @@ public class SingleUserNotificationService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final UserRepository userRepository;
-
     private final ConversationService conversationService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     private final CourseNotificationService courseNotificationService;
 
-    public SingleUserNotificationService(StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, ConversationService conversationService,
+    public SingleUserNotificationService(StudentParticipationRepository studentParticipationRepository, ConversationService conversationService,
             AuthorizationCheckService authorizationCheckService, CourseNotificationService courseNotificationService) {
         this.studentParticipationRepository = studentParticipationRepository;
-        this.userRepository = userRepository;
         this.conversationService = conversationService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseNotificationService = courseNotificationService;
@@ -66,9 +63,8 @@ public class SingleUserNotificationService {
             return;
         }
 
-        // The dispatcher needs user delivery fields, but none of their entity associations.
-        userRepository.findAllByIdIn(recipientsByUserId.keySet())
-                .forEach(recipient -> sendAssessmentNotification(exercise, recipient, recipientsByUserId.get(recipient.getId()).score()));
+        recipientsByUserId.values().forEach(recipient -> sendAssessmentNotification(exercise, new CourseNotificationRecipientDTO(recipient.userId(), recipient.login(),
+                recipient.email(), recipient.langKey(), recipient.firstName(), recipient.lastName(), recipient.testUser()), recipient.score()));
     }
 
     /**
@@ -87,16 +83,16 @@ public class SingleUserNotificationService {
             return;
         }
 
-        sendAssessmentNotification(exercise, recipient, studentParticipation.get().findLatestResult().getScore());
+        sendAssessmentNotification(exercise, CourseNotificationRecipientDTO.from(recipient), studentParticipation.get().findLatestResult().getScore());
     }
 
-    private void sendAssessmentNotification(Exercise exercise, User recipient, Double score) {
+    private void sendAssessmentNotification(Exercise exercise, CourseNotificationRecipientDTO recipient, Double score) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         Long examId = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam().getId() : null;
         var exerciseAssessedNotification = new ExerciseAssessedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getExerciseNotificationTitle(), exercise.getType(), exercise.getMaxPoints().longValue(), score.longValue(), examId);
 
-        courseNotificationService.sendCourseNotification(exerciseAssessedNotification, List.of(recipient));
+        courseNotificationService.sendCourseNotificationToRecipients(exerciseAssessedNotification, List.of(recipient));
     }
 
     /**

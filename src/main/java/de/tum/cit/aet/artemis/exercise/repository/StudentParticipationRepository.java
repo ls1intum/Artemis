@@ -742,22 +742,23 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultsAndParticipant(@Param("exerciseId") long exerciseId, @Param("testRun") boolean testRun);
 
     /**
-     * Reads the recipient IDs and scores needed to publish completed assessments, including all team members.
+     * Reads only recipient delivery fields and scores needed to publish completed assessments, including all team members.
      * No participation, team, submission, result or user entities are initialized.
      *
      * @param exerciseId the exercise whose assessments are published
      * @return recipients and scores for completed assessments outside test runs
      */
     @Query("""
-            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO(COALESCE(p.student.id, teamStudent.id), r.score)
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO(
+                recipient.id, r.score, recipient.login, recipient.email, recipient.langKey, recipient.firstName, recipient.lastName, recipient.isTestUser)
             FROM StudentParticipation p
                 LEFT JOIN p.team team
                 LEFT JOIN team.students teamStudent
+                JOIN User recipient ON recipient.id = COALESCE(p.student.id, teamStudent.id)
                 JOIN p.submissions s
                 JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
-                AND (p.student IS NOT NULL OR teamStudent IS NOT NULL)
                 AND r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND r.id = (
                     SELECT MAX(r2.id)

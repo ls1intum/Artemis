@@ -221,7 +221,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         resultRepository.saveAndFlush(result);
 
         // No surrounding transaction: recipient loading must also work after the repository session closes.
+        queryInterceptor.startQueryCount();
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(assessedExercise);
+        assertThat(queryInterceptor.getStatements()).allSatisfy(sql -> assertThat(sql).doesNotContain("password_hash"));
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             var notifications = courseNotificationRepository.findAll().stream()
@@ -250,7 +252,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             result.setAssessmentType(AssessmentType.MANUAL);
             resultRepository.saveAndFlush(result);
             for (User member : members) {
-                expectedRecipients.add(new AssessmentPublicationRecipientDTO(member.getId(), 60.0 + i));
+                expectedRecipients.add(new AssessmentPublicationRecipientDTO(member.getId(), 60.0 + i, member.getLogin(), member.getEmail(), member.getLangKey(),
+                        member.getFirstName(), member.getLastName(), member.isTestUser()));
             }
         }
 
