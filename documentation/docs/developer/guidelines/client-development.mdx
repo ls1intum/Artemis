@@ -831,6 +831,17 @@ that selector.
 </div>
 ```
 
+### Dividers between panels
+
+Every divider between two panels is 6px wide, the `--spacing-divider` token from `tailwind.css`. Never size
+one in percentages or with its own pixel value.
+
+- A resizable side panel (`jhiResizable`) gives its handle the global `panel-divider-x` class, for example
+  `<div class="draggable-left panel-divider-x"></div>`. The class sets the width, the small grip and a grab area that reaches
+  4px into the following panel.
+- A PrimeNG `p-splitter` sets `[gutterSize]="6"` and draws the grip from two 2px bars with a 1px gap, as
+  `resizable-panels.component.scss` does. Its default gutter is 4px.
+
 ### Styling
 
 Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
