@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -116,6 +117,26 @@ class SecurityPolicyRepositoryFilesTest {
 
         SecurityPolicyRepositoryFiles.deletePolicy(root);
         assertThat(SecurityPolicyRepositoryFiles.isEnforcing(notNormalized)).isFalse();
+    }
+
+    @Test
+    void findsSymbolicLinksButNotTheGitDirectory() throws IOException {
+        Path outside = Files.createDirectories(root.resolve("outside"));
+        Path repository = Files.createDirectories(root.resolve("repository"));
+        writeTestClass("repository/test/de/example/SortingTest.java", "de.example", "SortingTest");
+        FileUtils.writeStringToFile(outside.resolve("Other.java").toFile(), "class Other {\n}\n", StandardCharsets.UTF_8);
+        Files.createDirectories(repository.resolve(".git"));
+        try {
+            Files.createSymbolicLink(repository.resolve("test/de/example/Other.java"), outside.resolve("Other.java"));
+            Files.createSymbolicLink(repository.resolve("linked"), outside);
+            Files.createSymbolicLink(repository.resolve(".git/ignored"), outside);
+        }
+        catch (UnsupportedOperationException | IOException e) {
+            assumeTrue(false, "The file system does not support symbolic links");
+        }
+
+        assertThat(SecurityPolicyRepositoryFiles.findSymbolicLinks(repository)).containsExactly("linked", "test/de/example/Other.java");
+        assertThat(SecurityPolicyRepositoryFiles.findTestClasses(repository)).containsExactly("de.example.SortingTest");
     }
 
     @Test

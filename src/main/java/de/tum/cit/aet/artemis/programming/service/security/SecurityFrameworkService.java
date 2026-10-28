@@ -97,7 +97,7 @@ public class SecurityFrameworkService {
     private static final String COMMIT_TRAILER = "\n\nChanged-by: Artemis Security Framework";
 
     /**
-     * The Security Framework commits whose push processing has not completed, by exercise id. An entry is added before the commit is pushed and removed only
+     * The Security Framework commits whose push processing has not completed, by exercise id and commit hash. An entry is added before the commit is pushed and removed only
      * after the whole processing has returned, so a retry also resumes a processing that failed after it had already saved the solution submission.
      */
     private static final String PENDING_PROCESSING_MAP = "securityFrameworkPendingProcessing";
@@ -128,7 +128,7 @@ public class SecurityFrameworkService {
     private final DistributedDataProvider distributedDataProvider;
 
     @Nullable
-    private volatile DistributedMap<Long, String> pendingProcessing;
+    private volatile DistributedMap<String, String> pendingProcessing;
 
     public SecurityFrameworkService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, TempFileUtilService tempFileUtilService,
             ProgrammingExerciseBuildConfigRepository buildConfigRepository, ResourceLoaderService resourceLoaderService, Optional<LocalVCServletService> localVCServletService,
@@ -298,11 +298,12 @@ public class SecurityFrameworkService {
             temporaryCheckout = tempFileUtilService.createTempDirectory("security-framework-");
             repository = gitService.getOrCheckoutRepositoryOnBranch(testRepositoryUri, temporaryCheckout.resolve("repository"), branch);
             String checkedOutHead = gitService.getLocalHeadHash(repository);
+            rejectSymbolicLinks(exercise, repository);
             change.accept(repository);
             if (gitService.stageAllChanges(repository)) {
                 String commitHash = gitService.commitStagedChanges(repository, commitMessage + COMMIT_TRAILER, user);
                 if (localVCServletService.isPresent()) {
-                    pendingProcessing().put(exercise.getId(), commitHash);
+                    pendingProcessing().put(pendingProcessingKey(exercise, commitHash), commitHash);
                 }
                 gitService.pushCommitWithLease(repository, commitHash, branch, checkedOutHead);
                 processPushToTestRepository(exercise, testRepositoryUri, branch, commitHash, user);
@@ -337,7 +338,7 @@ public class SecurityFrameworkService {
             try (Repository serverRepository = bareGitRepositoryService.getBareRepository(testRepositoryUri, branch, false)) {
                 servletService.processNewPush(commitHash, serverRepository, user, Optional.empty(), Optional.empty(), Optional.empty());
                 // Only now is the processing complete: the submission is saved, the results are marked as outdated and the builds are triggered.
-                pendingProcessing().remove(exercise.getId(), commitHash);
+                pendingProcessing().remove(pendingProcessingKey(exercise, commitHash));
             }
             catch (RuntimeException e) {
                 // The change itself is pushed. Retrying the same action resumes the processing, see isUnprocessedSecurityFrameworkCommit.
@@ -361,7 +362,7 @@ public class SecurityFrameworkService {
                 return false;
             }
         }
-        if (head.equals(pendingProcessing().get(exercise.getId()))) {
+        if (pendingProcessing().get(pendingProcessingKey(exercise, head)) != null) {
             return true;
         }
         return solutionParticipationRepository.findByProgrammingExerciseId(exercise.getId())
@@ -369,10 +370,31 @@ public class SecurityFrameworkService {
     }
 
     /**
+     * The key of a commit's pending entry. Keying by exercise and commit keeps the entries of different commits apart: the entry of a commit whose push was
+     * rejected, e.g. because another instructor pushed first, can never replace the entry of the commit that was pushed.
+     */
+    private static String pendingProcessingKey(ProgrammingExercise exercise, String commitHash) {
+        return exercise.getId() + ":" + commitHash;
+    }
+
+    /**
+     * The Security Framework reads and rewrites files of the checkout, and both follow symbolic links. A link committed to the tests repository could
+     * therefore make a change read or modify a file outside the checkout with the server's permissions, so a repository with links is not changed at all.
+     */
+    private static void rejectSymbolicLinks(ProgrammingExercise exercise, Repository repository) {
+        List<String> links = SecurityPolicyRepositoryFiles.findSymbolicLinks(repository.getLocalPath());
+        if (!links.isEmpty()) {
+            log.warn("Refusing to change the tests repository of exercise {}, because it contains symbolic links: {}", exercise.getId(), links);
+            throw new BadRequestAlertException("The tests repository contains symbolic links, which the Security Framework does not follow: " + String.join(", ", links),
+                    ENTITY_NAME, "securityFrameworkSymbolicLinks");
+        }
+    }
+
+    /**
      * The map is requested on first use rather than in the constructor, so creating the service never contacts the distributed data provider.
      */
-    private DistributedMap<Long, String> pendingProcessing() {
-        DistributedMap<Long, String> map = pendingProcessing;
+    private DistributedMap<String, String> pendingProcessing() {
+        DistributedMap<String, String> map = pendingProcessing;
         if (map == null) {
             map = distributedDataProvider.getExpiringMap(PENDING_PROCESSING_MAP, PENDING_PROCESSING_TIME_TO_LIVE);
             pendingProcessing = map;

@@ -3,9 +3,13 @@ package de.tum.cit.aet.artemis.programming.service.security;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -332,9 +336,46 @@ public final class SecurityPolicyRepositoryFiles {
         return testClasses;
     }
 
+    /**
+     * Lists the symbolic links of a checkout. Reading or rewriting a file follows a link, so a link committed to the repository could make a change of the
+     * Security Framework read or modify a file outside the checkout with the server's permissions. The {@code .git} directory belongs to the server, not to
+     * the repository content, and is not checked.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @return the symbolic links relative to the root, with forward slashes and sorted; empty if there are none
+     */
+    public static List<String> findSymbolicLinks(Path repositoryRoot) {
+        Path gitDirectory = repositoryRoot.resolve(".git");
+        List<String> links = new ArrayList<>();
+        try {
+            // walkFileTree does not follow links, so a link to a directory is reported like a link to a file and its target is never entered.
+            Files.walkFileTree(repositoryRoot, new SimpleFileVisitor<>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attributes) {
+                    return directory.equals(gitDirectory) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+                    if (attributes.isSymbolicLink()) {
+                        links.add(repositoryRoot.relativize(file).toString().replace('\\', '/'));
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        links.sort(String::compareTo);
+        return links;
+    }
+
     private static List<Path> javaFiles(Path repositoryRoot) {
         try (Stream<Path> files = Files.walk(repositoryRoot)) {
-            return files.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".java") && isScannedSource(repositoryRoot, path)).sorted().toList();
+            return files.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) && path.getFileName().toString().endsWith(".java")
+                    && isScannedSource(repositoryRoot, path)).sorted().toList();
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);

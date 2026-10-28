@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -24,6 +25,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.UnaryOperator;
 
@@ -39,9 +41,12 @@ import org.eclipse.jgit.transport.RefLeaseSpec;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.util.FS;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.FileSystemResource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -123,6 +128,9 @@ class SecurityFrameworkServiceTest {
     /** Simulates someone else, e.g. the online editor, pushing to the tests repository while a change is being prepared. */
     private boolean pushConcurrentlyAfterCheckout;
 
+    /** Runs once after the next checkout, e.g. another instructor's change that is pushed while this checkout is being prepared. */
+    private Runnable afterNextCheckout;
+
     private GitService gitService;
 
     private BareGitRepositoryService bareGitRepositoryService;
@@ -152,6 +160,11 @@ class SecurityFrameworkServiceTest {
             Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(localPath.toFile()).setBranch(call.getArgument(2, String.class)).call().close();
             if (pushConcurrentlyAfterCheckout) {
                 pushUnrelatedCommit();
+            }
+            Runnable hook = afterNextCheckout;
+            afterNextCheckout = null;
+            if (hook != null) {
+                hook.run();
             }
             return new Repository(new FileRepositoryBuilder().setGitDir(localPath.resolve(".git").toFile()).setWorkTree(localPath.toFile()).setup(), localPath,
                     mock(LocalVCRepositoryUri.class));
@@ -390,6 +403,55 @@ class SecurityFrameworkServiceTest {
                 .hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy(value = \"./SecurityPolicy.yaml\")"));
     }
 
+    /** A change of an instructor's checkout that may throw, e.g. creating a symbolic link. */
+    @FunctionalInterface
+    private interface CheckoutChange {
+
+        void apply(Path checkout) throws IOException;
+    }
+
+    /**
+     * Pushes a change of the repository content, as an instructor would through git.
+     */
+    private void pushCheckoutChange(CheckoutChange change) throws Exception {
+        Path checkout = newDirectory("instructor-");
+        try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
+            change.apply(checkout);
+            git.add().setUpdate(true).addFilepattern(".").call();
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("Change the repository by hand").setAuthor("Instructor", "instructor@example.org").call();
+            git.push().call();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "test/de/example/OtherExerciseTest.java", SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, "test/de/linked" })
+    void aRepositoryWithSymbolicLinksIsNeverChanged(String link) throws Exception {
+        assumeTrue(FS.DETECTED.supportsSymlinks(), "The file system does not support symbolic links");
+        Path outside = newDirectory("other-exercise-");
+        Path externalTest = outside.resolve("OtherExerciseTest.java");
+        String externalContent = TEST_CLASS.replace("SortingTest", "OtherExerciseTest");
+        FileUtils.writeStringToFile(externalTest.toFile(), externalContent, StandardCharsets.UTF_8);
+        pushCheckoutChange(checkout -> {
+            Path linkPath = checkout.resolve(link);
+            Files.deleteIfExists(linkPath);
+            Files.createDirectories(linkPath.getParent());
+            Files.createSymbolicLink(linkPath, link.endsWith(".java") || link.endsWith(".yaml") ? externalTest : outside);
+        });
+        String headBefore = pushedHead();
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
+                .matches(exception -> "securityFrameworkSymbolicLinks".equals(exception.getErrorKey()));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.activate(exercise, "2.3.0", user))
+                .matches(exception -> "securityFrameworkSymbolicLinks".equals(exception.getErrorKey()));
+
+        assertThat(Files.readString(externalTest)).isEqualTo(externalContent);
+        assertThat(outside.toFile().list()).containsExactly("OtherExerciseTest.java");
+        assertThat(pushedHead()).isEqualTo(headBefore);
+        verifyNoInteractions(localVCServletService);
+    }
+
     @Test
     void readingTheStateNeverTouchesAWorkingCopy() throws Exception {
         securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA));
@@ -567,6 +629,38 @@ class SecurityFrameworkServiceTest {
 
         // Once the processing has completed, a further retry does not process the change again.
         securityFrameworkService.deactivate(exercise, user);
+        verify(localVCServletService, times(2)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+    }
+
+    @Test
+    void aRejectedCompetingChangeKeepsTheRetryOfThePushedChange() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        Set<String> submittedCommits = ConcurrentHashMap.newKeySet();
+        when(programmingSubmissionRepository.existsByParticipationIdAndCommitHash(eq(SOLUTION_PARTICIPATION_ID), anyString()))
+                .thenAnswer(call -> submittedCommits.contains(call.getArgument(1, String.class)));
+        AtomicBoolean failProcessing = new AtomicBoolean(true);
+        doAnswer(call -> {
+            submittedCommits.add(call.getArgument(0, String.class));
+            if (failProcessing.get()) {
+                throw new VersionControlException("Build trigger failed");
+            }
+            return null;
+        }).when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+
+        // Instructor B checks out the repository. Before B pushes, instructor A pushes a change whose processing fails after saving the submission.
+        afterNextCheckout = () -> assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
+                .matches(exception -> "securityFrameworkProcessingFailed".equals(exception.getErrorKey()));
+        // B's push is rejected, because its checkout no longer matches the repository.
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user))
+                .matches(exception -> "securityFrameworkPushFailed".equals(exception.getErrorKey()));
+        String pushedHead = pushedHead();
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+        assertThat(submittedCommits).containsExactly(pushedHead);
+
+        // The rejected change of B has not replaced the pending entry of A, so the retry resumes the processing of A.
+        failProcessing.set(false);
+        securityFrameworkService.deactivate(exercise, user);
+        verify(localVCServletService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
         verify(localVCServletService, times(2)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
     }
 
