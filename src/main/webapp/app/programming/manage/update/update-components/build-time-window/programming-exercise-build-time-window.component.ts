@@ -5,6 +5,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { BuildTimeWindow } from 'app/programming/shared/entities/programming-exercise-build-advanced-settings';
 import { BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS, BuildTimeWindowError, normalizeBuildTimeWindow } from 'app/programming/shared/utils/build-time-window.utils';
 
 /**
@@ -21,13 +22,19 @@ import { BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS, BuildTimeWindowError, normali
 })
 export class ProgrammingExerciseBuildTimeWindowComponent {
     readonly programmingExercise = input.required<ProgrammingExercise>();
+    /**
+     * The window as the parent reads it from the exercise. It is a separate input, because the metadata synchronization replaces the build config on the same
+     * exercise object, which the exercise input does not signal, so the pickers would keep showing the old dates.
+     */
+    readonly buildTimeWindow = input<BuildTimeWindow | undefined>();
     /** The problem with the window that is derived from the exercise dates, undefined when the window is fine. */
     readonly error = input<BuildTimeWindowError | undefined>();
 
     protected readonly errorTranslationKeys = BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS;
 
-    protected readonly start = linkedSignal(() => normalizeBuildTimeWindow(this.programmingExercise().buildConfig?.advancedSettings?.buildTimeWindow)?.start);
-    protected readonly end = linkedSignal(() => normalizeBuildTimeWindow(this.programmingExercise().buildConfig?.advancedSettings?.buildTimeWindow)?.end);
+    private readonly shownWindow = computed(() => normalizeBuildTimeWindow(this.buildTimeWindow()));
+    protected readonly start = linkedSignal(() => this.shownWindow()?.start);
+    protected readonly end = linkedSignal(() => this.shownWindow()?.end);
 
     /** The pickers keep their last valid value while the typed text is not a date yet, so that text is tracked separately. */
     protected readonly isStartTextValid = signal(true);

@@ -545,8 +545,12 @@ public class ProgrammingExerciseCreationUpdateService {
 
     /**
      * Rejects a date change that would leave the build time window of the exercise (if any) outside of its new dates, as no push would be built then.
+     * Callers that change several exercises call this before they persist anything.
+     *
+     * @param programmingExercise the exercise with its new dates
+     * @throws BadRequestAlertException if the stored window does not lie between the start (or release) date and the due date
      */
-    private void validateBuildTimeWindowFitsDates(ProgrammingExercise programmingExercise) {
+    public void validateBuildTimeWindowFitsDates(ProgrammingExercise programmingExercise) {
         var window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(programmingExercise.getId());
         ZonedDateTime earliest = programmingExercise.getStartDate() != null ? programmingExercise.getStartDate() : programmingExercise.getReleaseDate();
         if (window != null && !window.isWithin(earliest, programmingExercise.getDueDate())) {

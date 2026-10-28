@@ -51,11 +51,24 @@ describe('ProgrammingExerciseBuildTimeWindowComponent', () => {
         const other = new ProgrammingExercise(undefined, undefined);
         other.buildConfig!.advancedSettings = { buildTimeWindow: { start, end } };
         fixture.componentRef.setInput('programmingExercise', other);
+        fixture.componentRef.setInput('buildTimeWindow', other.buildConfig!.advancedSettings.buildTimeWindow);
         fixture.detectChanges();
 
         const [startPicker, endPicker] = pickers();
         expect(startPicker.value()?.isSame(start)).toBe(true);
         expect(endPicker.value()?.isSame(end)).toBe(true);
+    });
+
+    it('shows a window that the metadata synchronization put on the same exercise object', () => {
+        const syncedEnd = dayjs('2026-10-01T18:00:00Z');
+        exercise.buildConfig!.advancedSettings = { buildTimeWindow: { start, end: syncedEnd } };
+        // the parent reads the window from the exercise again and passes the new value
+        fixture.componentRef.setInput('buildTimeWindow', exercise.buildConfig!.advancedSettings.buildTimeWindow);
+        fixture.detectChanges();
+
+        const [startPicker, endPicker] = pickers();
+        expect(startPicker.value()?.isSame(start)).toBe(true);
+        expect(endPicker.value()?.isSame(syncedEnd)).toBe(true);
     });
 
     it('writes a changed start and end to the build config', () => {

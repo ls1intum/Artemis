@@ -65,7 +65,11 @@
                 <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
                 <hr class="mb-5" />
                 @if (isEditFieldDisplayedRecord().buildTimeWindow && !isExamMode()) {
-                    <jhi-programming-exercise-build-time-window [programmingExercise]="programmingExercise" [error]="getBuildTimeWindowError()" />
+                    <jhi-programming-exercise-build-time-window
+                        [programmingExercise]="programmingExercise"
+                        [buildTimeWindow]="programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow"
+                        [error]="getBuildTimeWindowError()"
+                    />
                     <hr class="mb-5" />
                 }
             }
