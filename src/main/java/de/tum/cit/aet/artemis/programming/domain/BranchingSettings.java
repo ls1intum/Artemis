@@ -4,18 +4,17 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Whether students may push to branches other than the default branch of their repository and which branch names are allowed.
  *
  * @param allowed whether branching is allowed
  * @param regex   the regex a branch name has to match, {@code null} means {@link #DEFAULT_REGEX}. Only considered if branching is allowed.
- *                    An empty regex is kept as it is (it matches no branch name), so it must not be left out of the stored JSON.
+ *                    An empty regex is kept as it is (it matches no branch name). The record therefore has no {@code @JsonInclude(NON_EMPTY)},
+ *                    which would leave it out of the stored JSON, and a {@code null} regex is stored as JSON null.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record BranchingSettings(boolean allowed, @JsonInclude(JsonInclude.Include.NON_NULL) @Nullable String regex) {
+public record BranchingSettings(boolean allowed, @Nullable String regex) {
 
     public static final String DEFAULT_REGEX = ".*";
 
