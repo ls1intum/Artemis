@@ -9,7 +9,7 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -92,7 +92,7 @@ describe('CodeEditorStudentContainerComponent', () => {
             of({ ...studentParticipation, submissions: [earlierSubmission] } as ProgrammingExerciseStudentParticipation),
         );
         vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
-        const newResults = new Subject<Result | undefined>();
+        const newResults = new BehaviorSubject<Result | undefined>(undefined);
         const subscribeSpy = vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(newResults);
 
         comp.ngOnInit();
@@ -115,7 +115,7 @@ describe('CodeEditorStudentContainerComponent', () => {
             } as ProgrammingExerciseStudentParticipation),
         );
         vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
-        const newResults = new Subject<Result | undefined>();
+        const newResults = new BehaviorSubject<Result | undefined>(undefined);
         vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(newResults);
 
         comp.ngOnInit();
