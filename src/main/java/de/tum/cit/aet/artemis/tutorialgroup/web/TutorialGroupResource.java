@@ -507,7 +507,7 @@ public class TutorialGroupResource {
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/import-registrations")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<TutorialGroupStudentImportDataDTO>> importRegistrations(@PathVariable long courseId, @PathVariable long tutorialGroupId,
-            @RequestBody List<TutorialGroupStudentImportDataDTO> studentImportDTOs) {
+            @RequestBody @Valid List<TutorialGroupStudentImportDataDTO> studentImportDTOs) {
         log.debug("REST request to register {} to tutorial group {}", studentImportDTOs, tutorialGroupId);
         var tutorialGroup = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         checkIfGroupMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
