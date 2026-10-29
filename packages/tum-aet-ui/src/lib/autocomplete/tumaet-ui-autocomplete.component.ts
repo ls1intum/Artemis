@@ -363,8 +363,7 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
 
     private clearInput(): void {
         this.query.set('');
-        this.hasSearched.set(false);
-        this.activeIndex.set(-1);
+        this.hide();
     }
 
     private moveActive(direction: 1 | -1): void {

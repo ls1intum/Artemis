@@ -131,6 +131,32 @@ describe('TumAetUiAutoCompleteComponent (multiple mode)', () => {
         expect(input().value).toBe('');
     });
 
+    it.each([false, true])('keeps suggestions closed after selecting before a pending search completes (multiple=%s)', (multiple) => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('multiple', multiple);
+        fixture.componentRef.setInput('completeOnFocus', true);
+        fixture.componentRef.setInput('minLength', 0);
+        fixture.componentRef.setInput('debounceMs', 200);
+        fixture.componentRef.setInput('suggestions', ['5, 5', '5, 1']);
+        fixture.detectChanges();
+        input().focus();
+        fixture.detectChanges();
+        typeQuery('5, 5');
+        fixture.detectChanges();
+
+        const changed = vi.fn();
+        component.registerOnChange(changed);
+        options()[0].click();
+        fixture.detectChanges();
+        expect(listbox()).toBeNull();
+        expect(changed).toHaveBeenLastCalledWith(multiple ? ['5, 5'] : '5, 5');
+
+        vi.advanceTimersByTime(200);
+        fixture.detectChanges();
+        expect(listbox()).toBeNull();
+        expect(input().getAttribute('aria-expanded')).toBe('false');
+    });
+
     it('does not add a duplicate suggestion', async () => {
         const onChangeCallback = vi.fn();
         component.registerOnChange(onChangeCallback);
