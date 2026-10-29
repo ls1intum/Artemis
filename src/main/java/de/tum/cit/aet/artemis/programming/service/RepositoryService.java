@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -86,10 +88,17 @@ public class RepositoryService {
 
     static final long MAX_SELECTED_FILES_TOTAL_SIZE_BYTES = 5L * 1024 * 1024;
 
+    /**
+     * Script types that {@link BinaryFileExtensionConfiguration} counts as binary although they are text. A shell still
+     * executes such a script when it contains a NUL byte, so its content must not be classified away.
+     */
+    private static final List<String> TEXT_SCRIPT_EXTENSIONS = List.of(".sh", ".bat");
+
     private enum BinaryFileFilter {
         NONE, EXTENSION, CONTENT,
         /**
-         * Skips a file only when both its extension and the beginning of its content mark it as binary.
+         * Skips a file only when both its extension and the beginning of its content mark it as binary. Scripts are never
+         * skipped.
          */
         EXTENSION_AND_CONTENT
     }
@@ -342,8 +351,9 @@ public class RepositoryService {
      * the beginning of its content say so.
      * <p>
      * Unlike {@link #getFilesContentFromBareRepository}, which drops files by extension alone, this keeps text files
-     * whose extensions count as binary, such as {@code .sh} or {@code .bat} scripts. A file without such an extension is
-     * always returned as text, as before. For a file with such an extension only the beginning is read to classify it,
+     * whose extensions count as binary. Shell and batch scripts are always returned as text, even with a NUL byte, which a
+     * shell executes regardless. A file without a binary extension is always returned as text, as before. For a file with such an extension only the beginning is read to classify
+     * it,
      * so an archive or image is recognised without loading it; a file whose beginning is text is loaded completely, like
      * every other text file. The paths of all entries not returned as text are reported, so a caller that has to account
      * for every file sees each one.
@@ -481,6 +491,11 @@ public class RepositoryService {
         }
     }
 
+    private static boolean isTextScript(String path) {
+        String lowerCasePath = path.toLowerCase(Locale.ROOT);
+        return TEXT_SCRIPT_EXTENSIONS.stream().anyMatch(lowerCasePath::endsWith);
+    }
+
     /**
      * Classifies a blob as binary from its beginning alone, without loading the rest of it.
      *
@@ -550,7 +565,7 @@ public class RepositoryService {
                 ObjectId objectId = treeWalk.getObjectId(0);
                 try {
                     var blobLoader = repository.open(objectId);
-                    if (binaryFileFilter == BinaryFileFilter.EXTENSION_AND_CONTENT && isBinaryFile(path) && startsWithBinaryContent(blobLoader)) {
+                    if (binaryFileFilter == BinaryFileFilter.EXTENSION_AND_CONTENT && isBinaryFile(path) && !isTextScript(path) && startsWithBinaryContent(blobLoader)) {
                         if (skippedPaths != null) {
                             skippedPaths.add(path);
                         }

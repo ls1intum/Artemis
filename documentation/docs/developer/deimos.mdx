@@ -101,7 +101,8 @@ walking the git graph. Consequences worth knowing:
 - Snapshots are read with `RepositoryService.getTextSnapshotFromBareRepository`, which leaves a file out as binary
   only when both its extension and the beginning of its content say so, and reads no more than that beginning for such
   files. Scripts such as `.sh` or `.bat`, whose extensions count as binary for the repository exports, are therefore
-  part of the evidence, and a NUL byte cannot hide a file without such an extension. The paths of binary files and
+  part of the evidence. Scripts are never classified away by their content, and a file without a binary extension is
+  always read as text, so a NUL byte cannot hide either. The paths of binary files and
   symbolic links never reach the payload but are scanned for imitated markers.
 - The baseline is the exercise template, resolved from the setup commit. If that commit cannot be found, an empty
   baseline is used and everything counts as added.
