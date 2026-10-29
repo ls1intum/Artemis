@@ -392,10 +392,12 @@ export class TutorialCreateOrEditComponent {
         const schedule = this.schedule();
         if (!schedule) return false;
         if (this.configureSessionPlan()) {
-            const firstSessionStartChanged = this.firstSessionStart()?.format('YYYY-MM-DDTHH:mm:ss') !== schedule.firstSessionStart;
-            const firstSessionEndChanged = this.firstSessionEnd()?.format('YYYY-MM-DDTHH:mm:ss') !== schedule.firstSessionEnd;
+            // Compare instants, not formatted strings: the server serializes LocalDateTime without trailing zero seconds
+            // (e.g. 10:15, not 10:15:00), so a formatted comparison would always differ and warn on every edit.
+            const firstSessionStartChanged = this.firstSessionStart()?.valueOf() !== dayjs(schedule.firstSessionStart).valueOf();
+            const firstSessionEndChanged = this.firstSessionEnd()?.valueOf() !== dayjs(schedule.firstSessionEnd).valueOf();
             const repetitionFrequencyChanged = this.repetitionFrequency() !== schedule.repetitionFrequency;
-            const tutorialPeriodEndChanged = this.tutorialPeriodEnd()?.format('YYYY-MM-DD') !== schedule.tutorialPeriodEnd;
+            const tutorialPeriodEndChanged = this.tutorialPeriodEnd()?.valueOf() !== dayjs(schedule.tutorialPeriodEnd).valueOf();
             const locationChanged = this.location() !== schedule.location;
             return firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
         }

@@ -515,6 +515,33 @@ describe('TutorialCreateOrEditComponent', () => {
         });
     });
 
+    it('should emit onUpdate directly without the overwrite warning when only a non-schedule field of a scheduled group changes', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        // The server serializes whole-minute schedule times without seconds (10:15, not 10:15:00).
+        const schedule = createTutorialGroupSchedule({ firstSessionStart: '2026-04-20T10:15', firstSessionEnd: '2026-04-20T11:45' });
+        const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
+        component.onUpdate.subscribe(onUpdateSpy);
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('schedule', schedule);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+        component.title.set('TG Updated');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(onUpdateSpy).toHaveBeenCalledOnce();
+    });
+
     it('should confirm schedule-overwriting update and emit on accept', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
