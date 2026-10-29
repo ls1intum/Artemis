@@ -6,12 +6,16 @@
                 <span>Repository: {{ auxiliaryRepository.name }}</span>
                 <jhi-code-button
                     class="ms-2"
-                    [smallButtons]="true"
+                    size="small"
+                    [allowOnlineIde]="false"
                     [repositoryUri]="auxiliaryRepository.repositoryUri"
-                    [routerLinkForRepositoryView]="['.', 'repository', RepositoryType.AUXILIARY, auxiliaryRepository.id]"
-                    [repositoryType]="RepositoryType.AUXILIARY"
-                    [auxiliaryRepositoryId]="auxiliaryRepository.id"
+                    [repositoryViewLink]="['.', 'repository', RepositoryType.AUXILIARY, auxiliaryRepository.id]"
                     [exerciseId]="data.exerciseId"
+                    [vcsAccessTokenSourceInfo]="{
+                        returnedTokenType: 'repository-token',
+                        repositoryType: RepositoryType.AUXILIARY,
+                        auxiliaryRepositoryId: auxiliaryRepository.id,
+                    }"
                 />
                 <jhi-programming-exercise-instructor-repo-download
                     class="ms-2"

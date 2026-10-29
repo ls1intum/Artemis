@@ -72,7 +72,7 @@
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        gap: 2px;
+        gap: 1px;
         width: 100%;
         height: 24px;
         background: transparent;
@@ -82,7 +82,7 @@
             content: '';
             display: block;
             width: 2px;
-            height: 18px;
+            height: 12px;
             background: var(--bs-body-color);
             border-radius: 1px;
         }

@@ -7,7 +7,7 @@
             variant="outlined"
             size="small"
             [jhiFeatureToggle]="FeatureToggle.Exports"
-            [overwriteDisabled]="isBeingArchived()"
+            [forceDisabled]="isBeingArchived()"
             type="button"
             [attr.data-mode]="archiveMode()"
             data-testid="archiveButton"

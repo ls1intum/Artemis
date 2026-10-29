@@ -7,6 +7,9 @@ buildscript {
     // This is a build-time-only dependency (client code generation), not shipped in the WAR.
     configurations.classpath {
         resolutionStrategy {
+            // Plugin dependencies resolve independently of the application constraint below.
+            // Guava < 33.7.2 is affected by CVE-2026-102554 (deserialization memory exhaustion).
+            force "com.google.guava:guava:33.7.2-jre"
             force "com.github.jknack:handlebars:4.5.5"
             // Force the patched Apache HttpComponents onto the build-script / plugin classpath too. The
             // org.owasp.dependencycheck and org.springframework.boot plugins drag in httpclient5 5.6.1 /
@@ -50,7 +53,7 @@ buildscript {
             mavenCentral()
         }
         dependencies {
-            classpath "de.tum.cit.aet:openapi-generator-angular22:1.0.0"
+            classpath "de.tum.cit.aet:openapi-generator-angular22:3.0.0"
         }
     }
     dependencies {
@@ -665,6 +668,10 @@ dependencies {
             version { strictly("33.7.2-jre") }
             because("Force the newest guava across its many transitive users to avoid outdated-dependency CVEs")
         }
+        checkstyle("com.google.guava:guava") {
+            version { strictly("33.7.2-jre") }
+            because("Checkstyle has a separate classpath; patch CVE-2026-102554 there as well")
+        }
         implementation("org.apache.santuario:xmlsec") {
             version { strictly("4.0.4") }
             because("Pulled transitively by OpenSAML (SAML2); force the newest version to avoid CVEs")
@@ -944,6 +951,6 @@ tasks.named("dependencyUpdates").configure {
 // 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
-// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
-// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
+// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp
+// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp
 // 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp

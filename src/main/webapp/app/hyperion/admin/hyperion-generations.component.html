@@ -1,5 +1,5 @@
 <section class="flex flex-col gap-4" aria-labelledby="hyperion-workers-title" [attr.aria-busy]="loading()">
-    <h5 *adminTitleBarTitle id="hyperion-workers-title" class="m-0" jhiTranslate="artemisApp.hyperion.workers.title"></h5>
+    <h5 *adminTitleBarTitle id="hyperion-workers-title" class="m-0">{{ 'artemisApp.hyperion.workers.title' | artemisTranslate }}</h5>
     <div *adminTitleBarActions>
         <tumaet-ui-button severity="secondary" variant="outlined" size="small" [disabled]="loading()" (clicked)="refresh()" data-testid="hyperion-workers-refresh">
             <span jhiTranslate="artemisApp.hyperion.workers.refresh"></span>
@@ -121,7 +121,7 @@
 >
     <div class="flex flex-col gap-3">
         <p jhiTranslate="artemisApp.hyperion.workers.cancelConfirmation" [translateValues]="{ exerciseId: cancelTarget()?.exerciseId }"></p>
-        <label for="hyperion-admin-cancel-reason" jhiTranslate="artemisApp.hyperion.workers.cancelReason"></label>
+        <label for="hyperion-admin-cancel-reason">{{ 'artemisApp.hyperion.workers.cancelReason' | artemisTranslate }}</label>
         <textarea
             id="hyperion-admin-cancel-reason"
             tumAetUiTextarea

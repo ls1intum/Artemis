@@ -1,6 +1,6 @@
 import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
@@ -13,7 +13,6 @@ import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-e
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
 import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -27,6 +26,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
 import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 /** setTimeout truncates delays beyond a signed 32-bit millisecond value. */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
@@ -48,6 +48,7 @@ export class ExamExerciseRowButtonsComponent {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private modelingExerciseService = inject(ModelingExerciseService);
     private quizExerciseService = inject(QuizExerciseService);
+    private quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
     private exerciseService = inject(ExerciseService);
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
@@ -354,7 +355,7 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     private deleteQuizExercise() {
-        this.quizExerciseService.delete(this.exercise().id!).subscribe({
+        this.quizExerciseDeletionApi.deleteQuizExercise(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({ name: 'quizExerciseListModification', content: 'Deleted a quiz' });
                 this.dialogErrorSource.next('');
@@ -380,8 +381,7 @@ export class ExamExerciseRowButtonsComponent {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizById(exportAll: boolean) {
-        this.quizExerciseService.find(this.exercise().id!).subscribe((res: HttpResponse<QuizExercise>) => {
-            const exercise = res.body!;
+        this.quizExerciseService.find(this.exercise().id!).subscribe((exercise) => {
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }
