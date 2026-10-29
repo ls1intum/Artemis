@@ -304,6 +304,38 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: 'editor1' }) });
     });
 
+    it('should not save while typed assessor text has not been selected from the list', () => {
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+        const input = query('#presentation-instance-assessor') as HTMLInputElement;
+
+        input.value = 'gra';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.editForm.controls.assessorOption.hasError('assessorNotSelected')).toBe(true);
+        expect(query('#presentation-instance-assessor-default-picture')).toBeNull();
+
+        component.save();
+        fixture.detectChanges();
+
+        expect(saved).not.toHaveBeenCalled();
+        expect(query('[data-testid="presentation-instance-assessor-missing"]')).not.toBeNull();
+    });
+
+    it('should save once an assessor is selected after typing', () => {
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+        const input = query('#presentation-instance-assessor') as HTMLInputElement;
+        input.value = 'edi';
+        input.dispatchEvent(new Event('input'));
+
+        component.editForm.controls.assessorOption.setValue({ assessor: { login: 'editor1', name: 'Editor One' }, label: 'Editor One (editor1)' });
+        component.save();
+
+        expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: 'editor1' }) });
+    });
+
     it('should not save without an assessor and ask for one', () => {
         fixture.componentRef.setInput('canChooseAssessor', true);
         fixture.detectChanges();

@@ -70,7 +70,7 @@
                 <span aria-hidden="true">*</span>
             </label>
             <div class="flex items-center gap-2">
-                @if (editForm.controls.assessorOption.value; as assessorOption) {
+                @if (selectedAssessorOption(); as assessorOption) {
                     <jhi-profile-picture
                         imageSizeInRem="2"
                         fontSizeInRem="0.8"
@@ -100,7 +100,7 @@
                         class="min-w-0 flex-1"
                         disabled
                         data-testid="presentation-instance-assessor"
-                        [value]="editForm.controls.assessorOption.value?.label ?? ''"
+                        [value]="selectedAssessorOption()?.label ?? ''"
                     />
                 }
             </div>

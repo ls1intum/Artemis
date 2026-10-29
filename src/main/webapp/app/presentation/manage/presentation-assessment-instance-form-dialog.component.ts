@@ -49,6 +49,8 @@ const RESULT_POINTS_UPPER_BOUND = 10000;
 const MIN_PRESENTATION_DATE = dayjs('1970-01-01T00:00:00');
 const minimumPresentationDate: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     control.value && dayjs(control.value).isBefore(MIN_PRESENTATION_DATE) ? { minDate: true } : null;
+/** The autocomplete writes the typed text into the control; only a selected assessor (an object) is a valid value. */
+const assessorSelected: ValidatorFn = (control: AbstractControl): ValidationErrors | null => (typeof control.value === 'string' ? { assessorNotSelected: true } : null);
 
 /** The assessor together with the text the autocomplete shows for it, like the presenter options of the presenter selector. */
 interface AssessorOption {
@@ -146,6 +148,12 @@ export class PresentationAssessmentInstanceFormDialogComponent {
         this.assessorSearchTerms.next(query);
     }
 
+    /** The selected assessor, or undefined while the field is empty or holds text typed into the autocomplete. */
+    protected selectedAssessorOption(): AssessorOption | undefined {
+        const value = this.editForm.controls.assessorOption.value;
+        return value && typeof value === 'object' ? value : undefined;
+    }
+
     readonly assessorFormatter = (assessor: UserNameAndLoginDTO): string => `${assessor.name ?? ''} (${assessor.login ?? ''})`;
 
     protected readonly assessorOptions = computed(() => this.assessorSuggestions().map((assessor) => this.toAssessorOption(assessor)));
@@ -156,7 +164,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             presentationTime: [undefined as dayjs.Dayjs | undefined],
             resultPoints: [undefined as number | undefined, [Validators.min(0), Validators.max(RESULT_POINTS_UPPER_BOUND)]],
             maxPoints: [0],
-            assessorOption: [undefined as AssessorOption | undefined, Validators.required],
+            assessorOption: [undefined as AssessorOption | undefined, [Validators.required, assessorSelected]],
             language: ['en', Validators.required],
             mode: [PresentationAssessmentMode.IN_PERSON, Validators.required],
             location: ['', Validators.maxLength(255)],
@@ -205,7 +213,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
         }
 
         const value = this.editForm.getRawValue();
-        const assessorLogin = value.assessorOption?.assessor.login;
+        const assessorLogin = this.selectedAssessorOption()?.assessor.login;
         if (!value.presentationDate || !value.language || !value.mode || !assessorLogin) {
             return;
         }
