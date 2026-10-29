@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.videosource.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -9,6 +11,7 @@ import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -33,6 +36,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.config.LoggingAspect;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.videosource.api.GocastBindingApi;
+import de.tum.cit.aet.artemis.videosource.api.TumLiveApi;
 import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingRepository;
 
@@ -99,12 +104,32 @@ class GocastLoggingSafetyTest extends AbstractSpringIntegrationIndependentTest {
         pointcut.setPointcutDeclarationScope(LoggingAspect.class);
         pointcut.setExpression(expression);
 
-        List<Class<?>> credentialBoundaryTypes = List.of(GocastConnectorService.class, GocastBindingService.class, GocastConnectionRepository.class,
-                GocastCourseBindingRepository.class, handlerType("/api/videosource/public/gocast/approval/callback"), handlerType("/api/videosource/courses/{courseId}/binding"));
+        List<Class<?>> credentialBoundaryTypes = List.of(GocastConnectorService.class, GocastBindingService.class, GocastRecordingService.class, GocastConnectionRepository.class,
+                GocastCourseBindingRepository.class, handlerType("/api/videosource/public/gocast/approval/callback"), handlerType("/api/videosource/courses/{courseId}/binding"),
+                handlerType("/api/lecture/lecture-units/{lectureUnitId}/playlist"));
         for (Class<?> type : credentialBoundaryTypes) {
             assertThat(List.of(type.getDeclaredMethods()).stream().filter(method -> Modifier.isPublic(method.getModifiers())).noneMatch(method -> pointcut.matches(method, type)))
                     .as("all public methods on %s are outside credential logging", type.getSimpleName()).isTrue();
         }
+    }
+
+    @Test
+    void actualAspectDoesNotLogSignedPlaylistsPassedThroughTheResolver() {
+        ListAppender<ILoggingEvent> aspectAppender = capture(LoggingAspect.class.getName());
+        String signedPlaylist = "https://edge.example/vod/42/COMB/playlist.m3u8?jwt=" + API_KEY_SENTINEL;
+        var tumLiveApi = mock(TumLiveApi.class);
+        var gocastBindingApi = mock(GocastBindingApi.class);
+        when(gocastBindingApi.lookUpConnectedPlaylist(7L, "https://live.rbg.tum.de/w/algo/42"))
+                .thenReturn(Optional.of(new TumLivePlaylistLookup(signedPlaylist, TumLivePlaylistLookup.Outcome.RESOLVED)));
+        when(tumLiveApi.lookUpPlaylist("https://live.rbg.tum.de/w/public/43")).thenReturn(new TumLivePlaylistLookup(signedPlaylist, TumLivePlaylistLookup.Outcome.RESOLVED));
+        var environment = new MockEnvironment().withProperty("spring.profiles.active", "dev");
+        VideoSourceResolverService resolver = proxied(new VideoSourceResolverService(Optional.of(tumLiveApi), Optional.of(gocastBindingApi), new YouTubeUrlService()), environment);
+
+        assertThat(resolver.resolve("https://live.rbg.tum.de/w/algo/42", 7L).url()).isEqualTo(signedPlaylist);
+        assertThat(resolver.resolve("https://live.rbg.tum.de/w/public/43", 7L).url()).isEqualTo(signedPlaylist);
+
+        assertThat(aspectAppender.list).as("the aspect logged the resolver calls").isNotEmpty();
+        assertMessagesExclude(aspectAppender, API_KEY_SENTINEL);
     }
 
     private Class<?> handlerType(String path) {
