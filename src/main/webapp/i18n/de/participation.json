@@ -15,6 +15,7 @@
                 "results": "Ergebnisse",
                 "assessmentType": "Bewertungsart",
                 "mode": "Teilnahmemodus",
+                "gradingStatus": "Bewertungsstatus",
                 "assessmentStatus": "Bewertungsstatus"
             },
             "created": "Teilnahme erstellt mit ID {{ param }}",

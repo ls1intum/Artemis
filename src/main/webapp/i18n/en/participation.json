@@ -15,6 +15,7 @@
                 "results": "Results",
                 "assessmentType": "Assessment type",
                 "mode": "Participation mode",
+                "gradingStatus": "Grading status",
                 "assessmentStatus": "Assessment status"
             },
             "created": "Created new participation with identifier {{ param }}",

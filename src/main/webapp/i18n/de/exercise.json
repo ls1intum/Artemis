@@ -276,7 +276,7 @@
             "showValidSubmissions": "Gültige Einreichungen",
             "showNoSubmissions": "Nur ohne Einreichungen",
             "showGraded": "Nur bewertete Teilnahmen",
-            "showNoPracticeMode": "Nur bewertete Abgaben",
+            "showNoPracticeMode": "Übungsmodus ausschließen",
             "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",
             "showingOfResults": "Zeigt {{ filtered }} von {{ total }} ({{ percent }}%) Bewertungen",
             "tagPlaceholder": "+ Kategorie",

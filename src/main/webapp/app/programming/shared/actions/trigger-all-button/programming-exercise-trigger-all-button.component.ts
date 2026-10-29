@@ -1,5 +1,6 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
-import { catchError, tap } from 'rxjs/operators';
+import { Component, inject, input, output, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -48,7 +49,7 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
     `,
     imports: [TumAetUiButtonDirective, TumAetUiTooltipDirective, FaIconComponent, ArtemisTranslatePipe, FeatureToggleDirective, TranslateDirective],
 })
-export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
+export class ProgrammingExerciseTriggerAllButtonComponent {
     private submissionService = inject(ProgrammingSubmissionService);
     private programmingBuildRunService = inject(ProgrammingBuildRunService);
     private dialogService = inject(DialogService);
@@ -65,14 +66,14 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 
     readonly onBuildTriggered = output();
     readonly confirmationOpening = output<void>();
-    readonly isTriggeringBuildAll = signal(false);
+    readonly isTriggeringBuildAll = toSignal(
+        toObservable(this.exercise).pipe(
+            switchMap((exercise) => this.programmingBuildRunService.getBuildRunUpdates(exercise.id!).pipe(map((state) => state === BuildRunState.RUNNING))),
+        ),
+        { initialValue: false },
+    );
     // Icons
     faRedo = faRedo;
-
-    ngOnInit() {
-        // The info that the builds were triggered comes from a websocket channel.
-        this.subscribeBuildRunUpdates();
-    }
 
     /**
      * Opens a modal in that the user has to confirm to trigger all participations.
@@ -104,13 +105,6 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
                     this.onBuildTriggered.emit();
                 });
         });
-    }
-
-    private subscribeBuildRunUpdates() {
-        this.programmingBuildRunService
-            .getBuildRunUpdates(this.exercise().id!)
-            .pipe(tap((buildRunState) => this.isTriggeringBuildAll.set(buildRunState === BuildRunState.RUNNING)))
-            .subscribe();
     }
 }
 

@@ -276,7 +276,7 @@
             "showValidSubmissions": "Valid Submissions",
             "showNoSubmissions": "No Submissions",
             "showGraded": "Only graded participations",
-            "showNoPracticeMode": "Only graded participations",
+            "showNoPracticeMode": "Exclude practice mode",
             "showingOnlyInRange": "Showing only results in range: {{ range }}",
             "showingOfResults": "Showing {{ filtered }} of {{ total }} ({{ percent }}%) scores",
             "tagPlaceholder": "+ Category",
