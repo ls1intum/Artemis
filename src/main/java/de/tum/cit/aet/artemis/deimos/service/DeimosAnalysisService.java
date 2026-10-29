@@ -56,14 +56,13 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosVerdict;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosSnapshotHistoryException;
+import de.tum.cit.aet.artemis.deimos.service.DeimosSnapshotReader.TextSnapshot;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.service.RepositoryService.TextSnapshot;
 
 @Conditional(DeimosEnabled.class)
 @Lazy
@@ -131,7 +130,7 @@ public class DeimosAnalysisService {
 
     private final DeimosPromptTemplateService deimosPromptTemplateService;
 
-    private final RepositoryService repositoryService;
+    private final DeimosSnapshotReader deimosSnapshotReader;
 
     private final BareGitRepositoryService bareGitRepositoryService;
 
@@ -160,7 +159,7 @@ public class DeimosAnalysisService {
     private final int finalStateReservedBytes;
 
     public DeimosAnalysisService(ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
-            DeimosLlmClient deimosLlmClient, DeimosPromptTemplateService deimosPromptTemplateService, RepositoryService repositoryService,
+            DeimosLlmClient deimosLlmClient, DeimosPromptTemplateService deimosPromptTemplateService, DeimosSnapshotReader deimosSnapshotReader,
             BareGitRepositoryService bareGitRepositoryService, @Value("${" + MAX_FILE_INPUT_BYTES_PROPERTY + ":" + DEFAULT_MAX_FILE_INPUT_BYTES + "}") int maxFileInputBytes,
             @Value("${" + MAX_FILE_DIFF_BYTES_PROPERTY + ":" + DEFAULT_MAX_FILE_DIFF_BYTES + "}") int maxFileDiffBytes,
             @Value("${" + MAX_PAYLOAD_BYTES_PROPERTY + ":" + DEFAULT_MAX_PAYLOAD_BYTES + "}") int maxPayloadBytes,
@@ -169,7 +168,7 @@ public class DeimosAnalysisService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.deimosLlmClient = deimosLlmClient;
         this.deimosPromptTemplateService = deimosPromptTemplateService;
-        this.repositoryService = repositoryService;
+        this.deimosSnapshotReader = deimosSnapshotReader;
         this.bareGitRepositoryService = bareGitRepositoryService;
         this.maxFileInputBytes = maxFileInputBytes;
         this.maxFileDiffBytes = maxFileDiffBytes;
@@ -684,12 +683,10 @@ public class DeimosAnalysisService {
     /**
      * Reads one snapshot, failing loudly when the commit cannot be resolved.
      * <p>
-     * A file is only left out as binary when both its extension and its content say so: scripts such as {@code .sh} or
-     * {@code .bat} count as binary by extension, and they are exactly where an attack on the build infrastructure would
-     * be written.
+     * Which files count as text, scripts always among them, is decided by {@link DeimosSnapshotReader}.
      * <p>
-     * {@link RepositoryService#getTextSnapshotFromBareRepository} returns an empty snapshot for an unresolvable hash,
-     * which is indistinguishable from an empty repository. Left unchecked, a garbage-collected or rewritten commit would
+     * {@link DeimosSnapshotReader#read} returns an empty snapshot for an unresolvable hash, which is indistinguishable
+     * from an empty repository. Left unchecked, a garbage-collected or rewritten commit would
      * be rendered as "the student deleted every file", or as "nothing to analyse", instead of being reported as an error.
      *
      * @param repository the bare repository
@@ -702,7 +699,7 @@ public class DeimosAnalysisService {
             if (repository.resolve(commitHash) == null) {
                 throw new DeimosSnapshotHistoryException("Could not resolve commit " + commitHash + " in the participation repository");
             }
-            return repositoryService.getTextSnapshotFromBareRepository(repository, commitHash);
+            return deimosSnapshotReader.read(repository, commitHash);
         }
         catch (DeimosSnapshotHistoryException ex) {
             throw ex;

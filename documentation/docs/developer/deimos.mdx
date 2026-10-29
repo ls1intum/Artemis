@@ -65,7 +65,7 @@ resolvable in integration tests.
 | --- | --- |
 | `web` | `DeimosResource`, the two `POST` endpoints, role annotations and the feature toggle |
 | `api` | `DeimosBatchApi`, the interface the resource implements |
-| `service` | `DeimosBatchService` (validation, scheduling, mail), `DeimosAnalysisService` (evidence and orchestration), `DeimosLlmClient` with `DefaultDeimosLlmClient`, `DeimosPromptTemplateService` |
+| `service` | `DeimosBatchService` (validation, scheduling, mail), `DeimosAnalysisService` (evidence and orchestration), `DeimosLlmClient` with `DefaultDeimosLlmClient`, `DeimosPromptTemplateService`, `DeimosSnapshotReader` (the files of one commit) |
 | `repository` | `DeimosBatchParticipationRepository`, the candidate-selection queries |
 | `dto` | Request, summary, email and failure records |
 | `exception` | `DeimosConfigurationException`, `DeimosLlmException`, `DeimosSnapshotHistoryException`, plus the failure analyzer |
@@ -98,7 +98,7 @@ walking the git graph. Consequences worth knowing:
 - Submissions without a commit hash never reach the loop; the repository query filters them out and they leave no
   trace. A blank hash reaches the loop, is skipped with a log line, and is marked in the payload as a submission that
   could not be examined. It is recorded as a `MISSING_COMMIT_HASH` omission.
-- Snapshots are read with `RepositoryService.getTextSnapshotFromBareRepository`, which leaves a file out as binary
+- Snapshots are read with `DeimosSnapshotReader`, which leaves a file out as binary
   only when both its extension and the beginning of its content say so, and reads no more than that beginning for such
   files. Scripts such as `.sh` or `.bat`, whose extensions count as binary for the repository exports, are therefore
   part of the evidence. Scripts are never classified away by their content, and a file without a binary extension is

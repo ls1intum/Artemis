@@ -15,7 +15,6 @@ import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.PersonIdent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -254,38 +253,6 @@ class RepositoryServiceFileOperationsTest {
     @Test
     void getFilesContentFromBareRepository_forACommitThatCannotBeResolved_returnsNoFiles() throws Exception {
         assertThat(repositoryService.getFilesContentFromBareRepository(repository, "no-such-commit")).isEmpty();
-    }
-
-    @Test
-    void getTextSnapshotFromBareRepository_skipsOnlyFilesWhoseExtensionAndContentAreBinary() throws Exception {
-        FileUtils.write(workingTree.resolve("Main.java").toFile(), "class Main {}\n", StandardCharsets.UTF_8);
-        FileUtils.write(workingTree.resolve("build.sh").toFile(), "#!/bin/sh\necho build\n", StandardCharsets.UTF_8);
-        // A shell executes a script despite a NUL byte, so a script is never classified away by its content.
-        FileUtils.writeByteArrayToFile(workingTree.resolve("RUN.BAT").toFile(), "@echo off\r\nrem \0\r\necho run\r\n".getBytes(StandardCharsets.UTF_8));
-        FileUtils.writeByteArrayToFile(workingTree.resolve("logo.png").toFile(), new byte[] { (byte) 0x89, 'P', 'N', 'G', 0, 0, 0, 13 });
-        // Without a binary extension a file stays text even with a NUL byte, so such a byte cannot hide a script.
-        FileUtils.writeByteArrayToFile(workingTree.resolve("gradlew").toFile(), "#!/bin/sh\n# \0\necho wrapper\n".getBytes(StandardCharsets.UTF_8));
-        String commitHash;
-        try (Git git = Git.open(workingTree.toFile())) {
-            git.add().addFilepattern(".").call();
-            var author = new PersonIdent("Artemis", "artemis@example.com");
-            commitHash = GitService.commit(git).setMessage("Files").setAuthor(author).setCommitter(author).call().getName();
-        }
-
-        RepositoryService.TextSnapshot snapshot = repositoryService.getTextSnapshotFromBareRepository(repository, commitHash);
-
-        // The script counts as binary by its extension, so the extension-filtered reader drops it; this one keeps it.
-        assertThat(repositoryService.getFilesContentFromBareRepository(repository, commitHash)).doesNotContainKey("build.sh");
-        assertThat(snapshot.textFiles()).containsOnlyKeys("Main.java", "build.sh", "gradlew", "RUN.BAT").containsEntry("build.sh", "#!/bin/sh\necho build\n");
-        assertThat(snapshot.otherPaths()).containsExactly("logo.png");
-    }
-
-    @Test
-    void getTextSnapshotFromBareRepository_forACommitThatCannotBeResolved_returnsAnEmptySnapshot() throws Exception {
-        RepositoryService.TextSnapshot snapshot = repositoryService.getTextSnapshotFromBareRepository(repository, "no-such-commit");
-
-        assertThat(snapshot.textFiles()).isEmpty();
-        assertThat(snapshot.otherPaths()).isEmpty();
     }
 
     @Test

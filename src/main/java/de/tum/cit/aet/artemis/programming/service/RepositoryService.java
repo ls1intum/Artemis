@@ -13,9 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -29,7 +26,6 @@ import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -88,19 +84,8 @@ public class RepositoryService {
 
     static final long MAX_SELECTED_FILES_TOTAL_SIZE_BYTES = 5L * 1024 * 1024;
 
-    /**
-     * Script types that {@link BinaryFileExtensionConfiguration} counts as binary although they are text. A shell still
-     * executes such a script when it contains a NUL byte, so its content must not be classified away.
-     */
-    private static final List<String> TEXT_SCRIPT_EXTENSIONS = List.of(".sh", ".bat");
-
     private enum BinaryFileFilter {
-        NONE, EXTENSION, CONTENT,
-        /**
-         * Skips a file only when both its extension and the beginning of its content mark it as binary. Scripts are never
-         * skipped.
-         */
-        EXTENSION_AND_CONTENT
+        NONE, EXTENSION, CONTENT
     }
 
     public RepositoryService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, Optional<VcsAccessLogService> vcsAccessLogService) {
@@ -338,43 +323,6 @@ public class RepositoryService {
     }
 
     /**
-     * The files of one commit, split into text files and everything else.
-     *
-     * @param textFiles  the text files, repository-relative path to UTF-8 content
-     * @param otherPaths the paths of all other entries: binary files and symbolic links
-     */
-    public record TextSnapshot(Map<String, String> textFiles, Set<String> otherPaths) {
-    }
-
-    /**
-     * Retrieves every file of a commit in a bare repository, skipping a file as binary only when both its extension and
-     * the beginning of its content say so.
-     * <p>
-     * Unlike {@link #getFilesContentFromBareRepository}, which drops files by extension alone, this keeps text files
-     * whose extensions count as binary. Shell and batch scripts are always returned as text, even with a NUL byte, which a
-     * shell executes regardless. A file without a binary extension is always returned as text, as before. For a file with such an extension only the beginning is read to classify
-     * it,
-     * so an archive or image is recognised without loading it; a file whose beginning is text is loaded completely, like
-     * every other text file. The paths of all entries not returned as text are reported, so a caller that has to account
-     * for every file sees each one.
-     *
-     * @param repository the bare repository
-     * @param commitHash the commit identifier
-     * @return the text files and the remaining paths of that commit, both empty if the commit cannot be resolved
-     * @throws IOException if the repository cannot be read
-     */
-    public TextSnapshot getTextSnapshotFromBareRepository(Repository repository, @NonNull String commitHash) throws IOException {
-        ObjectId commitId = resolveCommit(repository, commitHash);
-        if (commitId == null) {
-            return new TextSnapshot(Map.of(), Set.of());
-        }
-        Set<String> otherPaths = new HashSet<>();
-        Map<String, String> textFiles = getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION_AND_CONTENT, Long.MAX_VALUE,
-                Long.MAX_VALUE, otherPaths);
-        return new TextSnapshot(textFiles, otherPaths);
-    }
-
-    /**
      * Retrieves one raw blob as UTF-8 text from a commit in a bare repository.
      * This method deliberately does not classify the file by extension. Callers that export collections of files must apply their own binary-file policy.
      *
@@ -491,24 +439,6 @@ public class RepositoryService {
         }
     }
 
-    private static boolean isTextScript(String path) {
-        String lowerCasePath = path.toLowerCase(Locale.ROOT);
-        return TEXT_SCRIPT_EXTENSIONS.stream().anyMatch(lowerCasePath::endsWith);
-    }
-
-    /**
-     * Classifies a blob as binary from its beginning alone, without loading the rest of it.
-     *
-     * @param blobLoader the loader of the blob
-     * @return whether the beginning of the blob is binary
-     * @throws IOException if the blob cannot be read
-     */
-    private static boolean startsWithBinaryContent(ObjectLoader blobLoader) throws IOException {
-        try (InputStream inputStream = blobLoader.openStream()) {
-            return RawText.isBinary(inputStream);
-        }
-    }
-
     /**
      * Reads file content through one shared JGit traversal for full-repository exports, selected files, and single-file lookups.
      *
@@ -523,18 +453,6 @@ public class RepositoryService {
      */
     private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
             @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes) throws IOException {
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, selectedFilePaths, binaryFileFilter, maxFileSizeBytes, maxTotalSizeBytes, null);
-    }
-
-    /**
-     * Same as {@link #getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository, ObjectId, Set, BinaryFileFilter, long, long)}, additionally
-     * reporting the path of every entry skipped as a symbolic link or as binary.
-     *
-     * @param skippedPaths collects the skipped paths, or {@code null} if the caller does not need them
-     */
-    private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
-            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, @Nullable Set<String> skippedPaths)
-            throws IOException {
         Map<String, String> filesWithContent = new HashMap<>();
         long totalSize = 0;
 
@@ -556,21 +474,12 @@ public class RepositoryService {
                 }
                 if (treeWalk.getFileMode(0) == FileMode.SYMLINK || treeWalk.getFileMode(0).getObjectType() != Constants.OBJ_BLOB
                         || binaryFileFilter == BinaryFileFilter.EXTENSION && isBinaryFile(path)) {
-                    if (skippedPaths != null) {
-                        skippedPaths.add(path);
-                    }
                     continue;
                 }
 
                 ObjectId objectId = treeWalk.getObjectId(0);
                 try {
                     var blobLoader = repository.open(objectId);
-                    if (binaryFileFilter == BinaryFileFilter.EXTENSION_AND_CONTENT && isBinaryFile(path) && !isTextScript(path) && startsWithBinaryContent(blobLoader)) {
-                        if (skippedPaths != null) {
-                            skippedPaths.add(path);
-                        }
-                        continue;
-                    }
                     long blobSize = blobLoader.getSize();
                     if (blobSize > maxFileSizeBytes || blobSize > maxTotalSizeBytes - totalSize) {
                         continue;
@@ -580,9 +489,6 @@ public class RepositoryService {
                         bytes = inputStream.readAllBytes();
                     }
                     if (binaryFileFilter == BinaryFileFilter.CONTENT && RawText.isBinary(bytes)) {
-                        if (skippedPaths != null) {
-                            skippedPaths.add(path);
-                        }
                         continue;
                     }
                     filesWithContent.put(path, new String(bytes, StandardCharsets.UTF_8));
