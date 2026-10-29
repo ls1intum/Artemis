@@ -10,6 +10,8 @@ import { TumAetUiOverlayPlacement, TumAetUiOverlayService } from '../overlay/tum
 /** Shorter than the way in: a closing only has to avoid snapping. */
 const CLOSE_DURATION_MS = 100;
 
+export type TumAetUiPopoverPaddingOption = 'default' | 'none';
+
 /**
  * Anchored panel for rich or interactive content, opened via {@link TumAetUiPopoverTriggerDirective}. Use the
  * tooltip instead for a short, non-interactive hint.
@@ -31,6 +33,7 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     private readonly document = inject(DOCUMENT);
 
     readonly placement = input<TumAetUiOverlayPlacement>('bottom');
+    readonly padding = input<TumAetUiPopoverPaddingOption>('default');
     /** Accessible name announced for the role="dialog" panel. Required: a dialog must have a name. */
     readonly ariaLabel = input.required<string>();
     readonly openChange = output<boolean>();

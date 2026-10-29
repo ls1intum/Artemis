@@ -1,6 +1,5 @@
 @import '../../communication.component';
 
-$draggable-width: 15px;
 $discussion-section-card-min-width-sm: 230px;
 $discussion-section-card-min-width: 370px;
 
@@ -15,15 +14,7 @@ $discussion-section-card-min-width: 370px;
 }
 
 .expanded-discussion {
-    width: calc(#{$draggable-width} + #{$discussion-section-card-min-width});
-
-    .draggable-left {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-width: $draggable-width;
-    }
+    width: calc(var(--spacing-divider) + #{$discussion-section-card-min-width});
 
     .card {
         width: inherit;
@@ -65,7 +56,9 @@ $discussion-section-card-min-width: 370px;
     flex-flow: column nowrap;
     border: 2px solid $border-color;
     border-radius: 0.25em 0 0 0.25em;
-    margin-left: auto;
+
+    // No divider is rendered while collapsed, so the bar keeps the distance a divider has.
+    margin-left: var(--spacing-divider);
     cursor: pointer;
 
     span {
@@ -88,6 +81,9 @@ $discussion-section-card-min-width: 370px;
 @media screen and (max-width: 832px) {
     .expanded-discussion {
         max-width: $discussion-section-card-min-width-sm !important;
+
+        // The divider is hidden here, so the card keeps the distance a divider has.
+        margin-left: var(--spacing-divider);
 
         .draggable-left {
             display: none;

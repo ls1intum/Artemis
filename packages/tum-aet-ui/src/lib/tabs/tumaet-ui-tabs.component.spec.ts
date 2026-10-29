@@ -580,3 +580,106 @@ describe('TumAetUiTabs family (appearance)', () => {
         expect(element.querySelector('tumaet-ui-tab-list')!.classList).toContain('tumaet-ui-tab-list-muted');
     });
 });
+
+@Component({
+    template: `
+        <tumaet-ui-tabs [value]="value()" (valueChange)="value.set($event ?? 1)">
+            <tumaet-ui-tab-list>
+                <tumaet-ui-tab [value]="1">Files</tumaet-ui-tab>
+                <tumaet-ui-tab [value]="2">Statement</tumaet-ui-tab>
+            </tumaet-ui-tab-list>
+            <tumaet-ui-tab-panels>
+                <tumaet-ui-tab-panel [value]="1" preserveContent><span class="kept">Files</span></tumaet-ui-tab-panel>
+                <tumaet-ui-tab-panel [value]="2"><span class="discarded">Statement</span></tumaet-ui-tab-panel>
+            </tumaet-ui-tab-panels>
+        </tumaet-ui-tabs>
+    `,
+    imports: [TumAetUiTabsComponent, TumAetUiTabListComponent, TumAetUiTabComponent, TumAetUiTabPanelsComponent, TumAetUiTabPanelComponent],
+})
+class PreserveContentHostComponent {
+    readonly value = signal<number | string>(1);
+}
+
+describe('TumAetUiTabPanelComponent preserveContent', () => {
+    let fixture: ComponentFixture<PreserveContentHostComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [PreserveContentHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(PreserveContentHostComponent);
+        fixture.detectChanges();
+    });
+
+    function panel(value: number): HTMLElement {
+        return fixture.debugElement.queryAll(By.css('tumaet-ui-tab-panel'))[value - 1].nativeElement as HTMLElement;
+    }
+
+    it('destroys an inactive panel by default', () => {
+        expect(fixture.debugElement.query(By.css('.discarded'))).toBeNull();
+        fixture.componentInstance.value.set(2);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.discarded'))).not.toBeNull();
+        fixture.componentInstance.value.set(1);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.discarded'))).toBeNull();
+    });
+
+    it('keeps the same preserved content after switching away and back', () => {
+        const content = fixture.debugElement.query(By.css('.kept')).nativeElement;
+        fixture.componentInstance.value.set(2);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.kept')).nativeElement).toBe(content);
+        fixture.componentInstance.value.set(1);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.kept')).nativeElement).toBe(content);
+    });
+
+    it('takes the preserved panel out of the accessibility tree and out of the tab order while hidden', () => {
+        fixture.componentInstance.value.set(2);
+        fixture.detectChanges();
+        const preserved = panel(1);
+        expect(preserved.hasAttribute('hidden')).toBe(true);
+        expect(preserved.hasAttribute('inert')).toBe(true);
+        expect(preserved.getAttribute('tabindex')).toBeNull();
+        expect(preserved.getAttribute('data-state')).toBe('inactive');
+        expect(panel(2).getAttribute('data-state')).toBe('active');
+        expect(panel(2).hasAttribute('inert')).toBe(false);
+    });
+});
+
+@Component({
+    template: `
+        <tumaet-ui-tabs [value]="value()" (valueChange)="value.set($event)">
+            <tumaet-ui-tab-list aria-label="Artifacts">
+                @if (showDesign()) {
+                    <tumaet-ui-tab value="design">Design</tumaet-ui-tab>
+                }
+                <tumaet-ui-tab value="files">Files</tumaet-ui-tab>
+            </tumaet-ui-tab-list>
+            <tumaet-ui-tab-panels>
+                @if (showDesign()) {
+                    <tumaet-ui-tab-panel value="design">Exercise design</tumaet-ui-tab-panel>
+                }
+                <tumaet-ui-tab-panel value="files">Exercise files</tumaet-ui-tab-panel>
+            </tumaet-ui-tab-panels>
+        </tumaet-ui-tabs>
+    `,
+    imports: TABS_IMPORTS,
+})
+class ConditionalFirstTabHostComponent {
+    readonly value = signal<string | number | undefined>('design');
+    readonly showDesign = signal(true);
+}
+
+describe('conditional first tab selection', () => {
+    it('keeps the bound selection until conditional tabs have registered', async () => {
+        await TestBed.configureTestingModule({ imports: [ConditionalFirstTabHostComponent] }).compileComponents();
+        const fixture = TestBed.createComponent(ConditionalFirstTabHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.value()).toBe('design');
+        const tabs = fixture.debugElement.queryAll(By.css('tumaet-ui-tab'));
+        expect(tabs[0].nativeElement.getAttribute('aria-selected')).toBe('true');
+        expect(tabs[1].nativeElement.getAttribute('aria-selected')).toBe('false');
+    });
+});

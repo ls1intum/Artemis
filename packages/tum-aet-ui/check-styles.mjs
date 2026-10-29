@@ -65,7 +65,13 @@ for (const className of cdkOverlayClasses) {
         errors.push(`CDK overlay selector .${className} is missing`);
     }
 }
-const runtimeClasses = new Set(runtimeSources.flatMap((source) => [...source.matchAll(/tumaet:[^\s"'`$]+/g)].map((match) => match[0])));
+// `tumaet:` matches the required utility prefix.
+// `[^\s"'`$]+?` lazily matches one or more characters that are not whitespace, string delimiters, or a template-interpolation marker.
+// `(?=...)` is a positive lookahead that requires, but does not consume, one of the following boundaries.
+// `]\s*=` identifies the closing bracket, optional whitespace, and equals sign at the end of an Angular class binding, for example the `]=` in `[class.tumaet:p-3]="condition"`.
+// `[\s"'`$]` identifies regular whitespace, a string delimiter, or a template-interpolation boundary, representing other delimiters that can follow a class.
+const runtimeUtilityPattern = /tumaet:[^\s"'`$]+?(?=]\s*=|[\s"'`$])/g;
+const runtimeClasses = new Set(runtimeSources.flatMap((source) => [...source.matchAll(runtimeUtilityPattern)].map((match) => match[0])));
 for (const className of runtimeClasses) {
     if (!compiledClasses.has(className)) {
         errors.push(`runtime utility .${className} is missing`);

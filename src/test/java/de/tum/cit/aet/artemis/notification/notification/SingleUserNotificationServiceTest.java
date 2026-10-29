@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -11,12 +12,16 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.DataExport;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -27,6 +32,11 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
@@ -40,6 +50,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -60,6 +71,21 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private UserCourseNotificationStatusTestRepository userCourseNotificationStatusTestRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ResultTestRepository resultRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     private User user;
 
@@ -173,6 +199,69 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
         DataExport dataExport = new DataExport();
         dataExport.setUser(user);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void shouldNotifyAllParticipantsWhenPublishingAssessments(boolean teamMode) {
+        var now = ZonedDateTime.now();
+        TextExercise assessedExercise = teamMode ? textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.minusDays(2), now.minusDays(1))
+                : textExerciseUtilService.createIndividualTextExercise(course, now.minusDays(3), now.minusDays(2), now.minusDays(1));
+        Set<User> recipients = teamMode ? Set.of(user, userUtilService.getUserByLogin(TEST_PREFIX + "student2")) : Set.of(user);
+        StudentParticipation participation;
+        if (teamMode) {
+            var team = teamUtilService.createTeam(recipients, null, assessedExercise, TEST_PREFIX + "publicationteam");
+            participation = participationUtilService.addTeamParticipationForExercise(assessedExercise, team.getId());
+        }
+        else {
+            participation = participationUtilService.createAndSaveParticipationForExercise(assessedExercise, user.getLogin());
+        }
+        Result result = participationUtilService.createSubmissionAndResult(participation, 60, true);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.saveAndFlush(result);
+
+        // No surrounding transaction: recipient loading must also work after the repository session closes.
+        queryInterceptor.startQueryCount();
+        singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(assessedExercise);
+        assertThat(queryInterceptor.getStatements()).allSatisfy(sql -> assertThat(sql).doesNotContain("password_hash"));
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            var notifications = courseNotificationRepository.findAll().stream()
+                    .filter(notification -> notification.getCourse().getId().equals(course.getId()) && notification.getType() == 7).toList();
+            assertThat(notifications).hasSize(recipients.size());
+            var notifiedUserIds = notifications.stream()
+                    .flatMap(notification -> userCourseNotificationStatusTestRepository.findAllByCourseNotificationId(notification.getId()).stream())
+                    .map(status -> status.getUser().getId()).toList();
+            assertThat(notifiedUserIds).containsExactlyInAnyOrderElementsOf(recipients.stream().map(User::getId).toList());
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 4 })
+    void shouldLoadPublicationRecipientsWithoutAssessmentEntities(int teamCount) {
+        String prefix = TEST_PREFIX + "publicationload";
+        userUtilService.addUsers(prefix, teamCount * 2, 0, 0, 0);
+        var now = ZonedDateTime.now();
+        var assessedExercise = textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.minusDays(2), now.minusDays(1));
+        Set<AssessmentPublicationRecipientDTO> expectedRecipients = new HashSet<>();
+        for (int i = 0; i < teamCount; i++) {
+            Set<User> members = Set.of(userUtilService.getUserByLogin(prefix + "student" + (i * 2 + 1)), userUtilService.getUserByLogin(prefix + "student" + (i * 2 + 2)));
+            var team = teamUtilService.createTeam(members, null, assessedExercise, prefix + i);
+            var participation = participationUtilService.addTeamParticipationForExercise(assessedExercise, team.getId());
+            Result result = participationUtilService.createSubmissionAndResult(participation, 60 + i, true);
+            result.setAssessmentType(AssessmentType.MANUAL);
+            resultRepository.saveAndFlush(result);
+            for (User member : members) {
+                expectedRecipients.add(new AssessmentPublicationRecipientDTO(member.getId(), 60.0 + i, member.getLogin(), member.getEmail(), member.getLangKey(),
+                        member.getFirstName(), member.getLastName(), member.isTestUser()));
+            }
+        }
+
+        var recipients = assertThatDb(() -> studentParticipationRepository.findAssessmentPublicationRecipients(assessedExercise.getId())).hasBeenCalledTimes(1);
+        assertThat(recipients).containsExactlyInAnyOrderElementsOf(expectedRecipients);
+        String sql = queryInterceptor.getStatements().getFirst();
+        String selectedColumns = sql.substring(0, sql.indexOf(" from "));
+        assertThat(selectedColumns).doesNotContain("password_hash", "repository_url", "submission_date", "completion_date");
     }
 
     @Test

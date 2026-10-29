@@ -145,6 +145,64 @@ class WorkerRegistryServiceTest {
         assertThat(registry.renew(replacement)).isTrue();
     }
 
+    @Test
+    void collectorUsesActualLeaseValuesAndPreservesAReplacementClaim() {
+        registry.recordPresence("worker", heartbeat(incarnation, 1, true));
+        var old = registry.claim("old", "resource-1", CAPABILITY);
+        var transport = new WorkerTransport(data, new WorkerMessageCodecApi());
+        transport.publish(new WorkerEventDTO(WorkerCommandDTO.PROTOCOL_VERSION, "worker", incarnation, 2, Instant.now(), WorkerEventType.FINISHED, old.identity(), true,
+                old.imageDigest(), null, "abandoned output", new WorkerCapacityDTO(1, List.of()), CAPABILITY));
+        data.<String, UUID>getExpiringMap("aiworker-leases", properties.leaseTtl()).remove("worker", old.identity().executionId());
+        var replacement = registry.claim("replacement", "resource-2", CAPABILITY);
+        var live = new WorkerEventDTO(WorkerCommandDTO.PROTOCOL_VERSION, "worker", incarnation, 3, Instant.now(), WorkerEventType.FINISHED, replacement.identity(), true,
+                replacement.imageDigest(), null, "replacement output", new WorkerCapacityDTO(1, List.of()), CAPABILITY);
+        transport.publish(live);
+
+        registry.pruneUnclaimedDeliveries();
+
+        assertThat(transport.receive(old.identity(), _ -> {
+            throw new AssertionError("abandoned output remained");
+        })).isFalse();
+        assertThat(registry.renew(replacement)).isTrue();
+        assertThat(transport.receive(replacement.identity(), observed -> assertThat(observed).isEqualTo(live))).isTrue();
+    }
+
+    @Test
+    void collectorChecksFreshLeasesAfterDiscoveryAndPreservesSlotFifteen() {
+        var store = org.mockito.Mockito.spy(new LocalDataProviderService());
+        var chunks = org.mockito.Mockito.spy(store.<String, String>getMap("aiworker-event-chunks"));
+        org.mockito.Mockito.when(store.<String, String>getMap("aiworker-event-chunks")).thenReturn(chunks);
+        var transport = new WorkerTransport(store, new WorkerMessageCodecApi());
+        var collector = new WorkerRegistryService(properties, transport, store);
+        collector.recordPresence("worker", heartbeat(incarnation, 1, true).withCapacity(new WorkerCapacityDTO(16, List.of())));
+        for (int slot = 0; slot < 15; slot++) {
+            collector.claim("occupied-" + slot, "resource-" + slot, CAPABILITY);
+        }
+        var old = collector.claim("old", "resource-15", CAPABILITY);
+        assertThat(old.identity().slot()).isEqualTo(15);
+        transport.publish(new WorkerEventDTO(WorkerCommandDTO.PROTOCOL_VERSION, "worker", incarnation, 2, Instant.now(), WorkerEventType.FINISHED, old.identity(), true,
+                old.imageDigest(), null, "old output", new WorkerCapacityDTO(16, List.of()), CAPABILITY));
+        store.<String, UUID>getExpiringMap("aiworker-leases", properties.leaseTtl()).remove("worker:15", old.identity().executionId());
+        var replacement = new java.util.concurrent.atomic.AtomicReference<ExecutionClaimDTO>();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            Object observedEntries = invocation.callRealMethod();
+            var claim = collector.claim("replacement", "resource-16", CAPABILITY);
+            replacement.set(claim);
+            transport.publish(new WorkerEventDTO(WorkerCommandDTO.PROTOCOL_VERSION, "worker", incarnation, 3, Instant.now(), WorkerEventType.FINISHED, claim.identity(), true,
+                    claim.imageDigest(), null, "live output", new WorkerCapacityDTO(16, List.of()), CAPABILITY));
+            return observedEntries;
+        }).when(chunks).keySet();
+
+        collector.pruneUnclaimedDeliveries();
+
+        assertThat(replacement.get().identity().slot()).isEqualTo(15);
+        assertThat(collector.renew(replacement.get())).isTrue();
+        assertThat(transport.receive(old.identity(), _ -> {
+            throw new AssertionError("old output remained");
+        })).isFalse();
+        assertThat(transport.receive(replacement.get().identity(), observed -> assertThat(observed.payload()).isEqualTo("live output"))).isTrue();
+    }
+
     private WorkerEventDTO completion(ExecutionClaimDTO claim, long sequence, boolean ready) {
         return event(WorkerCommandDTO.PROTOCOL_VERSION, "worker", incarnation, sequence, Instant.now(), WorkerEventType.ERROR, claim.identity(), ready, claim.imageDigest(),
                 "Generation failed", null, null);

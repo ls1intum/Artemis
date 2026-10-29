@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.text;
 
 import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static java.time.ZonedDateTime.now;
+import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.isA;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -678,6 +680,87 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(submission.blocks()).isNotEmpty();
     }
 
+    @ParameterizedTest
+    @CsvSource({ "pending,false", "failed,false", "expired,false", "pending,true", "failed,true", "expired,true" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForTextEditorRetainsReleasedManualFeedbackAndAthenaRequestHistory(String requestState, boolean withoutAssessmentDueDate) throws Exception {
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), withoutAssessmentDueDate ? null : now().minusDays(1));
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, now().minusHours(4), submission);
+        Result successfulAthena = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now().minusHours(3), submission);
+        successfulAthena.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        resultRepository.save(successfulAthena);
+        Result manual = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, now().minusHours(2), submission);
+        manual.setScore(80.0);
+        manual.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        resultRepository.save(manual);
+        participationUtilService.addFeedbackToResult(new Feedback().detailText("Released manual feedback").type(FeedbackType.MANUAL), manual);
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(TextExerciseFactory.generateTextBlocks(1), submission);
+        var requestCompletionDate = now().truncatedTo(MILLIS);
+        Result requestResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA,
+                "pending".equals(requestState) ? requestCompletionDate.plusMinutes(5) : requestCompletionDate.minusMinutes(5), submission);
+        requestResult.setSuccessful("failed".equals(requestState) ? false : null);
+        requestResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        resultRepository.save(requestResult);
+
+        TextParticipationDTO response = request.get("/api/text/text-editor/" + submission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
+
+        var returnedSubmission = response.submissions().getLast();
+        assertThat(returnedSubmission.results()).extracting(ResultDTO::id).containsExactlyInAnyOrder(successfulAthena.getId(), manual.getId(), requestResult.getId());
+        var returnedManual = returnedSubmission.results().stream().filter(result -> result.id().equals(manual.getId())).findFirst().orElseThrow();
+        assertThat(returnedManual.score()).isEqualTo(80.0);
+        assertThat(returnedManual.feedbacks()).extracting(FeedbackDTO::detailText).containsExactly("Released manual feedback");
+        assertThat(returnedSubmission.blocks()).hasSize(1);
+        assertThat(returnedSubmission.results()).allSatisfy(result -> assertThat(result.assessor()).isNull());
+        var returnedRequest = returnedSubmission.results().stream().filter(result -> result.id().equals(requestResult.getId())).findFirst().orElseThrow();
+        assertThat(returnedRequest.successful()).isEqualTo(requestResult.isSuccessful());
+        assertThat(returnedRequest.completionDate().toInstant()).isEqualTo(requestResult.getCompletionDate().toInstant());
+
+        TextParticipationDTO explicitResponse = request.get("/api/text/text-editor/" + submission.getParticipation().getId() + "?resultId=" + manual.getId(), HttpStatus.OK,
+                TextParticipationDTO.class);
+        assertThat(explicitResponse.submissions().getLast().results()).extracting(ResultDTO::id).containsExactly(manual.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForTextEditorRetainsAthenaHistoryWithoutPublishingManualFeedback() throws Exception {
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), now().plusDays(1));
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        Result successfulAthena = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now().minusHours(3), submission);
+        Result manual = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, now().minusHours(2), submission);
+        Result pending = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now().plusMinutes(5), submission);
+        pending.setSuccessful(null);
+        pending.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        resultRepository.save(pending);
+
+        TextParticipationDTO response = request.get("/api/text/text-editor/" + submission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
+
+        assertThat(response.submissions().getLast().results()).extracting(ResultDTO::id).containsExactlyInAnyOrder(successfulAthena.getId(), pending.getId());
+        assertThat(response.submissions().getLast().results()).allSatisfy(result -> assertThat(result.assessor()).isNull());
+        request.get("/api/text/text-editor/" + submission.getParticipation().getId() + "?resultId=" + manual.getId(), HttpStatus.NOT_FOUND, TextParticipationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForTextEditorRetainsPendingOnlyRequestWithoutAssessor() throws Exception {
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        Result pending = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now().plusMinutes(5), submission);
+        pending.setSuccessful(null);
+        pending.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        resultRepository.save(pending);
+
+        TextParticipationDTO response = request.get("/api/text/text-editor/" + submission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
+
+        assertThat(response.submissions().getLast().results()).singleElement().satisfies(result -> {
+            assertThat(result.id()).isEqualTo(pending.getId());
+            assertThat(result.successful()).isNull();
+            assertThat(result.assessor()).isNull();
+        });
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnSpecificResultWhenResultIdProvided() throws Exception {
@@ -694,11 +777,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         secondResult.setScore(85.0);
         secondResult = resultRepository.save(secondResult);
 
-        // Without resultId parameter - should get only the latest result (default behavior)
+        // The failed Athena result remains in the request history alongside the latest manual assessment.
         TextParticipationDTO actualParticipationWithoutParam = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK,
                 TextParticipationDTO.class);
         final var actualSubmissionWithoutParam = actualParticipationWithoutParam.submissions().getLast();
-        assertThat(actualSubmissionWithoutParam.results()).hasSize(1);
+        assertThat(actualSubmissionWithoutParam.results()).extracting(ResultDTO::id).containsExactlyInAnyOrder(firstResultId, secondResult.getId());
 
         // With resultId parameter - should get only the specific result
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -922,7 +1005,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
         assertThat(participation.submissions()).hasSize(1);
-        assertThat(participation.submissions().getLast().results()).hasSize(1);
+        assertThat(participation.submissions().getLast().results()).hasSize(2);
     }
 
     @Test
@@ -937,7 +1020,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
         assertThat(participation.submissions()).hasSize(1);
-        assertThat(participation.submissions().getLast().results()).hasSize(1);
+        assertThat(participation.submissions().getLast().results()).hasSize(2);
     }
 
     @Test
@@ -951,7 +1034,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
         assertThat(participation.submissions()).hasSize(1);
-        assertThat(participation.submissions().getLast().results()).hasSize(1);
+        assertThat(participation.submissions().getLast().results()).hasSize(2);
     }
 
     private void getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {

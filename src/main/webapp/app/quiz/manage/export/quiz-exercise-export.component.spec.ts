@@ -60,8 +60,8 @@ describe('QuizExerciseExportComponent', () => {
         const quiz = { id: 7, quizQuestions: [{ id: 1 } as QuizQuestion] } as QuizExercise;
         const quizDetails = { ...quiz, quizQuestions: [{ id: 1 } as QuizQuestion] } as QuizExercise;
         courseService.find.mockReturnValue(of(new ResponseStub(course)));
-        quizService.findForCourse.mockReturnValue(of(new ResponseStub([quiz])));
-        quizService.find.mockReturnValue(of(new ResponseStub(quizDetails)));
+        quizService.findForCourse.mockReturnValue(of([quiz]));
+        quizService.find.mockReturnValue(of(quizDetails));
 
         const fixture = await open(42);
 
@@ -74,7 +74,7 @@ describe('QuizExerciseExportComponent', () => {
 
     it('should forward export call and close', async () => {
         courseService.find.mockReturnValue(of(new ResponseStub({ id: 42 } as Course)));
-        quizService.findForCourse.mockReturnValue(of(new ResponseStub([])));
+        quizService.findForCourse.mockReturnValue(of([]));
         const fixture = await open(42);
         fixture.componentInstance.questions.set([{ id: 1 } as QuizQuestion]);
 
@@ -86,7 +86,7 @@ describe('QuizExerciseExportComponent', () => {
 
     it('emits back and closes on back', async () => {
         courseService.find.mockReturnValue(of(new ResponseStub({ id: 42 } as Course)));
-        quizService.findForCourse.mockReturnValue(of(new ResponseStub([])));
+        quizService.findForCourse.mockReturnValue(of([]));
         const fixture = await open(42);
         const backSpy = vi.fn();
         fixture.componentInstance.back.subscribe(backSpy);
@@ -117,7 +117,7 @@ describe('QuizExerciseExportComponent', () => {
 
     it('should stop loading and alert when loading a quiz`s questions fails', async () => {
         courseService.find.mockReturnValue(of(new ResponseStub({ id: 42 } as Course)));
-        quizService.findForCourse.mockReturnValue(of(new ResponseStub([{ id: 7 } as QuizExercise])));
+        quizService.findForCourse.mockReturnValue(of([{ id: 7 } as QuizExercise]));
         quizService.find.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, statusText: 'boom' })));
 
         const fixture = await open(42);
@@ -128,7 +128,7 @@ describe('QuizExerciseExportComponent', () => {
 
     it('should show an empty list without loading questions when the course has no quizzes', async () => {
         courseService.find.mockReturnValue(of(new ResponseStub({ id: 42 } as Course)));
-        quizService.findForCourse.mockReturnValue(of(new ResponseStub([])));
+        quizService.findForCourse.mockReturnValue(of([]));
 
         const fixture = await open(42);
 

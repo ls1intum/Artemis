@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *                              {@code PENDING}, so a live figure is never mistaken for a total; a status without retained usage, and any status for a caller who does not own the
  *                              run, is {@code INCOMPLETE}
  * @param effortProfile     the effort profile this run actually resolved to; omitted for sanitized views and for deployments that configure no profiles
+ * @param run               durable owner-only provenance when addressed by canonical run id
  * @param input             the instructor input retained for this run; omitted for non-owner and sanitized views
  * @param artifactsRetained whether a candidate snapshot from this run is currently readable through the artifacts endpoint. Answers exactly one question
  *                              for the client — is there anything for the instructor to look at — so it can stop promising kept work for a run that kept none. Derived from the
@@ -44,7 +45,15 @@ public record ExerciseGenerationStatusDTO(@Schema(requiredMode = Schema.Required
         @Schema(description = "Whether the reported usage is a complete account of a generation run's provider spend", requiredMode = Schema.RequiredMode.REQUIRED) ExerciseGenerationAccountingState accountingState,
         @Nullable String effortProfile,
         @Schema(description = "Whether a current or retained candidate snapshot from this run is readable", requiredMode = Schema.RequiredMode.REQUIRED) boolean artifactsRetained,
-        @Nullable ExerciseGenerationInputDTO input) {
+        @Nullable ExerciseGenerationInputDTO input, @Nullable AuthoringRunDTO run) {
+
+    public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
+            List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode, boolean ownedByCaller,
+            boolean cancellable, @Nullable String specDocument, @Nullable ExerciseGenerationUsageDTO usage, ExerciseGenerationAccountingState accountingState,
+            @Nullable String effortProfile, boolean artifactsRetained, @Nullable ExerciseGenerationInputDTO input) {
+        this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage, accountingState, effortProfile,
+                artifactsRetained, input, null);
+    }
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode, boolean ownedByCaller,
@@ -82,19 +91,38 @@ public record ExerciseGenerationStatusDTO(@Schema(requiredMode = Schema.Required
         return new ExerciseGenerationStatusDTO(jobId, false, mode, List.of(), List.of(), true, jobId, mode);
     }
 
+    /**
+     * Attaches independently checked recovery availability; replay retention does not determine whether a version can be restored.
+     *
+     * @param available    whether current lifecycle and mutation guards permit recovery
+     * @param runId        the exact restorable run, or null
+     * @param recoveryMode the restorable run's mode, or null
+     * @return status with the authoritative recovery identity
+     */
+    public ExerciseGenerationStatusDTO withRevertAvailability(boolean available, @Nullable String runId, @Nullable GenerationMode recoveryMode) {
+        return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, available, runId, recoveryMode, ownedByCaller, cancellable, specDocument, usage,
+                accountingState, effortProfile, artifactsRetained, input, run);
+    }
+
+    /** Adds durable recovery events without discarding retained usage or artifact metadata. */
+    public ExerciseGenerationStatusDTO withEvents(List<ExerciseGenerationEventDTO> events) {
+        return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
+                accountingState, effortProfile, artifactsRetained, input, run);
+    }
+
     public ExerciseGenerationStatusDTO withInput(@Nullable ExerciseGenerationInputDTO input) {
         return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
-                accountingState, effortProfile, artifactsRetained, ownedByCaller ? input : null);
+                accountingState, effortProfile, artifactsRetained, ownedByCaller ? input : null, run);
     }
 
     public ExerciseGenerationStatusDTO withUsage(@Nullable ExerciseGenerationUsageDTO usage, ExerciseGenerationAccountingState accountingState) {
         return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
-                accountingState, effortProfile, artifactsRetained, input);
+                accountingState, effortProfile, artifactsRetained, input, run);
     }
 
     public ExerciseGenerationStatusDTO withEffortProfile(@Nullable String effortProfile) {
         return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
-                accountingState, effortProfile, artifactsRetained, input);
+                accountingState, effortProfile, artifactsRetained, input, run);
     }
 
     /**
@@ -105,6 +133,18 @@ public record ExerciseGenerationStatusDTO(@Schema(requiredMode = Schema.Required
      */
     public ExerciseGenerationStatusDTO withArtifactsRetained(boolean artifactsRetained) {
         return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
-                accountingState, effortProfile, artifactsRetained, input);
+                accountingState, effortProfile, artifactsRetained, input, run);
     }
+
+    /**
+     * Adds durable identity only after owner and current course authorization have both succeeded.
+     *
+     * @param run owner-authorized history summary
+     * @return status with its immutable run identity
+     */
+    public ExerciseGenerationStatusDTO withRun(AuthoringRunDTO run) {
+        return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
+                accountingState, effortProfile, artifactsRetained, input, ownedByCaller ? run : null);
+    }
+
 }
