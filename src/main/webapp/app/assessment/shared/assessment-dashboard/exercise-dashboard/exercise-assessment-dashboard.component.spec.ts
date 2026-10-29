@@ -748,6 +748,35 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
+    it('keeps locked complaint and feedback evaluation links out of keyboard navigation until unlocked', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        fixture.detectChanges();
+        comp.isExamMode.set(false);
+        const submission = { id: 123, participation: { id: 456 }, results: [{ assessmentType: AssessmentType.MANUAL }] } as Submission;
+        const complaint = { result: { submission }, complaintType: ComplaintType.COMPLAINT } as Complaint;
+        comp.submissionsWithComplaints.set([{ submission, complaint }]);
+        comp.submissionsWithMoreFeedbackRequests.set([{ submission, complaint: { ...complaint, complaintType: ComplaintType.MORE_FEEDBACK } }]);
+        const lockedSpy = vi.spyOn(comp, 'isComplaintLocked').mockReturnValue(true);
+        fixture.detectChanges();
+
+        const links = Array.from(fixture.nativeElement.querySelectorAll('a.pointer-events-none')) as HTMLAnchorElement[];
+        expect(links).toHaveLength(2);
+        for (const link of links) {
+            expect(link.getAttribute('href')).toBeNull();
+            expect(link.getAttribute('aria-disabled')).toBe('true');
+            expect(link.tabIndex).toBe(-1);
+        }
+
+        lockedSpy.mockReturnValue(false);
+        fixture.changeDetectorRef.markForCheck();
+        fixture.detectChanges();
+        for (const link of links) {
+            expect(link.getAttribute('href')).toContain('/submissions/123/assessment');
+            expect(link.getAttribute('aria-disabled')).toBeNull();
+            expect(link.tabIndex).toBe(0);
+        }
+    });
+
     describe('openExampleSubmission', () => {
         const courseId = 4;
 
