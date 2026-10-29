@@ -74,4 +74,15 @@ describe('Lecture import picker', () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
         expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }));
     });
+
+    it('keeps page navigation without claiming an item count that the API does not provide', async () => {
+        const paginator = fixture.nativeElement.querySelector('nav') as HTMLElement;
+        expect(paginator.textContent).not.toContain('Showing');
+        const lastPage = paginator.querySelector('[aria-label="Last page"]') as HTMLButtonElement;
+        lastPage.click();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        await fixture.whenStable();
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ page: 3 }));
+        expect(lastPage.disabled).toBe(true);
+    });
 });

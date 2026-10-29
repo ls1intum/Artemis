@@ -1,8 +1,8 @@
 <div class="flex flex-col gap-4!">
-    <label class="flex flex-col gap-2" for="lecture-import-search">
-        <span jhiTranslate="artemisApp.lecture.import.search"></span>
+    <div class="flex flex-col gap-2">
+        <label for="lecture-import-search" jhiTranslate="artemisApp.lecture.import.search"></label>
         <input tumAetUiInput id="lecture-import-search" [(ngModel)]="searchTerm" name="search" type="search" />
-    </label>
+    </div>
     @if (loading()) {
         <span role="status" jhiTranslate="artemisApp.lecture.import.loading"></span>
     }
@@ -53,5 +53,13 @@
             </tbody>
         </table>
     </div>
-    <tumaet-ui-paginator [page]="state.page - 1" [pageSize]="state.pageSize" [totalRecords]="total()" [showRowsPerPage]="false" (pageChange)="onPageChange($event + 1)" />
+    <!-- The API supplies a page count, so the estimated total supports navigation but cannot describe an item range. -->
+    <tumaet-ui-paginator
+        [page]="state.page - 1"
+        [pageSize]="state.pageSize"
+        [totalRecords]="total()"
+        [showCurrentPageReport]="false"
+        [showRowsPerPage]="false"
+        (pageChange)="onPageChange($event + 1)"
+    />
 </div>
