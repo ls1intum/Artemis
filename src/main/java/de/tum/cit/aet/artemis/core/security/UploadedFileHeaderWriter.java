@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.security;
 
 import java.util.List;
+import java.util.Locale;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,7 +20,9 @@ import org.springframework.web.util.pattern.PathPatternParser;
  * This writer replaces that policy for uploaded files with one that renders them in a sandbox without any script, which also covers files that were stored before uploads
  * were checked. Embedding a file with {@code <img>} or fetching it from the client is unaffected, since neither applies the policy of the fetched response.
  * <p>
- * PDF files are exempt: browsers refuse to show a PDF in a sandboxed document, and the PDF viewer does not run the file's scripts in the Artemis origin.
+ * PDF files are exempt: browsers refuse to show a PDF in a sandboxed document, and the PDF viewer does not run the file's scripts in the Artemis origin. A {@code 304 Not
+ * Modified} needs the same decision as the response it revalidates, because browsers copy its policy onto the cached file. Such a response may carry no content type, so the
+ * extension in the requested path decides then; without either, the file is sandboxed.
  * <p>
  * The writer runs when the response is committed, after the content type has been set, so it is registered after the application-wide policy and overrides it.
  */
@@ -38,19 +41,20 @@ public class UploadedFileHeaderWriter implements HeaderWriter {
 
     @Override
     public void writeHeaders(HttpServletRequest request, HttpServletResponse response) {
-        if (servesUploadedFile(request) && !isPdf(response.getContentType())) {
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        if (servesUploadedFile(path) && !servesPdf(path, response.getContentType())) {
             response.setHeader(CONTENT_SECURITY_POLICY_HEADER, UPLOADED_FILE_POLICY_DIRECTIVES);
         }
     }
 
-    private static boolean servesUploadedFile(HttpServletRequest request) {
-        PathContainer path = PathContainer.parsePath(request.getRequestURI().substring(request.getContextPath().length()));
-        return UPLOADED_FILE_PATHS.stream().anyMatch(pattern -> pattern.matches(path));
+    private static boolean servesUploadedFile(String path) {
+        PathContainer pathContainer = PathContainer.parsePath(path);
+        return UPLOADED_FILE_PATHS.stream().anyMatch(pattern -> pattern.matches(pathContainer));
     }
 
-    private static boolean isPdf(String contentType) {
+    private static boolean servesPdf(String path, String contentType) {
         if (contentType == null) {
-            return false;
+            return path.toLowerCase(Locale.ROOT).endsWith(".pdf");
         }
         try {
             return MediaType.APPLICATION_PDF.isCompatibleWith(MediaType.parseMediaType(contentType));

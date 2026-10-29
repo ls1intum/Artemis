@@ -36,6 +36,17 @@ class UploadedFileHeaderWriterTest {
         assertThat(writeHeaders("/api/core/files/attachments/lectures/1/slides.pdf", contentType).getHeader("Content-Security-Policy")).isEqualTo(APPLICATION_POLICY);
     }
 
+    /**
+     * A 304 without a content type must get the policy of the response it revalidates, because browsers copy it onto the cached file.
+     */
+    @ParameterizedTest
+    @CsvSource({ "/user/profile-pictures/ProfilePicture_x.svg, true", "/api/core/files/courses/1/attachment-video-units/2, true", "/markdown/Markdown_x.pdf, false",
+            "/api/core/files/attachments/lectures/1/Slides.PDF, false" })
+    void decidesNotModifiedWithoutContentTypeByPath(String path, boolean sandboxed) {
+        var response = writeHeaders(path, null);
+        assertThat(response.getHeader("Content-Security-Policy")).isEqualTo(sandboxed ? UploadedFileHeaderWriter.UPLOADED_FILE_POLICY_DIRECTIVES : APPLICATION_POLICY);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "/", "/index.html", "/courses/1", "/api/core/account", "/api/core/filesystem" })
     void keepsApplicationPolicyOutsideUploadedFiles(String path) {

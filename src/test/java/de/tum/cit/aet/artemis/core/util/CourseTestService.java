@@ -1056,6 +1056,19 @@ public class CourseTestService {
     }
 
     // Test
+    public void testCreateCourseWithRejectedCourseImageCreatesNoCourse() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        CourseCreateDTO dto = toCourseCreateDTO(course);
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
+        var iconPart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, "<svg xmlns=\"http://www.w3.org/2000/svg\"/>".getBytes());
+
+        request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart).file(iconPart)).andExpect(status().isBadRequest());
+
+        // A course left behind would block a retry, since its short name is taken
+        assertThat(courseRepo.findAllByShortName(course.getShortName())).isEmpty();
+    }
+
+    // Test
     public void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
         Course createdCourse = createCourseWithCourseImageAndReturn();
 

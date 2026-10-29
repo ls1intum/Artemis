@@ -589,6 +589,24 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.get("/api/core/files/courses/" + courseId + "/attachment-video-units/" + attachmentVideoUnitId, HttpStatus.OK, byte[].class);
     }
 
+    /**
+     * The path names no file here, so a revalidation has to tell by its content type that it keeps the policy of a PDF: browsers copy the policy of a 304 onto the cached
+     * file, and a sandboxed PDF is not displayed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetAttachmentVideoUnitPdfNotModifiedIsNotSandboxed() throws Exception {
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 0, true);
+        String url = "/api/core/files/courses/" + lecture.getCourse().getId() + "/attachment-video-units/" + attachmentVideoUnit.getId();
+
+        String lastModified = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_PDF)).andReturn().getResponse()
+                .getHeader(HttpHeaders.LAST_MODIFIED);
+        String policy = mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, lastModified)).andExpect(status().isNotModified()).andReturn().getResponse()
+                .getHeader("Content-Security-Policy");
+        assertThat(policy).doesNotContain("sandbox");
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAttachmentVideoUnitStudentVersion() throws Exception {
@@ -789,6 +807,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         MvcResult notModifiedResponse = mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, lastModified)).andExpect(status().isNotModified())
                 .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andReturn();
         assertAuthenticationVaryHeader(notModifiedResponse);
+        // Browsers copy the policy of a 304 onto the cached file, and a sandboxed PDF is not displayed
+        assertThat(notModifiedResponse.getResponse().getHeader("Content-Security-Policy")).doesNotContain("sandbox");
         Mockito.verify(fileService, Mockito.never()).getFileForPath(storedAttachmentVideoUnitFile(attachmentVideoUnit.getId()));
     }
 
