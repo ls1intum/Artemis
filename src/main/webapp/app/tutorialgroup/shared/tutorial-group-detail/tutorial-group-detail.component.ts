@@ -152,6 +152,7 @@ export class TutorialGroupDetailComponent {
 
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private averageAttendanceRatio = computed<number | undefined>(() => this.computeAverageAttendanceRatio(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
+    private averageAttendanceCount = computed<number | undefined>(() => this.computeAverageAttendanceCount(this.tutorialGroup().sessions));
     private sessionModal = viewChild.required<TutorialSessionCreateOrEditModalComponent>('sessionModal');
 
     tutorialGroup = input.required<TutorialGroupDetailData>();
@@ -170,7 +171,7 @@ export class TutorialGroupDetailComponent {
     tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
     tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));
     tutorialGroupCampus = computed<string>(() => this.tutorialGroup().campus ?? '-');
-    averageAttendancePercentage = computed<string | undefined>(() => this.computeAverageAttendancePercentage());
+    attendanceChartLabel = computed<string | undefined>(() => this.computeAttendanceChartLabel());
     pieChartData = computed<ChartSeriesEntry[]>(() => this.computePieChartData());
     /** The raw slice colors (CSS variable references), index-aligned with {@link pieChartData}. */
     pieChartColors = computed<string[]>(() => this.computePieChartColors());
@@ -352,11 +353,23 @@ export class TutorialGroupDetailComponent {
         return averageAttendance / capacity;
     }
 
-    private computeAverageAttendancePercentage(): string | undefined {
+    private computeAttendanceChartLabel(): string | undefined {
         const attendanceRatio = this.averageAttendanceRatio();
-        if (attendanceRatio === undefined) return undefined;
-        const percentage = attendanceRatio * 100;
-        return `Ø ${percentage.toFixed(0)}%`;
+        if (attendanceRatio !== undefined) {
+            return `Ø ${(attendanceRatio * 100).toFixed(0)}%`;
+        }
+        // Without a capacity there is no ratio, but sessions may still carry attendance: show the average headcount instead of hiding the chart.
+        const attendanceCount = this.averageAttendanceCount();
+        if (attendanceCount !== undefined) {
+            return `Ø ${attendanceCount.toFixed(0)}`;
+        }
+        return undefined;
+    }
+
+    private computeAverageAttendanceCount(sessions: TutorialGroupSession[]): number | undefined {
+        const sessionsWithAttendance = sessions.filter((session) => session.attendance !== undefined && session.attendance !== null);
+        if (sessionsWithAttendance.length === 0) return undefined;
+        return sessionsWithAttendance.reduce((sum, session) => sum + session.attendance!, 0) / sessionsWithAttendance.length;
     }
 
     private computePieChartData(): ChartSeriesEntry[] {

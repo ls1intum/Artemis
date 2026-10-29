@@ -1,5 +1,6 @@
-import { Component, OnDestroy, effect, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, model, output, signal } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 import type { TumAetUiInputSize } from '@tumaet/ui-angular';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Subscription, distinctUntilChanged, filter } from 'rxjs';
@@ -48,6 +49,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         SearchFilterPipe,
         CourseTitleBarTitleComponent,
         CourseSidebarToggleButtonComponent,
+        TumAetUiCheckboxComponent,
     ],
 })
 export class SidebarComponent implements OnDestroy {
@@ -75,6 +77,9 @@ export class SidebarComponent implements OnDestroy {
     readonly collapseState = input.required<CollapseState>();
     sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
     readonly showFilter = input<boolean>(false);
+    /** Translation key for an optional toggle shown below the search; the host owns what it filters. */
+    readonly inlineFilterLabel = input<string>();
+    readonly inlineFilterActive = model<boolean>(false);
     inCommunication = input<boolean>(false);
     readonly searchValue = signal<string>('');
     readonly reEmitNonDistinctSidebarEvents = input<boolean>(false);

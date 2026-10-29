@@ -1344,7 +1344,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private static UpdateProgrammingExerciseDTO toClientUpdateDTO(ProgrammingExerciseResponseDTO response) {
         Long exerciseGroupId = response.exerciseGroup() != null ? response.exerciseGroup().id() : null;
         Long courseId = exerciseGroupId != null ? null : (response.course() != null ? response.course().id() : null);
-        Set<GradingCriterionDTO> gradingCriteria = response.gradingCriteria() == null ? null : new HashSet<>(response.gradingCriteria());
+        List<GradingCriterionDTO> gradingCriteria = response.gradingCriteria();
         return new UpdateProgrammingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(), response.problemStatement(), response.categories(),
                 response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(), response.allowComplaintsForAutomaticAssessments(),
                 response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.gradingInstructions(), response.releaseDate(), response.startDate(),
@@ -1373,11 +1373,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         return new UpdateProgrammingExerciseDTO(dto.id(), dto.title(), dto.channelName(), dto.shortName(), dto.problemStatement(), dto.categories(), dto.difficulty(),
                 dto.maxPoints(), dto.bonusPoints(), dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.presentationScoreEnabled(),
                 dto.secondCorrectionEnabled(), dto.gradingInstructions(), dto.releaseDate(), dto.startDate(), dto.dueDate(), dto.assessmentDueDate(),
-                dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria, dto.competencyLinks(), dto.testRepositoryUri(),
-                dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(), dto.staticCodeAnalysisEnabled(),
-                dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(), dto.buildAndTestStudentSubmissionsAfterDueDate(),
-                dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(), dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig(),
-                dto.plagiarismDetectionConfig());
+                dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria == null ? null : List.copyOf(gradingCriteria), dto.competencyLinks(),
+                dto.testRepositoryUri(), dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(),
+                dto.staticCodeAnalysisEnabled(), dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(),
+                dto.buildAndTestStudentSubmissionsAfterDueDate(), dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(),
+                dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig(), dto.plagiarismDetectionConfig());
     }
 
     /**

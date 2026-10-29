@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.text.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,7 +38,7 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, AssessmentType assessmentType, boolean secondCorrectionEnabled,
         Boolean presentationScoreEnabled, String problemStatement, String exampleSolution, String gradingInstructions, Set<String> categories, String channelName,
         boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores, CourseForQuizExerciseDTO course,
-        Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria,
+        Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, List<GradingCriterionDTO> gradingCriteria,
         Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed,
         Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup, ExerciseVariantGroupReferenceDTO exerciseVariantGroup)
         implements Serializable, CourseManagementExerciseDTO {
@@ -71,10 +72,10 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
 
         var context = ExerciseResponseContextDTO.of(exercise, TextExerciseExamGroupDTO::of);
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        List<GradingCriterionDTO> gradingCriterionDTOs;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = GradingCriterionDTO.ofAll(criteria);
         }
         else {
             gradingCriterionDTOs = null;
