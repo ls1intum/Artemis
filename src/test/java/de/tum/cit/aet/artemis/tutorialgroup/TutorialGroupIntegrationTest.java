@@ -625,6 +625,44 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void updateSchedule_whenAManuallyCancelledSessionCrossesAFreePeriod_shouldKeepTheManualCancellation() throws Exception {
+            TutorialGroupScheduleDTO initialSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, 1, FOURTH_AUGUST_MONDAY, "Room A");
+            CreateOrUpdateTutorialGroupRequestDTO createRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG ManualCancel", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 10, "info", initialSchedule);
+            Long tutorialGroupId = request.postWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", createRequest, Long.class, HttpStatus.OK);
+            tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_AUGUST_MONDAY_12_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
+
+            // Manually cancel the first session (CANCELLED without a free period, with an explanation).
+            TutorialGroupSession firstSession = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
+                    .min(Comparator.comparing(TutorialGroupSession::getStart)).orElseThrow();
+            firstSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
+            firstSession.setStatusExplanation("Tutor is sick");
+            firstSession.setTutorialGroupFreePeriod(null);
+            tutorialGroupSessionRepository.saveAndFlush(firstSession);
+            Long firstSessionId = firstSession.getId();
+
+            // Extend the end into the free period: the manual cancellation and its explanation must survive, with no free period attached.
+            TutorialGroupScheduleDTO intoFreePeriod = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_13_00, 1, FOURTH_AUGUST_MONDAY, "Room A");
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId,
+                    new CreateOrUpdateTutorialGroupRequestDTO("TG ManualCancel", firstCourseTutor1.getId(), "English", false, "Garching", 10, "info", intoFreePeriod),
+                    HttpStatus.NO_CONTENT);
+            TutorialGroupSession afterEntering = tutorialGroupSessionRepository.findByIdElseThrow(firstSessionId);
+            assertThat(afterEntering.getStatus()).isEqualTo(TutorialGroupSessionStatus.CANCELLED);
+            assertThat(afterEntering.getStatusExplanation()).isEqualTo("Tutor is sick");
+            assertThat(afterEntering.getTutorialGroupFreePeriod()).isNull();
+
+            // Shorten the end back out of the free period: it must not be silently reactivated.
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId,
+                    new CreateOrUpdateTutorialGroupRequestDTO("TG ManualCancel", firstCourseTutor1.getId(), "English", false, "Garching", 10, "info", initialSchedule),
+                    HttpStatus.NO_CONTENT);
+            TutorialGroupSession afterLeaving = tutorialGroupSessionRepository.findByIdElseThrow(firstSessionId);
+            assertThat(afterLeaving.getStatus()).isEqualTo(TutorialGroupSessionStatus.CANCELLED);
+            assertThat(afterLeaving.getStatusExplanation()).isEqualTo("Tutor is sick");
+            assertThat(afterLeaving.getTutorialGroupFreePeriod()).isNull();
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void update_withTrailingWhitespaceInUnchangedTitle_preservesChannelName() throws Exception {
             firstCourseChannel1.setName("tutorgroup-custom-name-7");
             channelRepository.saveAndFlush(firstCourseChannel1);

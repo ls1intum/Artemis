@@ -142,20 +142,22 @@ public class TutorialGroupScheduleService {
      * @param overlappingPeriod an Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
      */
     public static void updateStatusAndFreePeriod(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
+        // A manual cancellation (CANCELLED without a free period) is kept with its explanation regardless of free-period overlap; only
+        // the explicit activate action reverses it. Free-period and active sessions derive their status from the current overlap.
+        boolean manuallyCancelled = newSession.getStatus() == TutorialGroupSessionStatus.CANCELLED && newSession.getTutorialGroupFreePeriod() == null;
+        if (manuallyCancelled) {
+            return;
+        }
         if (overlappingPeriod.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
             // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod
             newSession.setStatusExplanation(null);
             newSession.setTutorialGroupFreePeriod(overlappingPeriod.get());
-            return;
         }
-        // No free period overlaps the session. A session cancelled only because of a free period is reactivated, but a manual
-        // cancellation (CANCELLED without a free period) is kept together with its explanation.
-        boolean wasCancelledByFreePeriod = newSession.getTutorialGroupFreePeriod() != null;
-        newSession.setTutorialGroupFreePeriod(null);
-        if (wasCancelledByFreePeriod || newSession.getStatus() != TutorialGroupSessionStatus.CANCELLED) {
+        else {
             newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
             newSession.setStatusExplanation(null);
+            newSession.setTutorialGroupFreePeriod(null);
         }
     }
 
