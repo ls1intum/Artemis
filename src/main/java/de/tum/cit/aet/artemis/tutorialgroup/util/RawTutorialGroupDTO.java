@@ -13,7 +13,8 @@ import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 @JsonInclude(Include.NON_EMPTY)
 public record RawTutorialGroupDTO(@NotNull Long groupId, @NotNull String title, @NotNull String language, @NotNull Boolean isOnline, @Nullable Integer capacity,
         @Nullable String campus, @Nullable String tutorFirstName, @Nullable String tutorLastName, @Nullable String tutorLogin, @Nullable Long tutorId,
-        @Nullable String tutorImageUrl, @Nullable String additionalInformation, @Nullable Long groupChannelId) {
+        @Nullable String tutorImageUrl, @Nullable String additionalInformation, @Nullable Long groupChannelId, @Nullable Integer scheduleDayOfWeek,
+        @Nullable String scheduleStartTime, @Nullable String scheduleEndTime, @Nullable String scheduleLocation) {
 
     /**
      * The tutor fields come from a left join, so a tutorial group without an assigned tutor leaves them empty. The tutor's profile

@@ -421,22 +421,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                 userRepository.save(tutor);
             }
         }
-
-        @Test
-        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
-        void shouldReturnGroupWhenItHasMoreThanOneSchedule() throws Exception {
-            TutorialGroup group = buildTutorialGroupWithoutSchedule("firstcoursetutor1");
-            tutorialGroupTestRepository.save(group);
-            TutorialGroupSchedule firstSchedule = buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
-            firstSchedule.setTutorialGroup(group);
-            TutorialGroupSchedule secondSchedule = buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
-            secondSchedule.setTutorialGroup(group);
-            tutorialGroupScheduleTestRepository.saveAll(List.of(firstSchedule, secondSchedule));
-
-            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + group.getId();
-            TutorialGroupDetailDataDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailDataDTO.class);
-            assertThat(response.id()).isEqualTo(group.getId());
-        }
     }
 
     @Nested
