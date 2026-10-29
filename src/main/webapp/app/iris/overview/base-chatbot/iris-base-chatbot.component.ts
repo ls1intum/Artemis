@@ -172,6 +172,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly clipboard = inject(Clipboard);
     private readonly onboardingService = inject(IrisOnboardingService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
+    private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
@@ -646,7 +647,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 } else if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
                     this.scrollToBottom('smooth');
                 }
-                const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
+                const timeoutId = setTimeout(() => this.focusUnlessFocusIsElsewhere(this.messageTextarea()?.nativeElement), 10);
                 onCleanup(() => clearTimeout(timeoutId));
             }
             // Track new messages for animation (compare against previous IDs, not current).
@@ -717,15 +718,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
 
         // Focus on message textarea after initialization
-        const focusTimeoutId = setTimeout(() => {
-            const textarea = this.messageTextarea();
-            const acceptBtn = this.acceptButton();
-            if (textarea) {
-                textarea.nativeElement.focus();
-            } else if (acceptBtn) {
-                acceptBtn.nativeElement.focus();
-            }
-        }, 150);
+        const focusTimeoutId = setTimeout(() => this.focusUnlessFocusIsElsewhere((this.messageTextarea() ?? this.acceptButton())?.nativeElement), 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
         this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
         this.destroyRef.onDestroy(() => {
@@ -879,14 +872,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
     }
 
+    /**
+     * Focuses the element unless the user is working outside the chat, e.g. in the tab list that opened it or in the
+     * editor: taking the focus there would break their keyboard navigation.
+     */
+    private focusUnlessFocusIsElsewhere(element: HTMLElement | undefined) {
+        const focused = document.activeElement;
+        if (element && (!focused || focused === document.body || this.elementRef.nativeElement.contains(focused))) {
+            element.focus();
+        }
+    }
+
     private focusInputAfterAcceptance() {
-        setTimeout(() => {
-            if (this.messageTextarea()) {
-                this.messageTextarea()!.nativeElement.focus();
-            } else if (this.acceptButton()) {
-                this.acceptButton()!.nativeElement.focus();
-            }
-        }, 150);
+        setTimeout(() => this.focusUnlessFocusIsElsewhere((this.messageTextarea() ?? this.acceptButton())?.nativeElement), 150);
     }
 
     /**
