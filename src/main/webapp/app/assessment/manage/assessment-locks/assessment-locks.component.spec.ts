@@ -20,6 +20,8 @@ import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { assessmentLocksRoute } from './assessment-locks.route';
+import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -107,6 +109,11 @@ describe('AssessmentLocksComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('tbody a').getAttribute('href')).toBe(href);
+    });
+
+    it('requires instructor access for exam locks while retaining tutor access for course locks', () => {
+        expect(assessmentLocksRoute.find((route) => route.path === 'exams/:examId/assessment-locks')?.data?.authorities).toEqual(IS_AT_LEAST_INSTRUCTOR);
+        expect(assessmentLocksRoute.find((route) => route.path === 'assessment-locks')?.data?.authorities).toEqual(IS_AT_LEAST_TUTOR);
     });
 
     it('should release lock for programming exercise', () => {
