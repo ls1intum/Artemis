@@ -197,7 +197,8 @@
                 [disabled]="isSaving() || isPdfLoading() || totalPages() === 0 || !hasChanges()"
             >
                 @if (isSaving()) {
-                    <tumaet-ui-progress-spinner class="size-4" [ariaLabel]="'loading' | artemisTranslate" />
+                    <!-- Inline, because the kit sets the spinner's 100px size in unlayered component styles that a Tailwind utility cannot override. -->
+                    <tumaet-ui-progress-spinner [style.width.rem]="1" [style.height.rem]="1" [ariaLabel]="'loading' | artemisTranslate" />
                 } @else {
                     <fa-icon [icon]="faSave" [tumAetUiTooltip]="'entity.action.save' | artemisTranslate" />
                 }

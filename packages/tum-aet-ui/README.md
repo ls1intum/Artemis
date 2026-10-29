@@ -156,8 +156,8 @@ build tool and its transitive dependencies separate from the library peer matrix
 
 ### Splitter
 
-`TumAetUiSplitterComponent` arranges two persistent template panels. Import it and
-`TumAetUiSplitterPanelDirective` from `@tumaet/ui-angular`:
+`TumAetUiSplitterComponent` arranges two persistent template panels. Import it from
+`@tumaet/ui-angular` and mark each panel template with `#panel`:
 
 ```html
 <tumaet-ui-splitter [panelSizes]="[65, 35]" [minSizes]="[20, 15]" ariaLabel="Resize document and notes" (resizeEnd)="saveSizes($event)">
@@ -166,10 +166,19 @@ build tool and its transitive dependencies separate from the library peer matrix
 </tumaet-ui-splitter>
 ```
 
-The separator supports pointer dragging over embedded frames, axis arrow keys (Shift
-for larger steps), Home, and End. `orientation="vertical"` stacks the panels.
+The separator supports pointer dragging over embedded frames, axis arrow keys (two
+percentage points, or ten with Shift), Home, and End. `layout="vertical"` stacks the
+panels. Sizes and minimums are percentages of the available space excluding the
+gutter. `gutterSize` overrides its pixel width; otherwise
+`--tumaet-ui-splitter-divider-size` applies, defaulting to `6px`.
+
 `sizesChange` emits percentage pairs during dragging; `resizeEnd` commits keyboard
 or pointer changes. Cancellation restores the previous sizes without committing.
-Consumers own persistence and must hide or make their own content inert when using
+An optional `stateKey` persists the first percentage in local storage under
+`${stateKey}-${layout}`, retaining an independent split for each orientation.
+Consumers can instead persist `resizeEnd` values themselves. When `ariaLabel` is
+omitted, the separator uses the translated `tumAetUi.splitter.resize` label.
+
+Consumers must hide or make their own content inert when using
 `collapsedSecondSize` to replace the second panel with a fixed-size collapsed rail.
 Panel templates stay mounted during resizing and collapse.
