@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -624,6 +625,16 @@ class SecurityFrameworkServiceTest {
         assertThat(versions.templateVersions().values()).containsOnly(gradleTemplateVersion);
         assertThat(versions.selectableVersions()).startsWith("2.3.0").contains(gradleTemplateVersion).doesNotHaveDuplicates();
         assertThat(createService().getFrameworkVersions().selectableVersions()).containsExactly(gradleTemplateVersion);
+    }
+
+    @Test
+    void selectableVersionsAreSortedNewestFirstWhateverTheConfiguredOrder() {
+        String templateVersion = SecurityPolicyRepositoryFiles.readAresVersion(MAIN_RESOURCES.resolve("templates/java/test/gradle/projectTemplate")).orElseThrow();
+        assertThat(templateVersion).isEqualTo("2.2.1");
+
+        List<String> selectableVersions = createService("2.2.0", "2.9.1", "2.10.0", "2.10.0-Beta2", "2.10.0-Beta10", "2.0.1").getFrameworkVersions().selectableVersions();
+
+        assertThat(selectableVersions).containsExactly("2.10.0", "2.10.0-Beta10", "2.10.0-Beta2", "2.9.1", "2.2.1", "2.2.0", "2.0.1");
     }
 
     @Test

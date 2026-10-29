@@ -52,6 +52,11 @@ artemis:
     # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
     # push-notification-relay: https://hermes-prod.artemis.cit.tum.de
 
+    programming:
+        security-framework:
+            # Ares versions instructors can pin for the Security Framework of a Java exercise. The version the Java templates use is always
+            # selectable as well. Only list published versions that work with the Java templates, otherwise the exercise builds fail.
+            supported-versions: 2.2.1, 2.2.0
     continuous-integration:
         # Defines the used docker images for certain programming languages.
         # For each language at least the `default` image has to be defined.
