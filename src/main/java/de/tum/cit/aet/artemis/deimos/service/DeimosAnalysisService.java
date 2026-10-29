@@ -120,6 +120,9 @@ public class DeimosAnalysisService {
      */
     private static final Pattern FENCE_MARKER_PATTERN = Pattern.compile("-{3}[\\s\\p{Z}]*+(?:BEGIN|END)[\\s\\p{Z}]++UNTRUSTED[\\s\\p{Z}]++DATA", Pattern.CASE_INSENSITIVE);
 
+    // Every common line ending, so converting a file between them keeps the identity and number of its lines.
+    private static final Pattern LINE_BREAK_PATTERN = Pattern.compile("\r\n|[\r\n]");
+
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
@@ -661,21 +664,20 @@ public class DeimosAnalysisService {
      * pass and a line is only copied when it matches.
      *
      * @param content  the text to scan
-     * @param consumer receives the 1-based line number and the text of each matching line
+     * @param consumer receives the 1-based line number and the text of each matching line, without its line terminator
      */
     private static void forEachFenceMarkerLine(String content, MarkerLineConsumer consumer) {
         Matcher matcher = FENCE_MARKER_PATTERN.matcher(content);
+        Matcher lineBreakMatcher = LINE_BREAK_PATTERN.matcher(content);
         int lineStart = 0;
         int lineNumber = 1;
         while (lineStart <= content.length()) {
-            int lineEnd = content.indexOf('\n', lineStart);
-            if (lineEnd < 0) {
-                lineEnd = content.length();
-            }
+            boolean hasLineBreak = lineBreakMatcher.find(lineStart);
+            int lineEnd = hasLineBreak ? lineBreakMatcher.start() : content.length();
             if (matcher.region(lineStart, lineEnd).find()) {
                 consumer.accept(lineNumber, content.substring(lineStart, lineEnd));
             }
-            lineStart = lineEnd + 1;
+            lineStart = hasLineBreak ? lineBreakMatcher.end() : content.length() + 1;
             lineNumber++;
         }
     }

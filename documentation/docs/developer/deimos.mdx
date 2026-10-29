@@ -197,10 +197,12 @@ raw object, a fenced block, or an object embedded in a preamble, but it requires
 A response missing either is rejected as `LLM_UNPARSEABLE` rather than being read as benign.
 
 Candidates are grouped into tiers of decreasing confidence: the whole response, then fenced blocks, then balanced
-objects found in the text. The first tier that yields a verdict decides. Within a tier, identical verdicts are
+objects found in the text. The first tier that yields a verdict decides. Within that tier, identical verdicts are
 collapsed, but two **differing** verdicts are rejected as `LLM_UNPARSEABLE` instead of being resolved by position:
 nothing in a sequence of objects says which one is final, and taking the first could report a malicious participation
-as benign.
+as benign. Verdicts that differ in `malicious` are rejected across tiers as well, because a fence does not mark the
+final answer either: a fenced object may be a quoted example followed by the actual answer. A classification stated
+outside a recoverable object counts too, so prose with an unmatched brace or quote cannot hide a later verdict.
 
 ## Failure taxonomy
 

@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +63,15 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
 
     private static final String RATIONALE_FIELD = "rationale";
 
+    /**
+     * A classification stated anywhere in the response, also where no object can be recovered: prose with an unmatched
+     * brace or quote derails the balanced-object scan, and must not hide a later contradicting verdict. Each character of
+     * the key may be written literally or as a JSON Unicode escape.
+     */
+    private static final Pattern CLASSIFICATION_PATTERN = Pattern
+            .compile("\"" + MALICIOUS_FIELD.chars().mapToObj(character -> "(?:%c|\\\\u(?i:%04x))".formatted(character, character)).collect(Collectors.joining())
+                    + "\"\\s*+:\\s*+(true|false)\\b");
+
     private static final String CREDENTIALS_REJECTED_MESSAGE = "LLM endpoint rejected the credentials (HTTP %d): API key missing or wrong, or not authorised for this endpoint or model";
 
     /**
@@ -106,25 +117,37 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
      * Extracts the verdict from a raw assistant response.
      * <p>
      * Candidates are grouped into tiers of decreasing confidence: the whole trimmed response, then the contents of any
-     * fenced block, then any balanced JSON object found in the text. The first tier that yields a verdict decides, which
-     * is what lets a model state a provisional answer in prose and then correct itself inside a fence. Fences are not
-     * stripped indiscriminately, because the required JSON is frequently the fenced content itself.
+     * fenced block, then any balanced JSON object found in the text. The first tier that yields a verdict decides, so a
+     * model may refine its rationale inside a fence. Fences are not stripped indiscriminately, because the required JSON
+     * is frequently the fenced content itself.
      * <p>
      * Within a tier, identical verdicts are collapsed, since the same object is usually recovered by more than one
      * candidate. Two <em>differing</em> verdicts in the same tier are rejected instead of resolved by position: nothing
      * in a bare sequence of objects says which one is the final answer, and taking the first would report a malicious
-     * participation as benign. The response is then counted as {@code LLM_UNPARSEABLE} and can be re-run, rather than
-     * silently resolved in the dangerous direction.
+     * participation as benign. Verdicts with differing classifications are rejected across tiers as well, because a
+     * fence does not mark the final answer either: a fenced object may be a quoted example followed by the actual
+     * answer. Classifications stated outside a recoverable object count as well. The response is then counted as
+     * {@code LLM_UNPARSEABLE} and can be re-run, rather than silently resolved in the dangerous direction.
      *
      * @param content the raw assistant response
-     * @return the parsed verdict, or empty if no tier yielded exactly one valid verdict
+     * @return the parsed verdict, or empty if no tier yielded exactly one valid verdict or the classifications differ
      */
     static Optional<DeimosLlmResponse> parseVerdict(String content) {
+        List<Set<DeimosLlmResponse>> verdictsPerTier = new ArrayList<>();
         for (List<String> tier : candidateTiers(content)) {
             var distinctVerdicts = new LinkedHashSet<DeimosLlmResponse>();
             for (String candidate : tier) {
                 tryParse(candidate).ifPresent(distinctVerdicts::add);
             }
+            verdictsPerTier.add(distinctVerdicts);
+        }
+        Stream<Boolean> parsedClassifications = verdictsPerTier.stream().flatMap(Set::stream).map(DeimosLlmResponse::malicious);
+        Stream<Boolean> statedClassifications = CLASSIFICATION_PATTERN.matcher(content).results().map(match -> Boolean.parseBoolean(match.group(1)));
+        if (Stream.concat(parsedClassifications, statedClassifications).distinct().count() > 1) {
+            log.warn("LLM response contained verdicts with differing classifications, rejecting it as ambiguous");
+            return Optional.empty();
+        }
+        for (Set<DeimosLlmResponse> distinctVerdicts : verdictsPerTier) {
             if (distinctVerdicts.size() == 1) {
                 return Optional.of(distinctVerdicts.iterator().next());
             }

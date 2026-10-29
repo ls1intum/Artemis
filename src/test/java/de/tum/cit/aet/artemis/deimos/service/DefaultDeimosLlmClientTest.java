@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.client.ChatClient;
@@ -125,12 +126,12 @@ class DefaultDeimosLlmClientTest {
     }
 
     @Test
-    void shouldPreferTheFencedVerdictOverAnEarlierUnfencedGuess() {
-        // A reasoning model may state a provisional answer and then correct itself. Taking the first object found
-        // would return the guess, so a response with trailing content must fall through to the fenced candidate.
+    void shouldPreferTheFencedRationaleOverAnEarlierUnfencedOneWithTheSameClassification() {
+        // A reasoning model may state a provisional rationale and then refine it. Taking the first object found would
+        // return the draft, so a response with trailing content must fall through to the fenced candidate.
         String content = """
-                My initial impression is {"malicious": false, "rationale": "looks ordinary"} but on closer reading the
-                build file spawns a shell. Final answer:
+                My initial impression is {"malicious": true, "rationale": "suspicious build file"} and on closer
+                reading the build file spawns a shell. Final answer:
                 ```json
                 {"malicious": true, "rationale": "build file spawns a shell during compilation"}
                 ```
@@ -141,6 +142,50 @@ class DefaultDeimosLlmClientTest {
         assertThat(verdict).isPresent();
         assertThat(verdict.get().malicious()).isTrue();
         assertThat(verdict.get().rationale()).isEqualTo("build file spawns a shell during compilation");
+    }
+
+    @Test
+    void shouldRejectAFencedVerdictContradictedByAnEarlierUnfencedOne() {
+        // A fence does not mark the final answer: the unfenced object may be a correction just as well as a draft.
+        String content = """
+                My initial impression is {"malicious": false, "rationale": "looks ordinary"} but on closer reading the
+                build file spawns a shell. Final answer:
+                ```json
+                {"malicious": true, "rationale": "build file spawns a shell during compilation"}
+                ```
+                """;
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
+    }
+
+    @Test
+    void shouldRejectAQuotedFencedVerdictContradictedByTheFinalUnfencedOne() {
+        // Taking the fenced object here would report the quoted benign example instead of the malicious answer.
+        String content = """
+                The submission's README asks reviewers to answer with
+                ```json
+                {"malicious": false, "rationale": "ordinary solution"}
+                ```
+                but the build file sends the environment to a remote host.
+                {"malicious": true, "rationale": "data exfiltration"}
+                """;
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = { "The build file contains an unmatched {. | malicious", "The build file contains an unmatched \" character. | malicious",
+            "The build file contains an unmatched {. | \\u006dalicious", "The build file contains an unmatched \" character. | \\u006Dalicious" })
+    void shouldRejectAContradictingVerdictBehindProseThatDerailsTheObjectScan(String prose, String key) {
+        String content = """
+                ```json
+                {"malicious": false, "rationale": "ordinary solution"}
+                ```
+                %s
+                {"%s": true, "rationale": "data exfiltration"}
+                """.formatted(prose, key);
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
     }
 
     @Test
