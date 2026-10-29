@@ -561,7 +561,7 @@ describe('ParticipationComponent', () => {
 
             expect(filters()).not.toContain(FilterProp.FAILED);
             expect(filters()).not.toContain(FilterProp.BUILD_FAILED);
-            expect(filters()).not.toContain(FilterProp.GRADED);
+            expect(filters()).toContain(FilterProp.GRADED);
             expect(filters()).toContain(FilterProp.NO_SUBMISSIONS);
         });
 
@@ -601,6 +601,8 @@ describe('ParticipationComponent', () => {
             [FilterProp.AUTOMATIC, { type: ExerciseType.MODELING }, true, false],
             [FilterProp.MANUAL, { type: ExerciseType.FILE_UPLOAD }, true, false],
             [FilterProp.GRADED, { type: ExerciseType.QUIZ }, false, true],
+            [FilterProp.GRADED, { type: ExerciseType.TEXT }, false, true],
+            [FilterProp.GRADED, { type: ExerciseType.MODELING }, false, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC, isAtLeastInstructor: true }, false, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, isAtLeastInstructor: true }, false, false],
         ])('should offer the result filter %s only where it applies', (filter: FilterProp, ex: Partial<Exercise>, newManualResultsAllowed: boolean, expected: boolean) => {
@@ -618,7 +620,7 @@ describe('ParticipationComponent', () => {
             expect(filters()).toContain(FilterProp.LOCKED);
         });
 
-        it.each([ExerciseType.QUIZ, ExerciseType.PROGRAMMING])('sends the graded filter to the server (%s)', (type) => {
+        it.each([ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('sends the graded filter to the server (%s)', (type) => {
             component.exercise.set({ ...exercise, type });
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
             component.onDataRequest({ pageIndex: 0, pageSize: 50 });

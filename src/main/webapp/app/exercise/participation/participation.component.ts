@@ -246,7 +246,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                   ]
                 : []),
             ...(isProgramming ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.NO_PRACTICE_MODE] }] : []),
-            ...(isProgramming || ex.type === ExerciseType.QUIZ ? [{ labelKey: 'artemisApp.participation.filterGroup.gradingStatus', items: [FilterProp.GRADED] }] : []),
+            ...(isProgramming || ex.type === ExerciseType.QUIZ || ex.type === ExerciseType.TEXT || ex.type === ExerciseType.MODELING
+                ? [{ labelKey: 'artemisApp.participation.filterGroup.gradingStatus', items: [FilterProp.GRADED] }]
+                : []),
             ...(manualAssessmentEnabled && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentStatus', items: [FilterProp.LOCKED] }] : []),
         ];
     });

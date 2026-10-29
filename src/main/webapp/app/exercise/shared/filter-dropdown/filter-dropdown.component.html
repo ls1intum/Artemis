@@ -1,7 +1,7 @@
 <div class="flex flex-wrap items-center gap-2" role="group" [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate">
     @for (group of groups(); track group.labelKey) {
         @if (group.items.length === 1) {
-            <div class="inline-flex shrink-0 items-center gap-2 text-sm text-(--tumaet-ui-text-color)" role="group" [attr.aria-label]="group.labelKey | artemisTranslate">
+            <div class="inline-flex shrink-0 items-center gap-2 text-sm text-(--tumaet-ui-text-color)">
                 <tumaet-ui-checkbox
                     [inputId]="'participation-filter-' + group.items[0]"
                     [checked]="group.selected.length > 0"
