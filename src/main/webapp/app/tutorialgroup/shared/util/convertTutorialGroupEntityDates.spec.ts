@@ -32,6 +32,14 @@ describe('convertTutorialGroupEntityDates', () => {
         expect(result.end?.toISOString()).toBe(END);
     });
 
+    it('should preserve the server-derived capacityReached availability flag', () => {
+        const summaries: TutorialGroupSummary[] = [{ id: 1, capacityReached: true }, { id: 2, capacityReached: false }, { id: 3 }];
+
+        const result = convertTutorialGroupSummaryArrayDatesFromServer(summaries);
+
+        expect(result.map((group) => group.capacityReached)).toEqual([true, false, undefined]);
+    });
+
     it('should convert generated tutorial group summary dates without mutating the response', () => {
         const tutorialGroupSummaries: TutorialGroupSummary[] = [
             {
