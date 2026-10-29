@@ -76,7 +76,8 @@
         <section class="card narrow" aria-labelledby="tutor-card-title">
             <h3 id="tutor-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h3>
             <div class="tutor-card-content">
-                @if (tutorialGroup().tutorName; as tutorName) {
+                @if (tutorialGroup().tutorLogin; as tutorLogin) {
+                    @let tutorName = tutorialGroup().tutorName ?? tutorLogin;
                     <jhi-profile-picture
                         imageSizeInRem="6"
                         fontSizeInRem="2"

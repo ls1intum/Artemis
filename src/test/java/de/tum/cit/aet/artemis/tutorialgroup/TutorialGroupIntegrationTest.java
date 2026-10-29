@@ -379,6 +379,32 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
+        void shouldFallBackToTutorLoginWhenTutorHasNoName() throws Exception {
+            TutorialGroup group = buildTutorialGroupWithoutSchedule("firstcoursetutor1");
+            tutorialGroupTestRepository.save(group);
+            User tutor = userRepository.findOneByLogin("firstcoursetutor1").orElseThrow();
+            String originalFirstName = tutor.getFirstName();
+            String originalLastName = tutor.getLastName();
+            tutor.setFirstName(null);
+            tutor.setLastName(null);
+            userRepository.save(tutor);
+            try {
+                String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + group.getId();
+                TutorialGroupDetailDataDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailDataDTO.class);
+                assertThat(response.id()).isEqualTo(group.getId());
+                assertThat(response.tutorLogin()).isEqualTo(tutor.getLogin());
+                assertThat(response.tutorName()).isEqualTo(tutor.getLogin());
+                assertThat(response.tutorId()).isEqualTo(tutor.getId());
+            }
+            finally {
+                tutor.setFirstName(originalFirstName);
+                tutor.setLastName(originalLastName);
+                userRepository.save(tutor);
+            }
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
         void shouldReturnGroupWhenItHasMoreThanOneSchedule() throws Exception {
             TutorialGroup group = buildTutorialGroupWithoutSchedule("firstcoursetutor1");
             tutorialGroupTestRepository.save(group);

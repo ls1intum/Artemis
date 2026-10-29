@@ -170,6 +170,16 @@ describe('TutorialGroupDetailComponent', () => {
         expect(fixture.debugElement.query(By.css('[data-testid="tutor-chat-button"]'))).toBeNull();
     });
 
+    it('should show an assigned tutor using the login as a fallback when the tutor has no name', () => {
+        const tutorialGroup = createTutorialGroupDetailData({ tutorName: undefined, tutorLogin: 'gx89tum', tutorId: 12 });
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[data-testid="no-tutor-assigned"]'))).toBeNull();
+        const tutorName = fixture.debugElement.query(By.css('[data-testid="tutor-name"]'));
+        expect(tutorName).not.toBeNull();
+        expect(tutorName.nativeElement.textContent.trim()).toBe('gx89tum');
+    });
+
     it('should display current lesson button if currentTutorialLectureId available', () => {
         const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
