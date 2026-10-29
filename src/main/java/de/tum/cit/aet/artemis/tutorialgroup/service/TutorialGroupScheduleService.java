@@ -74,14 +74,17 @@ public class TutorialGroupScheduleService {
             return;
         }
         // The schedule changed: a regenerated session that starts at the same time as an existing one is the same session, so keep its
-        // id, recorded attendance, and status, letting only its end and location follow the new schedule. Existing sessions whose start
-        // no longer occurs are removed. Delete and insert commit together so the schedule is never left without its sessions.
+        // id and recorded attendance and let its end and location follow the new schedule. Existing sessions whose start no longer
+        // occurs are removed. Delete and insert commit together so the schedule is never left without its sessions.
         List<TutorialGroupSession> sessionsToPersist = new ArrayList<>();
         for (TutorialGroupSession generatedSession : generatedSessions) {
             TutorialGroupSession existingSession = existingSessionsByStart.remove(generatedSession.getStart().toInstant());
             if (existingSession != null) {
                 existingSession.setEnd(generatedSession.getEnd());
                 existingSession.setLocation(generatedSession.getLocation());
+                // The new interval may now overlap (or no longer overlap) a free period, so recompute the free-period status from the
+                // generated session's lookup. updateStatusAndFreePeriod keeps a manual cancellation; the attendance is untouched.
+                updateStatusAndFreePeriod(existingSession, Optional.ofNullable(generatedSession.getTutorialGroupFreePeriod()));
                 sessionsToPersist.add(existingSession);
             }
             else {
