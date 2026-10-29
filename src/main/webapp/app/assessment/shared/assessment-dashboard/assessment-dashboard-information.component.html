@@ -146,9 +146,19 @@
                             scope="row"
                             jhiTranslate="artemisApp.assessmentDashboard.assessmentLocks"
                         ></th>
-                        <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ assessmentLocks().total }}</td>
                         <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
-                            <a [routerLink]="assessmentLocksLink()" [queryParams]="{ tutorId: tutorId() }">{{ assessmentLocks().tutor }}</a>
+                            @if (isExamMode() && course()?.isAtLeastInstructor) {
+                                <a [routerLink]="assessmentLocksLink()">{{ assessmentLocks().total }}</a>
+                            } @else {
+                                {{ assessmentLocks().total }}
+                            }
+                        </td>
+                        <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
+                            @if (!isExamMode()) {
+                                <a [routerLink]="assessmentLocksLink()" [queryParams]="{ tutorId: tutorId() }">{{ assessmentLocks().tutor }}</a>
+                            } @else {
+                                {{ assessmentLocks().tutor }}
+                            }
                         </td>
                     </tr>
                     @if (!isExamMode()) {
