@@ -12,6 +12,7 @@ export interface StandardizedCompetency extends BaseCompetency {
     linkedCompetencies?: CourseCompetency[];
 }
 
+/** Mutable admin request/form and UI draft; generated read DTOs are adapted at the view boundary. */
 export interface StandardizedCompetencyDTO extends BaseEntity {
     title?: string;
     description?: string;
@@ -30,6 +31,7 @@ export interface KnowledgeArea extends BaseEntity {
     competencies?: StandardizedCompetency[];
 }
 
+/** Mutable admin request/form and UI draft, including unsaved areas without an identifier. */
 export interface KnowledgeAreaDTO extends BaseEntity {
     title?: string;
     shortTitle?: string;
@@ -39,6 +41,7 @@ export interface KnowledgeAreaDTO extends BaseEntity {
     competencies?: StandardizedCompetencyDTO[];
 }
 
+/** Admin catalog/domain shape. Read consumers adapt generated citation DTOs into this view. */
 export interface Source extends BaseEntity {
     title?: string;
     author?: string;

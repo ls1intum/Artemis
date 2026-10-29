@@ -3,10 +3,10 @@
  * Tests the main management view for standardized competencies and knowledge areas
  * including CRUD operations, tree navigation, and filtering.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { Subject, of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,7 +18,6 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
-    Source,
     StandardizedCompetencyDTO,
     StandardizedCompetencyForTree,
     convertToKnowledgeAreaForTree,
@@ -30,14 +29,16 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
+import { KnowledgeAreaResult } from 'app/openapi/model/knowledge-area-result';
+import { Source as ApiSource } from 'app/openapi/model/source';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 
 describe('StandardizedCompetencyManagementComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;
     let component: StandardizedCompetencyManagementComponent;
     let competencyService: StandardizedCompetencyService;
-    let getForTreeViewSpy: ReturnType<typeof vi.spyOn>;
-    let getSourcesSpy: ReturnType<typeof vi.spyOn>;
+    let getForTreeViewSpy: MockInstance<StandardizedCompetencyService['getAllForTreeView']>;
+    let getSourcesSpy: MockInstance<StandardizedCompetencyService['getSources']>;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -54,12 +55,41 @@ describe('StandardizedCompetencyManagementComponent', () => {
         componentFixture = TestBed.createComponent(StandardizedCompetencyManagementComponent);
         component = componentFixture.componentInstance;
         competencyService = TestBed.inject(StandardizedCompetencyService);
-        getForTreeViewSpy = vi.spyOn(competencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
-        getSourcesSpy = vi.spyOn(competencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
+        getForTreeViewSpy = vi.spyOn(competencyService, 'getAllForTreeView').mockReturnValue(of([{ id: 1 }]));
+        getSourcesSpy = vi.spyOn(competencyService, 'getSources').mockReturnValue(of([{ id: 1 }]));
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('keeps reads parallel and initializes only after both bodies arrive', () => {
+        const tree = new Subject<KnowledgeAreaResult[]>();
+        const sources = new Subject<ApiSource[]>();
+        getForTreeViewSpy.mockReturnValue(tree);
+        getSourcesSpy.mockReturnValue(sources);
+        componentFixture.detectChanges();
+        expect(getForTreeViewSpy).toHaveBeenCalledExactlyOnceWith();
+        expect(getSourcesSpy).toHaveBeenCalledExactlyOnceWith();
+        sources.next([{ id: 4, title: 'Citation' }]);
+        sources.complete();
+        expect(component['isLoading']()).toBe(true);
+        expect(component['sourcesForSelect']()).toEqual([]);
+        tree.next([{ id: 1, children: [{ id: 2, parentId: 1, competencies: [{ id: 3, taxonomy: 'CREATE', sourceId: 4 }] }] }]);
+        tree.complete();
+        expect(component['isLoading']()).toBe(false);
+        expect(component['knowledgeAreaMap'].size).toBe(2);
+        expect(component['knowledgeAreaMap'].get(2)?.competencies?.[0].taxonomy).toBe(CompetencyTaxonomy.CREATE);
+        expect(component['sourcesForSelect']()[0]).toMatchObject({ id: 4, title: 'Citation' });
+    });
+
+    it('reports initialization failure without replacing local state', () => {
+        getSourcesSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        componentFixture.detectChanges();
+        expect(TestBed.inject(AlertService).error).toHaveBeenCalledWith('error.http.403');
+        expect(component['knowledgeAreaMap'].size).toBe(0);
+        expect(component['sourcesForSelect']()).toEqual([]);
+        expect(component['isLoading']()).toBe(true);
     });
 
     it('should initialize', () => {
@@ -68,7 +98,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should load data on init', () => {
-        const tree: KnowledgeAreaDTO[] = [
+        const tree = [
             {
                 id: 1,
                 children: [
@@ -87,10 +117,10 @@ describe('StandardizedCompetencyManagementComponent', () => {
             {
                 id: 3,
             },
-        ];
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
-        const sources: Source[] = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
-        getSourcesSpy.mockReturnValue(of(new HttpResponse({ body: sources })));
+        ] satisfies KnowledgeAreaResult[];
+        getForTreeViewSpy.mockReturnValue(of(tree));
+        const sources: ApiSource[] = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+        getSourcesSpy.mockReturnValue(of(sources));
         componentFixture.detectChanges();
 
         expect(getForTreeViewSpy).toHaveBeenCalledOnce();
@@ -176,16 +206,16 @@ describe('StandardizedCompetencyManagementComponent', () => {
     it('should delete competency', () => {
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const deleteSpy = vi.spyOn(adminStandardizedCompetencyService, 'deleteStandardizedCompetency').mockReturnValue(of(new HttpResponse<void>()));
-        const competencyToDelete: StandardizedCompetencyDTO = { id: 1, title: 'competency1', knowledgeAreaId: 1 };
-        const c2: StandardizedCompetencyForTree = { id: 2, title: 'competency2', knowledgeAreaId: 1, isVisible: true };
-        const c3: StandardizedCompetencyForTree = { id: 3, title: 'competency3', knowledgeAreaId: 1, isVisible: true };
-        const tree: KnowledgeAreaDTO[] = [
+        const competencyToDelete = { id: 1, title: 'competency1', knowledgeAreaId: 1 } satisfies StandardizedCompetencyDTO;
+        const c2 = { id: 2, title: 'competency2', knowledgeAreaId: 1, isVisible: true } satisfies StandardizedCompetencyForTree;
+        const c3 = { id: 3, title: 'competency3', knowledgeAreaId: 1, isVisible: true } satisfies StandardizedCompetencyForTree;
+        const tree = [
             {
                 id: 1,
                 competencies: [competencyToDelete, c2, c3],
             },
-        ];
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        ] satisfies KnowledgeAreaResult[];
+        getForTreeViewSpy.mockReturnValue(of(tree));
         component['selectedCompetency'].set(competencyToDelete);
         componentFixture.detectChanges();
 
@@ -200,13 +230,13 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should create competency', () => {
-        const tree: KnowledgeAreaDTO[] = [
+        const tree = [
             {
                 id: 1,
                 competencies: [{ id: 1 }, { id: 2 }],
             },
-        ];
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        ] satisfies KnowledgeAreaResult[];
+        getForTreeViewSpy.mockReturnValue(of(tree));
 
         // Important that this has no id, so we create a competency!
         const competencyToCreate: StandardizedCompetencyDTO = { title: 'competency1', knowledgeAreaId: 1 };
@@ -231,12 +261,12 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const competencyToUpdate = createCompetencyDTO(1, 'title', 'description', CompetencyTaxonomy.ANALYZE, 1);
         const updatedCompetency = createCompetencyDTO(1, 'new title', 'new description', CompetencyTaxonomy.CREATE, 1);
         const expectedCompetencyInTree: StandardizedCompetencyForTree = { ...updatedCompetency, isVisible: true };
-        const tree: KnowledgeAreaDTO[] = [
+        const tree = [
             {
                 id: 1,
                 competencies: [competencyToUpdate, { id: 2 }],
             },
-        ];
+        ] satisfies KnowledgeAreaResult[];
 
         prepareAndExecuteCompetencyUpdate(tree, competencyToUpdate, updatedCompetency);
 
@@ -249,7 +279,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const competencyToUpdate = createCompetencyDTO(1, 'title', 'description', CompetencyTaxonomy.ANALYZE, 1);
         const updatedCompetency = createCompetencyDTO(1, 'new title', 'new description', CompetencyTaxonomy.ANALYZE, 2);
         const expectedCompetencyInTree: StandardizedCompetencyForTree = { ...updatedCompetency, isVisible: true };
-        const tree: KnowledgeAreaDTO[] = [
+        const tree = [
             {
                 id: 1,
                 competencies: [{ id: 1 }, { id: 2 }],
@@ -258,7 +288,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
                 id: 2,
                 competencies: [{ id: 21, title: 'competency 21' }],
             },
-        ];
+        ] satisfies KnowledgeAreaResult[];
 
         prepareAndExecuteCompetencyUpdate(tree, competencyToUpdate, updatedCompetency);
 
@@ -331,10 +361,10 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const deleteSpy = vi.spyOn(adminStandardizedCompetencyService, 'deleteKnowledgeArea').mockReturnValue(of(new HttpResponse<void>()));
         const knowledgeAreaToDelete = createKnowledgeAreaDTO(1, 'title', 't1', 'd1');
-        const ka2: KnowledgeAreaForTree = { id: 2, title: 'title2', isVisible: true, level: 0 };
-        const ka3: KnowledgeAreaForTree = { id: 3, title: 'title2', isVisible: true, level: 0 };
-        const tree: KnowledgeAreaDTO[] = [knowledgeAreaToDelete, ka2, ka3];
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        const ka2 = { id: 2, title: 'title2', isVisible: true, level: 0 } satisfies KnowledgeAreaForTree;
+        const ka3 = { id: 3, title: 'title2', isVisible: true, level: 0 } satisfies KnowledgeAreaForTree;
+        const tree = [knowledgeAreaToDelete, ka2, ka3] satisfies KnowledgeAreaResult[];
+        getForTreeViewSpy.mockReturnValue(of(tree));
         component['selectedKnowledgeArea'].set(knowledgeAreaToDelete);
         componentFixture.detectChanges();
 
@@ -358,7 +388,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const childToDelete1 = createKnowledgeAreaDTO(deletedIds[1], 'titleC', 'tC', '', deletedIds[0]);
         const knowledgeAreaToDelete = createKnowledgeAreaDTO(deletedIds[0], 'kaToDelete', 'kTD', '', 1, [childToDelete1, childToDelete2]);
 
-        const tree: KnowledgeAreaDTO[] = [
+        const tree = [
             {
                 id: 1,
                 title: 'ka1',
@@ -368,8 +398,8 @@ describe('StandardizedCompetencyManagementComponent', () => {
                 id: 2,
                 title: 'ka2',
             },
-        ];
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        ] satisfies KnowledgeAreaResult[];
+        getForTreeViewSpy.mockReturnValue(of(tree));
         component['selectedKnowledgeArea'].set(knowledgeAreaToDelete);
         componentFixture.detectChanges();
 
@@ -387,12 +417,12 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should create knowledgeArea', () => {
-        const tree: KnowledgeAreaDTO[] = [
+        const tree = [
             {
                 id: 1,
             },
-        ];
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        ] satisfies KnowledgeAreaResult[];
+        getForTreeViewSpy.mockReturnValue(of(tree));
 
         // Important that this has no id, so we create!
         const knowledgeAreaToCreate: KnowledgeAreaDTO = { title: 'ka1', parentId: 1 };
@@ -415,14 +445,14 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
     it('should hide created knowledgeArea if it is not in the filter', () => {
         component['knowledgeAreaFilter'] = { id: 2 };
-        const tree: KnowledgeAreaDTO[] = [
+        const tree = [
             {
                 id: 1,
                 title: 'title',
                 children: [{ id: 2, title: 'ka2' }],
             },
-        ];
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        ] satisfies KnowledgeAreaResult[];
+        getForTreeViewSpy.mockReturnValue(of(tree));
 
         // Important that this has no id, so we create!
         const knowledgeAreaToCreate: KnowledgeAreaDTO = { title: 'ka1', parentId: 1 };
@@ -445,7 +475,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const knowledgeAreaToUpdate = createKnowledgeAreaDTO(1, 'long title', 'title', 'description');
         const updatedKnowledgeArea = createKnowledgeAreaDTO(1, 'new long title', 'new title', 'new description');
         const expectedKnowledgeAreaInTree = convertToKnowledgeAreaForTree(updatedKnowledgeArea, true, 0);
-        const tree: KnowledgeAreaDTO[] = [knowledgeAreaToUpdate, { id: 2, title: 'another title' }];
+        const tree = [knowledgeAreaToUpdate, { id: 2, title: 'another title' }] satisfies KnowledgeAreaResult[];
 
         prepareAndExecuteKnowledgeAreaUpdate(tree, knowledgeAreaToUpdate, updatedKnowledgeArea);
 
@@ -460,10 +490,10 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const knowledgeAreaToUpdate = createKnowledgeAreaDTO(10, 'long title', 'title', 'description', parentId);
         const updatedKnowledgeArea = createKnowledgeAreaDTO(10, 'new long title', 'new title', 'new description', newParentId);
         const expectedKnowledgeAreaInTree = convertToKnowledgeAreaForTree(updatedKnowledgeArea, true, 1);
-        const tree: KnowledgeAreaDTO[] = [
+        const tree = [
             { id: parentId, title: 'title1', children: [knowledgeAreaToUpdate, { id: 3 }] },
             { id: newParentId, title: 'title2', children: [{ id: 4 }] },
-        ];
+        ] satisfies KnowledgeAreaResult[];
 
         prepareAndExecuteKnowledgeAreaUpdate(tree, knowledgeAreaToUpdate, updatedKnowledgeArea);
 
@@ -521,8 +551,12 @@ describe('StandardizedCompetencyManagementComponent', () => {
     /**
      * Prepares test data and executes a competency update.
      */
-    function prepareAndExecuteCompetencyUpdate(tree: KnowledgeAreaDTO[], competencyToUpdate: StandardizedCompetencyDTO, updatedCompetency: StandardizedCompetencyDTO) {
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+    function prepareAndExecuteCompetencyUpdate(
+        tree: (KnowledgeAreaDTO & KnowledgeAreaResult)[],
+        competencyToUpdate: StandardizedCompetencyDTO,
+        updatedCompetency: StandardizedCompetencyDTO,
+    ) {
+        getForTreeViewSpy.mockReturnValue(of(tree));
         component['selectedCompetency'].set(competencyToUpdate);
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const updateSpy = vi.spyOn(adminStandardizedCompetencyService, 'updateStandardizedCompetency');
@@ -538,8 +572,12 @@ describe('StandardizedCompetencyManagementComponent', () => {
     /**
      * Prepares test data and executes a knowledge area update.
      */
-    function prepareAndExecuteKnowledgeAreaUpdate(tree: KnowledgeAreaDTO[], knowledgeAreaToUpdate: KnowledgeAreaDTO, updatedKnowledgeArea: KnowledgeAreaDTO) {
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+    function prepareAndExecuteKnowledgeAreaUpdate(
+        tree: (KnowledgeAreaDTO & KnowledgeAreaResult)[],
+        knowledgeAreaToUpdate: KnowledgeAreaDTO,
+        updatedKnowledgeArea: KnowledgeAreaDTO,
+    ) {
+        getForTreeViewSpy.mockReturnValue(of(tree));
         component['selectedKnowledgeArea'].set(knowledgeAreaToUpdate);
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const updateSpy = vi.spyOn(adminStandardizedCompetencyService, 'updateKnowledgeArea');
@@ -555,30 +593,30 @@ describe('StandardizedCompetencyManagementComponent', () => {
     /**
      * Creates a test competency DTO.
      */
-    function createCompetencyDTO(id?: number, title?: string, description?: string, taxonomy?: CompetencyTaxonomy, knowledgeAreaId?: number) {
-        const competency: StandardizedCompetencyDTO = {
+    function createCompetencyDTO(id: number, title?: string, description?: string, taxonomy?: CompetencyTaxonomy, knowledgeAreaId?: number) {
+        const competency = {
             id: id,
             title: title,
             description: description,
             taxonomy: taxonomy,
             knowledgeAreaId: knowledgeAreaId,
         };
-        return competency;
+        return competency satisfies StandardizedCompetencyDTO;
     }
 
     /**
      * Creates a test knowledge area DTO.
      */
     function createKnowledgeAreaDTO(
-        id?: number,
+        id: number,
         title?: string,
         shortTitle?: string,
         description?: string,
         parentId?: number,
-        children?: KnowledgeAreaDTO[],
-        competencies?: StandardizedCompetencyDTO[],
+        children?: (KnowledgeAreaDTO & KnowledgeAreaResult)[],
+        competencies?: (StandardizedCompetencyDTO & { id: number })[],
     ) {
-        const knowledgeArea: KnowledgeAreaDTO = {
+        const knowledgeArea = {
             id: id,
             title: title,
             shortTitle: shortTitle,
@@ -587,6 +625,6 @@ describe('StandardizedCompetencyManagementComponent', () => {
             children: children,
             competencies: competencies,
         };
-        return knowledgeArea;
+        return knowledgeArea satisfies KnowledgeAreaDTO;
     }
 });
