@@ -2,13 +2,18 @@ package de.tum.cit.aet.artemis.tutorialgroup.service;
 
 import static de.tum.cit.aet.artemis.core.util.DateUtil.getFirstDateOfWeekDay;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -55,18 +60,35 @@ public class TutorialGroupScheduleService {
      * @param tutorialGroupSchedule the schedule to create
      */
     public void saveScheduleAndGenerateScheduledSessions(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
-        var individualSessions = generateSessionsForSchedule(course, tutorialGroupSchedule);
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
-        if (tutorialGroupSchedule.getId() != null) {
-            tutorialGroupSessionRepository.deleteByTutorialGroupSchedule(tutorialGroupSchedule);
-        }
+        boolean scheduleAlreadyExisted = tutorialGroupSchedule.getId() != null;
+        // Key by instant, not ZonedDateTime: a persisted start read back (in UTC) would not equal a freshly generated one in the
+        // course zone even for the same moment, so a ZonedDateTime key would never match and nothing would be preserved.
+        Map<Instant, TutorialGroupSession> existingSessionsByStart = scheduleAlreadyExisted ? tutorialGroupSessionRepository.findAllByScheduleId(tutorialGroupSchedule.getId())
+                .stream().collect(Collectors.toMap(session -> session.getStart().toInstant(), Function.identity(), (first, second) -> first)) : new HashMap<>();
 
         TutorialGroupSchedule savedSchedule = tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
-        for (var individualSession : individualSessions) {
-            individualSession.setTutorialGroupSchedule(savedSchedule);
-            individualSession.setTutorialGroup(savedSchedule.getTutorialGroup());
+        List<TutorialGroupSession> generatedSessions = generateSessionsForSchedule(course, savedSchedule);
+        if (!scheduleAlreadyExisted) {
+            tutorialGroupSessionRepository.saveAll(generatedSessions);
+            return;
         }
-        tutorialGroupSessionRepository.saveAll(individualSessions);
+        // The schedule changed: a regenerated session that starts at the same time as an existing one is the same session, so keep its
+        // id, recorded attendance, and status, letting only its end and location follow the new schedule. Existing sessions whose start
+        // no longer occurs are removed. Delete and insert commit together so the schedule is never left without its sessions.
+        List<TutorialGroupSession> sessionsToPersist = new ArrayList<>();
+        for (TutorialGroupSession generatedSession : generatedSessions) {
+            TutorialGroupSession existingSession = existingSessionsByStart.remove(generatedSession.getStart().toInstant());
+            if (existingSession != null) {
+                existingSession.setEnd(generatedSession.getEnd());
+                existingSession.setLocation(generatedSession.getLocation());
+                sessionsToPersist.add(existingSession);
+            }
+            else {
+                sessionsToPersist.add(generatedSession);
+            }
+        }
+        tutorialGroupSessionRepository.replaceScheduleSessions(List.copyOf(existingSessionsByStart.values()), sessionsToPersist);
     }
 
     /**
@@ -122,11 +144,15 @@ public class TutorialGroupScheduleService {
             // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod
             newSession.setStatusExplanation(null);
             newSession.setTutorialGroupFreePeriod(overlappingPeriod.get());
+            return;
         }
-        else {
+        // No free period overlaps the session. A session cancelled only because of a free period is reactivated, but a manual
+        // cancellation (CANCELLED without a free period) is kept together with its explanation.
+        boolean wasCancelledByFreePeriod = newSession.getTutorialGroupFreePeriod() != null;
+        newSession.setTutorialGroupFreePeriod(null);
+        if (wasCancelledByFreePeriod || newSession.getStatus() != TutorialGroupSessionStatus.CANCELLED) {
             newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
             newSession.setStatusExplanation(null);
-            newSession.setTutorialGroupFreePeriod(null);
         }
     }
 

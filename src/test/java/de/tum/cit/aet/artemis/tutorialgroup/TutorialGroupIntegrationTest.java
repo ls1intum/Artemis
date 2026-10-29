@@ -571,6 +571,36 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void updateSchedule_whenExtendingThePeriod_shouldKeepExistingSessionsAndTheirAttendance() throws Exception {
+            // Create a group with a weekly schedule over four Mondays (Aug 1, 8, 15, 22).
+            TutorialGroupScheduleDTO initialSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_12_00, 1, FOURTH_AUGUST_MONDAY, "Room A");
+            CreateOrUpdateTutorialGroupRequestDTO createRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG Preserve", firstCourseTutor1.getId(), "English", false, "Garching",
+                    10, "info", initialSchedule);
+            Long tutorialGroupId = request.postWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", createRequest, Long.class, HttpStatus.OK);
+
+            List<TutorialGroupSession> initialSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
+                    .sorted(Comparator.comparing(TutorialGroupSession::getStart)).toList();
+            assertThat(initialSessions).hasSize(4);
+            TutorialGroupSession firstSession = initialSessions.getFirst();
+            firstSession.setAttendanceCount(7);
+            tutorialGroupSessionRepository.saveAndFlush(firstSession);
+
+            // Extend the period by one week (Aug 29 added); day, time and location are unchanged.
+            TutorialGroupScheduleDTO extendedSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_12_00, 1, FIFTH_AUGUST_MONDAY, "Room A");
+            CreateOrUpdateTutorialGroupRequestDTO updateRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG Preserve", firstCourseTutor1.getId(), "English", false, "Garching",
+                    10, "info", extendedSchedule);
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, updateRequest, HttpStatus.NO_CONTENT);
+
+            List<TutorialGroupSession> updatedSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
+                    .sorted(Comparator.comparing(TutorialGroupSession::getStart)).toList();
+            assertThat(updatedSessions).hasSize(5);
+            TutorialGroupSession preservedFirstSession = updatedSessions.getFirst();
+            assertThat(preservedFirstSession.getId()).isEqualTo(firstSession.getId());
+            assertThat(preservedFirstSession.getAttendanceCount()).isEqualTo(7);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void update_withTrailingWhitespaceInUnchangedTitle_preservesChannelName() throws Exception {
             firstCourseChannel1.setName("tutorgroup-custom-name-7");
             channelRepository.saveAndFlush(firstCourseChannel1);
