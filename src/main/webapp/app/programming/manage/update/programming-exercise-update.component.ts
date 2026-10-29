@@ -729,8 +729,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             exerciseId: this.programmingExercise.id,
             exerciseType: this.programmingExercise.type ?? ExerciseType.PROGRAMMING,
             getCurrentExercise: () => this.programmingExercise,
-            // Publish a fresh model shell while preserving the category/criteria arrays shared with child editors.
-            setCurrentExercise: (exercise) => (this.programmingExercise = cloneWith(new ProgrammingExercise(undefined, undefined), exercise)),
+            setCurrentExercise: (exercise) => {
+                const updated = cloneWith(new ProgrammingExercise(undefined, undefined), exercise);
+                // Re-seed the selector's linked signal and keep its separate creation-config binding in sync.
+                updated.categories = [...(exercise.categories ?? [])];
+                this.exerciseCategories = updated.categories;
+                this.programmingExercise = updated;
+            },
             getBaselineExercise: () => this.backupExercise,
             setBaselineExercise: (exercise) => (this.backupExercise = exercise),
         });

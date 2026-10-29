@@ -65,6 +65,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -112,7 +113,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent],
+            imports: [FaIconComponent, CategorySelectorComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -264,10 +265,40 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise).not.toBe(incoming);
             expect(comp.programmingExercise).toEqual(incoming);
             expect(comp.programmingExercise).toBeInstanceOf(ProgrammingExercise);
-            expect(comp.programmingExercise.categories).toBe(categories);
+            expect(comp.programmingExercise.categories).not.toBe(categories);
+            expect(comp.programmingExercise.categories).toEqual(categories);
+            expect(comp.programmingExercise.categories?.[0]).toBe(categories[0]);
+            expect(comp.getProgrammingExerciseCreationConfig().exerciseCategories).toBe(comp.programmingExercise.categories);
             expect(comp.programmingExercise.gradingCriteria).toBe(gradingCriteria);
             expect(syncContext.getCurrentExercise()).toBe(comp.programmingExercise);
             expect(visibleTitle()).toBe('Incoming exercise');
+        });
+
+        it('refreshes synchronized category chips through the separate settings binding', async () => {
+            const initialize = vi.spyOn(TestBed.inject(ExerciseMetadataSyncService), 'initialize');
+            protectedSettings();
+            const localCategories = [new ExerciseCategory('Local category', '#ffffff')];
+            comp.updateCategories(localCategories);
+            const categoryFixture = TestBed.createComponent(CategorySelectorComponent);
+            categoryFixture.componentRef.setInput('categories', comp.getProgrammingExerciseCreationConfig().exerciseCategories);
+            categoryFixture.detectChanges();
+            await categoryFixture.whenStable();
+            expect(categoryFixture.nativeElement.querySelector('button.category-name').textContent).toBe('Local category');
+
+            // Align the owner after async fixture initialization, then simulate the metadata handler's in-place update.
+            comp.updateCategories(localCategories);
+            localCategories.splice(0, 1, new ExerciseCategory('Incoming category', '#691b0b'));
+            expect(comp.programmingExercise.categories).toBe(localCategories);
+            initialize.mock.calls[0][0].setCurrentExercise!(comp.programmingExercise);
+            categoryFixture.componentRef.setInput('categories', comp.getProgrammingExerciseCreationConfig().exerciseCategories);
+            categoryFixture.detectChanges();
+            await categoryFixture.whenStable();
+
+            expect(comp.programmingExercise.categories?.map((category) => category.category)).toEqual(['Incoming category']);
+            expect(comp.getProgrammingExerciseCreationConfig().exerciseCategories?.map((category) => category.category)).toEqual(['Incoming category']);
+            expect(categoryFixture.componentInstance.selectedCategoryItems().map((category) => category.category)).toEqual(['Incoming category']);
+            expect(categoryFixture.nativeElement.querySelector('button.category-name').textContent).toBe('Incoming category');
+            expect(categoryFixture.nativeElement.textContent).not.toContain('Local category');
         });
 
         it('revalidates before a category save even when the generation event was missed', () => {
