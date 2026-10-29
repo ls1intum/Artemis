@@ -102,11 +102,13 @@
                 }
             }
             <div class="flex justify-between p-2">
+                <!-- The search API supplies page counts, not an exact number of records. -->
                 <tumaet-ui-paginator
                     [page]="state.page - 1"
                     [pageSize]="state.pageSize"
                     [totalRecords]="total()"
                     [showRowsPerPage]="false"
+                    [showCurrentPageReport]="false"
                     (pageChange)="onPaginatorPageChange({ page: $event })"
                 />
             </div>

@@ -691,7 +691,11 @@
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
                                                         <a
                                                             [class.pointer-events-none]="isComplaintLocked(submissionWithComplaint.complaint)"
-                                                            [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
+                                                            [routerLink]="
+                                                                isComplaintLocked(submissionWithComplaint.complaint) ? null : getAssessmentLink(submissionWithComplaint.submission)
+                                                            "
+                                                            [attr.aria-disabled]="isComplaintLocked(submissionWithComplaint.complaint) || null"
+                                                            [attr.tabindex]="isComplaintLocked(submissionWithComplaint.complaint) ? -1 : null"
                                                             [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
                                                             data-testid="evaluate-complaint"
                                                             tumAetUiButton
@@ -796,7 +800,11 @@
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
                                                         <a
                                                             [class.pointer-events-none]="isComplaintLocked(moreFeedbackRequest.complaint)"
-                                                            [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
+                                                            [routerLink]="
+                                                                isComplaintLocked(moreFeedbackRequest.complaint) ? null : getAssessmentLink(moreFeedbackRequest.submission)
+                                                            "
+                                                            [attr.aria-disabled]="isComplaintLocked(moreFeedbackRequest.complaint) || null"
+                                                            [attr.tabindex]="isComplaintLocked(moreFeedbackRequest.complaint) ? -1 : null"
                                                             [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                                             tumAetUiButton
                                                             severity="success"
