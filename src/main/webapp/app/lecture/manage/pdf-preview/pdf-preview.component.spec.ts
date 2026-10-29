@@ -648,9 +648,10 @@ describe('PdfPreviewComponent', () => {
             component.isSaving.set(true);
             fixture.detectChanges();
 
-            // The kit spinner is 100px wide by default and would stretch the button.
+            // The kit spinner is 100px wide by default and would stretch the button. A utility class cannot shrink it, as the kit sets its size in unlayered styles.
             expect(saveSpinner()).not.toBeNull();
-            expect(saveSpinner().classList).toContain('size-4');
+            expect(saveSpinner().style.width).toBe('1rem');
+            expect(saveSpinner().style.height).toBe('1rem');
         });
 
         it('should not go back once more when a deletion completes after the user left the page', async () => {

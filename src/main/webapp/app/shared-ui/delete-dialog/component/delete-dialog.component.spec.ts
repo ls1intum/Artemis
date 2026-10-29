@@ -62,6 +62,18 @@ describe('DeleteDialogComponent', () => {
         expect(comp.visible()).toBe(false);
     });
 
+    it('should show an icon-sized spinner while the summary loads', () => {
+        fixture.detectChanges();
+        comp.isLoadingSummary.set(true);
+        fixture.detectChanges();
+
+        // The kit spinner is 100px wide by default. A utility class cannot shrink it, as the kit sets its size in unlayered styles.
+        const spinner: HTMLElement | null = fixture.nativeElement.ownerDocument.querySelector('.summary-loading-container tumaet-ui-progress-spinner');
+        expect(spinner).not.toBeNull();
+        expect(spinner!.style.width).toBe('1.5rem');
+        expect(spinner!.style.height).toBe('1.5rem');
+    });
+
     it('Form properly checked before submission', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
