@@ -147,6 +147,18 @@ export class GradingComponent implements OnInit {
     /** The non-editable {@link GradingScale} fields, recombined with {@link gradeStepsModel} in the {@link gradingScale} accessor. */
     private gradingScaleMeta: GradingScaleMeta = {};
 
+    /** Keep presentation input identity stable across grade-step edits and child configuration echoes. */
+    readonly presentationGradingScale = computed(
+        () => {
+            this.course();
+            return this.gradingScale;
+        },
+        {
+            equal: (previous, current) =>
+                previous.course === current.course && previous.presentationsNumber === current.presentationsNumber && previous.presentationsWeight === current.presentationsWeight,
+        },
+    );
+
     /**
      * Signal form over {@link gradeStepsModel}. Drives the grade-step rows reactively (so they render under zoneless) and
      * provides {@link gradingForm}().valid()/invalid() for the Save button instead of a method called from the template.
@@ -336,6 +348,8 @@ export class GradingComponent implements OnInit {
      * Handles updates to the presentations configuration emitted by the child component.
      */
     onPresentationsConfigChange(config: PresentationsConfig): void {
+        this.gradingScaleMeta.presentationsNumber = config.presentationsNumber;
+        this.gradingScaleMeta.presentationsWeight = config.presentationsWeight;
         this.presentationsConfig.set(config);
     }
 

@@ -148,7 +148,11 @@
             }
         </div>
     </div>
-    <jhi-grading-presentations [gradingScale]="gradingScale" [presentationsConfig]="presentationsConfig()" (presentationsConfigChange)="onPresentationsConfigChange($event)" />
+    <jhi-grading-presentations
+        [gradingScale]="presentationGradingScale()"
+        [presentationsConfig]="presentationsConfig()"
+        (presentationsConfigChange)="onPresentationsConfigChange($event)"
+    />
 </div>
 <tumaet-ui-select-button
     id="tab-bar"
