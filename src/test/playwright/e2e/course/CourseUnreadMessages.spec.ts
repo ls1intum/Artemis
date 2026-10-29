@@ -7,6 +7,7 @@ import { CommunicationAPIRequests } from '../../support/requests/CommunicationAP
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
+import { readResponseJson } from '../../support/utils';
 
 /** Real REST persistence, websocket delivery and the rendered sidebar must agree. */
 test.describe('Unread messages across conversation types', { tag: '@fast' }, () => {
@@ -169,7 +170,7 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
             }
             const response = await creation;
             expect(response.ok()).toBe(true);
-            const created: { id: number } = await response.json();
+            const created = await readResponseJson<{ id: number }>(response);
             // Keep the same app/service instance: a page.goto here would clear the state that caused the regression.
             await expect(page).toHaveURL(new RegExp(`conversationId=${created.id}$`));
             await expect(page.getByTestId('conversation-name')).toContainText('Instructor User');
