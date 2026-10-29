@@ -157,29 +157,11 @@ export class GradingPresentationsComponent {
         });
     }
 
-    /**
-     * Effect that initializes the presentation configuration when inputs change.
-     * This replaces the ngOnChanges lifecycle hook with a reactive signal-based approach.
-     *
-     * When either the grading scale or presentations config changes, this effect
-     * determines the current presentation type based on the grading scale settings
-     * and updates the config accordingly.
-     *
-     * Uses untracked for the initialization to prevent NG0103 errors (expression changed
-     * after it was checked) by deferring the config change emission to the next microtask.
-     */
+    /** Initialize from a loaded scale, without treating our own configuration outputs as new server data. */
     private setupInputChangeEffect(): void {
         effect(() => {
-            const scale = this.gradingScale();
-            const config = this.presentationsConfig();
-
-            // Only initialize if both inputs are available
-            if (scale && config) {
-                // Use untracked to avoid re-triggering the effect when we modify the config
-                untracked(() => {
-                    this.initializePresentationConfig();
-                });
-            }
+            this.gradingScale();
+            untracked(() => this.initializePresentationConfig());
         });
     }
 
@@ -202,17 +184,18 @@ export class GradingPresentationsComponent {
         const config = this.presentationsConfig();
         const scale = this.gradingScale();
 
-        // Determine presentation type based on grading scale settings
-        // Order matters: check graded first since it's more specific
-        if (this.isGradedPresentation()) {
-            config.presentationType = PresentationType.GRADED;
-        } else if (this.isBasicPresentation()) {
-            config.presentationType = PresentationType.BASIC;
-        } else {
-            config.presentationType = PresentationType.NONE;
+        const presentationType = this.isGradedPresentation() ? PresentationType.GRADED : this.isBasicPresentation() ? PresentationType.BASIC : PresentationType.NONE;
+        const presentationScore = (scale.course?.presentationScore ?? 0) > 0 ? scale.course!.presentationScore : undefined;
+        if (
+            config.presentationType === presentationType &&
+            config.presentationScore === presentationScore &&
+            config.presentationsNumber === scale.presentationsNumber &&
+            config.presentationsWeight === scale.presentationsWeight
+        ) {
+            return;
         }
-
-        // Sync graded presentation settings from scale to config
+        config.presentationType = presentationType;
+        config.presentationScore = presentationScore;
         config.presentationsNumber = scale.presentationsNumber;
         config.presentationsWeight = scale.presentationsWeight;
 
@@ -236,6 +219,10 @@ export class GradingPresentationsComponent {
      * a notification of changes with the updated values.
      */
     private emitConfigChange(): void {
+        if (this.pendingEmitTimeout) {
+            clearTimeout(this.pendingEmitTimeout);
+            this.pendingEmitTimeout = undefined;
+        }
         const configCopy = deepClone(this.presentationsConfig());
         this.presentationsConfigChange.emit(configCopy);
     }
