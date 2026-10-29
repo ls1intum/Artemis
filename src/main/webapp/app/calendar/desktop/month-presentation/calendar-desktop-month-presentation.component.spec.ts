@@ -6,6 +6,7 @@ import { By } from '@angular/platform-browser';
 import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
@@ -15,11 +16,12 @@ import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calenda
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 describe('CalendarDesktopMonthPresentationComponent', () => {
     let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
     let component: CalendarDesktopMonthPresentationComponent;
     let mockMap: Map<string, IdentifiableCalendarEvent[]>;
+    let calendarService: MockCalendarService;
 
     const referenceDate = dayjs('2025-05-15 10:30');
     const events = [
@@ -48,6 +50,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
     });
 
     beforeEach(async () => {
+        calendarService = new MockCalendarService(mockMap);
         await TestBed.configureTestingModule({
             imports: [
                 CalendarDesktopMonthPresentationComponent,
@@ -59,7 +62,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
             providers: [
                 {
                     provide: CalendarService,
-                    useFactory: () => new MockCalendarService(mockMap),
+                    useValue: calendarService,
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -72,6 +75,11 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
                         MockDirective(TranslateDirective),
                         MockComponent(CalendarDayBadgeComponent),
                         CalendarEventDetailPopoverComponent,
+                        TumAetUiButtonDirective,
+                        TumAetUiPopoverComponent,
+                        TumAetUiPopoverTriggerDirective,
+                        ArtemisDatePipe,
+                        MockPipe(ArtemisTranslatePipe, (key) => key ?? ''),
                     ],
                 },
             })
@@ -144,6 +152,97 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
 
         expect(openSpy).toHaveBeenCalled();
         expect(popoverComponent.isOpen()).toBe(true);
+    });
+
+    describe('day agenda for overflowing events', () => {
+        const overflowButton = (): HTMLButtonElement | null => fixture.nativeElement.querySelector('[data-testid="calendar-more-events-2025-05-15"]');
+        const agenda = (): HTMLElement | null => document.querySelector('[data-testid="calendar-day-agenda"]');
+
+        async function openAgenda(): Promise<HTMLButtonElement> {
+            const button = overflowButton();
+            expect(button).not.toBeNull();
+            button!.focus();
+            // A native button also receives click when activated with Enter or Space.
+            button!.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            return button!;
+        }
+
+        it('provides a native dialog trigger with a localized count for the hidden events', () => {
+            const button = overflowButton();
+            expect(button).not.toBeNull();
+            expect(button!.tagName).toBe('BUTTON');
+            expect(button!.type).toBe('button');
+            expect(button!.getAttribute('aria-haspopup')).toBe('dialog');
+            expect(button!.getAttribute('aria-expanded')).toBe('false');
+            const count = fixture.debugElement.query(By.css('[data-testid="calendar-more-events-2025-05-15"] [jhiTranslate]')).injector.get(TranslateDirective);
+            expect(count.jhiTranslate()).toBe('artemisApp.calendar.moreEvents');
+            expect(count.translateValues()).toEqual({ count: 2 });
+        });
+
+        it('opens the full day agenda, including the events hidden in the month cell', async () => {
+            const button = await openAgenda();
+
+            expect(button.getAttribute('aria-expanded')).toBe('true');
+            expect(agenda()).not.toBeNull();
+            const eventButtons = agenda()!.querySelectorAll('[data-testid="calendar-day-agenda-event"]');
+            expect(eventButtons).toHaveLength(4);
+            events.slice(0, 4).forEach((event, index) => expect(eventButtons[index].textContent).toContain(event.title));
+            expect(agenda()!.textContent).toContain('10:30');
+        });
+
+        it('opens event details for an event reached through the day agenda', async () => {
+            const details = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent)).componentInstance as CalendarEventDetailPopoverComponent;
+            const open = vi.spyOn(details, 'open').mockImplementation(() => undefined);
+            await openAgenda();
+
+            (agenda()!.querySelectorAll('[data-testid="calendar-day-agenda-event"]')[3] as HTMLButtonElement).click();
+
+            expect(open).toHaveBeenCalledWith(expect.any(MouseEvent), events[3]);
+        });
+
+        it('keeps the opened agenda and hidden count aligned with the filtered event map', async () => {
+            await openAgenda();
+            const extra = new IdentifiableCalendarEvent('LECTURE', 'Additional lecture', referenceDate.add(3, 'hour'));
+            const another = new IdentifiableCalendarEvent('LECTURE', 'Later lecture', referenceDate.add(4, 'hour'));
+            const filteredEvents = [...events.slice(1, 4), extra, another];
+
+            calendarService.eventMap.set(new Map([['2025-05-15', filteredEvents]]));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(agenda()!.querySelectorAll('[data-testid="calendar-day-agenda-event"]')).toHaveLength(5);
+            expect(agenda()!.textContent).toContain(extra.title);
+            expect(agenda()!.textContent).not.toContain('Exam');
+            const count = fixture.debugElement.query(By.css('[data-testid="calendar-more-events-2025-05-15"] [jhiTranslate]')).injector.get(TranslateDirective);
+            expect(count.translateValues()).toEqual({ count: 3 });
+        });
+
+        it('removes the overflow and closes its agenda when filtering leaves three events', async () => {
+            await openAgenda();
+
+            calendarService.eventMap.set(new Map([['2025-05-15', events.slice(1, 4)]]));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(overflowButton()).toBeNull();
+            expect(agenda()).toBeNull();
+            expect(fixture.debugElement.query(By.css('[data-testid="Object Design 3"]'))).not.toBeNull();
+        });
+
+        it('closes with Escape and returns keyboard focus to the overflow button', async () => {
+            const button = await openAgenda();
+            expect(agenda()!.contains(document.activeElement)).toBe(true);
+
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(agenda()).toBeNull();
+            expect(button.getAttribute('aria-expanded')).toBe('false');
+            expect(document.activeElement).toBe(button);
+        });
     });
 
     it('should close popover only when close button used', async () => {

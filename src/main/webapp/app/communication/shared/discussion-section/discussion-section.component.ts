@@ -9,7 +9,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { User } from 'app/account/user/user.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { HttpResponse } from '@angular/common/http';
-import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronLeft, faChevronRight, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/communication/directive/course-discussion.directive';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -90,7 +90,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
-    faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
     faLongArrowRight = faLongArrowRight;
 

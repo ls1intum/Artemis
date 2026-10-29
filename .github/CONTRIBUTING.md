@@ -29,13 +29,15 @@ contribution.
 5. **Implement and test.** Follow the
    [coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/) and add automated
    tests. See [Code quality and testing](#code-quality-and-testing).
-6. **Open a pull request.** Start as a draft while you work, so questions can be discussed early. The
-   title follows the
+6. **Open a pull request.** Use a draft only while the implementation is unfinished. Open completed work
+   as a non-draft PR, or mark it ready for review as soon as the implementation is finished, so full CI
+   and automated review bots can run. Pending CI, reviews or test-server validation are not reasons to
+   keep completed work in draft. The title follows the
    [pull request naming conventions](https://docs.artemis.tum.de/developer/development-process#pr-naming-conventions),
    because it becomes part of the release notes. Fill in the template, including the steps for testing,
-   complete applicable author tasks and remove inapplicable tasks and empty sections. Set the PR milestone
-   to the intended release, then leave draft and verify the `ready for review` label. Applicable review
-   tasks stay open until verified. Follow
+   check completed author tasks and remove inapplicable tasks and empty sections. Set the PR milestone
+   to the intended release and verify the `ready for review` label. Pending validation and applicable review
+   tasks stay open until verified and must be completed before merge. Follow
    [PR readiness](https://docs.artemis.tum.de/developer/development-process#pull-request-readiness).
 7. **Participate in review.** Respond to comments, push updates, and re-request review. See
    [Pull request review](#pull-request-review).

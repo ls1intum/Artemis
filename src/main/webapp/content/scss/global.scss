@@ -1297,6 +1297,54 @@ body.transparent-background {
 }
 
 /*
+ * The draggable divider between two side-by-side panels. A `jhiResizable` handle (`.draggable-left`, or a button beside
+ * the panel) takes this class. It is one `--spacing-divider` wide, like every other divider, and carries the same small
+ * grip as the split of the course exercise page. Its grab area reaches 4px into the panel that follows the divider, and never into the one before it,
+ * whose scrollbar sits on that edge. Plain CSS for the same reason as `.shell-divider-b`.
+ */
+.panel-divider-x {
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--spacing-divider);
+    z-index: 10;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -4px;
+        bottom: 0;
+        left: 0;
+    }
+
+    &::after {
+        content: '';
+        box-sizing: border-box;
+        width: 5px;
+        height: 12px;
+        border-inline: 2px solid var(--body-color);
+        border-radius: 1px;
+    }
+
+    &:hover::after,
+    &:focus-visible::after {
+        border-color: var(--primary);
+    }
+}
+
+/*
+ * While a drag is in progress the pointer is captured by the panel and may no longer be over the divider. The divider is
+ * a child of the panel it resizes, or its next sibling when the panel is a column beside it (the lecture video players).
+ */
+.card-resizable > .panel-divider-x::after,
+.card-resizable + .panel-divider-x::after {
+    border-color: var(--primary);
+}
+
+/*
  * A top bar a page renders itself, as a card, in place of the shell's title bar — the communication search and the FAQ
  * filters. Same frame as the shell title bars so all three shells read alike: `--title-bar-content-height` of content
  * with `--title-bar-padding-block` above and below, i.e. `--title-bar-height` in total.

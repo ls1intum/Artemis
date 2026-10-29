@@ -591,6 +591,7 @@ export class ExamManagementService {
         exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
         exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
         exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
+        exam.exampleSolutionPublicationDate = convertDateFromServer(exam.exampleSolutionPublicationDate);
         exam.examSummaryPublicationDate = convertDateFromServer(exam.examSummaryPublicationDate);
 
         if (exam.course) {

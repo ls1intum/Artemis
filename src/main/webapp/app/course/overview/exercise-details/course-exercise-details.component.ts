@@ -34,7 +34,7 @@ import { LiveQuizParticipationStatus, QuizExercise, QuizStatus } from 'app/quiz/
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -523,7 +523,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
-                    for (const athenaResult of this.athenaResultNotificationTracker.resultsToNotify(changedParticipation.submissions)) {
+                    const athenaResultsToNotify = this.athenaResultNotificationTracker.resultsToNotify(changedParticipation.submissions);
+                    for (const athenaResult of athenaResultsToNotify) {
                         if (athenaResult.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
                         } else if (athenaResult.successful === false) {
@@ -552,7 +553,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     }
                     this._studentParticipations.set(updatedParticipations);
                     this.sortResults();
-                    this.navigateToAthenaResult(changedParticipation);
+                    const completedAthenaResult = getNewestResult(athenaResultsToNotify.filter((result) => result.successful === true));
+                    if (completedAthenaResult) {
+                        this.navigateToAthenaResult(changedParticipation, completedAthenaResult);
+                    }
                 }
             });
     }
@@ -918,8 +922,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         };
     }
 
-    private navigateToAthenaResult(changedParticipation: StudentParticipation) {
-        const athenaSubmission = changedParticipation.submissions?.find((s) => s.results?.some((r) => r.assessmentType === AssessmentType.AUTOMATIC_ATHENA && r.successful));
+    private navigateToAthenaResult(changedParticipation: StudentParticipation, completedResult: Result) {
+        const athenaSubmission = changedParticipation.submissions?.find((submission) => submission.results?.some((result) => result.id === completedResult.id));
 
         const submissionId = athenaSubmission?.id;
         if (!submissionId || !this.exercise?.type || !changedParticipation.id) {

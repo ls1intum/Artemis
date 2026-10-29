@@ -1,6 +1,7 @@
 <!-- Follow https://docs.artemis.tum.de/developer/development-process#pull-request-readiness -->
-<!-- Before review: complete applicable author Checklist tasks with [x], delete only inapplicable tasks and empty sections, and replace example text. Keep unfinished applicable work in draft. -->
-<!-- Set the PR milestone to the intended release. When ready, leave draft and verify the "ready for review" label. -->
+<!-- Check completed author Checklist tasks with [x], leave pending validation unchecked, delete only inapplicable tasks and empty sections, and replace example text. -->
+<!-- Use drafts only for unfinished implementations. Open completed work as non-draft or mark it ready immediately so full CI and review bots run; do not wait for CI, reviews or test-server validation. -->
+<!-- Set the PR milestone to the intended release and verify the "ready for review" label once implementation is complete. -->
 <!-- Review Progress tasks remain open until verified. Before merge: all remaining tasks checked, required approvals obtained, threads resolved, checks passing and no conflicts; replace "ready for review" with "ready to merge". -->
 
 ### Summary 
@@ -8,7 +9,7 @@
 
 ### Checklist
 #### General
-<!-- Complete every applicable author task before requesting review; remove only tasks that do not apply. -->
+<!-- Check only completed author tasks; pending validation may remain unchecked during review. Complete every applicable task before merge and remove only tasks that do not apply. -->
 <!-- You only need to choose one of the first two check items: Generally, test on the test servers. -->
 <!-- If it's only a small change, testing it locally is acceptable, and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.

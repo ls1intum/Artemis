@@ -23,7 +23,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { AthenaResultNotificationTracker, getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -259,7 +259,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Updates the participation, the submission selected can be chosen through submissionId, default undefined means latest
      * @param participation The participation data
      * @param submissionId The id of the submission of choice. undefined value defaults to the latest submission
-     * @param resultId The id of the specific result to display. undefined value defaults to the latest result
+     * @param resultId The id of the specific result to display. undefined value defaults to the latest assessment
      */
     private updateParticipation(participation: StudentParticipation, submissionId: number | undefined = undefined, resultId: number | undefined = undefined) {
         if (participation) {
@@ -280,10 +280,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             participation.submissions
                 ?.flatMap((submission) => {
                     return (
-                        submission.results?.map((result) => {
-                            result.submission = submission;
-                            return result;
-                        }) ?? []
+                        submission.results
+                            ?.filter((result) => this.canDisplayResult(result))
+                            .map((result) => {
+                                result.submission = submission;
+                                return result;
+                            }) ?? []
                     );
                 })
                 .sort((a, b) => (a.id ?? 0) - (b.id ?? 0)) || [],
@@ -310,16 +312,19 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             }
 
             setLatestSubmissionResult(this.submission(), getLatestSubmissionResult(this.submission()));
+            // Keep raw requests on the submission for request locks and quota; select the assessment independently.
+            const latestDisplayableResult = getNewestResult(this.submission().results?.filter((result) => this.canDisplayResult(result)));
+            this.hasAthenaResultForLatestSubmission =
+                this.submission().results?.some((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true) ?? false;
 
-            // If resultId is provided, find the specific result; otherwise use latest
+            // If resultId is provided, find the specific result; otherwise use the latest assessment.
             if (resultId && this.submission()?.results) {
                 const specificResult = this.submission().results?.find((result) => result.id === resultId);
-                this.result.set(specificResult || this.submission().latestResult!);
+                this.result.set((specificResult || latestDisplayableResult)!);
             } else if (!this.submission()?.results) {
                 this.result.set(this.sortedHistoryResults().last()!);
             } else {
-                this.result.set(this.submission().latestResult!);
-                this.hasAthenaResultForLatestSubmission = this.submission().latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+                this.result.set(latestDisplayableResult!);
             }
             if (this.result() && !this.result().submission) {
                 this.result().submission = this.submission();
@@ -337,6 +342,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
         // check whether the student looks at the result
         this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(this.participation()));
+    }
+
+    private canDisplayResult(result: Result): boolean {
+        return result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || result.successful === true;
     }
 
     ngOnDestroy() {

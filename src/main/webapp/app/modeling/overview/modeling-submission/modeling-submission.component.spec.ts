@@ -109,7 +109,7 @@ describe('ModelingSubmissionComponent', () => {
 
     let mockModelingEditor: Partial<ModelingEditorComponent>;
 
-    function createModelingSubmissionComponent(routeOverride?: ActivatedRoute) {
+    function createModelingSubmissionComponent(routeOverride?: Pick<ActivatedRoute, 'params'>) {
         if (routeOverride) {
             TestBed.overrideProvider(ActivatedRoute, { useValue: routeOverride });
         }
@@ -469,6 +469,108 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.assessmentResult()?.feedbacks).toEqual([olderFeedback]);
     });
 
+    describe('Athena request state after HTTP reload', () => {
+        function serverSubmissionWithAthenaRequest(successful: false | undefined, includeManualResult = true) {
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            modelingExercise.assessmentDueDate = dayjs().subtract(1, 'day');
+            modelingExercise.maxPoints = 10;
+            modelingExercise.teamMode = false;
+            const participation = new StudentParticipation();
+            participation.id = 1;
+            participation.exercise = modelingExercise;
+
+            const feedback = { id: 1, detailText: 'Released manual feedback', credits: 5, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
+            const manualResult = {
+                id: 99,
+                assessmentType: AssessmentType.MANUAL,
+                completionDate: dayjs().subtract(1, 'hour'),
+                successful: true,
+                score: 50,
+                feedbacks: [feedback],
+            } as Result;
+            const athenaRequest = {
+                id: 100,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                completionDate: successful === false ? dayjs() : dayjs().add(5, 'minutes'),
+                successful,
+                feedbacks: [],
+            } as Result;
+            const serverSubmission = {
+                id: 20,
+                submitted: true,
+                model: validMockModel,
+                participation,
+                results: includeManualResult ? [athenaRequest, manualResult] : [athenaRequest],
+            } as ModelingSubmission;
+
+            // Flush a JSON payload with wire-format dates through the real submission service conversion.
+            return JSON.parse(JSON.stringify(serverSubmission));
+        }
+
+        it.each([
+            { state: 'pending', successful: undefined, mode: 'standard', submissionId: undefined },
+            { state: 'failed', successful: false, mode: 'standard', submissionId: undefined },
+            { state: 'pending', successful: undefined, mode: 'submission-only feedback', submissionId: 20 },
+            { state: 'failed', successful: false, mode: 'submission-only feedback', submissionId: 20 },
+        ] as const)('should preserve released manual feedback after HTTP reload with a $state Athena request in $mode mode', ({ successful, submissionId }) => {
+            createModelingSubmissionComponent({ params: of({ courseId: 5, exerciseId: 22, participationId: 1, submissionId }) });
+            const serverSubmission = serverSubmissionWithAthenaRequest(successful);
+            const httpMock = TestBed.inject(HttpTestingController);
+
+            comp.ngOnInit();
+            if (submissionId) {
+                httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/1/submissions-with-results' }).flush([serverSubmission]);
+            }
+            httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/1/latest-modeling-submission' }).flush(serverSubmission);
+
+            expect(comp.result()?.id).toBe(99);
+            expect(comp.result()?.assessmentType).toBe(AssessmentType.MANUAL);
+            expect(comp.assessmentResult()?.id).toBe(99);
+            expect(comp.assessmentResult()?.score).toBe(50);
+            expect(comp.assessmentResult()?.feedbacks).toEqual(serverSubmission.results[1].feedbacks);
+            expect(comp.unreferencedFeedback).toEqual(serverSubmission.results[1].feedbacks);
+            expect(comp.totalScore).toBe(5);
+
+            // The header and quota guards still need the newest request, including its pending lease.
+            for (const loadedSubmission of [comp.submission(), comp.participation().submissions![0]]) {
+                expect(loadedSubmission.results?.map((result) => result.id)).toEqual([100, 99]);
+                const request = loadedSubmission.results?.find((result) => result.id === 100);
+                expect(request?.assessmentType).toBe(AssessmentType.AUTOMATIC_ATHENA);
+                expect(request?.successful).toBe(successful);
+                expect(request?.score).toBeUndefined();
+                expect(request?.feedbacks).toEqual([]);
+                expect(dayjs(request?.completionDate).valueOf()).toBe(dayjs(serverSubmission.results[0].completionDate).valueOf());
+            }
+            if (submissionId) {
+                expect(comp.sortedSubmissionHistory()[0].results?.map((result) => result.id)).toEqual([100, 99]);
+                expect(comp.sortedResultHistory().map((result) => result.id)).toEqual([99]);
+            }
+            httpMock.verify();
+        });
+
+        it('should leave assessment empty after HTTP reload with only a pending Athena request', () => {
+            createModelingSubmissionComponent({ params: of({ courseId: 5, exerciseId: 22, participationId: 1 }) });
+            const serverSubmission = serverSubmissionWithAthenaRequest(undefined, false);
+            const httpMock = TestBed.inject(HttpTestingController);
+
+            comp.ngOnInit();
+            httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/1/latest-modeling-submission' }).flush(serverSubmission);
+
+            expect(comp.result()).toBeUndefined();
+            expect(comp.assessmentResult()).toBeUndefined();
+            expect(comp.unreferencedFeedback).toBeUndefined();
+            expect(comp.totalScore).toBe(0);
+            expect(comp['hasAssessmentToShow']()).toBe(false);
+            for (const loadedSubmission of [comp.submission(), comp.participation().submissions![0]]) {
+                expect(loadedSubmission.results).toHaveLength(1);
+                expect(loadedSubmission.results?.[0].id).toBe(100);
+                expect(loadedSubmission.results?.[0].successful).toBeUndefined();
+                expect(dayjs(loadedSubmission.results?.[0].completionDate).isAfter(dayjs())).toBe(true);
+            }
+            httpMock.verify();
+        });
+    });
+
     it('should get inactive as soon as the due date passes the current date', async () => {
         createModelingSubmissionComponent();
 
@@ -559,62 +661,111 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.submission()).toBe(modelSubmission);
     });
 
-    it('should handle failed Athena assessment appropriately', async () => {
-        const routeOverride = {
-            params: of({ courseId: 5, exerciseId: 22, participationId: 123 }),
-        } as any as ActivatedRoute;
-        createModelingSubmissionComponent(routeOverride);
+    it.each([
+        { state: 'pending', successful: undefined, completionDate: () => dayjs().add(5, 'minutes') },
+        { state: 'failed', successful: false, completionDate: () => dayjs() },
+    ])('should preserve displayed feedback for a $state Athena assessment with a completion timestamp', async ({ successful, completionDate }) => {
+        createModelingSubmissionComponent();
 
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
-        const alertServiceSpy = vi.spyOn(alertService, 'error');
+        const errorAlertSpy = vi.spyOn(alertService, 'error');
+        const successAlertSpy = vi.spyOn(alertService, 'success');
+        const infoAlertSpy = vi.spyOn(alertService, 'info');
+
+        const previousFeedback = new Feedback();
+        previousFeedback.id = 1;
+        previousFeedback.detailText = 'Keep this assessment visible';
+        previousFeedback.credits = 5;
+        previousFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
 
         const manualResult = new Result();
+        manualResult.id = 99;
         manualResult.score = 50.0;
         manualResult.assessmentType = AssessmentType.MANUAL;
-        manualResult.submission = submission;
-        manualResult.completionDate = dayjs();
-        manualResult.feedbacks = [];
+        manualResult.completionDate = dayjs().subtract(1, 'hour');
+        manualResult.feedbacks = [previousFeedback];
 
-        const failedAthenaResult = new Result();
-        failedAthenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
-        failedAthenaResult.submission = submission;
-        failedAthenaResult.completionDate = undefined;
-        failedAthenaResult.successful = false;
-        failedAthenaResult.feedbacks = [];
+        const displayedSubmission = new ModelingSubmission();
+        displayedSubmission.id = 20;
+        displayedSubmission.submitted = true;
+        displayedSubmission.participation = participation;
+        displayedSubmission.model = validMockModel;
+        displayedSubmission.results = [manualResult];
+        displayedSubmission.latestResult = manualResult;
+        manualResult.submission = displayedSubmission;
+
+        const athenaResult = new Result();
+        athenaResult.id = 100;
+        athenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        athenaResult.submission = displayedSubmission;
+        // Pending requests persist the lease expiry here; failures also have a completion timestamp.
+        athenaResult.completionDate = completionDate();
+        athenaResult.successful = successful;
+        athenaResult.feedbacks = [];
 
         const resultSubject = new BehaviorSubject<Result | undefined>(manualResult);
-        const subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+        vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
 
-        submission.model = validMockModel;
-        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(displayedSubmission));
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+        expect(comp.result()).toBe(manualResult);
+        expect(comp.assessmentResult()).toBe(manualResult);
+        expect(comp.unreferencedFeedback).toEqual([previousFeedback]);
+        expect(comp.totalScore).toBe(5);
 
-        alertServiceSpy.mockClear();
+        errorAlertSpy.mockClear();
+        successAlertSpy.mockClear();
+        infoAlertSpy.mockClear();
 
-        resultSubject.next(failedAthenaResult);
+        resultSubject.next(athenaResult);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
+        if (successful === false) {
+            expect(errorAlertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackFailed');
+        } else {
+            expect(errorAlertSpy).not.toHaveBeenCalled();
+        }
+        expect(successAlertSpy).not.toHaveBeenCalled();
+        expect(infoAlertSpy).not.toHaveBeenCalled();
+        expect(comp.result()).toBe(manualResult);
+        expect(comp.assessmentResult()).toBe(manualResult);
+        expect(comp.unreferencedFeedback).toEqual([previousFeedback]);
+        expect(comp.totalScore).toBe(5);
     });
 
-    it('should handle Athena assessment results separately from manual assessments', async () => {
+    it('should display successful feedback when the same pending Athena result completes', async () => {
         createModelingSubmissionComponent();
 
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
         const alertServiceInfoSpy = vi.spyOn(alertService, 'info');
-        const alterServiceSuccessSpy = vi.spyOn(alertService, 'success');
+        const alertServiceSuccessSpy = vi.spyOn(alertService, 'success');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
+
+        const newFeedback = new Feedback();
+        newFeedback.id = 2;
+        newFeedback.detailText = 'New Athena feedback';
+        newFeedback.credits = 7.5;
+        newFeedback.type = FeedbackType.AUTOMATIC;
 
         const athenaResult = new Result();
+        athenaResult.id = 100;
         athenaResult.score = 75.0;
         athenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
         athenaResult.submission = submission;
         athenaResult.completionDate = dayjs();
         athenaResult.successful = true;
-        athenaResult.feedbacks = [];
+        athenaResult.feedbacks = [newFeedback];
+
+        const pendingAthenaResult = new Result();
+        pendingAthenaResult.id = athenaResult.id;
+        pendingAthenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        pendingAthenaResult.submission = submission;
+        pendingAthenaResult.completionDate = dayjs().add(5, 'minutes');
+        pendingAthenaResult.successful = undefined;
+        pendingAthenaResult.feedbacks = [];
 
         const manualResult = new Result();
         manualResult.score = 50.0;
@@ -636,11 +787,16 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.assessmentResult()).toEqual(manualResult);
         expect(alertServiceInfoSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.newAssessment');
 
+        resultSubject.next(pendingAthenaResult);
         resultSubject.next(athenaResult);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(comp.assessmentResult()).toEqual(athenaResult);
-        expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: comp.modelingExercise()?.title ?? '' });
+        expect(comp.result()).toBe(athenaResult);
+        expect(comp.assessmentResult()).toBe(athenaResult);
+        expect(comp.assessmentResult()?.feedbacks).toEqual([newFeedback]);
+        expect(comp.totalScore).toBe(7.5);
+        expect(alertServiceSuccessSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: comp.modelingExercise()?.title ?? '' });
+        expect(alertServiceErrorSpy).not.toHaveBeenCalled();
     });
 
     it('should set result when new result comes in from websocket', async () => {
