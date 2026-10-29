@@ -229,13 +229,23 @@ export class TutorialCreateOrEditComponent {
         if (!this.configureSessionPlan() || !firstSessionStart || !firstSessionEnd || !tutorialPeriodEnd) {
             return undefined;
         }
+        const original = this.schedule();
         return {
-            firstSessionStart: firstSessionStart.format('YYYY-MM-DDTHH:mm:ss'),
-            firstSessionEnd: firstSessionEnd.format('YYYY-MM-DDTHH:mm:ss'),
+            firstSessionStart: this.serializeUnchangedOrFormatted(firstSessionStart, original?.firstSessionStart),
+            firstSessionEnd: this.serializeUnchangedOrFormatted(firstSessionEnd, original?.firstSessionEnd),
             repetitionFrequency: this.repetitionFrequency(),
             tutorialPeriodEnd: tutorialPeriodEnd.format('YYYY-MM-DD'),
             location: this.location(),
         };
+    }
+
+    // Keep the server's exact date-time string when the field has not changed, so a round-trip never rewrites it. Reformatting a
+    // value whose local time falls in a DST gap would otherwise normalize it to a different hour and silently move the sessions.
+    private serializeUnchangedOrFormatted(value: dayjs.Dayjs, original: string | undefined): string {
+        if (original !== undefined && dayjs(original).valueOf() === value.valueOf()) {
+            return original;
+        }
+        return value.format('YYYY-MM-DDTHH:mm:ss');
     }
 
     private computeTitleValidation(): Validation {

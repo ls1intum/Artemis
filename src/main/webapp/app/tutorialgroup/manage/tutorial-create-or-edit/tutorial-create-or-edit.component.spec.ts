@@ -542,6 +542,32 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(onUpdateSpy).toHaveBeenCalledOnce();
     });
 
+    it('should send the original server schedule strings for fields the user did not change', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        // The server serializes whole-minute times without seconds; an unchanged field must be sent back verbatim rather than reformatted.
+        const schedule = createTutorialGroupSchedule({ firstSessionStart: '2026-04-20T10:15', firstSessionEnd: '2026-04-20T11:45' });
+        const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
+        component.onUpdate.subscribe(onUpdateSpy);
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('schedule', schedule);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component.title.set('TG Updated');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+
+        expect(onUpdateSpy).toHaveBeenCalledOnce();
+        const emittedSchedule = onUpdateSpy.mock.calls[0][0].updateTutorialGroupDTO.tutorialGroupSchedule;
+        expect(emittedSchedule?.firstSessionStart).toBe('2026-04-20T10:15');
+        expect(emittedSchedule?.firstSessionEnd).toBe('2026-04-20T11:45');
+    });
+
     it('should confirm schedule-overwriting update and emit on accept', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
