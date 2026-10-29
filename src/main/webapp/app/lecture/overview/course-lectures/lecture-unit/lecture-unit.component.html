@@ -34,6 +34,7 @@
                         size="small"
                         type="button"
                         id="view-original-version-button"
+                        [attr.aria-label]="'artemisApp.textUnit.originalVersion' | artemisTranslate"
                         (click)="handleOriginalVersionView($event)"
                     >
                         <fa-icon [icon]="faDownload" />
@@ -41,7 +42,16 @@
                     </button>
                 }
                 @if (showViewIsolatedButton()) {
-                    <button tumAetUiButton severity="primary" variant="solid" size="small" type="button" id="view-isolated-button" (click)="handleIsolatedView($event)">
+                    <button
+                        tumAetUiButton
+                        severity="primary"
+                        variant="solid"
+                        size="small"
+                        type="button"
+                        id="view-isolated-button"
+                        [attr.aria-label]="viewIsolatedButtonLabel() | artemisTranslate"
+                        (click)="handleIsolatedView($event)"
+                    >
                         <fa-icon [icon]="viewIsolatedButtonIcon()" />
                         <span class="hidden md:inline" [jhiTranslate]="viewIsolatedButtonLabel()"></span>
                     </button>
