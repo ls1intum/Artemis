@@ -725,6 +725,7 @@ export const prepareExamForImport = (exam: Exam): Exam =>
             'publishResultsDate',
             'examStudentReviewStart',
             'examStudentReviewEnd',
+            'exampleSolutionPublicationDate',
             'examSummaryPublicationDate',
             'examUsers',
             'studentExams',

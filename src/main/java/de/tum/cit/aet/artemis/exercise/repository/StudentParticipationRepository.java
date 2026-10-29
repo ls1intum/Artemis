@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
@@ -740,13 +741,24 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultsAndParticipant(@Param("exerciseId") long exerciseId, @Param("testRun") boolean testRun);
 
+    /**
+     * Reads only recipient delivery fields and scores needed to publish completed assessments, including all team members.
+     * No participation, team, submission, result or user entities are initialized.
+     *
+     * @param exerciseId the exercise whose assessments are published
+     * @return recipients and scores for completed assessments outside test runs
+     */
     @Query("""
-            SELECT DISTINCT p
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO(
+                recipient.id, r.score, recipient.login, recipient.email, recipient.langKey, recipient.firstName, recipient.lastName, recipient.isTestUser)
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
+                LEFT JOIN p.team team
+                LEFT JOIN team.students teamStudent
+                JOIN User recipient ON recipient.id = COALESCE(p.student.id, teamStudent.id)
+                JOIN p.submissions s
+                JOIN s.results r
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun = :testRun
+                AND p.testRun = FALSE
                 AND r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND r.id = (
                     SELECT MAX(r2.id)
@@ -755,8 +767,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       AND r2.completionDate IS NOT NULL
                 )
             """)
-    Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsAndLatestResultWithCompletionDate(@Param("exerciseId") long exerciseId,
-            @Param("testRun") boolean testRun);
+    Set<AssessmentPublicationRecipientDTO> findAssessmentPublicationRecipients(@Param("exerciseId") long exerciseId);
 
     /**
      * Get all participations for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).

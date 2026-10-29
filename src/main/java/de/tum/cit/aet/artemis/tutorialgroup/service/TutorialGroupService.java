@@ -114,11 +114,16 @@ public class TutorialGroupService {
 
         if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.REGISTRATIONS) && tutorialGroup.getRegistrations() != null) {
             tutorialGroup.setIsUserRegistered(tutorialGroup.getRegistrations().stream().anyMatch(registration -> registration.getStudent().equals(user)));
-            tutorialGroup.setNumberOfRegisteredUsers(tutorialGroup.getRegistrations().size());
+            int numberOfRegisteredUsers = tutorialGroup.getRegistrations().size();
+            tutorialGroup.setNumberOfRegisteredUsers(numberOfRegisteredUsers);
+            Integer capacity = tutorialGroup.getCapacity();
+            // Derived here while the count is available; it survives hidePrivacySensitiveInformation, so students keep it.
+            tutorialGroup.setCapacityReached(capacity != null && numberOfRegisteredUsers >= capacity);
         }
         else {
             tutorialGroup.setIsUserRegistered(null);
             tutorialGroup.setNumberOfRegisteredUsers(null);
+            tutorialGroup.setCapacityReached(null);
         }
 
         if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.COURSE) && tutorialGroup.getCourse() != null) {
