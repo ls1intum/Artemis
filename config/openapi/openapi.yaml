@@ -3902,6 +3902,7 @@ components:
         isUserRegistered: {type: boolean}
         isUserTutor: {type: boolean}
         numberOfRegisteredUsers: {type: integer, format: int32}
+        capacityReached: {type: boolean}
         teachingAssistantName: {type: string}
         teachingAssistantId: {type: integer, format: int64}
         teachingAssistantImageUrl: {type: string}
