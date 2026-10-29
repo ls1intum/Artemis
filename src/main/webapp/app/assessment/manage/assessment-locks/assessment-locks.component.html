@@ -43,48 +43,17 @@
                             </td>
                             <td>
                                 <span>
-                                    @if (submission.participation!.exercise!.type === ExerciseType.TEXT) {
-                                        <a
-                                            [routerLink]="[
-                                                '/course-management',
-                                                courseId(),
-                                                'text-exercises',
-                                                submission.participation!.exercise!.id!,
-                                                'participations',
-                                                submission.participation!.id!,
-                                                'submissions',
-                                                submission.id!,
-                                                'assessment',
-                                            ]"
-                                            class="mb-1"
-                                            tumAetUiButton
-                                            severity="secondary"
-                                            variant="outlined"
-                                            size="small"
-                                        >
-                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
-                                        </a>
-                                    }
-                                    @if (submission.participation!.exercise!.type !== ExerciseType.TEXT) {
-                                        <a
-                                            [routerLink]="[
-                                                '/course-management',
-                                                courseId(),
-                                                submission.participation!.exercise!.type + '-exercises',
-                                                submission.participation!.exercise!.id!,
-                                                'submissions',
-                                                submission.id,
-                                                'assessment',
-                                            ]"
-                                            class="mb-1"
-                                            tumAetUiButton
-                                            severity="secondary"
-                                            variant="outlined"
-                                            size="small"
-                                        >
-                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
-                                        </a>
-                                    }
+                                    <a
+                                        [routerLink]="getAssessmentLink(submission)"
+                                        [queryParams]="{ 'correction-round': submission.latestResult?.correctionRound ?? 0 }"
+                                        class="mb-1"
+                                        tumAetUiButton
+                                        severity="secondary"
+                                        variant="outlined"
+                                        size="small"
+                                    >
+                                        <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
+                                    </a>
                                 </span>
                                 <span>
                                     @if (!submission.latestResult!.completionDate) {
