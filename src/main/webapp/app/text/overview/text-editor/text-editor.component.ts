@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,15 +17,17 @@ import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
-import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
+import { AssessmentSubmissionPanelComponent } from 'app/assessment/manage/assessment-submission-panel/assessment-submission-panel.component';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -36,21 +39,27 @@ import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { TextResultComponent } from '../text-result/text-result.component';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
+import { GeneralFeedbackComponent } from 'app/exercise/general-feedback/general-feedback.component';
+import { FeedbackBottomPanelComponent } from 'app/exercise/feedback-bottom-panel/feedback-bottom-panel.component';
+import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { UpperCasePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
+    // The page gives its panel no padding, so the editor adds it, unless the assessed submission panel fills the panel to its
+    // edges; an exam summary has its own frame.
+    host: {
+        class: 'block',
+        '[class.text-editor--fill]': 'fillsPanel',
+    },
     imports: [
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
@@ -58,13 +67,16 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         FormsModule,
         TeamSubmissionSyncComponent,
         TextResultComponent,
-        UnifiedFeedbackComponent,
+        GeneralFeedbackComponent,
+        FeedbackBottomPanelComponent,
+        FeedbackSplitComponent,
+        NgTemplateOutlet,
         RatingComponent,
-        ComplaintsStudentViewComponent,
         FaIconComponent,
-        UpperCasePipe,
-        ArtemisTranslatePipe,
         MarkdownDirective,
+        AssessmentSubmissionPanelComponent,
+        TumAetUiTagComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
@@ -80,8 +92,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
     protected readonly Result = Result;
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
-    protected readonly isAthenaAIResult = isAthenaAIResult;
-    protected readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
     participationId = input<number>();
     expandProblemStatement = input<boolean>(true);
@@ -93,10 +103,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly textExercise = signal<TextExercise>(undefined!);
     readonly participation = signal<StudentParticipation>(undefined!);
     readonly result = signal<Result>(undefined!);
-    readonly resultWithComplaint = signal<Result | undefined>(undefined);
     readonly submission = signal<TextSubmission>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
     readonly isSaving = signal(false);
+    /** Whether the general feedback panel at the bottom of the page shows its content. */
+    readonly generalFeedbackExpanded = signal(true);
     private textEditorInput = new Subject<string>();
     textEditorInputObservable = this.textEditorInput.asObservable();
     private submissionChange = new Subject<TextSubmission>();
@@ -334,9 +345,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.result().submission = this.submission();
             }
 
-            // if one of the submissions results has a complaint, we get it
-            this.resultWithComplaint.set(getFirstResultWithComplaint(this.submission()));
-
             if (this.submission()?.text) {
                 this.answer.set(this.submission().text ?? '');
             } else {
@@ -391,15 +399,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     get isAutomaticResult(): boolean {
         return this.result()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
-    /**
-     * True, if the due date is after the current date, or there is no due date, or the participation is a practice run
-     */
-    get isActive(): boolean {
+    /** True, if the due date is after the current date, or there is no due date, or the participation is a practice run */
+    get isBeforeDueDate(): boolean {
         return (
             !this.examMode() &&
-            (!this.result() || this.isAutomaticResult) &&
-            (!!this.participation()?.testRun || (this.textExercise() && (!this.textExercise().dueDate || !hasExerciseDueDatePassed(this.textExercise(), this.participation()))))
+            (!!this.participation()?.testRun || (!!this.textExercise() && (!this.textExercise().dueDate || !hasExerciseDueDatePassed(this.textExercise(), this.participation()))))
         );
+    }
+
+    /** True, if the student may still change the submission: before the due date, and while no assessor has started on it */
+    get isActive(): boolean {
+        return this.isBeforeDueDate && (!this.result() || this.isAutomaticResult);
     }
 
     /**
@@ -407,6 +417,46 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get unreferencedFeedback(): Feedback[] | undefined {
         return this.result() ? getUnreferencedFeedback(this.result().feedbacks) : undefined;
+    }
+
+    /**
+     * Whether the general feedback sits in the panel at the bottom of the page, as in the code editor. An exam summary is one
+     * long page that a fixed panel would cut, so it keeps the feedback below the submission.
+     */
+    get showsGeneralFeedbackPanel(): boolean {
+        return this.showsAssessedSubmission && !this.isExamSummary() && !!this.unreferencedFeedback?.length;
+    }
+
+    toggleGeneralFeedback(): void {
+        this.generalFeedbackExpanded.update((expanded) => !expanded);
+    }
+
+    /**
+     * Whether the page shows the box to write in rather than the submission read-only. The submission is saved with the submit button, not
+     * automatically, and stays open until the due date, whatever result may exist; after that it is locked and waits for its assessment.
+     * An assessed submission (feedback to show) is read-only with its feedback.
+     */
+    get isEditing(): boolean {
+        if (this.isReadOnlyWithShowResult() || this.showsAssessedSubmission) {
+            return false;
+        }
+        return this.isExamSummary() ? !this.result() : this.isBeforeDueDate || this.isAllowedToSubmitAfterDueDate();
+    }
+
+    /** Whether the box to write in accepts input: not in an exam summary, which only shows what was handed in. */
+    get canWrite(): boolean {
+        return this.isEditing && !this.isExamSummary();
+    }
+
+    /** Whether the page fills its panel to the edges: an assessed submission does, and so does the editor of a student who is still writing. */
+    get fillsPanel(): boolean {
+        return this.showsAssessedSubmission || !this.isExamSummary();
+    }
+
+    /** Whether the student reads an assessed submission, which the submission panel of the assessment page then frames. */
+    get showsAssessedSubmission(): boolean {
+        const result = this.result();
+        return !!result?.feedbacks?.length && (!this.isAutomaticResult || this.isExamSummary() || this.isReadOnlyWithShowResult());
     }
 
     get wordCount(): number {

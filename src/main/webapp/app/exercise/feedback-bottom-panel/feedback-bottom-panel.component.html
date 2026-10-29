@@ -1,0 +1,39 @@
+<section class="feedback-bottom-panel" [class.feedback-bottom-panel--fill]="fill()" [class.feedback-bottom-panel--collapsed]="!expanded()" [attr.data-testid]="testId()">
+    @if (expanded()) {
+        <div class="feedback-bottom-panel__header">
+            <div class="feedback-bottom-panel__title">
+                <ng-content select="[panelHeader]">
+                    <fa-icon [icon]="faCommentDots" aria-hidden="true" />
+                    <h3 class="feedback-bottom-panel__heading">{{ titleKey() | artemisTranslate }}</h3>
+                    @if (count() !== undefined) {
+                        <span class="feedback-bottom-panel__count" data-testid="feedback-bottom-panel-count">{{ count() }}</span>
+                    }
+                </ng-content>
+            </div>
+            <button
+                type="button"
+                class="btn btn-link feedback-bottom-panel__collapse"
+                data-testid="feedback-bottom-panel-toggle"
+                aria-expanded="true"
+                [attr.aria-label]="toggleLabelKey() | artemisTranslate"
+                (click)="toggled.emit($event)"
+            >
+                <fa-icon [icon]="faChevronDown" aria-hidden="true" />
+            </button>
+        </div>
+    } @else {
+        <!-- Collapsed, only the icons of the panel remain; one of them opens the panel again -->
+        <jhi-collapsed-panel-rail
+            [icon]="collapsedIcon()"
+            [labelKey]="toggleLabelKey()"
+            [items]="collapsedItems()"
+            orientation="horizontal"
+            testId="feedback-bottom-panel-toggle"
+            (itemSelected)="collapsedItemSelected.emit($event)"
+            (expand)="toggled.emit($event)"
+        />
+    }
+    <div class="feedback-bottom-panel__content" [hidden]="!expanded()">
+        <ng-content />
+    </div>
+</section>

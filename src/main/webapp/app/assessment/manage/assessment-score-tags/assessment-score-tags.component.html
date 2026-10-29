@@ -1,0 +1,13 @@
+@let points = roundedScore();
+<tumaet-ui-tag severity="success" data-testid="assessment-awarded-points">
+    <span class="assessment-score-tags__label">{{ 'artemisApp.assessment.detail.baseAward' | artemisTranslate }}</span>
+    {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: points.awarded } }}
+</tumaet-ui-tag>
+<tumaet-ui-tag severity="danger" data-testid="assessment-deducted-points">
+    <span class="assessment-score-tags__label">{{ 'artemisApp.assessment.detail.deductions' | artemisTranslate }}</span>
+    {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: points.deducted } }}
+</tumaet-ui-tag>
+<tumaet-ui-tag severity="contrast" data-testid="assessment-final-points">
+    <span class="assessment-score-tags__label">{{ 'artemisApp.assessment.detail.finalScore' | artemisTranslate }}</span>
+    {{ 'artemisApp.assessment.detail.pointsOfShort' | artemisTranslate: { points: points.total, maxPoints: maxPoints() } }}
+</tumaet-ui-tag>
