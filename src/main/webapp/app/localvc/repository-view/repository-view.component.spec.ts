@@ -123,6 +123,16 @@ describe('RepositoryViewComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('recognizes the actual individual or team owner before choosing a download purpose', () => {
+        component.userId.set(7);
+        component.participation.set({ student: { id: 7 } } as ProgrammingExerciseStudentParticipation);
+        expect(component.ownsParticipation()).toBe(true);
+        component.participation.set({ student: { id: 8 } } as ProgrammingExerciseStudentParticipation);
+        expect(component.ownsParticipation()).toBe(false);
+        component.participation.set({ team: { students: [{ id: 7 }] } } as ProgrammingExerciseStudentParticipation);
+        expect(component.ownsParticipation()).toBe(true);
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });

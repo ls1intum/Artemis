@@ -362,7 +362,7 @@ describe('ProgrammingExercise Service', () => {
     it('should reset Exercise', () => {
         const exerciseId = 1;
         const options = {
-            deleteParticipationsSubmissionsAndResults: true,
+            deleteParticipationsSubmissionsAndResults: false,
             recreateBuildPlans: true,
         };
         const expectedResult = 'success';
@@ -370,6 +370,29 @@ describe('ProgrammingExercise Service', () => {
         const url = `${resourceUrl}/${exerciseId}/reset`;
         const req = httpMock.expectOne({ method: 'PUT', url });
         req.flush(expectedResult);
+    });
+
+    it('sends destructive reset options unchanged to the instructor operation', () => {
+        const options = { deleteParticipationsSubmissionsAndResults: true, recreateBuildPlans: false };
+        service.resetParticipations(1, options).subscribe();
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/reset-participations` });
+        expect(req.request.body).toEqual(options);
+        req.flush('');
+    });
+
+    it('uses the staff snapshot URL with the original includeTests option', () => {
+        service.exportSolutionSnapshotForStaff(1, true).subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/1/export-student-requested-repository/for-staff?includeTests=true` });
+        req.flush(new Blob());
+    });
+
+    it.each([
+        [false, 'for-staff'],
+        [true, 'for-instructor'],
+    ])('uses the selected staff archive audience %s', (identified, audience) => {
+        service.exportStudentRepositoryForStaff(1, 5, identified as boolean).subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/1/export-student-repository/${audience}?participationId=5` });
+        req.flush(new Blob());
     });
 
     it('export instructor repository', () => {
@@ -653,5 +676,11 @@ describe('ProgrammingExercise Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+    it('should load exam details from the exam route with the same options', () => {
+        service.findForExam(123, true).subscribe((response) => expect(response.body?.id).toBe(123));
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/programming/programming-exercises/123/for-exam');
+        expect(req.request.params.get('withPlagiarismDetectionConfig')).toBe('true');
+        req.flush({ id: 123 });
     });
 });

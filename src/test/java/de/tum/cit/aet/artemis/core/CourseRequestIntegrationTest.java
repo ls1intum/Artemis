@@ -130,7 +130,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAdminOverview_asInstructor_shouldReturnForbidden() throws Exception {
         request.get("/api/admin/course-requests/overview", HttpStatus.FORBIDDEN, CourseRequestsAdminOverviewDTO.class);
     }
@@ -155,7 +155,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void acceptCourseRequest_asInstructor_shouldReturnForbidden() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Accept Forbidden Test", "ACPFBD");
 
@@ -183,7 +183,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void rejectCourseRequest_asInstructor_shouldReturnForbidden() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Reject Forbidden Test", "REJFBD");
         CourseRequestDecisionDTO decision = new CourseRequestDecisionDTO("Rejection reason");
@@ -605,7 +605,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourseRequest_asInstructor_shouldReturnForbidden() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Request For Instructor", "REQINST");
 

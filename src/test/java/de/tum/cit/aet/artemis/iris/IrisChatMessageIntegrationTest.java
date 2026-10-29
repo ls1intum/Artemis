@@ -718,7 +718,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @ParameterizedTest
     @EnumSource(value = IrisChatMode.class, names = { "TEXT_EXERCISE_CHAT", "LECTURE_CHAT" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteOwningEntity_cascadesSessionsAndMessages(IrisChatMode mode) throws Exception {
         IrisChatSession session = createSessionForUser(mode, "instructor1");
         irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
@@ -943,7 +943,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void deleteProgrammingExercise_cascadesSessionsAndMessages() throws Exception {
             IrisChatSession session = createProgrammingSession(programmingExercise, "instructor1");
             irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
@@ -1700,4 +1700,16 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private static String proactiveOutcomeUrl(IrisChatSession session, IrisMessage message) {
         return "/api/iris/sessions/" + session.getId() + "/messages/" + message.getId() + "/proactive-outcome";
     }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void tutorSuggestionRejectsOrdinaryChatSession(IrisChatMode mode) throws Exception {
+        var session = createSessionForUser(mode, "student1");
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        request.postWithoutResponseBody("/api/iris/sessions/" + session.getId() + "/tutor-suggestion", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        assertThat(irisChatSessionRepository.findById(session.getId())).isPresent();
+    }
+
 }

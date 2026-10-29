@@ -1341,7 +1341,7 @@ about something they never asked for.
 
 - **Check before a request that runs without a user action.** Call the `AccountService` method that answers what the
   server endpoint requires, and skip the request when the answer is no. The variant job tray, for example, calls
-  `hasEditorAccess()` before it loads `GET /api/hyperion/variant-jobs`, an `@EnforceAtLeastEditor` endpoint.
+  `hasEditorAccess()` before it loads `GET /api/hyperion/variant-jobs`, which only lists the jobs of the caller.
 - **Use the high-level methods, not the raw authorities.** An authority list such as `IS_AT_LEAST_EDITOR` includes the
   administrator authorities, and the administrator authority alone is not what the server checks: on a server that
   requires a passkey for administrator features, an administrator who signed in with a password has no editor access

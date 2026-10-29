@@ -22,7 +22,7 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.4.1_1-jdk@sha256:8c0a84ea11c8f6ed52600fc19f1040121f2a162998e9f50a5faebbbad9172dcc AS builder
+FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.4.1_1-jdk@sha256:3ab7fc8d0b4ade8fef96903fb36767c1dbb4fd1535dcfad85b59c17afbbb5857 AS builder
 
 # python3/build-essential were previously installed defensively for npm deps that
 # trigger node-gyp; no current Artemis dep needs that. If a future dep does, the
@@ -77,7 +77,7 @@ RUN \
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 AS external_builder
+FROM docker.io/library/alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS external_builder
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
@@ -97,7 +97,7 @@ FROM ${WAR_FILE_STAGE} AS war_file
 #-----------------------------------------------------------------------------------------------------------------------
 # extract stage (explode the WAR so the runtime image runs from a flat classpath -> faster startup)
 #-----------------------------------------------------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.4.1_1-jdk@sha256:8c0a84ea11c8f6ed52600fc19f1040121f2a162998e9f50a5faebbbad9172dcc AS extractor
+FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.4.1_1-jdk@sha256:3ab7fc8d0b4ade8fef96903fb36767c1dbb4fd1535dcfad85b59c17afbbb5857 AS extractor
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
@@ -113,7 +113,7 @@ RUN java -Djarmode=tools -jar Artemis.war extract --destination /extract/app
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:25.0.4.1_1-jdk@sha256:8c0a84ea11c8f6ed52600fc19f1040121f2a162998e9f50a5faebbbad9172dcc AS runtime
+FROM docker.io/library/eclipse-temurin:25.0.4.1_1-jdk@sha256:3ab7fc8d0b4ade8fef96903fb36767c1dbb4fd1535dcfad85b59c17afbbb5857 AS runtime
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"

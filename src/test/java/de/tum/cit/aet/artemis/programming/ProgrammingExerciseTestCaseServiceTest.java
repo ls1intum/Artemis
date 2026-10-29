@@ -64,20 +64,20 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldResetCourseExerciseTestCases() {
         testResetTestCases(programmingExercise, Visibility.ALWAYS);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldResetExamExerciseTestCases() {
         programmingExercise.setExerciseGroup(new ExerciseGroup());
         testResetTestCases(programmingExercise, Visibility.AFTER_DUE_DATE);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCascadeDeleteFeedbackWhenTestCaseIsDeleted() {
         // A fresh, unlinked test case so deleting it exercises only the test_case_feedback -> test_case foreign
         // key, not the task/coverage RESTRICT constraints that a seeded, task-linked test case would also hit.
@@ -125,7 +125,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldUpdateTestWeight() {
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
@@ -150,7 +150,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldAllowTestCaseWeightSumZero(AssessmentType assessmentType) {
         programmingExercise.setAssessmentType(assessmentType);
         programmingExerciseRepository.save(programmingExercise);
@@ -173,7 +173,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
      * this column means in the exercise's secondary table.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldClearTestCasesChanged() {
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
         programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
@@ -190,7 +190,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
      * in the statement, so its row count is what decides this.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotNotifyWhenTestCasesChangedAlreadyHasThatValue() {
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
         programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
@@ -208,7 +208,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
      * dropped and the flag stays where it was.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotSetTestCasesChangedWithoutAnyResult() {
         assertThat(resultRepository.existsByExerciseId(programmingExercise.getId())).isFalse();
 

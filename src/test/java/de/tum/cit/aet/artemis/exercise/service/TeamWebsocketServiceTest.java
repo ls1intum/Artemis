@@ -107,7 +107,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendTeamAssignmentUpdateOnTeamCreate() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise).students(students);
         TeamResponseDTO createdTeam = request.postWithResponseBody(teamResourceUrl(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.CREATED);
@@ -118,7 +118,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendTeamAssignmentUpdateOnRemoveStudentFromTeam() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise).students(students);
         team.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
@@ -133,7 +133,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendTeamAssignmentUpdateOnAddStudentToTeam() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise);
         team.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
@@ -149,7 +149,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCurrentTeamMembersReceiveExistingParticipationWithVisibleResults(boolean resultsReleased) throws Exception {
         textExercise.setAssessmentDueDate(ZonedDateTime.parse(resultsReleased ? "2000-01-01T00:00:00Z" : "2999-01-01T00:00:00Z"));
         exerciseRepository.save(textExercise);
@@ -197,7 +197,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testRenamedTeamNotifiesExistingMembers() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise).students(students);
         team.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
@@ -221,7 +221,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSendTeamAssignmentUpdateOnTeamDelete() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise);
         teamRepository.save(team);
@@ -234,7 +234,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSendTeamAssignmentUpdateOnTeamImport() throws Exception {
         teamUtilService.addTeamsForExercise(textExercise, 2, null); // create teams in source exercise
         List<TeamResponseDTO> destinationTeams = request.putWithResponseBodyList(importFromExerciseUrl(textExercise), null, TeamResponseDTO.class, HttpStatus.OK);
