@@ -993,6 +993,13 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectExerciseSearchWithoutSortedColumn() throws Exception {
+        request.performMvcRequest(get("/api/quiz/quiz-exercises").param("page", "0").param("pageSize", "20").param("sortingOrder", "ASCENDING").param("searchTerm", "quiz"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateQuizQuestionWithMoreSolutions() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
         QuizQuestion question = quizExercise.getQuizQuestions().get(2);
@@ -1022,6 +1029,36 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         ShortAnswerQuestion receivedShortAnswerQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
         assertThat(receivedShortAnswerQuestion.getSolutions()).hasSize(3);
         assertThat(receivedShortAnswerQuestion.getCorrectMappings()).hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReEvaluateShortAnswerSolutionTextChangeIsPersisted() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
+        ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+
+        // the student fills every spot with the original solution text, so the short answer question is fully correct before the edit
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerFor(shortAnswerQuestion, true));
+        quizSubmission.submitted(true);
+        quizSubmission.submissionDate(ZonedDateTime.now().minusHours(3));
+        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        double scoreBeforeReEvaluation = quizExercise.getScoreForSubmission(quizSubmission);
+        participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, scoreBeforeReEvaluation, true);
+        assertThat(scoreBeforeReEvaluation).isPositive();
+
+        ShortAnswerSolution editedSolution = shortAnswerQuestion.getSolutions().getFirst();
+        editedSolution.setText("corrected solution");
+
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), OK);
+
+        QuizExercise updatedQuizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
+        ShortAnswerQuestion updatedQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
+        assertThat(updatedQuestion.findSolutionById(editedSolution.getId()).getText()).isEqualTo("corrected solution");
+
+        // the submitted original text no longer matches the edited solution, so the stored result must be graded against the new text
+        var reEvaluatedResult = resultRepository.findDistinctBySubmissionId(quizSubmission.getId()).orElseThrow();
+        assertThat(reEvaluatedResult.getScore()).isLessThan(scoreBeforeReEvaluation);
     }
 
     @Test
@@ -1816,6 +1853,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asString()).isEqualTo("before-quiz-start");
         assertThat(json.has("quizQuestions")).isFalse();
 
         QuizExerciseWithoutQuestionsDTO dto = objectMapper.readValue(content, QuizExerciseWithoutQuestionsDTO.class);
@@ -1841,6 +1879,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asString()).isEqualTo("after-quiz-end");
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
 
@@ -1878,6 +1917,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asString()).isEqualTo("live-quiz");
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
 

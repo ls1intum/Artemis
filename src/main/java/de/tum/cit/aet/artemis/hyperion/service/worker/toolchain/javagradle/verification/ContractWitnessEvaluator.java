@@ -101,22 +101,25 @@ final class ContractWitnessEvaluator {
             }
             Map<ContractWitnessOutcome.Disposition, Long> counts = outcomes.stream().collect(Collectors.groupingBy(ContractWitnessOutcome::disposition, Collectors.counting()));
             log.info("Contract-witness probe for exercise {}: {} proposal outcomes {}", exerciseId, outcomes.size(), counts);
-            return List.copyOf(outcomes);
         }
-        catch (VerificationInfrastructureException exception) {
-            throw exception;
+        catch (RuntimeException exception) {
+            VerificationInfrastructureException failure = exception instanceof VerificationInfrastructureException infrastructure ? infrastructure
+                    : new VerificationInfrastructureException("The contract-witness probe could not restore the verified candidate", exception);
+            try {
+                restoreCandidate.run();
+            }
+            catch (RuntimeException restoreFailure) {
+                failure.addSuppressed(restoreFailure);
+            }
+            throw failure;
+        }
+        try {
+            restoreCandidate.run();
         }
         catch (RuntimeException exception) {
             throw new VerificationInfrastructureException("The contract-witness probe could not restore the verified candidate", exception);
         }
-        finally {
-            try {
-                restoreCandidate.run();
-            }
-            catch (RuntimeException exception) {
-                throw new VerificationInfrastructureException("The contract-witness probe could not restore the verified candidate", exception);
-            }
-        }
+        return List.copyOf(outcomes);
     }
 
     static List<ContractWitnessOutcome> inconclusive(List<ContractWitness> candidates, String diagnostic) {
