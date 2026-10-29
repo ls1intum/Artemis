@@ -33,6 +33,7 @@ import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-com
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { knowledgeAreaForView, sourceForView } from 'app/atlas/shared/standardized-competencies/standardized-competency-api.mapper';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -119,9 +120,9 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         const getSourcesObservable = this.standardizedCompetencyService.getSources();
         forkJoin([getKnowledgeAreasObservable, getSourcesObservable]).subscribe({
             next: ([knowledgeAreasResponse, sourcesResponse]) => {
-                this.sourcesForSelect.set(sourcesResponse.body!);
+                this.sourcesForSelect.set(sourcesResponse.map(sourceForView));
 
-                const knowledgeAreas = knowledgeAreasResponse.body!;
+                const knowledgeAreas = knowledgeAreasResponse.map(knowledgeAreaForView);
                 const knowledgeAreasForTree = knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
                 this.dataSource.data = knowledgeAreasForTree;
                 knowledgeAreasForTree.forEach((knowledgeArea) => {
