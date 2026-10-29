@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingP
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingSpecification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingInfoDTO;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingPresetEntryDTO;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationEntryDTO;
@@ -280,8 +281,8 @@ public class CourseNotificationSettingService {
      * @param recipients the users the notification may go to
      * @return their settings, for {@link #filterRecipientsBy} to apply
      */
-    protected RecipientSettings loadSettingsFor(long courseId, List<User> recipients) {
-        Set<Long> userIds = recipients.stream().map(User::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+    protected RecipientSettings loadSettingsFor(long courseId, List<CourseNotificationRecipientDTO> recipients) {
+        Set<Long> userIds = recipients.stream().map(CourseNotificationRecipientDTO::id).filter(Objects::nonNull).collect(Collectors.toSet());
         if (userIds.isEmpty()) {
             return new RecipientSettings(Map.of(), Map.of());
         }
@@ -312,17 +313,18 @@ public class CourseNotificationSettingService {
      * @param settings     The recipients' settings, read once by {@link #loadSettingsFor}
      * @return Filtered list of users who have enabled notifications for the specified channel
      */
-    protected List<User> filterRecipientsBy(CourseNotification notification, List<User> recipients, NotificationChannelOption filterFor, RecipientSettings settings) {
+    protected List<CourseNotificationRecipientDTO> filterRecipientsBy(CourseNotification notification, List<CourseNotificationRecipientDTO> recipients,
+            NotificationChannelOption filterFor, RecipientSettings settings) {
         Short notificationType = this.courseNotificationRegistryService.getNotificationIdentifier(notification.getClass());
         return recipients.stream().filter(recipient -> {
-            Short preset = settings.presets().get(recipient.getId());
+            Short preset = settings.presets().get(recipient.id());
 
             if (preset == null) {
                 // Run query on default preset if none are present
                 return isEnabledByDefault(recipient, notification, filterFor);
             }
             else if (preset == CUSTOM_PRESET_ID) {
-                var specification = settings.specifications().getOrDefault(recipient.getId(), List.of()).stream()
+                var specification = settings.specifications().getOrDefault(recipient.id(), List.of()).stream()
                         .filter(spec -> Objects.equals(spec.courseNotificationType(), notificationType)).findFirst();
 
                 return specification.map(switch (filterFor) {
@@ -343,8 +345,8 @@ public class CourseNotificationSettingService {
      * Whether the default preset delivers the notification on the channel to a user who did not choose a setting for it. A test
      * user (see {@link TestAccountEmailService}) gets no e-mail from what nobody configured; its other channels keep the default.
      */
-    private boolean isEnabledByDefault(User recipient, CourseNotification notification, NotificationChannelOption channel) {
-        if (channel == NotificationChannelOption.EMAIL && recipient.isTestUser()) {
+    private boolean isEnabledByDefault(CourseNotificationRecipientDTO recipient, CourseNotification notification, NotificationChannelOption channel) {
+        if (channel == NotificationChannelOption.EMAIL && recipient.testUser()) {
             return false;
         }
         return courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(DEFAULT_PRESET_ID, notification.getClass(), channel);
