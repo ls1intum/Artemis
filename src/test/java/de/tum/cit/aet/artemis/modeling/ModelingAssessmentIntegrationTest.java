@@ -433,8 +433,11 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         // A title without a description: the empty detail text tells the client that text is a title, not a legacy comment.
         Feedback titledFeedback = feedbacks.getFirst().text("Missing abstraction").detailText("");
 
-        ResultDTO savedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment",
+        ResultDTO savedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment?submit=true",
                 new ModelingAssessmentDTO(toFeedbackDTOs(feedbacks), null), ResultDTO.class, HttpStatus.OK);
+        // Only the student can load the result through this route, once the assessment is released.
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         ResultDTO loadedResult = request.get(API_MODELING_SUBMISSIONS + submission.getId() + "/result", HttpStatus.OK, ResultDTO.class);
 
         for (ResultDTO result : List.of(savedResult, loadedResult)) {

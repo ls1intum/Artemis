@@ -4,10 +4,13 @@ import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import tools.jackson.databind.annotation.JsonSerialize;
+
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.core.util.KeepEmptyStringSerializer;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 
@@ -17,8 +20,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType
  * An empty detail text is kept: the client reads it as a title in {@code text} without a description, unlike legacy feedback without one.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FeedbackDTO(Long id, String text, @JsonInclude(JsonInclude.Include.NON_NULL) String detailText, boolean hasLongFeedbackText, String reference, Double credits,
-        Boolean positive, FeedbackType type, Visibility visibility, GradingInstructionDTO gradingInstruction, TestCaseDTO testCase) implements Serializable {
+public record FeedbackDTO(Long id, String text, @JsonSerialize(using = KeepEmptyStringSerializer.class) String detailText, boolean hasLongFeedbackText, String reference,
+        Double credits, Boolean positive, FeedbackType type, Visibility visibility, GradingInstructionDTO gradingInstruction, TestCaseDTO testCase) implements Serializable {
 
     /**
      * The test case an automatic programming feedback belongs to. The components are every scalar property
