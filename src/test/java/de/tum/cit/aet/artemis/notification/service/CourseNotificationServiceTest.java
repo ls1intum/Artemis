@@ -106,7 +106,8 @@ class CourseNotificationServiceTest {
     void shouldRecordAFailedAsynchronousDeliveryAsAFailure() {
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
-        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(recipients), eq(NotificationChannelOption.WEBAPP), any())).thenReturn(recipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(toRecipientDTOs(recipients)), eq(NotificationChannelOption.WEBAPP), any()))
+                .thenReturn(toRecipientDTOs(recipients));
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
         when(webappService.sendCourseNotification(any(CourseNotificationDTO.class), anyList()))
@@ -122,7 +123,8 @@ class CourseNotificationServiceTest {
     void shouldRecordASuccessfulDeliveryAsASuccess() {
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
-        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(recipients), eq(NotificationChannelOption.WEBAPP), any())).thenReturn(recipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(toRecipientDTOs(recipients)), eq(NotificationChannelOption.WEBAPP), any()))
+                .thenReturn(toRecipientDTOs(recipients));
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
@@ -139,8 +141,10 @@ class CourseNotificationServiceTest {
         List<User> webappRecipients = List.of(createTestUser(1L));
         List<User> pushRecipients = List.of(createTestUser(2L));
 
-        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(allRecipients), eq(NotificationChannelOption.WEBAPP), any())).thenReturn(webappRecipients);
-        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(allRecipients), eq(NotificationChannelOption.PUSH), any())).thenReturn(pushRecipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(toRecipientDTOs(allRecipients)), eq(NotificationChannelOption.WEBAPP), any()))
+                .thenReturn(toRecipientDTOs(webappRecipients));
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(toRecipientDTOs(allRecipients)), eq(NotificationChannelOption.PUSH), any()))
+                .thenReturn(toRecipientDTOs(pushRecipients));
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
@@ -150,9 +154,9 @@ class CourseNotificationServiceTest {
         verify(pushService).sendCourseNotification(any(CourseNotificationDTO.class), eq(pushRecipients.stream().map(CourseNotificationRecipientDTO::from).toList()));
         verify(emailService, never()).sendCourseNotification(any(CourseNotificationDTO.class), anyList());
 
-        ArgumentCaptor<HashSet<User>> notifiedUsersCaptor = ArgumentCaptor.forClass(HashSet.class);
-        verify(userCourseNotificationStatusService).batchCreateStatusForUsers(notifiedUsersCaptor.capture(), eq(1L), eq(123L));
-        assertThat(notifiedUsersCaptor.getValue()).containsExactlyInAnyOrder(createTestUser(1L), createTestUser(2L));
+        ArgumentCaptor<HashSet<Long>> notifiedUsersCaptor = ArgumentCaptor.forClass(HashSet.class);
+        verify(userCourseNotificationStatusService).batchCreateStatusForUserIds(notifiedUsersCaptor.capture(), eq(1L), eq(123L));
+        assertThat(notifiedUsersCaptor.getValue()).containsExactlyInAnyOrder(1L, 2L);
     }
 
     @Test
@@ -160,7 +164,7 @@ class CourseNotificationServiceTest {
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
 
-        when(courseNotificationSettingService.filterRecipientsBy(any(), any(), any(), any())).thenReturn(recipients);
+        when(courseNotificationSettingService.filterRecipientsBy(any(), any(), any(), any())).thenReturn(toRecipientDTOs(recipients));
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
@@ -291,4 +295,9 @@ class CourseNotificationServiceTest {
             return new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise");
         }
     }
+
+    private static List<CourseNotificationRecipientDTO> toRecipientDTOs(List<User> recipients) {
+        return recipients.stream().map(CourseNotificationRecipientDTO::from).toList();
+    }
+
 }
