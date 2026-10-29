@@ -241,6 +241,14 @@ describe('CourseLectureDetailsComponent', () => {
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit()).toBe(true);
     });
 
+    it('should space the download PDF button from the lecture units heading', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const downloadButton = debugElement.query(By.css('#downloadButton')).nativeElement as HTMLElement;
+        expect(downloadButton.parentElement!.classList).toContain('gap-3');
+    });
+
     it('should not display download PDF button', async () => {
         lecture.lectureUnits = [lectureUnit3];
         courseLecturesDetailsComponent.lecture.set(lecture);
