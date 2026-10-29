@@ -12,7 +12,7 @@
 services:
   ollama:
     container_name: artemis-ollama
-    image: docker.io/ollama/ollama:${OLLAMA_VERSION:-0.40.3}
+    image: docker.io/ollama/ollama:${OLLAMA_VERSION:-0.40.12}
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
     environment:
@@ -29,7 +29,7 @@ services:
 
   ollama-pull:
     container_name: artemis-ollama-pull
-    image: docker.io/ollama/ollama:${OLLAMA_VERSION:-0.40.3}
+    image: docker.io/ollama/ollama:${OLLAMA_VERSION:-0.40.12}
     environment:
       OLLAMA_HOST: http://ollama:11434
     entrypoint: ["ollama", "pull", "${OLLAMA_EMBEDDING_MODEL:-qwen3-embedding:0.6b}"]
