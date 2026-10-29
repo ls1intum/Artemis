@@ -529,6 +529,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 // Auto-accepted suggestions are unsaved changes: warn on navigation away like any other edit.
                 this.hasPendingChanges = true;
                 this.handleFeedback();
+                // Suggestions loaded from the opt-in hint arrive after the assessment was validated without them.
+                this.validateFeedback();
             }
         } catch (error) {
             if ((error as HttpErrorResponse)?.error?.errorKey === 'llmSelectionRequired') {

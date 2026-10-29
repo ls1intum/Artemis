@@ -1244,6 +1244,25 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(suggestionsSpy).toHaveBeenCalled();
         });
 
+        it('should enable submitting once the suggestions loaded via the hint make the empty assessment valid', async () => {
+            const suggestion = { type: FeedbackType.MANUAL, reference: 'file:src/Main.java_line:3', credits: 2, text: 'Suggested feedback' } as Feedback;
+            vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+            comp.submission.set({ id: 42 } as ProgrammingSubmission);
+            comp.manualResult.set({ id: 7, feedbacks: [] } as Result);
+            comp.validateFeedback();
+            expect(comp.assessmentsAreValid()).toBe(false);
+
+            const loadSpy = vi.spyOn(internals(comp), 'loadFeedbackSuggestions');
+
+            comp.onOptInToAiFeedbackSuggestions();
+            // Await the load directly: waiting for a macrotask would let the pending initial change detection reset the result.
+            await loadSpy.mock.results[0].value;
+
+            expect(comp.referencedFeedback()).toEqual([suggestion]);
+            expect(comp.assessmentsAreValid()).toBe(true);
+        });
+
         it('should not fetch feedback suggestions for another submission loaded while the opt-in prompt was open', () => {
             const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([]));
             let onAccepted: () => void = () => {};
