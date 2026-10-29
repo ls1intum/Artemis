@@ -462,6 +462,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isFocused = signal(false);
     private cycleIntervalId: ReturnType<typeof setInterval> | undefined;
     private cycleFadeTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private focusAfterAcceptanceTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     readonly currentPlaceholder = computed(() => {
         const labels = this.interpolatedLabels();
@@ -720,6 +721,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Focus on message textarea after initialization
         const focusTimeoutId = setTimeout(() => this.focusUnlessFocusIsElsewhere((this.messageTextarea() ?? this.acceptButton())?.nativeElement), 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
+        this.destroyRef.onDestroy(() => clearTimeout(this.focusAfterAcceptanceTimeoutId));
         this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
         this.destroyRef.onDestroy(() => {
             if (this.draftSwapScrollRafId !== undefined) {
@@ -884,7 +886,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private focusInputAfterAcceptance() {
-        setTimeout(() => this.focusUnlessFocusIsElsewhere((this.messageTextarea() ?? this.acceptButton())?.nativeElement), 150);
+        this.focusAfterAcceptanceTimeoutId = setTimeout(() => this.focusUnlessFocusIsElsewhere((this.messageTextarea() ?? this.acceptButton())?.nativeElement), 150);
     }
 
     /**
