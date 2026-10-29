@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -41,6 +42,8 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizMessagingService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST controller for managing QuizExercise actions.
@@ -130,12 +133,29 @@ public class QuizExerciseResource {
      * PUT /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
      * @param quizExerciseId the id of the quiz exercise to start
-     * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible")
+     * @param action         the action to perform on the quiz (allowed actions: "start-now", "end-now", "set-visible")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
+    public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId,
+            @Parameter(schema = @Schema(type = "string", allowableValues = { "start-now", "end-now", "set-visible" })) @PathVariable QuizAction action) {
+        return performQuizAction(quizExerciseId, action);
+    }
+
+    /**
+     * Ends a quiz immediately and calculates the results.
+     *
+     * @param quizExerciseId the quiz exercise
+     * @return the updated quiz dates
+     */
+    @PutMapping("quiz-exercises/{quizExerciseId}/end-now")
+    @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<QuizExerciseDatesDTO> endQuizExercise(@PathVariable Long quizExerciseId) {
+        return performQuizAction(quizExerciseId, QuizAction.END_NOW);
+    }
+
+    private ResponseEntity<QuizExerciseDatesDTO> performQuizAction(Long quizExerciseId, QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithAuthorities();

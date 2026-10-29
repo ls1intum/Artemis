@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        The two users of a one-to-one chat as "<lower user id>-<higher user id>". Together with the course it identifies the chat of a pair,
+        which is what makes a second chat for the same pair impossible. Nullable: only one-to-one chats have a key, and a chat whose other user
+        was deleted has no pair any more. A version of the application that does not know the column writes chats without a key, which the
+        unique index below accepts, so reverting the WAR still works.
+    -->
+    <changeSet id="20261024132235-01-add-one-to-one-chat-pair-key" author="krusche">
+        <addColumn tableName="conversation">
+            <column name="participant_pair_key" type="VARCHAR(40)"/>
+        </addColumn>
+    </changeSet>
+
+    <!--
+        Two concurrent requests that start a chat between the same two users each found no chat and each created one. Production has 8 such
+        pairs (16 chats). Keep the oldest chat of a pair, move the messages of the others to it, and delete the others. Only chats with exactly two
+        participants have a pair; a chat without its second user is left alone.
+
+        The chats to remove are collected in a helper table first, because MySQL does not allow a statement to read the table it changes.
+        The latest message date of a merged chat is the latest of its chats: it decides whether the other user sees the chat at all.
+
+        Preserve notification targets and participant state before deleting duplicates. Sum unread counters (including thread replies), keep
+        the earliest last-read date, or null if any chat was never read, and retain favorites and mute preferences. Only hide the merged chat
+        if all of the user's chats were hidden. A single last-read date cannot represent separate histories exactly, so use the conservative
+        boundary rather than treating messages from another chat as read. Null counters contribute zero, as in the one-to-one conversation list.
+    -->
+    <changeSet id="20261024132235-02-merge-duplicate-one-to-one-chats" author="krusche">
+        <comment>Set the pair key of every one-to-one chat with two participants and merge the chats of a pair that exist more than once.</comment>
+        <sql>
+            UPDATE conversation
+            SET participant_pair_key = (
+                SELECT CONCAT(MIN(participant.user_id), '-', MAX(participant.user_id))
+                FROM conversation_participant participant
+                WHERE participant.conversation_id = conversation.id
+                HAVING COUNT(*) = 2
+            )
+            WHERE discriminator = 'O';
+
+            DROP TABLE IF EXISTS tmp_one_to_one_chat_duplicate;
+            DROP TABLE IF EXISTS tmp_one_to_one_chat_participant;
+        </sql>
+        <createTable tableName="tmp_one_to_one_chat_duplicate">
+            <column name="duplicate_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="keep_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_message_date" type="datetime(3)"/>
+        </createTable>
+        <sql>
+            INSERT INTO tmp_one_to_one_chat_duplicate (duplicate_id, keep_id, last_message_date)
+            SELECT dup.id, oldest.keep_id, dup.last_message_date
+            FROM conversation dup
+            JOIN (
+                SELECT course_id, participant_pair_key, MIN(id) AS keep_id
+                FROM conversation
+                WHERE participant_pair_key IS NOT NULL
+                GROUP BY course_id, participant_pair_key
+                HAVING COUNT(*) > 1
+            ) oldest ON oldest.course_id = dup.course_id AND oldest.participant_pair_key = dup.participant_pair_key
+            WHERE dup.id &lt;&gt; oldest.keep_id;
+        </sql>
+        <!-- Snapshot the aggregate before updating participants: MySQL cannot read the table an UPDATE changes. -->
+        <createTable tableName="tmp_one_to_one_chat_participant">
+            <column name="participant_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="last_read" type="datetime(3)"/>
+            <column name="unread_messages_count" type="BIGINT"/>
+            <column name="is_favorite" type="BOOLEAN"/>
+            <column name="is_hidden" type="BOOLEAN"/>
+            <column name="is_muted" type="BOOLEAN"/>
+        </createTable>
+        <sql>
+            INSERT INTO tmp_one_to_one_chat_participant (participant_id, last_read, unread_messages_count, is_favorite, is_hidden, is_muted)
+            SELECT kept.id,
+                   CASE WHEN COUNT(*) = COUNT(source.last_read) THEN MIN(source.last_read) ELSE NULL END,
+                   SUM(COALESCE(source.unread_messages_count, 0)),
+                   MAX(CASE WHEN source.is_favorite = TRUE THEN 1 ELSE 0 END) = 1,
+                   MIN(CASE WHEN source.is_hidden = TRUE THEN 1 ELSE 0 END) = 1,
+                   MAX(CASE WHEN source.is_muted = TRUE THEN 1 ELSE 0 END) = 1
+            FROM conversation_participant source
+            LEFT JOIN tmp_one_to_one_chat_duplicate merged ON merged.duplicate_id = source.conversation_id
+            JOIN conversation_participant kept ON kept.conversation_id = COALESCE(merged.keep_id, source.conversation_id) AND kept.user_id = source.user_id
+            WHERE kept.conversation_id IN (SELECT keep_id FROM tmp_one_to_one_chat_duplicate)
+            GROUP BY kept.id;
+
+            UPDATE conversation_participant
+            SET last_read = (SELECT state.last_read FROM tmp_one_to_one_chat_participant state WHERE state.participant_id = conversation_participant.id),
+                unread_messages_count = (SELECT state.unread_messages_count FROM tmp_one_to_one_chat_participant state WHERE state.participant_id = conversation_participant.id),
+                is_favorite = (SELECT state.is_favorite FROM tmp_one_to_one_chat_participant state WHERE state.participant_id = conversation_participant.id),
+                is_hidden = (SELECT state.is_hidden FROM tmp_one_to_one_chat_participant state WHERE state.participant_id = conversation_participant.id),
+                is_muted = (SELECT state.is_muted FROM tmp_one_to_one_chat_participant state WHERE state.participant_id = conversation_participant.id)
+            WHERE id IN (SELECT participant_id FROM tmp_one_to_one_chat_participant);
+
+            UPDATE course_notification_parameter
+            SET param_value = (SELECT CONCAT(merged.keep_id, '') FROM tmp_one_to_one_chat_duplicate merged WHERE CONCAT(merged.duplicate_id, '') = course_notification_parameter.param_value)
+            WHERE param_key = 'channelId'
+              AND param_value IN (SELECT CONCAT(duplicate_id, '') FROM tmp_one_to_one_chat_duplicate);
+
+            UPDATE post
+            SET conversation_id = (SELECT merged.keep_id FROM tmp_one_to_one_chat_duplicate merged WHERE merged.duplicate_id = post.conversation_id)
+            WHERE conversation_id IN (SELECT duplicate_id FROM tmp_one_to_one_chat_duplicate);
+
+            UPDATE conversation
+            SET last_message_date = (SELECT MAX(merged.last_message_date) FROM tmp_one_to_one_chat_duplicate merged WHERE merged.keep_id = conversation.id)
+            WHERE id IN (SELECT keep_id FROM tmp_one_to_one_chat_duplicate)
+              AND (last_message_date IS NULL
+                   OR last_message_date &lt; (SELECT MAX(merged.last_message_date) FROM tmp_one_to_one_chat_duplicate merged WHERE merged.keep_id = conversation.id));
+
+            DELETE FROM conversation_participant WHERE conversation_id IN (SELECT duplicate_id FROM tmp_one_to_one_chat_duplicate);
+
+            DELETE FROM conversation WHERE id IN (SELECT duplicate_id FROM tmp_one_to_one_chat_duplicate);
+        </sql>
+        <dropTable tableName="tmp_one_to_one_chat_participant"/>
+        <dropTable tableName="tmp_one_to_one_chat_duplicate"/>
+        <rollback>
+            <stop>The merged duplicate one-to-one chats cannot be split again. Restore the database backup taken before this migration to recover them. A version of Artemis that does not know the pair key can run against the merged data.</stop>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261024132235-03-one-to-one-chat-pair-unique" author="krusche">
+        <comment>At most one one-to-one chat per pair of users and course. Chats without a key are not constrained.</comment>
+        <createIndex indexName="uk_conversation_one_to_one_pair" tableName="conversation" unique="true">
+            <column name="course_id"/>
+            <column name="participant_pair_key"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

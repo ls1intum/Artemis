@@ -52,6 +52,7 @@ jobs:
     outputs:
       build_relevant: ${{ steps.decide.outputs.build_relevant }}
       has_java: ${{ steps.decide.outputs.has_java }}
+      has_sandbox_tests: ${{ steps.decide.outputs.has_sandbox_tests }}
       has_docs: ${{ steps.decide.outputs.has_docs }}
       has_i18n: ${{ steps.decide.outputs.has_i18n }}
       has_gradle: ${{ steps.decide.outputs.has_gradle }}
@@ -163,6 +164,18 @@ jobs:
               - 'config/pmd/**'
               - 'supporting_scripts/analyze_java_files.py'
               - 'supporting_scripts/find_slow_queries.py'
+            has_sandbox_tests:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-test.yml'
+              - 'build.gradle'
+              - 'gradle/**'
+              - 'deployment/docker/hyperion/**'
+              - 'src/main/java/de/tum/cit/aet/artemis/aiworker/**'
+              - 'src/test/java/de/tum/cit/aet/artemis/aiworker/**'
+              - 'src/main/java/de/tum/cit/aet/artemis/hyperion/**'
+              - 'src/test/java/de/tum/cit/aet/artemis/hyperion/**'
+              - 'src/main/resources/templates/java/test/gradle/**'
+              - 'src/main/resources/templates/hyperion/**'
             # bean-instantiations boots the *production* context (gradle test is skipped), so it
             # only cares about main sources + the build graph — not test sources or the analysis
             # helpers that has_java carries for the quality jobs.
@@ -287,6 +300,7 @@ jobs:
              || github.event_name == 'merge_group' }}
           F_BUILD: ${{ steps.relevant.outputs.build }}
           F_JAVA: ${{ steps.area.outputs.has_java }}
+          F_SANDBOX_TESTS: ${{ steps.area.outputs.has_sandbox_tests }}
           F_DOCS: ${{ steps.area.outputs.has_docs }}
           F_I18N: ${{ steps.area.outputs.has_i18n }}
           F_GRADLE: ${{ steps.area.outputs.has_gradle }}
@@ -308,13 +322,14 @@ jobs:
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
+            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
             {
               echo "build_relevant=${F_BUILD:-false}"
               echo "has_java=${F_JAVA:-false}"
+              echo "has_sandbox_tests=${F_SANDBOX_TESTS:-false}"
               echo "has_docs=${F_DOCS:-false}"
               echo "has_i18n=${F_I18N:-false}"
               echo "has_gradle=${F_GRADLE:-false}"
@@ -422,6 +437,7 @@ jobs:
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
       # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
       run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+      run_sandbox_tests: ${{ needs.detect-changes.outputs.has_sandbox_tests == 'true' }}
       # A pull request that cannot affect one suite does not run it (see `detect-changes`). Always true
       # for anything but a pull request.
       # `!= 'false'`, so that an output that went missing runs the suite instead of silently skipping it.
@@ -1004,7 +1020,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Render run timeline
-        uses: Kesin11/actions-timeline@57fc93f20c6da7fbc14063c6d24a2a5627c799ad  # v3.2.0
+        uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf  # v3.2.1
         with:
           show-waiting-runner: true
       - name: Render summary

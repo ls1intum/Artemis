@@ -31,6 +31,7 @@ export class SubmissionExportDialogComponent implements OnInit {
 
     readonly exerciseId = input.required<number>();
     readonly exerciseType = input.required<ExerciseType>();
+    readonly examExercise = input(false);
 
     readonly exercise = signal<Exercise | undefined>(undefined);
     readonly exportInProgress = signal(false);
@@ -58,8 +59,7 @@ export class SubmissionExportDialogComponent implements OnInit {
     ngOnInit() {
         this.isLoading.set(true);
         this.exportInProgress.set(false);
-        this.exerciseService
-            .find(this.exerciseId())
+        (this.examExercise() ? this.exerciseService.findForExamManagement(this.exerciseId()) : this.exerciseService.findForStaff(this.exerciseId()))
             .pipe(
                 tap(({ body: exercise }) => {
                     this.exercise.set(exercise!);

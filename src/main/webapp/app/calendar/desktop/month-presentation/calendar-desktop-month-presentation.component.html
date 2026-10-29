@@ -14,7 +14,74 @@
                             @for (eventAndMetadata of day.firstTwoEventsAndMetadata; track eventAndMetadata.event.id) {
                                 <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: eventAndMetadata }" />
                             }
-                            <div class="more-events-label">+{{ day.eventsAndMetadata.length - 2 }} more</div>
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                variant="text"
+                                severity="secondary"
+                                size="small"
+                                class="more-events-label"
+                                [tumAetUiPopoverTrigger]="dayAgenda"
+                                [attr.data-testid]="'calendar-more-events-' + day.id"
+                                [attr.aria-label]="
+                                    'artemisApp.calendar.showDayEvents' | artemisTranslate: { date: day.date | artemisDate: 'long-date', count: day.eventsAndMetadata.length }
+                                "
+                            >
+                                <span jhiTranslate="artemisApp.calendar.moreEvents" [translateValues]="{ count: day.eventsAndMetadata.length - 2 }"></span>
+                            </button>
+                            <tumaet-ui-popover
+                                #dayAgenda
+                                [ariaLabel]="'artemisApp.calendar.dayEvents' | artemisTranslate: { date: day.date | artemisDate: 'long-date', count: day.eventsAndMetadata.length }"
+                            >
+                                <section class="flex w-80 max-w-[calc(100vw-3rem)] flex-col gap-2" data-testid="calendar-day-agenda">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <h3
+                                            class="m-0! text-base font-semibold"
+                                            jhiTranslate="artemisApp.calendar.dayEvents"
+                                            [translateValues]="{ date: day.date | artemisDate: 'long-date', count: day.eventsAndMetadata.length }"
+                                        ></h3>
+                                        <button
+                                            type="button"
+                                            cdkFocusRegionStart
+                                            tumAetUiButton
+                                            variant="text"
+                                            severity="secondary"
+                                            size="small"
+                                            [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                                            (click)="dayAgenda.close()"
+                                        >
+                                            <fa-icon [icon]="faXmark" />
+                                        </button>
+                                    </div>
+                                    <ul class="m-0! flex max-h-80 list-none flex-col gap-1 overflow-y-auto overscroll-contain p-0!">
+                                        @for (eventAndMetadata of day.eventsAndMetadata; track eventAndMetadata.event.id) {
+                                            @let event = eventAndMetadata.event;
+                                            <li>
+                                                <button
+                                                    type="button"
+                                                    tumAetUiButton
+                                                    variant="text"
+                                                    severity="secondary"
+                                                    class="w-full justify-start! gap-3! text-left!"
+                                                    data-testid="calendar-day-agenda-event"
+                                                    (click)="eventDetailPopover.open($event, event)"
+                                                >
+                                                    <fa-icon [icon]="eventAndMetadata.icon" />
+                                                    <span class="flex min-w-0 flex-col gap-1">
+                                                        <span class="break-words whitespace-normal">{{ event.title }}</span>
+                                                        <span class="text-sm font-normal text-muted-color">
+                                                            {{ event.startDate | artemisDate: 'time' }}
+                                                            @if (event.endDate) {
+                                                                – {{ event.endDate | artemisDate: 'time' }}
+                                                            }
+                                                        </span>
+                                                    </span>
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+                                </section>
+                            </tumaet-ui-popover>
                         } @else {
                             @for (eventAndMetadata of day.eventsAndMetadata; track eventAndMetadata.event.id) {
                                 <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: eventAndMetadata }" />

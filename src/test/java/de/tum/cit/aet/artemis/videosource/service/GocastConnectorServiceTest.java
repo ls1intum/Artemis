@@ -130,6 +130,39 @@ class GocastConnectorServiceTest {
         server.verify();
     }
 
+    @Test
+    void readsTheSignedRecordingPlaylistOfTheExactGrant() {
+        String playlist = "https://edge.example/vod/42/COMB/playlist.m3u8?jwt=signed";
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/recordings/42")).andExpect(method(HttpMethod.GET)).andExpect(header(HttpHeaders.AUTHORIZATION, AUTHORIZATION))
+                .andRespond(withSuccess("{\"playlistUrl\":\"%s\",\"converting\":true,\"progress\":10}".formatted(playlist), MediaType.APPLICATION_JSON));
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/recordings/43")).andRespond(withSuccess("{\"converting\":true,\"progress\":40}", MediaType.APPLICATION_JSON));
+
+        assertThat(connector.getRecordingPlaylist(23, 42)).contains(playlist);
+        assertThat(connector.getRecordingPlaylist(23, 43)).isEmpty();
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "{\"playlistUrl\":\"javascript:alert(1)\"}", "{\"playlistUrl\":\"/relative.m3u8\"}", "{\"playlistUrl\":\"https://user:pass@edge.example/p.m3u8\"}",
+            "null" })
+    void rejectsRecordingPlaylistsThatAreNotHttpUrls(String responseBody) {
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/recordings/42")).andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> connector.getRecordingPlaylist(23, 42)).isInstanceOf(GocastIntegrationException.class)
+                .satisfies(error -> assertThat(((GocastIntegrationException) error).getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
+        server.verify();
+    }
+
+    @Test
+    void preservesNotFoundForRecordingsTheGrantDoesNotCover() {
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/recordings/42")).andRespond(withStatus(HttpStatus.NOT_FOUND));
+
+        assertThatThrownBy(() -> connector.getRecordingPlaylist(23, 42)).isInstanceOf(GocastIntegrationException.class)
+                .satisfies(error -> assertThat(((GocastIntegrationException) error).getUpstreamStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+        assertThatThrownBy(() -> connector.getRecordingPlaylist(23, 0)).isInstanceOf(IllegalArgumentException.class);
+        server.verify();
+    }
+
     @ParameterizedTest
     @MethodSource("invalidIntegrationResponses")
     void rejectsInvalidIntegrationIdentity(String responseBody) {

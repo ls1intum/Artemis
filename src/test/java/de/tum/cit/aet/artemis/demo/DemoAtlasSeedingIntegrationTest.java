@@ -262,7 +262,7 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = UserDemoService.DEMO_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = UserDemoService.DEMO_INSTRUCTOR_LOGIN, roles = "USER")
     void recreatesAndRelinksDeletedCompetency() throws Exception {
         seed();
         long courseId = demoCourse().getId();

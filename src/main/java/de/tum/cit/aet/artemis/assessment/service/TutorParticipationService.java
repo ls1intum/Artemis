@@ -263,6 +263,9 @@ public class TutorParticipationService {
         }
 
         ExampleSubmission originalExampleSubmission = exampleSubmissionFromDatabase.get();
+        if (originalExampleSubmission.getExercise() == null || !exercise.getId().equals(originalExampleSubmission.getExercise().getId())) {
+            throw new BadRequestAlertException("The example submission does not belong to this exercise", ENTITY_NAME, "exampleSubmissionExerciseMismatch");
+        }
 
         // Cannot start an example submission if the tutor hasn't participated in the exercise yet
         if (existingTutorParticipation.getStatus() == NOT_PARTICIPATED) {
@@ -349,26 +352,4 @@ public class TutorParticipationService {
         return feedback;
     }
 
-    /**
-     * This method removes the tutor participation for the example submission of an exercise
-     *
-     * @param exercise the exercise to which the example submission and tutor participation are linked to
-     * @param user     the user for which the tutor participation should be removed
-     */
-    public void removeTutorParticipations(Exercise exercise, User user) {
-        if (!tutorParticipationRepository.existsByAssessedExerciseIdAndTutorId(exercise.getId(), user.getId())) {
-            return;
-        }
-
-        Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
-        TutorParticipation tutorParticipation = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(exercise, user);
-
-        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
-            Optional<ExampleSubmission> exampleSubmissionWithTutorParticipation = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(exampleSubmission.getId());
-            if (exampleSubmissionWithTutorParticipation.isPresent()) {
-                exampleSubmissionWithTutorParticipation.get().removeTutorParticipations(tutorParticipation);
-                tutorParticipationRepository.delete(tutorParticipation);
-            }
-        }
-    }
 }

@@ -83,7 +83,7 @@ public class LinkPreviewResource {
         log.debug("REST request to get link preview for URL: {}", decodedUrl);
 
         if (!isValidUrl(decodedUrl)) {
-            log.warn("Rejected link preview request for an invalid or potentially unsafe URL");
+            log.info("Rejected link preview request for an invalid or potentially unsafe URL");
             return ResponseEntity.badRequest().build();
         }
 

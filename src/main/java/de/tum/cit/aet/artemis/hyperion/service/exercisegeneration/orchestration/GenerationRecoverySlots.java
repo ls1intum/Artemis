@@ -16,7 +16,7 @@ final class GenerationRecoverySlots {
 
     private static final String GENERATION_RECOVERY_PREFIX = "generation-recovery-";
 
-    private static final String RECOVERY_PREFIX = "revert-recovery-";
+    static final String RECOVERY_PREFIX = "revert-recovery-";
 
     static final String RETRY_PREFIX = "revert-retry-";
 

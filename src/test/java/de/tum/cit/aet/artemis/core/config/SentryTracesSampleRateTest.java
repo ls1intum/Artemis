@@ -6,6 +6,9 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -17,6 +20,18 @@ import org.springframework.test.util.ReflectionTestUtils;
  * 5% rather than the 0.2 its inventory asked for.
  */
 class SentryTracesSampleRateTest {
+
+    @ParameterizedTest
+    @CsvSource({ "prod,true", "'core,prod',true", "'buildagent,prod',true", "aiworker,false", "'prod,aiworker',false", "core,false", "buildagent,false" })
+    void sentryConfigurationOnlyLoadsOnNonWorkerProductionProfiles(String profiles, boolean enabled) {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().setActiveProfiles(profiles.split(","));
+            context.register(SentryConfiguration.class);
+            context.refresh();
+            assertThat(context.containsBeanDefinition("sentryConfiguration")).isEqualTo(enabled);
+            assertThat(context.getBeanFactory().containsSingleton("sentryConfiguration")).isFalse();
+        }
+    }
 
     private double rateFor(String environment, Double configured) {
         SentryConfiguration configuration = new SentryConfiguration();

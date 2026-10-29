@@ -32,6 +32,8 @@ import { signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -425,6 +427,47 @@ describe('ExerciseHeaderComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-collapsed']).toBeTruthy();
+    });
+
+    describe('live Athena completion', () => {
+        it.each(
+            [ExerciseType.TEXT, ExerciseType.MODELING].flatMap((type) => [true, false].flatMap((successful) => [false, true].map((testRun) => ({ type, successful, testRun })))),
+        )('unlocks $type Submit for terminal feedback (successful=$successful, practice=$testRun) without replacing the exercise', ({ type, successful, testRun }) => {
+            const exercise = type === ExerciseType.TEXT ? new TextExercise(undefined, undefined) : new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.id = 7;
+            exercise.course = { athenaFormativeFeedbackEnabled: true };
+            exercise.releaseDate = dayjs().subtract(1, 'day');
+            exercise.dueDate = dayjs().add(1, 'day');
+            const pending: StudentParticipation = {
+                id: 10,
+                testRun,
+                initializationState: InitializationState.FINISHED,
+                submissions: [{ id: 1, submitted: true, results: [{ id: 77, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') }] }],
+            };
+            exercise.studentParticipations = [pending];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput(testRun ? 'practiceParticipation' : 'studentParticipation', pending);
+            fixture.componentRef.setInput('participationMode', testRun ? 'practice' : 'graded');
+            fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+            fixture.detectChanges();
+            const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]');
+            expect(button.disabled).toBe(true);
+
+            const completed: StudentParticipation = {
+                id: 10,
+                testRun,
+                initializationState: InitializationState.FINISHED,
+                submissions: [{ id: 1, submitted: true, results: [{ id: 77, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs(), successful }] }],
+            };
+            // The details view updates the participation input while retaining its original exercise snapshot.
+            fixture.componentRef.setInput(testRun ? 'practiceParticipation' : 'studentParticipation', completed);
+            fixture.detectChanges();
+
+            expect(button.disabled).toBe(false);
+            expect(exercise.studentParticipations[0]).toBe(pending);
+            expect(pending.submissions![0].results![0].successful).toBeUndefined();
+        });
     });
 
     describe('hasGradedSubmission', () => {

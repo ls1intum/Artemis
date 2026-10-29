@@ -90,8 +90,8 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
 
         // the next save adds what the failed creation left out
         courseRepository.saveWithDefaultConfigurations(course);
-        for (String table : new String[] { "course_configuration", "course_athena_config", "online_course_configuration", "tutorial_groups_configuration",
-                "course_iris_settings" }) {
+        for (String table : new String[] { "course_configuration", "course_athena_config", "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings",
+                "hyperion_course_settings" }) {
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
         }
     }
@@ -109,7 +109,7 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).isEqualTo(2);
         assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).as("repairing twice adds nothing").isZero();
 
-        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
+        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings", "hyperion_course_settings" }) {
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
         }
         assertThat(jdbc.queryForObject("SELECT id FROM online_course_configuration WHERE course_id = ?", Long.class, course.getId())).as("an existing row is kept")
@@ -121,8 +121,8 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         var course = courseUtilService.createCourse();
         var jdbc = new JdbcTemplate(dataSource);
         assertThat(course.isOnlineCourse()).isFalse();
-        for (String table : new String[] { "course_configuration", "course_athena_config", "online_course_configuration", "tutorial_groups_configuration",
-                "course_iris_settings" }) {
+        for (String table : new String[] { "course_configuration", "course_athena_config", "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings",
+                "hyperion_course_settings" }) {
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
         }
         assertThat(jdbc.queryForObject(

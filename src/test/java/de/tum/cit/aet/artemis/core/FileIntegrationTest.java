@@ -4,12 +4,16 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,12 +32,17 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -122,7 +131,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUploadExamUserSignature() throws Exception {
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
@@ -138,7 +147,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetTemplateFile() throws Exception {
         String javaReadme = request.get("/api/core/files/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
@@ -149,14 +158,101 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateReturnsProjectReadmeAndClosesStream() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        var stream = Mockito.spy(new ByteArrayInputStream("project readme".getBytes(StandardCharsets.UTF_8)));
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "java", "plain_maven", "readme"));
+        Mockito.when(resource.exists()).thenReturn(true);
+        Mockito.when(resource.getInputStream()).thenReturn(stream);
+
+        mockMvc.perform(get("/api/core/files/templates/JAVA/PLAIN_MAVEN")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN))
+                .andExpect(content().bytes("project readme".getBytes(StandardCharsets.UTF_8)));
+        Mockito.verify(stream).close();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateFallsBackToLanguageReadmeWhenProjectReadmeIsMissing() throws Exception {
+        var missing = Mockito.mock(Resource.class);
+        var fallback = Mockito.mock(Resource.class);
+        Mockito.doReturn(missing).when(resourceLoaderService).getResource(Path.of("templates", "java", "plain_maven", "readme"));
+        Mockito.doReturn(fallback).when(resourceLoaderService).getResource(Path.of("templates", "java", "readme"));
+        Mockito.when(fallback.getInputStream()).thenReturn(new ByteArrayInputStream("fallback".getBytes(StandardCharsets.UTF_8)));
+
+        mockMvc.perform(get("/api/core/files/templates/JAVA/PLAIN_MAVEN")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN))
+                .andExpect(content().bytes("fallback".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateLoadsLanguageReadmeWithoutProjectType() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "python", "readme"));
+        Mockito.when(resource.getInputStream()).thenReturn(new ByteArrayInputStream("python".getBytes(StandardCharsets.UTF_8)));
+
+        mockMvc.perform(get("/api/core/files/templates/PYTHON")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN))
+                .andExpect(content().bytes("python".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateReturnsNotFoundWhenReadmeCannotBeRead() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "python", "readme"));
+        Mockito.when(resource.getInputStream()).thenThrow(new IOException("missing readme"));
+
+        mockMvc.perform(get("/api/core/files/templates/PYTHON")).andExpect(status().isNotFound()).andExpect(content().bytes(new byte[0]));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateReturnsUtf8CodeOfConductAndClosesStream() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        var stream = Mockito.spy(new ByteArrayInputStream("Respect für alle".getBytes(StandardCharsets.UTF_8)));
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "codeofconduct", "README.md"));
+        Mockito.when(resource.getInputStream()).thenReturn(stream);
+
+        mockMvc.perform(get("/api/core/files/templates/code-of-conduct")).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
+                .andExpect(content().string("Respect für alle"));
+        Mockito.verify(stream).close();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templatePreservesCodeOfConductIoFailure() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "codeofconduct", "README.md"));
+        Mockito.when(resource.getInputStream()).thenThrow(new IOException("missing conduct"));
+
+        var result = mockMvc.perform(get("/api/core/files/templates/code-of-conduct")).andExpect(status().isServiceUnavailable()).andExpect(content().string("missing conduct"))
+                .andReturn();
+        assertThat(result.getResolvedException()).isInstanceOf(IOException.class).hasMessage("missing conduct");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "JAVA/PLAIN_MAVEN", "PYTHON", "code-of-conduct" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void staticTemplatesAreAvailableToSignedInUsers(String template) throws Exception {
+        mockMvc.perform(get("/api/core/files/templates/" + template)).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "JAVA/PLAIN_MAVEN", "PYTHON", "code-of-conduct" })
+    @WithAnonymousUser
+    void staticTemplatesRejectAnonymousUsers(String template) throws Exception {
+        mockMvc.perform(get("/api/core/files/templates/" + template)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCodeOfConductTemplate() throws Exception {
         var template = request.get("/api/core/files/templates/code-of-conduct", HttpStatus.OK, String.class);
         assertThat(template).startsWith("<!-- Code of Conduct Template");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetUnreleasedAttachmentVideoUnitAsTutor() throws Exception {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lecture.setTitle("Test title");
@@ -181,7 +277,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * both mappings load-bearing.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetMigratedLectureAttachmentUnderEitherPathSpelling() throws Exception {
         byte[] content = "lecture attachment content".getBytes();
         Attachment attachment = createLectureAttachmentWithStoredFile(content);
@@ -197,7 +293,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * even though the file itself never left the lecture attachment directory. That is the whole point of separating where a file is served from where it is stored.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetMigratedLectureAttachmentThroughItsAttachmentVideoUnit() throws Exception {
         byte[] content = "lecture attachment content".getBytes();
         Attachment attachment = createLectureAttachmentWithStoredFile(content);
@@ -248,7 +344,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * its student version.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitUnderThePathSpellingRecordedInPostMarkdown() throws Exception {
         byte[] dummyContent = "dummy pdf content".getBytes();
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
@@ -265,29 +361,117 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void uploadImageMarkdownAsStudent_forbidden() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         // upload file
-        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true&courseId=" + course.getId(), file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void uploadImageMarkdownAsTutorInForeignCourse_forbidden() throws Exception {
+        var course = courseUtilService.addEmptyCourse();
+        var file = new MockMultipartFile("file", "image.png", "image/png", "image".getBytes(StandardCharsets.UTF_8));
+        mockMvc.perform(multipart("/api/core/markdown-file-upload").file(file).param("courseId", course.getId().toString())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void uploadImageMarkdownAsTutor_nonExistingCourse_forbidden() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true&courseId=" + Long.MAX_VALUE, file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void uploadImageMarkdownAsTutor() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         // upload file
-        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
-                HttpStatus.CREATED);
+        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true&courseId=" + course.getId(), file.getOriginalFilename(), "file", file,
+                JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asString();
         assertThat(responsePath).contains("markdown");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void uploadImageMarkdownOutsideOfACourseAsAdmin() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/core/admin/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.CREATED);
+        assertThat(response.get("path").asString()).contains("markdown");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void uploadImageMarkdownOutsideOfACourseAsInstructor_forbidden() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        request.postWithMultipartFile("/api/core/admin/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void markdownUploadReturnsSanitizedJson(boolean keepFileName) throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        assertSanitizedUpload("/api/core/markdown-file-upload?courseId=" + course.getId(), keepFileName);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void adminMarkdownUploadReturnsSanitizedJson(boolean keepFileName) throws Exception {
+        assertSanitizedUpload("/api/core/admin/markdown-file-upload", keepFileName);
+    }
+
+    private void assertSanitizedUpload(String url, boolean keepFileName) throws Exception {
+        var file = new MockMultipartFile("file", "../<script>\"unsafe.png", "image/png", "image".getBytes(StandardCharsets.UTF_8));
+        var result = mockMvc.perform(multipart(url).file(file).param("keepFileName", Boolean.toString(keepFileName)).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        var body = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(body.size()).isEqualTo(1);
+        var path = body.get("path").asString();
+        assertThat(path).startsWith("/api/core/files/markdown/Markdown_").endsWith(".png").doesNotContain("<", ">", "\"", "..", "unsafe.png/");
+        assertThat(path.substring("/api/core/files/markdown/".length())).matches("[A-Za-z0-9_.-]+\\.png");
+        if (keepFileName) {
+            assertThat(path).endsWith(".__script__unsafe.png");
+        }
+        else {
+            assertThat(path).doesNotContain("unsafe");
+        }
+        assertThat(result.getResponse().getHeader(HttpHeaders.LOCATION)).isEqualTo(path);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void markdownUploadRejectsHtml() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        assertUploadRejectsHtml("/api/core/markdown-file-upload?courseId=" + course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void adminMarkdownUploadRejectsHtml() throws Exception {
+        assertUploadRejectsHtml("/api/core/admin/markdown-file-upload");
+    }
+
+    private void assertUploadRejectsHtml(String url) throws Exception {
+        var file = new MockMultipartFile("file", "image.png", "image/png", "image".getBytes(StandardCharsets.UTF_8));
+        mockMvc.perform(multipart(url).file(file).accept(MediaType.TEXT_HTML)).andExpect(status().isNotAcceptable());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void uploadFileMarkdownUnsupportedFileExtensionAsTutor() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         // upload file
-        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
+        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true&courseId=" + course.getId(), file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -297,7 +481,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
         var units = lecture.getLectureUnits();
@@ -319,7 +503,57 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetLecturePdfAttachmentsMerged_DoesNotCompleteExternalPdf() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        var externalUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(2);
+        externalUnit.getAttachment().setLink("https://example.com/external.pdf");
+        attachmentRepo.save(externalUnit.getAttachment());
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        callAndCheckMergeResult(lecture, 3);
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lecture.getLectureUnits().getFirst().getId(), student.getId())).isPresent();
+        assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(externalUnit.getId(), student.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetLecturePdfAttachmentsMerged_MissingFileDoesNotCompleteUnits(boolean allFilesMissing) throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        var pdfUnits = lecture.getLectureUnits().stream().map(AttachmentVideoUnit.class::cast).filter(unit -> unit.getAttachment().getLink().endsWith(".pdf")).toList();
+        for (var unit : allFilesMissing ? pdfUnits : List.of(pdfUnits.getFirst())) {
+            Files.delete(unit.getAttachment().fileLocation().orElseThrow().path());
+        }
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+
+        assertLectureUnitsNotCompleted(lecture);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetLecturePdfAttachmentsMerged_CorruptFileDoesNotCompleteUnits() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        var firstUnit = (AttachmentVideoUnit) lecture.getLectureUnits().getFirst();
+        FileUtils.writeStringToFile(firstUnit.getAttachment().fileLocation().orElseThrow().path().toFile(), "corrupt PDF", StandardCharsets.UTF_8);
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.INTERNAL_SERVER_ERROR, byte[].class);
+
+        assertLectureUnitsNotCompleted(lecture);
+    }
+
+    private void assertLectureUnitsNotCompleted(Lecture lecture) {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(lecture.getLectureUnits()).allSatisfy(unit -> assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit.getId(), student.getId())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_TutorAccessToUnreleasedUnits() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
 
@@ -332,7 +566,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_NoAccessToUnreleasedUnits() throws Exception {
         // The test setup needs elevated privileges, we later switch to a student for the test execution
         Lecture lecture = createLectureWithLectureUnits();
@@ -354,7 +588,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_correctOrder() throws Exception {
         // The test setup needs elevated privileges, we later switch to a student for the test execution
         Lecture lecture = createLectureWithLectureUnits();
@@ -448,7 +682,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetAttachmentVideoUnitFileAsEditor() throws Exception {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
 
@@ -473,7 +707,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitAttachmentFilenameSanitization() throws Exception {
         testGetAttachmentVideoUnitAsTutor();
     }
@@ -520,9 +754,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", new byte[] { 1, 2, 3, 4, 5 });
 
-        JsonNode response = request.postWithMultipartFile("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId(), file.getOriginalFilename(),
-                "file", file, JsonNode.class, HttpStatus.CREATED);
+        var upload = mockMvc
+                .perform(multipart("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId()).file(file).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        JsonNode response = objectMapper.readTree(upload.getResponse().getContentAsString());
         String responsePath = response.get("path").asString();
+        assertThat(responsePath).startsWith("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId() + "/").endsWith("_image.png");
+        assertThat(upload.getResponse().getHeader(HttpHeaders.LOCATION)).isEqualTo(responsePath);
 
         byte[] retrievedContent = request.get(responsePath, HttpStatus.OK, byte[].class);
         assertThat(retrievedContent).isEqualTo(file.getBytes());
@@ -550,7 +788,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitAttachmentRangeRequest() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
@@ -589,7 +827,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitAttachmentRangeRequestNotSatisfiable() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
@@ -599,7 +837,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitAttachmentRangeRequestMalformedHeader() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
@@ -609,12 +847,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testMarkdownFileCacheHeaders() throws Exception {
         // Upload a markdown file
         MockMultipartFile file = new MockMultipartFile("file", "test-image.png", "image/png", "test image content".getBytes());
-        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class,
-                HttpStatus.CREATED);
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=false&courseId=" + course.getId(), file.getOriginalFilename(), "file", file,
+                JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asString();
 
         // Verify cache headers (30 days = 2592000 seconds)
@@ -622,7 +861,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExamUserSignatureCacheHeaders() throws Exception {
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
@@ -764,7 +1003,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * that, the same old link can serve a different unit's file from one request to the next.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testLegacyLectureAttachmentRouteIsDeterministicForTwoAttachmentsOfTheSameName() throws Exception {
         byte[] olderContent = "the attachment the link was written for".getBytes();
         Attachment older = createLectureAttachmentWithStoredFile(olderContent);

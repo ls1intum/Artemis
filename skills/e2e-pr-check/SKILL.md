@@ -99,6 +99,8 @@ so anything asserting on a server-wide counter must assert a lower bound, not an
 exact delta. A single-worker local run hides this class of bug entirely, so a test that passes
 locally and fails in CI with an off-by-a-few count is usually this.
 
+**Does the test assert exact request counts for one navigation?** The page fixture enables navigation recovery by default and may reload a slow route. Set `test.use({ recoverNavigation: false })` for that contract and wait for the actual page content. This keeps automatic recovery from adding cancelled requests to the count; retain the exact request assertions and existing timeouts.
+
 **Never fix a flake by raising a timeout.** Raising a timeout hides the race rather than fixing it,
 and the test stays flaky in CI where the machine is slower and more loaded. Find what the test is
 actually waiting for.

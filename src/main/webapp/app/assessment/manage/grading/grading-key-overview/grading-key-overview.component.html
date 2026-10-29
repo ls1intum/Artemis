@@ -7,7 +7,7 @@
         @if (!isExam()) {
             <h6 jhiTranslate="artemisApp.gradingSystem.overview.info"></h6>
         }
-        <jhi-grade-key-table />
+        <jhi-grade-key-table [purpose]="purpose" />
         <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faChevronLeft" />&nbsp;<span jhiTranslate="entity.action.back"></span></button>
         <button type="button" id="exportToPDFButton" class="btn btn-primary" style="float: right" (click)="printPDF()">
             <fa-icon [icon]="faPrint" />

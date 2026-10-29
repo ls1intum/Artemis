@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -109,6 +110,27 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentBa
         var optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), true);
 
         assertThat(optionalSubmission).isEmpty();
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(booleans = false)
+    void shouldKeepPriorManualGradeWithoutRemovingAthenaHistory(Boolean successful) {
+        var participation = new StudentParticipation().exercise(exerciseByType.get(ExerciseType.TEXT));
+        var submission = new TextSubmission();
+        submission.setParticipation(participation);
+        submission.setSubmissionDate(ZonedDateTime.now().minusHours(1));
+        var manual = new Result().assessmentType(AssessmentType.MANUAL).rated(true).score(70D).completionDate(ZonedDateTime.now().minusMinutes(1));
+        manual.setId(1L);
+        var unfinished = new Result().assessmentType(AssessmentType.AUTOMATIC_ATHENA).rated(false).successful(successful).completionDate(ZonedDateTime.now().plusMinutes(5));
+        unfinished.setId(2L);
+        submission.setResults(Set.of(manual, unfinished));
+
+        var selected = submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), true);
+
+        assertThat(selected).contains(submission);
+        assertThat(submission.getLatestResult()).isSameAs(unfinished);
+        assertThat(submission.getResults()).containsExactlyInAnyOrder(manual, unfinished);
     }
 
     @ParameterizedTest

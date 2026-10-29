@@ -48,6 +48,9 @@ import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPo
  */
 public class AgentLoopRunner {
 
+    /** Upper bound available to tool adapters before the loop truncates a response. */
+    public static final int MAX_TOOL_RESPONSE_CHARS = AgentConversationContext.MAX_TOOL_RESPONSE_CHARS;
+
     private static final Logger log = LoggerFactory.getLogger(AgentLoopRunner.class);
 
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
@@ -208,9 +211,10 @@ public class AgentLoopRunner {
         return configuredTurnTokenLimit().legacy();
     }
 
-    private OpenAiChatOptions agentOptions(ToolCallback[] toolCallbacks, List<Message> conversation) {
+    private OpenAiChatOptions agentOptions(ToolCallback[] toolCallbacks, List<Message> conversation, long lastPromptTokens, int messagesAtLastCall, long toolDefinitionTokens) {
         TurnTokenLimit configuredLimit = configuredTurnTokenLimit();
-        long available = (long) contextWindowTokens - AgentConversationContext.estimateTokens(conversation, 0, conversation.size()) - CONTEXT_ESTIMATION_SAFETY_TOKENS;
+        long available = (long) contextWindowTokens - AgentConversationContext.estimateContextTokens(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens)
+                - CONTEXT_ESTIMATION_SAFETY_TOKENS;
         if (available < MIN_TURN_OUTPUT_TOKENS) {
             throw new IllegalStateException("The agent prompt leaves insufficient context for a model response.");
         }
@@ -289,16 +293,19 @@ public class AgentLoopRunner {
             emit(stepListener, "Cancelling generation…");
             return session(AgentLoopResult.Status.CANCELLED, 0, "", conversation);
         }
-        conversation = compactIfNeeded(conversation, 0, 0, usageSink, cancelled, stepListener);
+        long toolDefinitionTokens = AgentConversationContext.estimateToolDefinitionTokens(toolCallbacks);
+        conversation = compactIfNeeded(conversation, 0, 0, toolDefinitionTokens, usageSink, cancelled, stepListener);
         if (cancelled.getAsBoolean()) {
             return session(AgentLoopResult.Status.CANCELLED, 0, "", conversation);
         }
-        Prompt prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
+        Prompt prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation, 0, 0, toolDefinitionTokens));
         String lastAssistantText = "";
         int consecutiveToolFailures = 0;
         int consecutiveRejectedActions = 0;
         long lastPromptTokens = 0;
         int messagesAtLastCall = 0;
+        // Compaction invalidates provider usage even when the rebuilt history still has enough messages.
+        List<Message> lastPromptConversation = conversation;
         // Resolved from the sink rather than passed in: the runner is a shared bean, so it must hold no per-run state of its own.
         GenerationActivityTracker activity = AgentActivitySink.trackerOf(stepListener);
 
@@ -318,16 +325,20 @@ public class AgentLoopRunner {
 
             AgentPromptSafety.requirePromptSafe(prompt);
             messagesAtLastCall = conversation.size();
+            lastPromptConversation = conversation;
             emitWaitingOnModel(stepListener, activity);
-            ChatResponse response = callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
-            if (response == null) {
-                if (cancelled.getAsBoolean()) {
-                    return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
-                }
+            ChatResponse response;
+            try {
+                response = callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
+            }
+            catch (UsageAccountingException | UsageUncertainException failure) {
                 return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
             }
+            if (response == null) {
+                return session(cancelled.getAsBoolean() ? AgentLoopResult.Status.CANCELLED : AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+            }
             response = normalizeToolNames(response);
-            lastPromptTokens = promptTokensOf(response);
+            lastPromptTokens = AgentConversationContext.promptTokensOf(response);
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
                     : List.of();
             if (response.getResult() != null && response.getResult().getOutput() != null) {
@@ -367,11 +378,12 @@ public class AgentLoopRunner {
                                         + "Re-issue the call with complete arguments, splitting large content across smaller calls if needed."))
                         .toList();
                 conversation.add(ToolResponseMessage.builder().responses(truncatedResponses).build());
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
+                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
+                prompt = new Prompt(conversation,
+                        agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
                 continue;
             }
 
@@ -390,11 +402,12 @@ public class AgentLoopRunner {
                         "ERROR: no call in this batch was executed. Submit must be the only tool call in its response. Finish other actions first, then submit separately."))
                         .toList();
                 conversation.add(ToolResponseMessage.builder().responses(rejectedResponses).build());
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
+                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
+                prompt = new Prompt(conversation,
+                        agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
                 continue;
             }
             ToolExecutionResult toolExecutionResult;
@@ -405,6 +418,7 @@ public class AgentLoopRunner {
                 toolExecutionResult = toolCallingManager.executeToolCalls(prompt, response);
                 // Preserve the model call and tool results even when a sandbox failure ends the session.
                 conversation = new ArrayList<>(toolExecutionResult.conversationHistory());
+                lastPromptConversation = conversation;
                 AgentConversationContext.capToolResponses(conversation);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
@@ -463,11 +477,12 @@ public class AgentLoopRunner {
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
+                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
+                prompt = new Prompt(conversation,
+                        agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
                 continue;
             }
 
@@ -490,11 +505,12 @@ public class AgentLoopRunner {
                 conversation.add(new UserMessage("You are close to the step limit. Finish the current change, make sure the build and tests reflect the intended outcome, "
                         + "and then stop calling tools."));
             }
-            conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
+            conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
             if (cancelled.getAsBoolean()) {
                 return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }
-            prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
+            prompt = new Prompt(conversation,
+                    agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
         }
 
         emit(stepListener, "The generation step limit was reached.");
@@ -648,6 +664,9 @@ public class AgentLoopRunner {
             catch (RuntimeException e) {
                 log.error("Agent loop model call failed on turn {} ({}, {})", turn, ProviderFailureClass.of(e), ProviderFailureClass.describe(e));
                 emit(stepListener, "The AI service could not complete the request.");
+                if (e instanceof UsageAccountingException || e instanceof UsageUncertainException) {
+                    throw e;
+                }
                 return null;
             }
         }
@@ -709,9 +728,9 @@ public class AgentLoopRunner {
         return !hasToolCalls && (text == null || text.isBlank());
     }
 
-    private List<Message> compactIfNeeded(List<Message> conversation, long lastPromptTokens, int messagesAtLastCall, @Nullable Consumer<ChatResponse> usageSink,
-            BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
-        long contextTokens = AgentConversationContext.estimateContextTokens(conversation, lastPromptTokens, messagesAtLastCall);
+    private List<Message> compactIfNeeded(List<Message> conversation, long lastPromptTokens, int messagesAtLastCall, long toolDefinitionTokens,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
+        long contextTokens = AgentConversationContext.estimateContextTokens(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens);
         if (contextTokens <= (long) contextWindowTokens - RESERVE_TOKENS) {
             return conversation;
         }
@@ -720,13 +739,6 @@ public class AgentLoopRunner {
         }
         emit(stepListener, "Preparing the next generation step.");
         return compact(conversation, usageSink, cancelled, AgentActivitySink.trackerOf(stepListener));
-    }
-
-    private static long promptTokensOf(@Nullable ChatResponse response) {
-        if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
-            return 0;
-        }
-        return response.getMetadata().getUsage().getPromptTokens().longValue();
     }
 
     /**

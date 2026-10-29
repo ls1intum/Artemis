@@ -4,7 +4,7 @@
     ngbTooltip="{{ tooltip() | artemisTranslate }}"
     (click)="onClick.emit($event)"
     [jhiFeatureToggle]="featureToggle() ?? []"
-    [overwriteDisabled]="disabled() || isLoading()"
+    [forceDisabled]="disabled() || isLoading()"
 >
     @if (isLoading()) {
         <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" animation="spin" size="sm" />

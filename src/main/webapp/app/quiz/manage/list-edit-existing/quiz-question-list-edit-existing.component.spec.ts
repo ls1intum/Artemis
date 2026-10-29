@@ -5,7 +5,7 @@ import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-ma
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent, State } from 'app/quiz/manage/list-edit-existing/quiz-question-list-edit-existing.component';
@@ -39,6 +39,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FileService } from 'app/foundation/service/file.service';
+import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();
@@ -204,17 +205,20 @@ describe('QuizQuestionListEditExistingComponent', () => {
             component.allExistingQuestions.set([]);
             component.selectedCourseId = course0.id;
             component.courses.set([course0, course1]);
-            const quizExercise = new QuizExercise(course0, undefined);
-            quizExercise.id = 1;
+            const sourceRow = { id: 1, title: 'Course source quiz' } as QuizExercise;
+            const quizExercise = new QuizExercise(undefined, undefined);
+            quizExercise.id = sourceRow.id;
             const quizQuestion = new MultipleChoiceQuestion();
             quizExercise.quizQuestions = [quizQuestion];
-            const findForCourseSpy = vi.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
-            const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            const findForCourseSpy = vi.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(of([sourceRow]));
+            const examFindSpy = vi.spyOn(quizExerciseService, 'findForExam');
+            const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
             const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation(() => {});
             component.onCourseSelect();
             expect(findForCourseSpy).toHaveBeenCalledExactlyOnceWith(course0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
-            expect(quizQuestion.exercise).toEqual(quizExercise);
+            expect(examFindSpy).not.toHaveBeenCalled();
+            expect(quizQuestion.exercise).toEqual(sourceRow);
             expect(component.allExistingQuestions()).toHaveLength(1);
             expect(component.allExistingQuestions()[0]).toEqual(quizQuestion);
             expect(applyFilterSpy).toHaveBeenCalledOnce();
@@ -236,26 +240,59 @@ describe('QuizQuestionListEditExistingComponent', () => {
             exam0.id = 1;
             const exam1 = new Exam();
             exam1.id = 2;
-            const course = new Course();
             component.existingQuestions.set([]);
             component.allExistingQuestions.set([]);
             component.selectedExamId = exam0.id;
             component.exams.set([exam0, exam1]);
-            const quizExercise = new QuizExercise(course, undefined);
-            quizExercise.id = 1;
+            const sourceRow = { id: 1, title: 'Exam source quiz' } as QuizExercise;
+            const quizExercise = new QuizExercise(undefined, undefined);
+            quizExercise.id = sourceRow.id;
             const quizQuestion = new MultipleChoiceQuestion();
             quizExercise.quizQuestions = [quizQuestion];
-            const findForExamSpy = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
-            const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            const findForExamSpy = vi.spyOn(quizExerciseService, 'findAllForExam').mockReturnValue(of([sourceRow]));
+            const courseFindSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
+            const findSpy = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(quizExercise));
             const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation(() => {});
             component.onExamSelect();
             expect(findForExamSpy).toHaveBeenCalledExactlyOnceWith(exam0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
-            expect(quizQuestion.exercise).toEqual(quizExercise);
+            expect(courseFindSpy).not.toHaveBeenCalled();
+            expect(quizQuestion.exercise).toEqual(sourceRow);
             expect(component.allExistingQuestions()).toHaveLength(1);
             expect(component.allExistingQuestions()[0]).toEqual(quizQuestion);
             expect(applyFilterSpy).toHaveBeenCalledOnce();
         });
+    });
+
+    it('retains each list request source when responses arrive after another selection', () => {
+        const courseRows = new Subject<QuizExercise[]>();
+        const examRows = new Subject<QuizExercise[]>();
+        const courseRow = { id: 11, title: 'Course quiz' } as QuizExercise;
+        const examRow = { id: 22, title: 'Exam quiz' } as QuizExercise;
+        component.courses.set([{ id: 1 } as Course]);
+        component.exams.set([{ id: 2 } as Exam]);
+        vi.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(courseRows);
+        vi.spyOn(quizExerciseService, 'findAllForExam').mockReturnValue(examRows);
+        const courseDetail = new QuizExercise(undefined, undefined);
+        courseDetail.id = 11;
+        courseDetail.quizQuestions = [];
+        const examDetail = new QuizExercise(undefined, undefined);
+        examDetail.id = 22;
+        examDetail.quizQuestions = [];
+        const courseFind = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(courseDetail));
+        const examFind = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(examDetail));
+        vi.spyOn(component, 'applyFilter').mockImplementation(() => {});
+
+        component.selectedCourseId = 1;
+        component.onCourseSelect();
+        component.selectedExamId = 2;
+        component.onExamSelect();
+        courseRows.next([courseRow]);
+        component.selectedExamId = undefined;
+        examRows.next([examRow]);
+
+        expect(courseFind).toHaveBeenCalledExactlyOnceWith(11);
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(22);
     });
 
     describe('applyFilter', () => {
@@ -539,5 +576,109 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(images.size).toBe(1);
             expect(images.has('image1')).toBe(true);
         });
+    });
+});
+
+describe('QuizQuestionListEditExistingComponent question preview', () => {
+    let fixture: ComponentFixture<QuizQuestionListEditExistingComponent>;
+    let component: QuizQuestionListEditExistingComponent;
+    let question: MultipleChoiceQuestion;
+    let otherQuestion: MultipleChoiceQuestion;
+
+    const overlayElement = (testId: string): HTMLElement | null => document.body.querySelector(`[data-testid="${testId}"]`);
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
+        })
+            // The preview rendering of the question types is covered by the spec of the preview component.
+            .overrideComponent(QuizQuestionListEditExistingComponent, {
+                remove: { imports: [QuizQuestionPreviewComponent] },
+                add: { imports: [MockComponent(QuizQuestionPreviewComponent)] },
+            })
+            .compileComponents();
+
+        vi.spyOn(TestBed.inject(CourseManagementService), 'getAllCoursesWithQuizExercises').mockReturnValue(of(new HttpResponse<Course[]>({ body: [] })));
+        vi.spyOn(TestBed.inject(ExamManagementService), 'findAllExamsAccessibleToUser').mockReturnValue(of(new HttpResponse<Exam[]>({ body: [] })));
+
+        question = createValidMCQuestion().question;
+        question.id = 1;
+        otherQuestion = createValidMCQuestion().question;
+        otherQuestion.id = 2;
+
+        fixture = TestBed.createComponent(QuizQuestionListEditExistingComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('show', true);
+        fixture.componentRef.setInput('courseId', 1);
+        component.existingQuestions.set([question, otherQuestion]);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+    });
+
+    it('should offer a preview button for every existing question', () => {
+        expect(fixture.nativeElement.querySelector('[data-testid="preview-question-1"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="preview-question-2"]')).not.toBeNull();
+    });
+
+    it('should not show the preview dialog before a preview is requested', () => {
+        expect(component.previewVisible()).toBe(false);
+        expect(overlayElement('question-preview-add')).toBeNull();
+    });
+
+    it('should open the preview of the question whose button was clicked', () => {
+        fixture.nativeElement.querySelector('[data-testid="preview-question-2"] button').click();
+        fixture.detectChanges();
+
+        expect(component.previewVisible()).toBe(true);
+        expect(component.previewQuestion()).toBe(otherQuestion);
+        expect(overlayElement('question-preview-add')).not.toBeNull();
+        expect(document.body.querySelector('jhi-quiz-question-preview')).not.toBeNull();
+    });
+
+    it('should label the preview button of a question with its title', () => {
+        const button = fixture.nativeElement.querySelector('[data-testid="preview-question-1"] button') as HTMLButtonElement;
+
+        expect(button.getAttribute('aria-label')).toBe('artemisApp.quizExercise.previewQuestion');
+    });
+
+    it('should select the previewed question for the import and close the dialog when it is added', async () => {
+        fixture.nativeElement.querySelector('[data-testid="preview-question-1"] button').click();
+        fixture.detectChanges();
+
+        overlayElement('question-preview-add')!.querySelector('button')!.click();
+        fixture.detectChanges();
+        // ngModel writes the checkbox in a microtask
+        await fixture.whenStable();
+
+        expect(question.exportQuiz).toBe(true);
+        expect(otherQuestion.exportQuiz).toBe(false);
+        // the row of the question shows it as ticked, the other row does not
+        expect((fixture.nativeElement.querySelector('#cbExportQuizQuestion1') as HTMLInputElement).checked).toBe(true);
+        expect((fixture.nativeElement.querySelector('#cbExportQuizQuestion2') as HTMLInputElement).checked).toBe(false);
+        expect(component.previewVisible()).toBe(false);
+        expect(overlayElement('question-preview-add')).toBeNull();
+        expect(component.previewQuestion()).toBeUndefined();
+    });
+
+    it('should close the preview without selecting the question', () => {
+        fixture.nativeElement.querySelector('[data-testid="preview-question-1"] button').click();
+        fixture.detectChanges();
+
+        overlayElement('question-preview-close')!.querySelector('button')!.click();
+        fixture.detectChanges();
+
+        expect(question.exportQuiz).toBe(false);
+        expect(component.previewVisible()).toBe(false);
+        expect(overlayElement('question-preview-add')).toBeNull();
     });
 });

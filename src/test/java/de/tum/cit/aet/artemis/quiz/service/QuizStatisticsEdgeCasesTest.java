@@ -36,6 +36,8 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswerSelection;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerTextSelection;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswerSelection;
+import de.tum.cit.aet.artemis.quiz.dto.DragAndDropQuestionStatisticDTO;
+import de.tum.cit.aet.artemis.quiz.dto.ShortAnswerQuestionStatisticDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.RatedSelection;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticsRepository;
 
@@ -102,7 +104,7 @@ class QuizStatisticsEdgeCasesTest {
 
         var statistic = service.getQuestionStatistic(quiz(question), 7L).quizQuestionStatistic();
 
-        assertThat(statistic.type()).isEqualTo("drag-and-drop");
+        assertThat(statistic).isInstanceOf(DragAndDropQuestionStatisticDTO.class);
         assertThat(statistic.participantsRated()).isEqualTo(2);
         assertThat(statistic.participantsUnrated()).isEqualTo(2);
         assertThat(statistic.ratedCorrectCounter()).isOne();
@@ -129,7 +131,7 @@ class QuizStatisticsEdgeCasesTest {
 
         var statistic = service.getQuestionStatistic(quiz(question), 7L).quizQuestionStatistic();
 
-        assertThat(statistic.type()).isEqualTo("short-answer");
+        assertThat(statistic).isInstanceOf(ShortAnswerQuestionStatisticDTO.class);
         assertThat(statistic.participantsRated()).isOne();
         assertThat(statistic.participantsUnrated()).isEqualTo(2);
         assertThat(statistic.ratedCorrectCounter()).isZero();

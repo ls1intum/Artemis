@@ -361,6 +361,10 @@ tests to run. It helps manage the initialization and cleanup tasks so that each 
 We use fixtures for all POMs and common test commands such as `login`. Fixtures are defined in
 `support/fixtures.ts`.
 
+The page fixture enables navigation recovery by default. Tests that assert exact network request counts for one
+navigation use `test.use({ recoverNavigation: false })` and wait for the actual page content to render. This prevents
+a recovery reload from adding cancelled requests to the count. Keep the exact request assertions and existing timeouts.
+
 To create a fixture, define its instance inside a corresponding existing type or define a new one:
 
 ```typescript

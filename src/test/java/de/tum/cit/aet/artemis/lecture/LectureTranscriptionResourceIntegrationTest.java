@@ -73,7 +73,7 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void getTranscript_success() throws Exception {
         // Create transcription
         var segments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1), new LectureTranscriptionSegment(5.0, 10.0, "This is a test", 1));
@@ -90,7 +90,7 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void getTranscript_notFound() throws Exception {
         // Perform GET request for non-existent transcription
         restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isNotFound());
@@ -104,7 +104,7 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void getTranscriptStatus_manualTranscriptionCompleted() throws Exception {
         var segments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1));
         var transcription = new LectureTranscription("en", segments, lectureUnit);
@@ -116,7 +116,7 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void getTranscriptStatus_notFound() throws Exception {
         restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript/status", lectureUnit.getId())).andExpect(status().isNotFound());
     }
