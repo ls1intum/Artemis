@@ -46,7 +46,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
         var loginName = TEST_PREFIX + "student1";
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
@@ -218,4 +218,16 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
                 List.of("test3", "test4"), List.of(), List.of(commit), null);
         programmingExerciseResultTestService.shouldUpdateParticipantScoresOnlyOnce(notification, instanceMessageSendService);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void resultBuildJobLookupSupportsStudentAndBaseParticipations() throws Exception {
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var participation = participationRepository.findByExerciseId(exercise.getId()).iterator().next();
+        for (Long id : List.of(participation.getId(), exercise.getTemplateParticipation().getId(), exercise.getSolutionParticipation().getId())) {
+            var response = request.get("/api/assessment/participations/" + id + "/results/build-job-ids", org.springframework.http.HttpStatus.OK, java.util.Map.class);
+            org.assertj.core.api.Assertions.assertThat(response).isEmpty();
+        }
+    }
+
 }

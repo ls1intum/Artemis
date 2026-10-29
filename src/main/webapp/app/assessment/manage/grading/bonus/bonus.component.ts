@@ -183,7 +183,7 @@ export class BonusComponent implements OnInit {
                     );
                 }),
             ),
-            this.gradingService.findGradeSteps(this.courseId, this.examId).pipe(
+            this.gradingService.findGradeSteps(this.courseId, this.examId, 'management').pipe(
                 tap((gradeSteps) => {
                     if (gradeSteps) {
                         this.bonusToGradeStepsDTO.set(gradeSteps);

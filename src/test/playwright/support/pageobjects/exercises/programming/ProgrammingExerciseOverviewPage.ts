@@ -113,7 +113,7 @@ export class ProgrammingExerciseOverviewPage {
         }
     }
 
-    /** Dismisses the repository dialog and waits for its backdrop to leave. */
+    /** Dismisses repository actions without clicking the trigger covered by the popover backdrop. */
     async closeCloneMenu() {
         const dialog = this.getRepositoryActionsDialog();
         if (await dialog.isVisible()) {
@@ -161,16 +161,20 @@ export class ProgrammingExerciseOverviewPage {
         }
         const codeButtonLocator = codeButton ?? this.getCodeButton();
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+        const popover = this.getRepositoryActionsDialog();
         const button = this.getCloneUrlButton();
-        if (!(await button.isVisible())) {
+        if (!(await popover.isVisible())) {
             await codeButtonLocator.click();
+            await popover.waitFor({ state: 'visible' });
         }
         try {
             await expect(button).toBeEnabled({ timeout: 30000 });
         } catch {
-            await this.closeCloneMenu();
+            if (await popover.isVisible()) {
+                await this.closeCloneMenu();
+            }
             await codeButtonLocator.click();
-            await this.getRepositoryActionsDialog().waitFor({ state: 'visible' });
+            await popover.waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
         }
         await button.click();

@@ -332,6 +332,13 @@ $color-selector-background: $neutral-dark-l-10;
 $color-selector-border: $neutral-dark-l-20;
 $color-selector-box-shadow: rgba(0, 0, 0, 0.3);
 
+// Student statistics: exercise-type palette for the Artemis score ring.
+$statistics-score-quiz-color: #53cedf;
+$statistics-score-programming-color: #ffac68;
+$statistics-score-modeling-color: #9c7bff;
+$statistics-score-text-color: #f17ac0;
+$statistics-score-file-upload-color: #57c8b4;
+
 // Component: Statistics average score graph
 $stat-av-sc-legend-background: $brighter-body-bg;
 

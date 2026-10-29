@@ -100,20 +100,20 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getImportSummary_asTutor_shouldReturnForbidden() throws Exception {
         request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.FORBIDDEN, CourseSummaryDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getImportSummary_asEditor_shouldReturnForbidden() throws Exception {
         // Editor can access source course but cannot access target course as instructor
         request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.FORBIDDEN, CourseSummaryDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getImportSummary_asInstructor_shouldSucceed() throws Exception {
         CourseSummaryDTO summary = request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.OK,
                 CourseSummaryDTO.class);
@@ -123,7 +123,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getImportSummary_asInstructorOfAnotherCourseOnly_shouldReturnForbidden() throws Exception {
         // The user may read the source course, but is no member of the target course
         Course foreignTargetCourse = courseUtilService.createCourse();
@@ -132,7 +132,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importMaterial_asInstructorOfAnotherCourseOnly_shouldReturnForbiddenAndImportNothing() throws Exception {
         Course foreignTargetCourse = courseUtilService.createCourse();
         CourseMaterialImportOptionsDTO options = new CourseMaterialImportOptionsDTO(sourceCourse.getId(), false, false, false, false, false, true);
@@ -151,7 +151,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importMaterial_asInstructor_shouldSucceed() throws Exception {
         CourseMaterialImportOptionsDTO options = new CourseMaterialImportOptionsDTO(sourceCourse.getId(), false, false, false, false, false, true);
 
@@ -170,13 +170,13 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     // ==================== Validation Tests ====================
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getImportSummary_sameCourse_shouldReturnBadRequest() throws Exception {
         request.get("/api/course/courses/" + sourceCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.BAD_REQUEST, CourseSummaryDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importMaterial_sameCourse_shouldReturnBadRequest() throws Exception {
         CourseMaterialImportOptionsDTO options = new CourseMaterialImportOptionsDTO(sourceCourse.getId(), false, false, false, false, false, true);
 
@@ -186,7 +186,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     // ==================== Functional Tests ====================
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importMaterial_noOptionsSelected_shouldReturnEmptyResult() throws Exception {
         CourseMaterialImportOptionsDTO options = new CourseMaterialImportOptionsDTO(sourceCourse.getId(), false, false, false, false, false, false);
 
@@ -203,7 +203,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importMaterial_faqsWithCategories_shouldPreserveCategories() throws Exception {
         // Create FAQ with categories
         Faq faqWithCategories = new Faq();
@@ -228,7 +228,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importMaterial_multipleTimes_shouldCreateDuplicates() throws Exception {
         CourseMaterialImportOptionsDTO options = new CourseMaterialImportOptionsDTO(sourceCourse.getId(), false, false, false, false, false, true);
 
@@ -248,7 +248,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getImportSummary_emptySourceCourse_shouldReturnZeroCounts() throws Exception {
         // Create an empty source course
         Course emptyCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
@@ -267,7 +267,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importMaterial_fromEmptyCourse_shouldReturnZeroImported() throws Exception {
         // Create an empty source course
         Course emptyCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
@@ -290,7 +290,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     // ==================== Exercise content preservation (regression guard for #13268) ====================
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importMaterial_exercises_shouldPreserveAllContentFields() throws Exception {
         ZonedDateTime past = ZonedDateTime.now().minusDays(2);
         ZonedDateTime future = ZonedDateTime.now().plusDays(2);

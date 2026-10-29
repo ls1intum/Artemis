@@ -98,6 +98,26 @@ describe('SidebarComponent', () => {
         expect(host.classList.contains('fit-container-height')).toBe(false);
     });
 
+    describe('inline filter checkbox', () => {
+        it('should not render the checkbox without a label', () => {
+            fixture.changeDetectorRef.detectChanges();
+            expect(fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'))).toBeNull();
+        });
+
+        it('should render the checkbox with a label and reflect its changes', () => {
+            fixture.componentRef.setInput('inlineFilterLabel', 'artemisApp.courseOverview.sidebar.freeSpotsOnly');
+            fixture.changeDetectorRef.detectChanges();
+
+            const checkbox = fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'));
+            expect(checkbox).not.toBeNull();
+            expect(component.inlineFilterActive()).toBe(false);
+
+            checkbox.componentInstance.checked.set(true);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.inlineFilterActive()).toBe(true);
+        });
+    });
+
     describe('selected entity params', () => {
         /**
          * The sidebar renders on the list route ('exercises'), which carries no entity id of its own. The id lives on

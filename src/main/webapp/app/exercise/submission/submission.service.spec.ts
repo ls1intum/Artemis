@@ -54,6 +54,12 @@ describe('Submission Service', () => {
         ];
     });
 
+    it('uses the explicit instructor complaint queue URL', () => {
+        service.getSubmissionsWithComplaintsForInstructor(42).subscribe((response) => expect(response.body).toEqual([]));
+        const req = httpMock.expectOne({ url: 'api/exercise/exercises/42/submissions-with-complaints/for-instructor', method: 'GET' });
+        req.flush([]);
+    });
+
     afterEach(() => {
         httpMock.verify();
         vi.restoreAllMocks();

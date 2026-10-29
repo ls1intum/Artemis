@@ -36,6 +36,7 @@
             "files": [
                 "src/main/webapp/app/admin/**/*.scss",
                 "src/main/webapp/app/course/request/**/*.scss",
+                "src/main/webapp/app/course/overview/course-statistics/**/*.scss",
                 "src/main/webapp/app/exercise/result/**/*.scss",
                 "src/main/webapp/app/iris/manage/settings/**/*.scss",
                 "src/main/webapp/app/atlas/shared/standardized-competencies/**/*.scss",

@@ -190,8 +190,9 @@ export class ExamManagementService {
      * @param courseId The id of the course.
      * @param examId The id of the exam.
      */
-    getExamStatistics(courseId: number, examId: number): Observable<HttpResponse<ExamChecklist>> {
-        return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics`, { observe: 'response' });
+    getExamStatistics(courseId: number, examId: number, audience: 'tutor' | 'instructor' = 'tutor'): Observable<HttpResponse<ExamChecklist>> {
+        const suffix = audience === 'instructor' ? '/for-instructor' : '';
+        return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics${suffix}`, { observe: 'response' });
     }
 
     /**
@@ -591,6 +592,7 @@ export class ExamManagementService {
         exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
         exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
         exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
+        exam.exampleSolutionPublicationDate = convertDateFromServer(exam.exampleSolutionPublicationDate);
         exam.examSummaryPublicationDate = convertDateFromServer(exam.examSummaryPublicationDate);
 
         if (exam.course) {

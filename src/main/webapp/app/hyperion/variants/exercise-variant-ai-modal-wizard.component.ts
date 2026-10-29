@@ -806,7 +806,9 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
             // A reset clears the job id while this lookup is still in flight; its response belongs to the
             // previous wizard session and must not put that exercise (and its editor link) on a later job.
             const requestedForJobId = this.jobId();
-            this.exerciseService.find(variantExerciseId).subscribe({
+            // A tray-opened monitor has no source exercise input; its stored, validated placement identifies the exam source.
+            const examSource = this.isExamExercise() || this.monitorRequest()?.placement?.type === 'SAME_EXAM_GROUP';
+            (examSource ? this.exerciseService.findForExamManagement(variantExerciseId) : this.exerciseService.findForStaff(variantExerciseId)).subscribe({
                 next: (response) => {
                     if (this.jobId() === requestedForJobId) {
                         this.generatedVariant.set(response.body ?? undefined);

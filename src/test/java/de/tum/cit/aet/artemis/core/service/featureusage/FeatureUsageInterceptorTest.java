@@ -123,15 +123,15 @@ class FeatureUsageInterceptorTest {
 
     @Test
     void shouldRecordTheHighestGlobalRoleOfTheCaller() {
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("instructor", "credentials",
-                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()), new SimpleGrantedAuthority(Role.INSTRUCTOR.getAuthority()))));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("admin", "credentials",
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()), new SimpleGrantedAuthority(Role.ADMIN.getAuthority()))));
         var request = new MockHttpServletRequest();
         var response = new MockHttpServletResponse();
 
         interceptor.preHandle(request, response, handlerMethod);
         interceptor.afterCompletion(request, response, handlerMethod, null);
 
-        assertThat(collector.drain(LocalDate.now(ZoneOffset.UTC)).getFirst().callerRole()).isEqualTo(Role.INSTRUCTOR);
+        assertThat(collector.drain(LocalDate.now(ZoneOffset.UTC)).getFirst().callerRole()).isEqualTo(Role.ADMIN);
     }
 
     @Test
@@ -153,7 +153,7 @@ class FeatureUsageInterceptorTest {
     @Test
     void shouldKeepTheRoleAndTheClockOfTheFirstDispatch() {
         SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken("instructor", "credentials", List.of(new SimpleGrantedAuthority(Role.INSTRUCTOR.getAuthority()))));
+                .setAuthentication(new UsernamePasswordAuthenticationToken("admin", "credentials", List.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority()))));
         var request = new MockHttpServletRequest();
         var response = new MockHttpServletResponse();
 
@@ -165,7 +165,7 @@ class FeatureUsageInterceptorTest {
         interceptor.afterCompletion(request, response, handlerMethod, null);
 
         assertThat(request.getAttribute(START_NANOS_ATTRIBUTE)).isEqualTo(startOfTheFirstDispatch);
-        assertThat(collector.drain(LocalDate.now(ZoneOffset.UTC)).getFirst().callerRole()).isEqualTo(Role.INSTRUCTOR);
+        assertThat(collector.drain(LocalDate.now(ZoneOffset.UTC)).getFirst().callerRole()).isEqualTo(Role.ADMIN);
     }
 
     /**

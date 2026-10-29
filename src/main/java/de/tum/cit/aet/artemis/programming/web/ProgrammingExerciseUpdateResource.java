@@ -30,7 +30,9 @@ import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -150,7 +152,8 @@ public class ProgrammingExerciseUpdateResource {
      *         is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
     @PutMapping("programming-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText,
@@ -491,7 +494,7 @@ public class ProgrammingExerciseUpdateResource {
      */
     @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
     @PutMapping("programming-exercises/{exerciseId}/re-evaluate")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseResponseDTO> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate,
@@ -505,8 +508,8 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         var user = userRepository.getUserWithAuthorities();
-        Course course = courseService.retrieveCourseOfLoadedExercise(authorizationExercise);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        // The exercise was loaded without its exercise group, which this initializes for an exam exercise so that its course can be read further down
+        courseService.retrieveCourseOfLoadedExercise(authorizationExercise);
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             // Reload after claiming so a request that waited for another mutation cannot apply a stale managed entity.

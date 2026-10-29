@@ -131,7 +131,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testNewExerciseIsNeverStoredAsGroupMember() {
         TextExercise exercise = TextExerciseFactory.generateTextExercise(RELEASE, DUE, ASSESSMENT_DUE, course);
         exercise.setExerciseVariantGroup(group);
@@ -144,7 +144,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testSavingAnExistingMemberKeepsItsGroup() throws Exception {
         TextExercise member = groupedTextExercise();
         Exercise loaded = exerciseRepository.findByIdElseThrow(member.getId());
@@ -157,7 +157,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
 
     @ParameterizedTest(name = "{displayName} [into the source course: {0}]")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateTextExerciseIgnoresVariantGroupInBody(boolean intoSourceCourse) throws Exception {
         TextExercise member = groupedTextExercise();
         TextExercise newExercise = TextExerciseFactory.generateTextExercise(RELEASE, DUE, ASSESSMENT_DUE, target(intoSourceCourse));
@@ -171,7 +171,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateExamExerciseIgnoresVariantGroupInBody() throws Exception {
         TextExercise member = groupedTextExercise();
         ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(course, true);
@@ -186,7 +186,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
 
     @ParameterizedTest(name = "{displayName} [into the source course: {0}]")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testImportTextExerciseLeavesCopyOutOfSourceGroup(boolean intoSourceCourse) throws Exception {
         TextExercise source = groupedTextExercise();
         long sourceId = source.getId();
@@ -204,7 +204,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
 
     @ParameterizedTest(name = "{displayName} [into the source course: {0}]")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateModelingExerciseIgnoresVariantGroupInBody(boolean intoSourceCourse) throws Exception {
         TextExercise member = groupedTextExercise();
         ModelingExercise newExercise = ModelingExerciseFactory.generateModelingExercise(RELEASE, DUE, ASSESSMENT_DUE, DiagramType.ClassDiagram, target(intoSourceCourse));
@@ -219,7 +219,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
 
     @ParameterizedTest(name = "{displayName} [into the source course: {0}]")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testImportModelingExerciseLeavesCopyOutOfSourceGroup(boolean intoSourceCourse) throws Exception {
         ModelingExercise source = modelingExerciseUtilService.addModelingExercise(course, RELEASE, null, DUE, ASSESSMENT_DUE);
         assign(source, group);
@@ -237,7 +237,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
 
     @ParameterizedTest(name = "{displayName} [into the source course: {0}]")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateFileUploadExerciseIgnoresVariantGroupInBody(boolean intoSourceCourse) throws Exception {
         TextExercise member = groupedTextExercise();
         FileUploadExercise newExercise = FileUploadExerciseFactory.generateFileUploadExercise(RELEASE, DUE, ASSESSMENT_DUE, "pdf", target(intoSourceCourse));
@@ -252,7 +252,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
 
     @ParameterizedTest(name = "{displayName} [into the source course: {0}]")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testImportFileUploadExerciseLeavesCopyOutOfSourceGroup(boolean intoSourceCourse) throws Exception {
         FileUploadExercise source = fileUploadExerciseUtilService.addFileUploadExercise(course, RELEASE, null, DUE, ASSESSMENT_DUE);
         assign(source, group);
@@ -272,7 +272,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
      */
     @ParameterizedTest(name = "{displayName} [into the source course: {0}]")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateSynchronizedQuizIgnoresVariantGroupInBody(boolean intoSourceCourse) throws Exception {
         TextExercise member = groupedTextExercise();
         Course target = target(intoSourceCourse);
@@ -291,7 +291,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
      * the source's group. The copy still has to start outside of it, whatever placement the instructor picked afterwards.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testImportingQuizFromLoadedGroupMemberLeavesCopyOutOfGroup() throws Exception {
         QuizExercise source = exerciseRepository.save(quizWithOneQuestion(course, QuizMode.INDIVIDUAL));
         assign(source, group);
@@ -309,7 +309,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCourseMaterialImportLeavesCopiesOutOfSourceGroup() throws Exception {
         TextExercise source = groupedTextExercise();
         var options = new CourseMaterialImportOptionsDTO(course.getId(), true, false, false, false, false, false);
@@ -323,7 +323,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateTextExerciseKeepsMembership() throws Exception {
         TextExercise member = groupedTextExercise();
         ExerciseVariantGroup anotherGroup = createGroup("Recursion variants");
@@ -338,7 +338,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateModelingExerciseKeepsMembership() throws Exception {
         ModelingExercise member = modelingExerciseUtilService.addModelingExercise(course, RELEASE, null, DUE, ASSESSMENT_DUE);
         assign(member, group);
@@ -354,7 +354,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateFileUploadExerciseKeepsMembership() throws Exception {
         FileUploadExercise member = fileUploadExerciseUtilService.addFileUploadExercise(course, RELEASE, null, DUE, ASSESSMENT_DUE);
         assign(member, group);
@@ -369,7 +369,7 @@ class ExerciseVariantGroupMembershipIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateQuizExerciseKeepsMembership() throws Exception {
         QuizExercise member = exerciseRepository.save(quizWithOneQuestion(course, QuizMode.INDIVIDUAL));
         assign(member, group);
