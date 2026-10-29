@@ -9,7 +9,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
-import { Subscription, of, throwError } from 'rxjs';
+import { Subject, Subscription, of, throwError } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
@@ -228,6 +228,37 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(getAllResults).toHaveBeenCalledWith(2);
         expect(comp.latestResult?.id).toBe(testResult.id);
         expect(comp.latestResult?.feedbacks).toEqual(testFeedback);
+    });
+
+    it('should not let the pending lookup of an earlier submission overwrite the result of a newer build', () => {
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            problemStatement: 'lorem ipsum dolor sit amet',
+        };
+        const pendingLookup = new Subject<ProgrammingExerciseStudentParticipation>();
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(pendingLookup);
+        vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [] })));
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', exercise);
+        // submission A's latest result is AI feedback, so its test result is looked up
+        fixture.componentRef.setInput('participation', {
+            id: 2,
+            submissions: [{ id: 9, results: [{ id: 5, assessmentType: AssessmentType.AUTOMATIC_ATHENA, feedbacks: [] }] }],
+        } as Participation);
+        fixture.changeDetectorRef.detectChanges();
+
+        // submission B's build arrives before the lookup for A completes
+        const newerBuild: Result = { id: 6, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [] };
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ id: 10, results: [newerBuild] }] } as Participation);
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.latestResult?.id).toBe(newerBuild.id);
+
+        pendingLookup.next({ id: 2, submissions: [{ id: 9, results: [{ id: 3, assessmentType: AssessmentType.AUTOMATIC }] }] } as ProgrammingExerciseStudentParticipation);
+
+        expect(comp.latestResult?.id).toBe(newerBuild.id);
     });
 
     it('should keep the test result when AI feedback arrives over the websocket', () => {

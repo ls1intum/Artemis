@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
@@ -60,6 +62,9 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ResultGradeRepository resultGradeRepository;
 
     private ZonedDateTime now;
 
@@ -117,6 +122,24 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
                 .containsExactly(60.0);
         assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), studentId, now)).extracting(CourseGradeScoreDTO::score)
                 .containsExactly(60.0);
+    }
+
+    /**
+     * The same order for the grade published to an LMS: the successful AI feedback with its copied 0% completes after the build reported 60%.
+     */
+    @Test
+    void shouldNotPublishARequestedAiFeedbackOfAProgrammingExerciseAsGrade() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise exercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var submission = new ProgrammingSubmission();
+        submission.setSubmissionDate(now.minusHours(1));
+        submission.setSubmitted(true);
+        var savedSubmission = participationUtilService.addSubmission(participation, submission);
+        Result buildResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusMinutes(30), savedSubmission, true, true, 60.0);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusMinutes(10), savedSubmission, true, true, 0.0);
+
+        assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).get().extracting(Result::getId).isEqualTo(buildResult.getId());
     }
 
     /**

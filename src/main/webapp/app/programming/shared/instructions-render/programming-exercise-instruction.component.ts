@@ -101,6 +101,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     // callbacks, and while the loading branch is shown no other tracked signal is live in the
     // template — a plain field write would never schedule the render that swaps the branches.
     protected readonly isLoading = signal(false);
+    /** Counts participation changes, so an initial-result load of an earlier participation is discarded instead of overwriting a newer result. */
+    private initialResultLoad = 0;
     readonly latestResultValue = signal<Result | undefined>(undefined);
     // Page-scoped so multiple problem statements (e.g. across exam exercise tabs) don't collide.
     private taskIndex = 0;
@@ -217,6 +219,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 tap((participationHasChanged: boolean) => {
                     if (participationHasChanged) {
                         this.isInitial = true;
+                        // A pending load belongs to the previous participation: discard it and load the new one instead of skipping it.
+                        this.initialResultLoad++;
+                        this.isLoading.set(false);
                         // Always tear down the previous result websocket when the participation
                         // changes — including when the new participation is undefined — otherwise
                         // the stale subscription leaks and continues delivering results for the
@@ -234,12 +239,14 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                     const currentExercise = this.exercise();
                     if (!this.isLoading() && currentExercise && this.participation() && (this.isInitial || participationHasChanged)) {
                         this.isLoading.set(true);
+                        const load = this.initialResultLoad;
                         return of(currentExercise.problemStatement).pipe(
                             tap((problemStatement) => {
                                 this.problemStatement = problemStatement?.trim() || undefined;
                                 this.lastSeenProblemStatement = currentExercise.problemStatement;
                             }),
                             switchMap(() => this.loadInitialResult()),
+                            filter(() => load === this.initialResultLoad),
                             tap((latestResult) => {
                                 this.latestResult = latestResult;
                             }),
