@@ -1,5 +1,5 @@
 import { Service, inject } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -16,9 +16,9 @@ export class UserRouteAccessService implements CanActivate {
      * Check if the client can activate a route.
      * @param route The ActivatedRouteSnapshot of the route to activate.
      * @param state The current RouterStateSnapshot.
-     * @return True if user is logged in, false otherwise.
+     * @return Whether the navigation is allowed, or a denial redirect when the initial page cannot be activated.
      */
-    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
+    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean | UrlTree> {
         const ltiRedirectUrl = this.handleLTIRedirect(route, state);
         const urlToStore = ltiRedirectUrl ?? state.url;
 
@@ -39,7 +39,13 @@ export class UserRouteAccessService implements CanActivate {
         // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
         // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.
-        return this.checkLogin(authorities, urlToStore);
+        return this.checkLogin(authorities, urlToStore).then((allowed) => {
+            // An initial cancellation leaves both the page and navbar outlets empty. Render the denial page instead.
+            if (!allowed && this.router.lastSuccessfulNavigation() === null && this.accountService.isAuthenticated()) {
+                return this.router.createUrlTree(['/accessdenied']);
+            }
+            return allowed;
+        });
     }
 
     /**
