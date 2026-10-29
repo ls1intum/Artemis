@@ -35,6 +35,7 @@
                 </button>
                 @if (loadedPages().has(page.order)) {
                     <tumaet-ui-checkbox
+                        class="pdf-page-selection"
                         [inputId]="'checkbox-' + page.slideId"
                         [ariaLabel]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: page.order }"
                         [checked]="isPageSelected(page.slideId)"
@@ -145,6 +146,7 @@
                 </button>
                 @if (loadedPages().has(page.order)) {
                     <tumaet-ui-checkbox
+                        class="pdf-page-selection"
                         [inputId]="'checkbox-' + page.slideId"
                         [ariaLabel]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: page.order }"
                         [checked]="isPageSelected(page.slideId)"
