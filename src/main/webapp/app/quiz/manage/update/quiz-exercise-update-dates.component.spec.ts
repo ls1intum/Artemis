@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -25,7 +25,7 @@ import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-qu
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
-import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
+import { QuizAiGenerationModalComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 
@@ -79,10 +79,16 @@ describe('QuizExerciseUpdateComponent schedule section', () => {
     };
 
     beforeEach(async () => {
+        const snapshot = new ActivatedRouteSnapshot();
+        snapshot.params = { courseId: String(course.id), exerciseId: '456' };
+        snapshot.queryParams = {};
+        vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+        vi.spyOn(snapshot, 'routeConfig', 'get').mockReturnValue({ path: 'quiz-exercises/:exerciseId/edit' });
+
         await TestBed.configureTestingModule({
             providers: [
                 MockProvider(DialogService),
-                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456 }) }, queryParams: of({}) } },
+                { provide: ActivatedRoute, useValue: { snapshot, params: of(snapshot.params), queryParams: of(snapshot.queryParams) } },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },

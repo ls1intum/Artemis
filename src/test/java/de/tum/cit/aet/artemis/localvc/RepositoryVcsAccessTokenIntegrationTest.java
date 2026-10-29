@@ -107,7 +107,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOrCreateToken_isScopedIdempotentAndDeletable() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
 
@@ -129,7 +129,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void ensureTokensForExerciseAsync_provisionsTokensForStaffOnly() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
@@ -151,7 +151,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void staffMembershipLifecycle_createsAndRemovesTokens() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
 
@@ -177,7 +177,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void addStaffToCourse_asynchronouslyProvisionsTokens_andRemovalDeletesThem() {
         // A dedicated user that is not yet staff in the course (so soft state of the shared per-prefix users is untouched).
         User joiningStaff = userUtilService.createAndSaveUser(TEST_PREFIX + "joiningstaff");
@@ -204,7 +204,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void registerUsersForCourse_asynchronouslyProvisionsTokensForStaff() {
         // A dedicated user, added the same way the course-member registration modal and CSV import add staff (the bulk endpoint), not the single-user add endpoint.
         User joiningStaff = userUtilService.createAndSaveUser(TEST_PREFIX + "bulkjoiningstaff");
@@ -221,7 +221,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getAndCreateRepositoryVcsAccessToken_asTutor() throws Exception {
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
         // No token exists yet.
@@ -269,7 +269,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void repositoryVcsAccessTokenEndpoints_auxiliaryWithoutIdIsBadRequest() throws Exception {
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=AUXILIARY";
         request.get(url, HttpStatus.BAD_REQUEST, String.class);
@@ -277,7 +277,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void repositoryVcsAccessTokenEndpoints_userRepositoryWithoutParticipationIdIsBadRequest() throws Exception {
         // A USER (student) repository token is scoped by its participation. Requesting it without a participationId must be rejected with 400 (participationIdMissing) instead of
         // letting it reach the service and surface as a 500.
@@ -295,7 +295,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void repositoryVcsAccessTokenEndpoints_auxiliaryIdNotBelongingToExerciseIsNotFound() throws Exception {
         // An auxiliaryRepositoryId that is not one of THIS exercise's auxiliary repositories (a non-existent id, or one belonging to a different exercise) must not resolve to a
         // token. The service only ever looks at the requested exercise's own auxiliary repositories, so a foreign id cannot be used to mint a token for a repository the caller
@@ -306,7 +306,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOrCreateToken_forAuxiliaryRepository_isScopedToTheAuxiliaryRepository() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         AuxiliaryRepository auxiliaryRepository = persistAuxiliaryRepository("http://localhost/git/TESTREPOVCSAT/testrepovcsat-aux.git");
@@ -326,7 +326,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOrCreateToken_forUnknownAuxiliaryRepository_throws() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         // No auxiliary repository with this id is attached to the exercise.
@@ -334,7 +334,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getAndCreateRepositoryVcsAccessToken_forAuxiliaryRepository_asTutor() throws Exception {
         AuxiliaryRepository auxiliaryRepository = persistAuxiliaryRepository("http://localhost/git/TESTREPOVCSAT/testrepovcsat-aux2.git");
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=AUXILIARY&auxiliaryRepositoryId="
@@ -349,7 +349,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteExercise_withRepositoryTokens_doesNotThrowAndRemovesTokens() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
@@ -372,7 +372,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteUser_withRepositoryTokens_doesNotThrowAndRemovesTokens() {
         // A dedicated user so soft-deleting it does not affect the shared per-prefix users used by the other test methods.
         User user = userUtilService.createAndSaveUser(TEST_PREFIX + "todelete");
@@ -390,7 +390,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteAuxiliaryRepository_withRepositoryToken_cascadesAndDoesNotThrow() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         AuxiliaryRepository auxiliaryRepository = persistAuxiliaryRepository("http://localhost/git/TESTREPOVCSAT/testrepovcsat-aux-delete.git");
@@ -411,7 +411,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
      * {@code DataIntegrityViolationException}. This is the regression guard for that ordering.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletingExerciseWithReferencingTokensSucceeds() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
@@ -440,7 +440,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
      * remove the user's tokens before anonymizing the account. This guards against a foreign-key exception during user deletion.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletingUserWithReferencingTokensSucceeds() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         String solutionUri = exercise.getSolutionRepositoryUri();
@@ -460,7 +460,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
      * {@code auxiliary_repository_id} foreign key is {@code ON DELETE CASCADE}, so no explicit token cleanup is needed and the delete must not throw.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletingAuxiliaryRepositoryWithReferencingTokenCascades() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         AuxiliaryRepository auxiliaryRepository = persistAuxiliaryRepository("http://localhost/git/TESTREPOVCSAT/testrepovcsat-aux-cascade.git");
@@ -480,7 +480,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOrCreateStudentRepositoryToken_isScopedToTheStudentRepositoryAndLinksTheParticipation() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
@@ -504,7 +504,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getAndCreateStudentRepositoryVcsAccessToken_asTutor() throws Exception {
         ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=USER&participationId=" + studentParticipation.getId();
@@ -518,7 +518,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void studentRepositorySupportClosesAtManualDeadlineIncludingPreviouslyIssuedTokens() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
@@ -563,7 +563,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createStudentRepositoryToken_forParticipationOfAnotherExercise_isBadRequest() throws Exception {
         // A participation that belongs to a DIFFERENT exercise than the one the caller is authorized for must be rejected, so a valid participation id cannot be paired with an
         // unrelated exercise id to reach a repository the caller was not authorized against.
@@ -578,7 +578,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletingStudentParticipationCascadesStaffRepositoryToken() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
@@ -597,7 +597,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getVcsAccessTokenOverview_returnsOwnRepositoryTokensWithMetadataOnly() throws Exception {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         RepositoryVCSAccessToken templateToken = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
@@ -648,7 +648,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void revokeVcsAccessToken_removesOwnRepositoryTokenAndAllowsReminting() throws Exception {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         RepositoryVCSAccessToken token = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
@@ -663,7 +663,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void revokeVcsAccessToken_forAnotherUsersToken_isNotFoundAndKeepsTheToken() throws Exception {
         // A repository token owned by the instructor, not by the tutor making the request.
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");

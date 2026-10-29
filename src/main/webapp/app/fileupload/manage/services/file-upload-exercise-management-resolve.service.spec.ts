@@ -53,12 +53,13 @@ describe('FileUploadExerciseManagementResolve', () => {
                     provide: FileUploadExerciseService,
                     useValue: {
                         find: vi.fn(),
+                        findForExam: vi.fn(),
                     },
                 },
                 {
                     provide: CourseManagementService,
                     useValue: {
-                        find: vi.fn(),
+                        findForManagement: vi.fn(),
                     },
                 },
                 {
@@ -85,7 +86,7 @@ describe('FileUploadExerciseManagementResolve', () => {
             const exercise = createExercise(createCourse());
             vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
-            const snapshot = { params: { exerciseId: 456 } } as unknown as ActivatedRouteSnapshot;
+            const snapshot = { params: { exerciseId: 456 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
             const result = await firstValueFrom(service.resolve(snapshot));
 
@@ -97,11 +98,11 @@ describe('FileUploadExerciseManagementResolve', () => {
             const exercise = createExercise(createCourse());
             vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
-            const snapshot = { params: { exerciseId: 456 } } as unknown as ActivatedRouteSnapshot;
+            const snapshot = { params: { exerciseId: 456 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
             await firstValueFrom(service.resolve(snapshot));
 
-            expect(courseManagementService.find).not.toHaveBeenCalled();
+            expect(courseManagementService.findForManagement).not.toHaveBeenCalled();
             expect(exerciseGroupService.find).not.toHaveBeenCalled();
         });
     });
@@ -109,22 +110,22 @@ describe('FileUploadExerciseManagementResolve', () => {
     describe('resolve with courseId only', () => {
         it('should create new exercise for course', async () => {
             const course = createCourse(789);
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
 
-            const snapshot = { params: { courseId: 789 } } as unknown as ActivatedRouteSnapshot;
+            const snapshot = { params: { courseId: 789 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
             const result = await firstValueFrom(service.resolve(snapshot));
 
-            expect(courseManagementService.find).toHaveBeenCalledWith(789);
+            expect(courseManagementService.findForManagement).toHaveBeenCalledWith(789);
             expect(result.course).toEqual(course);
             expect(result.filePattern).toBe('pdf, png');
         });
 
         it('should not call fileUploadExerciseService when only courseId is present', async () => {
             const course = createCourse();
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
 
-            const snapshot = { params: { courseId: 123 } } as unknown as ActivatedRouteSnapshot;
+            const snapshot = { params: { courseId: 123 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
             await firstValueFrom(service.resolve(snapshot));
 
@@ -139,6 +140,7 @@ describe('FileUploadExerciseManagementResolve', () => {
 
             const snapshot = {
                 params: { courseId: 123, examId: 4, exerciseGroupId: 5 },
+                pathFromRoot: [{ params: {} }],
             } as unknown as ActivatedRouteSnapshot;
 
             const result = await firstValueFrom(service.resolve(snapshot));
@@ -154,33 +156,35 @@ describe('FileUploadExerciseManagementResolve', () => {
 
             const snapshot = {
                 params: { courseId: 123, examId: 4, exerciseGroupId: 5 },
+                pathFromRoot: [{ params: {} }],
             } as unknown as ActivatedRouteSnapshot;
 
             await firstValueFrom(service.resolve(snapshot));
 
-            expect(courseManagementService.find).not.toHaveBeenCalled();
+            expect(courseManagementService.findForManagement).not.toHaveBeenCalled();
         });
     });
 
     describe('resolve with courseId and examId only', () => {
         it('should create exercise for course when examId is present but not exerciseGroupId', async () => {
             const course = createCourse(456);
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
 
             const snapshot = {
                 params: { courseId: 456, examId: 4 },
+                pathFromRoot: [{ params: {} }],
             } as unknown as ActivatedRouteSnapshot;
 
             const result = await firstValueFrom(service.resolve(snapshot));
 
-            expect(courseManagementService.find).toHaveBeenCalledWith(456);
+            expect(courseManagementService.findForManagement).toHaveBeenCalledWith(456);
             expect(result.course).toEqual(course);
         });
     });
 
     describe('resolve with empty params', () => {
         it('should return empty exercise when no params provided', async () => {
-            const snapshot = { params: {} } as unknown as ActivatedRouteSnapshot;
+            const snapshot = { params: {}, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
             const result = await firstValueFrom(service.resolve(snapshot));
 
@@ -190,12 +194,12 @@ describe('FileUploadExerciseManagementResolve', () => {
         });
 
         it('should not call any service when params are empty', async () => {
-            const snapshot = { params: {} } as unknown as ActivatedRouteSnapshot;
+            const snapshot = { params: {}, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
             await firstValueFrom(service.resolve(snapshot));
 
             expect(fileUploadExerciseService.find).not.toHaveBeenCalled();
-            expect(courseManagementService.find).not.toHaveBeenCalled();
+            expect(courseManagementService.findForManagement).not.toHaveBeenCalled();
             expect(exerciseGroupService.find).not.toHaveBeenCalled();
         });
     });
@@ -203,9 +207,9 @@ describe('FileUploadExerciseManagementResolve', () => {
     describe('default file pattern', () => {
         it('should set default file pattern for course exercise', async () => {
             const course = createCourse();
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
 
-            const snapshot = { params: { courseId: 123 } } as unknown as ActivatedRouteSnapshot;
+            const snapshot = { params: { courseId: 123 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
             const result = await firstValueFrom(service.resolve(snapshot));
 
@@ -218,6 +222,7 @@ describe('FileUploadExerciseManagementResolve', () => {
 
             const snapshot = {
                 params: { courseId: 123, examId: 4, exerciseGroupId: 5 },
+                pathFromRoot: [{ params: {} }],
             } as unknown as ActivatedRouteSnapshot;
 
             const result = await firstValueFrom(service.resolve(snapshot));
@@ -231,22 +236,22 @@ describe('FileUploadExerciseManagementResolve', () => {
             const exercise = createExercise();
             vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
-            const snapshot = { params: { exerciseId: 999 } } as unknown as ActivatedRouteSnapshot;
+            const snapshot = { params: { exerciseId: 999 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
             await firstValueFrom(service.resolve(snapshot));
 
             expect(fileUploadExerciseService.find).toHaveBeenCalledWith(999);
         });
 
-        it('should call courseManagementService.find with correct course ID', async () => {
+        it('should call courseManagementService.findForManagement with correct course ID', async () => {
             const course = createCourse();
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
 
-            const snapshot = { params: { courseId: 888 } } as unknown as ActivatedRouteSnapshot;
+            const snapshot = { params: { courseId: 888 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
             await firstValueFrom(service.resolve(snapshot));
 
-            expect(courseManagementService.find).toHaveBeenCalledWith(888);
+            expect(courseManagementService.findForManagement).toHaveBeenCalledWith(888);
         });
 
         it('should call exerciseGroupService.find with correct IDs', async () => {
@@ -255,11 +260,45 @@ describe('FileUploadExerciseManagementResolve', () => {
 
             const snapshot = {
                 params: { courseId: 111, examId: 222, exerciseGroupId: 333 },
+                pathFromRoot: [{ params: {} }],
             } as unknown as ActivatedRouteSnapshot;
 
             await firstValueFrom(service.resolve(snapshot));
 
             expect(exerciseGroupService.find).toHaveBeenCalledWith(111, 222, 333);
         });
+    });
+    it('should resolve exam details from an ancestor with the same options', () => {
+        const detailService = TestBed.inject(FileUploadExerciseService);
+        const exercise = new FileUploadExercise(undefined, undefined);
+        const examFind = vi.spyOn(detailService, 'findForExam').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        vi.spyOn(detailService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const snapshot = new ActivatedRouteSnapshot();
+        snapshot.params = { exerciseId: 123 };
+        const ancestor = new ActivatedRouteSnapshot();
+        ancestor.params = { examId: 7 };
+        vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([ancestor, snapshot]);
+        service.resolve(snapshot).subscribe((result) => expect(result).toBe(exercise));
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(123);
+        expect(detailService.find).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['true', false],
+        ['false', true],
+        [undefined, true],
+    ])('uses import source flag %s before target exam context %s after reload', (sourceFlag, targetIsExam) => {
+        const detailService = TestBed.inject(FileUploadExerciseService);
+        const exercise = new FileUploadExercise(undefined, undefined);
+        const courseFind = vi.spyOn(detailService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const examFind = vi.spyOn(detailService, 'findForExam').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const snapshot = new ActivatedRouteSnapshot();
+        snapshot.params = { exerciseId: 123, ...(targetIsExam ? { examId: 7 } : {}) };
+        snapshot.queryParams = sourceFlag === undefined ? {} : { sourceIsExamExercise: sourceFlag };
+        vi.spyOn(snapshot, 'routeConfig', 'get').mockReturnValue({ path: 'exercises/:exerciseId/import' });
+        vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+        service.resolve(snapshot).subscribe((result) => expect(result).toBe(exercise));
+        expect(sourceFlag === 'true' ? examFind : courseFind).toHaveBeenCalledExactlyOnceWith(123);
+        expect(sourceFlag === 'true' ? courseFind : examFind).not.toHaveBeenCalled();
     });
 });

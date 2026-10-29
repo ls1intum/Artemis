@@ -49,7 +49,7 @@ class GenerationJobReplayBoundaryTest {
 
     @BeforeEach
     void setup() {
-        store = new GenerationJobReplayStore(provider, Duration.ofHours(4), cancellations);
+        store = new GenerationJobReplayStore(provider, Duration.ofHours(4), Duration.ofMinutes(30), cancellations);
         owner = new User();
         owner.setLogin("owner");
         other = new User();
@@ -68,7 +68,7 @@ class GenerationJobReplayBoundaryTest {
     @NullSource
     @ValueSource(strings = { "PT0S", "PT-1S" })
     void terminalReplayRequiresPositiveRetention(String duration) {
-        assertThatThrownBy(() -> new GenerationJobReplayStore(provider, duration == null ? null : Duration.parse(duration), cancellations))
+        assertThatThrownBy(() -> new GenerationJobReplayStore(provider, duration == null ? null : Duration.parse(duration), Duration.ofMinutes(30), cancellations))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("terminal-replay-ttl must be positive");
     }
 
@@ -177,7 +177,7 @@ class GenerationJobReplayBoundaryTest {
         LocalDataProviderService failingProvider = spy(new LocalDataProviderService());
         DistributedMap<String, Object> usage = mock(DistributedMap.class);
         doReturn(usage).when(failingProvider).getExpiringMap(eq("hyperion-exercise-generation-usage"), any());
-        var failingStore = new GenerationJobReplayStore(failingProvider, Duration.ofHours(4), cancellations);
+        var failingStore = new GenerationJobReplayStore(failingProvider, Duration.ofHours(4), Duration.ofMinutes(30), cancellations);
         doThrow(new IllegalStateException("lock unavailable")).when(usage).lock("job");
         assertThatCode(() -> failingStore.recordToolCalls("job", 1)).doesNotThrowAnyException();
         assertThatCode(() -> failingStore.sealUsage("job")).doesNotThrowAnyException();

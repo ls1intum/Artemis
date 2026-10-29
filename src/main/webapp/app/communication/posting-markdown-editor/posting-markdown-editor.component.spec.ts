@@ -5,6 +5,10 @@ import { PostingMarkdownEditorComponent } from './posting-markdown-editor.compon
 import { MessageEditorComponent } from 'app/communication/message-editor/message-editor.component';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 import { CommunicationService } from 'app/communication/service/communication.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { BehaviorSubject } from 'rxjs';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PostingEditType } from 'app/communication/communication.util';
@@ -12,11 +16,17 @@ import { PostingEditType } from 'app/communication/communication.util';
 describe('Posting message editor integration', () => {
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let component: PostingMarkdownEditorComponent;
+    const shownConversation = new BehaviorSubject<ConversationDTO | undefined>(undefined);
 
     beforeEach(() => {
+        shownConversation.next(undefined);
         TestBed.configureTestingModule({
             imports: [PostingMarkdownEditorComponent],
-            providers: [{ provide: CommunicationService, useClass: MockCommunicationService }],
+            providers: [
+                { provide: CommunicationService, useClass: MockCommunicationService },
+                { provide: ConversationService, useValue: { getConversationName: (conversation?: { name?: string }) => conversation?.name ?? '' } },
+                { provide: CourseConversationsService, useValue: { activeConversation$: shownConversation.asObservable() } },
+            ],
         }).overrideComponent(PostingMarkdownEditorComponent, {
             remove: { imports: [MessageEditorComponent, RedirectToIrisButtonComponent, ArtemisTranslatePipe] },
             add: { imports: [MockComponent(MessageEditorComponent), MockComponent(RedirectToIrisButtonComponent), MockPipe(ArtemisTranslatePipe)] },
@@ -167,6 +177,38 @@ describe('Posting message editor integration', () => {
         fixture.componentRef.setInput('draftIdentity', 'reply:12:new');
         fixture.detectChanges();
         expect(editor.draftIdentity()).toBe('reply:12:new');
+    });
+
+    it('names the conversation for the hint of the empty editor and words it for a reply', () => {
+        fixture.componentRef.setInput('activeConversation', { id: 42, name: 'announcement' });
+        component.writeValue('');
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(MessageEditorComponent)).componentInstance as MessageEditorComponent;
+        expect(editor.conversationName()).toBe('announcement');
+        expect(editor.reply()).toBe(false);
+
+        fixture.componentRef.setInput('isReply', true);
+        fixture.componentRef.setInput('activeConversation', { id: 43, name: 'organisation' });
+        fixture.detectChanges();
+        expect(editor.conversationName()).toBe('organisation');
+        expect(editor.reply()).toBe(true);
+    });
+
+    it('takes the name from the conversation that the course view shows when the new post names only its id', () => {
+        fixture.componentRef.setInput('activeConversation', { id: 42 });
+        component.writeValue('');
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(MessageEditorComponent)).componentInstance as MessageEditorComponent;
+        expect(editor.conversationName()).toBe('');
+
+        shownConversation.next({ id: 42, name: 'random' } as ConversationDTO);
+        fixture.detectChanges();
+        expect(editor.conversationName()).toBe('random');
+
+        // The name of another conversation does not label this composer.
+        fixture.componentRef.setInput('activeConversation', { id: 43 });
+        fixture.detectChanges();
+        expect(editor.conversationName()).toBe('');
     });
 
     it('disables Send while an upload is pending even when the parent form was valid', () => {

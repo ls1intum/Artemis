@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
+import { PostingMarkdownComponent, postingReferencePlaceholder } from 'app/communication/posting-content/posting-markdown/posting-markdown.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -33,7 +33,7 @@ describe('PostingContentComponent', () => {
         await TestBed.configureTestingModule({
             imports: [
                 PostingContentComponent,
-                MockComponent(PostingContentPartComponent),
+                MockComponent(PostingMarkdownComponent),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
@@ -274,18 +274,11 @@ describe('PostingContentComponent', () => {
     });
 
     describe('Computing posting content parts', () => {
-        it('should only include content before reference for empty patternMatches', () => {
+        it('should not include a reference and render the content unchanged for empty patternMatches', () => {
             fixture.componentRef.setInput('content', 'I do not want to reference a Post.');
             component.computePostingContentParts([]);
-            expect(component.postingContentParts()).toEqual([
-                {
-                    contentBeforeReference: component.content(),
-                    linkToReference: undefined,
-                    queryParams: undefined,
-                    referenceStr: undefined,
-                    contentAfterReference: undefined,
-                } as unknown as PostingContentPart,
-            ]);
+            expect(component.postingContentParts()).toEqual([]);
+            expect(component.postingMarkdown()).toBe('I do not want to reference a Post.');
         });
 
         it('should include content before and reference as well as a linked reference within an exercise context', async () => {
@@ -302,14 +295,13 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfExercisePostToReference}` },
                     referenceStr: `#${idOfExercisePostToReference}`,
                     referenceType: ReferenceType.POST,
-                    contentAfterReference: ' in the same exercise context.',
                 } as unknown as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + ' in the same exercise context.');
         });
 
         it('should include content before and reference as well as a linked reference within a lecture context', async () => {
@@ -326,14 +318,13 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfLecturePostToReference}` },
                     referenceStr: `#${idOfLecturePostToReference}`,
                     referenceType: ReferenceType.POST,
-                    contentAfterReference: ' in the same lecture context.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + ' in the same lecture context.');
         });
 
         it('should include content before and reference as well as a linked reference within the course discussion overview', async () => {
@@ -353,14 +344,15 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfGeneralCourseWidePost}` },
                     referenceStr: `#${idOfGeneralCourseWidePost}`,
                     referenceType: ReferenceType.POST,
-                    contentAfterReference: ' with course-wide context while currently being at course discussion overview.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe(
+                'I want to reference ' + postingReferencePlaceholder(0) + ' with course-wide context while currently being at course discussion overview.',
+            );
         });
 
         it('should compute parts when referencing a post from a lecture context while being at the course discussion overview.', async () => {
@@ -379,14 +371,15 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfLecturePostToReference}` },
                     referenceStr: `#${idOfLecturePostToReference}`,
                     referenceType: ReferenceType.POST,
-                    contentAfterReference: ' with lecture context while currently being at the course discussion overview.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe(
+                'I want to reference ' + postingReferencePlaceholder(0) + ' with lecture context while currently being at the course discussion overview.',
+            );
         });
 
         it('should compute parts when referencing a post from an exercise context while being at the course discussion overview', async () => {
@@ -405,14 +398,15 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfExercisePostToReference}` },
                     referenceStr: `#${idOfExercisePostToReference}`,
                     referenceType: ReferenceType.POST,
-                    contentAfterReference: ' with exercise context while currently being at the course discussion overview.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe(
+                'I want to reference ' + postingReferencePlaceholder(0) + ' with exercise context while currently being at the course discussion overview.',
+            );
         });
 
         it('should compute parts when referencing a post with course-wide context while being at a lecture page', async () => {
@@ -428,14 +422,15 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfCourseWidePostToReference}` },
                     referenceStr: `#${idOfCourseWidePostToReference}`,
                     referenceType: ReferenceType.POST,
-                    contentAfterReference: ' with course-wide context while currently being at a lecture page.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe(
+                'I want to reference ' + postingReferencePlaceholder(0) + ' with course-wide context while currently being at a lecture page.',
+            );
         });
 
         it('should compute parts when referencing a post with lecture context while being at a lecture page', async () => {
@@ -451,14 +446,13 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfExercisePostToReference}` },
                     referenceStr: `#${idOfExercisePostToReference}`,
                     referenceType: ReferenceType.POST,
-                    contentAfterReference: ' with exercise context while currently being at a lecture page.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + ' with exercise context while currently being at a lecture page.');
         });
 
         it('should compute parts when referencing a file upload exercise', () => {
@@ -467,13 +461,12 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
                     referenceStr: `File Upload Exercise`,
                     referenceType: ReferenceType.FILE_UPLOAD,
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing a modeling exercise', () => {
@@ -482,13 +475,12 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
                     referenceStr: `Modeling Exercise`,
                     referenceType: ReferenceType.MODELING,
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing a quiz exercise', () => {
@@ -497,13 +489,12 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
                     referenceStr: `Quiz Exercise`,
                     referenceType: ReferenceType.QUIZ,
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing a programming exercise', () => {
@@ -512,13 +503,12 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
                     referenceStr: `Programming Exercise`,
                     referenceType: ReferenceType.PROGRAMMING,
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing a text exercise', () => {
@@ -527,13 +517,12 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
                     referenceStr: `Text Exercise`,
                     referenceType: ReferenceType.TEXT,
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing a lecture', () => {
@@ -542,13 +531,12 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/lectures/1'],
                     referenceStr: `Lecture 1`,
                     referenceType: ReferenceType.LECTURE,
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing an attachment', () => {
@@ -559,13 +547,12 @@ describe('PostingContentComponent', () => {
             const attachmentDirectory = 'api/core/files/attachments/';
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     referenceStr: `PDF File`,
                     referenceType: ReferenceType.ATTACHMENT,
                     attachmentToReference: attachmentDirectory + 'attachmentPath/attachment.pdf',
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing an lecture unit', () => {
@@ -576,13 +563,12 @@ describe('PostingContentComponent', () => {
             const attachmentDirectory = 'api/core/files/attachments/';
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     referenceStr: `PDF File lecture unit`,
                     referenceType: ReferenceType.ATTACHMENT_UNITS,
                     attachmentToReference: attachmentDirectory + 'attachmentPath/attachmentUnit.pdf',
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing a single slide', () => {
@@ -593,13 +579,12 @@ describe('PostingContentComponent', () => {
             const attachmentDirectory = 'api/core/files/attachments/';
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     referenceStr: `PDF File Slide 7`,
                     referenceType: ReferenceType.SLIDE,
                     slideToReference: attachmentDirectory + 'slides/attachment-unit/123/slide/9',
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing a user', () => {
@@ -608,13 +593,12 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'This message is important for ',
                     referenceStr: `Test`,
                     referenceType: ReferenceType.USER,
                     queryParams: { referenceUserLogin: 'test_login' } as Params,
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('This message is important for ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing a faq', () => {
@@ -623,14 +607,13 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses/1/faq'],
                     referenceStr: `faq`,
                     referenceType: ReferenceType.FAQ,
-                    contentAfterReference: '.',
                     queryParams: { faqId: '45' },
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should compute parts when referencing a channel', () => {
@@ -639,13 +622,12 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'This topic belongs to ',
                     referenceStr: 'test',
                     referenceType: ReferenceType.CHANNEL,
                     queryParams: { channelId: 1 } as Params,
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('This topic belongs to ' + postingReferencePlaceholder(0) + '.');
         });
 
         it('should set channelID undefined if referenced a channel id is not a number', () => {
@@ -654,13 +636,12 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
-                    contentBeforeReference: 'This topic belongs to ',
                     referenceStr: 'test',
                     referenceType: ReferenceType.CHANNEL,
                     queryParams: { channelId: undefined } as Params,
-                    contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
+            expect(component.postingMarkdown()).toBe('This topic belongs to ' + postingReferencePlaceholder(0) + '.');
         });
     });
 });

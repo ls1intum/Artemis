@@ -212,15 +212,18 @@ public class UserCreationService {
     }
 
     private void setUserAuthorities(final ManagedUserVM userDTO, final User user) {
-        // A user needs to have at least some role, otherwise an authentication token can never be constructed
-        if (userDTO.getAuthorities() == null || userDTO.getAuthorities().isEmpty()) {
-            userDTO.setAuthorities(Set.of(STUDENT.getAuthority()));
-        }
-
         // clear and add instead of new Set for Hibernate change tracking
         final Set<Authority> authorities = user.getAuthorities();
         authorities.clear();
-        userDTO.getAuthorities().stream().map(authorityRepository::findById).flatMap(Optional::stream).forEach(authorities::add);
+        if (userDTO.getAuthorities() != null) {
+            userDTO.getAuthorities().stream().map(authorityRepository::findById).flatMap(Optional::stream).forEach(authorities::add);
+        }
+
+        // A user needs to have at least some role, otherwise an authentication token can never be constructed.
+        // This is checked after resolving the names, because unknown ones (such as the retired teaching authorities) are dropped above.
+        if (authorities.isEmpty()) {
+            authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
+        }
     }
 
     /**

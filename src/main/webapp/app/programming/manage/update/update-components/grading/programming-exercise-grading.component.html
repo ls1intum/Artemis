@@ -18,13 +18,11 @@
             <div class="col">
                 <div class="form-group">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
-                    @if (programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) {
-                        <span class="text-state-danger" aria-hidden="true">*</span>
-                    }
+                    <span class="text-state-danger" aria-hidden="true">*</span>
                     <jhi-points-input
-                        [required]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED"
+                        [required]="true"
                         fluid
-                        [min]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED ? 0 : 1"
+                        [min]="1"
                         [max]="9999"
                         name="points"
                         inputId="field_points"

@@ -6,6 +6,7 @@ import { finalize } from 'rxjs/operators';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { LtiLoginContinuationService } from 'app/lti/overview/lti13-exercise-launch/lti-login-continuation.service';
 
 @Service()
 export class LoginService {
@@ -14,6 +15,7 @@ export class LoginService {
     private router = inject(Router);
     private alertService = inject(AlertService);
     private sessionStorageService = inject(SessionStorageService);
+    private readonly ltiLoginContinuation = inject(LtiLoginContinuationService);
 
     logoutWasForceful = false;
 
@@ -30,7 +32,7 @@ export class LoginService {
                     });
                 },
                 error: (err) => {
-                    this.logout(false);
+                    this.ltiLoginContinuation.preserveForLoginRetry(() => this.logout(false));
                     this.logoutWasForceful = false;
                     reject(err);
                 },
@@ -51,7 +53,7 @@ export class LoginService {
                     });
                 },
                 error: (err) => {
-                    this.logout(false);
+                    this.ltiLoginContinuation.preserveForLoginRetry(() => this.logout(false));
                     this.logoutWasForceful = false;
                     reject(err);
                 },
