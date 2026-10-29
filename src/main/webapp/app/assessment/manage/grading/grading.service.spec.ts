@@ -93,6 +93,39 @@ describe('GradingService', () => {
             expect(response.body).toEqual(gradingScaleDTO);
         });
 
+        it.each([false, true])('explicitly clears Basic requirements when saving graded=%s', async (graded) => {
+            const scale = {
+                ...gradingScale,
+                course: { id: courseId, presentationScore: undefined } as Course,
+                presentationsNumber: graded ? 5 : undefined,
+                presentationsWeight: graded ? 35 : undefined,
+            };
+            const responsePromise = lastValueFrom(service.updateGradingScaleForCourse(courseId, scale));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
+            const wireBody = JSON.parse(req.request.serializeBody() as string);
+            req.flush(gradingScaleDTO);
+            await responsePromise;
+
+            // Omission/null means "leave the current value unchanged" on the server; zero disables Basic presentations.
+            expect(wireBody.coursePresentationScore).toBe(0);
+            if (graded) {
+                expect(wireBody.presentationsNumber).toBe(5);
+                expect(wireBody.presentationsWeight).toBe(35);
+            } else {
+                expect(wireBody.presentationsNumber).toBeUndefined();
+                expect(wireBody.presentationsWeight).toBeUndefined();
+            }
+        });
+
+        it('preserves a positive Basic requirement in the serialized update', async () => {
+            const scale = { ...gradingScale, course: { id: courseId, presentationScore: 3 } as Course };
+            const responsePromise = lastValueFrom(service.updateGradingScaleForCourse(courseId, scale));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
+            expect(JSON.parse(req.request.serializeBody() as string).coursePresentationScore).toBe(3);
+            req.flush(gradingScaleDTO);
+            await responsePromise;
+        });
+
         it('should find grading scale for course', async () => {
             const responsePromise = lastValueFrom(service.findGradingScaleForCourse(courseId));
             const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
@@ -155,6 +188,14 @@ describe('GradingService', () => {
 
             const response = await responsePromise;
             expect(response.body).toEqual(gradingScaleDTO);
+        });
+
+        it('omits course presentation settings from exam updates', async () => {
+            const responsePromise = lastValueFrom(service.updateGradingScaleForExam(courseId, examId, gradingScale));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
+            expect(JSON.parse(req.request.serializeBody() as string).coursePresentationScore).toBeUndefined();
+            req.flush(gradingScaleDTO);
+            await responsePromise;
         });
 
         it('should find grading scale for exam', async () => {
