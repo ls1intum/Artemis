@@ -426,6 +426,29 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testManualAssessmentSave_keepsEmptyDetailTextInResponses() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        // A title without a description: the empty detail text tells the client that text is a title, not a legacy comment.
+        Feedback titledFeedback = feedbacks.getFirst().text("Missing abstraction").detailText("");
+
+        ResultDTO savedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment?submit=true",
+                new ModelingAssessmentDTO(toFeedbackDTOs(feedbacks), null), ResultDTO.class, HttpStatus.OK);
+        // Only the student can load the result through this route, once the assessment is released.
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        ResultDTO loadedResult = request.get(API_MODELING_SUBMISSIONS + submission.getId() + "/result", HttpStatus.OK, ResultDTO.class);
+
+        for (ResultDTO result : List.of(savedResult, loadedResult)) {
+            FeedbackDTO feedback = result.feedbacks().stream().filter(candidate -> titledFeedback.getReference().equals(candidate.reference())).findFirst().orElseThrow();
+            assertThat(feedback.text()).isEqualTo("Missing abstraction");
+            assertThat(feedback.detailText()).isNotNull().isEmpty();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_classDiagram() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",

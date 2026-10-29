@@ -271,3 +271,4 @@ minimumReleaseAgeExclude:
   - '@angular/build@22.2.3'
   - '@angular/cli@22.2.3'
   - '@schematics/angular@22.2.3'
+  - '@tumaet/apollon@5.5.0'
