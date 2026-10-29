@@ -138,7 +138,7 @@ export class FaqUpdateComponent implements OnInit {
      */
     protected onSaveSuccess(faq: Faq) {
         if (!this.faq.id) {
-            this.faqService.find(this.courseId, faq.id!).subscribe({
+            this.faqService.findForManagement(this.courseId, faq.id!).subscribe({
                 next: (response: HttpResponse<Faq>) => {
                     this.isSaving.set(false);
                     const faqBody = response.body;
@@ -185,7 +185,7 @@ export class FaqUpdateComponent implements OnInit {
     }
 
     private loadCourseFaqCategories(courseId: number) {
-        loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
+        loadCourseFaqCategories(courseId, this.alertService, this.faqService, undefined, 'management').subscribe((existingCategories) => {
             this.existingCategories.set(existingCategories);
         });
     }

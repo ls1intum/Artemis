@@ -254,7 +254,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     // uses when a user is not enrolled in the resolved course.
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testToggleResolvesPost() throws Exception {
         AnswerPost answerPost = existingAnswerPosts.getFirst();
         AnswerPost answerPost2 = existingAnswerPosts.get(1);
@@ -288,7 +288,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testToggleResolvesPost_asPostAuthor() throws Exception {
         // author of the associated original post is instructor1
         AnswerPost answerPost = existingAnswerPosts.getFirst();

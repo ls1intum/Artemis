@@ -62,14 +62,14 @@ class ProgrammingExerciseGraphQueryCountTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testTheUpdateGraphReadsTheExerciseAndItsCourseInOneStatement() {
         assertThatDb(() -> programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId)).hasBeenCalledTimes(1);
         assertReadsTheExerciseTimesAndNoCourseOnItsOwn(1);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testTheCreationGraphInitializesManagedCollectionsWithoutSeparateCourseReads() {
         // The graph without the criteria and the links, the criteria, and the links.
         assertThatDb(() -> programmingExerciseRepository.findForCreationByIdElseThrow(exerciseId)).hasBeenCalledTimes(3);
@@ -77,7 +77,7 @@ class ProgrammingExerciseGraphQueryCountTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testTheVersioningGraphReadsTheExerciseAndItsCourseOnce() {
         // The base graph, the test cases, the tasks and the static code analysis categories.
         assertThatDb(() -> programmingExerciseRepository.findForVersioningById(exerciseId)).hasBeenCalledTimes(4);
@@ -85,7 +85,7 @@ class ProgrammingExerciseGraphQueryCountTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testTheNameOfTheChannelIsReadWithoutReadingTheExercise() {
         Channel channel = conversationUtilService.addChannelToExercise(exercise);
 

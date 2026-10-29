@@ -40,6 +40,9 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -333,41 +336,60 @@ public class CourseOverviewResource {
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    // TODO: this method is invoked quite often as part of course management resolve. However, it might not be necessary to fetch tutorial group configuration and online course
-    // configuration in such cases.
     @GetMapping("courses/{courseId}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseManagementDTO> getCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get course {} for students", courseId);
+        return ResponseEntity.ok(loadCourse(courseId, CourseProjection.STUDENT));
+    }
+
+    /**
+     * Returns the course settings and counts required by tutors and editors.
+     *
+     * @param courseId the course to retrieve
+     * @return the fixed tutor projection
+     */
+    @GetMapping("courses/{courseId}/for-tutor")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<CourseManagementDTO> getCourseForTutor(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadCourse(courseId, CourseProjection.TUTOR));
+    }
+
+    /**
+     * Returns the complete course management settings for instructors.
+     *
+     * @param courseId the course to retrieve
+     * @return the fixed instructor projection
+     */
+    @GetMapping("courses/{courseId}/for-instructor")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<CourseManagementDTO> getCourseForInstructor(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadCourse(courseId, CourseProjection.INSTRUCTOR));
+    }
+
+    private enum CourseProjection {
+        STUDENT, TUTOR, INSTRUCTOR
+    }
+
+    private CourseManagementDTO loadCourse(Long courseId, CourseProjection projection) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-
-        // The configurations hold the key to their course, so the course cannot carry them: each is read on its own, and
-        // only for the roles that see it.
+        // Each configuration owns its course key and is read only by the projection that needs it.
         OnlineCourseConfiguration onlineConfiguration = null;
         TutorialGroupsConfiguration tutorialConfiguration = null;
         boolean presentationAssessmentsEnabled = false;
-        if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            // the Athena switches, grade-relevance and the auto-orchestration settings the instructor edits
+        if (projection == CourseProjection.INSTRUCTOR) {
             courseAthenaConfigRepository.attachTo(course);
             courseConfigurationRepository.attachTo(course);
             presentationAssessmentsEnabled = course.getPresentationAssessmentsEnabled();
             onlineConfiguration = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).orElse(null);
-            tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
         }
-        else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
-            // Tutors and editors grade presentations, so they need this switch, but not the rest of the course configuration.
+        else if (projection == CourseProjection.TUTOR) {
             presentationAssessmentsEnabled = courseConfigurationRepository.findPresentationAssessmentsEnabledByCourseId(courseId).orElse(false);
         }
-
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (projection != CourseProjection.STUDENT) {
+            tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
             userRepository.setUserCountsForCourse(course);
         }
-
-        return ResponseEntity.ok(CourseManagementDTO.of(course, onlineConfiguration, tutorialConfiguration, presentationAssessmentsEnabled));
+        return CourseManagementDTO.of(course, onlineConfiguration, tutorialConfiguration, presentationAssessmentsEnabled);
     }
 
     @UsageInteraction(FeatureInteraction.AUTOMATIC)

@@ -58,7 +58,7 @@
                 <div class="flex justify-center p-4!">
                     <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.attachmentVideoUnit.videoPlayer.loading' | artemisTranslate" />
                 </div>
-            } @else if (playlistUrl() && hasTranscript() && !playerFailed()) {
+            } @else if (playlistUrl() && !playerFailed()) {
                 <div class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
                     <jhi-video-player
                         [videoUrl]="playlistUrl()!"

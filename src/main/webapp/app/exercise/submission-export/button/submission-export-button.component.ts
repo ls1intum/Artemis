@@ -34,6 +34,7 @@ export class SubmissionExportButtonComponent {
 
     readonly exerciseId = input<number>();
     readonly exerciseType = input<ExerciseType>();
+    readonly examExercise = input(false);
 
     // Icons
     readonly faDownload = faDownload;
@@ -61,6 +62,7 @@ export class SubmissionExportButtonComponent {
             inputValues: {
                 exerciseId,
                 exerciseType,
+                examExercise: this.examExercise(),
             },
         });
     }

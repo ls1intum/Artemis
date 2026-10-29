@@ -267,15 +267,24 @@ describe('ExerciseAddModalComponent', () => {
             component.startImport(ExerciseType.TEXT);
             onClose.next({ id: 7 } as Exercise);
 
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'text-exercises', 7, 'import']);
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'text-exercises', 7, 'import'], { queryParams: { sourceIsExamExercise: false } });
         });
 
         it('navigates to the programming import route for a selected programming exercise', () => {
             component.startImport(ExerciseType.PROGRAMMING);
             onClose.next({ id: 7 } as Exercise);
 
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'programming-exercises', 'import', 7]);
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'programming-exercises', 'import', 7], { queryParams: { sourceIsExamExercise: false } });
         });
+
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ])(
+            'retains the selected exam source kind for %s imports into a course',
+            (type) => {
+                component.startImport(type);
+                onClose.next({ id: 7, exerciseGroup: {} } as Exercise);
+                expect(navigateSpy).toHaveBeenCalledWith(expect.any(Array), { queryParams: { sourceIsExamExercise: true } });
+            },
+        );
 
         it('routes a from-file programming import (no id) to the import-from-file page with state', () => {
             const fromFile = { title: 'from file' } as Exercise;

@@ -176,7 +176,7 @@ describe('GradingComponent', () => {
                     {
                         provide: CourseManagementService,
                         useValue: {
-                            find: vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: courseId } as Course }))),
+                            findForInstructor: vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: courseId } as Course }))),
                         },
                     },
                     {
@@ -463,7 +463,7 @@ describe('GradingComponent', () => {
                     {
                         provide: CourseManagementService,
                         useValue: {
-                            find: vi.fn(),
+                            findForInstructor: vi.fn(),
                         },
                     },
                     {

@@ -19,12 +19,26 @@ import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, addPublic
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
+type CourseRole = 'STUDENT' | 'TEACHING_ASSISTANT' | 'EDITOR' | 'INSTRUCTOR';
+
+const COURSE_ROLE_LEVEL: Record<CourseRole, number> = { STUDENT: 0, TEACHING_ASSISTANT: 1, EDITOR: 2, INSTRUCTOR: 3 };
+
+/** The course role that stands for each of the authorities that are not global; the users with a higher role are covered by the authority lists. */
+const COURSE_ROLE_OF_AUTHORITY: Partial<Record<Authority, CourseRole>> = {
+    [Authority.TUTOR]: 'TEACHING_ASSISTANT',
+    [Authority.EDITOR]: 'EDITOR',
+    [Authority.INSTRUCTOR]: 'INSTRUCTOR',
+};
+
+function isAtLeastCourseRole(role: string, minimum: CourseRole): boolean {
+    return (COURSE_ROLE_LEVEL[role as CourseRole] ?? -1) >= COURSE_ROLE_LEVEL[minimum];
+}
+
 export interface IAccountService {
     save: (account: User) => Observable<HttpResponse<User>>;
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
-    hasAuthority: (authority: string) => Promise<boolean>;
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastTutorInCourseWithId: (courseId?: number) => boolean;
@@ -103,34 +117,21 @@ export class AccountService implements IAccountService {
         return Promise.resolve(this.hasAnyAuthorityDirect(authorities));
     }
 
+    /**
+     * Whether the user has one of the authorities. Only the student, administrator and super administrator authorities are global. The tutor, editor and
+     * instructor authorities stand for a role in at least one course, so they are answered from the course roles of the user, and an authority that an
+     * older server still sends for them is ignored.
+     */
     hasAnyAuthorityDirect(authorities: readonly Authority[]): boolean {
-        if (!this.authenticated() || !this.userIdentity()?.authorities) {
+        const identity = this.userIdentity();
+        if (!this.authenticated() || !identity?.authorities) {
             return false;
         }
 
-        for (let i = 0; i < authorities.length; i++) {
-            if (this.userIdentity()?.authorities?.includes(authorities[i])) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    hasAuthority(authority: string): Promise<boolean> {
-        if (!this.authenticated()) {
-            return Promise.resolve(false);
-        }
-
-        return this.identity().then(
-            (id) => {
-                const authorities = id!.authorities!;
-                return Promise.resolve(authorities && authorities.includes(authority));
-            },
-            () => {
-                return Promise.resolve(false);
-            },
-        );
+        return authorities.some((authority) => {
+            const courseRole = COURSE_ROLE_OF_AUTHORITY[authority];
+            return courseRole ? this.hasCourseRoleAtLeastInAnyCourse(courseRole) : identity.authorities!.includes(authority);
+        });
     }
 
     identity(force?: boolean): Promise<User | undefined> {
@@ -183,7 +184,7 @@ export class AccountService implements IAccountService {
     }
 
     isAtLeastTutorInCourseWithId(courseId?: number): boolean {
-        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+        if (this.hasAdministratorAccess()) {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'TEACHING_ASSISTANT');
@@ -198,7 +199,7 @@ export class AccountService implements IAccountService {
     }
 
     isAtLeastEditorInCourseWithId(courseId?: number): boolean {
-        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+        if (this.hasAdministratorAccess()) {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'EDITOR');
@@ -213,27 +214,22 @@ export class AccountService implements IAccountService {
     }
 
     isAtLeastInstructorInCourseWithId(courseId?: number): boolean {
-        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+        if (this.hasAdministratorAccess()) {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'INSTRUCTOR');
     }
 
-    private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: string): boolean {
+    private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: CourseRole): boolean {
         if (!courseId || !this.authenticated()) {
             return false;
         }
-        const courseRoles = this.userIdentity()?.courseRoles;
-        if (!courseRoles) {
-            return false;
-        }
-        const entry = courseRoles.find((r) => r.courseId === courseId);
-        if (!entry) {
-            return false;
-        }
-        const roleHierarchy: Record<string, number> = { STUDENT: 0, TEACHING_ASSISTANT: 1, EDITOR: 2, INSTRUCTOR: 3 };
-        const minLevel = roleHierarchy[minimumRole] ?? 0;
-        return entry.roles.some((role) => (roleHierarchy[role] ?? -1) >= minLevel);
+        const entry = this.userIdentity()?.courseRoles?.find((r) => r.courseId === courseId);
+        return !!entry && entry.roles.some((role) => isAtLeastCourseRole(role, minimumRole));
+    }
+
+    private hasCourseRoleAtLeastInAnyCourse(minimumRole: CourseRole): boolean {
+        return !!this.userIdentity()?.courseRoles?.some((entry) => entry.roles.some((role) => isAtLeastCourseRole(role, minimumRole)));
     }
 
     /**

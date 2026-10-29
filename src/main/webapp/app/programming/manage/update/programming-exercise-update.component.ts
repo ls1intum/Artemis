@@ -654,7 +654,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                             } else if (params['courseId']) {
                                 this.courseId.set(params['courseId']);
                                 this.isExamMode.set(false);
-                                this.courseService.find(this.courseId()).subscribe((res) => {
+                                this.courseService.findForManagement(this.courseId()).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;
                                     if (
                                         !params['exerciseId'] &&
@@ -834,6 +834,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         const courseId = params['courseId'];
+        this.courseId.set(courseId);
         if (courseId && params['examId'] && params['exerciseGroupId']) {
             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
@@ -843,7 +844,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.isExamMode.set(true);
             this.importOptions.setTestCaseVisibilityToAfterDueDate = true;
         } else if (courseId) {
-            this.courseService.find(courseId).subscribe((res) => {
+            this.courseService.findForManagement(courseId).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
                 // Set exerciseGroup to undefined if an exam exercise is imported
                 this.programmingExercise.exerciseGroup = undefined;

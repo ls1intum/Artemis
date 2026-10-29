@@ -19,10 +19,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -48,17 +46,14 @@ public class ProgrammingExerciseGradingResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final UserRepository userRepository;
 
     private final ResultRepository resultRepository;
 
     public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, ResultRepository resultRepository) {
+            UserRepository userRepository, ResultRepository resultRepository) {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
     }
@@ -74,14 +69,12 @@ public class ProgrammingExerciseGradingResource {
     // The catalogue files this controller under configuration/grading, which fits reading grading statistics. Re-grading
     // every submission of an exercise is a different thing an instructor does, heavyweight and rare, so it is worth
     // counting on its own rather than being averaged into the same figure.
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to re-evaluate the graded results of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithAuthorities();
-
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
 
         List<Result> updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
 
@@ -97,13 +90,9 @@ public class ProgrammingExerciseGradingResource {
      * @return the test case statistics for the exercise.
      */
     @GetMapping("programming-exercises/{exerciseId}/grading/statistics")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<ProgrammingExerciseGradingStatisticsDTO> getGradingStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-
         var statistics = programmingExerciseGradingService.generateGradingStatistics(exerciseId);
         return ResponseEntity.ok(statistics);
     }
