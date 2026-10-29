@@ -1,3 +1,4 @@
+import { usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { Component, DestroyRef, Injector, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -17,19 +18,20 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
+import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-statement.service';
+import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/hyperion/problem-statement/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
+import { ChecklistPanelComponent } from 'app/hyperion/problem-statement/checklist-panel/checklist-panel.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH } from 'app/foundation/constants/input.constants';
 
+import { Observable } from 'rxjs';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
+import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 
 @Component({
@@ -71,7 +73,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     programmingExercise = input<ProgrammingExercise>();
+    readonly editingLocked = input(false);
+    readonly beforeStatementSave = input<(() => Observable<boolean>) | undefined>();
     problemStatementChange = output<string>();
+    readonly problemStatementSaved = output<string | undefined>();
     programmingExerciseChange = output<ProgrammingExercise>();
 
     /** Tracks the authoritative competency links state, updated whenever links change from any source. */
@@ -82,8 +87,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
 
+    readonly canonicalBaseIsolation = computed(() => usesCanonicalProblemStatementSync(this.programmingExercise(), this.aiOps.hyperionGenerationSupported));
+
     // Delegate signals for template binding compatibility
     readonly userPrompt = this.aiOps.userPrompt;
+    readonly generationBrief = this.aiOps.generationBrief;
     readonly isGeneratingOrRefining = this.aiOps.isGeneratingOrRefining;
     protected readonly isPromptNearLimit = this.aiOps.isPromptNearLimit;
     readonly hyperionEnabled = this.aiOps.hyperionEnabled;

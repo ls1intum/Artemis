@@ -77,13 +77,11 @@ public class VariantAgentLoopService {
     /**
      * Result of one agent round.
      *
-     * @param finishSummary   the model's final text output for the round — becomes the TRANSFORMING/REPAIRING
-     *                            step output summary
-     * @param touchedTestRepo programming only: whether the round edited the test repository — forces
-     *                            re-verification of BOTH builds (build-dependency constraint)
-     * @param tokensUsed      tokens consumed in this round (telemetry)
+     * @param finishSummary the model's final text output for the round — becomes the TRANSFORMING/REPAIRING
+     *                          step output summary
+     * @param tokensUsed    tokens consumed in this round (telemetry)
      */
-    public record AgentResult(String finishSummary, boolean touchedTestRepo, long tokensUsed) implements Serializable {
+    public record AgentResult(String finishSummary, long tokensUsed) implements Serializable {
     }
 
     /**
@@ -92,7 +90,7 @@ public class VariantAgentLoopService {
      * @param plan           the ChangePlan contract, rendered into the system prompt
      * @param toolset        the per-round toolset (from {@code VariantToolsetFactory.createTools}); tools observe
      *                           the job's cancel flag between invocations, and the toolset reports the round state
-     *                           (finish summary, touched-test-repo flag) back to the pipeline
+     *                           (finish summary) back to the pipeline
      * @param budgets        iteration/token budgets
      * @param job            the running job (cancellation flag, telemetry attribution)
      * @param repairFeedback null on the first round; the previous round's VerificationReport on repair rounds —
@@ -114,27 +112,18 @@ public class VariantAgentLoopService {
         // The tool catalog is rendered from the actual ToolCallbacks, so a tool added to a toolset is
         // automatically part of the prompt's "these are the ONLY tools" contract — no manual prompt upkeep.
         String systemPrompt = templateService.render(promptTemplate, Map.of("changePlan", renderPlanContract(plan), "availableTools", renderToolCatalog(tools)));
-        // A4: seed the opening message with prefetched context (file trees + files the plan is likely to touch)
-        // so the round doesn't have to spend its first several calls just discovering what it's working with —
-        // every round is a fresh conversation, so this applies to repair rounds too.
-        String prefetchedContext = toolset.prefetchContext(plan);
-        String userMessage = repairFeedback == null ? initialUserMessage(plan, prefetchedContext) : repairUserMessage(repairFeedback, escalationNote, prefetchedContext);
+        String userMessage = repairFeedback == null ? initialUserMessage(plan) : repairUserMessage(repairFeedback, escalationNote);
 
         log.debug("Starting agent round for job {} with {} tools (repair: {})", job.getJobId(), tools.size(), repairFeedback != null);
         ChatResponse chatResponse = callAgent(job, systemPrompt, userMessage, tools);
         String content = LLMTokenUsageService.extractResponseText(chatResponse);
         log.debug("Agent round finished for job {}: {}", job.getJobId(), content);
-        // Round boundary: persist whatever the round left unpersisted (e.g. repo edits without a final runBuild)
-        // BEFORE reading the round state — verification must judge the round's actual work, and a flush of the
-        // test repository must set the touched-test-repo flag.
-        toolset.flushPendingChanges();
-
         Long userId = userRepository.findOneByLogin(job.getInitiatorLogin()).map(User::getId).orElse(null);
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, TRANSFORM_PIPELINE_ID,
                 builder -> builder.withExercise(job.getVariantExerciseId()).withUser(userId));
 
         String finishSummary = toolset.finishSummary() != null ? toolset.finishSummary() : content;
-        return new AgentResult(finishSummary, toolset.touchedTestRepo(), extractTotalTokens(chatResponse));
+        return new AgentResult(finishSummary, extractTotalTokens(chatResponse));
     }
 
     /**
@@ -192,15 +181,15 @@ public class VariantAgentLoopService {
                 + plan.invariants().stream().map(invariant -> "- " + invariant).collect(Collectors.joining("\n"));
     }
 
-    private String initialUserMessage(ChangePlan plan, String prefetchedContext) {
+    private String initialUserMessage(ChangePlan plan) {
         String message = "Apply the change plan to the exercise copy now using your tools. Work through the intended changes in order, "
                 + "verify your work with the available validation/build tools, and call finish with a short summary when done. " + "There are " + plan.intendedChanges().size()
                 + " intended change(s). Be efficient: you have a limited tool-call budget for this round — read the current state once, "
                 + "apply each change once, validate once at the end, and then call finish. Do NOT re-read or re-validate after every single edit.";
-        return appendPrefetchedContext(message, prefetchedContext);
+        return message;
     }
 
-    private String repairUserMessage(VerificationReport report, @Nullable String escalationNote, String prefetchedContext) {
+    private String repairUserMessage(VerificationReport report, @Nullable String escalationNote) {
         String findings = report.toAgentFeedback();
         String message = "Verification failed with the following findings. Fix exactly these issues using your tools, keeping all invariants intact, "
                 + "then call finish with a short summary. Be efficient: you have a limited tool-call budget for this round — "
@@ -208,19 +197,7 @@ public class VariantAgentLoopService {
         if (escalationNote != null && !escalationNote.isBlank()) {
             message += "\n\nStuck-loop warning:\n" + escalationNote;
         }
-        return appendPrefetchedContext(message, prefetchedContext);
+        return message;
     }
 
-    /**
-     * Appends prefetched context (if any) below the round's instructions, clearly labelled as a starting point
-     * rather than ground truth — the agent must still re-read a file before editing it if anything is unclear,
-     * since the prefetch is a best-effort snapshot taken before this round's edits.
-     */
-    private static String appendPrefetchedContext(String message, String prefetchedContext) {
-        if (prefetchedContext == null || prefetchedContext.isBlank()) {
-            return message;
-        }
-        return message + "\n\nFor reference, here is the current repository state (file trees and files the plan likely touches). "
-                + "Use it as a starting point instead of re-reading these files, but re-read anything you are unsure about:\n\n" + prefetchedContext;
-    }
 }

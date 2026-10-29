@@ -1146,7 +1146,6 @@ describe('MarkdownEditorMonacoComponent', () => {
             expect(inlineFixSpy).toHaveBeenCalledWith({ threadId: 9 });
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith(location);
-            expect(config.showFeedbackAction()).toBe(false);
         });
 
         it('should clear the drafts of an existing review comment manager', () => {

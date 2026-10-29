@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -78,5 +78,19 @@ describe('CodeEditorRepositoryFileService', () => {
         const result = firstValueFrom(service.getRepositoryContent([DomainType.PARTICIPATION, { id: 7 }], commitId));
         httpTestingController.expectOne({ method: 'GET', url: `api/programming/participations/7/repository/commits/${commitId}/files` }).flush({});
         expect(await result).toEqual({});
+    });
+});
+
+describe('CodeEditorRepositoryService pull routing', () => {
+    it('uses POST for the selected repository', () => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: WebsocketService, useValue: {} }],
+        });
+        const service = TestBed.inject(CodeEditorRepositoryService);
+        const http = TestBed.inject(HttpTestingController);
+        service.setDomain([DomainType.PARTICIPATION, { id: 12 }]);
+        service.pull().subscribe();
+        http.expectOne({ method: 'POST', url: 'api/programming/participations/12/repository/pull' }).flush(null);
+        http.verify();
     });
 });
