@@ -65,6 +65,12 @@ class DeimosAnalysisCompleteEmailRenderingTest {
                 "Analysis model did not respond in time", "The model classified this participation as benign:", "Incompletely checked participations",
                 "File too large for the analysis (per-file input limit)", "final state compared with the exercise template", "snapshot abcdef12, 2026-01-15T10:00Z",
                 "... and 11 more", "Analysis model rejected the API key (missing or wrong)", "Batch-level failure", "Run aborted");
+        // Some mail clients drop a line break between inline elements, so the separating spaces must be literal ones.
+        assertThat(html).contains("(per-file input limit)</span>: <span>src/Big.java</span> (<span>snapshot abcdef12, 2026-01-15T10:00Z</span>)",
+                "total size limit was reached</span> (<span>final state compared with the exercise template</span>)",
+                "<span>Participation 5</span>: <span>Analysis model rejected the API key (missing or wrong)</span>",
+                "<span>Batch-level failure</span>: <span>Analysis model rejected the API key (missing or wrong)</span>",
+                "<span>No assessment by the model</span>: <span>Analysis model did not respond in time</span>");
         assertNoUnresolvedMessageAndEscaped(html);
     }
 

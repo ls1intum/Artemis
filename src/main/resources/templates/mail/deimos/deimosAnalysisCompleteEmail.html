@@ -59,11 +59,8 @@
         <p class="bold-text" th:text="#{email.deimos.analysisComplete.failedDetailsHeading}">Failure details</p>
         <ul>
             <li th:each="detail : ${analysis.failedAnalysisDetails}">
-                <span th:if="${detail.participationId > 0}"
-                      th:text="#{email.deimos.analysisComplete.failedParticipationLabel(${detail.participationId})}">Participation</span>
-                <span th:if="${detail.participationId <= 0}"
-                      th:text="#{email.deimos.analysisComplete.failedBatchLabel}">Batch-level failure</span>:
-                <span th:text="#{${detail.translationKey}}">Category</span>
+                <!--/* One line with literal spaces: some mail clients drop a line break between inline elements instead of showing it as a space. */-->
+                <span th:if="${detail.participationId > 0}" th:text="#{email.deimos.analysisComplete.failedParticipationLabel(${detail.participationId})}">Participation</span><span th:if="${detail.participationId <= 0}" th:text="#{email.deimos.analysisComplete.failedBatchLabel}">Batch-level failure</span>: <span th:text="#{${detail.translationKey}}">Category</span>
                 <p style="white-space: pre-wrap; margin: 0.35em 0 0.75em 0; font-family: monospace; font-size: 0.85em; color: #666;"
                    th:text="${detail.reason}">Reason</p>
             </li>
@@ -94,8 +91,7 @@
                    style="white-space: pre-wrap; margin: 0.35em 0 0.75em 0;"
                    th:text="${link.rationale}">Rationale</p>
                 <p th:if="${link.failureTranslationKey != null}">
-                    <span th:text="#{email.deimos.analysisComplete.llmUnavailable}">No assessment by the model</span>:
-                    <span th:text="#{${link.failureTranslationKey}}">Category</span>
+                    <span th:text="#{email.deimos.analysisComplete.llmUnavailable}">No assessment by the model</span>: <span th:text="#{${link.failureTranslationKey}}">Category</span>
                 </p>
             </li>
         </ul>
@@ -125,10 +121,8 @@
                 </div>
                 <ul>
                     <li th:each="omission : ${link.omissions}">
-                        <span th:text="#{${'email.deimos.analysisComplete.omissionReason.' + omission.reason.name()}}">Reason</span><th:block th:if="${omission.filePath != null}">:
-                        <span th:text="${omission.filePath}">File</span></th:block>
-                        (<span th:if="${omission.snapshot != null}" th:text="#{email.deimos.analysisComplete.omissionSnapshot(${omission.snapshot})}">snapshot</span><span
-                            th:if="${omission.snapshot == null}" th:text="#{email.deimos.analysisComplete.finalState}">final state</span>)
+                        <!--/* One line with literal spaces: some mail clients drop a line break between inline elements instead of showing it as a space. */-->
+                        <span th:text="#{${'email.deimos.analysisComplete.omissionReason.' + omission.reason.name()}}">Reason</span><th:block th:if="${omission.filePath != null}">: <span th:text="${omission.filePath}">File</span></th:block> (<span th:if="${omission.snapshot != null}" th:text="#{email.deimos.analysisComplete.omissionSnapshot(${omission.snapshot})}">snapshot</span><span th:if="${omission.snapshot == null}" th:text="#{email.deimos.analysisComplete.finalState}">final state</span>)
                     </li>
                     <li th:if="${link.omissionCount > link.omissions.size()}"
                         th:text="#{email.deimos.analysisComplete.moreOmissions(${link.omissionCount - link.omissions.size()})}">... and more</li>
