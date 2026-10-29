@@ -55,7 +55,7 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withNewDueDate() {
         Exercise originalExercise = testExercise;
         ZonedDateTime newDueDate = testExercise.getDueDate().plusDays(3);
@@ -72,7 +72,7 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withNullOriginalDueDate() {
         // Create an exercise with null due date
         Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), null, ZonedDateTime.now().plusDays(8), testCourse);
@@ -99,7 +99,7 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withUnchangedDueDate() {
         // Create original exercise
         ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);
@@ -126,4 +126,25 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
         assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(dueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void visibleSlideDownloadsAgreeAndHiddenSlideIsDenied() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        userUtilService.addInstructorToCourse(TEST_PREFIX + "instructor1", testCourse);
+        var lecture = lectureUtilService.createLecture(testCourse);
+        var unit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 1, true);
+        var slide = slideRepository.findAllByAttachmentVideoUnitId(unit.getId()).getFirst();
+        var file = new de.tum.cit.aet.artemis.core.util.FileSystemLocation.Slide(unit.getId(), slide.getSlideNumber(), "slide1.png").path();
+        byte[] expected = java.nio.file.Files.readAllBytes(file);
+        String byUnit = "/api/core/files/attachments/attachment-video-units/" + unit.getId() + "/slide/" + slide.getSlideNumber();
+        String byId = "/api/core/files/slides/" + slide.getId();
+        assertThat(request.get(byUnit, org.springframework.http.HttpStatus.OK, byte[].class)).containsExactly(expected);
+        assertThat(request.get(byId, org.springframework.http.HttpStatus.OK, byte[].class)).containsExactly(expected);
+        slide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.saveAndFlush(slide);
+        request.get(byId, org.springframework.http.HttpStatus.FORBIDDEN, byte[].class);
+        assertThat(java.nio.file.Files.readAllBytes(file)).containsExactly(expected);
+    }
+
 }

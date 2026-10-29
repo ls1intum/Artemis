@@ -97,6 +97,10 @@ export class ProgrammingExerciseService {
         return this.http.put(`${this.resourceUrl}/${exerciseId}/reset`, options, { responseType: 'text' });
     }
 
+    resetParticipations(exerciseId: number, options: ProgrammingExerciseResetOptions): Observable<string> {
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/reset-participations`, options, { responseType: 'text' });
+    }
+
     /**
      * Check plagiarism with JPlag
      *
@@ -236,8 +240,17 @@ export class ProgrammingExerciseService {
      * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
     find(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(programmingExerciseId, false, withPlagiarismDetectionConfig);
+    }
+
+    /** Loads management details of an exam exercise with the same options and conversion as course details. */
+    findForExam(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(programmingExerciseId, true, withPlagiarismDetectionConfig);
+    }
+
+    private findDetails(programmingExerciseId: number, exam: boolean, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, {
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}${exam ? '/for-exam' : ''}`, {
                 observe: 'response',
                 params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig },
             })
@@ -472,6 +485,14 @@ export class ProgrammingExerciseService {
         });
     }
 
+    exportStudentRepositoryForStaff(exerciseId: number, participationId: number, identified = false): Observable<HttpResponse<Blob>> {
+        const audience = identified ? 'for-instructor' : 'for-staff';
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository/${audience}?participationId=${participationId}`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
     /**
      * Exports all instructor repositories (solution, template, test), the problem statement and the exercise details.
      * @param exerciseId
@@ -493,6 +514,14 @@ export class ProgrammingExerciseService {
         params = params.set('includeTests', includeTests.toString());
         return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-requested-repository`, {
             params,
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    exportSolutionSnapshotForStaff(exerciseId: number, includeTests: boolean): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-requested-repository/for-staff`, {
+            params: { includeTests },
             observe: 'response',
             responseType: 'blob',
         });

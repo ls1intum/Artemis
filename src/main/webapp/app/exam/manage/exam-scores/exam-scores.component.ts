@@ -189,7 +189,7 @@ export class ExamScoresComponent implements OnInit {
                 .findGradingScaleForExam(params['courseId'], params['examId'])
                 .pipe(catchError(() => of(new HttpResponse<GradingScaleDTO>())));
 
-            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => {
+            this.courseManagementService.findForInstructor(params['courseId']).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
             });
 

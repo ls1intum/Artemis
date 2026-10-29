@@ -201,7 +201,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 {
                     provide: CourseManagementService,
                     useValue: {
-                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findForManagement: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
                         findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
                     },
                 },

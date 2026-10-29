@@ -39,7 +39,7 @@
                         <jhi-programming-assessment-repo-export [programmingExercises]="[exercise()!]" class="me-1" (buttonPressed)="closeExportPopover()" />
                     }
                     @if (exercise()!.type === ExerciseType.TEXT || exercise()!.type === ExerciseType.MODELING || exercise()!.type === ExerciseType.FILE_UPLOAD) {
-                        <jhi-exercise-submission-export [exerciseId]="exercise()!.id!" [exerciseType]="exercise()!.type!" class="me-1" />
+                        <jhi-exercise-submission-export [examExercise]="isExamExercise()" [exerciseId]="exercise()!.id!" [exerciseType]="exercise()!.type!" class="me-1" />
                     }
                 </ng-template>
             }

@@ -771,7 +771,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testEditConversationAnswerPost_forbidden() throws Exception {
         // conversation answerPost of student1 must not be editable by tutors
         AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.getFirst().getAnswers().iterator().next();
@@ -864,7 +864,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of student1 must not be deletable by tutors
         AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.getFirst().getAnswers().iterator().next();
@@ -1083,7 +1083,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldOnlyNotifyTheUsersMentionedByNameWhenVerifyingAnIrisAnswerThatContainsAtAll() throws Exception {
         User mentionedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         User otherMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
@@ -1182,7 +1182,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldSendMentionNotificationWhenVerifyingEditedIrisAnswerWithMention() throws Exception {
 
         User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
@@ -1230,7 +1230,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testVerifyAnswerMessage_contentTooLong_badRequest() throws Exception {
         // approving an Iris answer with edited content beyond the 5000 character limit must be rejected and must not verify or change the answer
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
@@ -1257,7 +1257,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testVerifyAnswerMessage_contentAtMaxLength_ok() throws Exception {
         // approving an Iris answer with edited content at exactly the 5000 character limit is accepted and verifies the answer with that content
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
@@ -1352,7 +1352,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldExposeUnverifiedIrisReplyThroughSourcePostsToTutor() throws Exception {
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -1392,7 +1392,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldExposeUnverifiedIrisReplyThroughSavedPostsToTutor() throws Exception {
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
         User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");

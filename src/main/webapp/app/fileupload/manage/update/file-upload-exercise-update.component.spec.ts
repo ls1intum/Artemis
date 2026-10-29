@@ -221,7 +221,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 {
                     provide: CourseManagementService,
                     useValue: {
-                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findForManagement: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
                         findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
                     },
                 },
@@ -781,7 +781,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(courseService.find).toHaveBeenCalledOnce();
+            expect(courseService.findForManagement).toHaveBeenCalledOnce();
 
             const dueDate = dayjs().add(1, 'day');
             fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance.dueDate.set(dueDate);
@@ -791,7 +791,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
             // Running the import handling again would have reset the dates and loaded the course once more.
             expect(component.fileUploadExercise().dueDate).toBe(dueDate);
-            expect(courseService.find).toHaveBeenCalledOnce();
+            expect(courseService.findForManagement).toHaveBeenCalledOnce();
         });
 
         it('should load exercise group when importing to exam', async () => {

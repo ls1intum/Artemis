@@ -1,7 +1,7 @@
 import { CdkCopyToClipboard, Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -55,7 +55,7 @@ describe('CodeButtonPopoverContentComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useValue: { retrieve: vi.fn(), store: vi.fn() } },
                 { provide: ExternalCloningService, useValue: { buildIdeUrl: vi.fn(), buildSourceTreeUrl: vi.fn() } },
-                { provide: DomSanitizer, useValue: { sanitize: vi.fn(), bypassSecurityTrustUrl: vi.fn(), bypassSecurityTrustHtml: vi.fn() } },
+                { provide: DomSanitizer, useValue: { sanitize: vi.fn(), bypassSecurityTrustHtml: vi.fn() } },
                 { provide: TheiaService, useValue: { startOnlineIDE: vi.fn() } },
                 { provide: ProfileService, useValue: { getProfileInfo: vi.fn() } },
                 { provide: Clipboard, useValue: { copy: vi.fn() } },
@@ -112,13 +112,6 @@ describe('CodeButtonPopoverContentComponent', () => {
     function expectSelectedAuthenticationMethod(label: string, repositoryUrl: string): void {
         expect(authenticationMenuTrigger().textContent).toContain(label);
         expect(repositoryUrlElement().textContent.trim()).toBe(repositoryUrl);
-    }
-
-    function trustUrl(url: string): SafeUrl {
-        const trustedUrl = { toString: () => url } as SafeUrl;
-        sanitizer.sanitize.mockReturnValue(url);
-        sanitizer.bypassSecurityTrustUrl.mockReturnValue(trustedUrl);
-        return trustedUrl;
     }
 
     describe('authentication method rendering and selection', () => {
@@ -328,10 +321,10 @@ describe('CodeButtonPopoverContentComponent', () => {
             expect(translatedElement('artemisApp.exerciseActions.ideButton.openIn')).toBeNull();
         });
 
-        it('should reveal a trusted IDE action', () => {
+        it('should reveal a sanitized IDE action', () => {
             const ideUrl = 'jetbrains://idea/checkout?url=repository';
             externalCloningService.buildIdeUrl.mockReturnValue(ideUrl);
-            trustUrl(ideUrl);
+            sanitizer.sanitize.mockReturnValue(ideUrl);
             renderComponent([tokenAuthenticationMethodData]);
 
             const showAlternativesButton = translatedElement('artemisApp.exerciseActions.showAlternatives') as HTMLButtonElement;
@@ -357,10 +350,10 @@ describe('CodeButtonPopoverContentComponent', () => {
             expect(translatedElement('artemisApp.exerciseActions.openInSourceTree.button')).toBeNull();
         });
 
-        it('should reveal a trusted SourceTree action', () => {
+        it('should reveal a sanitized SourceTree action', () => {
             const sourceTreeUrl = 'sourcetree://cloneRepo?cloneUrl=repository';
             externalCloningService.buildSourceTreeUrl.mockReturnValue(sourceTreeUrl);
-            trustUrl(sourceTreeUrl);
+            sanitizer.sanitize.mockReturnValue(sourceTreeUrl);
             renderComponent([passwordAuthenticationMethodData]);
 
             (translatedElement('artemisApp.exerciseActions.showAlternatives') as HTMLButtonElement).click();
@@ -414,7 +407,6 @@ describe('CodeButtonPopoverContentComponent', () => {
             externalCloningService.buildIdeUrl.mockReturnValue(ideUrl);
             externalCloningService.buildSourceTreeUrl.mockReturnValue(sourceTreeUrl);
             sanitizer.sanitize.mockImplementation((_context, url) => (typeof url === 'string' ? url : null));
-            sanitizer.bypassSecurityTrustUrl.mockImplementation((url) => ({ toString: () => url }) as SafeUrl);
 
             renderComponent([tokenAuthenticationMethodData], true, theiaLinkData);
 

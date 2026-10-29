@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -153,12 +153,12 @@ public class HyperionExerciseGenerationResource {
     /**
      * GET programming-exercises/generation/supported-languages : the languages whole-exercise generation can be verified for, so clients fetch the set instead of hardcoding it.
      * <p>
-     * Not exercise-scoped, so it is guarded by the least-privileged global role that can create exercises ({@link EnforceAtLeastEditor}) rather than by course membership.
+     * Static metadata that is not exercise-scoped, so being authenticated is enough.
      *
      * @return the supported programming languages
      */
     @GetMapping("programming-exercises/generation/supported-languages")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ProgrammingLanguage>> getSupportedGenerationLanguages() {
         log.debug("REST request to get the Hyperion generation-supported programming languages");
         return ResponseEntity.ok(generationRequestService.supportedGenerationLanguages().stream().sorted().toList());
@@ -170,13 +170,12 @@ public class HyperionExerciseGenerationResource {
      * <p>
      * Name and label only: model ids and budgets are admin-owned and must not be exposed here.
      * <p>
-     * Not exercise-scoped, so it is guarded by the least-privileged global role that can create exercises ({@link EnforceAtLeastEditor}), mirroring
-     * {@link #getSupportedGenerationLanguages()}.
+     * Static metadata that is not exercise-scoped, so being authenticated is enough, mirroring {@link #getSupportedGenerationLanguages()}.
      *
      * @return the selectable effort profiles, in configured order
      */
     @GetMapping("programming-exercises/generation/effort-profiles")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ExerciseGenerationEffortProfileDTO>> getGenerationEffortProfiles() {
         log.debug("REST request to get the Hyperion generation effort profiles");
         return ResponseEntity.ok(effortProfileService.selectableProfiles());

@@ -1,3 +1,4 @@
+import { AccountService } from 'app/core/auth/account.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -33,6 +34,7 @@ import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model
 })
 export class ListOfComplaintsComponent implements OnInit {
     complaintService = inject(ComplaintService);
+    private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -147,7 +149,11 @@ export class ListOfComplaintsComponent implements OnInit {
     loadComplaints() {
         let complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>;
 
-        if (this.tutorId) {
+        if (!this.accountService.isAtLeastInstructorInCourseWithId(this.courseId)) {
+            complaintResponse = this.exerciseId
+                ? this.complaintService.findForTutorByExerciseId(this.exerciseId, this.complaintType())
+                : this.complaintService.findForTutorByCourseId(this.courseId, this.complaintType());
+        } else if (this.tutorId) {
             if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType());
             } else if (this.examId) {
@@ -167,7 +173,7 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         this.mineScopeSubscription?.unsubscribe();
         this.mineScopeSubscription = this.subscribeToComplaintResponse(complaintResponse, 'mine');
-        this.courseManagementService.find(this.courseId).subscribe((response) => {
+        this.courseManagementService.findForManagement(this.courseId).subscribe((response) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.course.set(response?.body!);
         });

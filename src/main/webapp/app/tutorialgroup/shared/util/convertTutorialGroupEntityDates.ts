@@ -131,6 +131,7 @@ export function convertTutorialGroupSummaryArrayDatesFromServer(tutorialGroups: 
         tutorialGroup.isUserRegistered = summary.isUserRegistered;
         tutorialGroup.isUserTutor = summary.isUserTutor;
         tutorialGroup.numberOfRegisteredUsers = summary.numberOfRegisteredUsers;
+        tutorialGroup.capacityReached = summary.capacityReached;
         tutorialGroup.teachingAssistantName = summary.teachingAssistantName;
         tutorialGroup.teachingAssistantId = summary.teachingAssistantId;
         tutorialGroup.teachingAssistantImageUrl = summary.teachingAssistantImageUrl;

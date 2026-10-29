@@ -79,14 +79,14 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExerciseOnce() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExerciseTwice() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
@@ -94,7 +94,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProblemStatement_courseExercise() throws Exception {
         final var newProblem = "a new problem statement";
         final var endpoint = "/api/programming/programming-exercises/" + programmingExerciseId + "/problem-statement";
@@ -109,7 +109,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProblemStatement_examExercise() throws Exception {
         var programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM", true, TEST_PREFIX);
         var exam = programmingExercise.getExam();
@@ -129,7 +129,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExerciseAutomaticFeedbackNoTestCases() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
 
@@ -142,7 +142,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExerciseAutomaticFeedbackTestCasesPositiveWeight() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
@@ -154,7 +154,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExerciseTestCasesZeroWeight(AssessmentType assessmentType) throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
@@ -175,7 +175,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseAssessmentTypeToSemiAutomatic() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
@@ -198,7 +198,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseAssessmentTypeToAutomatic() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
@@ -330,7 +330,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteProgrammingExerciseChannel() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
@@ -349,7 +349,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
      * leave a configuration row naming an exercise that no longer exists, which is the orphan the key exists to prevent.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteProgrammingExerciseDeletesItsBuildConfig() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();

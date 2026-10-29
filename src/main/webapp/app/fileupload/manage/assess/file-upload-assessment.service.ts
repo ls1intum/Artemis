@@ -48,11 +48,6 @@ export class FileUploadAssessmentService {
             .pipe(map((res: FileUploadResultDTOResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
-    // TODO refactor all asssessment.service getAssessment calls to make similar REST calls
-    getAssessment(submissionId: number): Observable<Result> {
-        return this.http.get<FileUploadResultDTO>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/result`).pipe(map((result) => this.convertResultFromServer(result)));
-    }
-
     cancelAssessment(submissionId: number, resultId?: number): Observable<void> {
         const params = resultId ? new HttpParams().set('resultId', resultId) : undefined;
         return this.http.put<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/cancel-assessment`, null, { params });

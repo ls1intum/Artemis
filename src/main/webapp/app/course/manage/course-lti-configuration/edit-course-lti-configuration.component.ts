@@ -23,6 +23,7 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
@@ -53,6 +54,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     private readonly courseService = inject(CourseManagementService);
     private readonly router = inject(Router);
     private readonly ltiConfigurationService = inject(LtiConfigurationService);
+    private readonly accountService = inject(AccountService);
 
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
 
@@ -104,6 +106,10 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     }
 
     loadData(): void {
+        // Only administrators choose the LTI platform (see the template), and only they may list the platforms.
+        if (!this.accountService.isAdmin()) {
+            return;
+        }
         this.ltiConfigurationService
             .query({
                 page: this.page() - 1,

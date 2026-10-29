@@ -114,7 +114,7 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeletionSummary() throws Exception {
         addStudentExam(student1, false, false);
         addStudentExam(student2, false, false);
@@ -136,7 +136,7 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetExamWithExamSessions_shouldDeleteExamSessionsAndStudentExams() throws Exception {
         // Create a new exam specifically for this test to avoid interference with other tests
         Exam resetExam = examUtilService.addExam(course);
@@ -173,7 +173,7 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetExam_shouldUnregisterAllStudentsButKeepExamAndCourseEnrollment() throws Exception {
         Exam resetExam = examUtilService.addExam(course);
         // Every exam has a channel, and the deletion summary reads it.

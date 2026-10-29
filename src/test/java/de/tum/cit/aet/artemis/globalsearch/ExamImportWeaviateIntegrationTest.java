@@ -70,7 +70,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_indexesExamAndExercisesInWeaviate() throws Exception {
         Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
         sourceExam.setChannelName("weaviate-import-test");
@@ -104,7 +104,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithoutExercises_indexesExamInWeaviate() throws Exception {
         Exam sourceExam = examUtilService.addExam(course);
         sourceExam.setChannelName("weaviate-empty-import");
@@ -119,7 +119,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExerciseGroupsToExistingExam_indexesExercisesInWeaviate() throws Exception {
         // Create a target exam without exercises
         Exam targetExam = examUtilService.addExam(course);

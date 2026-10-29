@@ -324,7 +324,7 @@ describe('BonusComponent', () => {
         expect(findWithBonusSpy).toHaveBeenCalledWith(state);
 
         expect(findGradeStepsSpy).toHaveBeenCalledTimes(1);
-        expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId);
+        expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId, 'management');
 
         expect(component.isLoading()).toBe(false);
         expect(component.bonus.sourceGradingScale).toEqual(sourceGradingScale);

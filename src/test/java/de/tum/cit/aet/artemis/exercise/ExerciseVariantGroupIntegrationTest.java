@@ -136,7 +136,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateExerciseVariantGroup() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
 
@@ -148,7 +148,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCourseWithExercisesSerializesVariantGroupForCap() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group";
@@ -164,14 +164,14 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateExerciseVariantGroup_negativeMaxPointsBadRequest() throws Exception {
         CreateExerciseVariantGroupDTO negativeMaxPoints = new CreateExerciseVariantGroupDTO("Loop variants", -5.0, null, null, null, null, null);
         request.postWithResponseBody(groupsUrl(), negativeMaxPoints, ExerciseVariantGroupDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateExerciseVariantGroup_titleTooLongBadRequest() throws Exception {
         // The title column is varchar(255), so a longer title must fail validation instead of reaching persistence.
         CreateExerciseVariantGroupDTO tooLongTitle = new CreateExerciseVariantGroupDTO("x".repeat(256), null, null, null, null, null, null);
@@ -179,7 +179,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateExerciseVariantGroup_titleTooLongBadRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         UpdateExerciseVariantGroupDTO tooLongTitle = new UpdateExerciseVariantGroupDTO(created.id(), "x".repeat(256), null, null, null, null, null, null);
@@ -193,13 +193,13 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateExerciseVariantGroup_tutorForbidden() throws Exception {
         request.postWithResponseBody(groupsUrl(), sampleCreateDTO(), ExerciseVariantGroupDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateExerciseVariantGroup() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         UpdateExerciseVariantGroupDTO updateDTO = new UpdateExerciseVariantGroupDTO(created.id(), "Renamed", 50.0, null, null, null, null, null);
@@ -213,7 +213,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateExerciseVariantGroup_idMismatchBadRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         UpdateExerciseVariantGroupDTO mismatched = new UpdateExerciseVariantGroupDTO(created.id() + 1, "Renamed", null, null, null, null, null, null);
@@ -221,7 +221,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetExerciseVariantGroupsForCourse() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
 
@@ -231,7 +231,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetExerciseVariantGroup() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
 
@@ -242,13 +242,13 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetExerciseVariantGroup_unknownNotFound() throws Exception {
         request.get(groupsUrl() + "/" + Long.MAX_VALUE, HttpStatus.NOT_FOUND, ExerciseVariantGroupDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteExerciseVariantGroup_instructorAllowed() throws Exception {
         ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), sampleCreateDTO(), ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
 
@@ -258,7 +258,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteExerciseVariantGroup_withMembersDetachesExercises() throws Exception {
         ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), sampleCreateDTO(), ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
         String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group";
@@ -273,14 +273,14 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testDeleteExerciseVariantGroup_editorForbidden() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         request.delete(groupsUrl() + "/" + created.id(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignAndUnassignExerciseToGroup() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group";
@@ -294,7 +294,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testMoveExerciseBetweenGroupsInSingleRequest() throws Exception {
         ExerciseVariantGroupDTO group1 = createGroupAsEditor();
         ExerciseVariantGroupDTO group2 = createGroupAsEditor();
@@ -308,7 +308,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssigningExerciseAdoptsGroupTimeline() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         // Within the exercise's own (pre-existing) assessment due date so adopting it (see below) stays a valid combination.
@@ -331,7 +331,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssigningExerciseToGroupWithDateAlreadySetDoesNotOverwriteGroup() throws Exception {
         // Within the exercise's own pre-existing release/assessment-due dates so the resulting combination stays valid.
         ZonedDateTime due = ZonedDateTime.now().plusHours(36).truncatedTo(ChronoUnit.MILLIS);
@@ -350,7 +350,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdatingGroupTimelinePropagatesToMembers() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group";
@@ -368,7 +368,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** A group timeline edit must run the same post-update work a member's own endpoint does (scheduling, versioning, ...). */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdatingGroupTimelineRunsMemberPostUpdateSideEffects() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group";
@@ -388,7 +388,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** A programming member's build-and-test date is per-exercise, not shared, so a group due-date edit must not overwrite it. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdatingGroupTimelineKeepsProgrammingMemberBuildAndTestDate() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = release.plusDays(6);
@@ -409,7 +409,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateGroupWithInvalidProgrammingBuildAndTestDate_badRequestLeavesDatesUnchanged() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = release.plusDays(6);
@@ -487,7 +487,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignProgrammingExerciseWithInvalidBuildAndTestDate_badRequestLeavesExerciseUnchanged() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = release.plusDays(6);
@@ -512,7 +512,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void sourceTimelineEditedDuringGenerationDoesNotLeaveRejectedMembership() throws Exception {
         ProgrammingExercise source = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         ZonedDateTime originalDue = source.getDueDate().truncatedTo(ChronoUnit.MILLIS);
@@ -542,7 +542,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void sourceAssignmentFailureRollsBackClaimAndPersistedTimeline() throws Exception {
         ProgrammingExercise source = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         ZonedDateTime originalDue = exerciseRepository.findByIdElseThrow(source.getId()).getDueDate();
@@ -564,7 +564,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void sourceAssignmentCommitsAndDoesNotMoveAlreadyGroupedSource() throws Exception {
         ProgrammingExercise source = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         var created = createGroupAsEditor();
@@ -581,7 +581,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignProgrammingExerciseWithInvalidBuildAndTestDate_badRequestLeavesEmptyGroupUnchanged() throws Exception {
         ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), sampleCreateDTO(), ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
 
@@ -605,7 +605,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateGroupToInvalidTimeline_badRequestLeavesGroupDatesUnchanged() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
@@ -637,7 +637,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignProgrammingExerciseInvalidTimeline_badRequestLeavesExerciseUngrouped() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
@@ -667,7 +667,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignExerciseFromAnotherCourseBadRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         Course otherCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Other");
@@ -679,7 +679,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignExamExerciseToGroup_badRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         // An exam exercise reports the exam's course, so it would otherwise pass the ownership check; it must be rejected.
@@ -699,7 +699,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
      * hand back a proxy and pass even when the JSON is null.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testExerciseEndpointSerializesVariantGroup() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         assignToGroup(exercise.getId(), created.id());
@@ -711,7 +711,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testExerciseDetailsEndpointSerializesVariantGroup() throws Exception {
         createGroupAsEditorFor(exercise.getId());
 
@@ -723,7 +723,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** The quiz edit DTO reads the association (maps title/maxPoints/dates off it), so an unfetched proxy would throw here. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testQuizExerciseEndpointSerializesVariantGroup() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
@@ -737,7 +737,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** The programming edit page serializes the entity, so it carries the association only if fetched. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testProgrammingExerciseEndpointSerializesVariantGroup() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         createGroupAsEditorFor(programmingExercise.getId());
@@ -749,7 +749,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** The modeling exercise edit page is a DTO, so like the text one it must map the group explicitly. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testModelingExerciseEndpointSerializesVariantGroup() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.addModelingExerciseToCourse(course);
         createGroupAsEditorFor(modelingExercise.getId());
@@ -762,7 +762,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testFileUploadExerciseEndpointSerializesVariantGroup() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addFileUploadExercise(course, now.minusDays(1), now, now.plusDays(7), now.plusDays(14));
@@ -791,7 +791,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** The scores view caps a group at its maxPoints, so every member must carry its group — asserted here for a quiz too. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCourseWithExercisesSerializesVariantGroupForQuiz() throws Exception {
         QuizExercise quiz = quizInGroup();
 
@@ -841,7 +841,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** The text exercise edit page is a DTO, so unlike the entity-serializing pages it must map the group explicitly. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testTextExerciseEndpointSerializesVariantGroup() throws Exception {
         createGroupAsEditorFor(exercise.getId());
 
@@ -879,7 +879,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
      * reject the request instead.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateTextExerciseCannotChangeGroupTimeline() throws Exception {
         GroupTimeline timeline = createGroupWithTimelineFor(exercise.getId());
         TextExercise toUpdate = (TextExercise) exerciseRepository.findByIdElseThrow(exercise.getId());
@@ -891,7 +891,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateModelingExerciseCannotChangeGroupTimeline() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.addModelingExerciseToCourse(course);
         GroupTimeline timeline = createGroupWithTimelineFor(modelingExercise.getId());
@@ -904,7 +904,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateFileUploadExerciseCannotChangeGroupTimeline() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addFileUploadExercise(course, now.plusDays(1), null, now.plusDays(7), now.plusDays(14));
@@ -925,7 +925,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** The timeline-only programming endpoint rejects group members. The guard lives in the resource so the service can still propagate group dates onto members. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateProgrammingExerciseTimelineForGroupMember_badRequest() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         GroupTimeline timeline = createGroupWithTimelineFor(programmingExercise.getId());
@@ -940,7 +940,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** {@code set-visible} writes the release date through a targeted {@code @Modifying} query that bypasses validation, so it needs its own group guard. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testSetVisibleOnGroupedQuiz_badRequest() throws Exception {
         QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
         GroupTimeline timeline = createGroupWithTimelineFor(quiz.getId());
@@ -987,7 +987,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignSynchronizedQuizToGroup_badRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         QuizExercise quiz = addQuizToCourse(QuizMode.SYNCHRONIZED);
@@ -1000,7 +1000,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignBatchedQuizToGroup_badRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         QuizExercise quiz = addQuizToCourse(QuizMode.BATCHED);
@@ -1010,7 +1010,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignIndividualQuizToGroupAdoptsTimeline() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
@@ -1028,7 +1028,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignIndividualQuizToGroup_exampleSolutionDateAfterDueDateSuccess() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
@@ -1050,7 +1050,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
      * otherwise overwrite the dates of a live attempt.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignIndividualQuizWithStartedBatchToGroup_badRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
@@ -1064,7 +1064,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** The same guard for a quiz that has already ended: assigning it would move a finished quiz's due date. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAssignEndedIndividualQuizToGroup_badRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         QuizExercise quiz = addEndedQuizToCourse();
@@ -1077,7 +1077,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** A date-changing group update must be rejected once a member quiz's batch has started, leaving the member's dates untouched. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateGroupTimelineWithStartedBatchQuizMember_badRequest() throws Exception {
         QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
         // Assign while still editable so the quiz adopts the group timeline, then start a batch to lock it.
@@ -1093,7 +1093,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** The same group-update guard for an ended member quiz (membership built via repositories, since REST assignment would already reject it). */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateGroupTimelineWithEndedQuizMember_badRequest() throws Exception {
         QuizExercise quiz = addEndedQuizToCourse();
         GroupTimeline timeline = persistEndedQuizInGroup(quiz);
@@ -1110,7 +1110,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** A group edit that doesn't touch the timeline (only title/max points) stays a no-op for members, so it's allowed even while a member quiz is live. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateGroupMetadataOnlyWithLiveQuizMemberAllowed() throws Exception {
         QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
         GroupTimeline timeline = createGroupWithTimelineFor(quiz.getId());
@@ -1129,7 +1129,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     /** Regression: an editable quiz member (no started batch) still receives a group date change — the guard doesn't over-reject. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateGroupTimelinePropagatesToEditableQuizMember() throws Exception {
         QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
         GroupTimeline timeline = createGroupWithTimelineFor(quiz.getId());

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
@@ -157,14 +158,30 @@ public class FaqResource {
     @GetMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<FaqDTO> getFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
-        log.debug("REST request to get faq {}", faqId);
+        Faq faq = loadFaqInCourse(faqId, courseId);
+        checkAcceptedFaq(faq.getFaqState());
+        return ResponseEntity.ok(new FaqDTO(faq));
+    }
+
+    /**
+     * Retrieves an FAQ in any workflow state for course management.
+     *
+     * @param faqId    the FAQ to retrieve
+     * @param courseId the course owning the FAQ
+     * @return the FAQ, or 404 if it does not exist
+     */
+    @GetMapping("courses/{courseId}/faqs/{faqId}/for-management")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<FaqDTO> getFaqForManagement(@PathVariable Long faqId, @PathVariable Long courseId) {
+        return ResponseEntity.ok(new FaqDTO(loadFaqInCourse(faqId, courseId)));
+    }
+
+    private Faq loadFaqInCourse(Long faqId, Long courseId) {
         Faq faq = faqRepository.findByIdElseThrow(faqId);
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
-        checkShouldAccessNotAccepted(faq.getFaqState(), courseId);
-        FaqDTO dto = new FaqDTO(faq);
-        return ResponseEntity.ok(dto);
+        return faq;
     }
 
     /**
@@ -191,7 +208,7 @@ public class FaqResource {
 
     /**
      * GET /courses/:courseId/faqs : get all the faqs of a course
-     * Students only see accepted faqs, while tutors and instructors can see all faqs.
+     * Returns accepted FAQs for every caller of the student audience.
      *
      * @param courseId the courseId of the course for which all faqs should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
@@ -199,12 +216,26 @@ public class FaqResource {
     @GetMapping("courses/{courseId}/faqs")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<FaqDTO>> getFaqsForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all Faqs for the course with id : {}", courseId);
-        List<Faq> faqs = authCheckService.isAtLeastTeachingAssistantInCourse(courseId) ? faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId) // TAs and Instructors see
-                                                                                                                                                         // all FAQs
-                : faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, FaqState.ACCEPTED); // Students see only accepted FAQs
-        List<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).toList();
-        return ResponseEntity.ok().body(faqDTOS);
+        return ResponseEntity.ok(loadFaqs(courseId, FaqState.ACCEPTED));
+    }
+
+    /**
+     * Retrieves course FAQs in all workflow states, optionally filtered by state.
+     *
+     * @param courseId the course whose FAQs are requested
+     * @param faqState optional data filter
+     * @return the FAQs ordered by creation date, newest first
+     */
+    @GetMapping("courses/{courseId}/faqs/for-management")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<FaqDTO>> getFaqsForManagement(@PathVariable Long courseId, @RequestParam(required = false) FaqState faqState) {
+        return ResponseEntity.ok(loadFaqs(courseId, faqState));
+    }
+
+    private List<FaqDTO> loadFaqs(Long courseId, FaqState faqState) {
+        List<Faq> faqs = faqState == null ? faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId)
+                : faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, faqState);
+        return faqs.stream().map(FaqDTO::new).toList();
     }
 
     /**
@@ -218,23 +249,22 @@ public class FaqResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
         log.debug("REST request to get all Faqs for the course with id {} and status {}", courseId, faqState);
-        checkShouldAccessNotAccepted(faqState, courseId);
-        List<Faq> faqs = faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, faqState);
-        List<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).toList();
-        return ResponseEntity.ok().body(faqDTOS);
+        checkAcceptedFaq(faqState);
+        return ResponseEntity.ok(loadFaqs(courseId, faqState));
     }
 
     /**
-     * GET /courses/:courseId/faq-categories : get all the faq categories of a course
+     * GET /courses/:courseId/faq-categories : get the categories of the accepted faqs of a course, the only faqs students can see.
+     * The categories of all faqs are available to course staff through {@code faq-categories/for-management}.
      *
-     * @param courseId the courseId of the course for which all faq categories should be returned
-     * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
+     * @param courseId the courseId of the course for which the faq categories should be returned
+     * @return the ResponseEntity with status 200 (OK) and the categories of the accepted faqs in body
      */
     @GetMapping("courses/{courseId}/faq-categories")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
-        Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
+        log.debug("REST request to get the Faq Categories of the accepted Faqs of the course with id : {}", courseId);
+        Set<String> faqs = faqRepository.findAllCategoriesByCourseIdAndState(courseId, FaqState.ACCEPTED);
         return ResponseEntity.ok().body(faqs);
     }
 
@@ -242,9 +272,22 @@ public class FaqResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<String>> getFaqCategoriesForCourseByState(@PathVariable Long courseId, @PathVariable FaqState faqState) {
         log.debug("REST request to get all Faq Categories for the course with id : {} and the state {}", courseId, faqState);
-        checkShouldAccessNotAccepted(faqState, courseId);
+        checkAcceptedFaq(faqState);
         Set<String> faqs = faqRepository.findAllCategoriesByCourseIdAndState(courseId, faqState);
         return ResponseEntity.ok().body(faqs);
+    }
+
+    /**
+     * Retrieves category names from all FAQ states or the selected state for management.
+     *
+     * @param courseId the course whose categories are requested
+     * @param faqState optional data filter
+     * @return the matching category names
+     */
+    @GetMapping("courses/{courseId}/faq-categories/for-management")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<Set<String>> getFaqCategoriesForManagement(@PathVariable Long courseId, @RequestParam(required = false) FaqState faqState) {
+        return ResponseEntity.ok(faqState == null ? faqRepository.findAllCategoriesByCourseId(courseId) : faqRepository.findAllCategoriesByCourseIdAndState(courseId, faqState));
     }
 
     /**
@@ -258,9 +301,9 @@ public class FaqResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }
 
-    private void checkShouldAccessNotAccepted(FaqState faqState, Long courseId) {
+    private void checkAcceptedFaq(FaqState faqState) {
         if (faqState != FaqState.ACCEPTED) {
-            checkRoleForCourse(courseId, Role.TEACHING_ASSISTANT);
+            throw new AccessForbiddenException("Only accepted FAQs are available in the student audience");
         }
     }
 
