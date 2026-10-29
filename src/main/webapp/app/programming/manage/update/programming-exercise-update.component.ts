@@ -70,7 +70,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -729,6 +729,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             exerciseId: this.programmingExercise.id,
             exerciseType: this.programmingExercise.type ?? ExerciseType.PROGRAMMING,
             getCurrentExercise: () => this.programmingExercise,
+            // Publish a fresh model shell while preserving the category/criteria arrays shared with child editors.
+            setCurrentExercise: (exercise) => (this.programmingExercise = cloneWith(new ProgrammingExercise(undefined, undefined), exercise)),
             getBaselineExercise: () => this.backupExercise,
             setBaselineExercise: (exercise) => (this.backupExercise = exercise),
         });

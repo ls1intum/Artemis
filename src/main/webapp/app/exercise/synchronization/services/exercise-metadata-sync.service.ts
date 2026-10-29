@@ -35,6 +35,8 @@ export interface ExerciseMetadataSyncContext<T extends Exercise> {
     // Safe by construction: setBaselineExercise only ever receives values read from this same context's
     // getters (see applySnapshotToBaseline). Without this, strictFunctionTypes rejects the assignment.
     getCurrentExercise(): T;
+    /** Receives the mutated exercise so reactive editors can publish a new reference while retaining nested identities. */
+    setCurrentExercise?(exercise: T): void;
     getBaselineExercise(): T;
     setBaselineExercise(exercise: T): void;
 }
@@ -419,6 +421,7 @@ export class ExerciseMetadataSyncService {
     ): void {
         const currentExercise = context.getCurrentExercise();
         const conflictFields = new Set(conflicts.map((conflict) => conflict.field));
+        let applied = false;
 
         for (const handler of handlers) {
             if (conflictFields.has(handler.key)) {
@@ -426,6 +429,10 @@ export class ExerciseMetadataSyncService {
             }
             const incomingValue = handler.getIncomingValue(snapshot);
             handler.applyValue(currentExercise, incomingValue);
+            applied = true;
+        }
+        if (applied) {
+            context.setCurrentExercise?.(currentExercise);
         }
     }
 
@@ -518,6 +525,7 @@ export class ExerciseMetadataSyncService {
     ): void {
         const currentExercise = context.getCurrentExercise();
         const handlerMap = new Map(handlers.map((handler) => [handler.key, handler]));
+        let applied = false;
 
         for (const decision of resolution.decisions) {
             const handler = handlerMap.get(decision.field);
@@ -529,6 +537,10 @@ export class ExerciseMetadataSyncService {
             }
             const incomingValue = handler.getIncomingValue(snapshot);
             handler.applyValue(currentExercise, incomingValue);
+            applied = true;
+        }
+        if (applied) {
+            context.setCurrentExercise?.(currentExercise);
         }
     }
 
