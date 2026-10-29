@@ -20,6 +20,20 @@ import de.tum.cit.aet.artemis.core.config.valves.PublicTimeValve;
 public class TomcatConfiguration {
 
     /**
+     * The most locales Tomcat parses from the Accept-Language header of one request.
+     * <p>
+     * Tomcat 9.0.123, 10.1.61 and 11.0.27 introduced a default of 10 in a patch release. A request above the limit makes
+     * {@code getLocale()} throw, and Spring's {@code RequestContextFilter} calls it for every request, so such a client got a
+     * 500 for every page and API call. Browsers send one entry per configured language and RFC 9110 sets no maximum, so users
+     * with many languages exceed 10.
+     * <p>
+     * The limit stays because parsing costs about a microsecond per entry and a rejected header stops at the limit, which bounds
+     * the work an attacker can force with a header of up to 8 KB (roughly a thousand entries). 50 costs at most about 45 microseconds
+     * per request, an order of magnitude less than unlimited parsing at the proxy's header size.
+     */
+    static final int MAX_ACCEPT_LANGUAGE_LOCALES = 50;
+
+    /**
      * Customize the Tomcat configuration to achieve performance improvements as outlined below
      *
      * @return the WebServerFactoryCustomizer with the customized options to improve the performance
@@ -31,6 +45,7 @@ public class TomcatConfiguration {
             container.addEngineValves(new HealthCheckValve());
             // Add time valve for ultra-fast /time responses used by the webapp
             container.addEngineValves(new PublicTimeValve());
+            container.addConnectorCustomizers(connector -> connector.setMaxLocaleCount(MAX_ACCEPT_LANGUAGE_LOCALES));
 
             container.addContextCustomizers((Context context) -> {
 

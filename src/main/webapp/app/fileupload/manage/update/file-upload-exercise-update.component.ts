@@ -53,6 +53,7 @@ import { ExerciseFormState } from 'app/exercise/util/exercise-form-state';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const MIN_FILE_PATTERN_LENGTH = 2;
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -81,6 +82,7 @@ const MIN_FILE_PATTERN_LENGTH = 2;
         ArtemisTranslatePipe,
         ExerciseTimelineComponent,
         ExerciseGroupDateNoticeComponent,
+        PointsInputComponent,
     ],
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {

@@ -119,13 +119,21 @@
         </section>
     </div>
     <div class="card-row">
-        <section class="card narrow" aria-labelledby="attendance-card-title">
+        <section class="card narrow" aria-labelledby="attendance-card-title" data-testid="tutorial-group-attendance-card">
             <h3 id="attendance-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h3>
-            @let attendancePercentage = averageAttendancePercentage();
-            @if (attendancePercentage) {
+            @let attendanceLabel = attendanceChartLabel();
+            @if (attendanceLabel) {
                 <div class="attendance-card-content">
-                    <span class="doughnut-chart-text">{{ attendancePercentage }}</span>
-                    <tumaet-ui-doughnut-chart class="h-[122px] w-[122px]" [labels]="chartData().labels" [series]="chartData().series" [config]="chartConfig" aria-hidden="true" />
+                    <div class="chart-wrapper">
+                        <span class="doughnut-chart-text">{{ attendanceLabel }}</span>
+                        <tumaet-ui-doughnut-chart
+                            data-testid="tutorial-group-attendance-chart"
+                            [labels]="chartData().labels"
+                            [series]="chartData().series"
+                            [config]="chartConfig"
+                            aria-hidden="true"
+                        />
+                    </div>
                 </div>
             } @else {
                 <div class="disclaimer" data-testid="no-attendance-data-available-disclaimer">
@@ -208,125 +216,127 @@
     </div>
     @let sessions = tutorialGroupSessions();
     @if (sessions) {
-        <table>
-            <thead>
-                <tr>
-                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.date"></th>
-                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.time"></th>
-                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.location"></th>
-                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.status"></th>
-                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.attendance"></th>
-                    @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
-                        <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.actions"></th>
-                    }
-                </tr>
-            </thead>
-            <tbody>
-                @for (session of sessions; track session.date) {
+        <div class="session-table-scroll">
+            <table>
+                <thead>
                     <tr>
-                        <td>
-                            <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
-                                {{ session.date }}
-                                @if (!session.isCancelled && session.dateChanged) {
-                                    <div class="change-indicator" aria-hidden="true"></div>
-                                }
-                            </div>
-                        </td>
-                        <td>
-                            <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
-                                {{ session.time }}
-                                @if (!session.isCancelled && session.timeChanged) {
-                                    <div class="change-indicator" aria-hidden="true"></div>
-                                }
-                            </div>
-                        </td>
-                        <td>
-                            <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
-                                {{ session.location }}
-                                @if (!session.isCancelled && session.locationChanged) {
-                                    <div class="change-indicator" aria-hidden="true"></div>
-                                }
-                            </div>
-                        </td>
-                        <td>
-                            <jhi-course-tutorial-group-detail-session-status-indicator
-                                [isCancelled]="session.isCancelled"
-                                [locationChanged]="session.locationChanged"
-                                [timeChanged]="session.timeChanged"
-                                [dateChanged]="session.dateChanged"
-                            />
-                        </td>
-                        <td>{{ session.attendance }}</td>
+                        <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.date"></th>
+                        <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.time"></th>
+                        <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.location"></th>
+                        <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.status"></th>
+                        <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.attendance"></th>
                         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
-                            <td>
-                                <div class="session-actions">
-                                    <!-- Icon-only, so the tooltip label doubles as the accessible name the icon itself cannot carry. -->
-                                    <button
-                                        tumAetUiButton
-                                        size="small"
-                                        severity="secondary"
-                                        variant="text"
-                                        type="button"
-                                        [pTooltip]="editSessionButtonTooltipLabel()"
-                                        [attr.aria-label]="editSessionButtonTooltipLabel()"
-                                        tooltipPosition="left"
-                                        data-testid="edit-session-button"
-                                        (click)="openSessionModal(session.id)"
-                                    >
-                                        <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
-                                    </button>
-                                    @if (session.isCancelled && !session.isCancelledByFreePeriod) {
-                                        <button
-                                            tumAetUiButton
-                                            size="small"
-                                            severity="secondary"
-                                            variant="text"
-                                            type="button"
-                                            [pTooltip]="activateSessionButtonTooltipLabel()"
-                                            [attr.aria-label]="activateSessionButtonTooltipLabel()"
-                                            tooltipPosition="left"
-                                            data-testid="activate-session-button"
-                                            (click)="activateTutorialGroupSession(session.id)"
-                                        >
-                                            <fa-icon [icon]="faCirclePlay" aria-hidden="true" />
-                                        </button>
-                                    } @else if (!session.isCancelled) {
-                                        <button
-                                            tumAetUiButton
-                                            size="small"
-                                            severity="secondary"
-                                            variant="text"
-                                            type="button"
-                                            [pTooltip]="cancelSessionButtonTooltipLabel()"
-                                            [attr.aria-label]="cancelSessionButtonTooltipLabel()"
-                                            tooltipPosition="left"
-                                            data-testid="cancel-session-button"
-                                            (click)="cancelTutorialGroupSession(session.id)"
-                                        >
-                                            <fa-icon [icon]="faBan" aria-hidden="true" />
-                                        </button>
-                                    }
-                                    <button
-                                        tumAetUiButton
-                                        size="small"
-                                        severity="danger"
-                                        variant="text"
-                                        type="button"
-                                        [pTooltip]="deleteSessionButtonTooltipLabel()"
-                                        [attr.aria-label]="deleteSessionButtonTooltipLabel()"
-                                        tooltipPosition="left"
-                                        data-testid="delete-session-button"
-                                        (click)="confirmSessionDeletion($event, session.id)"
-                                    >
-                                        <fa-icon [icon]="faTrash" aria-hidden="true" />
-                                    </button>
-                                </div>
-                            </td>
+                            <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.actions"></th>
                         }
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @for (session of sessions; track session.date) {
+                        <tr>
+                            <td>
+                                <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                                    {{ session.date }}
+                                    @if (!session.isCancelled && session.dateChanged) {
+                                        <div class="change-indicator" aria-hidden="true"></div>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                                    {{ session.time }}
+                                    @if (!session.isCancelled && session.timeChanged) {
+                                        <div class="change-indicator" aria-hidden="true"></div>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                                    {{ session.location }}
+                                    @if (!session.isCancelled && session.locationChanged) {
+                                        <div class="change-indicator" aria-hidden="true"></div>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <jhi-course-tutorial-group-detail-session-status-indicator
+                                    [isCancelled]="session.isCancelled"
+                                    [locationChanged]="session.locationChanged"
+                                    [timeChanged]="session.timeChanged"
+                                    [dateChanged]="session.dateChanged"
+                                />
+                            </td>
+                            <td>{{ session.attendance }}</td>
+                            @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
+                                <td>
+                                    <div class="session-actions">
+                                        <!-- Icon-only, so the tooltip label doubles as the accessible name the icon itself cannot carry. -->
+                                        <button
+                                            tumAetUiButton
+                                            size="small"
+                                            severity="secondary"
+                                            variant="text"
+                                            type="button"
+                                            [pTooltip]="editSessionButtonTooltipLabel()"
+                                            [attr.aria-label]="editSessionButtonTooltipLabel()"
+                                            tooltipPosition="left"
+                                            data-testid="edit-session-button"
+                                            (click)="openSessionModal(session.id)"
+                                        >
+                                            <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
+                                        </button>
+                                        @if (session.isCancelled && !session.isCancelledByFreePeriod) {
+                                            <button
+                                                tumAetUiButton
+                                                size="small"
+                                                severity="secondary"
+                                                variant="text"
+                                                type="button"
+                                                [pTooltip]="activateSessionButtonTooltipLabel()"
+                                                [attr.aria-label]="activateSessionButtonTooltipLabel()"
+                                                tooltipPosition="left"
+                                                data-testid="activate-session-button"
+                                                (click)="activateTutorialGroupSession(session.id)"
+                                            >
+                                                <fa-icon [icon]="faCirclePlay" aria-hidden="true" />
+                                            </button>
+                                        } @else if (!session.isCancelled) {
+                                            <button
+                                                tumAetUiButton
+                                                size="small"
+                                                severity="secondary"
+                                                variant="text"
+                                                type="button"
+                                                [pTooltip]="cancelSessionButtonTooltipLabel()"
+                                                [attr.aria-label]="cancelSessionButtonTooltipLabel()"
+                                                tooltipPosition="left"
+                                                data-testid="cancel-session-button"
+                                                (click)="cancelTutorialGroupSession(session.id)"
+                                            >
+                                                <fa-icon [icon]="faBan" aria-hidden="true" />
+                                            </button>
+                                        }
+                                        <button
+                                            tumAetUiButton
+                                            size="small"
+                                            severity="danger"
+                                            variant="text"
+                                            type="button"
+                                            [pTooltip]="deleteSessionButtonTooltipLabel()"
+                                            [attr.aria-label]="deleteSessionButtonTooltipLabel()"
+                                            tooltipPosition="left"
+                                            data-testid="delete-session-button"
+                                            (click)="confirmSessionDeletion($event, session.id)"
+                                        >
+                                            <fa-icon [icon]="faTrash" aria-hidden="true" />
+                                        </button>
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
 </div>
 <p-confirmdialog />
