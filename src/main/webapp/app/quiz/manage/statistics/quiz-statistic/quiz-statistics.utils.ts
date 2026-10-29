@@ -5,7 +5,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
  * @param quizExercise the exercise the score should be computed
  * @return (int): sum over the Scores of all questions
  */
-export function calculateMaxScore(quizExercise: QuizExercise) {
+export function calculateMaxScore(quizExercise: Pick<QuizExercise, 'maxPoints'> & { quizQuestions?: { points?: number }[] }) {
     let result = 0;
 
     if (quizExercise.quizQuestions) {

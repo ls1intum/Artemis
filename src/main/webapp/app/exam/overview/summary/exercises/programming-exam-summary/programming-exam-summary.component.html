@@ -7,10 +7,12 @@
                         <h5 class="m-0! text-base! font-semibold!" jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
                     }
                     <jhi-code-button
-                        [smallButtons]="true"
-                        [participations]="[participation()]"
-                        [repositoryUri]="participation()?.userIndependentRepositoryUri ?? ''"
-                        [routerLinkForRepositoryView]="routerLinkForRepositoryView"
+                        size="small"
+                        [allowOnlineIde]="false"
+                        [exerciseId]="exercise().id!"
+                        [repositoryUri]="participation()?.repositoryUri ?? participation()?.userIndependentRepositoryUri ?? ''"
+                        [repositoryViewLink]="repositoryViewLink"
+                        [vcsAccessTokenSourceInfo]="vcsAccessTokenSourceInfo()"
                     />
                     <span>
                         @if (submission()) {

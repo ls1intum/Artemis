@@ -37,7 +37,7 @@ final class ApprovedStructuralContract {
 
     private static final Pattern TYPE_NAME = Pattern.compile("[\\w$.]+");
 
-    private static final Pattern JAVA_BLOCK = Pattern.compile("```java\\s*([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);
+    private static final Pattern JAVA_BLOCK = Pattern.compile("```java([^`]*+(?:`(?!``)[^`]*+)*+)```", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern STUDENT_CREATES_MARKER = Pattern.compile("@studentCreates\\b");
 

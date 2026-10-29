@@ -456,22 +456,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             modelingSubmission = (ModelingSubmission) optionalLatestSubmission.get();
         }
 
-        // do not send the result to the client if the assessment is not finished
-        Result latestResult = modelingSubmission.getLatestResult();
-        if (latestResult != null && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA
-                && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
-            modelingSubmission.setResults(Set.of());
-        }
-
-        if (!ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
-            // We want to have the preliminary feedback before the assessment due date too
-            List<Result> athenaResults = modelingSubmission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
-                    .toList();
-            modelingSubmission.setResults(new LinkedHashSet<>(athenaResults));
-        }
-
-        if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            modelingSubmission.getLatestResult().filterSensitiveInformation();
+        // Filter each result: a newer AI request must not make an older unfinished manual assessment visible.
+        boolean assessmentPeriodOver = ExerciseDateService.isAfterAssessmentDueDate(exercise);
+        List<Result> visibleResults = modelingSubmission.getResults().stream().filter(Objects::nonNull)
+                .filter(result -> isResultVisibleInStudentEditor(result, assessmentPeriodOver)).toList();
+        modelingSubmission.setResults(new LinkedHashSet<>(visibleResults));
+        if (!validationResult.isAtLeastTutor) {
+            visibleResults.forEach(Result::filterSensitiveInformation);
         }
 
         // make sure sensitive information are not sent to the client
@@ -504,6 +495,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var validationResult = validateParticipation(participationId);
         var studentParticipation = validationResult.studentParticipation;
         Comparator<Result> resultsByMostRecentCompletion = Comparator.comparing(Result::getCompletionDate, Comparator.nullsFirst(Comparator.naturalOrder())).reversed();
+        boolean assessmentPeriodOver = ExerciseDateService.isAfterAssessmentDueDate(validationResult.modelingExercise);
 
         // Get the submissions associated with the participation
         Set<Submission> submissions = studentParticipation.getSubmissions();
@@ -514,19 +506,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             submission.setParticipation(studentParticipation);
 
             // Filter results within each submission based on assessment type and period
-            List<Result> filteredResults = submission.getResults().stream().filter(Objects::nonNull).filter(result -> {
-                if (!validationResult.isAtLeastTutor) {
-                    if (ExerciseDateService.isAfterAssessmentDueDate(validationResult.modelingExercise)) {
-                        return true; // Include all results if the assessment period is over
-                    }
-                    else {
-                        return result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA; // Only include Athena results if the assessment period is not over
-                    }
-                }
-                else {
-                    return true; // Tutors and above can see all results
-                }
-            }).peek(Result::filterSensitiveInformation).sorted(resultsByMostRecentCompletion).toList();
+            List<Result> filteredResults = submission.getResults().stream().filter(Objects::nonNull)
+                    .filter(result -> validationResult.isAtLeastTutor || isResultVisibleInStudentEditor(result, assessmentPeriodOver)).peek(Result::filterSensitiveInformation)
+                    .sorted(resultsByMostRecentCompletion).toList();
 
             // Set filtered results back into the submission if any results remain after filtering
             if (!filteredResults.isEmpty()) {
@@ -542,5 +524,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         List<ModelingSubmissionResponseDTO> submissionDTOs = submissionsWithResults.stream()
                 .map(submission -> ModelingSubmissionResponseDTO.of((ModelingSubmission) submission, true)).toList();
         return ResponseEntity.ok().body(submissionDTOs);
+    }
+
+    private static boolean isResultVisibleInStudentEditor(Result result, boolean assessmentPeriodOver) {
+        return result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA || assessmentPeriodOver && result.getCompletionDate() != null && result.getAssessor() != null;
     }
 }

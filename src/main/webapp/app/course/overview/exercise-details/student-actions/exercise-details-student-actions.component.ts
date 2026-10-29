@@ -1,11 +1,13 @@
 import { ProgrammingExerciseParticipationActionsComponent } from 'app/exercise/participation/programming-exercise-participation-actions/programming-exercise-participation-actions.component';
 import { StudentExerciseActionsDirective } from 'app/exercise/participation/student-exercise-actions.directive';
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
-import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 
@@ -51,4 +53,21 @@ export class ExerciseDetailsStudentActionsComponent extends StudentExerciseActio
 
     readonly equalColumns = input(true);
     readonly smallColumns = input(false);
+
+    readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
+    readonly gradedRepositoryUri = computed(() => this.getGradedRepositoryUri());
+
+    private getProgrammingParticipationForCodeButton(): ProgrammingExerciseStudentParticipation | undefined {
+        const participations = this.studentParticipations();
+        return this.participationService.getSpecificStudentParticipation(participations, false) ?? participations[0];
+    }
+
+    private getGradedRepositoryUri(): string {
+        const participation = this.programmingParticipationForCodeButton();
+        return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
+    }
+
+    private isProgrammingExerciseStudentParticipation(participation: StudentParticipation): participation is ProgrammingExerciseStudentParticipation {
+        return participation.type === ParticipationType.PROGRAMMING;
+    }
 }

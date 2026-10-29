@@ -567,7 +567,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
             const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
             expect(startExerciseButton).not.toBeNull();
-            expect(startExerciseButton.componentInstance.overwriteDisabled()).toBe(true);
+            expect(startExerciseButton.componentInstance.forceDisabled()).toBe(true);
         },
     );
 

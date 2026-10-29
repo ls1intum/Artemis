@@ -115,7 +115,7 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         assertThat(studentParticipationRepository.findIndividualGradesByCourseId(course.getId())).extracting(CourseGradeScoreDTO::score).containsExactly(60.0);
         assertThat(studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(course.getId()), studentId)).extracting(CourseGradeScoreDTO::score)
                 .containsExactly(60.0);
-        assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), studentId)).extracting(CourseGradeScoreDTO::score)
+        assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), studentId, now)).extracting(CourseGradeScoreDTO::score)
                 .containsExactly(60.0);
     }
 

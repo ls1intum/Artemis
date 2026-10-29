@@ -1,8 +1,6 @@
 import { resizeVideoColumn, syncVideoTranscriptHeight } from '../video-transcript-layout.util';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResizableConstraints, ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
@@ -33,7 +31,7 @@ const MIN_TRANSCRIPT_WIDTH = 250;
 @Component({
     selector: 'jhi-youtube-player',
     standalone: true,
-    imports: [YouTubePlayer, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe, ResizableDirective],
+    imports: [YouTubePlayer, TranscriptViewerComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './youtube-player.component.html',
     styleUrls: ['./youtube-player.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,9 +55,6 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     private readonly currentSlideNumber = signal<number | undefined>(undefined);
 
     playerComponent = viewChild(YouTubePlayer);
-
-    /** FontAwesome icon for the resizer grip */
-    protected readonly faGripLinesVertical = faGripLinesVertical;
 
     // view refs for the resizer (mirror VideoPlayerComponent)
     videoWrapper = viewChild<ElementRef<HTMLDivElement>>('videoWrapper');

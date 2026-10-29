@@ -26,14 +26,12 @@
          this handle through resizableHandleOutsideHost, mirroring the previous interact.js between-columns divider. -->
     <button
         type="button"
-        class="resizer-handle"
+        class="resizer-handle panel-divider-x"
         #resizerHandle
         (dblclick)="resetSplitRatio()"
         (keydown.enter)="resetSplitRatio()"
         (keydown.space)="resetSplitRatio(); $event.preventDefault()"
         [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
-    >
-        <fa-icon [icon]="faGripLinesVertical" [attr.aria-hidden]="true" />
-    </button>
+    ></button>
     <jhi-transcript-viewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
 </div>

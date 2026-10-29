@@ -1250,6 +1250,65 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'exercises', 'text-exercises', 42, 'participate', 1, 'submission', 5]);
         });
 
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING].flatMap((type) => [undefined, false].map((successful) => ({ type, successful }))))(
+            'does not reopen prior Athena feedback for a $type pending or failed request (successful=$successful)',
+            ({ type, successful }) => {
+                const previous = { ...athenaResult(true), id: 76 };
+                startWith([changed([previous])], type);
+                const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+                participationWebsocketBehaviorSubject.next(changed([previous, athenaResult(successful)]));
+
+                expect(navigateSpy).not.toHaveBeenCalled();
+            },
+        );
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('opens the newly completed feedback submission for %s once, preserving earlier feedback', (type) => {
+            const previous = { ...athenaResult(true), id: 76 };
+            startWith([changed([previous])], type);
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+            const completed = changed([], {
+                submissions: [
+                    { id: 5, results: [previous] },
+                    { id: 6, results: [athenaResult(true)] },
+                ],
+            });
+
+            participationWebsocketBehaviorSubject.next(completed);
+            participationWebsocketBehaviorSubject.next(completed);
+
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith([
+                '/courses',
+                1,
+                'exercises',
+                type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises',
+                42,
+                'participate',
+                1,
+                'submission',
+                6,
+            ]);
+        });
+
+        it.each([true, false])('reports completion of the persisted pending Athena result once (successful=%s)', (successful) => {
+            startWith([changed([athenaResult(undefined, dayjs().add(5, 'minutes'))])]);
+            comp.exercise!.dueDate = undefined;
+            const alert = TestBed.inject(AlertService);
+            const successSpy = vi.spyOn(alert, 'success');
+            const errorSpy = vi.spyOn(alert, 'error');
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(successful)], { exercise: { id: 42 } as Exercise }));
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(successful)], { exercise: { id: 42 } as Exercise }));
+
+            if (successful) {
+                expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: 'Essay' });
+                expect(errorSpy).not.toHaveBeenCalled();
+            } else {
+                expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackFailed');
+                expect(successSpy).not.toHaveBeenCalled();
+            }
+        });
+
         it('should open the submission with the Athena feedback of a modeling exercise', () => {
             startWith([{ id: 1, testRun: false, submissions: [] } as unknown as StudentParticipation], ExerciseType.MODELING);
             const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
