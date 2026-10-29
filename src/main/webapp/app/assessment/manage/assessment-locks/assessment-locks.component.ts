@@ -7,7 +7,7 @@ import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
@@ -18,6 +18,7 @@ import { combineLatest } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -34,8 +35,6 @@ export class AssessmentLocksComponent implements OnInit {
     private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
     private courseService = inject(CourseManagementService);
     private examManagementService = inject(ExamManagementService);
-
-    readonly ExerciseType = ExerciseType;
 
     course?: Course;
     readonly courseId = signal<number>(undefined!);
@@ -88,6 +87,11 @@ export class AssessmentLocksComponent implements OnInit {
             },
             error: (response: string) => this.onError(response),
         });
+    }
+
+    getAssessmentLink(submission: Submission): string[] {
+        const exercise = submission.participation!.exercise!;
+        return getLinkToSubmissionAssessment(exercise.type!, this.courseId(), exercise.id!, submission.participation?.id, submission.id!, this.examId, exercise.exerciseGroup?.id);
     }
 
     /**

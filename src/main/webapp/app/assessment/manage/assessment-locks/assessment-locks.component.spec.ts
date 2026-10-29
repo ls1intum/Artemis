@@ -19,7 +19,8 @@ import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -43,6 +44,7 @@ describe('AssessmentLocksComponent', () => {
         TestBed.configureTestingModule({
             imports: [AssessmentLocksComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockHasAnyAuthorityDirective, MockPipe(ArtemisDatePipe)],
             providers: [
+                provideRouter([]),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(TextAssessmentService),
@@ -85,6 +87,26 @@ describe('AssessmentLocksComponent', () => {
         // Note: findAllLockedSubmissionsOfCourse is already called once in beforeEach during detectChanges
         // We verify it was called by checking the spy set up in beforeEach
         expect(courseService.findAllLockedSubmissionsOfCourse).toHaveBeenCalled();
+    });
+
+    it.each([
+        [ExerciseType.TEXT, undefined, undefined, 0, '/course-management/9437/text-exercises/818/submissions/1033/assessment?correction-round=0'],
+        [ExerciseType.TEXT, 42, 51, 1, '/course-management/9437/exams/42/exercise-groups/51/text-exercises/818/submissions/1033/assessment?correction-round=1'],
+        [ExerciseType.MODELING, 42, 52, 0, '/course-management/9437/exams/42/exercise-groups/52/modeling-exercises/818/submissions/1033/assessment?correction-round=0'],
+        [ExerciseType.PROGRAMMING, 42, 53, 1, '/course-management/9437/exams/42/exercise-groups/53/programming-exercises/818/submissions/1033/assessment?correction-round=1'],
+    ])('renders a resumable %s assessment link for exam %s and group %s', (type, examId, groupId, correctionRound, href) => {
+        component.courseId.set(9437);
+        component.examId = examId;
+        component.submissions.set([
+            {
+                id: 1033,
+                participation: { id: 1065, exercise: { id: 818, type, exerciseGroup: groupId ? { id: groupId } : undefined } },
+                latestResult: { correctionRound },
+            } as Submission,
+        ]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('tbody a').getAttribute('href')).toBe(href);
     });
 
     it('should release lock for programming exercise', () => {
