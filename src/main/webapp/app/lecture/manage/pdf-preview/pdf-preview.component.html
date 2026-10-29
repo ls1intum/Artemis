@@ -197,7 +197,7 @@
                 [disabled]="isSaving() || isPdfLoading() || totalPages() === 0 || !hasChanges()"
             >
                 @if (isSaving()) {
-                    <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+                    <tumaet-ui-progress-spinner class="size-4" [ariaLabel]="'loading' | artemisTranslate" />
                 } @else {
                     <fa-icon [icon]="faSave" [tumAetUiTooltip]="'entity.action.save' | artemisTranslate" />
                 }

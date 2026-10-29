@@ -640,6 +640,19 @@ describe('PdfPreviewComponent', () => {
             expect(footerButton('pdf-preview-back').disabled).toBe(true);
         });
 
+        it('should show an icon-sized spinner in the save button while the changes are saved', () => {
+            fixture.detectChanges();
+            const saveSpinner = () => fixture.nativeElement.querySelector('button[type="submit"] tumaet-ui-progress-spinner');
+            expect(saveSpinner()).toBeNull();
+
+            component.isSaving.set(true);
+            fixture.detectChanges();
+
+            // The kit spinner is 100px wide by default and would stretch the button.
+            expect(saveSpinner()).not.toBeNull();
+            expect(saveSpinner().classList).toContain('size-4');
+        });
+
         it('should not go back once more when a deletion completes after the user left the page', async () => {
             component.ngOnDestroy();
 
