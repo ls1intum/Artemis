@@ -391,6 +391,22 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.loadingFeedbackSuggestions()).toBe(false);
         });
 
+        it('should enable submitting once the fetched feedback suggestions make the assessment valid', async () => {
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const suggestion = { ...new Feedback(), reference: 'element:1', type: FeedbackType.AUTOMATIC, credits: 2, text: 'Suggested feedback' };
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(component.referencedFeedback).toContainEqual(suggestion);
+            expect(component.assessmentsAreValid()).toBe(true);
+        });
+
         it('should not re-fetch feedback suggestions when the submission already has a persisted adapted suggestion', async () => {
             // Referenced modeling suggestions are typed AUTOMATIC, so a saved adapted suggestion alone still looked
             // like "only automatic feedback" (a fresh assessment) to the old gate, causing it to refetch and

@@ -418,6 +418,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);
+            // The suggestions arrive after the submission was validated without them, so Submit would stay disabled until an edit.
+            this.validateFeedback();
         } finally {
             if (this.submission() == submissionAtStart) {
                 this.loadingFeedbackSuggestions.set(false);
