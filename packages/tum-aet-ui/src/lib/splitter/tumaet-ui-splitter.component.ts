@@ -3,7 +3,6 @@ import {
     ChangeDetectionStrategy,
     Component,
     DestroyRef,
-    Directive,
     ElementRef,
     Renderer2,
     TemplateRef,
@@ -12,32 +11,22 @@ import {
     effect,
     inject,
     input,
-    linkedSignal,
-    numberAttribute,
     output,
+    signal,
 } from '@angular/core';
-
-/** Declares one of exactly two persistent splitter panels, in document order. */
-@Directive({ selector: 'ng-template[tumAetUiSplitterPanel]' })
-export class TumAetUiSplitterPanelDirective {
-    readonly template = inject(TemplateRef<unknown>);
-}
+import { TUM_AET_UI_TRANSLATOR } from '../i18n/tumaet-ui-translations';
 
 /**
  * Two persistent panels separated by a keyboard and pointer operated separator.
  * Sizes and minimums are percentages of the available space excluding the gutter.
- * Arrow keys adjust by one percentage point (ten with Shift); Home/End reach the minimum/maximum.
- * Horizontal places panels side by side; vertical stacks them. Persistence belongs to the consumer.
+ * Arrow keys adjust by two percentage points (ten with Shift); Home/End reach the limits.
  */
 @Component({
     selector: 'tumaet-ui-splitter',
     imports: [NgTemplateOutlet],
     templateUrl: './tumaet-ui-splitter.component.html',
     styleUrl: './tumaet-ui-splitter.component.scss',
-    host: {
-        '[class.vertical]': 'orientation() === "vertical"',
-        '[style.flex-direction]': 'orientation() === "vertical" ? "column" : "row"',
-    },
+    host: { '[attr.data-layout]': 'layout()', '[class.vertical]': 'layout() === "vertical"' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumAetUiSplitterComponent {
@@ -45,88 +34,115 @@ export class TumAetUiSplitterComponent {
     private readonly document = inject(DOCUMENT);
     private readonly destroyRef = inject(DestroyRef);
     private readonly renderer = inject(Renderer2);
+    private readonly translator = inject(TUM_AET_UI_TRANSLATOR);
 
-    readonly orientation = input<'horizontal' | 'vertical'>('horizontal');
-    /** Two nonnegative relative weights, normalized to 100 and clamped to minSizes. */
-    readonly sizes = input<readonly number[]>([50, 50]);
-    /** Minimum percentages. Impossible minimums whose sum exceeds 100 are proportionally normalized. */
-    readonly minSizes = input<readonly number[]>([0, 0]);
-    readonly gutterSize = input(8, { transform: numberAttribute });
-    readonly separatorLabel = input.required<string>();
+    readonly layout = input<'horizontal' | 'vertical'>('horizontal');
+    /** Initial nonnegative relative weights, normalized to 100; user resizes are retained until these inputs change. */
+    readonly panelSizes = input<readonly number[]>([50, 50]);
+    /** Impossible minimums whose sum exceeds 100 are proportionally normalized. */
+    readonly minSizes = input<readonly number[]>([10, 10]);
+    /** Optional local-storage key. Each orientation retains an independent size. */
+    readonly stateKey = input<string>();
+    readonly ariaLabel = input<string>();
+    /** Explicit gutter width in pixels; otherwise the splitter divider CSS token applies. */
+    readonly gutterSize = input<number>();
     /** Fix the second panel to a CSS size and hide the separator while retaining both panel views. */
     readonly collapsedSecondSize = input<string>();
     readonly sizesChange = output<number[]>();
     readonly resizeEnd = output<number[]>();
 
-    protected readonly panels = contentChildren(TumAetUiSplitterPanelDirective);
+    protected readonly panels = contentChildren('panel', { read: TemplateRef<unknown> });
+    protected readonly size = signal(50);
     protected readonly minimums = computed(() => {
         const first = this.percentage(this.minSizes()[0]);
         const second = this.percentage(this.minSizes()[1]);
         const sum = first + second;
         return sum > 100 ? [(first * 100) / sum, (second * 100) / sum] : [first, second];
     });
+    protected readonly minimum = computed(() => this.minimums()[0]);
     protected readonly maximum = computed(() => 100 - this.minimums()[1]);
-    protected readonly current = linkedSignal(() => {
-        const [first, second] = this.sizes();
-        const sum = first + second;
-        return this.clamp(Number.isFinite(sum) && first >= 0 && second >= 0 && sum > 0 ? (first * 100) / sum : 50);
+    protected readonly safeGutterSize = computed(() => {
+        const size = this.gutterSize();
+        return size !== undefined && Number.isFinite(size) ? Math.max(0, size) : undefined;
     });
-    protected readonly safeGutterSize = computed(() => Math.max(0, Number.isFinite(this.gutterSize()) ? this.gutterSize() : 8));
-    protected readonly firstBasis = computed(() => (this.collapsedSecondSize() ? undefined : `calc((100% - ${this.safeGutterSize()}px) * ${this.current() / 100})`));
+    protected readonly separatorLabel = computed(() => {
+        this.translator.translationChanges?.();
+        return this.ariaLabel() || this.translator.translate('tumAetUi.splitter.resize');
+    });
     private dragCleanup?: () => void;
 
     constructor() {
         this.destroyRef.onDestroy(() => this.dragCleanup?.());
         effect(() => {
-            // A responsive/controlled update during a gesture must not leave a viewport shield behind.
-            this.orientation();
-            this.minSizes();
+            const key = this.storageKey();
+            const [first, second] = this.panelSizes();
+            const sum = first + second;
+            let initial = Number.isFinite(sum) && first >= 0 && second >= 0 && sum > 0 ? (first * 100) / sum : 50;
+            if (key) {
+                try {
+                    const stored = this.document.defaultView?.localStorage.getItem(key);
+                    if (stored !== undefined && stored !== null && Number.isFinite(Number(stored))) {
+                        initial = Number(stored);
+                    }
+                } catch {
+                    // Resizing remains available when browser storage is disabled.
+                }
+            }
+            // Controlled/responsive updates end the gesture before replacing its geometry or state.
+            this.dragCleanup?.();
+            this.size.set(this.clamp(initial));
+        });
+        effect(() => {
+            this.layout();
             this.collapsedSecondSize();
+            this.gutterSize();
             this.dragCleanup?.();
         });
     }
 
-    protected onKeydown(event: KeyboardEvent): void {
+    protected resizeWithKeyboard(event: KeyboardEvent): void {
         if (this.collapsedSecondSize()) {
             return;
         }
-        const increase = this.orientation() === 'horizontal' ? 'ArrowRight' : 'ArrowDown';
-        const decrease = this.orientation() === 'horizontal' ? 'ArrowLeft' : 'ArrowUp';
-        let value: number;
-        switch (event.key) {
-            case 'Home':
-                value = this.minimums()[0];
-                break;
-            case 'End':
-                value = this.maximum();
-                break;
-            default:
-                if (event.key !== increase && event.key !== decrease) {
-                    return;
-                }
-                value = this.current() + (event.key === increase ? 1 : -1) * (event.shiftKey ? 10 : 1);
+        const decrease = this.layout() === 'horizontal' ? 'ArrowLeft' : 'ArrowUp';
+        const increase = this.layout() === 'horizontal' ? 'ArrowRight' : 'ArrowDown';
+        let value = this.size();
+        if (event.key === decrease) {
+            value -= event.shiftKey ? 10 : 2;
+        } else if (event.key === increase) {
+            value += event.shiftKey ? 10 : 2;
+        } else if (event.key === 'Home') {
+            value = this.minimum();
+        } else if (event.key === 'End') {
+            value = this.maximum();
+        } else {
+            return;
         }
         event.preventDefault();
         this.update(value);
-        this.resizeEnd.emit(this.values());
+        this.persist();
     }
 
-    protected onPointerdown(event: PointerEvent): void {
+    protected startResize(event: PointerEvent): void {
         if (event.button !== 0 || this.collapsedSecondSize()) {
             return;
         }
         event.preventDefault();
         this.dragCleanup?.();
-        const horizontal = this.orientation() === 'horizontal';
+        const horizontal = this.layout() === 'horizontal';
         const bounds = this.element.nativeElement.getBoundingClientRect();
-        const available = (horizontal ? bounds.width : bounds.height) - this.safeGutterSize();
+        const separator = event.currentTarget as HTMLElement;
+        const gutterBounds = separator.getBoundingClientRect();
+        const measuredGutter = horizontal ? gutterBounds.width : gutterBounds.height;
+        const cssGutter = Number.parseFloat(this.document.defaultView?.getComputedStyle(separator).flexBasis ?? '');
+        const fallbackGutter = this.safeGutterSize() ?? (Number.isFinite(cssGutter) && cssGutter >= 0 ? cssGutter : 6);
+        const available = (horizontal ? bounds.width : bounds.height) - (measuredGutter > 0 ? measuredGutter : fallbackGutter);
         if (available <= 0) {
             return;
         }
         const start = horizontal ? event.clientX : event.clientY;
-        const previous = this.current();
+        const previous = this.size();
         const pointerId = event.pointerId;
-        const separator = event.currentTarget as HTMLElement;
         separator.focus();
         separator.setPointerCapture?.(pointerId);
         // Pointer capture plus a viewport shield keeps embedded PDF/video frames from swallowing the gesture.
@@ -149,7 +165,11 @@ export class TumAetUiSplitterComponent {
             cleanup();
             this.update(previous);
         };
-
+        const cancelPointer = (cancelled: PointerEvent) => {
+            if (cancelled.pointerId === pointerId) {
+                cancel();
+            }
+        };
         listeners.push(
             this.renderer.listen(this.document, 'pointermove', (move: PointerEvent) => {
                 if (move.pointerId === pointerId) {
@@ -161,12 +181,12 @@ export class TumAetUiSplitterComponent {
             this.renderer.listen(this.document, 'pointerup', (end: PointerEvent) => {
                 if (end.pointerId === pointerId) {
                     cleanup();
-                    this.resizeEnd.emit(this.values());
+                    this.persist();
                 }
             }),
         );
-        listeners.push(this.renderer.listen(this.document, 'pointercancel', cancel));
-        listeners.push(this.renderer.listen(separator, 'lostpointercapture', cancel));
+        listeners.push(this.renderer.listen(this.document, 'pointercancel', cancelPointer));
+        listeners.push(this.renderer.listen(separator, 'lostpointercapture', cancelPointer));
         if (this.document.defaultView) {
             listeners.push(this.renderer.listen(this.document.defaultView, 'blur', cancel));
         }
@@ -177,15 +197,32 @@ export class TumAetUiSplitterComponent {
     }
 
     private clamp(value: number): number {
-        return Math.max(this.minimums()[0], Math.min(this.maximum(), value));
+        return Math.max(this.minimum(), Math.min(this.maximum(), Number.isFinite(value) ? value : 50));
     }
 
     private values(): number[] {
-        return [this.current(), 100 - this.current()];
+        return [this.size(), 100 - this.size()];
     }
 
     private update(value: number): void {
-        this.current.set(this.clamp(value));
+        this.size.set(this.clamp(value));
         this.sizesChange.emit(this.values());
+    }
+
+    private storageKey(): string | undefined {
+        const key = this.stateKey();
+        return key ? `${key}-${this.layout()}` : undefined;
+    }
+
+    private persist(): void {
+        const key = this.storageKey();
+        if (key) {
+            try {
+                this.document.defaultView?.localStorage.setItem(key, String(this.size()));
+            } catch {
+                // Storage failures must not interrupt the active workflow.
+            }
+        }
+        this.resizeEnd.emit(this.values());
     }
 }

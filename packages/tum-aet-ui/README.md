@@ -76,7 +76,8 @@ Foundations:
   corresponding `--tumaet-ui-line-height-*` properties;
 - shape: `--tumaet-ui-radius-{sm,md,xl,2xl}`;
 - elevation: `--tumaet-ui-shadow-{xs,sm,md,lg,xl}`;
-- focus: `--tumaet-ui-focus-color`.
+- focus: `--tumaet-ui-focus-color`;
+- resizable panel divider: `--tumaet-ui-splitter-divider-size` (defaults to `6px`).
 
 Colors:
 
@@ -159,9 +160,9 @@ build tool and its transitive dependencies separate from the library peer matrix
 `TumAetUiSplitterPanelDirective` from `@tumaet/ui-angular`:
 
 ```html
-<tumaet-ui-splitter [sizes]="[65, 35]" [minSizes]="[20, 15]" separatorLabel="Resize document and notes" (resizeEnd)="saveSizes($event)">
-    <ng-template tumAetUiSplitterPanel>Document</ng-template>
-    <ng-template tumAetUiSplitterPanel>Notes</ng-template>
+<tumaet-ui-splitter [panelSizes]="[65, 35]" [minSizes]="[20, 15]" ariaLabel="Resize document and notes" (resizeEnd)="saveSizes($event)">
+    <ng-template #panel>Document</ng-template>
+    <ng-template #panel>Notes</ng-template>
 </tumaet-ui-splitter>
 ```
 

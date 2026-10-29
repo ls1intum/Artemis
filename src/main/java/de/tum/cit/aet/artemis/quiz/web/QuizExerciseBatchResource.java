@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -149,7 +149,8 @@ public class QuizExerciseBatchResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping({ "quiz-batches/{quizBatchId}/start-batch", "quiz-exercises/{quizBatchId}/start-batch" })
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<QuizBatchDTO> startBatch(@PathVariable Long quizBatchId) {
         log.info("REST request to start quiz batch : {}", quizBatchId);
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);

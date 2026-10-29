@@ -16,19 +16,19 @@
 }
 
 .intro-text {
-    color: var(--secondary);
+    color: var(--tumaet-ui-muted-color);
 }
 
-.list-group--teams {
+.team-list--teams {
     max-height: max(240px, 100vh - 740px);
     overflow-y: auto;
 
-    .list-group-item-container {
+    .team-list-item-container {
         position: relative;
         margin-bottom: 0.15rem;
     }
 
-    .list-group-item-index {
+    .team-list-item-index {
         min-width: 30px;
         text-align: right;
         margin-left: 0.5rem;
@@ -38,14 +38,14 @@
     }
 }
 
-.list-group-item--teams {
+.team-list-item--teams {
     display: flex !important;
     align-items: center;
     flex-grow: 1;
     overflow-x: hidden;
     padding: 0.3rem 1rem;
     border-radius: 0.15rem !important;
-    background-color: var(--bs-body-bg);
+    background-color: var(--tumaet-ui-content-background);
 
     &.has-success {
         color: var(--artemis-alert-success-color);
@@ -79,10 +79,10 @@
 }
 
 .source-teams-legend-box {
-    background: rgba(0, 100, 220, 0.04);
+    background: var(--tumaet-ui-highlight-background);
     padding: 12px 15px 0;
     border-radius: 0.2rem;
-    border: 1px solid rgba(0, 0, 0, 0.075);
+    border: 1px solid var(--tumaet-ui-border-color);
 }
 
 .source-teams-legend {
@@ -97,12 +97,12 @@
         }
     }
 
-    .list-group-item--teams {
+    .team-list-item--teams {
         $legend-font-size: 11px;
 
         padding: 0 0.5rem;
         font-size: $legend-font-size;
-        border: 1px solid rgba(0, 0, 0, 0.125);
+        border: 1px solid var(--tumaet-ui-border-color);
         border-radius: 0.15rem;
 
         .team-name {
@@ -123,7 +123,7 @@
         margin-top: 3px;
 
         > span {
-            color: var(--secondary);
+            color: var(--tumaet-ui-muted-color);
         }
     }
 }
@@ -161,13 +161,5 @@
 
     .explanation {
         max-width: 66%;
-    }
-}
-
-.modal-footer {
-    justify-content: space-between;
-
-    button[disabled] {
-        cursor: not-allowed;
     }
 }

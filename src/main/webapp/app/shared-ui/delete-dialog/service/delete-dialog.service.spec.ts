@@ -1,12 +1,132 @@
-import { ApplicationRef } from '@angular/core';
+import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ActionType, DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ApplicationRef, EventEmitter } from '@angular/core';
+import { Observable, Subject } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('Delete Dialog Service', () => {
+    let service: DeleteDialogService;
+    let dialogService: TumAetUiDialogService;
+    let alertService: AlertService;
+
+    let mockDialogRef: TumAetUiDialogRef;
+
+    beforeEach(() => {
+        mockDialogRef = new TumAetUiDialogRef(vi.fn(), vi.fn());
+        TestBed.configureTestingModule({
+            providers: [
+                DeleteDialogService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: TumAetUiDialogService,
+                    useValue: {
+                        open: vi.fn().mockReturnValue(mockDialogRef),
+                    },
+                },
+                {
+                    provide: AlertService,
+                    useValue: {
+                        closeAll: vi.fn(),
+                        error: vi.fn(),
+                    },
+                },
+            ],
+        });
+        service = TestBed.inject(DeleteDialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
+        alertService = TestBed.inject(AlertService);
+    });
+
+    afterEach(() => {
+        vi.resetAllMocks();
+    });
+
+    it('should open delete dialog', () => {
+        expect(service.dialogRef()).toBeFalsy();
+        const data: DeleteDialogData = {
+            dialogError: new Observable<string>(),
+            entityTitle: 'title',
+            deleteQuestion: 'artemisApp.exercise.delete.question',
+            translateValues: {},
+            deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+            actionType: ActionType.Delete,
+            buttonType: ButtonType.ERROR,
+            delete: new EventEmitter<Record<string, boolean>>(),
+            requireConfirmationOnlyForAdditionalChecks: false,
+        };
+        const openDialogSpy = vi.spyOn(dialogService, 'open');
+        service.openDeleteDialog(data);
+        expect(openDialogSpy).toHaveBeenCalledOnce();
+        expect(openDialogSpy).toHaveBeenCalledWith(
+            DeleteDialogComponent,
+            expect.objectContaining({
+                header: expect.any(String),
+                size: 'medium',
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: false,
+                data: expect.objectContaining({
+                    entityTitle: 'title',
+                    deleteQuestion: 'artemisApp.exercise.delete.question',
+                }),
+            }),
+        );
+    });
+
+    it('should display error via AlertService when dialogError emits an error message', () => {
+        const dialogErrorSource = new Subject<string>();
+        const data: DeleteDialogData = {
+            dialogError: dialogErrorSource.asObservable(),
+            entityTitle: 'title',
+            deleteQuestion: 'artemisApp.exercise.delete.question',
+            translateValues: {},
+            deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+            actionType: ActionType.Delete,
+            buttonType: ButtonType.ERROR,
+            delete: new EventEmitter<Record<string, boolean>>(),
+            requireConfirmationOnlyForAdditionalChecks: false,
+        };
+
+        service.openDeleteDialog(data);
+
+        // Emit an error message
+        dialogErrorSource.next('Delete failed: entity not found');
+
+        // Error should be displayed via AlertService
+        expect(alertService.error).toHaveBeenCalledOnce();
+        expect(alertService.error).toHaveBeenCalledWith('Delete failed: entity not found');
+    });
+
+    it('should not display error via AlertService when dialogError emits empty string (success)', () => {
+        const dialogErrorSource = new Subject<string>();
+        const data: DeleteDialogData = {
+            dialogError: dialogErrorSource.asObservable(),
+            entityTitle: 'title',
+            deleteQuestion: 'artemisApp.exercise.delete.question',
+            translateValues: {},
+            deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+            actionType: ActionType.Delete,
+            buttonType: ButtonType.ERROR,
+            delete: new EventEmitter<Record<string, boolean>>(),
+            requireConfirmationOnlyForAdditionalChecks: false,
+        };
+
+        service.openDeleteDialog(data);
+
+        // Emit empty string (success)
+        dialogErrorSource.next('');
+
+        // Error should NOT be displayed
+        expect(alertService.error).not.toHaveBeenCalled();
+    });
+});
 
 async function renderDialogs() {
     TestBed.tick();
@@ -14,7 +134,7 @@ async function renderDialogs() {
     TestBed.tick();
 }
 
-describe('DeleteDialogService', () => {
+describe('DeleteDialogService with the shared dialog host', () => {
     let service: DeleteDialogService;
     let alertService: AlertService;
     let data: DeleteDialogData;
@@ -42,6 +162,8 @@ describe('DeleteDialogService', () => {
             requireConfirmationOnlyForAdditionalChecks: false,
         };
     });
+
+    afterEach(() => TestBed.inject(TumAetUiDialogService).closeAll());
 
     it('requires the entity name before confirmation and retains the error callback after closing', async () => {
         service.openDeleteDialog(data);

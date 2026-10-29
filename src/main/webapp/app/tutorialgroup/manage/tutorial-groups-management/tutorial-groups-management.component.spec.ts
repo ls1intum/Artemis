@@ -22,7 +22,7 @@ import { TutorialGroupRowButtonsComponent } from './tutorial-group-row-buttons/t
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupManagementService } from 'app/tutorialgroup/manage/service/tutorial-group-management.service';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 
@@ -107,7 +107,7 @@ describe('TutorialGroupsManagementComponent', () => {
             imports: [TutorialGroupsManagementComponent],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
-                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupManagementService, useValue: tutorialGroupApiServiceMock },
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(

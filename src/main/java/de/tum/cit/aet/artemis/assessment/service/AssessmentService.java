@@ -141,6 +141,7 @@ public class AssessmentService {
         }
         // the update is copied onto a new result below, but the feedback ids are still read while the request is mapped
         checkFeedbackBelongsToResultElseThrow(assessmentUpdate.feedbacks(), originalResult);
+        complaintResponseService.checkComplaintResponseBelongsToResultElseThrow(assessmentUpdate.complaintResponse().getId(), originalResult.getId());
         // Save the complaint response
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.complaintResponse());
 

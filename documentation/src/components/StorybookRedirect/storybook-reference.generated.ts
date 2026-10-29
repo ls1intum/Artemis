@@ -88,6 +88,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'overlays-dialog--docs';
         case 'overlays-popover':
             return 'overlays-popover--docs';
+        case 'overlays-programmatic-dialog':
+            return 'overlays-programmatic-dialog--docs';
         case 'overlays-tooltip':
             return 'overlays-tooltip--docs';
         default:

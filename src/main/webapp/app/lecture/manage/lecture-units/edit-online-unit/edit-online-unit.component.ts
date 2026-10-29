@@ -26,16 +26,18 @@ export class EditOnlineUnitComponent implements OnInit {
     onlineUnit!: OnlineUnit; // loaded in ngOnInit() before the form can trigger an update
     readonly formData = signal<OnlineUnitFormData>(undefined!);
     lectureId!: number; // set in ngOnInit() from route params
+    readonly courseId = signal<number>(undefined!); // set in ngOnInit() from route params
 
     ngOnInit(): void {
         this.isLoading.set(true);
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
+        combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap, lectureRoute.parent!.paramMap])
             .pipe(
                 take(1),
-                switchMap(([params, parentParams]) => {
+                switchMap(([params, parentParams, courseParams]) => {
                     const onlineUnitId = Number(params.get('onlineUnitId'));
                     this.lectureId = Number(parentParams.get('lectureId'));
+                    this.courseId.set(Number(courseParams.get('courseId')));
                     return this.onlineUnitService.findById(onlineUnitId, this.lectureId);
                 }),
                 finalize(() => {

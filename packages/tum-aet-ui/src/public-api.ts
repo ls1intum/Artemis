@@ -77,4 +77,7 @@ export { TumAetUiTooltipDirective } from './lib/tooltip/tumaet-ui-tooltip.direct
 export type { TumAetUiOverlayPlacement } from './lib/overlay/tumaet-ui-overlay.service';
 export { setInputs } from './lib/internal/set-inputs';
 
-export { TumAetUiSplitterComponent, TumAetUiSplitterPanelDirective } from './lib/splitter/tumaet-ui-splitter.component';
+export { TumAetUiDialogService } from './lib/dialog/tumaet-ui-dialog.service';
+export { TumAetUiDialogConfig, TumAetUiDialogRef, type TumAetUiDialogOptions, type TumAetUiDialogInputs } from './lib/dialog/tumaet-ui-dialog.types';
+export { TumAetUiSplitterComponent } from './lib/splitter/tumaet-ui-splitter.component';
+export { tumAetUiButtonClasses, type TumAetUiButtonVariantOptions } from './lib/button/tumaet-ui-button.variants';

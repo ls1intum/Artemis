@@ -58,7 +58,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportLectureToCourse() {
         int lectureCount = this.course2.getLectures().size();
 

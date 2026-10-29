@@ -13,20 +13,20 @@
     -->
     <ng-template #mainArea>
         @if (showHorizontalSplitter()) {
-            <!-- Horizontal splitter (top | bottom). orientation="vertical" = stacked panels (was split.js direction 'vertical'). -->
+            <!-- Horizontal splitter (top | bottom). layout="vertical" = stacked panels (was split.js direction 'vertical'). -->
             <tumaet-ui-splitter
                 class="fullscreen-splitter w-full h-full"
-                orientation="vertical"
-                [sizes]="horizontalSplit().sizes"
+                layout="vertical"
+                [panelSizes]="horizontalSplit().sizes"
                 [minSizes]="horizontalMinSizes()"
                 [gutterSize]="6"
-                [separatorLabel]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: dialogAriaLabel() ?? '' }"
+                [ariaLabel]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: dialogAriaLabel() ?? '' }"
                 (resizeEnd)="onHorizontalResize($event)"
             >
-                <ng-template tumAetUiSplitterPanel>
+                <ng-template #panel>
                     <ng-content select="[content-top]" />
                 </ng-template>
-                <ng-template tumAetUiSplitterPanel>
+                <ng-template #panel>
                     <ng-content select="[content-bottom]" />
                 </ng-template>
             </tumaet-ui-splitter>
@@ -38,20 +38,20 @@
     </ng-template>
 
     @if (showVerticalSplitter()) {
-        <!-- Vertical splitter (main area | sidebar). orientation="horizontal" = side-by-side panels (was split.js direction 'horizontal'). -->
+        <!-- Vertical splitter (main area | sidebar). layout="horizontal" = side-by-side panels (was split.js direction 'horizontal'). -->
         <tumaet-ui-splitter
             class="fullscreen-splitter w-full h-full"
-            orientation="horizontal"
-            [sizes]="verticalSplit().sizes"
+            layout="horizontal"
+            [panelSizes]="verticalSplit().sizes"
             [minSizes]="verticalMinSizes()"
             [gutterSize]="6"
-            [separatorLabel]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: sidebarAriaLabel() ?? '' }"
+            [ariaLabel]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: sidebarAriaLabel() ?? '' }"
             (resizeEnd)="onVerticalResize($event)"
         >
-            <ng-template tumAetUiSplitterPanel>
+            <ng-template #panel>
                 <ng-container [ngTemplateOutlet]="mainArea" />
             </ng-template>
-            <ng-template tumAetUiSplitterPanel>
+            <ng-template #panel>
                 <div class="iris-sidebar" role="complementary" [attr.aria-label]="sidebarAriaLabel()">
                     <ng-content select="[content-sidebar]" />
                 </div>

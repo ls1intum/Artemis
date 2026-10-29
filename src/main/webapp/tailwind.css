@@ -58,6 +58,10 @@
 
 /* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
 @source './app/admin';
+@source './app/shared-ui/components/buttons/button';
+@source './app/shared-ui/table-view';
+@source './app/assessment';
+@source './app/exercise';
 @source './app/presentation';
 @source './app/atlas/shared/standardized-competencies';
 @source './app/atlas/shared/competency-selection';
@@ -234,4 +238,13 @@
     ::after {
         border-color: var(--p-content-border-color);
     }
+}
+
+@theme inline {
+    --color-border: var(--tumaet-ui-border-color);
+    --color-surface-sunken: var(--tumaet-ui-control-background);
+    --color-surface-raised: var(--tumaet-ui-content-background);
+    --color-surface-hover: var(--tumaet-ui-hover-background);
+    --color-text: var(--tumaet-ui-text-color);
+    --color-text-secondary: var(--tumaet-ui-muted-color);
 }

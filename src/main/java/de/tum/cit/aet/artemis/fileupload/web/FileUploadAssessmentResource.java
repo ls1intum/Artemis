@@ -27,9 +27,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -67,7 +66,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, ExerciseRepository exerciseRepository,
             ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }
@@ -82,7 +81,22 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @GetMapping("file-upload-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadResultDTO> getFileUploadAssessmentBySubmissionId(@PathVariable Long submissionId) {
-        var response = super.getAssessmentBySubmissionId(submissionId);
+        var response = super.getAssessmentBySubmissionId(submissionId, false);
+        return toFileUploadResultResponse(response.getStatusCode(), response.getHeaders(), response.getBody());
+    }
+
+    /**
+     * Get the result of a file upload submission using the existing instructor eligibility policy.
+     *
+     * @param submissionId the submission owning the result
+     * @return the instructor result projection
+     */
+    @FeatureUsage(UserFeature.EXERCISE_FEEDBACK)
+    @GetMapping("file-upload-submissions/{submissionId}/result/for-instructor")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<FileUploadResultDTO> getFileUploadAssessmentBySubmissionIdForInstructor(@PathVariable Long submissionId) {
+        var response = super.getAssessmentBySubmissionId(submissionId, true);
         return toFileUploadResultResponse(response.getStatusCode(), response.getHeaders(), response.getBody());
     }
 
@@ -96,7 +110,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("file-upload-submissions/{submissionId}/feedback")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<FileUploadResultDTO> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @Valid @RequestBody FileUploadAssessmentInputDTO fileUploadAssessment) {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
@@ -116,7 +131,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("file-upload-submissions/{submissionId}/assessment-after-complaint")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<FileUploadResultDTO> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId,
             @Valid @RequestBody FileUploadAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
@@ -146,7 +162,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("file-upload-submissions/{submissionId}/cancel-assessment")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
         return super.cancelAssessment(submissionId, resultId);
     }
@@ -161,14 +178,10 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      */
     @Override
     @DeleteMapping("participations/{participationId}/file-upload-submissions/{submissionId}/results/{resultId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
-    }
-
-    @Override
-    protected String getEntityName() {
-        return ENTITY_NAME;
     }
 
     private static ResponseEntity<FileUploadResultDTO> toFileUploadResultResponse(HttpStatusCode status, HttpHeaders headers, Result result) {

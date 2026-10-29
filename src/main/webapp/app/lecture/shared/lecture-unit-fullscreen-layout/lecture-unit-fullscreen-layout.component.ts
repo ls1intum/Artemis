@@ -16,7 +16,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TumAetUiSplitterComponent, TumAetUiSplitterPanelDirective } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 type SplitSizes = [number, number];
@@ -47,7 +47,7 @@ const MIN_PANEL_PERCENT = 5;
 @Component({
     selector: 'jhi-lecture-unit-fullscreen-layout',
     standalone: true,
-    imports: [CommonModule, TumAetUiSplitterComponent, TumAetUiSplitterPanelDirective, ArtemisTranslatePipe],
+    imports: [CommonModule, TumAetUiSplitterComponent, ArtemisTranslatePipe],
     templateUrl: './lecture-unit-fullscreen-layout.component.html',
     styleUrl: './lecture-unit-fullscreen-layout.component.scss',
     encapsulation: ViewEncapsulation.None,

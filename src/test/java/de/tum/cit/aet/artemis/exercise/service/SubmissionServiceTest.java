@@ -215,7 +215,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testProgrammingExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
         submission1 = new ProgrammingSubmission();
         submission2 = new ProgrammingSubmission();
@@ -238,7 +238,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testFileUploadExerciseGetRandomSubmissionEligibleForNewAssessment() {
         submission1 = new FileUploadSubmission();
         submission2 = new FileUploadSubmission();
@@ -260,7 +260,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testFileUploadExerciseGetRandomSubmissionEligibleForNewAssessmentWithoutSubmission() {
         // setup
         queryTestingBasics(this.examFileUploadExercise);
@@ -279,7 +279,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -301,7 +301,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithoutLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -335,7 +335,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -367,7 +367,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithoutLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -397,7 +397,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -433,7 +433,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -456,7 +456,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithoutLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -491,7 +491,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -523,7 +523,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithoutLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -553,7 +553,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -587,7 +587,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetSubmissionsWithComplaintsForExerciseAsInstructor() {
         var participation1 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
         var participation2 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
@@ -623,7 +623,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetSubmissionsWithComplaintsForExerciseAsTutor() {
         var participation1 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
         var participation2 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
@@ -654,7 +654,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetSubmissionsWithMoreFeedbackRequestsForExerciseAsTutor() {
         var participation1 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
         var participation2 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");

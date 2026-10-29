@@ -290,7 +290,7 @@ describe('ResizablePanelsComponent', () => {
         const separator = fixture.nativeElement.querySelector('[role="separator"]');
         separator.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
         fixture.detectChanges();
-        expect(localStorage.getItem('keyboard-split')).toBe('[66,34]');
+        expect(localStorage.getItem('keyboard-split')).toBe('[67,33]');
     });
 
     it('should start collapsed without changing the active right panel', () => {

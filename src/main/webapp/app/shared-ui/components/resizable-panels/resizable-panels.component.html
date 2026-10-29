@@ -2,14 +2,14 @@
     <tumaet-ui-splitter
         class="resizable-panels-splitter w-full h-full"
         [class.right-collapsed]="isRightPanelCollapsed()"
-        [sizes]="panelSizesForSplitter()"
+        [panelSizes]="panelSizesForSplitter()"
         [minSizes]="[0, 0]"
         [gutterSize]="gutterSize"
         [collapsedSecondSize]="isRightPanelCollapsed() ? '3rem' : undefined"
-        [separatorLabel]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: rightPanels()[activeRightIndex()].label() | artemisTranslate }"
+        [ariaLabel]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: rightPanels()[activeRightIndex()].label() | artemisTranslate }"
         (resizeEnd)="onResizeEnd($event)"
     >
-        <ng-template tumAetUiSplitterPanel>
+        <ng-template #panel>
             @if (leftPanel()) {
                 <div class="panel-surface flex flex-col w-full h-full overflow-hidden rounded-lg">
                     <div class="grow min-h-0 overflow-y-auto" [class.p-2]="!flushLeftPanel()" cdkScrollable>
@@ -18,7 +18,7 @@
                 </div>
             }
         </ng-template>
-        <ng-template tumAetUiSplitterPanel>
+        <ng-template #panel>
             <!-- Hiding keeps editor and embedded chat state intact across collapse/expand. -->
             <div
                 data-testid="right-panel-content"

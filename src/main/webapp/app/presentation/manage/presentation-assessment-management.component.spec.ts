@@ -6,7 +6,7 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
@@ -119,10 +119,10 @@ describe('PresentationAssessmentManagementComponent', () => {
                 provideRouter([]),
                 provideArtemisTumAetUiTranslator(),
                 { provide: TranslateService, useValue: translateService },
-                { provide: DialogService, useValue: dialogService },
+                { provide: TumAetUiDialogService, useValue: dialogService },
                 {
                     provide: ExerciseService,
-                    useValue: { getTitlesForCourse: vi.fn().mockReturnValue(of([])) },
+                    useValue: { getTitlesForCourseForStaff: vi.fn().mockReturnValue(of([])) },
                 },
                 {
                     provide: ActivatedRoute,
@@ -283,7 +283,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.courseId()).toBe(courseId);
         expect(component.course()).toBe(course);
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledWith(courseId);
-        expect(TestBed.inject(ExerciseService).getTitlesForCourse).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(TestBed.inject(ExerciseService).getTitlesForCourseForStaff).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(component.presentationAssessments()).toEqual([presentationAssessment]);
     });
 
@@ -1413,16 +1413,17 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(instanceDialog().presentationAssessment()).toEqual(presentationAssessment);
     });
 
-    it('should delete an instance only after the deletion was confirmed', async () => {
+    it('should delete an instance only after the deletion was confirmed', () => {
         presentationAssessmentService.deleteInstance.mockReturnValue(of(new HttpResponse<void>()));
-        clickByTestId('delete-instance-button');
-        await fixture.whenStable();
 
+        clickByTestId('delete-instance-button');
+
+        // The confirmation dialog is open, nothing is deleted yet.
+        expect(dialogService.open).toHaveBeenCalledOnce();
         expect(presentationAssessmentService.deleteInstance).not.toHaveBeenCalled();
-        const confirm = document.querySelector<HTMLButtonElement>('[data-testid="delete-dialog-confirm-button"]')!;
-        expect(confirm).not.toBeNull();
-        confirm.click();
-        await fixture.whenStable();
+
+        // Confirming in the dialog calls the delete handler it was given.
+        dialogService.open.mock.calls[0][1].data.delete({});
 
         expect(presentationAssessmentService.deleteInstance).toHaveBeenCalledExactlyOnceWith(courseId, presentationAssessment.id, instances[0].id);
     });
@@ -1482,7 +1483,7 @@ describe('PresentationAssessmentManagementComponent', () => {
     it('should keep the exercise titles of the current visit when a delayed load of an earlier visit arrives', () => {
         const firstVisit = new Subject<ExerciseTitle[]>();
         const current: ExerciseTitle[] = [{ id: 7, title: 'Current exercise' }];
-        vi.mocked(TestBed.inject(ExerciseService).getTitlesForCourse).mockReturnValueOnce(firstVisit).mockReturnValueOnce(of([])).mockReturnValueOnce(of(current));
+        vi.mocked(TestBed.inject(ExerciseService).getTitlesForCourseForStaff).mockReturnValueOnce(firstVisit).mockReturnValueOnce(of([])).mockReturnValueOnce(of(current));
         visitCourseTwoThenThreeThenTwoAgain();
 
         firstVisit.next([{ id: 8, title: 'Stale exercise' }]);

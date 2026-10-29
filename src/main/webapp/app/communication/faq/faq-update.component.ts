@@ -20,7 +20,7 @@ import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intellig
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
 import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
@@ -29,7 +29,7 @@ import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewritin
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    imports: [CategorySelectorPrimengComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent],
+    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent],
 })
 export class FaqUpdateComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -138,7 +138,7 @@ export class FaqUpdateComponent implements OnInit {
      */
     protected onSaveSuccess(faq: Faq) {
         if (!this.faq.id) {
-            this.faqService.find(this.courseId, faq.id!).subscribe({
+            this.faqService.findForManagement(this.courseId, faq.id!).subscribe({
                 next: (response: HttpResponse<Faq>) => {
                     this.isSaving.set(false);
                     const faqBody = response.body;
@@ -185,7 +185,7 @@ export class FaqUpdateComponent implements OnInit {
     }
 
     private loadCourseFaqCategories(courseId: number) {
-        loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
+        loadCourseFaqCategories(courseId, this.alertService, this.faqService, undefined, 'management').subscribe((existingCategories) => {
             this.existingCategories.set(existingCategories);
         });
     }

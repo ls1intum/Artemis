@@ -97,7 +97,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetDeletionSummary_programmingExercise() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         final ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -163,7 +163,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetDeletionSummary_textExercise() throws Exception {
         Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
@@ -193,7 +193,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetDeletionSummary_modelingExercise() throws Exception {
         Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
@@ -219,7 +219,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetDeletionSummary_fileUploadExercise() throws Exception {
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.getFirstExerciseWithType(course, FileUploadExercise.class);
@@ -247,7 +247,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetDeletionSummary_quizExercise() throws Exception {
         Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = ExerciseUtilService.getFirstExerciseWithType(course, QuizExercise.class);
@@ -265,7 +265,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetDeletionSummary_allZeroResults() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         final ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -280,7 +280,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetDeletionSummary_editorForbidden() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         final ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -288,7 +288,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void testGetDeletionSummary_instructorNotInCourseForbidden() throws Exception {
         // Use a course without TEST_PREFIX enrollment so instructor2 is not enrolled (it should be FORBIDDEN)
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();

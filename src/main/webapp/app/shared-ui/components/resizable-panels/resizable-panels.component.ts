@@ -23,7 +23,6 @@ import { NgTemplateOutlet } from '@angular/common';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import {
     TumAetUiSplitterComponent,
-    TumAetUiSplitterPanelDirective,
     TumAetUiTabComponent,
     TumAetUiTabListComponent,
     TumAetUiTabPanelComponent,
@@ -53,7 +52,6 @@ export class PanelDirective {
         FaIconComponent,
         NgTemplateOutlet,
         TumAetUiSplitterComponent,
-        TumAetUiSplitterPanelDirective,
         TumAetUiTabsComponent,
         TumAetUiTabListComponent,
         TumAetUiTabComponent,

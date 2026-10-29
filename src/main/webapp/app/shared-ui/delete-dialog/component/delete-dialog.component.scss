@@ -11,6 +11,9 @@
     align-items: center;
     justify-content: center;
     padding: 1rem 1.5rem;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tumaet-ui-content-background);
     color: var(--tumaet-ui-muted-color);
 }
 
@@ -19,9 +22,18 @@
     overflow-x: auto;
     margin-bottom: 0.5rem;
 
+    table {
+        width: auto;
+    }
+
+    td {
+        border: 1px solid var(--tumaet-ui-border-color);
+    }
+
     .category-header-cell {
-        font-weight: 600;
-        background-color: var(--tumaet-ui-content-background);
+        background: var(--tumaet-ui-hover-background);
+        color: var(--tumaet-ui-muted-color);
+        font-weight: 700;
     }
 
     .item-value-cell {

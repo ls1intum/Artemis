@@ -1,29 +1,20 @@
-import { ApplicationRef, DestroyRef, EnvironmentInjector, Service, createComponent, inject, signal } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { DestroyRef, Service, inject, signal } from '@angular/core';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { setInputs } from 'app/foundation/util/set-inputs.util';
-
-/** The lifecycle exposed to callers that need to distinguish dismissal from confirmation. */
-export interface DeleteDialogRef {
-    readonly onClose: Observable<void>;
-    close(): void;
-}
 
 @Service()
 export class DeleteDialogService {
-    private readonly applicationRef = inject(ApplicationRef);
-    private readonly environmentInjector = inject(EnvironmentInjector);
-    private readonly document = inject(DOCUMENT);
+    private dialogService = inject(TumAetUiDialogService);
     private readonly destroyRef = inject(DestroyRef);
-    private readonly alertService = inject(AlertService);
-    private readonly translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
 
-    readonly dialogRef = signal<DeleteDialogRef | undefined>(undefined);
+    readonly dialogRef = signal<TumAetUiDialogRef | undefined>(undefined);
     private errorSubscription?: Subscription;
 
     constructor() {
@@ -33,68 +24,73 @@ export class DeleteDialogService {
         });
     }
 
-    /** Opens a TUM AET UI confirmation while preserving the caller's delete and error callbacks. */
+    /**
+     * Opens delete dialog
+     * @param deleteDialogData data that is used in dialog
+     * @param animation retained for compatibility with callers; motion follows the design system
+     */
     openDeleteDialog(deleteDialogData: DeleteDialogData, _animation = true): void {
         this.alertService.closeAll();
+        // Clean up any previous error subscription
         this.errorSubscription?.unsubscribe();
+        this.errorSubscription = undefined;
 
-        const component = createComponent(DeleteDialogComponent, { environmentInjector: this.environmentInjector });
-        const closed = new Subject<void>();
-        const ref: DeleteDialogRef = {
-            onClose: closed.asObservable(),
-            close: () => component.instance.clear(),
-        };
-        setInputs(component, {
-            data: cloneWith(deleteDialogData, {
-                translateValues: cloneWith(deleteDialogData.translateValues, { title: deleteDialogData.entityTitle }),
-                // Observables and callbacks belong to the caller and must keep their identity.
-                delete: deleteDialogData.delete,
-                dialogError: deleteDialogData.dialogError,
-                fetchEntitySummary: deleteDialogData.fetchEntitySummary,
-                fetchCategorizedEntitySummary: deleteDialogData.fetchCategorizedEntitySummary,
-            }),
-            header: this.getDialogHeader(deleteDialogData.actionType),
-        });
-
-        component.instance.closed.subscribe(() => {
-            this.applicationRef.detachView(component.hostView);
-            component.destroy();
-            component.location.nativeElement.remove();
-            if (this.dialogRef() === ref) {
-                this.dialogRef.set(undefined);
-            }
-            closed.next();
-            closed.complete();
-        });
-
-        // Subscribe before rendering: an action may complete synchronously from its callback.
+        // Keep errors observable after confirmation closes, including synchronous results during rendering.
         if (deleteDialogData.dialogError) {
-            this.errorSubscription = deleteDialogData.dialogError.subscribe((errorMessage) => {
+            const errorSubscription = deleteDialogData.dialogError.pipe(take(1)).subscribe((errorMessage: string) => {
                 if (errorMessage !== '') {
                     this.alertService.error(errorMessage);
                 }
-                this.errorSubscription?.unsubscribe();
                 this.errorSubscription = undefined;
             });
+            this.errorSubscription = errorSubscription.closed ? undefined : errorSubscription;
         }
 
-        this.dialogRef.set(ref);
-        this.document.body.appendChild(component.location.nativeElement);
-        this.applicationRef.attachView(component.hostView);
-        component.changeDetectorRef.detectChanges();
+        const ref = this.dialogService.open<DeleteDialogComponent, unknown, DeleteDialogData>(DeleteDialogComponent, {
+            header: this.getDialogHeader(deleteDialogData.actionType),
+            size: 'medium',
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                entityTitle: deleteDialogData.entityTitle,
+                deleteQuestion: deleteDialogData.deleteQuestion,
+                translateValues: cloneWith(deleteDialogData.translateValues, { title: deleteDialogData.entityTitle }),
+                deleteConfirmationText: deleteDialogData.deleteConfirmationText,
+                additionalChecks: deleteDialogData.additionalChecks,
+                entitySummaryTitle: deleteDialogData.entitySummaryTitle,
+                actionType: deleteDialogData.actionType,
+                buttonType: deleteDialogData.buttonType,
+                delete: deleteDialogData.delete,
+                dialogError: deleteDialogData.dialogError,
+                requireConfirmationOnlyForAdditionalChecks: deleteDialogData.requireConfirmationOnlyForAdditionalChecks,
+                fetchEntitySummary: deleteDialogData.fetchEntitySummary,
+                fetchCategorizedEntitySummary: deleteDialogData.fetchCategorizedEntitySummary,
+            },
+        });
+
+        this.dialogRef.set(ref ?? undefined);
+
+        ref?.onClose.subscribe(() => {
+            if (this.dialogRef() === ref) {
+                this.dialogRef.set(undefined);
+            }
+        });
     }
 
     private getDialogHeader(actionType?: string): string {
-        const headerKeys: Record<string, string> = {
+        const headerKeys: { [key: string]: string } = {
             delete: 'entity.delete.title',
             reset: 'entity.reset.title',
             cleanup: 'entity.cleanup.title',
             remove: 'entity.remove.title',
             unlink: 'entity.unlink.title',
             noButtonTextDelete: 'entity.noButtonTextDelete.title',
-            'end-now': 'entity.endNow.title',
+            'no-button-text-delete': 'entity.noButtonTextDelete.title',
             endNow: 'entity.endNow.title',
+            'end-now': 'entity.endNow.title',
         };
-        return this.translateService.instant(headerKeys[actionType || 'delete'] || 'entity.delete.title');
+        const key = headerKeys[actionType || 'delete'] || 'entity.delete.title';
+        return this.translateService.instant(key);
     }
 }

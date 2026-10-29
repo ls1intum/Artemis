@@ -708,24 +708,20 @@ export default tseslint.config(
         files: [
             'src/main/webapp/app/admin/**/*.html',
             'src/main/webapp/app/course/request/**/*.html',
-            'src/main/webapp/app/exercise/result/**/*.html',
             'src/main/webapp/app/iris/manage/settings/**/*.html',
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
             'src/main/webapp/app/atlas/shared/competency-selection/**/*.html',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
-            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.html',
             'src/main/webapp/app/localci/build-queue/**/*.html',
             'src/main/webapp/app/videosource/gocast/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
-            // Admin-reachable global shell + delete-dialog chain (rendered on every admin page / during admin deletes).
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
             'src/main/webapp/app/core/alert/**/*.html',
             'src/main/webapp/app/core/about-us/**/*.html',
             'src/main/webapp/app/core/feature-overview/**/*.html',
             'src/main/webapp/app/core/layouts/footer/**/*.html',
-            // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
             'src/main/webapp/app/notification/**/*.html',
@@ -737,106 +733,7 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
-            // The whole exam mode: instructor pages, student pages and the pieces they share, and the example solution that only the exam summary shows.
             'src/main/webapp/app/exam/**/*.html',
-            'src/main/webapp/app/exercise/example-solution/**/*.html',
-            'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
-            'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
             'src/main/webapp/app/course/manage/update/**/*.html',
             'src/main/webapp/app/account/**/*.html',
-            // Lecture and tutorial-group management, reading views, and their shared UI compositions.
-            'src/main/webapp/app/lecture/**/*.html',
-            'src/main/webapp/app/tutorialgroup/**/*.html',
-            'src/main/webapp/app/shared-ui/components/resizable-panels/**/*.html',
-            'src/main/webapp/app/shared-ui/components/buttons/confirm-autofocus-button/**/*.html',
-            'src/main/webapp/app/shared-ui/loading-indicator-overlay/**/*.html',
-            'src/main/webapp/app/shared-ui/loading-indicator-container/**/*.html',
-            'src/main/webapp/app/shared-ui/components/checklist-check/**/*.html',
-            'src/main/webapp/app/shared-ui/information-box/**/*.html',
-            'src/main/webapp/app/shared-ui/detail-overview-list/detail-overview-list.component.html',
-            'src/main/webapp/app/course/shared/course-sidebar-toggle-button/**/*.html',
-            'src/main/webapp/app/atlas/shared/competency-contribution/**/*.html',
-            'src/main/webapp/app/atlas/manage/orchestration-trigger/**/*.html',
-            'src/main/webapp/app/atlas/shared/orchestration-result-dialog/**/*.html',
-            'src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.html',
-            'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
-            'src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.html',
-            'src/main/webapp/app/plagiarism/shared/case-header/**/*.html',
-            'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
-            'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
-            'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
-            'packages/tum-aet-ui/src/lib/**/*.html',
-        ],
-        languageOptions: {
-            parser: angularTemplateParser,
-        },
-        plugins: {
-            localRules: localRulesPlugin,
-        },
-        rules: {
-            'localRules/no-bootstrap-classes': 'error',
-        },
-    },
-    {
-        // Bootstrap and Tailwind define the same spacing class names (`mb-3`, `px-4`, `gap-5`) with different values for
-        // 3 to 5, and Bootstrap wins while it is loaded, so a bare one renders differently once Bootstrap is removed.
-        // These templates of the student exam mode and the pages it shows (the exam, the feedback, the complaints and
-        // the text and file upload editors) are laid out with Tailwind and must say which value they mean. Add a folder
-        // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
-        // See client-development.mdx (### Styling).
-        files: [
-            'src/main/webapp/app/course/overview/course-statistics/**/*.html',
-            'src/main/webapp/app/exam/overview/**/*.html',
-            'src/main/webapp/app/exam/shared/**/*.html',
-            'src/main/webapp/app/assessment/overview/**/*.html',
-            'src/main/webapp/app/assessment/manage/complaints-for-tutor/**/*.html',
-            'src/main/webapp/app/assessment/manage/complaint-response/**/*.html',
-            'src/main/webapp/app/exercise/feedback/**/*.html',
-            'src/main/webapp/app/text/overview/text-editor/**/*.html',
-            'src/main/webapp/app/fileupload/overview/file-upload-submission/**/*.html',
-        ],
-        languageOptions: {
-            parser: angularTemplateParser,
-        },
-        plugins: {
-            localRules: localRulesPlugin,
-        },
-        rules: {
-            'localRules/no-ambiguous-spacing-utility': 'error',
-        },
-    },
-    // The exam mode is migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in it, including specs.
-    // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
-    {
-        files: [
-            'src/main/webapp/app/exam/**/*.ts',
-            'src/main/webapp/app/notification/**/*.ts',
-            'src/main/webapp/app/calendar/**/*.ts',
-            'src/main/webapp/app/atlas/shared/competency-selection/**/*.ts',
-            'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.ts',
-            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.ts',
-        ],
-        rules: {
-            'no-restricted-imports': [
-                'error',
-                {
-                    paths: [
-                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
-                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
-                        noNgZoneImport,
-                        ...noDirectCloneDeepImports,
-                    ],
-                    patterns: [
-                        ...tumAetUiConsumerImportPatterns,
-                        {
-                            group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
-                            message:
-                                'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
-                        },
-                    ],
-                },
-            ],
-        },
-    },
-);

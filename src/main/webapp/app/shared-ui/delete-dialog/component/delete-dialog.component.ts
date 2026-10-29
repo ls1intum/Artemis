@@ -1,5 +1,13 @@
-import { Component, DestroyRef, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogConfig,
+    TumAetUiDialogRef,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiTableDirective,
+} from '@tumaet/ui-angular';
 import { mapValues } from 'lodash-es';
 import {
     ActionType,
@@ -20,7 +28,6 @@ import { ConfirmEntityNameComponent } from '../../confirm-entity-name/confirm-en
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiProgressSpinnerComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-delete-dialog',
@@ -32,21 +39,17 @@ import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogCompo
         ConfirmEntityNameComponent,
         FaIconComponent,
         ArtemisTranslatePipe,
+        TumAetUiTableDirective,
         TumAetUiButtonDirective,
         TumAetUiCheckboxComponent,
-        TumAetUiDialogComponent,
         TumAetUiProgressSpinnerComponent,
-        TumAetUiTableDirective,
     ],
 })
 export class DeleteDialogComponent implements OnInit {
+    private dialogRef = inject(TumAetUiDialogRef);
+    private dialogConfig = inject<TumAetUiDialogConfig<DeleteDialogData>>(TumAetUiDialogConfig);
     private alertService = inject(AlertService);
     private destroyRef = inject(DestroyRef);
-
-    readonly data = input.required<DeleteDialogData>();
-    readonly header = input.required<string>();
-    readonly visible = signal(true);
-    readonly closed = output<void>();
 
     protected readonly faBan = faBan;
     protected readonly faSpinner = faSpinner;
@@ -56,6 +59,7 @@ export class DeleteDialogComponent implements OnInit {
     protected readonly faUndo = faUndo;
 
     readonly actionTypes = ActionType;
+    protected readonly ButtonType = ButtonType;
     private delete!: DeleteDialogDeleteHandler; // set in ngOnInit() from dialog config data
 
     // Signals for reactive state
@@ -103,7 +107,10 @@ export class DeleteDialogComponent implements OnInit {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit(): void {
-        const data = this.data();
+        const data = this.dialogConfig.data;
+        if (!data) {
+            throw new Error('Delete dialog requires its entity and action configuration');
+        }
         this.entityTitle.set(data.entityTitle ?? '');
         this.deleteQuestion.set(data.deleteQuestion ?? 'entity.action.deleteQuestion');
         this.translateValues.set(data.translateValues);
@@ -140,7 +147,7 @@ export class DeleteDialogComponent implements OnInit {
      * Closes the dialog
      */
     clear(): void {
-        this.visible.set(false);
+        this.dialogRef.close();
     }
 
     /**
@@ -150,7 +157,7 @@ export class DeleteDialogComponent implements OnInit {
     confirmDelete(): void {
         this.submitDisabled.set(true);
         triggerDeleteDialogDelete(this.delete, this.additionalChecksValues);
-        this.visible.set(false);
+        this.dialogRef.close();
     }
 
     /**

@@ -66,8 +66,20 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
     find(exerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(exerciseId, false, withPlagiarismDetectionConfig);
+    }
+
+    /** Loads management details of an exam exercise with the same options and conversion as course details. */
+    findForExam(exerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(exerciseId, true, withPlagiarismDetectionConfig);
+    }
+
+    private findDetails(exerciseId: number, exam: boolean, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response', params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig } })
+            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}${exam ? '/for-exam' : ''}`, {
+                observe: 'response',
+                params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig },
+            })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
