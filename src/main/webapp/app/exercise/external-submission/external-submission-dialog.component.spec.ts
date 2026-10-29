@@ -44,6 +44,30 @@ describe('ExternalSubmissionDialogComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('associates each dynamic feedback label with its own input after feedback is added and removed', async () => {
+        fixture.componentRef.setInput('exercise', { id: 2, title: 'Sorting review' } as Exercise);
+        component.pushFeedback();
+        component.pushFeedback();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const assertFeedbackLabels = (count: number) => {
+            const labels = Array.from(fixture.nativeElement.querySelectorAll('label[for^="feedback"]')) as HTMLLabelElement[];
+            expect(labels).toHaveLength(count * 2);
+            for (const label of labels) {
+                const control = label.parentElement!.querySelector('input, textarea') as HTMLInputElement | HTMLTextAreaElement;
+                expect(control).not.toBeNull();
+                expect(label.control).toBe(control);
+                expect(control.labels).toContain(label);
+            }
+        };
+        assertFeedbackLabels(2);
+        component.popFeedback();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        assertFeedbackLabels(1);
+    });
+
     it('should get initial result on init', () => {
         const result = new Result();
         const extServiceSpy = vi.spyOn(externalSubmissionService, 'generateInitialManualResult').mockReturnValue(result);

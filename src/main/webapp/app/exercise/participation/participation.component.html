@@ -25,7 +25,15 @@
                 ></button>
                 <tumaet-ui-popover #exportPopover [ariaLabel]="'artemisApp.exercise.export.options' | artemisTranslate">
                     <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
-                    <button size="small" severity="info" tumAetUiButton type="button" class="me-1" (click)="exportNames()">
+                    <button
+                        size="small"
+                        severity="info"
+                        tumAetUiButton
+                        type="button"
+                        class="me-1"
+                        [attr.aria-label]="'artemisApp.exercise.export.names' | artemisTranslate"
+                        (click)="exportNames()"
+                    >
                         <fa-icon [icon]="faDownload" />
                         <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.export.names"></span>
                     </button>
@@ -38,7 +46,7 @@
                     }
                 </tumaet-ui-popover>
             }
-            <button size="small" severity="primary" tumAetUiButton type="button" (click)="refresh()">
+            <button size="small" severity="primary" tumAetUiButton type="button" [attr.aria-label]="'artemisApp.exercise.refresh' | artemisTranslate" (click)="refresh()">
                 <fa-icon [icon]="faSync" />
                 <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.refresh"></span>
             </button>
@@ -86,7 +94,15 @@
             <jhi-manage-assessment-buttons [course]="course()!" [exercise]="exercise()!" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
             @if (exercise()!.type === ExerciseType.PROGRAMMING) {
                 @if (dto.buildPlanId && !isLocalCIEnabled()) {
-                    <a size="small" severity="primary" tumAetUiButton [href]="getBuildPlanUrl(dto)" target="_blank" rel="noreferrer">
+                    <a
+                        size="small"
+                        severity="primary"
+                        tumAetUiButton
+                        [attr.aria-label]="'artemisApp.programmingExercise.buildplan' | artemisTranslate"
+                        [href]="getBuildPlanUrl(dto)"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
                         <fa-icon [icon]="farFileCode" />
                         <span class="hidden xl:inline ms-1" jhiTranslate="artemisApp.programmingExercise.buildplan"></span>
                     </a>
@@ -99,6 +115,7 @@
                 severity="info"
                 tumAetUiButton
                 [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
+                [attr.aria-label]="'artemisApp.participation.onlineEditor' | artemisTranslate"
                 [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
             >
                 <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
@@ -117,7 +134,14 @@
             }
         }
         @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
-            <button size="small" severity="info" tumAetUiButton type="button" (click)="addBasicPresentation(dto)">
+            <button
+                size="small"
+                severity="info"
+                tumAetUiButton
+                type="button"
+                [attr.aria-label]="'artemisApp.participation.addPresentation.label' | artemisTranslate"
+                (click)="addBasicPresentation(dto)"
+            >
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="hidden xl:inline ms-1" jhiTranslate="artemisApp.participation.addPresentation.label"></span>
             </button>
@@ -129,6 +153,7 @@
                 tumAetUiButton
                 type="button"
                 [disabled]="(dto.presentationScore ?? 0) < 0 || (dto.presentationScore ?? 0) > 100"
+                [attr.aria-label]="'artemisApp.participation.savePresentation.label' | artemisTranslate"
                 (click)="addGradedPresentation(dto)"
             >
                 <fa-icon [icon]="faFilePowerpoint" />
@@ -139,7 +164,14 @@
             (basicPresentationEnabled() && (dto.presentationScore ?? 0) > 0) ||
             (gradedPresentationEnabled() && (!hasGradedPresentationChanged(dto) || dto.presentationScore === undefined))
         ) {
-            <button size="small" severity="danger" tumAetUiButton type="button" (click)="removePresentation(dto)">
+            <button
+                size="small"
+                severity="danger"
+                tumAetUiButton
+                type="button"
+                [attr.aria-label]="'artemisApp.participation.removePresentation.label' | artemisTranslate"
+                (click)="removePresentation(dto)"
+            >
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="hidden xl:inline ms-1" jhiTranslate="artemisApp.participation.removePresentation.label"></span>
             </button>

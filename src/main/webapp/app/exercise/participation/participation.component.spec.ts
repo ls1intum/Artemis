@@ -201,6 +201,17 @@ describe('ParticipationComponent', () => {
             expect(row.querySelector('[data-testid="participation-practice-tag"]')).not.toBeNull();
         });
 
+        it.each([undefined, 1])('names presentation actions when the current score is %s', async (presentationScore) => {
+            const row = await render(
+                { ...exercise, isAtLeastInstructor: true, isAtLeastTutor: true, presentationScoreEnabled: true, course: { ...course, presentationScore: 1 } },
+                { ...sampleDto, presentationScore },
+            );
+            const action = presentationScore === 1 ? 'removePresentation' : 'addPresentation';
+            const button = Array.from(row.querySelectorAll('button')).find((control) => control.textContent?.includes(`artemisApp.participation.${action}.label`));
+            expect(button).toBeDefined();
+            expect(button?.getAttribute('aria-label')).toBe(`artemisApp.participation.${action}.label`);
+        });
+
         it('should name the assessment type next to the result only where manual results exist', async () => {
             const dto: ParticipationManagementDTO = { ...sampleDto, submissionId: 2, resultId: 5, score: 80, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() };
             // MockResultService leaves out what jhi-result needs to render the score
