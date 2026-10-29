@@ -153,6 +153,21 @@ artemis:
       max-concurrent-jobs-per-core-node: 2
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
+    quiz-pool:
+      # Model (for Azure: deployment name) that generates pool questions; blank uses the default chat model configured below.
+      generator-model:
+      # Model (for Azure: deployment name) that judges generated questions; blank uses the default chat model configured below.
+      judge-model:
+      question-types: single-choice,multiple-choice
+      difficulties: easy,medium,hard
+      # Questions requested per generation call; a cell larger than this is filled in several calls.
+      generation-batch-size: 8
+      # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.
+      stale-claim-minutes: 30
+      # Characters of a lecture unit's text (slide PDF, transcript or text unit) that a generation prompt receives at most.
+      max-material-characters: 60000
+      # How long a running build holds its course's lease without a heartbeat before another node may build the course.
+      build-lease-minutes: 10
   aiworker:
     enabled: false # Optional standalone coordination; Hyperion generation enables this automatically on eligible core nodes.
     # ids: [worker-1]

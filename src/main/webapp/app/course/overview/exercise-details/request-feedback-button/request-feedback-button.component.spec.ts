@@ -30,6 +30,10 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shar
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -1368,5 +1372,111 @@ describe('RequestFeedbackButtonComponent', () => {
         await initAndTick();
 
         expect(participationWebsocketService.subscribeForLatestResultOfParticipation).not.toHaveBeenCalled();
+    });
+});
+
+describe('RequestFeedbackButtonComponent accepted HTTP participation', () => {
+    let fixture: ComponentFixture<RequestFeedbackButtonComponent>;
+    let updates: ParticipationWebsocketService;
+    let response: Subject<StudentParticipation>;
+    let exercise: Exercise;
+
+    function participationWith(result?: Result): StudentParticipation {
+        return { id: 1, testRun: false, submissions: [{ id: 3, submitted: true, results: result ? [result] : [] }] } as StudentParticipation;
+    }
+
+    function cachedResult(): Result | undefined {
+        return updates.getParticipationsForExercise(1)[0]?.submissions?.[0].results?.[0];
+    }
+
+    beforeEach(async () => {
+        vi.useFakeTimers();
+        await TestBed.configureTestingModule({
+            imports: [RequestFeedbackButtonComponent],
+            providers: [
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: LLMSelectionModalService, useValue: { open: vi.fn() } },
+                { provide: UserService, useValue: { updateLLMSelectionDecision: vi.fn() } },
+                provideHttpClient(),
+            ],
+        }).compileComponents();
+        const initial = participationWith();
+        exercise = { id: 1, type: ExerciseType.TEXT, course: { athenaFormativeFeedbackEnabled: true }, studentParticipations: [initial] } as Exercise;
+        TestBed.inject(AccountService).userIdentity.set({ id: 42, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+        vi.spyOn(TestBed.inject(ExerciseService), 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: { exercise } })));
+        response = new Subject<StudentParticipation>();
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'requestFeedback').mockReturnValue(response);
+        updates = TestBed.inject(ParticipationWebsocketService);
+        updates.addParticipation(initial, exercise);
+        fixture = TestBed.createComponent(RequestFeedbackButtonComponent);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participationId', initial.id);
+        fixture.componentRef.setInput('isSubmitted', true);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('publishes a persisted HTTP-only pending result to participation subscribers and unlocks at its deadline', async () => {
+        let observed: StudentParticipation | undefined;
+        const subscription = updates.subscribeForParticipationChanges().subscribe((participation) => (observed = participation as StudentParticipation));
+        const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        button.click();
+        await vi.advanceTimersByTimeAsync(0);
+        response.next(participationWith({ id: 61, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(1, 'second') } as Result));
+        fixture.detectChanges();
+
+        expect(cachedResult()?.id).toBe(61);
+        expect(observed?.submissions?.[0].results?.[0].id).toBe(61);
+        expect(fixture.componentInstance.participation?.submissions?.[0].results?.[0].id).toBe(61);
+        expect(button.disabled).toBe(true);
+
+        await vi.advanceTimersByTimeAsync(1001);
+        fixture.detectChanges();
+        expect(button.disabled).toBe(false);
+        subscription.unsubscribe();
+    });
+
+    it.each([true, false])('preserves a terminal websocket result when its stale pending HTTP response arrives (successful=%s)', async (successful) => {
+        const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        button.click();
+        await vi.advanceTimersByTimeAsync(0);
+        updates.notifyAllResultSubscribers({
+            id: 61,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful,
+            completionDate: dayjs(),
+            submission: { id: 3, participation: { id: 1 } },
+        } as Result);
+        response.next(participationWith({ id: 61, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result));
+        fixture.detectChanges();
+
+        expect(cachedResult()).toMatchObject({ id: 61, successful });
+        expect(fixture.componentInstance.participation?.submissions?.[0].results?.[0]).toMatchObject({ id: 61, successful });
+        expect(fixture.componentInstance.isFeedbackGenerationInProgress()).toBe(false);
+        expect(fixture.componentInstance.currentFeedbackRequestCount()).toBe(successful ? 1 : 0);
+        expect(button.disabled).toBe(false);
+    });
+
+    it.each([true, false])('uses terminal state returned directly over HTTP (successful=%s)', async (successful) => {
+        const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        button.click();
+        await vi.advanceTimersByTimeAsync(0);
+        response.next(participationWith({ id: 61, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful, completionDate: dayjs() } as Result));
+        fixture.detectChanges();
+
+        expect(cachedResult()).toMatchObject({ id: 61, successful });
+        expect(fixture.componentInstance.isFeedbackGenerationInProgress()).toBe(false);
+        expect(fixture.componentInstance.currentFeedbackRequestCount()).toBe(successful ? 1 : 0);
+        expect(button.disabled).toBe(false);
     });
 });

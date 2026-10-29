@@ -22,11 +22,12 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { isAthenaAIResult } from 'app/exercise/result/result.utils';
 import dayjs from 'dayjs/esm';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 // Mirrors the server-side default for `artemis.athena.allowed-feedback-requests`
 export const DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
@@ -320,9 +321,19 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     private processFeedbackRequest(exerciseId: number, participation: StudentParticipation | undefined) {
+        const exercise = this.exercise();
         this.courseExerciseService.requestFeedback(exerciseId, participation!.id!).subscribe({
-            next: () => {
-                if (this.participationId() === undefined || this.participationId() === participation?.id) {
+            next: (updatedParticipation) => {
+                if (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) {
+                    const merged = this.mergeFeedbackRequestParticipation(updatedParticipation, exercise);
+                    if (this.exercise().id === exerciseId && (this.participationId() === undefined || this.participationId() === merged.id)) {
+                        this.participation = merged;
+                        this.currentFeedbackRequestCount.set(countSuccessfulAthenaFeedbackRequests(merged));
+                        this.syncFeedbackRequestPendingState(getAllResultsOfAllSubmissions(merged.submissions).find(isPendingAthenaFeedbackResult));
+                    }
+                    // HTTP carries the durable reservation even when its initial websocket notification was lost.
+                    this.participationWebsocketService.addParticipation(merged, exercise);
+                } else if (this.participationId() === undefined || this.participationId() === participation?.id) {
                     this.isFeedbackRequestPending.set(true);
                 }
                 this.alertService.success('artemisApp.exercise.feedbackRequestSent');
@@ -331,6 +342,40 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                 this.alertService.error(`artemisApp.exercise.${error.error.errorKey}`);
             },
         });
+    }
+
+    private mergeFeedbackRequestParticipation(received: StudentParticipation, exercise: Exercise): StudentParticipation {
+        const cached = this.participationWebsocketService.getParticipationsForExercise(exercise.id!)?.find((participation) => participation.id === received.id);
+        const current = this.participation;
+        const merged = deepClone(cached ?? (current && current.id === received.id ? current : received));
+        merged.submissions ??= [];
+        for (const incomingSubmission of received.submissions ?? []) {
+            let submission: Submission | undefined = merged.submissions.find((existing) => existing.id === incomingSubmission.id);
+            if (!submission) {
+                submission = deepClone(incomingSubmission);
+                merged.submissions.push(submission);
+                continue;
+            }
+            // Merge result state only; an older response must not replace work saved after the request began.
+            submission.results ??= [];
+            for (const incomingResult of incomingSubmission.results ?? []) {
+                const index = submission.results.findIndex((existing) => incomingResult.id !== undefined && existing.id === incomingResult.id);
+                if (index !== -1 && submission.results[index].successful !== undefined) {
+                    // A completion notification can precede the HTTP response for its pending reservation.
+                    continue;
+                }
+                if (index === -1) {
+                    submission.results.push(deepClone(incomingResult));
+                } else {
+                    submission.results[index] = deepClone(incomingResult);
+                }
+            }
+        }
+        for (const submission of merged.submissions) {
+            submission.participation = merged;
+            submission.results?.forEach((result) => (result.submission = submission));
+        }
+        return merged;
     }
 
     /**

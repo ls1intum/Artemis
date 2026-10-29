@@ -2,6 +2,7 @@ import { ProgrammingExerciseParticipationActionsComponent } from 'app/exercise/p
 import { StudentExerciseActionsDirective } from 'app/exercise/participation/student-exercise-actions.directive';
 import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import dayjs from 'dayjs/esm';
 
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -12,28 +13,28 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
-
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
     RequestFeedbackButtonComponent,
     countSuccessfulAthenaFeedbackRequests,
 } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { TumAetUiButtonComponent, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -136,8 +137,26 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
+    readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
+    readonly repositoryUriForCodeButton = computed(() => this.getRepositoryUriForCodeButton());
+    readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
-    readonly routerLinkForRepositoryView = computed(() => {
+    private readonly feedbackDeadlineClock = signal(Date.now());
+    private readonly pendingAthenaFeedbackDeadline = computed(() => {
+        const type = this.exercise().type;
+        if (type !== ExerciseType.TEXT && type !== ExerciseType.MODELING) {
+            return 0;
+        }
+        return getAllResultsOfAllSubmissions(this.activeParticipationForCode()?.submissions).reduce((deadline, result) => {
+            if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || result.successful !== undefined) {
+                return deadline;
+            }
+            return Math.max(deadline, result.completionDate ? dayjs(result.completionDate).valueOf() : Infinity);
+        }, 0);
+    });
+    protected readonly hasPendingAthenaFeedback = computed(() => this.pendingAthenaFeedbackDeadline() > this.feedbackDeadlineClock());
+
+    readonly repositoryViewLink = computed(() => {
         const participation = this.activeParticipationForCode();
         if (!participation?.id) {
             return ['/courses', this.courseId(), 'exercises', this.exercise().id!];
@@ -172,6 +191,16 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
 
     constructor() {
         super();
+        // A reloaded pending request must unlock at its lease deadline, even without a result notification.
+        effect((onCleanup) => {
+            const deadline = this.pendingAthenaFeedbackDeadline();
+            const now = Date.now();
+            this.feedbackDeadlineClock.set(now);
+            if (Number.isFinite(deadline) && deadline > now) {
+                const timeout = setTimeout(() => this.feedbackDeadlineClock.set(Date.now()), deadline - now + 1);
+                onCleanup(() => clearTimeout(timeout));
+            }
+        });
         // Automatically make the rightmost action button primary, all others secondary
         effect(() => {
             const buttons = [...this.actionButtons(), ...this.programmingActions().flatMap((actions) => actions.actionButtons())];
@@ -188,6 +217,26 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
         this._quizNotStarted.set(false);
         this._programmingExercise.set(undefined);
         this._editorLabel.set(undefined);
+    }
+
+    private getRepositoryUriForCodeButton(): string {
+        const participations = this.studentParticipations();
+        const participation = this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
+        return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
+    }
+
+    private isProgrammingExerciseStudentParticipation(participation: StudentParticipation): participation is ProgrammingExerciseStudentParticipation {
+        return participation.type === ParticipationType.PROGRAMMING;
+    }
+
+    private getProgrammingParticipationForCodeButton(): ProgrammingExerciseStudentParticipation | undefined {
+        const participations = this.studentParticipations();
+        return this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
+    }
+
+    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenSourceInfo {
+        const participationId = this.programmingParticipationForCodeButton()!.id!;
+        return { returnedTokenType: 'participation-token', participationId };
     }
 
     /**
@@ -313,6 +362,9 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
     }
 
     submitAndShowPopover() {
+        if (this.hasPendingAthenaFeedback()) {
+            return;
+        }
         this.onSubmitExercise()?.();
         // The request limit only blocks another Athena request, which is only reachable once AI is accepted.
         if (this.hasUserAcceptedLLM() && countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {

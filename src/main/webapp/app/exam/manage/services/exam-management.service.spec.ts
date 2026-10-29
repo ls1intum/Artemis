@@ -198,6 +198,29 @@ describe('Exam Management Service Tests', () => {
         await Promise.resolve();
     });
 
+    it('should convert every date of a found exam to dayjs', async () => {
+        const dateFields = [
+            'visibleDate',
+            'startDate',
+            'endDate',
+            'publishResultsDate',
+            'examStudentReviewStart',
+            'examStudentReviewEnd',
+            'exampleSolutionPublicationDate',
+            'examSummaryPublicationDate',
+        ] as const;
+        const serverExam = { id: 1, ...Object.fromEntries(dateFields.map((field) => [field, '2026-10-28T08:00:00Z'])) };
+        let found: Exam | undefined;
+
+        service.find(course.id!, 1).subscribe((res) => (found = res.body!));
+
+        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/1?withExerciseGroups=false` }).flush(serverExam);
+        await Promise.resolve();
+
+        // The date picker of the exam form calls dayjs methods on these, so a plain ISO string breaks the form.
+        dateFields.forEach((field) => expect(dayjs.isDayjs(found![field]), field).toBe(true));
+    });
+
     it('should get exam scores', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agen
 
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -23,9 +24,11 @@ final class SandboxPathPolicy {
 
     private static final Pattern SAFE_RELATIVE_PATH = Pattern.compile("[a-zA-Z0-9_./-]+");
 
-    private static final Pattern MANAGED_BUILD_PATH = Pattern.compile(
-            "(?s).*(?:tests|solution|template)/(buildsrc/.*|gradle/.*|pom\\.xml|build\\.gradle|build\\.gradle\\.kts|settings\\.gradle|settings\\.gradle\\.kts|gradle\\.properties|package\\.json|"
-                    + "package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock|.*\\.cabal).*");
+    private static final Pattern MANAGED_BUILD_ROOT = Pattern.compile("(?:tests|solution|template)/");
+
+    private static final Pattern MANAGED_BUILD_FILE = Pattern
+            .compile("(?:tests|solution|template)/(?:buildsrc/|gradle/|pom\\.xml|build\\.gradle|settings\\.gradle|gradle\\.properties|"
+                    + "package\\.json|package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock)");
 
     private static final Pattern STDERR_DISCARD = Pattern.compile("(?<!\\S)2\\s*+>\\s*+/dev/null(?=\\s|[;&|]|$)");
 
@@ -74,12 +77,21 @@ final class SandboxPathPolicy {
      */
     static boolean mutatesManagedBuildInfrastructure(String command) {
         String lower = command.toLowerCase(Locale.ROOT);
-        if (!MANAGED_BUILD_PATH.matcher(lower).matches()) {
+        if (!namesManagedBuildPath(lower)) {
             return false;
         }
         String withoutStderrDiscard = STDERR_DISCARD.matcher(lower).replaceAll("");
         return withoutStderrDiscard.contains(">") || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ")
                 || lower.contains(" rm ") || lower.startsWith("rm ") || lower.contains(" mv ") || lower.startsWith("mv ") || lower.contains(" cp ") || lower.startsWith("cp ");
+    }
+
+    /** Whether a repository root is followed by a seeded build file, or anywhere later by a Cabal file. */
+    private static boolean namesManagedBuildPath(String lower) {
+        if (MANAGED_BUILD_FILE.matcher(lower).find()) {
+            return true;
+        }
+        Matcher root = MANAGED_BUILD_ROOT.matcher(lower);
+        return root.find() && lower.lastIndexOf(".cabal") >= root.end();
     }
 
     /**

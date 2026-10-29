@@ -48,12 +48,14 @@
             },
             "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will set up a separate repository for you to clone.",
             "code": "Code",
-            "cloneRatedRepository": "Clone your repository for this exercise:",
-            "clonePracticeRepository": "Clone your practice repository for this exercise:",
-            "cloneExerciseRepository": "Clone a repository for this exercise",
-            "cloneSourceTree": {
-                "button": "Clone in Git client",
-                "helpIcon": "This opens the repository in Sourcetree or Tower. If you do not have them, you can still clone the repository using your IDE or terminal."
+            "codePopoverAriaLabel": "Repository actions",
+            "codePopoverError": "An unexpected error has occurred. Please refresh the page.",
+            "codePopoverSshKeyTip": "To use SSH, you need to add an SSH key to your account <a href=\"{{ sshSettingsUrl }}\">here</a>.",
+            "codePopoverSshKeyExpiredTip": "Some of your SSH keys are expired. You might need to add a new SSH key to your account <a href=\"{{ sshSettingsUrl }}\">here</a>.",
+            "accessRepository": "Access your Repository",
+            "openInSourceTree": {
+                "button": "Open in Sourcetree",
+                "helpIcon": "This opens the repository in Sourcetree. If you do not have it, you can still clone the repository using your IDE or terminal."
             },
             "ideButton": {
                 "openIn": "Open in {{ ideName }}",
@@ -64,6 +66,7 @@
             "copyUrl": "Copy URL",
             "copiedUrl": "Copied URL",
             "openRepositoryReadOnly": "Open repository in read-only online code view (new tab)",
+            "showAlternatives": "Show Alternatives",
             "uploadFile": "Upload a file",
             "viewTeam": "Team",
             "sshKeyTip": "To use SSH, you need to add an SSH key to your account {link:here}.",
@@ -71,6 +74,8 @@
             "passwordWarningText": "Reusing account passwords for Git is insecure. Consider using a",
             "switchToToken": "Switch to Token",
             "passwordWarningHelp": "Personal access tokens are scoped to exercises and keep your primary account password safe from being cached in plaintext Git credentials.",
+            "passwordAuthenticationWarning": "Consider using <strong>Token</strong> or <strong>SSH</strong>. Using <strong>HTTPS</strong> as a cloning method can represent a security risk.",
+            "passwordAuthenticationWarningTooltip": "Cloning with HTTPS uses your Artemis account password. Git may insecurely cache the password in plain text.",
             "vcsTokenTip": "To access the repository with a VCS access token, you need to add a new one to your account {link:here}.",
             "vcsTokenExpiredTip": "Your VCS access token has expired. Renew it {link:here}.",
             "repositoryAccessTokenForbidden": "You are not allowed to access this repository.",

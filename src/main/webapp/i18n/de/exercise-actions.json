@@ -48,12 +48,14 @@
             },
             "practiceModeTooltip": "Der Übungsmodus ermöglicht es dir nach der Einreichungsfrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies beeinflusst deine Bewertung nicht! Artemis setzt dafür ein separates Repository auf, das du erneut clonen musst.",
             "code": "Code",
-            "cloneRatedRepository": "Klone dein Repository für diese Aufgabe:",
-            "clonePracticeRepository": "Klone dein Repository zum Üben für diese Aufgabe:",
-            "cloneExerciseRepository": "Klone ein Repository für diese Aufgabe",
-            "cloneSourceTree": {
-                "button": "Im Git Client klonen",
-                "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
+            "codePopoverAriaLabel": "Repository-Aktionen",
+            "codePopoverError": "Ein unerwarteter Fehler ist aufgetreten. Bitte lade die Seite neu.",
+            "codePopoverSshKeyTip": "Um SSH zu nutzen, musst du deinem Konto <a href=\"{{ sshSettingsUrl }}\">hier</a> einen SSH-Schlüssel hinzufügen.",
+            "codePopoverSshKeyExpiredTip": "Einige deiner SSH-Schlüssel sind abgelaufen. Möglicherweise musst du deinem Konto <a href=\"{{ sshSettingsUrl }}\">hier</a> einen neuen SSH-Schlüssel hinzufügen.",
+            "accessRepository": "Greif auf dein Repository zu",
+            "openInSourceTree": {
+                "button": "In Sourcetree öffnen",
+                "helpIcon": "Dies öffnet das Repository in Sourcetree. Falls du es nicht installiert hast, kannst du das Repository weiterhin in deiner IDE oder dem Terminal klonen."
             },
             "ideButton": {
                 "openIn": "Öffnen in {{ ideName }}",
@@ -64,6 +66,7 @@
             "copyUrl": "URL kopieren",
             "copiedUrl": "URL kopiert",
             "openRepositoryReadOnly": "Repository in der schreibgeschützten Online-Codeansicht öffnen (neuer Tab)",
+            "showAlternatives": "Alternativen anzeigen",
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
             "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH Schlüssel zu deinem Konto hinzufügen.",
@@ -71,6 +74,8 @@
             "passwordWarningText": "Die Nutzung von Kontopasswörtern für Git ist unsicher. Nutze stattdessen einen",
             "passwordWarningHelp": "Persönliche Zugriffstokens sind auf Übungen beschränkt und verhindern, dass dein primäres Passwort im Klartext in Git gespeichert wird.",
             "switchToToken": "Zu Token wechseln",
+            "passwordAuthenticationWarning": "Nutze besser <strong>Token</strong> oder <strong>SSH</strong>. Klonen über <strong>HTTPS</strong> kann ein Sicherheitsrisiko darstellen.",
+            "passwordAuthenticationWarningTooltip": "Beim Klonen über HTTPS wird dein Artemis-Passwort verwendet. Es kann dabei passieren, dass Git das Passwort unsicher als Klartext zwischenspeichert.",
             "vcsTokenTip": "Um mit einem VCS-Zugriffstoken auf das Repository zuzugreifen, musst du {link:hier} ein neues hinzufügen.",
             "vcsTokenExpiredTip": "Dein VCS-Zugriffstoken ist abgelaufen. Erneuere es {link:hier}.",
             "repositoryAccessTokenForbidden": "Du bist nicht berechtigt, auf dieses Repository zuzugreifen.",

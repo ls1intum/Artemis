@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { Subject, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -67,7 +67,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 quizService = TestBed.inject(QuizExerciseService);
                 accountService = TestBed.inject(AccountService);
                 websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
-                quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(quizExercise));
                 router = TestBed.inject(Router);
             });
     });
@@ -103,8 +103,8 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
         it('should ignore an older request after a websocket refresh completes', () => {
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const initialResponse = new Subject<HttpResponse<QuizQuestionStatisticResponse>>();
-            const refreshedResponse = new Subject<HttpResponse<QuizQuestionStatisticResponse>>();
+            const initialResponse = new Subject<QuizQuestionStatisticResponse>();
+            const refreshedResponse = new Subject<QuizQuestionStatisticResponse>();
             const refreshedStatistic = { answerCounters: [answerCounter] } as MultipleChoiceQuestionStatistic;
             const refreshedQuiz = { ...quizExercise, quizQuestionStatistic: refreshedStatistic };
             quizServiceFindSpy.mockReset().mockReturnValueOnce(initialResponse).mockReturnValueOnce(refreshedResponse);
@@ -112,8 +112,8 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             comp.ngOnInit();
             websocketService.emit('/topic/statistic/22', 22);
-            refreshedResponse.next(new HttpResponse({ body: refreshedQuiz }));
-            initialResponse.next(new HttpResponse({ body: quizExercise }));
+            refreshedResponse.next(refreshedQuiz);
+            initialResponse.next(quizExercise);
 
             expect(loadQuizSpy).toHaveBeenCalledOnce();
             expect(loadQuizSpy).toHaveBeenCalledWith(refreshedQuiz, true);

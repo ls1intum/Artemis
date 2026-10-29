@@ -147,6 +147,25 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
+        void getTutorialGroupsForCourse_asStudent_shouldReportCapacityReachedWithoutRegistrationCount() throws Exception {
+            // group one has one registration, so capping its capacity at one makes it full
+            firstCourseTutorialGroup1.setCapacity(1);
+            tutorialGroupTestRepository.save(firstCourseTutorialGroup1);
+
+            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
+
+            var fullGroup = tutorialGroupsOfCourse.stream().filter(group -> group.id().equals(firstCourseTutorialGroup1.getId())).findFirst().orElseThrow();
+            // The student never sees the exact count, but still learns the group is full through capacityReached.
+            assertThat(fullGroup.numberOfRegisteredUsers()).isNull();
+            assertThat(fullGroup.capacityReached()).isTrue();
+
+            var openGroup = tutorialGroupsOfCourse.stream().filter(group -> group.id().equals(firstCourseTutorialGroup2.getId())).findFirst().orElseThrow();
+            assertThat(openGroup.numberOfRegisteredUsers()).isNull();
+            assertThat(openGroup.capacityReached()).isFalse();
+        }
+
+        @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void getTutorialGroupsForCourse_asEditor_shouldHidePrivateInformationExceptTutorNameAndRegistrationCount() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);

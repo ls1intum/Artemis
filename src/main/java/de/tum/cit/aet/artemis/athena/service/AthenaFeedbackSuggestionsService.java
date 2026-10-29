@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.athena.service;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -421,18 +422,20 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Returns whether the submission has any Athena-generated result. Scans every result on the submission, not just
+     * Returns whether the submission has a successful or still-pending Athena-generated result. Scans every result on the submission, not just
      * the latest, to also catch the case where a later non-Athena result was added on top of an existing Athena result.
      *
      * @param submission the student's submission to inspect
      * @return {@code true} if any Athena result is present for the submission
      */
     public boolean submissionHasAthenaResult(Submission submission) {
-        return submission.getResults().stream().filter(Objects::nonNull).anyMatch(Result::isAthenaBased);
+        var now = ZonedDateTime.now();
+        return submission.getResults().stream().filter(Objects::nonNull).filter(Result::isAthenaBased).anyMatch(result -> Boolean.TRUE.equals(result.isSuccessful())
+                || (result.isSuccessful() == null && result.getCompletionDate() != null && result.getCompletionDate().isAfter(now)));
     }
 
     /**
-     * Ensures that the submission does not have any Athena-generated result. Scans every result on the submission,
+     * Ensures that the submission does not have a successful or still-pending Athena-generated result. Scans every result on the submission,
      * not just the latest, to also catch the case where a later non-Athena result was added on top of an existing
      * Athena result.
      *

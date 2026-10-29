@@ -612,6 +612,23 @@ describe('ExerciseHeaderActionsComponent', () => {
             return exercise;
         };
 
+        it('should provide a participation token for a team participation', () => {
+            const exercise = programmingExercise([
+                {
+                    id: 10,
+                    testRun: false,
+                    initializationState: InitializationState.INITIALIZED,
+                    repositoryUri: 'https://vcs.example.com/course/exercise.git',
+                    team: { id: 3 },
+                } as StudentParticipation,
+            ]);
+            exercise.allowOfflineIde = true;
+            createComponent(exercise);
+
+            const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
+            expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({ returnedTokenType: 'participation-token', participationId: 10 });
+        });
+
         it('should replace a known participation and emit it', () => {
             createComponent(programmingExercise([{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE } as StudentParticipation]));
             const emitted: StudentParticipation[] = [];
@@ -644,12 +661,12 @@ describe('ExerciseHeaderActionsComponent', () => {
             const practice = { id: 20, testRun: true } as StudentParticipation;
             createComponent(programmingExercise([practice]));
 
-            expect(fixture.componentInstance.routerLinkForRepositoryView()).toEqual(['/courses', 1, 'exercises', 7]);
+            expect(fixture.componentInstance.repositoryViewLink()).toEqual(['/courses', 1, 'exercises', 7]);
 
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.routerLinkForRepositoryView()).toEqual(['/courses', 1, 'exercises', 7, 'repository', 20]);
+            expect(fixture.componentInstance.repositoryViewLink()).toEqual(['/courses', 1, 'exercises', 7, 'repository', 20]);
         });
 
         it('should fall back to the graded participation in the practice mode as long as no practice participation exists', () => {
@@ -1027,6 +1044,122 @@ describe('ExerciseHeaderActionsComponent', () => {
             fixture.componentInstance.closeSubmitPopover();
 
             expect(closeSpy).toHaveBeenCalledOnce();
+        });
+    });
+    describe('pending text and modeling feedback', () => {
+        function withFeedback(type: ExerciseType, result: Result): Exercise {
+            const exercise = withCourse(createExerciseOfType(type), true);
+            exercise.id = 7;
+            exercise.releaseDate = dayjs().subtract(1, 'day');
+            exercise.dueDate = dayjs().add(1, 'day');
+            exercise.studentParticipations = [
+                {
+                    id: 10,
+                    testRun: false,
+                    initializationState: InitializationState.FINISHED,
+                    submissions: [
+                        { id: 1, submitted: true, results: [result] },
+                        { id: 2, submitted: true, results: [] },
+                    ],
+                } as StudentParticipation,
+            ];
+            return exercise;
+        }
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('disables restored %s Submit while any submission has pending feedback', (type) => {
+            const exercise = withFeedback(type, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result);
+            createComponent(exercise);
+            const submit = vi.fn();
+            fixture.componentRef.setInput('onSubmitExercise', submit);
+            fixture.detectChanges();
+
+            const button = fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement;
+            expect(button.disabled).toBe(true);
+            button.click();
+            expect(submit).not.toHaveBeenCalled();
+        });
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('handles a raw websocket deadline for %s and unlocks when it expires', async (type) => {
+            vi.useFakeTimers();
+            try {
+                const exercise = withFeedback(type, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(1, 'second') } as Result);
+                createComponent(exercise);
+                fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+                const wireParticipation = JSON.parse(JSON.stringify(exercise.studentParticipations![0])) as StudentParticipation;
+                fixture.componentInstance.receiveNewParticipation(wireParticipation);
+                fixture.detectChanges();
+                const button = fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement;
+                expect(button.disabled).toBe(true);
+
+                await vi.advanceTimersByTimeAsync(1001);
+                fixture.detectChanges();
+                expect(button.disabled).toBe(false);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it.each([true, false])('unlocks Submit after feedback becomes terminal (successful=%s)', (successful) => {
+            createComponent(withFeedback(ExerciseType.TEXT, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result));
+            fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement).disabled).toBe(true);
+
+            fixture.componentInstance.receiveNewParticipation({
+                id: 10,
+                testRun: false,
+                initializationState: InitializationState.FINISHED,
+                submissions: [{ id: 1, submitted: true, results: [{ id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs(), successful }] }],
+            } as StudentParticipation);
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        it('unlocks at the pending deadline without a websocket event or reload', async () => {
+            vi.useFakeTimers();
+            try {
+                createComponent(
+                    withFeedback(ExerciseType.MODELING, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(1, 'second') } as Result),
+                    { llmAccepted: false },
+                );
+                fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+                fixture.detectChanges();
+                // Without accepted AI, Submit still opens the popover, which then recommends choosing an AI Experience.
+                const button = fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement;
+                expect(button.disabled).toBe(true);
+
+                await vi.advanceTimersByTimeAsync(1001);
+                fixture.detectChanges();
+                expect(button.disabled).toBe(false);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('does not keep a previously selected participation deadline on another participation', () => {
+            createComponent(withFeedback(ExerciseType.TEXT, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result));
+            fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement).disabled).toBe(true);
+
+            fixture.componentInstance.receiveNewParticipation({
+                id: 10,
+                testRun: false,
+                initializationState: InitializationState.FINISHED,
+                submissions: [],
+            } as StudentParticipation);
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        it('preserves programming Submit behavior while Athena feedback is pending', () => {
+            createComponent(
+                withFeedback(ExerciseType.PROGRAMMING, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result),
+                { llmAccepted: false },
+            );
+            fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('#submit-exercise') as HTMLButtonElement).disabled).toBe(false);
         });
     });
 });
