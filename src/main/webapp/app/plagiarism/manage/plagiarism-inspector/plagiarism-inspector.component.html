@@ -33,7 +33,7 @@
                     [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                     class="check-plagiarism btn btn-primary"
                     (click)="checkPlagiarism()"
-                    [overwriteDisabled]="detectionInProgress()"
+                    [forceDisabled]="detectionInProgress()"
                 >
                     <span jhiTranslate="{{ plagiarismResult() ? 'artemisApp.plagiarism.rerun' : 'artemisApp.plagiarism.detect' }}"></span>
                 </button>
@@ -73,7 +73,7 @@
                         [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                         class="check-plagiarism btn btn-danger"
                         (click)="openCleanUpModal()"
-                        [overwriteDisabled]="detectionInProgress()"
+                        [forceDisabled]="detectionInProgress()"
                     >
                         <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit"></span>
                     </button>

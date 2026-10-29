@@ -33,8 +33,11 @@ skills into an instruction file: imports load at startup rather than on demand. 
 Coding agents follow the same [PR readiness requirements](/developer/development-process#pull-request-readiness)
 as human authors. When creating or updating a PR, have the agent clean up the template, check only work
 actually completed, remove inapplicable tasks and empty sections, and set the intended release milestone.
-Applicable review tasks remain unchecked until the reviews or tests take place. Keep the draft state and
-**ready for review** / **ready to merge** labels accurate after updates.
+Keep pending validation and applicable review tasks unchecked until the checks, reviews or tests take place.
+Use drafts only for unfinished implementations. Open completed work as non-draft or mark it ready for
+review immediately, so full CI and automated review bots run. Pending CI, reviews or test-server validation
+do not require draft status; all merge requirements still apply. Keep **ready for review** /
+**ready to merge** labels accurate after updates.
 
 An agent must not invent test results, reviewer approvals or a release target. If it cannot edit PR
 metadata or determine the milestone, it reports the missing action and requests maintainer help.

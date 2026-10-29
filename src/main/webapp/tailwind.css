@@ -83,6 +83,7 @@
 @source './app/exercise/example-solution';
 @source './app/localci/build-queue';
 @source './app/course/request';
+@source './app/course/overview/course-statistics';
 @source './app/shared-ui/user-import';
 @source './app/shared-ui/user-registration-modal';
 @source './app/shared-ui/confirm-entity-name';
@@ -118,6 +119,7 @@
 @source './app/localci/build-agent-details';
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
+@source './app/shared-ui/components/buttons/code-button';
 @source './app/quiz/manage/apollon-diagrams';
 @source './app/exercise/participation/programming-exercise-participation-actions';
 @source './app/quiz/manage/question-reevaluation-actions';

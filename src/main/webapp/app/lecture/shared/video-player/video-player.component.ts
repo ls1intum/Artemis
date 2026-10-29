@@ -3,8 +3,6 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, output,
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResizableConstraints, ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
 
@@ -18,7 +16,7 @@ const MIN_TRANSCRIPT_WIDTH = 250;
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
-    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe, ResizableDirective],
+    imports: [CommonModule, TranscriptViewerComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './video-player.component.html',
     styleUrls: ['./video-player.component.scss'],
 })
@@ -62,9 +60,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Store reference to timeupdate handler for cleanup */
     private timeupdateHandler: (() => void) | undefined = undefined;
-
-    /** FontAwesome icon for the resizer grip */
-    faGripLinesVertical = faGripLinesVertical;
 
     /** True while the divider is being dragged; disables the video's pointer events so the drag stays smooth. */
     protected readonly isResizing = signal<boolean>(false);

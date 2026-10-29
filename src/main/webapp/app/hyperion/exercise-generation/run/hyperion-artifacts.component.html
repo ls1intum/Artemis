@@ -1,5 +1,5 @@
 <section aria-labelledby="hyperion-artifacts-title" data-testid="hyperion-artifacts">
-    <h2 id="hyperion-artifacts-title" class="hyperion-artifacts-title mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generation.artifacts.title"></h2>
+    <h2 id="hyperion-artifacts-title" class="hyperion-artifacts-title mt-0 mb-1">{{ 'artemisApp.hyperion.generation.artifacts.title' | artemisTranslate }}</h2>
     <p class="mt-0 mb-3 text-sm text-muted-color" [jhiTranslate]="hintKey()"></p>
     <tumaet-ui-tabs [value]="selectedTab()" (valueChange)="onTabChange($event)">
         <tumaet-ui-tab-list>

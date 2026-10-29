@@ -514,14 +514,14 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(examId);
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(examId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(examId);
         List<Long> studentIds = studentExams.stream().map(studentExam -> studentExam.getUser().getId()).toList();
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
 
         Map<Long, List<StudentParticipation>> participationsByStudentId = new HashMap<>();
 
-        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && !se.isTestExam()).toList();
+        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestExam()).toList();
 
         if (!regularStudentExams.isEmpty()) {
             var regularStudentIds = regularStudentExams.stream().map(se -> se.getUser().getId()).toList();
@@ -535,12 +535,12 @@ public class ExamService {
         var studentResults = new ArrayList<ExamScoresDTO.StudentResultDTO>();
         var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
 
-        // Resolve the participations of every student exam first. A test run and a test exam load theirs individually,
+        // Resolve the participations of every student exam first. A test exam loads its participations individually,
         // and they have to be part of the preload below as much as the regular ones.
         Map<Long, List<StudentParticipation>> participationsByStudentExamId = new LinkedHashMap<>();
         for (StudentExam studentExam : studentExams) {
             List<StudentParticipation> participations;
-            if (studentExam.isTestRun() || studentExam.isTestExam()) {
+            if (studentExam.isTestExam()) {
                 participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
             }
             else {
@@ -938,7 +938,9 @@ public class ExamService {
             if (latestSubmission != null) {
                 relevantResult = latestSubmission.getLatestCompletedResult();
             }
-            double resultScore = (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
+            // Instructor quiz results can have a score before their completion timestamp is set. Use the same
+            // authoritative grade for the percentage and points instead of displaying 0% beside earned points.
+            double resultScore = studentExam.isTestRun() ? examGrade.score() : (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                     new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }
