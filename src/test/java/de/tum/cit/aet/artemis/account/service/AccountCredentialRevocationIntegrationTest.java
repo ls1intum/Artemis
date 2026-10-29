@@ -764,7 +764,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void aFailedScienceRenameKeepsTheRevocationAndRestoresTheLogin() {
+    void aFailedScienceRenameKeepsTheRevocationAndRestoresTheLogin() throws Exception {
         giveUserCredentials();
         String oldPasswordHash = user.getPassword();
         String previousLogin = user.getLogin();
@@ -773,9 +773,10 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(previousLogin).orElseThrow();
         ManagedUserVM update = new ManagedUserVM(userWithAuthorities, "new-Password-123");
         update.setLogin(previousLogin + "renamed");
+        update.setName("Renamed User");
         update.setRevokeCredentials(true);
 
-        assertThatThrownBy(() -> userCreationService.updateUser(userWithAuthorities, update)).hasMessage("science rename failed");
+        request.put("/api/account/admin/users", update, HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(reloadUser().getLogin()).isEqualTo(previousLogin);
         assertPasswordChangedTo(oldPasswordHash, "new-Password-123");

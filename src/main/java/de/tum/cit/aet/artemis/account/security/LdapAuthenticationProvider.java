@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
+import de.tum.cit.aet.artemis.account.service.user.ScienceIdentityRenameService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
@@ -49,13 +50,16 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final UserRepository userRepository;
 
+    private final ScienceIdentityRenameService scienceIdentityRenameService;
+
     public LdapAuthenticationProvider(LdapUserService ldapUserService, AuthorityService authorityService, UserCreationService userCreationService,
-            SpringSecurityLdapTemplate ldapTemplate, UserRepository userRepository) {
+            SpringSecurityLdapTemplate ldapTemplate, UserRepository userRepository, ScienceIdentityRenameService scienceIdentityRenameService) {
         this.ldapUserService = ldapUserService;
         this.authorityService = authorityService;
         this.userCreationService = userCreationService;
         this.ldapTemplate = ldapTemplate;
         this.userRepository = userRepository;
+        this.scienceIdentityRenameService = scienceIdentityRenameService;
     }
 
     @Override
@@ -176,7 +180,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
         // only save the user in the database in case it has changed
         if (saveNeeded) {
             user = userRepository.save(user);
-            userCreationService.renameScienceEventIdentityIfLoginChanged(previousLogin, user);
+            scienceIdentityRenameService.renameScienceEventIdentityIfLoginChanged(previousLogin, user);
         }
         return user;
     }
