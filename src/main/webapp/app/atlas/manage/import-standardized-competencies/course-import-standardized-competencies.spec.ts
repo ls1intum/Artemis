@@ -12,12 +12,14 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { KnowledgeAreaTreeStubComponent } from 'test/helpers/stubs/atlas/knowledge-area-tree-stub.component';
 import { SortService } from 'app/foundation/service/sort.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Source } from 'app/atlas/shared/entities/standardized-competency.model';
+import { Source } from 'app/openapi/model/source';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,8 +32,8 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
         snapshot: { paramMap: convertToParamMap({ courseId: courseId }) },
     } as ActivatedRoute;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [
                 CourseImportStandardizedCompetenciesComponent,
                 StandardizedCompetencyFilterStubComponent,
@@ -47,7 +49,9 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(CompetencyService),
-                MockProvider(StandardizedCompetencyService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(AlertService),
                 MockProvider(SortService),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -60,10 +64,11 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
     });
 
     afterEach(() => {
+        TestBed.inject(HttpTestingController).verify();
         vi.restoreAllMocks();
     });
 
-    it('should load data', () => {
+    it('should load data', async () => {
         const dtoTree = [
             {
                 id: 1,
@@ -98,17 +103,102 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
         const sources: Source[] = [{ id: 1 }, { id: 2 }];
 
         const standardizedCompetencyService = TestBed.inject(StandardizedCompetencyService);
-        const getForTreeViewSpy = vi.spyOn(standardizedCompetencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: dtoTree })));
-        const getSourcesSpy = vi.spyOn(standardizedCompetencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: sources })));
+        const getForTreeViewSpy = vi.spyOn(standardizedCompetencyService, 'getAllForTreeView');
+        const getSourcesSpy = vi.spyOn(standardizedCompetencyService, 'getSources');
 
         componentFixture.detectChanges();
         expect(componentFixture.nativeElement.querySelector('h2').textContent).toBe('artemisApp.standardizedCompetency.courseImport.title');
 
-        expect(getForTreeViewSpy).toHaveBeenCalled();
-        expect(getSourcesSpy).toHaveBeenCalled();
+        TestBed.tick();
+        const http = TestBed.inject(HttpTestingController);
+        const treeRequest = http.expectOne('/api/atlas/standardized-competencies/for-tree-view');
+        const sourcesRequest = http.expectOne('/api/atlas/standardized-competencies/sources');
+        expect(treeRequest.request.method).toBe('GET');
+        expect(sourcesRequest.request.method).toBe('GET');
+        expect(component['isLoading']()).toBe(true);
+        sourcesRequest.flush(sources);
+        TestBed.tick();
+        expect(component['knowledgeAreaMap'].size).toBe(0);
+        expect(component['sources']).toEqual([]);
+        expect(component['isLoading']()).toBe(true);
+        treeRequest.flush(dtoTree);
+        await componentFixture.whenStable();
+        expect(component['isLoading']()).toBe(false);
+        expect(getForTreeViewSpy).toHaveBeenCalledExactlyOnceWith();
+        expect(getSourcesSpy).not.toHaveBeenCalled();
+        http.expectNone('/api/atlas/standardized-competencies/sources');
         expect(component['knowledgeAreaMap'].size).toBe(5);
         expect(component['knowledgeAreasForSelect']).toHaveLength(5);
         expect(component['sources']).toHaveLength(2);
+    });
+
+    it('accepts empty results and waits for delayed sources', async () => {
+        componentFixture.detectChanges();
+        TestBed.tick();
+        const http = TestBed.inject(HttpTestingController);
+        http.expectOne('/api/atlas/standardized-competencies/for-tree-view').flush([]);
+        expect(component['isLoading']()).toBe(true);
+        expect(component.canDeactivate()).toBe(false);
+        http.expectOne('/api/atlas/standardized-competencies/sources').flush([]);
+        await componentFixture.whenStable();
+        expect(component['isLoading']()).toBe(false);
+        expect(component['dataSource'].data).toEqual([]);
+        expect(component['sources']).toEqual([]);
+        expect(component.canDeactivate()).toBe(true);
+    });
+
+    it.each([403, 500])('propagates sources error %i and cancels the parallel tree read', async (status) => {
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        componentFixture.detectChanges();
+        TestBed.tick();
+        const http = TestBed.inject(HttpTestingController);
+        const tree = http.expectOne('/api/atlas/standardized-competencies/for-tree-view');
+        http.expectOne('/api/atlas/standardized-competencies/sources').flush({ message: 'Error' }, { status, statusText: 'Error' });
+        await componentFixture.whenStable();
+        expect(tree.cancelled).toBe(true);
+        expect(component['knowledgeAreaMap'].size).toBe(0);
+        expect(component['sources']).toEqual([]);
+        // Existing loading-on-error behavior is retained; a wider UX fix is outside this migration.
+        expect(component['isLoading']()).toBe(true);
+        if (status === 403) {
+            expect(alert).toHaveBeenCalledExactlyOnceWith('error.http.403');
+        } else {
+            expect(alert).not.toHaveBeenCalled();
+        }
+    });
+
+    it('cancels sources when the parallel tree fails', async () => {
+        componentFixture.detectChanges();
+        TestBed.tick();
+        const http = TestBed.inject(HttpTestingController);
+        const sources = http.expectOne('/api/atlas/standardized-competencies/sources');
+        http.expectOne('/api/atlas/standardized-competencies/for-tree-view').flush({}, { status: 403, statusText: 'Forbidden' });
+        await componentFixture.whenStable();
+        expect(sources.cancelled).toBe(true);
+        expect(component['isLoading']()).toBe(true);
+        expect(TestBed.inject(AlertService).error).toHaveBeenCalledExactlyOnceWith('error.http.403');
+    });
+
+    it('cancels on destruction and starts fresh on re-entry', async () => {
+        componentFixture.detectChanges();
+        TestBed.tick();
+        const http = TestBed.inject(HttpTestingController);
+        const tree = http.expectOne('/api/atlas/standardized-competencies/for-tree-view');
+        const sources = http.expectOne('/api/atlas/standardized-competencies/sources');
+        componentFixture.destroy();
+        expect(tree.cancelled).toBe(true);
+        expect(sources.cancelled).toBe(true);
+        componentFixture = TestBed.createComponent(CourseImportStandardizedCompetenciesComponent);
+        component = componentFixture.componentInstance;
+        componentFixture.detectChanges();
+        TestBed.tick();
+        expect(component['sources']).toEqual([]);
+        http.expectOne('/api/atlas/standardized-competencies/for-tree-view').flush([{ id: 42 }]);
+        http.expectOne('/api/atlas/standardized-competencies/sources').flush([{ id: 7, title: 'Fresh' }]);
+        await componentFixture.whenStable();
+        expect(component['knowledgeAreaMap'].has(42)).toBe(true);
+        expect(component['sources']).toEqual([{ id: 7, title: 'Fresh', author: undefined, uri: undefined }]);
+        expect(component['isLoading']()).toBe(false);
     });
 
     it('should open details', () => {
