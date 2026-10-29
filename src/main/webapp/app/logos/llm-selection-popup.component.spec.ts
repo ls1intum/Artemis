@@ -253,6 +253,14 @@ describe('LLMSelectionModalComponent', () => {
         });
     });
 
+    it('moves focus into the dialog when it opens, so Escape works without clicking it first', () => {
+        fixture.detectChanges();
+        openModalSubject.next(undefined);
+        fixture.detectChanges();
+
+        expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[data-testid="llm-selection-modal"]'));
+    });
+
     describe('Escape', () => {
         it('dismisses the modal, so a later choice elsewhere cannot resume the action that opened it', () => {
             fixture.detectChanges();
