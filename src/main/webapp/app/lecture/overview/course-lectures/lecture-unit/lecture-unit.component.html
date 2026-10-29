@@ -70,13 +70,15 @@
                         <fa-icon [icon]="faExpand" />
                     </button>
                 }
-                @if (this.lectureUnit().completed !== undefined && !isPresentationMode() && isVisibleToStudents()) {
+                @if (this.lectureUnit().completed !== undefined && !isPresentationMode()) {
+                    <!-- Kept (hidden) for an unreleased unit, so its buttons line up with the other rows. -->
                     <button
                         tumAetUiButton
                         type="button"
                         severity="secondary"
                         variant="text"
                         size="small"
+                        [class.invisible]="!isVisibleToStudents()"
                         (click)="toggleCompletion($event)"
                         [attr.aria-pressed]="!!lectureUnit().completed"
                         [attr.aria-label]="(lectureUnit().completed ? 'artemisApp.lectureUnit.completedTooltip' : 'artemisApp.lectureUnit.uncompletedTooltip') | artemisTranslate"
