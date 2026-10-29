@@ -58,7 +58,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
-import { Signal, signal } from '@angular/core';
+import { Signal, computed, signal } from '@angular/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -246,6 +246,29 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             exercise.problemStatement = statement;
             return new HttpResponse({ body: exercise });
         }
+
+        it('publishes synchronized metadata through the settings signal', () => {
+            const initialize = vi.spyOn(TestBed.inject(ExerciseMetadataSyncService), 'initialize');
+            protectedSettings();
+            const syncContext = initialize.mock.calls[0][0];
+            const visibleTitle = computed(() => comp.programmingExercise.title);
+            expect(visibleTitle()).toBe('Saved exercise');
+            const categories = [new ExerciseCategory('Shared category', '#ffffff')];
+            const gradingCriteria = [{ id: 1, title: 'Shared criterion', structuredGradingInstructions: [] }];
+            comp.programmingExercise.categories = categories;
+            comp.programmingExercise.gradingCriteria = gradingCriteria;
+            const incoming = { ...comp.programmingExercise, title: 'Incoming exercise' };
+
+            syncContext.setCurrentExercise!(incoming);
+
+            expect(comp.programmingExercise).not.toBe(incoming);
+            expect(comp.programmingExercise).toEqual(incoming);
+            expect(comp.programmingExercise).toBeInstanceOf(ProgrammingExercise);
+            expect(comp.programmingExercise.categories).toBe(categories);
+            expect(comp.programmingExercise.gradingCriteria).toBe(gradingCriteria);
+            expect(syncContext.getCurrentExercise()).toBe(comp.programmingExercise);
+            expect(visibleTitle()).toBe('Incoming exercise');
+        });
 
         it('revalidates before a category save even when the generation event was missed', () => {
             protectedSettings();

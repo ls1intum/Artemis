@@ -23,6 +23,22 @@ import { ExerciseMetadataSyncContext, ExerciseMetadataSyncService, metadataValue
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { ExerciseMetadataConflictModalResult } from 'app/exercise/synchronization/metadata/exercise-metadata-conflict-modal.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+
+@Component({
+    imports: [ExerciseTitleChannelNameComponent],
+    template: '<jhi-exercise-title-channel-name [exercise]="editorView()" />',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+class MetadataTitleEditorHost {
+    readonly exercise = signal(new ProgrammingExercise(undefined, undefined));
+    // A signal-derived view must refresh when the synchronization service applies incoming state.
+    readonly editorView = computed(() => ({ ...this.exercise() }));
+}
 
 /**
  * Creates a mock TumAetUiDialogRef whose onClose Subject can be resolved or completed externally.
@@ -89,8 +105,11 @@ describe('ExerciseMetadataSyncService', () => {
         setTimeout(() => defaultMock.onClose.next({ decisions: [] } satisfies ExerciseMetadataConflictModalResult), 0);
 
         TestBed.configureTestingModule({
+            imports: [MetadataTitleEditorHost],
             providers: [
                 ExerciseMetadataSyncService,
+                SessionStorageService,
+                { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 {
@@ -166,6 +185,35 @@ describe('ExerciseMetadataSyncService', () => {
 
         httpMock.expectNone(() => true);
         expect(dialogService.open).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])('refreshes the rendered title after incoming metadata (conflict: %s)', async (conflict) => {
+        currentExercise.title = conflict ? 'local-title' : 'baseline-title';
+        const fixture = TestBed.createComponent(MetadataTitleEditorHost);
+        fixture.componentInstance.exercise.set(currentExercise);
+        fixture.autoDetectChanges();
+        await fixture.whenStable();
+        const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+        expect(input.value).toBe(currentExercise.title);
+        Object.assign(context, {
+            setCurrentExercise: (updated: ProgrammingExercise) => {
+                currentExercise = { ...updated };
+                fixture.componentInstance.exercise.set(currentExercise);
+            },
+        });
+        const mock = createMockDialogRef();
+        dialogService.open.mockReturnValue(mock.ref);
+        service.initialize(context);
+        emitAlert(createAlert(101, ['title']));
+        flushSnapshot(1, 101, { id: 1, title: 'incoming-title' });
+        await flushPromises();
+        if (conflict) {
+            mock.onClose.next({ decisions: [{ field: 'title', useIncoming: true }] });
+            await flushPromises();
+        }
+        await fixture.whenStable();
+        expect(currentExercise.title).toBe('incoming-title');
+        expect(input.value).toBe('incoming-title');
     });
 
     it('applies non-conflicting incoming changes to current and baseline without modal', async () => {
@@ -296,6 +344,8 @@ describe('ExerciseMetadataSyncService', () => {
     });
 
     it('keeps local values when conflict modal is dismissed', async () => {
+        const publish = vi.fn();
+        context.setCurrentExercise = publish;
         const mock = createMockDialogRef();
         dialogService.open.mockReturnValue(mock.ref);
 
@@ -316,9 +366,12 @@ describe('ExerciseMetadataSyncService', () => {
         expect(dialogService.open).toHaveBeenCalledOnce();
         expect(currentExercise.title).toBe('local-title');
         expect(baselineExercise.title).toBe('incoming-title');
+        expect(publish).not.toHaveBeenCalled();
     });
 
     it('keeps local values for decisions with useIncoming=false', async () => {
+        const publish = vi.fn();
+        context.setCurrentExercise = publish;
         const resolution: ExerciseMetadataConflictModalResult = {
             decisions: [{ field: 'title', useIncoming: false }],
         };
@@ -340,6 +393,7 @@ describe('ExerciseMetadataSyncService', () => {
 
         expect(currentExercise.title).toBe('local-title');
         expect(baselineExercise.title).toBe('incoming-title');
+        expect(publish).not.toHaveBeenCalled();
     });
 
     it('does not raise competency link conflicts when only exercise references differ', async () => {
