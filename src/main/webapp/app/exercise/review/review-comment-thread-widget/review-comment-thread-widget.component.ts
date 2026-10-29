@@ -479,7 +479,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         this.resolveGroupMenuItems.set(resolveGroupMenuItems);
     }
 
-    private readonly hideOpenMenus = (): void => {
+    private readonly hideOpenMenus = (event: Event): void => {
+        // Focusing an Aria menu item can scroll its overlay. That does not move the editor anchor,
+        // and closing here would dismiss the menu before the user can choose an action.
+        if (event.target instanceof Element && event.target.closest('tumaet-ui-menu')) {
+            return;
+        }
         this.hideAllCommentMenus();
     };
 

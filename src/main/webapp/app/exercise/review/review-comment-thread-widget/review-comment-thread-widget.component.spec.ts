@@ -50,6 +50,50 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it.each(['menu', 'menuitem'])('keeps comment actions usable when focus scrolls the %s', async (role) => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [{ id: 3, type: CommentType.USER, content: { contentType: CommentContentType.USER, text: 'Review this instruction.' } }],
+        });
+        fixture.detectChanges();
+        const trigger = fixture.nativeElement.querySelector('.monaco-review-comment-menu-trigger') as HTMLButtonElement;
+        trigger.click();
+        await fixture.whenStable();
+
+        const menu = document.querySelector('[role="menu"]') as HTMLElement;
+        expect(menu).not.toBeNull();
+        const scrollTarget = role === 'menu' ? menu : (menu.querySelector('[role="menuitem"]') as HTMLElement);
+        scrollTarget.dispatchEvent(new Event('scroll'));
+        await fixture.whenStable();
+
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        const editAction = document.querySelector('[role="menuitem"]') as HTMLButtonElement;
+        editAction.click();
+        await fixture.whenStable();
+        expect(comp.editingCommentId()).toBe(3);
+        expect(comp.editText()).toBe('Review this instruction.');
+    });
+
+    it('still closes comment actions when the surrounding page scrolls', async () => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [{ id: 3, type: CommentType.USER, content: { contentType: CommentContentType.USER, text: 'Review this instruction.' } }],
+        });
+        fixture.detectChanges();
+        const trigger = fixture.nativeElement.querySelector('.monaco-review-comment-menu-trigger') as HTMLButtonElement;
+        trigger.click();
+        await fixture.whenStable();
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+
+        document.dispatchEvent(new Event('scroll'));
+        await fixture.whenStable();
+
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+    });
+
     it('offers one outlined AI selection action instead of a second adaptation shortcut', () => {
         reviewCommentService.adaptationOffered.set(true);
         fixture.detectChanges();
