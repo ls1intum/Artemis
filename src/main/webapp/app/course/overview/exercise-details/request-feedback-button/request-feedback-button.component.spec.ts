@@ -1015,7 +1015,28 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(button.nativeElement.getAttribute('aria-label')).toBeTruthy();
         });
 
-        it('should disable the AI Experience button once the feedback limit is reached', async () => {
+        it('should keep the AI Experience button enabled before a submission and open the modal without a request', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+            setupComponentInputs(exercise, false);
+            const modalSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+            await initAndTick();
+
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
+            expect(button.nativeElement.disabled).toBe(false);
+            button.nativeElement.click();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(modalSpy).toHaveBeenCalled();
+            expect(requestSpy).not.toHaveBeenCalled();
+        });
+
+        it('should keep the AI Experience button enabled once the feedback limit is reached', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const participation: StudentParticipation = {
@@ -1038,8 +1059,9 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
+            // Choosing an AI Experience is still possible; the request that may follow is blocked by the limit (see below).
             const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
-            expect(button.nativeElement.disabled).toBe(true);
+            expect(button.nativeElement.disabled).toBe(false);
         });
 
         it('should not request feedback after accepting AI usage when the feedback limit was already reached', async () => {
@@ -1068,8 +1090,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
-            // Bypasses the disabled button to verify the guard inside acceptLLMUsage() itself, not just the disabled attribute.
-            await component.showLLMSelectionModal();
+            debugElement.query(By.css('#enable-ai-feedback-' + exercise.id)).nativeElement.click();
             await vi.advanceTimersByTimeAsync(0);
 
             expect(requestSpy).not.toHaveBeenCalled();
@@ -1291,6 +1312,8 @@ describe('RequestFeedbackButtonComponent', () => {
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
             setupComponentInputs(exercise, true);
+            // The plain button: the AI Experience prompt still opens the modal, as choosing needs no free request.
+            fixture.componentRef.setInput('showAiExperiencePrompt', false);
             component.hasUserAcceptedLLMUsage.set(false);
             component.currentFeedbackRequestCount.set(component.feedbackRequestLimit);
 

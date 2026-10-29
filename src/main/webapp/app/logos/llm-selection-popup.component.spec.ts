@@ -253,6 +253,22 @@ describe('LLMSelectionModalComponent', () => {
         });
     });
 
+    describe('Escape', () => {
+        it('dismisses the modal, so a later choice elsewhere cannot resume the action that opened it', () => {
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+            fixture.detectChanges();
+            const choiceSpy = vi.spyOn(component.choice, 'emit');
+
+            fixture.nativeElement.querySelector('[data-testid="llm-selection-modal"]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+            fixture.detectChanges();
+
+            expect(choiceSpy).toHaveBeenCalledExactlyOnceWith(LLM_MODAL_DISMISSED);
+            expect(modalService.emitChoice).toHaveBeenCalledExactlyOnceWith(LLM_MODAL_DISMISSED);
+            expect(component.isVisible()).toBe(false);
+        });
+    });
+
     describe('onLearnMoreClick', () => {
         it('should prevent default event behavior', () => {
             const event = { preventDefault: vi.fn() } as any;

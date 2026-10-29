@@ -3,7 +3,7 @@
         <tumaet-ui-button
             [size]="smallButtons() ? 'small' : 'default'"
             [icon]="faPenSquare"
-            [disabled]="isFeedbackRequestBlocked()"
+            [disabled]="!showOptInPrompt() && isFeedbackRequestBlocked()"
             [id]="buttonIdPrefix() + exercise().id"
             [ariaLabel]="buttonLabelKey() | artemisTranslate"
             (clicked)="requestAIFeedback()"
@@ -16,7 +16,7 @@
             class="btn btn-primary"
             (click)="requestAIFeedback()"
             [class.btn-sm]="smallButtons()"
-            [disabled]="isFeedbackRequestBlocked()"
+            [disabled]="!showOptInPrompt() && isFeedbackRequestBlocked()"
             [id]="buttonIdPrefix() + exercise().id"
             [attr.aria-label]="buttonLabelKey() | artemisTranslate"
         >

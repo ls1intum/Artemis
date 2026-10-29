@@ -75,6 +75,10 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
     private readonly isFeedbackRequestPending = signal(false);
     readonly isFeedbackRequestBlocked = computed(() => !this.isSubmitted() || this.isFeedbackGenerationInProgress() || this.isFeedbackLimitReached());
+    /**
+     * Choosing an AI Experience needs no submission, so this prompt is never disabled; the feedback request that may
+     * follow the choice re-checks the submission, a pending request and the limit itself.
+     */
     readonly showOptInPrompt = computed(() => this.showAiExperiencePrompt() && !this.hasUserAcceptedLLMUsage());
     readonly buttonIdPrefix = computed(() => (this.showOptInPrompt() ? 'enable-ai-feedback-' : 'request-feedback-'));
     readonly buttonLabelKey = computed(() => (this.showOptInPrompt() ? this.aiExperienceActionKey() : 'artemisApp.exerciseActions.requestAutomaticFeedback'));
@@ -228,7 +232,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     async requestAIFeedback(): Promise<void> {
-        if (this.isFeedbackLimitReached()) {
+        if (this.isFeedbackLimitReached() && !this.showOptInPrompt()) {
             return;
         }
         // Another tab may have changed the AI Experience choice since this tab cached it (or since this component was
