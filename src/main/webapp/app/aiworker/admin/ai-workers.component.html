@@ -1,0 +1,95 @@
+<section class="flex flex-col gap-4" aria-labelledby="ai-workers-title" [attr.aria-busy]="loading()">
+    <h2 id="ai-workers-title" class="m-0 text-lg font-semibold">{{ 'artemisApp.aiworker.title' | artemisTranslate }}</h2>
+    @if (updatedAt(); as updated) {
+        <p class="m-0 text-xs text-muted-color" data-testid="ai-workers-updated"><span jhiTranslate="artemisApp.aiworker.updated"></span> {{ updated | date: 'mediumTime' }}</p>
+    }
+    @if (failed()) {
+        <tumaet-ui-message severity="error" data-testid="ai-workers-error">
+            <span jhiTranslate="artemisApp.aiworker.loadFailed"></span>
+        </tumaet-ui-message>
+    }
+    @if (!failed() && updatedAt()) {
+        <dl class="m-0 grid grid-cols-2 gap-4 rounded-md border border-surface p-4 sm:grid-cols-4" data-testid="ai-workers-summary">
+            <div>
+                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.aiworker.configured"></dt>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ workers().length }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.aiworker.availableSlots"></dt>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ available() }} / {{ slots() }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.aiworker.occupied"></dt>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ occupied() }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.aiworker.unavailable"></dt>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ unavailable() }}</dd>
+            </div>
+        </dl>
+        @if (retainedReservations()) {
+            <tumaet-ui-message severity="warn" data-testid="ai-workers-retained-reservations">
+                <span jhiTranslate="artemisApp.aiworker.retainedReservations" [translateValues]="{ count: retainedReservations() }"></span>
+            </tumaet-ui-message>
+        }
+        @if (!workers().length) {
+            <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.aiworker.empty"></span></tumaet-ui-message>
+        }
+    }
+    <div class="overflow-x-auto">
+        <table tumAetUiTable data-testid="ai-workers-table">
+            <caption class="sr-only" jhiTranslate="artemisApp.aiworker.title"></caption>
+            <thead>
+                <tr>
+                    <th scope="col" jhiTranslate="artemisApp.aiworker.worker"></th>
+                    <th scope="col" jhiTranslate="artemisApp.aiworker.status"></th>
+                    <th scope="col" jhiTranslate="artemisApp.aiworker.availableSlots"></th>
+                    <th scope="col" jhiTranslate="artemisApp.aiworker.heartbeat"></th>
+                    <th scope="col" jhiTranslate="artemisApp.aiworker.runningJobs"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (row of rows(); track row.worker.workerId) {
+                    @let worker = row.worker;
+                    <tr [attr.data-state]="worker.state">
+                        <td>{{ worker.workerId }}</td>
+                        <td><tumaet-ui-tag [severity]="row.severity" [value]="'artemisApp.aiworker.state.' + worker.state | artemisTranslate" /></td>
+                        <td class="tabular-nums" data-testid="ai-worker-capacity">
+                            @if (row.capacityKnown) {
+                                {{ worker.availableSlots }} / {{ worker.capacity }}
+                            } @else {
+                                <span
+                                    role="img"
+                                    [attr.aria-label]="'artemisApp.aiworker.unknownCapacity' | artemisTranslate"
+                                    [tumAetUiTooltip]="'artemisApp.aiworker.unknownCapacity' | artemisTranslate"
+                                    >—</span
+                                >
+                            }
+                        </td>
+                        <td>{{ (worker.lastHeartbeat | date: 'medium') ?? '—' }}</td>
+                        <td data-testid="ai-worker-running">
+                            <span class="tabular-nums">{{ row.capacityKnown ? (worker.executions?.length ?? 0) : '—' }}</span>
+                            @if (worker.executions?.length || worker.imageDigest || worker.capability?.profile) {
+                                <details class="mt-1 text-sm">
+                                    <summary jhiTranslate="artemisApp.aiworker.details"></summary>
+                                    @if (worker.capability?.profile) {
+                                        <div><span jhiTranslate="artemisApp.aiworker.profile"></span>: {{ worker.capability?.profile }}</div>
+                                    }
+                                    @if (worker.imageDigest) {
+                                        <div class="break-all"><span jhiTranslate="artemisApp.aiworker.image"></span>: {{ worker.imageDigest }}</div>
+                                    }
+                                    @for (execution of worker.executions ?? []; track execution.slot ?? $index) {
+                                        <div>
+                                            <span jhiTranslate="artemisApp.aiworker.slot"></span> {{ execution.slot ?? '—' }} · <span jhiTranslate="artemisApp.aiworker.job"></span>
+                                            {{ execution.jobId ?? '—' }} · <span jhiTranslate="artemisApp.aiworker.resource"></span> {{ execution.resourceId ?? '—' }}
+                                        </div>
+                                    }
+                                </details>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -456,7 +456,7 @@ describe('TutorialGroupDetailComponent', () => {
         expect(noUpcomingEventDisclaimer).not.toBeNull();
     });
 
-    it('should compute correct averageAttendancePercentage', () => {
+    it('should compute the correct average attendance percentage', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession = createRawTutorialGroupSessionDTO({
@@ -482,10 +482,10 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
-        expect(component.averageAttendancePercentage()).toBe('Ø 70%');
+        expect(component.attendanceChartLabel()).toBe('Ø 70%');
     });
 
-    it('should expose no averageAttendancePercentage if no attendances were recorded', () => {
+    it('should expose no attendance chart label if no attendances were recorded', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession = createRawTutorialGroupSessionDTO({
@@ -510,10 +510,10 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
-        expect(component.averageAttendancePercentage()).toBeUndefined();
+        expect(component.attendanceChartLabel()).toBeUndefined();
     });
 
-    it('should expose no averageAttendancePercentage if no capacity available for course', () => {
+    it('should show the average attendance count if no capacity is available', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession = createRawTutorialGroupSessionDTO({
@@ -538,7 +538,8 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
-        expect(component.averageAttendancePercentage()).toBeUndefined();
+        // Only the first session has attendance (7); without a capacity the chart shows the average headcount, not a percentage.
+        expect(component.attendanceChartLabel()).toBe('Ø 7');
     });
 
     it('should compute correct pieChartData', () => {

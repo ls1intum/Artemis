@@ -13,6 +13,7 @@ import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exerc
 import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { QuizExerciseCountdownComponent } from 'app/exercise/exercise-headers/quiz-countdown/quiz-exercise-countdown.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Width the title keeps for itself before the pills give way: the sidebar toggle plus enough of the exercise title to
@@ -157,6 +158,19 @@ export class ExerciseHeaderComponent {
 
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? this.effectivePracticeParticipation() : this.studentParticipation();
+    });
+
+    // Live participation updates do not replace the exercise snapshot. Give the action controls the same
+    // current participations as the status display, so a completed feedback request releases its Submit lock.
+    protected readonly exerciseForActions = computed(() => {
+        const exercise = this.exercise();
+        const currentParticipations = [this.studentParticipation(), this.effectivePracticeParticipation()].filter((participation) => participation !== undefined);
+        if (!currentParticipations.length) {
+            return exercise;
+        }
+        const currentIds = new Set(currentParticipations.map((participation) => participation.id));
+        const otherParticipations = (exercise.studentParticipations ?? []).filter((participation) => !currentIds.has(participation.id));
+        return cloneWith(exercise, { studentParticipations: otherParticipations.concat(currentParticipations) });
     });
 
     readonly quizPracticeInProgress = computed(() => {

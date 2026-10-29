@@ -8,9 +8,9 @@
                 [resizableEdges]="{ left: '.draggable-left' }"
                 [resizableConstraints]="{ minWidth: 375, maxWidth: 600 }"
             >
-                <div class="draggable-left" [hidden]="embedded()">
-                    <fa-icon [icon]="faGripLinesVertical" />
-                </div>
+                @if (!embedded()) {
+                    <div class="draggable-left panel-divider-x"></div>
+                }
                 <div [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden' : 'card'">
                     <!-- header -->
                     <div

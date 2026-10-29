@@ -59,7 +59,7 @@ export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
      */
     readonly gutterCenterPx = signal<number | undefined>(undefined);
     /** Splitter gutter width (px); single source of truth, bound to the template's [gutterSize] and used to centre the lock button. */
-    protected readonly gutterSize = 12;
+    protected readonly gutterSize = 6;
     private panelResizeObserver?: ResizeObserver;
 
     // Replaces the ngOnChanges 'exercise' branch: pure derived state, recomputed whenever the exercise input changes.

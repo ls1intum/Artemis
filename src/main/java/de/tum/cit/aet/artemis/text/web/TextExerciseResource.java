@@ -243,7 +243,7 @@ public class TextExerciseResource {
      * with answer if existing and the assessments if the submission was already submitted.
      *
      * @param participationId the participationId for which to find the data for the text editor
-     * @param resultId        optional id of a specific result to retrieve; if not provided, returns the latest result
+     * @param resultId        optional id of a specific result to retrieve; if not provided, returns the latest assessment and Athena request history
      * @return the ResponseEntity with the participation as body
      */
     // TODO: fix the URL scheme
@@ -285,27 +285,34 @@ public class TextExerciseResource {
                     textSubmission.setResults(new LinkedHashSet<>(athenaResults));
                 }
 
-                // Use specific result if resultId is provided, otherwise use latest
+                // Athena requests remain in the response for pending-request guards and quota calculations, but an
+                // unfinished or failed request must not displace the latest assessment.
                 Result result = (resultId != null) ? textSubmission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElse(null)
-                        : textSubmission.getLatestResult();
+                        : textSubmission.getLatestGradingResult();
+                Set<Result> resultsToReturn = resultId != null ? new LinkedHashSet<>()
+                        : new LinkedHashSet<>(textSubmission.getResults().stream().filter(Result::isAthenaBased).toList());
                 if (result != null) {
                     resultFound = true;
+                    resultsToReturn.add(result);
+                }
+                if (!resultsToReturn.isEmpty()) {
                     // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
                     final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
                     textSubmission.setBlocks(textBlocks);
 
-                    if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
-                        List<Feedback> assessments = feedbackRepository.findByResult(result);
-                        result.setFeedbacks(assessments);
-                    }
+                    for (Result returnedResult : resultsToReturn) {
+                        if (textSubmission.isSubmitted() && returnedResult.getCompletionDate() != null
+                                && (!returnedResult.isAthenaBased() || Boolean.TRUE.equals(returnedResult.isSuccessful()))) {
+                            List<Feedback> assessments = feedbackRepository.findByResult(returnedResult);
+                            returnedResult.setFeedbacks(assessments);
+                        }
 
-                    if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-                        result.filterSensitiveInformation();
+                        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+                            returnedResult.filterSensitiveInformation();
+                        }
                     }
-
-                    // Only send the relevant result to the client
-                    textSubmission.setResults(Set.of(result));
                 }
+                textSubmission.setResults(resultsToReturn);
                 participation.addSubmission(textSubmission);
             }
         }

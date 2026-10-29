@@ -1,0 +1,202 @@
+// Scope styles to rendered Markdown, including content inserted through innerHTML.
+.hyperion-markdown-body {
+    --hyperion-markdown-body-measure: 65ch;
+    --hyperion-markdown-body-block-gap: calc(var(--spacing) * 4);
+
+    max-width: var(--hyperion-markdown-body-measure);
+    color: var(--body-color);
+    font-family: inherit;
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    overflow-wrap: break-word;
+}
+
+.hyperion-markdown-body[data-density='compact'] {
+    --hyperion-markdown-body-block-gap: calc(var(--spacing) * 3);
+
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+}
+
+// Keep block spacing between siblings.
+.hyperion-markdown-body > * {
+    margin-block: 0;
+}
+
+.hyperion-markdown-body > * + * {
+    margin-block-start: var(--hyperion-markdown-body-block-gap);
+}
+
+// A heading opens a new section, so it gets more room above it than an ordinary block does.
+.hyperion-markdown-body > * + h1,
+.hyperion-markdown-body > * + h2,
+.hyperion-markdown-body > * + h3,
+.hyperion-markdown-body > * + h4,
+.hyperion-markdown-body > * + h5,
+.hyperion-markdown-body > * + h6 {
+    margin-block-start: calc(var(--hyperion-markdown-body-block-gap) * 1.75);
+}
+
+// Keep document headings subordinate to the page heading.
+.hyperion-markdown-body h1,
+.hyperion-markdown-body h2,
+.hyperion-markdown-body h3,
+.hyperion-markdown-body h4,
+.hyperion-markdown-body h5,
+.hyperion-markdown-body h6 {
+    color: var(--body-color);
+    font-weight: var(--font-weight-semibold);
+    text-wrap: balance;
+}
+
+.hyperion-markdown-body h1 {
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+}
+
+.hyperion-markdown-body h2 {
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+}
+
+.hyperion-markdown-body h3 {
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+}
+
+.hyperion-markdown-body h4,
+.hyperion-markdown-body h5,
+.hyperion-markdown-body h6 {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    text-transform: none;
+}
+
+.hyperion-markdown-body p {
+    margin-block: 0;
+}
+
+.hyperion-markdown-body ul,
+.hyperion-markdown-body ol {
+    margin-block: 0;
+    padding-inline-start: calc(var(--spacing) * 6);
+}
+
+.hyperion-markdown-body ul {
+    list-style: disc;
+}
+
+.hyperion-markdown-body ol {
+    list-style: decimal;
+}
+
+.hyperion-markdown-body li + li {
+    margin-block-start: calc(var(--spacing) * 1.5);
+}
+
+// A nested list belongs to the item above it, so it is spaced as part of that item rather than as a new block.
+.hyperion-markdown-body li > ul,
+.hyperion-markdown-body li > ol {
+    margin-block-start: calc(var(--spacing) * 1.5);
+}
+
+.hyperion-markdown-body li::marker {
+    color: var(--text-body-secondary);
+}
+
+.hyperion-markdown-body a {
+    color: var(--primary-dark);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.hyperion-markdown-body a:hover {
+    color: var(--primary);
+}
+
+.hyperion-markdown-body a:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm, 0.25rem);
+}
+
+.hyperion-markdown-body strong,
+.hyperion-markdown-body b {
+    font-weight: var(--font-weight-semibold);
+}
+
+// Keep code on its own surface.
+.hyperion-markdown-body code {
+    padding: calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5);
+    border-radius: var(--radius-sm, 0.25rem);
+    background: var(--artemis-control-background);
+    color: var(--body-color);
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.hyperion-markdown-body pre {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+    border-radius: var(--radius-md);
+    background: var(--artemis-control-background);
+    color: var(--body-color);
+    font-family: monospace;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    tab-size: 4;
+}
+
+.hyperion-markdown-body pre code {
+    padding: 0;
+    background: none;
+    font-size: inherit;
+}
+
+.hyperion-markdown-body blockquote {
+    padding-inline-start: calc(var(--spacing) * 4);
+    border-inline-start: 3px solid var(--artemis-control-border);
+    color: var(--text-body-secondary);
+}
+
+.hyperion-markdown-body hr {
+    height: 0;
+    border: 0;
+    border-block-start: 1px solid var(--border-color);
+    opacity: 1;
+}
+
+.hyperion-markdown-body table {
+    max-width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+}
+
+.hyperion-markdown-body th,
+.hyperion-markdown-body td {
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+    border-block-end: 1px solid var(--border-color);
+    text-align: start;
+    vertical-align: top;
+}
+
+.hyperion-markdown-body th {
+    font-weight: var(--font-weight-semibold);
+}
+
+.hyperion-markdown-body img,
+.hyperion-markdown-body video {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+}
+
+// In forced-colors the code surface disappears into the canvas, so the block needs a real boundary to stay a block.
+@media (forced-colors: active) {
+    .hyperion-markdown-body pre,
+    .hyperion-markdown-body code {
+        border: 1px solid CanvasText;
+    }
+}
