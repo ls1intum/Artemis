@@ -104,7 +104,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
         deleteQuizExerciseStub = vi.spyOn(TestBed.inject(QuizExerciseDeletionApi), 'deleteQuizExercise');
         deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete');
         deleteProgrammingExerciseStub = vi.spyOn(programmingExerciseService, 'delete');
-        quizExerciseServiceFindStub = vi.spyOn(quizExerciseService, 'find');
+        quizExerciseServiceFindStub = vi.spyOn(quizExerciseService, 'findForExam');
         onDeleteExerciseEmitSpy = vi.spyOn(component.onDeleteExercise, 'emit');
         quizExerciseExportSpy = vi.spyOn(quizExerciseService, 'exportQuiz');
     });

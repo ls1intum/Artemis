@@ -23,7 +23,9 @@
             "collapseMenu": "Menü einklappen (Strg + M)",
             "enabled": "Aktiviert",
             "disabled": "Deaktiviert",
-            "unknownPerson": "Unbekannte Person"
+            "unknownPerson": "Unbekannte Person",
+            "resizePanels": "Bereichsgröße ändern",
+            "selectAllRows": "Alle Zeilen auswählen"
         },
         "weekdays": {
             "monday": "Montag",

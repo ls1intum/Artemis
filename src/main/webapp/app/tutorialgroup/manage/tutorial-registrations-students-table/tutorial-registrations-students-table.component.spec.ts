@@ -7,7 +7,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 describe('TutorialRegistrationsStudentsTable', () => {
-    let component: TutorialRegistrationsStudentsTableComponent;
     let fixture: ComponentFixture<TutorialRegistrationsStudentsTableComponent>;
 
     const firstStudent: TutorialGroupStudent = {
@@ -35,7 +34,6 @@ describe('TutorialRegistrationsStudentsTable', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialRegistrationsStudentsTableComponent);
-        component = fixture.componentInstance;
     });
 
     afterEach(() => {
@@ -75,7 +73,7 @@ describe('TutorialRegistrationsStudentsTable', () => {
 
         expect(fixture.nativeElement.querySelector('th.action-column')).toBeNull();
         expect(fixture.nativeElement.querySelector('td.action-column')).toBeNull();
-        expect(fixture.nativeElement.querySelector('.remove-button')).toBeNull();
+        expect(fixture.nativeElement.querySelector('button[aria-label="entity.action.remove"]')).toBeNull();
     });
 
     it('should display the remove column when column info is provided', () => {
@@ -90,7 +88,9 @@ describe('TutorialRegistrationsStudentsTable', () => {
 
         expect(fixture.nativeElement.querySelector('th.action-column')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('td.action-column')).not.toBeNull();
-        expect(fixture.nativeElement.querySelector('.remove-button')).not.toBeNull();
-        expect(component).toBeTruthy();
+        const remove = fixture.nativeElement.querySelector('button[aria-label="entity.action.remove"]') as HTMLButtonElement;
+        expect(remove).not.toBeNull();
+        remove.click();
+        expect(removeActionColumnInfo.onRemove).toHaveBeenCalledWith(expect.any(MouseEvent), firstStudent);
     });
 });

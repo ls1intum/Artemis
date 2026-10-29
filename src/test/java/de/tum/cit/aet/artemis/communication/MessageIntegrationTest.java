@@ -201,7 +201,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateConversationPostInCourseWideChannel(boolean isAnnouncement) throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test", isAnnouncement);
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
@@ -224,7 +224,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreatePostInChannelOfUnreleasedExerciseOnlyReachesStaff() throws Exception {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseChannel.getExercise().getId());
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
@@ -248,7 +248,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateAnnouncementInPrivateChannel() throws Exception {
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
@@ -289,10 +289,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // the former fire-and-forget async Weaviate write). The actual Weaviate write still happens later off the request.
         // + 1 author read reset, now completed before the response rather than queued on the async executor.
         // This is the same UPDATE as before; it now counts toward the request's query budget.
+        // + 1 lock on the conversation row, taken because the author's participant does not exist yet and is created. It makes requests
+        // that create the same participant at the same time wait for each other, so none of them fails on the unique index. It is only
+        // taken once per user and conversation.
         // further database calls are made in async code
         // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
         assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(11);
+                .hasBeenCalledTimes(12);
     }
 
     @ParameterizedTest
@@ -690,7 +693,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testPinPost_asTutor() throws Exception {
         Post postToPin = existingConversationMessages.getFirst();
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -731,7 +734,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testEditConversationPost_forbidden() throws Exception {
         // conversation post of tutor1 must not be editable by tutor2
         Post conversationPostToUpdate = existingConversationMessages.getFirst();
@@ -760,7 +763,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of user must not be deletable by tutors
         Post conversationPostToDelete = existingConversationMessages.getFirst();
@@ -974,7 +977,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseWideMessagesWithPinnedOnly() throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "channel-for-pinned-test", false);
         ConversationParticipant instructorParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
@@ -1475,7 +1478,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldSendAnnouncementNotificationWhenFeatureIsEnabled() throws Exception {
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
@@ -1499,7 +1502,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotSendAnAnnouncementEmailToATestUserThatNeverConfiguredIt() throws Exception {
         var regularMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         var testUserMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();

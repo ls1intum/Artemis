@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -138,7 +137,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void shouldReturnForbiddenForUserNotInCourse() throws Exception {
         super.shouldReturnForbiddenForUserNotInCourse();
     }
@@ -209,37 +208,37 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportAllCompetencies() throws Exception {
         super.shouldImportAllCompetencies(competencyUtilService::createCompetency);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportAllCompetenciesWithSomeExisting() throws Exception {
         shouldImportAllCompetenciesWithSomeExisting(Competency::new, 5);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
         super.shouldImportAllExerciseAndLectureWithCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
         super.shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void shouldReturnForbiddenForInstructorNotInCourse() throws Exception {
         super.shouldReturnForbiddenForInstructorNotInCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForImportFromSameCourse() throws Exception {
         super.shouldReturnBadRequestForImportFromSameCourse();
     }
@@ -268,7 +267,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldGetCompetencyCourseProgressWhenTeamExercise() throws Exception {
             User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
             var teams = teamUtilService.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 2, tutor, 1);
@@ -288,7 +287,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldGetCompetencyCourseProgress() throws Exception {
             User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
@@ -386,7 +385,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     class GetCompetenciesForImport {
 
         @Test
-        @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+        @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
         void shouldNotGetCompetenciesForInstructorOfOtherCourse() throws Exception {
             // configure search so all competencies would get returned
             final var search = pageableSearchUtilService.configureCompetencySearch("", "", "", "");
@@ -396,7 +395,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldGetCompetenciesFromOwnCourses() throws Exception {
             final var search = pageableSearchUtilService.configureCompetencySearch(courseCompetency.getTitle(), "", course.getTitle(), "");
             var result = request.getSearchResult("/api/atlas/course-competencies/for-import", HttpStatus.OK, CourseCompetency.class,
@@ -435,7 +434,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     class GetCourseCompetencyTitles {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldGetCourseCompetencyTitles() throws Exception {
             competencyUtilService.createCompetencies(course, 5);
             var competencyTitles = courseCompetencyRepository.findAllForCourse(course.getId()).stream().map(CourseCompetency::getTitle).toList();
@@ -453,7 +452,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     class CreateCompetencyRelation {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldCreateForEditor() throws Exception {
             var headCompetency = competencyUtilService.createCompetency(course);
             var relationToCreate = new CompetencyRelation();
@@ -470,7 +469,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnBadRequestWhenCompetencyNotExists() throws Exception {
             var notPersCompetency = new Competency();
             notPersCompetency.setId(1337L);
@@ -489,7 +488,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnBadRequestWhenTypeNotPresent() throws Exception {
             var headCompetency = competencyUtilService.createCompetency(course);
             var relationToCreate = new CompetencyRelation();
@@ -502,7 +501,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnBadRequestForCircularRelations() throws Exception {
             Competency competency2 = competencyUtilService.createCompetency(course);
             Competency competency3 = competencyUtilService.createCompetency(course);
@@ -519,7 +518,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldUpdateForEditor() throws Exception {
             var headCompetency = competencyUtilService.createCompetency(course);
             var relationToCreate = new CompetencyRelation();
@@ -545,7 +544,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getCompetencyRelationsShouldGetRelations() throws Exception {
         Competency competency2 = competencyUtilService.createCompetency(course);
         Competency competency3 = competencyUtilService.createCompetency(course);
@@ -562,7 +561,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteCompetencyRelationShouldDeleteRelation() throws Exception {
         Competency competency2 = competencyUtilService.createCompetency(course);
 
@@ -625,7 +624,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldGetAllCompetenciesCourseProgressAsEditor() throws Exception {
             var result = request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.OK, CourseCompetencyProgressDTO.class);
 
@@ -634,7 +633,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldGetAllCompetenciesCourseProgressAsInstructor() throws Exception {
             var result = request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.OK, CourseCompetencyProgressDTO.class);
 
@@ -643,7 +642,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldReturnProgressForAllCompetencies() throws Exception {
             var secondCompetency = competencyUtilService.createCompetency(course);
 
@@ -655,7 +654,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void shouldReturnForbiddenForTutor() throws Exception {
             request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.FORBIDDEN, CourseCompetencyProgressDTO.class);
         }
@@ -671,7 +670,11 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     class PreAuthorize {
 
         private void testAllPreAuthorizeEditor() throws Exception {
-            request.get("/api/atlas/course-competencies/for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class);
+            final var search = pageableSearchUtilService.configureCompetencySearch("", "", "", "");
+            var result = request.getSearchResult("/api/atlas/course-competencies/for-import", HttpStatus.OK, CourseCompetency.class,
+                    pageableSearchUtilService.searchMapping(search));
+            assertThat(result.getResultsOnPage()).isEmpty();
+            assertThat(result.getNumberOfPages()).isZero();
             request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.FORBIDDEN, CourseCompetencyProgressDTO.class);
 
             // relations
@@ -685,7 +688,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void shouldFailAsTutor() throws Exception {
             this.testAllPreAuthorizeEditor();
         }

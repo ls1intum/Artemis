@@ -36,18 +36,17 @@ class UserCourseNotificationStatusServiceTest {
 
     @Test
     void shouldCreateStatusEntriesForMultipleUsersWhenBatchCreating() {
-        User user1 = createTestUser(1L);
-        User user2 = createTestUser(2L);
-        Set<User> users = Set.of(user1, user2);
+        Set<Long> userIds = Set.of(1L, 2L);
         long courseNotificationId = 10L;
         long courseId = 100L;
 
-        userCourseNotificationStatusService.batchCreateStatusForUsers(users, courseNotificationId, courseId);
+        userCourseNotificationStatusService.batchCreateStatusForUserIds(userIds, courseNotificationId, courseId);
 
         verify(userCourseNotificationStatusRepository).saveAll(statusCaptor.capture());
         List<UserCourseNotificationStatus> savedStatuses = statusCaptor.getValue();
 
         assertThat(savedStatuses).hasSize(2);
+        assertThat(savedStatuses).extracting(status -> status.getUser().getId()).containsExactlyInAnyOrder(1L, 2L);
         assertThat(savedStatuses).allMatch(status -> status.getStatus() == UserCourseNotificationStatusType.UNSEEN);
         assertThat(savedStatuses).allMatch(status -> status.getCourseNotification().getId() == courseNotificationId);
 

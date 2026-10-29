@@ -56,14 +56,14 @@ describe('ExerciseVersionHistoryTimelineComponent', () => {
 
     it('should emit selected version id', () => {
         const emitSpy = vi.spyOn(component.selectVersion, 'emit');
-        const versionButton: HTMLButtonElement = fixture.nativeElement.querySelector('.timeline-card');
+        const versionButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="version-history-entry"]');
         versionButton.click();
         expect(emitSpy).toHaveBeenCalledWith(5);
     });
 
     it('should emit loadMore on click', () => {
         const emitSpy = vi.spyOn(component.loadMore, 'emit');
-        const loadMoreButton = fixture.nativeElement.querySelector('.timeline-load-more');
+        const loadMoreButton = fixture.nativeElement.querySelector('[data-testid="version-history-load-more"] button');
         loadMoreButton.click();
         expect(emitSpy).toHaveBeenCalled();
     });

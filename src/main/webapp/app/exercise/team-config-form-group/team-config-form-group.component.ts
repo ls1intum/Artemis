@@ -1,3 +1,4 @@
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { AfterViewChecked, Component, OnDestroy, OnInit, input, output, signal, viewChild } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -15,7 +16,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-team-config-form-group',
     templateUrl: './team-config-form-group.component.html',
     styleUrls: ['./team-config-form-group.component.scss'],
-    imports: [TranslateDirective, HelpIconComponent, ModePickerComponent, FormsModule, KeyValuePipe, RemoveKeysPipe],
+    imports: [TumAetUiInputDirective, TranslateDirective, HelpIconComponent, ModePickerComponent, FormsModule, KeyValuePipe, RemoveKeysPipe],
 })
 export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy, OnInit {
     readonly INDIVIDUAL = ExerciseMode.INDIVIDUAL;
@@ -51,12 +52,12 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
         {
             value: ExerciseMode.INDIVIDUAL,
             labelKey: 'artemisApp.exercise.modes.individual',
-            btnClass: 'btn-secondary',
+            severity: 'secondary',
         },
         {
             value: ExerciseMode.TEAM,
             labelKey: 'artemisApp.exercise.modes.team',
-            btnClass: 'btn-info',
+            severity: 'info',
         },
     ];
 

@@ -26,10 +26,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
@@ -40,8 +37,9 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 /**
  * Unit tests for the build queue endpoints an instructor uses to watch and stop the builds of their course.
  * <p>
- * Every one of these endpoints takes a course id from the path and acts on build jobs, so the course check is what keeps
- * one instructor from cancelling another course's builds. The lookup of a single job additionally has to search three
+ * Every one of these endpoints takes a course id from the path and acts on build jobs, so the course scoping of the jobs is
+ * what keeps one instructor from cancelling another course's builds (the role check itself is the resource annotation of
+ * each endpoint). The lookup of a single job additionally has to search three
  * places - the jobs an agent is running, the jobs still queued, and the finished ones in the database - and has to refuse
  * a job that exists but belongs to a different course, because the id alone says nothing about who may see it.
  */
@@ -54,12 +52,6 @@ class BuildJobQueueResourceTest {
     private SharedQueueManagementService localCIBuildJobQueueService;
 
     @Mock
-    private AuthorizationCheckService authorizationCheckService;
-
-    @Mock
-    private CourseTestRepository courseRepository;
-
-    @Mock
     private BuildJobTestRepository buildJobRepository;
 
     @Mock
@@ -70,23 +62,9 @@ class BuildJobQueueResourceTest {
 
     private BuildJobQueueResource buildJobQueueResource;
 
-    private Course course;
-
     @BeforeEach
     void setUp() {
-        buildJobQueueResource = new BuildJobQueueResource(localCIBuildJobQueueService, authorizationCheckService, courseRepository, buildJobRepository,
-                distributedDataAccessService);
-        course = new Course();
-        course.setId(COURSE_ID);
-        lenient().when(courseRepository.findByIdElseThrow(COURSE_ID)).thenReturn(course);
-    }
-
-    private void asInstructorOfTheCourse() {
-        lenient().when(authorizationCheckService.isAtLeastInstructorInCourse(course, null)).thenReturn(true);
-    }
-
-    private void asSomebodyElse() {
-        when(authorizationCheckService.isAtLeastInstructorInCourse(course, null)).thenReturn(false);
+        buildJobQueueResource = new BuildJobQueueResource(localCIBuildJobQueueService, buildJobRepository, distributedDataAccessService);
     }
 
     private static BuildJobQueueItem job(String id, long courseId) {
@@ -202,7 +180,6 @@ class BuildJobQueueResourceTest {
 
     @Test
     void getQueuedBuildJobs_returnsOnlyTheJobsOfThatCourse() {
-        asInstructorOfTheCourse();
         var ofTheCourse = List.of(job("job-1", COURSE_ID));
         when(distributedDataAccessService.getQueuedJobsForCourse(COURSE_ID)).thenReturn(ofTheCourse);
 
@@ -210,16 +187,7 @@ class BuildJobQueueResourceTest {
     }
 
     @Test
-    void getQueuedBuildJobs_forSomebodyWhoDoesNotTeachTheCourse_isRefused() {
-        asSomebodyElse();
-
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.getQueuedBuildJobsForCourse(COURSE_ID));
-        verify(distributedDataAccessService, never()).getQueuedJobsForCourse(COURSE_ID);
-    }
-
-    @Test
     void getRunningBuildJobs_returnsOnlyTheJobsOfThatCourse() {
-        asInstructorOfTheCourse();
         var ofTheCourse = List.of(job("job-1", COURSE_ID));
         when(distributedDataAccessService.getProcessingJobsForCourse(COURSE_ID)).thenReturn(ofTheCourse);
 
@@ -227,16 +195,7 @@ class BuildJobQueueResourceTest {
     }
 
     @Test
-    void getRunningBuildJobs_forSomebodyWhoDoesNotTeachTheCourse_isRefused() {
-        asSomebodyElse();
-
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.getRunningBuildJobsForCourse(COURSE_ID));
-        verify(distributedDataAccessService, never()).getProcessingJobsForCourse(COURSE_ID);
-    }
-
-    @Test
     void cancelBuildJob_cancelsAQueuedJobOfTheCourse() {
-        asInstructorOfTheCourse();
         withProcessingJobs();
         when(processingJobs.get("job-1")).thenReturn(null);
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(job("job-1", COURSE_ID))));
@@ -247,7 +206,6 @@ class BuildJobQueueResourceTest {
 
     @Test
     void cancelBuildJob_cancelsARunningJobOfTheCourse() {
-        asInstructorOfTheCourse();
         withProcessingJobs();
         when(processingJobs.get("job-1")).thenReturn(job("job-1", COURSE_ID));
 
@@ -258,7 +216,6 @@ class BuildJobQueueResourceTest {
     @Test
     void cancelBuildJob_forARunningJobOfAnotherCourse_isRefused() {
         // Build job ids are not course scoped, so without this an instructor could stop any other course's build.
-        asInstructorOfTheCourse();
         withProcessingJobs();
         when(processingJobs.get("job-1")).thenReturn(job("job-1", 999L));
 
@@ -268,7 +225,6 @@ class BuildJobQueueResourceTest {
 
     @Test
     void cancelBuildJob_forAQueuedJobOfAnotherCourse_isRefused() {
-        asInstructorOfTheCourse();
         withProcessingJobs();
         when(processingJobs.get("job-1")).thenReturn(null);
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(job("job-1", 999L))));
@@ -280,7 +236,6 @@ class BuildJobQueueResourceTest {
     @Test
     void cancelBuildJob_forAJobThatAlreadyFinished_isStillAccepted() {
         // Nothing is left to cancel, so there is nothing to protect and the request stays a no-op rather than an error.
-        asInstructorOfTheCourse();
         withProcessingJobs();
         when(processingJobs.get("job-1")).thenReturn(null);
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>());
@@ -290,44 +245,17 @@ class BuildJobQueueResourceTest {
     }
 
     @Test
-    void cancelBuildJob_forSomebodyWhoDoesNotTeachTheCourse_isRefused() {
-        // Build job ids are not course scoped, so without this check an instructor could stop another course's builds.
-        asSomebodyElse();
-
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1"));
-        verify(localCIBuildJobQueueService, never()).cancelBuildJob(any());
-    }
-
-    @Test
     void cancelAllQueuedBuildJobs_cancelsOnlyTheQueuedJobsOfThatCourse() {
-        asInstructorOfTheCourse();
 
         assertThat(buildJobQueueResource.cancelAllQueuedBuildJobs(COURSE_ID).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         verify(localCIBuildJobQueueService).cancelAllQueuedBuildJobsForCourse(COURSE_ID);
     }
 
     @Test
-    void cancelAllQueuedBuildJobs_forSomebodyWhoDoesNotTeachTheCourse_isRefused() {
-        asSomebodyElse();
-
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.cancelAllQueuedBuildJobs(COURSE_ID));
-        verify(localCIBuildJobQueueService, never()).cancelAllQueuedBuildJobsForCourse(COURSE_ID);
-    }
-
-    @Test
     void cancelAllRunningBuildJobs_cancelsOnlyTheRunningJobsOfThatCourse() {
-        asInstructorOfTheCourse();
 
         assertThat(buildJobQueueResource.cancelAllRunningBuildJobs(COURSE_ID).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         verify(localCIBuildJobQueueService).cancelAllRunningBuildJobsForCourse(COURSE_ID);
-    }
-
-    @Test
-    void cancelAllRunningBuildJobs_forSomebodyWhoDoesNotTeachTheCourse_isRefused() {
-        asSomebodyElse();
-
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.cancelAllRunningBuildJobs(COURSE_ID));
-        verify(localCIBuildJobQueueService, never()).cancelAllRunningBuildJobsForCourse(COURSE_ID);
     }
 
     @Test

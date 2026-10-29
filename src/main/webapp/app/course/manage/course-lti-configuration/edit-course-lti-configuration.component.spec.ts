@@ -11,6 +11,7 @@ import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lt
 import { Course } from 'app/course/shared/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
+import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
@@ -136,6 +137,27 @@ describe('Edit Course LTI Configuration Component', () => {
         expect(updatedStub).toHaveBeenCalledWith(123, changedConfiguration);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'lti-configuration']);
+    });
+
+    describe('loading the LTI platforms', () => {
+        it('should load the platforms for administrators', () => {
+            const querySpy = vi
+                .spyOn(TestBed.inject(LtiConfigurationService), 'query')
+                .mockReturnValue(of(new HttpResponse<LtiPlatformConfiguration[]>({ body: [], status: 200 })));
+
+            fixture.detectChanges();
+
+            expect(querySpy).toHaveBeenCalled();
+        });
+
+        it('should not request the platforms for users who are not administrators', () => {
+            vi.spyOn(TestBed.inject(AccountService), 'isAdmin').mockReturnValue(false);
+            const querySpy = vi.spyOn(TestBed.inject(LtiConfigurationService), 'query');
+
+            fixture.detectChanges();
+
+            expect(querySpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('LTI Platform Methods', () => {

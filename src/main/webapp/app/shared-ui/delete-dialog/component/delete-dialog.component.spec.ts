@@ -8,7 +8,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -16,7 +16,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('DeleteDialogComponent', () => {
     let comp: DeleteDialogComponent;
     let fixture: ComponentFixture<DeleteDialogComponent>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let dialogErrorSource: Subject<string>;
 
     const createMockDialogConfig = (overrides = {}) => {
@@ -52,14 +52,14 @@ describe('DeleteDialogComponent', () => {
                 JhiLanguageHelper,
                 AlertService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: mockDialogRef },
-                { provide: DynamicDialogConfig, useValue: createMockDialogConfig() },
+                { provide: TumAetUiDialogRef, useValue: mockDialogRef },
+                { provide: TumAetUiDialogConfig, useValue: createMockDialogConfig() },
                 provideTranslateService(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(DeleteDialogComponent);
         comp = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
     });
 
     it('Dialog is correctly initialized', () => {
@@ -74,6 +74,18 @@ describe('DeleteDialogComponent', () => {
         // Check that clear method calls dialogRef.close
         comp.clear();
         expect(closeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should show an icon-sized spinner while the summary loads', () => {
+        fixture.detectChanges();
+        comp.isLoadingSummary.set(true);
+        fixture.detectChanges();
+
+        // The kit spinner is 100px wide by default. A utility class cannot shrink it, as the kit sets its size in unlayered styles.
+        const spinner: HTMLElement | null = fixture.nativeElement.querySelector('.summary-loading-container tumaet-ui-progress-spinner');
+        expect(spinner).not.toBeNull();
+        expect(spinner!.style.width).toBe('1.5rem');
+        expect(spinner!.style.height).toBe('1.5rem');
     });
 
     it('Form properly checked before submission', async () => {

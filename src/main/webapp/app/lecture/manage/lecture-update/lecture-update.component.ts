@@ -31,6 +31,7 @@ import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUns
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import {
     TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
     TumAetUiButtonGroupComponent,
     TumAetUiCheckboxComponent,
     TumAetUiConfirmDialogComponent,
@@ -74,6 +75,7 @@ interface PdfUploadConfirmationText {
     // Enter is handled on the host: the sections it saves are no controls themselves, so they take no key handlers.
     host: { '(window:beforeunload)': 'onBeforeUnload($event)', '(keydown.enter)': 'onEnterInDetails($event)' },
     imports: [
+        TumAetUiButtonDirective,
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,

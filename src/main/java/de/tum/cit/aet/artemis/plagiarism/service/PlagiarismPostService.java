@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -72,6 +73,7 @@ public class PlagiarismPostService extends PostingService {
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        checkPlagiarismCaseBelongsToCourseElseThrow(postDto.plagiarismCaseId(), courseId);
 
         parseUserMentions(course, post.getContent());
         // set author to current user
@@ -113,6 +115,7 @@ public class PlagiarismPostService extends PostingService {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Post existingPost = postRepository.findPostByIdElseThrow(postId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        checkPostBelongsToCourseElseThrow(existingPost, courseId);
 
         parseUserMentions(course, request.content());
 
@@ -183,6 +186,7 @@ public class PlagiarismPostService extends PostingService {
 
         Post post = postRepository.findPostByIdElseThrow(postId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        checkPostBelongsToCourseElseThrow(post, courseId);
 
         // Clear the bidirectional PlagiarismCase reference to avoid TransientObjectException in Hibernate 6.6
         PlagiarismCase plagiarismCase = post.getPlagiarismCase();
@@ -195,6 +199,28 @@ public class PlagiarismPostService extends PostingService {
         postRepository.deleteById(postId);
         preparePostForBroadcast(post);
         broadcastForPost(post, CommunicationCrudAction.DELETE, course.getId(), null);
+    }
+
+    /**
+     * Checks that the plagiarism case belongs to the given course, so that the role of the user in the course covers the case.
+     *
+     * @param plagiarismCaseId id of the plagiarism case
+     * @param courseId         id of the course from the path
+     */
+    private void checkPlagiarismCaseBelongsToCourseElseThrow(Long plagiarismCaseId, Long courseId) {
+        if (!Objects.equals(plagiarismCaseRepository.findCourseIdByIdElseThrow(plagiarismCaseId), courseId)) {
+            throw new ConflictException("The plagiarism case does not belong to the given course", PlagiarismPostCreationDTO.PLAGIARISM_POST_ENTITY_NAME, "courseMismatch");
+        }
+    }
+
+    /**
+     * Checks that the post belongs to a plagiarism case of the given course, so that the role of the user in the course covers the post.
+     *
+     * @param post     the post to check
+     * @param courseId id of the course from the path
+     */
+    private void checkPostBelongsToCourseElseThrow(Post post, Long courseId) {
+        checkPlagiarismCaseBelongsToCourseElseThrow(post.getPlagiarismCase().getId(), courseId);
     }
 
     /**

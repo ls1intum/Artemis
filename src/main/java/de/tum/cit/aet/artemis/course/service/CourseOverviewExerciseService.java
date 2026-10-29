@@ -110,7 +110,7 @@ public class CourseOverviewExerciseService {
         Map<Long, Set<String>> categoriesByExercise = loadCategories(exerciseIds);
         Map<Long, Long> teamAssignmentByExercise = loadTeamAssignments(exerciseDetails, studentId);
         OverviewParticipations overviewParticipations = loadParticipations(exerciseDetails, studentId, calculationTime);
-        List<CourseGradeScoreDTO> gradeScores = loadGradeScores(exerciseDetails, courseId, studentId);
+        List<CourseGradeScoreDTO> gradeScores = loadGradeScores(exerciseDetails, courseId, studentId, calculationTime);
         List<PlagiarismCaseScoreDTO> plagiarismCases = exerciseIds.isEmpty() ? List.of()
                 : plagiarismCaseApi.map(api -> api.findScoreInformationByStudentIdAndExerciseIds(studentId, exerciseIds)).orElse(List.of());
 
@@ -197,7 +197,7 @@ public class CourseOverviewExerciseService {
         return new OverviewParticipations(participationsByExerciseId, rowsByParticipationId, basicPresentationScoreCount, basicPresentationScoreCountByType);
     }
 
-    private List<CourseGradeScoreDTO> loadGradeScores(List<ExerciseForCourseOverviewDTO> exerciseDetails, long courseId, long studentId) {
+    private List<CourseGradeScoreDTO> loadGradeScores(List<ExerciseForCourseOverviewDTO> exerciseDetails, long courseId, long studentId, ZonedDateTime calculationTime) {
         Set<Long> visibleExerciseIds = exerciseDetails.stream().map(ExerciseForCourseOverviewDTO::id).collect(Collectors.toSet());
         if (visibleExerciseIds.isEmpty()) {
             return List.of();
@@ -214,10 +214,10 @@ public class CourseOverviewExerciseService {
             gradeScores.addAll(studentParticipationRepository.findIndividualQuizGradesByCourseIdAndStudentId(Set.of(courseId), studentId));
         }
         if (!individualNonQuizExerciseIds.isEmpty()) {
-            gradeScores.addAll(studentParticipationRepository.findIndividualGradesForCourseOverview(individualNonQuizExerciseIds, studentId));
+            gradeScores.addAll(studentParticipationRepository.findIndividualGradesForCourseOverview(individualNonQuizExerciseIds, studentId, calculationTime));
         }
         if (!teamExerciseIds.isEmpty()) {
-            gradeScores.addAll(studentParticipationRepository.findTeamGradesForCourseOverview(teamExerciseIds, studentId));
+            gradeScores.addAll(studentParticipationRepository.findTeamGradesForCourseOverview(teamExerciseIds, studentId, calculationTime));
         }
         return gradeScores.stream().filter(gradeScore -> visibleExerciseIds.contains(gradeScore.exerciseId())).toList();
     }
@@ -242,21 +242,31 @@ public class CourseOverviewExerciseService {
     private ParticipationOverviewDTO assembleParticipation(List<ParticipationOverviewRowDTO> participationRows, ExerciseForCourseOverviewDTO exercise,
             ZonedDateTime calculationTime) {
         ParticipationOverviewRowDTO firstRow = participationRows.getFirst();
-        Optional<ParticipationOverviewRowDTO> latestSubmissionRow = participationRows.stream().filter(row -> row.submissionId() != null)
-                .max(CourseOverviewExerciseService::compareSubmissions);
-        Set<SubmissionOverviewDTO> submissions = latestSubmissionRow.map(row -> {
-            List<ParticipationOverviewRowDTO> submissionRows = participationRows.stream().filter(candidate -> row.submissionId().equals(candidate.submissionId())).toList();
-            return visibleSubmission(row, submissionRows, exercise, calculationTime).map(Set::of).orElse(Set.of());
-        }).orElse(Set.of());
+        // The projection also includes the latest automatic fallback submission. A newer manual assessment may not
+        // be released yet, so choose the latest visible submission rather than discarding the fallback first.
+        Set<SubmissionOverviewDTO> submissions = participationRows.stream().filter(row -> row.submissionId() != null)
+                .collect(Collectors.groupingBy(ParticipationOverviewRowDTO::submissionId)).values().stream()
+                .sorted((first, second) -> compareSubmissions(second.getFirst(), first.getFirst())).map(rows -> visibleSubmission(rows.getFirst(), rows, exercise, calculationTime))
+                .flatMap(Optional::stream).findFirst().map(Set::of).orElse(Set.of());
 
+        boolean hasSubmitted = participationRows.stream().anyMatch(row -> row.submissionId() != null && (Boolean.TRUE.equals(row.submitted())
+                || exercise.type() == ExerciseType.PROGRAMMING && row.submissionDate() != null || row.resultId() != null && Boolean.TRUE.equals(row.resultRated())));
         return new ParticipationOverviewDTO(firstRow.participationId(), firstRow.participationType(), firstRow.initializationState(), firstRow.initializationDate(),
-                firstRow.testRun(), firstRow.individualDueDate(), firstRow.repositoryUri(), submissions);
+                firstRow.testRun(), firstRow.individualDueDate(), firstRow.repositoryUri(), submissions, hasSubmitted);
     }
 
     private Optional<SubmissionOverviewDTO> visibleSubmission(ParticipationOverviewRowDTO submissionRow, List<ParticipationOverviewRowDTO> submissionRows,
             ExerciseForCourseOverviewDTO exercise, ZonedDateTime calculationTime) {
         ParticipationOverviewRowDTO latestResultRow = submissionRows.stream().filter(row -> row.resultId() != null)
                 .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId)).orElse(null);
+        if (latestResultRow != null && latestResultRow.resultAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && !isGradeRelevant(latestResultRow)) {
+            // A durable request record is newer than the released assessment but does not supersede its grade.
+            latestResultRow = submissionRows.stream().filter(CourseOverviewExerciseService::isGradeRelevant).max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId))
+                    .orElse(null);
+            if (latestResultRow == null) {
+                return Optional.empty();
+            }
+        }
 
         if (exercise.type() == ExerciseType.QUIZ) {
             boolean quizEnded = exercise.dueDate() != null && calculationTime.isAfter(exercise.dueDate());
@@ -277,14 +287,16 @@ public class CourseOverviewExerciseService {
                 boolean submittedInTime = latestAccepted == null || submissionRow.submissionDate() != null && !submissionRow.submissionDate().isAfter(latestAccepted);
                 return submittedInTime ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(), exercise.type())) : Optional.empty();
             }
-            if (!Boolean.TRUE.equals(latestResultRow.resultRated())) {
-                return Optional.empty();
+            if (!isManual(latestResultRow.resultAssessmentType())) {
+                return Boolean.TRUE.equals(latestResultRow.resultRated())
+                        ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO()), exercise.type()))
+                        : Optional.empty();
             }
-            if (!isManual(latestResultRow.resultAssessmentType()) || isAssessmentDone(exercise, calculationTime) && latestResultRow.resultCompletionDate() != null) {
+            if (Boolean.TRUE.equals(latestResultRow.resultRated()) && isAssessmentDone(exercise, calculationTime) && latestResultRow.resultCompletionDate() != null) {
                 return Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO()), exercise.type()));
             }
             ParticipationOverviewRowDTO latestAutomaticResult = submissionRows.stream().filter(CourseOverviewExerciseService::isAutomatic)
-                    .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId)).orElse(null);
+                    .filter(CourseOverviewExerciseService::isGradeRelevant).max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId)).orElse(null);
             return latestAutomaticResult == null ? Optional.empty()
                     : Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestAutomaticResult.toResultOverviewDTO()), exercise.type()));
         }
@@ -323,6 +335,11 @@ public class CourseOverviewExerciseService {
 
     private static boolean isAutomatic(ParticipationOverviewRowDTO row) {
         return row.resultId() != null && (row.resultAssessmentType() == AssessmentType.AUTOMATIC || row.resultAssessmentType() == AssessmentType.AUTOMATIC_ATHENA);
+    }
+
+    private static boolean isGradeRelevant(ParticipationOverviewRowDTO row) {
+        return row.resultId() != null && Boolean.TRUE.equals(row.resultRated())
+                && (row.resultAssessmentType() != AssessmentType.AUTOMATIC_ATHENA || Boolean.TRUE.equals(row.resultSuccessful()));
     }
 
     private static boolean isAssessmentDone(ExerciseForCourseOverviewDTO exercise, ZonedDateTime calculationTime) {

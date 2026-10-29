@@ -23,7 +23,9 @@
             "collapseMenu": "Collapse menu (Ctrl + M)",
             "enabled": "Enabled",
             "disabled": "Disabled",
-            "unknownPerson": "Unknown person"
+            "unknownPerson": "Unknown person",
+            "resizePanels": "Resize panels",
+            "selectAllRows": "Select all rows"
         },
         "weekdays": {
             "monday": "Monday",

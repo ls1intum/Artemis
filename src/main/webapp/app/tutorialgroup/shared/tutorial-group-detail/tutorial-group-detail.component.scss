@@ -1,10 +1,13 @@
 .frame {
+    // Breakpoints below follow the page's own width, which the course sidebar narrows independently of the viewport
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 
     .header {
         display: flex;
+        flex-wrap: wrap;
         gap: 0.5rem;
         align-items: end;
 
@@ -24,13 +27,13 @@
         margin: 0;
     }
 
-    .card-row {
+    .detail-panels {
         width: 100%;
         display: flex;
         flex-direction: row;
         gap: 1rem;
 
-        .card {
+        .detail-panel {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -39,7 +42,7 @@
             // and the cards of a row stretch to the tallest one
             min-height: 12rem;
             padding: 1rem;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--tumaet-ui-border-color);
             border-radius: 0.375rem;
 
             h3 {
@@ -68,15 +71,38 @@
 
             .attendance-card-content {
                 flex: 1;
+
+                // Takes the card's width, so the chart below can shrink with a narrow card instead of spilling out
+                align-self: stretch;
+                min-width: 0;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 margin-top: 0.75rem;
-                position: relative;
 
-                .doughnut-chart-text {
-                    position: absolute;
-                    font-size: 1.4rem;
+                // Wraps the ring and its centred label, sized to the chart so the label can scale with it
+                .chart-wrapper {
+                    position: relative;
+                    width: min(122px, 100%);
+                    aspect-ratio: 1;
+                    container-type: inline-size;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    .doughnut-chart-text {
+                        position: absolute;
+
+                        // Scales with the chart width so the label shrinks with the ring instead of overlapping it on a narrow card
+                        font-size: 16cqw;
+                    }
+
+                    // Sized here rather than with Tailwind classes, which this folder is not scanned for
+                    tumaet-ui-doughnut-chart {
+                        width: 100%;
+                        height: auto;
+                        aspect-ratio: 1;
+                    }
                 }
             }
 
@@ -100,7 +126,7 @@
                         align-items: center;
 
                         .info-label {
-                            color: var(--secondary);
+                            color: var(--tumaet-ui-muted-color);
                         }
 
                         .info-value {
@@ -124,8 +150,38 @@
         }
     }
 
+    @container (max-width: 48rem) {
+        .detail-panels {
+            flex-direction: column;
+
+            .detail-panel {
+                min-height: 0;
+
+                &.narrow {
+                    width: auto;
+                }
+
+                .info-card-content {
+                    margin-top: 1rem;
+                    padding: 0;
+                }
+            }
+        }
+    }
+
+    @container (max-width: 30rem) {
+        .detail-panels .detail-panel .info-card-content {
+            flex-direction: column;
+
+            .info-stack {
+                gap: 1rem;
+            }
+        }
+    }
+
     .list-controls-row {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 0.5rem;
 
@@ -140,11 +196,20 @@
         }
     }
 
+    .session-table-scroll {
+        overflow-x: auto;
+
+        table {
+            width: 100%;
+            min-width: 40rem;
+        }
+    }
+
     th {
         width: 20%;
         padding-top: 0;
         padding-bottom: 1rem;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--tumaet-ui-border-color);
         white-space: normal;
         overflow-wrap: break-word;
     }
@@ -153,7 +218,7 @@
         width: 20%;
         padding-top: 1rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--tumaet-ui-border-color);
         white-space: normal;
         overflow-wrap: break-word;
     }
@@ -173,7 +238,7 @@
         width: 0.5rem;
         height: 0.5rem;
         border-radius: 0.25rem;
-        background-color: var(--warning);
+        background-color: var(--tumaet-ui-state-warning);
     }
 
     .session-actions {
