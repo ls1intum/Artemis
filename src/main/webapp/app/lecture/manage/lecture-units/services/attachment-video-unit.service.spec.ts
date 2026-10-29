@@ -376,16 +376,15 @@ describe('AttachmentVideoUnitService', () => {
 
     describe('getPlaylistUrl', () => {
         it('should return playlist URL on success', async () => {
-            const pageUrl = 'https://tum-live.de/w/course/1';
-            const playlistUrl = 'https://stream.tum-live.de/video.m3u8';
+            const playlistUrl = 'https://stream.tum-live.de/video.m3u8?jwt=signed';
             let result: string | undefined;
 
             service
-                .getPlaylistUrl(pageUrl)
+                .getPlaylistUrl(7)
                 .pipe(take(1))
                 .subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/videosource/playlist' && r.params.get('url') === pageUrl);
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === 'api/lecture/lecture-units/7/playlist');
             expect(req.request.responseType).toBe('text');
             req.flush(playlistUrl);
 
@@ -393,15 +392,14 @@ describe('AttachmentVideoUnitService', () => {
         });
 
         it('should return undefined on error', async () => {
-            const pageUrl = 'https://invalid-url.com';
             let result: string | undefined = 'initial';
 
             service
-                .getPlaylistUrl(pageUrl)
+                .getPlaylistUrl(7)
                 .pipe(take(1))
                 .subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/videosource/playlist');
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === 'api/lecture/lecture-units/7/playlist');
             req.flush('Not found', { status: 404, statusText: 'Not Found' });
 
             expect(result).toBeUndefined();

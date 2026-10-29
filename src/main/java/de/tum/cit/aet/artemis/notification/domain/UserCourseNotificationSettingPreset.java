@@ -5,17 +5,13 @@ import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.core.domain.UserCourseAssociation;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
@@ -25,19 +21,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 @Table(name = "user_course_notification_setting_preset")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @IdClass(UserCourseNotificationSettingPreset.UserCourseNotificationSettingPresetId.class)
-public class UserCourseNotificationSettingPreset implements Serializable {
-
-    @Id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @Parent
-    private User user;
-
-    @Id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    @Parent
-    private Course course;
+public class UserCourseNotificationSettingPreset extends UserCourseAssociation {
 
     @Column(name = "setting_preset", nullable = false)
     private Short settingPreset;
@@ -62,30 +46,13 @@ public class UserCourseNotificationSettingPreset implements Serializable {
     }
 
     /**
-     * Gets the user this setting preset belongs to.
-     *
-     * @return the user
-     */
-    public User getUser() {
-        return user;
-    }
-
-    /**
      * Sets the user this setting preset belongs to.
      *
      * @param user the user to set
      */
+    @Override
     public void setUser(User user) {
-        this.user = user;
-    }
-
-    /**
-     * Gets the course this setting preset is for.
-     *
-     * @return the course
-     */
-    public Course getCourse() {
-        return course;
+        super.setUser(user);
     }
 
     /**
@@ -93,8 +60,9 @@ public class UserCourseNotificationSettingPreset implements Serializable {
      *
      * @param course the course to set
      */
+    @Override
     public void setCourse(Course course) {
-        this.course = course;
+        super.setCourse(course);
     }
 
     /**

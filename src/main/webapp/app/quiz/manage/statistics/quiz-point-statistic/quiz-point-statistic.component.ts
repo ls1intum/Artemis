@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
@@ -9,17 +9,14 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { blueColor } from 'app/quiz/manage/statistics/question-statistic.component';
-import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { round } from 'app/foundation/util/utils';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
-import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { EMPTY, filter, merge, startWith, switchMap } from 'rxjs';
-import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 import { TumAetUiBarChartComponent, TumAetUiChartDatumContext } from '@tumaet/ui-angular';
 import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
@@ -29,13 +26,12 @@ import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-sta
     styleUrls: ['./quiz-point-statistic.component.scss'],
     imports: [FaIconComponent, TranslateDirective, TumAetUiBarChartComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
-export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
+export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
-    private serverDateService = inject(ArtemisServerDateService);
     private destroyRef = inject(DestroyRef);
 
     readonly round = round;
@@ -52,11 +48,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     websocketChannelForData!: string; // set in ngOnInit() from the route params before use
     quizExerciseChannel!: string; // set in ngOnInit() from the route params before use
 
-    // timer
+    // Keep listening for the quiz-start event until the initial quiz response reports that it started.
     waitingForQuizStart = false;
-    readonly remainingTimeText = signal('?');
-    readonly remainingTimeSeconds = signal(0);
-    interval!: ReturnType<typeof setInterval>; // set in ngOnInit() via setInterval(), cleared in ngOnDestroy()
 
     // Icons
     faSync = faSync;
@@ -88,52 +81,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((res) => {
-                this.loadQuizSuccess(res.body!);
+                this.loadQuizSuccess(res);
             });
-
-        // update displayed times in UI regularly
-        this.interval = setInterval(() => {
-            this.updateDisplayedTimes();
-        }, UI_RELOAD_TIME);
-    }
-
-    /**
-     * updates all displayed (relative) times in the UI
-     */
-    updateDisplayedTimes() {
-        const translationBasePath = 'artemisApp.showStatistic.';
-        const quizExercise = this.quizExercise();
-        // update remaining time
-        if (quizExercise?.dueDate) {
-            const endDate = quizExercise.dueDate;
-            if (endDate.isAfter(this.serverDateService.now())) {
-                // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
-                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
-            } else {
-                // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds.set(-1);
-                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
-            }
-        } else {
-            // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds.set(0);
-            this.remainingTimeText.set('?');
-        }
-    }
-
-    /**
-     * Express the given timespan as humanized text
-     *
-     * @param remainingTimeSeconds the amount of seconds to display
-     * @return humanized text for the given amount of seconds
-     */
-    relativeTimeText(remainingTimeSeconds: number) {
-        return formatQuizRelativeTime(remainingTimeSeconds);
-    }
-
-    ngOnDestroy() {
-        clearInterval(this.interval);
     }
 
     /**
@@ -149,7 +98,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         }
         this.quizExercise.set(quizExercise);
         this.waitingForQuizStart = !quizExercise.quizStarted;
-        this.quizPointStatistic = quizExercise.quizPointStatistic;
+        // The contract leaves the distribution optional; without one there is nothing to plot, so the chart stays empty.
+        this.quizPointStatistic = quizExercise.quizPointStatistic ?? new QuizPointStatistic();
         this.maxScore.set(calculateMaxScore(quizExercise));
 
         this.loadData();

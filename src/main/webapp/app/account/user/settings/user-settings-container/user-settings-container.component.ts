@@ -1,6 +1,5 @@
 import { NgOptimizedImage } from '@angular/common';
 import { Component, OnInit, Signal, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { MODULE_FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/account/user/user.model';
@@ -10,8 +9,7 @@ import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
-import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { insightsSectionAvailable, isAtlasModuleActive, isIrisModuleActive } from 'app/account/user/settings/learner-profile/learner-profile-availability';
+import { isAtlasModuleActive } from 'app/account/user/settings/learner-profile/learner-profile-availability';
 import { TumAetUiListComponent, TumAetUiListItemActionDirective, TumAetUiListItemDirective } from '@tumaet/ui-angular';
 
 /**
@@ -27,7 +25,6 @@ export class UserSettingsContainerComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
     private readonly dataGuard = inject(DataGuard);
-    private readonly featureToggleService = inject(FeatureToggleService);
 
     protected readonly faUser = faUser;
 
@@ -46,17 +43,13 @@ export class UserSettingsContainerComponent implements OnInit {
     // The science consent endpoints live in the atlas module (server-side ScienceResource is @Conditional(AtlasEnabled)).
     // When atlas is disabled they do not exist, so the tab must be hidden instead of opening an empty page (issue #13173).
     readonly isAtlasEnabled = signal(false);
-    // The learner profile composes sections from the atlas and the iris module, so its tab needs at least one of them.
-    // The module state is read into signals in ngOnInit rather than from inside the computed, which may only read
-    // signals; insightsSectionAvailable is shared with the page and its route guard.
-    private readonly isIrisEnabled = signal(false);
-    private readonly isMemirisEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Memiris), { requireSync: true });
-    readonly isLearnerProfileEnabled = computed(() => this.isAtlasEnabled() || insightsSectionAvailable(this.isIrisEnabled(), this.isMemirisEnabled()));
+    // The learner profile is served by the atlas module, so its tab needs it. The module state is read into a signal in
+    // ngOnInit rather than from inside the computed, which may only read signals.
+    readonly isLearnerProfileEnabled = computed(() => this.isAtlasEnabled());
 
     ngOnInit() {
         this.isPasskeyEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY));
         this.isAtlasEnabled.set(isAtlasModuleActive(this.profileService));
-        this.isIrisEnabled.set(isIrisModuleActive(this.profileService));
 
         this.isAiEnabled.set(this.dataGuard.isUsingLLM());
     }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.text.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,14 +14,13 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseContextDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
@@ -38,7 +38,7 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, AssessmentType assessmentType, boolean secondCorrectionEnabled,
         Boolean presentationScoreEnabled, String problemStatement, String exampleSolution, String gradingInstructions, Set<String> categories, String channelName,
         boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores, CourseForQuizExerciseDTO course,
-        Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria,
+        Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, List<GradingCriterionDTO> gradingCriteria,
         Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed,
         Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup, ExerciseVariantGroupReferenceDTO exerciseVariantGroup)
         implements Serializable, CourseManagementExerciseDTO {
@@ -70,42 +70,12 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
             return null;
         }
 
-        Long courseId = null;
-        Double courseAccuracyOfScores = null;
-        // Light nested course projection (id, title, group names, complaint config, ...) so the unchanged client can read
-        // exercise.course for display links and to compute access rights (account.service reads the course group names).
-        // Only populated for course exercises, mirroring the original entity where exercise.course was set for course
-        // exercises only; exam exercises resolve their course client-side via the exercise group.
-        CourseForQuizExerciseDTO course = null;
-        Long exerciseGroupId = null;
-        Long examId = null;
-        ZonedDateTime examPublishResultsDate = null;
-        // The student text editor / exam result summary detect exam mode from the presence of exercise.exerciseGroup
-        // and read exercise.exerciseGroup.exam.publishResultsDate; carry that nested shape for exam exercises.
-        TextExerciseExamGroupDTO exerciseGroup = null;
+        var context = ExerciseResponseContextDTO.of(exercise, TextExerciseExamGroupDTO::of);
 
-        if (exercise.isExamExercise()) {
-            exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
-            exerciseGroup = TextExerciseExamGroupDTO.of(exercise.getExerciseGroup());
-            Exam exam = exercise.getExam();
-            if (exam != null) {
-                examId = exam.getId();
-                examPublishResultsDate = exam.getPublishResultsDate();
-            }
-        }
-        else {
-            Course courseEntity = exercise.getCourseViaExerciseGroupOrCourseMember();
-            if (courseEntity != null) {
-                courseId = courseEntity.getId();
-                courseAccuracyOfScores = courseEntity.getAccuracyOfScores() != null ? courseEntity.getAccuracyOfScores().doubleValue() : null;
-                course = CourseForQuizExerciseDTO.of(courseEntity);
-            }
-        }
-
-        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        List<GradingCriterionDTO> gradingCriterionDTOs;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = GradingCriterionDTO.ofAll(criteria);
         }
         else {
             gradingCriterionDTOs = null;
@@ -152,8 +122,8 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
                 exercise.getSecondCorrectionEnabled(), exercise.getPresentationScoreEnabled(), exercise.getProblemStatement(), exercise.getExampleSolution(),
                 exercise.getGradingInstructions(), categories, exercise.getChannelName(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
-                courseId, courseAccuracyOfScores, course, exerciseGroupId, examId, examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs,
-                plagiarismDetectionConfigDTO, exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup,
-                exerciseVariantGroupDTO);
+                context.courseId(), context.courseAccuracyOfScores(), context.course(), context.exerciseGroupId(), context.examId(), context.examPublishResultsDate(),
+                teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO, exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs,
+                exercise.getMode() == ExerciseMode.TEAM, context.exerciseGroup(), exerciseVariantGroupDTO);
     }
 }

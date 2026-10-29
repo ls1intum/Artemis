@@ -255,8 +255,8 @@ reclaimed either, because nothing unlinks them when the row is deleted.
 **What to write instead.** Nothing: a `String`, or an attribute converted to one, round-trips as text
 on both databases whatever its length, since a length in the mapping only shapes generated DDL and
 Artemis generates none (`Exercise.problemStatement`). For a structured value,
-`@JdbcTypeCode(SqlTypes.JSON)` over a `json` column (`IrisMessage.accessedMemories`) - at the cost of
-the column's equality operator on PostgreSQL, so a query fetching the entity cannot use `DISTINCT`.
+`@JdbcTypeCode(SqlTypes.JSON)` over a `json` column - at the cost of the column's equality operator
+on PostgreSQL, so a query fetching the entity cannot use `DISTINCT`.
 
 ## Database
 

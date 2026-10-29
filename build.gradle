@@ -7,6 +7,9 @@ buildscript {
     // This is a build-time-only dependency (client code generation), not shipped in the WAR.
     configurations.classpath {
         resolutionStrategy {
+            // Plugin dependencies resolve independently of the application constraint below.
+            // Guava < 33.7.2 is affected by CVE-2026-102554 (deserialization memory exhaustion).
+            force "com.google.guava:guava:33.7.2-jre"
             force "com.github.jknack:handlebars:4.5.5"
             // Force the patched Apache HttpComponents onto the build-script / plugin classpath too. The
             // org.owasp.dependencycheck and org.springframework.boot plugins drag in httpclient5 5.6.1 /
@@ -50,7 +53,7 @@ buildscript {
             mavenCentral()
         }
         dependencies {
-            classpath "de.tum.cit.aet:openapi-generator-angular22:1.0.0"
+            classpath "de.tum.cit.aet:openapi-generator-angular22:3.0.0"
         }
     }
     dependencies {
@@ -61,8 +64,8 @@ buildscript {
         // shipped WAR only ever contains the patched versions. enforcedPlatform applies each jackson-bom's
         // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
         // both versions in sync with the project-level jackson-bom imports below.
-        classpath enforcedPlatform("tools.jackson:jackson-bom:3.2.3")
-        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.3")
+        classpath enforcedPlatform("tools.jackson:jackson-bom:3.2.4")
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.4")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -79,7 +82,7 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "io.github.ben-manes.versions" version "0.65.0"
+    id "io.github.ben-manes.versions" version "0.66.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
@@ -113,7 +116,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.4"
+version = "10.5"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -123,7 +126,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.8.1"
+    gradleVersion = "9.8.2"
 }
 
 node {
@@ -229,13 +232,6 @@ tasks.named('generateGitProperties') {
     inputs.property('reproducible', project.hasProperty('reproducible'))
 }
 
-// Override Spring Boot BOM versions to patched releases addressing known CVEs:
-// thymeleaf: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q, GHSA-c9ph-gxww-7744
-// tomcat: GHSA-5m62-pw8w-7w9f, GHSA-h6fc-48rj-7qqh, GHSA-r29c-68gh-xp6x,
-//         GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c,
-//         GHSA-gcx9-497g-6cp6, GHSA-9xv2-5v5q-p794, GHSA-h3x4-894j-xpx5
-ext["thymeleaf.version"] = "3.1.5.RELEASE"
-ext["tomcat.version"] = "11.0.26"
 // To compute Maven exclusions, io.spring.dependency-management resolves detached copies of the configurations. One of
 // them declares every BOM-managed dependency at its managed version, and none of them has the
 // configurations.configureEach excludes below. The GitHub dependency graph reports those resolutions although no
@@ -268,13 +264,14 @@ ext["testcontainers-redis-module.version"] = testcontainers_redis_version
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
 dependencyManagement {
     imports {
-        mavenBom "tools.jackson:jackson-bom:3.2.3"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.3"
+        mavenBom "tools.jackson:jackson-bom:3.2.4"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
     }
 }
 
 configurations {
     mockitoAgent
+    structuralOracleGrader
 }
 
 repositories {
@@ -429,7 +426,7 @@ dependencies {
     // Align all Spring AI modules to the same version, pinned to a release addressing
     // GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
     // Artemis was not exposed (explicit per-(course,user) conversation ids), but the scanner flags the range.
-    implementation platform("org.springframework.ai:spring-ai-bom:2.0.1")
+    implementation platform("org.springframework.ai:spring-ai-bom:2.0.2")
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
     // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
@@ -492,7 +489,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.8"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.9"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -623,10 +620,10 @@ dependencies {
     // these individual module versions are pinned because the spring-cloud-dependencies BOM does not
     // publish versions for them. The train's compatibility verifier accepts Spring Boot 4.0.x and 4.1.x;
     // do not drop below 2025.1.2, because 2025.1.1 rejected Boot 4.1.0 and shut the app down at startup.
-    // eureka-client trails the other two: spring-cloud-netflix was not re-released in 2025.1.3.
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.2"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.5"
-    implementation "org.springframework.cloud:spring-cloud-commons:5.0.3"
+    // eureka-client trails the other two: spring-cloud-netflix releases separately and was last released as 5.0.3.
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.3"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.6"
+    implementation "org.springframework.cloud:spring-cloud-commons:5.0.4"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support).
     // Version managed by the Spring Boot BOM.
@@ -671,6 +668,10 @@ dependencies {
             version { strictly("33.7.2-jre") }
             because("Force the newest guava across its many transitive users to avoid outdated-dependency CVEs")
         }
+        checkstyle("com.google.guava:guava") {
+            version { strictly("33.7.2-jre") }
+            because("Checkstyle has a separate classpath; patch CVE-2026-102554 there as well")
+        }
         implementation("org.apache.santuario:xmlsec") {
             version { strictly("4.0.4") }
             because("Pulled transitively by OpenSAML (SAML2); force the newest version to avoid CVEs")
@@ -711,9 +712,9 @@ dependencies {
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.30.1"
-    implementation "org.commonmark:commonmark-ext-gfm-tables:0.30.1"
-    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.30.1"
+    implementation "org.commonmark:commonmark:0.31.0"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.31.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.31.0"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
 
@@ -773,10 +774,10 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.197"
+    testImplementation "io.github.classgraph:classgraph:4.8.199"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.8.1"
+    testImplementation "org.gradle:gradle-tooling-api:9.8.2"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.0"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:${testcontainers_redis_version}"
@@ -789,6 +790,9 @@ dependencies {
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20260814"
+    structuralOracleGrader("de.tum.cit.ase:ares:2.2.1") {
+        transitive = false
+    }
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
@@ -803,8 +807,15 @@ dependencies {
 
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
 apply from: "gradle/test.gradle"
-apply from: "gradle/openapi.gradle"
 
+// Keep Ares' own global test configuration off the Artemis test classpath.
+tasks.withType(Test).configureEach {
+    inputs.files(configurations.structuralOracleGrader)
+    doFirst {
+        systemProperty "artemis.test.structuralOracleGraderJar", configurations.structuralOracleGrader.singleFile.absolutePath
+    }
+}
+apply from: "gradle/openapi.gradle"
 
 dependencyManagement {
     imports {
@@ -940,6 +951,6 @@ tasks.named("dependencyUpdates").configure {
 // 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
-// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
-// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
+// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp
+// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp
 // 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp

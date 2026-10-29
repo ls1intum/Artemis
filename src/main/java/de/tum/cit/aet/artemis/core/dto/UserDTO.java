@@ -105,8 +105,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     private boolean isPasskeySuperAdminApproved = DEFAULT_IS_SUPER_ADMIN_APPROVED;
 
-    private boolean memirisEnabled = true;
-
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
@@ -145,7 +143,7 @@ public class UserDTO extends AuditingEntityDTO {
             this.organizations = organizations.stream().map(OrganizationDTO::of).collect(Collectors.toSet());
         }
         // The AI preferences live in user_ai_preference, so they are set by the endpoints that actually surface them
-        // rather than read off the user here. memirisEnabled keeps its field default of true, matching "no row".
+        // rather than read off the user here.
     }
 
     public Long getId() {
@@ -327,14 +325,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setSelectedLLMUsageTimestamp(ZonedDateTime selectedLLMUsageTimestamp) {
         this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
-    }
-
-    public boolean isMemirisEnabled() {
-        return memirisEnabled;
-    }
-
-    public void setMemirisEnabled(boolean memirisEnabled) {
-        this.memirisEnabled = memirisEnabled;
     }
 
     @Override

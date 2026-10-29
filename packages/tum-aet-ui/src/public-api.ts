@@ -53,7 +53,7 @@ export { TumAetUiMultiSelectComponent, type TumAetUiMultiSelectSize, type TumAet
 export { TumAetUiPaginatorComponent } from './lib/paginator/tumaet-ui-paginator.component';
 export { TumAetUiPanelComponent } from './lib/panel/tumaet-ui-panel.component';
 export { TumAetUiPopoverTriggerDirective } from './lib/popover/tumaet-ui-popover-trigger.directive';
-export { TumAetUiPopoverComponent } from './lib/popover/tumaet-ui-popover.component';
+export { TumAetUiPopoverComponent, type TumAetUiPopoverPaddingOption } from './lib/popover/tumaet-ui-popover.component';
 export { TumAetUiProgressBarComponent, type TumAetUiProgressBarSeverity, type TumAetUiProgressBarSize } from './lib/progress-bar/tumaet-ui-progress-bar.component';
 export { TumAetUiProgressSpinnerComponent } from './lib/progress-spinner/tumaet-ui-progress-spinner.component';
 export { TumAetUiRadioButtonComponent, type TumAetUiRadioButtonSelectEvent } from './lib/radio-button/tumaet-ui-radio-button.component';
@@ -75,3 +75,4 @@ export { TumAetUiTagComponent, type TumAetUiTagSeverity, type TumAetUiTagSize } 
 export { TumAetUiToggleSwitchComponent } from './lib/toggle-switch/tumaet-ui-toggle-switch.component';
 export { TumAetUiTooltipDirective } from './lib/tooltip/tumaet-ui-tooltip.directive';
 export type { TumAetUiOverlayPlacement } from './lib/overlay/tumaet-ui-overlay.service';
+export { setInputs } from './lib/internal/set-inputs';

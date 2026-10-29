@@ -731,6 +731,7 @@ export default tseslint.config(
             'src/main/webapp/app/notification/**/*.html',
             'src/main/webapp/app/calendar/**/*.html',
             'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
+            'src/main/webapp/app/course/overview/course-statistics/**/*.html',
             'src/main/webapp/app/localci/build-agent-summary/**/*.html',
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
@@ -751,6 +752,13 @@ export default tseslint.config(
             'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
+            'src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.html',
+            'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
+            'src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.html',
+            'src/main/webapp/app/plagiarism/shared/case-header/**/*.html',
+            'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
+            'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
+            'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
         ],
         languageOptions: {
@@ -771,6 +779,7 @@ export default tseslint.config(
         // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
         // See client-development.mdx (### Styling).
         files: [
+            'src/main/webapp/app/course/overview/course-statistics/**/*.html',
             'src/main/webapp/app/exam/overview/**/*.html',
             'src/main/webapp/app/exam/shared/**/*.html',
             'src/main/webapp/app/assessment/overview/**/*.html',

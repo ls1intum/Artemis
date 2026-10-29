@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizStatisticsFooterComponent } from 'app/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -69,7 +69,7 @@ describe('QuizStatisticsFooterComponent', () => {
         router = fixture.debugElement.injector.get(Router);
         routerSpy = vi.spyOn(router, 'navigateByUrl');
         accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(quizExercise));
     });
 
     afterEach(() => {
@@ -110,17 +110,6 @@ describe('QuizStatisticsFooterComponent', () => {
         expect(comp.quizExercise()).toEqual(quizExercise);
         expect(comp.question()).toEqual(question);
         expect(comp.waitingForQuizStart()).toBe(false);
-    });
-
-    it('should return remaining Time', () => {
-        // only minutes if time > 2min 30sec
-        expect(comp.relativeTimeText(220)).toBe('4 min');
-
-        // minutes and seconds if time in minutes between 1 <= x < 2.5
-        expect(comp.relativeTimeText(130)).toBe('2 min 10 s');
-
-        // only seconds if time < 1min
-        expect(comp.relativeTimeText(50)).toBe('50 s');
     });
 
     describe('test previous statistic', () => {

@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 
 /**
  * Unit test for the quiz counterpart of the programming provisioner's post-import cleanup (see
- * {@link ProgrammingVariantAdapterServiceProvisionCleanupTest}): {@code importQuizExercise} saves the new quiz
+ * the programming import path): {@code importQuizExercise} saves the new quiz
  * BEFORE creating its channel and updating competency progress. A failure after that save leaves a persisted
  * clone behind while {@code provision()} never returns, so the pipeline's own null-variant cleanup can never find
  * it. This test forces a post-save import failure and asserts the clone is deleted instead of leaked.

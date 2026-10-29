@@ -195,9 +195,14 @@ A manually assessed course programming exercise without a due date also keeps su
 a due date is subsequently set and reached. The participations page explains the current access and any
 upcoming restriction.
 
-Other exercise types and exam exercises retain anonymous participation views for non-instructors. Instructors retain
-named views, and participation owners retain access to their own details. Exports selected by student login or team
-name and identity exports continue to require instructor access.
+**Course quizzes** are always assessed automatically, so there is no tutor assessment to keep anonymous. Tutors and
+editors see student names next to the quiz scores on the participations page.
+
+Other exercise types and exam exercises, including exam quizzes, retain anonymous participation views for
+non-instructors. The participations list of an exam exercise is only available to instructors, and the direct
+participation lookups of other staff stay anonymous. Instructors retain named views, and participation owners retain
+access to their own details. Exports
+selected by student login or team name and identity exports continue to require instructor access.
 
 ### Shared Submission and Assessment Features
 
@@ -316,6 +321,7 @@ In addition to the [General Functionality](#general-functionality) above, Quiz E
 
 [//]: # (Refers to QuizExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseResource.java)
 [//]: # (Refers to QuizSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/openapi/QuizSubmissionResource.java)
+[//]: # (Refers to QuizAssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizAssessmentResource.java)
 
 <Callout variant={CalloutVariant.info}>
   Quiz exercises use a different submission and assessment model from other exercise types.
@@ -333,6 +339,7 @@ In addition to the [General Functionality](#general-functionality) above, Quiz E
 | Recalculate Statistics      | ✔                   | ✔                   | ✔                   |                     |
 | Evaluate Quiz               | ✔                   |                     |                     |                     |
 | Re-evaluate Quiz            | ✔                   |                     |                     |                     |
+| Delete Result               | ✔                   |                     |                     |                     |
 | Submit (Live Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
 | Submit (Practice Mode)      | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) |
 | Submit (Exam Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |

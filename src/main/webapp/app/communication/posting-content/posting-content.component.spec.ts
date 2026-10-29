@@ -51,6 +51,63 @@ describe('PostingContentComponent', () => {
         communicationService = TestBed.inject(CommunicationService);
     });
 
+    it.each([
+        '> [link](https://a.com/\n> "#123")',
+        '> <a\n> href="https://a.com/#123">link</a>',
+        '$\\text{#123}$',
+        '$$\\text{#123}$$',
+
+        '&#169;',
+        '&#xA9;',
+        '&amp;#169;',
+        '&#38;#169;',
+        '&#x26;#169;',
+        '\\&#169;',
+        '\\#123',
+        '`#123`',
+        '``#123 ` literal``',
+        '```\n#123\n```',
+        '~~~ts\n#123\n~~~',
+        '```\n#123',
+        '    #123',
+        '> ```\n> #123\n> ```',
+        '- item\n\n  ```\n  #123\n  ```',
+        '`[user]Anna(anna)[/user]`',
+        '`![image](image.png)`',
+    ])('keeps literal Markdown out of reference splitting: %s', (source) => {
+        fixture.componentRef.setInput('content', source);
+        expect(component.getPatternMatches()).toEqual([]);
+    });
+
+    it.each([
+        '> `#9` then #9',
+        'a | b | c\n---|---|---\n![text | extra](file.png) | #9',
+        '&noEntity;#9',
+
+        'a | b\n---|---\n`unclosed | #9`',
+        'a | b\n---|---\na\\|b | #9',
+        'Copyright &#169; and #9',
+        '`#123` and #9',
+        '``#123 ` literal`` and #9',
+        '```\n#123\n```\n\n#9',
+        '~~~\n#123\n~~~\n\n#9',
+        '> `#123` and #9',
+        '- `#123` and #9',
+        '😀\r\n\r\n`#123` and #9',
+    ])('retains real references and source offsets beside literal content: %s', (source) => {
+        fixture.componentRef.setInput('content', source);
+        const startIndex = source.lastIndexOf('#9');
+        expect(component.getPatternMatches()).toEqual([{ startIndex, endIndex: startIndex + 2, referenceType: ReferenceType.POST }]);
+    });
+
+    it.each(['\\[user]#9(a)[/user] #10', '\\![#9](url) #10', 'a | b\n---|---\n\\![#9](url) | #10'])('maps nested candidates after an escaped outer reference: %s', (source) => {
+        fixture.componentRef.setInput('content', source);
+        expect(component.getPatternMatches()).toEqual([
+            { startIndex: source.indexOf('#9'), endIndex: source.indexOf('#9') + 2, referenceType: ReferenceType.POST },
+            { startIndex: source.indexOf('#10'), endIndex: source.indexOf('#10') + 3, referenceType: ReferenceType.POST },
+        ]);
+    });
+
     it('should set course and posts for course on initialization', async () => {
         component.ngOnInit();
         await fixture.whenStable();

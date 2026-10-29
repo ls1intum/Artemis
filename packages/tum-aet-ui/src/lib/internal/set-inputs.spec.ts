@@ -14,8 +14,6 @@ class SetInputsProbeComponent {
     readonly notAnInput = 'plain member';
 }
 
-// This is the library's own copy of the application's setInputs, which the library cannot import. The spec mirrors the
-// application's one, so that a change to only one of the two copies shows up as a failure here or there.
 describe('setInputs', () => {
     const create = () => {
         const fixture = TestBed.createComponent(SetInputsProbeComponent);

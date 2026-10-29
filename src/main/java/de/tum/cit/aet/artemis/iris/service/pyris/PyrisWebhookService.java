@@ -128,7 +128,7 @@ public class PyrisWebhookService {
 
         // Resolve TUM Live watch page URLs to HLS playlist URLs for Iris/FFmpeg, and tag video source type.
         // If the type is null (unsupported source), pass null URL so Pyris doesn't try to process it.
-        ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
+        ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource(), course.getId());
         String videoUrl = resolved.type() != null ? resolved.url() : null;
         String sentFingerprint = contentFingerprint;
         if (resolved.type() == null && videoSourceResolver.isSupportedSource(attachmentVideoUnit.getVideoSource())) {
@@ -165,10 +165,11 @@ public class PyrisWebhookService {
      * Falls back to the original URL if resolution fails or TumLiveApi is not present.
      *
      * @param videoSource the raw video URL (may be a TUM Live watch page URL)
+     * @param courseId    the course of the lecture unit, whose TUM.Live connection may hand out a lecture that is not public
      * @return the resolved HLS playlist URL, or the original URL if resolution is not applicable
      */
-    ResolvedVideo resolveVideoUrl(String videoSource) {
-        return videoSourceResolver.resolve(videoSource);
+    ResolvedVideo resolveVideoUrl(String videoSource, long courseId) {
+        return videoSourceResolver.resolve(videoSource, courseId);
     }
 
     /**
