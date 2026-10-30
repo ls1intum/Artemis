@@ -405,7 +405,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
         var properties = new RateLimitingProperties();
         properties.setEnabled(true);
-        properties.setAuthenticationRequestsPerMinute(1);
+        properties.setOnlineResourceFetchRequestsPerMinute(1);
         var features = mock(FeatureToggleService.class);
         when(features.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
         var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features);
