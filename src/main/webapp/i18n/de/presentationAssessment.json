@@ -43,6 +43,7 @@
             "assessment": "Bewertung",
             "remark": "Anmerkung",
             "assessor": "Bewertet von",
+            "gradeEditedBy": "Bewertung bearbeitet von {{ name }}",
             "remarkTooLong": "Die Anmerkung darf höchstens {{ max }} Zeichen enthalten.",
             "assessed": "Bewertet",
             "pending": "Ausstehend",

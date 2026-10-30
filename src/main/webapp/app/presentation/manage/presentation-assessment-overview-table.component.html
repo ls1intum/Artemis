@@ -56,6 +56,14 @@
                         <div class="flex flex-col">
                             <span>{{ assessor.name }}</span>
                             <small class="text-muted-color">{{ assessor.login }}</small>
+                            @if (row.instance.gradeEditedBy; as gradeEditedBy) {
+                                <small
+                                    class="text-muted-color italic"
+                                    data-testid="overview-grade-edited-by"
+                                    jhiTranslate="artemisApp.presentationAssessment.gradeEditedBy"
+                                    [translateValues]="{ name: gradeEditedBy.name || gradeEditedBy.login }"
+                                ></small>
+                            }
                         </div>
                     } @else {
                         -

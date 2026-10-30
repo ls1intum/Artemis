@@ -43,6 +43,7 @@
             "assessment": "Assessment",
             "remark": "Remark",
             "assessor": "Assessor",
+            "gradeEditedBy": "Grade edited by {{ name }}",
             "remarkTooLong": "The remark must not exceed {{ max }} characters.",
             "assessed": "Assessed",
             "pending": "Pending",

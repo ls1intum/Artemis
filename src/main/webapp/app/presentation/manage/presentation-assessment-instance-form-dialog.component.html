@@ -105,6 +105,14 @@
                         />
                     }
                 </div>
+                @if (instance()?.gradeEditedBy; as gradeEditedBy) {
+                    <small
+                        class="text-muted-color italic"
+                        data-testid="presentation-instance-grade-edited-by"
+                        jhiTranslate="artemisApp.presentationAssessment.gradeEditedBy"
+                        [translateValues]="{ name: gradeEditedBy.name || gradeEditedBy.login }"
+                    ></small>
+                }
                 @if (canChooseAssessor() && (editForm.controls.assessorOption.invalid || editForm.hasError('assessorRequired')) && editForm.controls.assessorOption.touched) {
                     <tumaet-ui-message severity="error" data-testid="presentation-instance-assessor-missing">
                         <span jhiTranslate="artemisApp.presentationAssessment.validation.assessorRequired"></span>

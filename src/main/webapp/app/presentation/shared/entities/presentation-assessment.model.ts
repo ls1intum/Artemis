@@ -17,6 +17,8 @@ export interface PresentationAssessmentInstance {
     resultPoints?: number | null;
     student?: Pick<User, 'login' | 'name' | 'firstName' | 'lastName' | 'email'>;
     assessor?: UserNameAndLoginDTO;
+    /** Who last changed the result points, only set when that person is not the assessor. */
+    gradeEditedBy?: UserNameAndLoginDTO;
     language?: string;
     mode?: PresentationAssessmentMode;
     location?: string;

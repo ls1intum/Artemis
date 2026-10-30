@@ -16,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
@@ -247,6 +248,20 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         fixture.detectChanges();
 
         expect(query('#presentation-instance-assessor-default-picture')).toBeNull();
+    });
+
+    it('should name who edited the grade of the opened presentation', () => {
+        const instance = { id: 11, presentationDate, resultPoints: 10, student: { login: 'student1' }, assessor: { login: 'tutor1', name: 'Tutor One' } };
+        fixture.componentRef.setInput('instance', instance);
+        fixture.detectChanges();
+        expect(query('[data-testid="presentation-instance-grade-edited-by"]')).toBeNull();
+
+        fixture.componentRef.setInput('instance', { ...instance, gradeEditedBy: { login: 'instructor1', name: 'Instructor One' } });
+        fixture.detectChanges();
+
+        const note = fixture.debugElement.query(By.css('[data-testid="presentation-instance-grade-edited-by"]'));
+        expect(note.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.gradeEditedBy');
+        expect(note.injector.get(TranslateDirective).translateValues()).toEqual({ name: 'Instructor One' });
     });
 
     it('should keep the existing assessor of an instance', () => {
