@@ -289,10 +289,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // the former fire-and-forget async Weaviate write). The actual Weaviate write still happens later off the request.
         // + 1 author read reset, now completed before the response rather than queued on the async executor.
         // This is the same UPDATE as before; it now counts toward the request's query budget.
+        // + 1 lock on the conversation row, taken because the author's participant does not exist yet and is created. It makes requests
+        // that create the same participant at the same time wait for each other, so none of them fails on the unique index. It is only
+        // taken once per user and conversation.
         // further database calls are made in async code
         // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
         assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(11);
+                .hasBeenCalledTimes(12);
     }
 
     @ParameterizedTest
