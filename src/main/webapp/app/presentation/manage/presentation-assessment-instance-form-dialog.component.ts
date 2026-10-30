@@ -42,9 +42,20 @@ const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl)
     return resultPoints !== null && resultPoints !== undefined && Number(resultPoints) > Number(maxPoints) ? { resultPointsExceedMaxPoints: true } : null;
 };
 
-/** Only a graded presentation has an assessor, so the assessor is required as soon as result points are entered. */
-const assessorRequiredForGrade: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
-    hasResultPoints(control.get('resultPoints')?.value) && !control.get('assessorOption')?.value ? { assessorRequired: true } : null;
+/**
+ * Only a graded presentation has an assessor, so the assessor is required as soon as result points are entered. The autocomplete writes the typed text into
+ * the control, so only a selected assessor (an object) counts; without result points neither is checked, as the field is hidden then.
+ */
+const assessorSelectedForGrade: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    if (!hasResultPoints(control.get('resultPoints')?.value)) {
+        return null;
+    }
+    const assessorOption = control.get('assessorOption')?.value;
+    if (!assessorOption) {
+        return { assessorRequired: true };
+    }
+    return typeof assessorOption === 'string' ? { assessorNotSelected: true } : null;
+};
 
 /** A meeting link is rendered as a link, so without a scheme the browser would open it relative to the Artemis URL. */
 const httpUrl: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
@@ -54,8 +65,6 @@ const RESULT_POINTS_UPPER_BOUND = 10000;
 const MIN_PRESENTATION_DATE = dayjs('1970-01-01T00:00:00');
 const minimumPresentationDate: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     control.value && dayjs(control.value).isBefore(MIN_PRESENTATION_DATE) ? { minDate: true } : null;
-/** The autocomplete writes the typed text into the control; only a selected assessor (an object) is a valid value. */
-const assessorSelected: ValidatorFn = (control: AbstractControl): ValidationErrors | null => (typeof control.value === 'string' ? { assessorNotSelected: true } : null);
 
 /** The assessor together with the text the autocomplete shows for it, like the presenter options of the presenter selector. */
 interface AssessorOption {
@@ -170,14 +179,14 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             presentationTime: [undefined as dayjs.Dayjs | undefined],
             resultPoints: [undefined as number | undefined, [Validators.min(0), Validators.max(RESULT_POINTS_UPPER_BOUND)]],
             maxPoints: [0],
-            assessorOption: [undefined as AssessorOption | undefined, [assessorSelected]],
+            assessorOption: [undefined as AssessorOption | undefined],
             language: ['en', Validators.required],
             mode: [PresentationAssessmentMode.IN_PERSON, Validators.required],
             location: ['', Validators.maxLength(255)],
             meetingLink: ['', [Validators.maxLength(1000), httpUrl]],
             remark: ['', Validators.maxLength(1000)],
         },
-        { validators: [resultPointsDoNotExceedMaxPoints, assessorRequiredForGrade] },
+        { validators: [resultPointsDoNotExceedMaxPoints, assessorSelectedForGrade] },
     );
 
     constructor() {

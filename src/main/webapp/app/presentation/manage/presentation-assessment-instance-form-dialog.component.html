@@ -113,7 +113,7 @@
                         [translateValues]="{ name: gradeEditedBy.name || gradeEditedBy.login }"
                     ></small>
                 }
-                @if (canChooseAssessor() && (editForm.controls.assessorOption.invalid || editForm.hasError('assessorRequired')) && editForm.controls.assessorOption.touched) {
+                @if (canChooseAssessor() && (editForm.hasError('assessorRequired') || editForm.hasError('assessorNotSelected')) && editForm.controls.assessorOption.touched) {
                     <tumaet-ui-message severity="error" data-testid="presentation-instance-assessor-missing">
                         <span jhiTranslate="artemisApp.presentationAssessment.validation.assessorRequired"></span>
                     </tumaet-ui-message>

@@ -346,7 +346,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         input.dispatchEvent(new Event('input'));
         fixture.detectChanges();
 
-        expect(component.editForm.controls.assessorOption.hasError('assessorNotSelected')).toBe(true);
+        expect(component.editForm.hasError('assessorNotSelected')).toBe(true);
         expect(query('#presentation-instance-assessor-default-picture')).toBeNull();
 
         component.save();
@@ -368,6 +368,23 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         component.save();
 
         expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: 'editor1' }) });
+    });
+
+    it('should save without an assessor once the result points of typed assessor text are removed', () => {
+        grade();
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+        const input = query('#presentation-instance-assessor') as HTMLInputElement;
+        input.value = 'gra';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        component.editForm.controls.resultPoints.setValue(undefined);
+        fixture.detectChanges();
+
+        expect(component.editForm.valid).toBe(true);
+        component.save();
+        expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: undefined }) });
     });
 
     it('should hide the assessor and send none while no result points are entered', () => {
