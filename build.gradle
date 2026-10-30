@@ -10,7 +10,7 @@ buildscript {
             // Plugin dependencies resolve independently of the application constraint below.
             // Guava < 33.7.2 is affected by CVE-2026-102554 (deserialization memory exhaustion).
             force "com.google.guava:guava:33.7.2-jre"
-            force "com.github.jknack:handlebars:4.5.5"
+            force "com.github.jknack:handlebars:4.5.7"
             // Force the patched Apache HttpComponents onto the build-script / plugin classpath too. The
             // org.owasp.dependencycheck and org.springframework.boot plugins drag in httpclient5 5.6.1 /
             // httpcore5 5.4.2 / httpcore5-h2 5.4, which the GitHub dependency graph reports and Dependabot flags

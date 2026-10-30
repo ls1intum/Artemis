@@ -26,7 +26,7 @@ overrides:
   '@swc/core': '1.16.20'
   '@swc/html': '1.16.20'
   # Kept on the 1.x line (docs' express 4 stack requires ^1).
-  body-parser: '1.20.8'
+  body-parser: '1.20.9'
   brace-expansion: '5.0.12'
   # Must stay >= 4.28.7, which fixed CVE-2026-73088 and CVE-2026-73089. Reached through @babel/core's
   # helper-compilation-targets, whose range allows this. Build-time tooling only, never served.
@@ -40,12 +40,12 @@ overrides:
   # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
   fast-uri: '3.1.9'
   follow-redirects: '1.16.2'
-  http-proxy-middleware: '3.0.7'
+  http-proxy-middleware: '3.0.10'
   # Must stay >= 2.0.3, which fixed GHSA-5p2g-fcmc-qvqq (JXL/HEIF) and GHSA-w3rx-r6r6-pgpr (ICNS): crafted images made
   # the parsers loop forever. @docusaurus/mdx-loader calls it to size every local image in the docs. Until 2.0.3 this
   # repository shipped its own patch for 2.0.2, the last release of the archived upstream.
   image-size: '2.0.4'
-  joi: '17.13.8'
+  joi: '17.13.9'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
   js-yaml: '4.3.2'
   launch-editor: '2.14.2'
@@ -60,7 +60,7 @@ overrides:
   'postcss-selector-parser@7': '7.1.7'
   # Must stay >= 6.16.0, which fixed CVE-2026-82417 (DoS via attacker-controlled isBuffer)
   # and CVE-2026-82562 (array-limit bypass via bracket-key comma parsing).
-  qs: '6.16.1'
+  qs: '6.17.1'
   serialize-javascript: '7.1.4'
   shell-quote: '1.12.0'
   # Kept on the 3.x line (docs' SVG toolchain requires ^3).
