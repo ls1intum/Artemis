@@ -36,7 +36,9 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -152,7 +154,8 @@ public class TextExerciseCreationUpdateResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("text-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @AllowedScopes(AgentScope.EXERCISES_DRAFT)
     @Operation(summary = "Create a text exercise", description = """
             Creates a text exercise in a course (set courseId; exercise groups of exams are not available to tokens). A request with a \
@@ -177,7 +180,6 @@ public class TextExerciseCreationUpdateResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     private ResponseEntity<TextExerciseResponseDTO> createTextExerciseInternal(TextExercise textExercise) throws URISyntaxException {
-        AgentDraftRules.requireDraftDatesForCreate(textExercise.getReleaseDate(), textExercise.getStartDate());
         if (textExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
@@ -190,6 +192,8 @@ public class TextExerciseCreationUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        // After the role check, so that a caller who may not create exercises is not told what the dates should be.
+        AgentDraftRules.requireDraftDatesForCreate(textExercise.getReleaseDate(), textExercise.getStartDate());
 
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
@@ -231,7 +235,8 @@ public class TextExerciseCreationUpdateResource {
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated
      */
     @PutMapping("text-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @AllowedScopes(AgentScope.EXERCISES_DRAFT)
     @Operation(summary = "Update a text exercise", description = """
             Replaces the editable fields of an existing text exercise, so send the whole exercise. A request with a personal access \
@@ -342,7 +347,7 @@ public class TextExerciseCreationUpdateResource {
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated
      */
     @PutMapping("text-exercises/{exerciseId}/re-evaluate")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<TextExerciseResponseDTO> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody UpdateTextExerciseDTO updateTextExerciseDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate TextExercise : {}", updateTextExerciseDTO);
@@ -364,8 +369,8 @@ public class TextExerciseCreationUpdateResource {
         var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         TextExercise exerciseForReevaluation = update(updateTextExerciseDTO, existingExercise);
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        // Loads the course (or the exercise group with its exam) of the exercise for the logging and notifications below
+        courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(exerciseForReevaluation, ENTITY_NAME);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);

@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
@@ -16,13 +17,16 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseDetailsDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExercise, List<QuizQuestionWithSolutionDTO> quizQuestions, Set<String> categories,
         Set<CompetencyExerciseLinkDTO> competencyLinks, List<GradingCriterionDTO> gradingCriteria, String channelName, Boolean testRunParticipationsExist, Boolean isEditable,
-        Boolean canBeEvaluated) {
+        Boolean canBeEvaluated, @Nullable ExerciseGroupWithIdAndExamDTO exerciseGroup) {
 
     /**
      * Converts a quiz exercise entity to the instructor-facing details DTO.
@@ -42,14 +46,20 @@ public record QuizExerciseDetailsDTO(@JsonUnwrapped QuizExerciseWithoutQuestions
             gradingCriterionDTOs = GradingCriterionDTO.ofAll(quizExercise.getGradingCriteria());
         }
 
+        ExerciseGroupWithIdAndExamDTO exerciseGroup = null;
+        if (quizExercise.isExamExercise()) {
+            var group = quizExercise.getExerciseGroup();
+            var exam = group.getExam();
+            exerciseGroup = new ExerciseGroupWithIdAndExamDTO(group.getId(), new ExamWithIdAndCourseDTO(exam.getId(), new CourseWithIdDTO(exam.getCourse().getId())));
+        }
         return new QuizExerciseDetailsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questionDTOs, categories, competencyExerciseLinkDTOs, gradingCriterionDTOs,
-                quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist(), null, null);
+                quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist(), null, null, exerciseGroup);
     }
 
     public static QuizExerciseDetailsDTO of(QuizExercise quizExercise, Boolean isEditable) {
         QuizExerciseDetailsDTO dto = of(quizExercise);
         return new QuizExerciseDetailsDTO(dto.quizExercise, dto.quizQuestions, dto.categories, dto.competencyLinks, dto.gradingCriteria, dto.channelName,
-                dto.testRunParticipationsExist, isEditable, null);
+                dto.testRunParticipationsExist, isEditable, null, dto.exerciseGroup);
     }
 
     /**
@@ -64,7 +74,7 @@ public record QuizExerciseDetailsDTO(@JsonUnwrapped QuizExerciseWithoutQuestions
     public static QuizExerciseDetailsDTO of(QuizExercise quizExercise, Boolean isEditable, boolean effectiveQuizEnded, boolean canBeEvaluated) {
         QuizExerciseDetailsDTO dto = of(quizExercise);
         return new QuizExerciseDetailsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise, effectiveQuizEnded), dto.quizQuestions, dto.categories, dto.competencyLinks,
-                dto.gradingCriteria, dto.channelName, dto.testRunParticipationsExist, isEditable, canBeEvaluated);
+                dto.gradingCriteria, dto.channelName, dto.testRunParticipationsExist, isEditable, canBeEvaluated, dto.exerciseGroup);
     }
 }
 

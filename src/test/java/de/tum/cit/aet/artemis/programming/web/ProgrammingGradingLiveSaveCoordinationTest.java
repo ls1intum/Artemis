@@ -21,7 +21,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -57,8 +56,7 @@ class ProgrammingGradingLiveSaveCoordinationTest {
         when(testCases.update(exerciseId, Set.of())).thenReturn(Set.of());
         var versions = mock(ExerciseVersionService.class);
         var resource = new ProgrammingExerciseTestCaseResource(mock(ProgrammingExerciseTestCaseTestRepository.class), testCases,
-                mock(ProgrammingExerciseCreationScheduleService.class), exercises, mock(AuthorizationCheckService.class), users, versions, guard,
-                mock(ProgrammingExerciseDraftGuardService.class));
+                mock(ProgrammingExerciseCreationScheduleService.class), exercises, users, versions, guard, mock(ProgrammingExerciseDraftGuardService.class));
         var synchronizing = new CountDownLatch(1);
         var finishSynchronization = new CountDownLatch(1);
 
@@ -116,8 +114,7 @@ class ProgrammingGradingLiveSaveCoordinationTest {
         when(testCases.reset(expected)).thenReturn(java.util.List.of());
         var versions = mock(ExerciseVersionService.class);
         var resource = new ProgrammingExerciseTestCaseResource(mock(ProgrammingExerciseTestCaseTestRepository.class), testCases,
-                mock(ProgrammingExerciseCreationScheduleService.class), exercises, mock(AuthorizationCheckService.class), users, versions, guard,
-                mock(ProgrammingExerciseDraftGuardService.class));
+                mock(ProgrammingExerciseCreationScheduleService.class), exercises, users, versions, guard, mock(ProgrammingExerciseDraftGuardService.class));
 
         resource.resetTestCases(exerciseId);
 

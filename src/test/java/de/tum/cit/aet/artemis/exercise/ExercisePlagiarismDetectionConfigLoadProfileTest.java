@@ -164,7 +164,7 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void readingAnExerciseThroughTheApiReadsTheConfigurationOnlyWhenAskedFor() throws Exception {
         String url = "/api/text/text-exercises/" + textExerciseId;
 

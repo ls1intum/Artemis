@@ -6,11 +6,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -25,10 +26,10 @@ public class AllowedScopesResource {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("testScopedInstructorWrite")
-    @EnforceAtLeastInstructor
+    @GetMapping("courses/{courseId}/testScopedInstructorWrite")
+    @EnforceAtLeastInstructorInCourse
     @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
-    public ResponseEntity<Void> testScopedInstructorWrite() {
+    public ResponseEntity<Void> testScopedInstructorWrite(@PathVariable long courseId) {
         return ResponseEntity.ok().build();
     }
 

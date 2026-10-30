@@ -134,7 +134,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExercisesWithTextExercise() throws Exception {
         // creating exercise
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
@@ -159,7 +159,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExercisesWithModelingExercise() throws Exception {
         // creating exercise
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().getFirst());
@@ -183,7 +183,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExerciseWithProgrammingExercise() throws Exception {
         ProgrammingExercise programmingExercise = createProgrammingExercise();
 
@@ -214,7 +214,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @ParameterizedTest(name = "{displayName} [{index}]")
     @ArgumentsSource(ExamStartDateSource.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExerciseWithProgrammingExercise_participationUnlocked(ZonedDateTime startDate) throws Exception {
         exam.setVisibleDate(ZonedDateTime.now().minusHours(2));
         exam.setStartDate(startDate);

@@ -23,10 +23,13 @@ export class StudentsRoomDistributionService {
 
     /**
      * Sends a GET request to retrieve basic data about all exam rooms available for distribution and updates {@link availableRooms}.
+     *
+     * @param courseId id of the course
+     * @param examId id of the exam
      */
-    loadRoomData(): void {
+    loadRoomData(courseId: number, examId: number): void {
         this.http
-            .get<RoomForDistributionDTO[]>(`${this.BASE_URL}/rooms/distribution-data`)
+            .get<RoomForDistributionDTO[]>(`${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms/distribution-data`)
             .pipe(
                 map((rooms: RoomForDistributionDTO[]) => {
                     this.availableRoomsInternal.set(rooms);
@@ -42,16 +45,18 @@ export class StudentsRoomDistributionService {
     /**
      * Sends a POST request to retrieve information about the capacities of the chosen rooms and updates {@link capacityData}
      *
+     * @param courseId id of the course
+     * @param examId id of the exam
      * @param roomIds ids of the rooms
      * @param reserveFactor percentage of seats that should be left empty
      */
-    updateCapacityData(roomIds: number[], reserveFactor: number): void {
+    updateCapacityData(courseId: number, examId: number, roomIds: number[], reserveFactor: number): void {
         if (roomIds.length === 0) {
             this.capacityDataInternal.set(undefined);
             return;
         }
 
-        const requestUrl = `${this.BASE_URL}/rooms/distribution-capacities`;
+        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms/distribution-capacities`;
         const params = new HttpParams().appendAll({ examRoomIds: roomIds }).set('reserveFactor', reserveFactor);
 
         this.http
@@ -107,10 +112,12 @@ export class StudentsRoomDistributionService {
     /**
      * Sends a GET request to retrieve all seats of a specific exam room
      *
+     * @param courseId id of the course
+     * @param examId id of the exam
      * @param examRoomId id of the exam room
      */
-    loadSeatsOfExamRoom(examRoomId: number): Observable<SeatsOfExamRoomDTO> {
-        const requestUrl = `${this.BASE_URL}/rooms/${examRoomId}/seats`;
+    loadSeatsOfExamRoom(courseId: number, examId: number, examRoomId: number): Observable<SeatsOfExamRoomDTO> {
+        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms/${examRoomId}/seats`;
 
         return this.http.get<SeatsOfExamRoomDTO>(requestUrl).pipe(
             map((seatsOfExamRoom: SeatsOfExamRoomDTO) => seatsOfExamRoom),

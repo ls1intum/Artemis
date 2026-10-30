@@ -88,3 +88,5 @@ jobs:
         run: python3 supporting_scripts/liquibase/test_memiris_cleanup_migration.py --database ${{ matrix.database }}
       - name: One-to-one chat pair migration with existing data
         run: python3 supporting_scripts/liquibase/test_one_to_one_chat_pair_migration.py --database ${{ matrix.database }}
+      - name: Course authorities migration with existing data
+        run: python3 supporting_scripts/liquibase/test_course_authorities_migration.py --database ${{ matrix.database }}

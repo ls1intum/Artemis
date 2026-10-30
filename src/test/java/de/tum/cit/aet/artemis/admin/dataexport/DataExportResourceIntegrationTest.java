@@ -376,7 +376,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRequestForAnotherUserInstructor_forbidden() throws Exception {
         request.post("/api/admin/data-exports/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
     }
@@ -436,7 +436,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllDataExportsAsInstructor_forbidden() throws Exception {
         request.getList("/api/admin/data-exports", HttpStatus.FORBIDDEN, DataExportAdminDTO.class);
     }

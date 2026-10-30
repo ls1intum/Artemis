@@ -25,13 +25,13 @@ export class CreateOnlineUnitComponent implements OnInit {
     onlineUnitToCreate: OnlineUnit = new OnlineUnit();
     readonly isLoading = signal<boolean>(undefined!);
     lectureId!: number; // set in ngOnInit() from route params
-    courseId!: number; // set in ngOnInit() from route params
+    readonly courseId = signal<number>(undefined!); // set in ngOnInit() from route params
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params, parentParams]) => {
             this.lectureId = Number(params.get('lectureId'));
-            this.courseId = Number(parentParams.get('courseId'));
+            this.courseId.set(Number(parentParams.get('courseId')));
         });
         this.onlineUnitToCreate = new OnlineUnit();
     }

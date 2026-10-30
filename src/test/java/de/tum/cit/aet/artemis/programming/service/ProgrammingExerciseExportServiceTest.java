@@ -27,6 +27,8 @@ import org.eclipse.jgit.lib.Constants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -44,6 +46,8 @@ import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -56,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -108,6 +113,12 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     @Autowired
     private AuxiliaryRepositoryService auxiliaryRepositoryService;
 
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExamTestRepository examTestRepository;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
@@ -128,7 +139,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * temporary directory altogether, so there is nothing left to collide over or to clean up twice.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldStreamEachRepositoryWithoutACheckout() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
         Path outputDir = tempFileUtilService.createTempDirectory("archival-export");
@@ -147,7 +158,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldExportTheWorkingTreeWithoutGitMetadata() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
         Path outputDir = tempFileUtilService.createTempDirectory("archival-export-content");
@@ -170,7 +181,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * get it: the repository is materialized straight from the bare repository.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldKeepTheHistoryWhenTheCallerAsksForItWithoutAnyRewritingOption() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
         Path outputDir = tempFileUtilService.createTempDirectory("manual-export-plain");
@@ -201,7 +212,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * would be read as an empty repository and hide the failure.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldNotLeaveAnArchiveBehindForAnUnreadableRepository() throws Exception {
         var participation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -230,7 +241,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * tell an instructor nothing about the repository it skipped.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldReportAnUnreadableRepositoryAlongsideTheOnesItExported() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(seedStudentParticipations(TEST_PREFIX + "student1"));
         var unreadable = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
@@ -254,7 +265,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldNameTheZipAfterTheParticipant() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
         Path outputDir = tempFileUtilService.createTempDirectory("archival-export-naming");
@@ -270,7 +281,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * history so the exported material can be re-imported and inspected, which is what the import expects to find.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldWriteOneZipPerRepositoryWithHistory() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -296,7 +307,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * the serialized index agrees with the files that were written next to it.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldProduceAnExtractableWorkingRepository() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -324,7 +335,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * must not disclose and which is unusable on the machine that extracts it.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldNotDiscloseTheInternalRepositoryPath() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -381,7 +392,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * are reachable from nowhere else, which is the one thing an archive must not do.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldKeepSecondaryBranchesAndTags() throws Exception {
         var baseRepositories = createAndSeedBaseRepositories();
         var templateRepository = baseRepositories.templateRepository();
@@ -419,7 +430,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * says nothing about them.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldExportAuxiliaryRepositories() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -438,6 +449,54 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         byte[] zipContent = Files.readAllBytes(auxiliaryArchive);
         assertThat(ZipTestUtil.readEntryAsString(zipContent, "hints/Hint.java")).isEqualTo("public class Hint {}");
         ZipTestUtil.verifyZipContainsGitDirectory(zipContent);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false, true", "true, true", "false, false", "true, false" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void auxiliaryExportRejectsRepositoryOfAnotherExercise(boolean sameCourse, boolean configured) throws Exception {
+        ProgrammingExercise allowedExercise = programmingExercise;
+        Course foreignCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(foreignCourse, ProgrammingExercise.class);
+        if (sameCourse) {
+            programmingExercise.setCourse(allowedExercise.getCourseViaExerciseGroupOrCourseMember());
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        }
+        createAndSeedBaseRepositories();
+        seedAuxiliaryRepository("privatehints", Map.of("private.txt", "foreign auxiliary repository content"));
+        var auxiliary = programmingExercise.getAuxiliaryRepositories().iterator().next();
+        if (!configured) {
+            auxiliary.setRepositoryUri((String) null);
+            programmingExerciseRepository.save(programmingExercise);
+            assertThat(programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow().getAuxiliaryRepositories()).singleElement()
+                    .satisfies(stored -> assertThat(stored.getRepositoryUri()).isNull());
+        }
+        var response = request
+                .performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/programming/programming-exercises/" + allowedExercise.getId() + "/export-instructor-auxiliary-repository?repositoryId=" + auxiliary.getId()))
+                .andReturn().getResponse();
+        assertThat(response.getStatus()).as("a tutor must not download a foreign exercise's auxiliary repository").isEqualTo(400);
+        assertThat(JsonObjectMapper.get().readTree(response.getContentAsString()).get("errorKey").asString()).isEqualTo("invalidRepositoryId");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void auxiliaryExportForTutorPreservesContentAndHistory() throws Exception {
+        createAndSeedBaseRepositories();
+        seedAuxiliaryRepository("allowedhints", Map.of("hints.txt", "allowed auxiliary repository content"));
+        var auxiliary = programmingExercise.getAuxiliaryRepositories().iterator().next();
+        File archive = request.getFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-auxiliary-repository?repositoryId=" + auxiliary.getId(),
+                HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(archive.getName()).contains("allowedhints").endsWith(".zip");
+        assertThat(ZipTestUtil.readEntryAsString(zip, "hints.txt")).isEqualTo("allowed auxiliary repository content");
+        ZipTestUtil.verifyZipContainsGitDirectory(zip);
+        Path extracted = tempFileUtilService.createTempDirectory("auxiliary-history");
+        ZipTestUtil.extractZip(zip, extracted);
+        try (Git git = Git.open(extracted.toFile())) {
+            assertThat(git.log().call()).anySatisfy(commit -> assertThat(commit.getFullMessage()).contains("auxiliary content"));
+        }
     }
 
     /** Creates a LocalVC repository for an auxiliary repository of the exercise, pushes one commit and persists it. */
@@ -464,7 +523,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * carry on with the remaining repositories rather than failing outright.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldReportMissingRepositoryUrisAsErrors() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -491,7 +550,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * reached by them.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositoriesToZipFile_withTheRewritingOptions_producesOneArchiveNamedAfterTheParticipants() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = List.of(seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1"),
                 seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student2"));
@@ -519,7 +578,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * identifiable from it, neither through the directory name nor through the commit authors.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositoriesToZipFile_whenAnonymizing_namesNoParticipant() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = List.of(seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1"));
         RepositoryExportOptionsDTO anonymizingOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, false, true, true, false);
@@ -550,7 +609,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportByParticipationIds_asTutor_ignoresIdentityRevealingOptions() throws Exception {
         var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
         var repository = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
@@ -569,13 +628,13 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportByParticipantIdentifiers_asTutor_forbidden() throws Exception {
         assertExportByParticipantIdentifiersForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void exportByParticipantIdentifiers_asEditor_forbidden() throws Exception {
         assertExportByParticipantIdentifiersForbidden();
     }
@@ -587,7 +646,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportByParticipantIdentifiers_asInstructor_keepsNamedExport() throws Exception {
         seedStudentParticipations(TEST_PREFIX + "student1");
         File archive = request.postWithResponseBodyFile(
@@ -597,14 +656,14 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportByParticipationIds_asTutor_cannotExportAll() throws Exception {
         var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
         request.post(exportByParticipationIdsUrl(programmingExercise, participation), ARCHIVAL_OPTIONS, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportByParticipationIds_fromAnotherExercise_forbidden() throws Exception {
         var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
         var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
@@ -613,32 +672,206 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportStudentSnapshot_asTutor_hidesParticipantInFilename() throws Exception {
-        File archive = exportStudentSnapshot();
+        File archive = exportStudentSnapshot("/for-staff");
         assertThat(archive.getName()).doesNotContain(TEST_PREFIX + "student1").endsWith("-student-submission.git.zip");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void exportStudentSnapshot_asOwner_keepsParticipantInFilename() throws Exception {
-        assertThat(exportStudentSnapshot().getName()).contains(TEST_PREFIX + "student1");
+        assertThat(exportStudentSnapshot("").getName()).contains(TEST_PREFIX + "student1");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportStudentSnapshot_asInstructor_keepsParticipantInFilename() throws Exception {
-        assertThat(exportStudentSnapshot().getName()).contains(TEST_PREFIX + "student1");
+        assertThat(exportStudentSnapshot("/for-instructor").getName()).contains(TEST_PREFIX + "student1");
     }
 
-    private File exportStudentSnapshot() throws Exception {
+    private File exportStudentSnapshot(String audience) throws Exception {
         var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
         File archive = request.getFile(
-                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository?participationId=" + participation.getId(), HttpStatus.OK);
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository" + audience + "?participationId=" + participation.getId(),
+                HttpStatus.OK);
         byte[] zip = Files.readAllBytes(archive.toPath());
         assertThat(ZipTestUtil.readEntryAsString(zip, "src/Main.java")).isEqualTo("public class Main {}");
         assertThat(ZipTestUtil.listEntryNames(zip)).noneMatch(name -> name.contains(".git/"));
         return archive;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportByParticipationIds_asInstructor_stillAnonymizesTheTutorOperation() throws Exception {
+        var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
+        var options = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
+        File archive = request.postWithResponseBodyFile(exportByParticipationIdsUrl(programmingExercise, participation), options, HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.listEntryNames(zip)).noneMatch(name -> name.contains(TEST_PREFIX + "student1"));
+        assertThat(ZipTestUtil.readEntryAsString(zip, "-student-submission.git/src/Main.java")).isEqualTo("public class Main {}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportByParticipationIds_asInstructor_cannotSelectAllThroughTutorOperation() throws Exception {
+        var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
+        request.post(exportByParticipationIdsUrl(programmingExercise, participation), ARCHIVAL_OPTIONS, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportStudentSnapshot_asInstructor_cannotUseOwnerOperationForAnotherStudent() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository?participationId=" + participation.getId(),
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportSolutionSnapshot_asInstructor_cannotUseUnpublishedStudentOperation() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=false", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void editorResetRejectsDestructiveOptionEvenForInstructorWithoutDeletingParticipations() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        long before = studentParticipationTestRepository.count();
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/reset", new ProgrammingExerciseResetOptionsDTO(true, false), HttpStatus.FORBIDDEN);
+        assertThat(studentParticipationTestRepository.count()).isEqualTo(before);
+        assertThat(studentParticipationTestRepository.existsById(participation.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void studentExamSnapshotRequiresAnAttemptEvenForInstructor() throws Exception {
+        createExamSnapshotFixture();
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=false", HttpStatus.FORBIDDEN);
+    }
+
+    private void createExamSnapshotFixture() throws Exception {
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusDays(1));
+        examTestRepository.save(exam);
+        createAndSeedBaseRepositories();
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void tutorStudentSnapshotRemainsAnonymousEvenForInstructor() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        var archive = request.getFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository/for-staff?participationId=" + participation.getId(),
+                HttpStatus.OK);
+        assertThat(archive.getName()).doesNotContain(TEST_PREFIX + "student1");
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, "src/Main.java")).isEqualTo("public class Main {}");
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(zip);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorSelectedExportKeepsIdentifiedHistoryAndRejectsForeignParticipation() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        var options = new RepositoryExportOptionsDTO();
+        var archive = request.postWithResponseBodyFile(exportByParticipationIdsUrl(programmingExercise, participation) + "/for-instructor", options, HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, TEST_PREFIX + "student1/src/Main.java")).isEqualTo("public class Main {}");
+        assertThat(ZipTestUtil.readEntryAsString(zip, TEST_PREFIX + "student1/.git/HEAD")).isNotBlank();
+        var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var other = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        request.post(exportByParticipationIdsUrl(other, participation) + "/for-instructor", options, HttpStatus.FORBIDDEN);
+        request.post(exportByParticipationIdsUrl(programmingExercise, participation) + "/for-instructor", ARCHIVAL_OPTIONS, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void tutorCannotUseIdentifiedSingleOrSelectedExport() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        request.post(exportByParticipationIdsUrl(programmingExercise, participation) + "/for-instructor", new RepositoryExportOptionsDTO(), HttpStatus.FORBIDDEN);
+        request.getFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository/for-instructor?participationId=" + participation.getId(),
+                HttpStatus.FORBIDDEN);
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository?participationId=" + participation.getId(),
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorAllExportKeepsEverySelectedAndUnselectedParticipant() throws Exception {
+        seedStudentParticipations(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        File archive = request.postWithResponseBodyFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/ALL",
+                ARCHIVAL_OPTIONS, HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, TEST_PREFIX + "student1/src/Main.java")).isEqualTo("public class Main {}");
+        assertThat(ZipTestUtil.readEntryAsString(zip, TEST_PREFIX + "student2/src/Main.java")).isEqualTo("public class Main {}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void fixedStudentExamSnapshotAllowsAnEnrolledInstructorAndRetainsPublicationAndTestsRules() throws Exception {
+        assertEnrolledExamSnapshot(TEST_PREFIX + "instructor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void fixedStudentExamSnapshotAllowsAnEnrolledStudentAndRetainsPublicationAndTestsRules() throws Exception {
+        assertEnrolledExamSnapshot(TEST_PREFIX + "student1");
+    }
+
+    private void assertEnrolledExamSnapshot(String login) throws Exception {
+        createExamSnapshotFixture();
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        examUtilService.addStudentExamWithUser(exam, login);
+        String url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=";
+        byte[] zip = Files.readAllBytes(request.getFile(url + "false", HttpStatus.OK).toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, "src/Main.java")).isEqualTo("public class Main { int solved; }");
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(zip);
+        request.getFile(url + "true", HttpStatus.FORBIDDEN);
+        programmingExercise.setReleaseTestsWithExampleSolution(true);
+        programmingExerciseRepository.save(programmingExercise);
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(Files.readAllBytes(request.getFile(url + "true", HttpStatus.OK).toPath()));
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        examTestRepository.save(exam);
+        request.getFile(url + "false", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void staffSolutionSnapshotKeepsCoursePrepublicationFormatButCannotBypassExamPublication() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        String suffix = "/export-student-requested-repository/for-staff?includeTests=false";
+        var archive = request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + suffix, HttpStatus.OK);
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(Files.readAllBytes(archive.toPath()));
+        createExamSnapshotFixture();
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        examTestRepository.save(exam);
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + suffix, HttpStatus.FORBIDDEN);
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusDays(1));
+        examTestRepository.save(exam);
+        request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + suffix, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void editorCannotDeleteParticipationsThroughEitherResetOperation() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        long before = studentParticipationTestRepository.count();
+        var options = new ProgrammingExerciseResetOptionsDTO(true, false);
+        String url = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        request.put(url + "/reset", options, HttpStatus.FORBIDDEN);
+        request.put(url + "/reset-participations", options, HttpStatus.FORBIDDEN);
+        assertThat(studentParticipationTestRepository.count()).isEqualTo(before);
+        assertThat(studentParticipationTestRepository.existsById(participation.getId())).isTrue();
     }
 
     private String exportByParticipationIdsUrl(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
@@ -646,7 +879,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositoriesToZipFile_withoutAnyParticipation_handsBackNothing() {
         // Nothing to zip is not an error: an instructor can filter the export down to a set of students that turns out to be empty.
         File exportedArchive = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, List.of(), ARCHIVAL_OPTIONS, Map.of());
@@ -655,7 +888,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldSkipAParticipationWithoutARepository() throws Exception {
         // Participations of old exercises can be stored without a repository URI. There is nothing to export for them, and nothing to report either.
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
@@ -675,7 +908,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldSkipPracticeParticipationsWhenTheyAreExcluded() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(seedStudentParticipations(TEST_PREFIX + "student1"));
         var practiceParticipation = participations.getFirst();
@@ -694,7 +927,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_writesTheRepositoriesTheProblemStatementAndTheExerciseDetails() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setProblemStatement("Implement the sorting strategies.");
@@ -719,7 +952,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * it and posts it back, so every field those imports bind has to survive the export.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_writesDetailsTheImportBindsBack() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setProblemStatement("Implement the sorting strategies.");
@@ -764,7 +997,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * it creates and clears it only after that exercise was saved, and the association cascades ALL.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_writesNoConfigurationIds() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setMode(ExerciseMode.TEAM);
@@ -794,7 +1027,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * exported exercise's row.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_detailsImportUnderAnIdCopyingImporter() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setMode(ExerciseMode.TEAM);
@@ -838,7 +1071,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * shared exercise with an auxiliary repository could not be imported at all.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_detailsWithAuxiliaryRepositoriesImportIntoTheSharingCreation() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -872,7 +1105,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * id and the references to its course and exercise group are the only ones, and the import replaces those.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_writesNoNestedIds() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -955,7 +1188,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * only thing that told two otherwise identical criteria apart. The exported rubric still has to keep both rows.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_keepsIdenticalGradingCriteria() throws Exception {
         createAndSeedBaseRepositories();
         Set<GradingCriterion> criteria = new HashSet<>();
@@ -999,7 +1232,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForArchival_writesTheInstructorAndTheStudentRepositoriesIntoTheGivenDirectory() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setProblemStatement("Implement the sorting strategies.");
@@ -1034,7 +1267,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * deadline, which is how an export for grading stays faithful to what was submitted in time.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_whenFilteringLateSubmissions_exportsTheStateOfTheCommitBeforeTheDeadline() throws Exception {
         var participation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -1056,4 +1289,48 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(exportedRepository.resolve("src/Main.java")).as("what was submitted in time is exported").isRegularFile();
         assertThat(exportedRepository.resolve("src/Late.java")).as("what was submitted after the deadline is not").doesNotExist();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorDownloadRoutesPreserveRepositoryHistoryAndExerciseDetails() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        for (String type : List.of("TEMPLATE", "SOLUTION", "TESTS")) {
+            var archive = request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + type, HttpStatus.OK);
+            byte[] zip = Files.readAllBytes(archive.toPath());
+            ZipTestUtil.verifyZipContainsGitDirectory(zip);
+            String name = type.equals("TESTS") ? "test/MainTest.java" : "src/Main.java";
+            String expected = switch (type) {
+                case "TEMPLATE" -> "public class Main {}";
+                case "SOLUTION" -> "public class Main { int solved; }";
+                default -> "public class MainTest {}";
+            };
+            assertThat(ZipTestUtil.readEntryAsString(zip, name)).isEqualTo(expected);
+        }
+        var exerciseZip = request.getFile("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-exercise", HttpStatus.OK);
+        var details = request.getObjectMapper().readTree(ZipTestUtil.extractExerciseJsonFromZip(Files.readAllBytes(exerciseZip.toPath())));
+        assertThat(details.path("title").asString()).isEqualTo(programmingExercise.getTitle());
+        assertThat(details.path("shortName").asString()).isEqualTo(programmingExercise.getShortName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void auxiliaryExportReportsOwnedRepositoryWithoutUriAsUnconfigured() throws Exception {
+        // The creation/import DTO permits an auxiliary configuration before a repository URI has been assigned.
+        var auxiliary = new de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO(null, "pending", null, "pending", "Not configured yet").toEntity();
+        auxiliary.setExercise(programmingExercise);
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliary)));
+        programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+        Long auxiliaryId = programmingExercise.getAuxiliaryRepositories().iterator().next().getId();
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .get("/api/programming/programming-exercises/{id}/export-instructor-auxiliary-repository", programmingExercise.getId())
+                .param("repositoryId", auxiliaryId.toString())).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnprocessableContent())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("X-artemisApp-error", "error.repositoryNotConfigured"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(""));
+        var persisted = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
+        assertThat(persisted.getAuxiliaryRepositories()).hasSize(1);
+        assertThat(persisted.getAuxiliaryRepositories().iterator().next().getId()).isEqualTo(auxiliaryId);
+        assertThat(persisted.getAuxiliaryRepositories().iterator().next().getRepositoryUri()).isNull();
+    }
+
 }

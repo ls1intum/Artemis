@@ -761,14 +761,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should not be in exam mode after onInit', () => {
             // GIVEN
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
             comp.ngOnInit();
 
             // THEN
-            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
             expect(comp.isSaving()).toBe(false);
             expect(comp.programmingExercise).toStrictEqual(expectedProgrammingExercise);
             expect(comp.isExamMode()).toBe(false);
@@ -793,7 +793,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 route.params = of({ courseId });
                 route.data = of({ programmingExercise: new ProgrammingExercise(course, undefined) });
             }
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             // GIVEN
             const testProgrammingLanguage = ProgrammingLanguage.SWIFT;
             expect(new ProgrammingExercise(undefined, undefined).programmingLanguage).not.toBe(testProgrammingLanguage);
@@ -814,7 +814,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.params = of({ courseId });
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
 
             const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
@@ -848,7 +848,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.onProgrammingLanguageChange(ProgrammingLanguage.SWIFT);
 
             // THEN
-            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
             expect(comp.packageNamePattern).toBe(APP_NAME_PATTERN_FOR_SWIFT);
@@ -861,7 +861,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.onProjectTypeChange(ProjectType.GCC);
 
             // THEN
-            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
             expect(comp.selectedProjectType).toBe(ProjectType.GCC);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
@@ -913,7 +913,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
             // the shared course keeps the default language that an earlier test chose, the package name pattern below belongs to Java
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.JAVA } as Course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(
+                of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.JAVA } as Course })),
+            );
             vi.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
             comp.ngOnInit();
             fixture.detectChanges();
@@ -963,15 +965,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.data = of({ programmingExercise: saved });
             route.url = of([{ path: 'edit' } as UrlSegment]);
             route.params = of({ courseId, exerciseId: saved.id });
-            vi.spyOn(courseService, 'find').mockReturnValue(
-                of(new HttpResponse({ body: Object.assign(new Course(), { id: courseId, title: 'Hydrated course', description: 'Loaded separately' }) })),
-            );
+            const hydratedCourse = Object.assign(new Course(), { id: courseId, title: 'Hydrated course', description: 'Loaded separately' });
+            const loadCourse = vi
+                .spyOn(courseService, 'findForManagement')
+                .mockReturnValue(of(new HttpResponse({ body: hydratedCourse })))
+                .mockClear();
             fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
             comp = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
             fixture.detectChanges();
             const action = fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent)).componentInstance;
+            expect(loadCourse).toHaveBeenCalledExactlyOnceWith(courseId);
             expect(comp.programmingExercise.course?.title).toBe('Hydrated course');
             expect(comp.backupExercise.course?.title).toBeUndefined();
             expect(comp.programmingExercise.categories).toEqual([]);
@@ -1077,7 +1082,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         let route: ActivatedRoute;
 
         beforeEach(() => {
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             route = TestBed.inject(ActivatedRoute);
@@ -1160,7 +1165,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
                 expect(comp.programmingExercise).toBe(programmingExercise);
-                expect(courseService.find).toHaveBeenCalledWith(courseId);
+                expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
 
                 comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                 comp.onStaticCodeAnalysisChanged();
@@ -1202,7 +1207,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             (programmingExercise as any).categories = categories;
             route.data = of({ programmingExercise });
 
-            const findSpy = vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            const findSpy = vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
@@ -1375,7 +1380,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 getProgrammingLanguageFeature(language),
             );
             vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } as Course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(
+                of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } as Course })),
+            );
             comp.ngOnInit();
 
             expect(comp.isImportFromSharing).toBe(true);
@@ -1441,7 +1448,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     }),
                 ),
             );
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(of(new HttpResponse({ body: entity })));
 
             comp.isImportFromSharing = true;
@@ -1462,7 +1469,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
 
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'save failed', status: 503 })));
 
             comp.isImportFromSharing = true;
@@ -2307,7 +2314,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         route.url = of([{ path: 'edit' } as UrlSegment]);
         route.data = of({ programmingExercise });
 
-        vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(Utils, 'loadCourseExerciseCategories').mockReturnValue(of([]));
         vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 

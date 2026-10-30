@@ -118,7 +118,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOrCheckoutRepositoryWithNullUriThrowsEntityNotFoundException() {
         // A participation without a repository URI (e.g. because the repository was never created) must lead to a
         // meaningful EntityNotFoundException (404) instead of a NullPointerException (500), see GitService.getLocalPathOfRepo
@@ -126,7 +126,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGitOperationsWithLocalVC() throws Exception {
         // Create a LocalVC repository (acts as remote) and seed with an initial commit
         var projectKey = "PROGEXGIT";
@@ -185,7 +185,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
      * null". The commit has to succeed with the login as the committer name instead.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitAndPushWithUserWithoutName() throws Exception {
         var projectKey = "PROGEXGITNONAME";
         var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-student";
@@ -224,7 +224,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFailedPullClosesRepositoryBeforeCleanupAndRecovers() throws Exception {
         var projectKey = "PROGEXGITPULL";
         var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
@@ -288,7 +288,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFailedCloneOfMissingRepositoryDoesNotLogSpuriousDeletionError() {
         var projectKey = "PROGEXGITCLONE";
         var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-doesnotexist";

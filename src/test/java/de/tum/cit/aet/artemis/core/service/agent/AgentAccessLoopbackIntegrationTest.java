@@ -73,10 +73,11 @@ class AgentAccessLoopbackIntegrationTest extends AbstractSpringIntegrationLocalC
     void aTextBodyIsSentAsPlainText() {
         actAs(tokenOf("editor1", AgentScope.PROGRAMMING_DRAFT));
 
-        // No such exercise exists, which is answered by the endpoint that takes the text: a 404 proves the call got that far.
+        // No such exercise exists, so the authorization of the endpoint answers 403. That comes after the body was read: a text body
+        // sent as another media type would have been answered 415 before.
         AgentApiResponse response = loopbackAgentApi.sendText(HttpMethod.PATCH, "/api/programming/programming-exercises/999999/problem-statement", "A problem statement.");
 
-        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.status()).isEqualTo(403);
     }
 
     private SavedToken tokenOf(String loginWithoutPrefix, AgentScope... scopes) {

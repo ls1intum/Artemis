@@ -22,14 +22,14 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
     let exam: Exam;
 
     test.beforeEach('Provide the room and an exam with registered students', async ({ login, page, examAPIRequests }) => {
-        await login(instructor);
-        const upload = await page.request.post('api/exam/rooms/upload', {
+        // Only an administrator uploads rooms.
+        await login(admin);
+        const upload = await page.request.post('api/exam/rooms/admin/upload', {
             multipart: { file: { name: 'single-room.zip', mimeType: 'application/zip', buffer: fs.readFileSync(roomZip) } },
         });
         expect(upload.status()).toBe(200);
         expect((await upload.json()).uploadedRoomNames).toEqual(['Friedrich L. Bauer Hörsaal']);
 
-        await login(admin);
         exam = await examAPIRequests.createRunningExam({ course });
         await examAPIRequests.registerAllCourseStudentsForExam(exam);
         // The rooms that can be offered are loaded once, when the student list opens.
@@ -165,10 +165,10 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
     });
 
     test('The room management page uploads room data and lists the rooms with their capacity', async ({ page, login }) => {
-        await login(instructor, '/exams/rooms');
+        await login(admin, '/exams/rooms');
         // The room of the set-up is listed already; uploading the file again replaces it and reports what the file holds.
         await page.locator('#roomDataFileSelect').setInputFiles(roomZip);
-        const uploaded = page.waitForResponse((response) => response.url().includes('rooms/upload') && response.request().method() === 'POST');
+        const uploaded = page.waitForResponse((response) => response.url().includes('rooms/admin/upload') && response.request().method() === 'POST');
         await page.locator('#roomDataUpload').click();
         expect((await uploaded).status()).toBe(200);
         const summary = page.locator('li', { hasText: 'Uploaded Rooms:' });
@@ -187,7 +187,8 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
     test('Cleaning up the rooms deletes an outdated version of a room once no exam uses it', async ({ page, login, examAPIRequests }) => {
         // The room of the set-up is the current version, and the exam seats its students in it.
         await login(instructor);
-        const distributionData = await page.request.get('api/exam/rooms/distribution-data');
+        const roomsOfExam = `api/exam/courses/${course.id}/exams/${exam.id}/rooms`;
+        const distributionData = await page.request.get(`${roomsOfExam}/distribution-data`);
         const version1 = ((await distributionData.json()) as { id: number; roomNumber: string }[]).find((candidate) => candidate.roomNumber === roomNumber)!;
         expect(version1, 'the room is offered for the distribution').toBeDefined();
         const distributed = await page.request.post(`api/exam/courses/${course.id}/exams/${exam.id}/distribute-registered-students?useOnlyDefaultLayouts=true&reserveFactor=0`, {
@@ -195,11 +196,15 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
         });
         expect(distributed.status()).toBe(200);
         // Uploading the same room again makes that version outdated.
-        const upload = await page.request.post('api/exam/rooms/upload', {
+        await login(admin);
+        const upload = await page.request.post('api/exam/rooms/admin/upload', {
             multipart: { file: { name: 'single-room.zip', mimeType: 'application/zip', buffer: fs.readFileSync(roomZip) } },
         });
         expect(upload.status()).toBe(200);
-        expect((await page.request.get(`api/exam/rooms/${version1.id}/seats`)).status(), 'the outdated version still exists').toBe(200);
+        // The seats are read in the context of an exam of the course, which is another one than the exam that is deleted below.
+        const probeExam = await examAPIRequests.createRunningExam({ course });
+        const roomsOfProbeExam = `api/exam/courses/${course.id}/exams/${probeExam.id}/rooms`;
+        expect((await page.request.get(`${roomsOfProbeExam}/${version1.id}/seats`)).status(), 'the outdated version still exists').toBe(200);
 
         // Only an administrator may clean up. The outdated version is used by the exam, so it stays; a second run finds nothing more.
         await login(admin, '/exams/rooms');
@@ -213,14 +218,15 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
         await deletedRooms();
         await expect(page.locator('li', { hasText: 'Deleted Rooms:' })).toBeVisible();
         expect(await deletedRooms(), 'nothing else is outdated and unused').toBe(0);
-        expect((await page.request.get(`api/exam/rooms/${version1.id}/seats`)).status(), 'the outdated version is kept while the exam uses it').toBe(200);
+        expect((await page.request.get(`${roomsOfProbeExam}/${version1.id}/seats`)).status(), 'the outdated version is kept while the exam uses it').toBe(200);
 
         // Without the exam nothing uses the outdated version any more, and the cleanup deletes exactly that one. The current version stays.
         await examAPIRequests.deleteExam(exam);
         expect(await deletedRooms(), 'only the outdated version is deleted').toBe(1);
-        expect((await page.request.get(`api/exam/rooms/${version1.id}/seats`)).ok(), 'the outdated version is gone').toBe(false);
+        expect((await page.request.get(`${roomsOfProbeExam}/${version1.id}/seats`)).ok(), 'the outdated version is gone').toBe(false);
         await page.reload();
         await expect(page.locator('tbody tr', { hasText: roomNumber }), 'the current version of the room is listed').toHaveCount(1);
+        await examAPIRequests.deleteExam(probeExam);
     });
 
     test('The dialog reports how many of the registered students the room can seat', async ({ page }) => {

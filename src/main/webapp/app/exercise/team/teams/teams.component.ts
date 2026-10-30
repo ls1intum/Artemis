@@ -129,7 +129,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     loadAll() {
         this.route.params.subscribe((params) => {
             this.isLoading.set(true);
-            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
+            this.exerciseService.findForStaff(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise.set(exerciseResponse.body!);
                 const teamOwnerId = this.teamCriteria.filterProp === FilterProp.OWN ? this.currentUser()?.id : undefined;
                 this.teamService.findAllByExerciseId(params['exerciseId'], teamOwnerId).subscribe((teamsResponse) => {

@@ -83,16 +83,16 @@ class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingI
     void creatingAnExerciseWithoutAFutureReleaseDateIsRejectedBeforeAnythingIsSetUp() throws Exception {
         SavedToken token = tokenOf("editor1", AgentScope.PROGRAMMING_DRAFT);
 
-        perform(post("/api/programming/programming-exercises/setup").contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"Agent exercise\"}"), token)
-                .andExpect(status().isBadRequest());
+        perform(post("/api/programming/programming-exercises/setup").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"Agent exercise\",\"course\":{\"id\":" + course.getId() + "}}"), token).andExpect(status().isBadRequest());
     }
 
     @Test
     void aTutorTokenCannotCreateProgrammingExercises() throws Exception {
         SavedToken token = tokenOf("tutor1", AgentScope.PROGRAMMING_DRAFT);
 
-        perform(post("/api/programming/programming-exercises/setup").contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"Agent exercise\"}"), token)
-                .andExpect(status().isForbidden());
+        perform(post("/api/programming/programming-exercises/setup").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"Agent exercise\",\"course\":{\"id\":" + course.getId() + "}}"), token).andExpect(status().isForbidden());
     }
 
     @Test

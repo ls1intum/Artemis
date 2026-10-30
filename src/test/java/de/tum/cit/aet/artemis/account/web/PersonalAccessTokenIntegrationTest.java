@@ -60,7 +60,7 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createdTokenCanBeListedUsedAndRevoked() throws Exception {
         var created = request.postWithResponseBody(TOKENS_URL, new CreatePersonalAccessTokenDTO("my agent", List.of("competencies:read"), 30), CreatedPersonalAccessTokenDTO.class,
                 HttpStatus.CREATED);
@@ -79,7 +79,7 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void revokedTokenDisappearsFromListAndCannotBeRevokedTwice() throws Exception {
         var created = request.postWithResponseBody(TOKENS_URL, new CreatePersonalAccessTokenDTO("temporary", List.of("courses:read"), null), CreatedPersonalAccessTokenDTO.class,
                 HttpStatus.CREATED);
@@ -91,7 +91,7 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void creationRejectsUnknownScopeAndTooLongLifetime() throws Exception {
         request.postWithoutResponseBody(TOKENS_URL, new CreatePersonalAccessTokenDTO("bad scope", List.of("grades:read"), 30), HttpStatus.BAD_REQUEST);
         request.postWithoutResponseBody(TOKENS_URL, new CreatePersonalAccessTokenDTO("too long", List.of("courses:read"), 91), HttpStatus.BAD_REQUEST);
@@ -105,7 +105,7 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void userCannotRevokeAnotherUsersToken() throws Exception {
         PersonalAccessToken studentToken = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.COURSES_READ), Duration.ofDays(1)).token();
 
@@ -140,8 +140,11 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
         String studentSecret = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.COMPETENCIES_WRITE), Duration.ofDays(1)).secret();
         String instructorSecret = saveToken(TEST_PREFIX + "instructor1", Set.of(AgentScope.COMPETENCIES_WRITE), Duration.ofDays(1)).secret();
 
-        performWithToken("/api/core/test/testScopedInstructorWrite", studentSecret).andExpect(status().isForbidden());
-        performWithToken("/api/core/test/testScopedInstructorWrite", instructorSecret).andExpect(status().isOk());
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        String url = "/api/core/test/courses/" + course.getId() + "/testScopedInstructorWrite";
+
+        performWithToken(url, studentSecret).andExpect(status().isForbidden());
+        performWithToken(url, instructorSecret).andExpect(status().isOk());
     }
 
     @Test

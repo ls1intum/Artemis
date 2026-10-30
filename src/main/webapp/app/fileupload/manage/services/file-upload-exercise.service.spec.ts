@@ -317,4 +317,9 @@ describe('FileUploadExerciseService', () => {
             req.flush(createExerciseDTO(1));
         });
     });
+    it('should load exam details from the exam route with the same options', () => {
+        service.findForExam(123).subscribe((response) => expect(response.body?.id).toBe(123));
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/fileupload/file-upload-exercises/123/for-exam');
+        req.flush({ id: 123 });
+    });
 });

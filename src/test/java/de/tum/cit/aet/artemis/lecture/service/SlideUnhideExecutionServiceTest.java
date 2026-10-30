@@ -67,7 +67,7 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUnhideSlide_withValidSlideAndAttachment() {
         // Call the method to test
         slideUnhideExecutionService.unhideSlide(testSlide.getId());
@@ -82,7 +82,7 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUnhideSlide_whenSlideNotFound() {
         // Use a non-existent ID
         Long nonExistentId = 999L;
@@ -95,7 +95,7 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUnhideSlide_withAttachmentUnitButNoAttachment() {
         // Create a slide with attachment unit but no attachment
         var lecture = lectureUtilService.createCourseWithLecture(true);
@@ -126,7 +126,7 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUnhideSlide_withRegenerationException() {
         // Setup attachmentService to throw exception
         doThrow(new RuntimeException("Test exception")).when(attachmentService).regenerateStudentVersion(any());
@@ -144,7 +144,7 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUnhideSlide_whenHiddenDateWasMovedToTheFuture() {
         // The hidden date was moved to a later point after the unhide task started
         ZonedDateTime newHiddenDate = ZonedDateTime.now().plusDays(1);
