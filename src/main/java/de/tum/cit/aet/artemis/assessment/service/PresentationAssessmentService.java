@@ -288,7 +288,7 @@ public class PresentationAssessmentService {
         }
         rejectAlreadyAssignedStudents(assessmentId, students);
 
-        User assessor = resolveAssessor(courseId, null, dto.assessorLogin());
+        User assessor = resolveAssessor(courseId, null, dto.resultPoints(), dto.assessorLogin());
         List<PresentationAssessmentInstance> instances = students.stream()
                 .map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, assessor)).toList();
         return presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances);
@@ -323,36 +323,43 @@ public class PresentationAssessmentService {
         }
         applyInstanceData(assessment, instance, dto);
         instance.setStudent(student);
-        instance.setAssessor(resolveAssessor(courseId, instance.getAssessor(), dto.assessorLogin()));
+        instance.setAssessor(resolveAssessor(courseId, instance.getAssessor(), dto.resultPoints(), dto.assessorLogin()));
     }
 
     /**
-     * Instructors choose any tutor, editor or instructor of the course as the assessor; like the presenter, an unchanged assessor is kept even if they left the
-     * course. Tutors and editors always assess as themselves and cannot edit an instance that someone else assesses, as only instructors override another
-     * person's result of an exercise. Like the assessor of a result, anyone allowed to grade may assess as themselves, so an administrator without a course role
-     * can too.
+     * Only a graded presentation has an assessor, so one without result points has none, also after its points were removed. Instructors choose any tutor,
+     * editor or instructor of the course as the assessor; like the presenter, an unchanged assessor is kept even if they left the course. Tutors and editors
+     * always assess as themselves and cannot edit an instance that someone else assesses, as only instructors override another person's result of an exercise.
+     * Like the assessor of a result, anyone allowed to grade may assess as themselves, so an administrator without a course role can too.
      *
      * @param courseId        the owning course id
      * @param currentAssessor the assessor of the instance being updated, or null for a new instance or one without an assessor
-     * @param assessorLogin   the requested assessor login
-     * @return the assessor to store
+     * @param resultPoints    the requested result points, or null for an ungraded presentation
+     * @param assessorLogin   the requested assessor login, only required with result points
+     * @return the assessor to store, or null for an ungraded presentation
      */
-    private User resolveAssessor(long courseId, User currentAssessor, String assessorLogin) {
-        String login = assessorLogin.trim();
+    private User resolveAssessor(long courseId, User currentAssessor, Double resultPoints, String assessorLogin) {
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseId);
-        if (isAtLeastInstructor && currentAssessor != null && currentAssessor.getLogin().equals(login)) {
-            return currentAssessor;
-        }
         User currentUser = userRepository.getUser();
-        if (!isAtLeastInstructor) {
-            boolean assessedBySomeoneElse = currentAssessor != null && !currentAssessor.getId().equals(currentUser.getId());
-            if (assessedBySomeoneElse || !currentUser.getLogin().equals(login)) {
-                throw new AccessForbiddenException("Tutors and editors only assess presentations as themselves and cannot edit presentations assessed by someone else");
-            }
-            return currentUser;
+        boolean assessedBySomeoneElse = currentAssessor != null && !currentAssessor.getId().equals(currentUser.getId());
+        if (!isAtLeastInstructor && assessedBySomeoneElse) {
+            throw new AccessForbiddenException("Tutors and editors cannot edit presentations assessed by someone else");
+        }
+        if (resultPoints == null) {
+            return null;
+        }
+        String login = assessorLogin == null ? "" : assessorLogin.trim();
+        if (login.isEmpty()) {
+            throw new BadRequestAlertException("A graded presentation needs an assessor", PresentationAssessmentInstance.ENTITY_NAME, "assessorMissing");
         }
         if (currentUser.getLogin().equals(login)) {
             return currentUser;
+        }
+        if (!isAtLeastInstructor) {
+            throw new AccessForbiddenException("Tutors and editors only assess presentations as themselves");
+        }
+        if (currentAssessor != null && currentAssessor.getLogin().equals(login)) {
+            return currentAssessor;
         }
         return userRepository.findOneByCourseIdAndCourseRolesInAndLogin(courseId, ASSESSOR_ROLES, login).orElseThrow(
                 () -> new BadRequestAlertException("The assessor must be at least a tutor in the course", PresentationAssessmentInstance.ENTITY_NAME, "assessorNotInCourse"));

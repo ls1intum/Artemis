@@ -34,7 +34,7 @@ export interface PresentationAssessmentInstanceRequest {
     location?: string;
     meetingLink?: string;
     remark?: string;
-    assessorLogin: string;
+    assessorLogin?: string;
 }
 
 export interface PresentationAssessmentInstancesCreate {
@@ -46,7 +46,7 @@ export interface PresentationAssessmentInstancesCreate {
     location?: string;
     meetingLink?: string;
     remark?: string;
-    assessorLogin: string;
+    assessorLogin?: string;
 }
 
 export interface PresentationAssessmentStudentRow {

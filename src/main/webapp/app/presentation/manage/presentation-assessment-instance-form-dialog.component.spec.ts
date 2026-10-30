@@ -67,6 +67,12 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         return fixture.nativeElement.querySelector(selector);
     }
 
+    /** The assessor field only exists once result points are entered. */
+    function grade(): void {
+        component.editForm.controls.resultPoints.setValue(10);
+        fixture.detectChanges();
+    }
+
     it('should split an existing presentation timestamp into date and time controls', () => {
         expect(component.editForm.controls.presentationDate.value?.hour()).toBe(0);
         expect(component.editForm.controls.presentationTime.value?.hour()).toBe(13);
@@ -224,6 +230,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should prefill the current user as assessor and show it disabled for tutors', () => {
+        grade();
         const assessorField = query('[data-testid="presentation-instance-assessor"]') as HTMLInputElement;
 
         expect(assessorField.disabled).toBe(true);
@@ -232,6 +239,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should show the initials of the assessor only while one is set', () => {
+        grade();
         expect(query('#presentation-instance-assessor-default-picture')?.textContent?.trim()).toBe('TO');
 
         fixture.componentRef.setInput('canChooseAssessor', true);
@@ -242,7 +250,13 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should keep the existing assessor of an instance', () => {
-        fixture.componentRef.setInput('instance', { id: 11, presentationDate, student: { login: 'student1' }, assessor: { login: 'editor1', name: 'Editor One' } });
+        fixture.componentRef.setInput('instance', {
+            id: 11,
+            presentationDate,
+            resultPoints: 10,
+            student: { login: 'student1' },
+            assessor: { login: 'editor1', name: 'Editor One' },
+        });
         fixture.detectChanges();
 
         expect((query('[data-testid="presentation-instance-assessor"]') as HTMLInputElement).value).toBe('Editor One (editor1)');
@@ -253,6 +267,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should offer the assessor search to editors and instructors', () => {
+        grade();
         fixture.componentRef.setInput('canChooseAssessor', true);
         fixture.detectChanges();
 
@@ -277,6 +292,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should provide assessor suggestions with name and login', async () => {
+        grade();
         const assessor: UserNameAndLoginDTO = { login: 'ghopper', name: 'Grace Hopper' };
         searchAssessors.mockReturnValue(of(new HttpResponse<UserNameAndLoginDTO[]>({ body: [assessor] })));
         fixture.componentRef.setInput('canChooseAssessor', true);
@@ -295,6 +311,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should send the chosen assessor', () => {
+        grade();
         fixture.componentRef.setInput('canChooseAssessor', true);
         fixture.detectChanges();
         component.editForm.controls.assessorOption.setValue({ assessor: { login: 'editor1', name: 'Editor One' }, label: 'Editor One (editor1)' });
@@ -305,6 +322,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should not save while typed assessor text has not been selected from the list', () => {
+        grade();
         fixture.componentRef.setInput('canChooseAssessor', true);
         fixture.detectChanges();
         const input = query('#presentation-instance-assessor') as HTMLInputElement;
@@ -324,6 +342,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should save once an assessor is selected after typing', () => {
+        grade();
         fixture.componentRef.setInput('canChooseAssessor', true);
         fixture.detectChanges();
         const input = query('#presentation-instance-assessor') as HTMLInputElement;
@@ -336,7 +355,30 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: 'editor1' }) });
     });
 
+    it('should hide the assessor and send none while no result points are entered', () => {
+        expect(query('#presentation-instance-assessor')).toBeNull();
+
+        component.save();
+
+        expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: undefined }) });
+    });
+
+    it('should require an assessor once result points are entered', () => {
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        component.editForm.controls.assessorOption.setValue(undefined);
+        grade();
+
+        expect(component.editForm.hasError('assessorRequired')).toBe(true);
+
+        component.save();
+        fixture.detectChanges();
+
+        expect(saved).not.toHaveBeenCalled();
+        expect(query('[data-testid="presentation-instance-assessor-missing"]')).not.toBeNull();
+    });
+
     it('should not save without an assessor and ask for one', () => {
+        grade();
         fixture.componentRef.setInput('canChooseAssessor', true);
         fixture.detectChanges();
         component.editForm.controls.assessorOption.setValue(undefined);

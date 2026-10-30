@@ -32,6 +32,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
+import { hasResultPoints } from 'app/presentation/manage/presentation-assessment-management.helper';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 
@@ -40,6 +41,10 @@ const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl)
     const maxPoints = control.get('maxPoints')?.value;
     return resultPoints !== null && resultPoints !== undefined && Number(resultPoints) > Number(maxPoints) ? { resultPointsExceedMaxPoints: true } : null;
 };
+
+/** Only a graded presentation has an assessor, so the assessor is required as soon as result points are entered. */
+const assessorRequiredForGrade: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+    hasResultPoints(control.get('resultPoints')?.value) && !control.get('assessorOption')?.value ? { assessorRequired: true } : null;
 
 /** A meeting link is rendered as a link, so without a scheme the browser would open it relative to the Artemis URL. */
 const httpUrl: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
@@ -105,6 +110,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     protected readonly dateTextValid = signal(true);
     protected readonly timeTextValid = signal(true);
     protected readonly resultPointsUpperBound = RESULT_POINTS_UPPER_BOUND;
+    protected readonly hasResultPoints = hasResultPoints;
     readonly languageOptions = computed(() => {
         this.translationChanges();
         return [
@@ -164,14 +170,14 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             presentationTime: [undefined as dayjs.Dayjs | undefined],
             resultPoints: [undefined as number | undefined, [Validators.min(0), Validators.max(RESULT_POINTS_UPPER_BOUND)]],
             maxPoints: [0],
-            assessorOption: [undefined as AssessorOption | undefined, [Validators.required, assessorSelected]],
+            assessorOption: [undefined as AssessorOption | undefined, [assessorSelected]],
             language: ['en', Validators.required],
             mode: [PresentationAssessmentMode.IN_PERSON, Validators.required],
             location: ['', Validators.maxLength(255)],
             meetingLink: ['', [Validators.maxLength(1000), httpUrl]],
             remark: ['', Validators.maxLength(1000)],
         },
-        { validators: resultPointsDoNotExceedMaxPoints },
+        { validators: [resultPointsDoNotExceedMaxPoints, assessorRequiredForGrade] },
     );
 
     constructor() {
@@ -213,8 +219,8 @@ export class PresentationAssessmentInstanceFormDialogComponent {
         }
 
         const value = this.editForm.getRawValue();
-        const assessorLogin = this.selectedAssessorOption()?.assessor.login;
-        if (!value.presentationDate || !value.language || !value.mode || !assessorLogin) {
+        const assessorLogin = hasResultPoints(value.resultPoints) ? this.selectedAssessorOption()?.assessor.login : undefined;
+        if (!value.presentationDate || !value.language || !value.mode || (hasResultPoints(value.resultPoints) && !assessorLogin)) {
             return;
         }
 

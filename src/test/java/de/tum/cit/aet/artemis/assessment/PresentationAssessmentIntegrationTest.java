@@ -1244,6 +1244,48 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void savePresentationAssessmentInstances_withoutResultPoints_shouldStoreNoAssessor() throws Exception {
+        PresentationAssessmentInstanceDTO created = createSearchInstance(presentationAssessment, "student1", null);
+
+        assertThat(created.assessor()).isNull();
+        assertThat(storedAssessorLogin(created.id())).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updatePresentationAssessmentInstance_removingOwnResultPoints_shouldClearTheAssessor() throws Exception {
+        PresentationAssessmentInstance instance = saveInstanceWithAssessor("student1", "tutor1");
+
+        request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(), ungradedRequest(instance), PresentationAssessmentInstanceDTO.class,
+                HttpStatus.OK);
+
+        assertThat(storedAssessorLogin(instance.getId())).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updatePresentationAssessmentInstance_asTutorRemovingResultPointsOfAnotherAssessor_shouldReturnForbidden() throws Exception {
+        PresentationAssessmentInstance instance = saveInstanceWithAssessor("student1", "editor1");
+
+        request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(), ungradedRequest(instance), PresentationAssessmentInstanceDTO.class,
+                HttpStatus.FORBIDDEN);
+
+        assertThat(storedAssessorLogin(instance.getId())).isEqualTo(TEST_PREFIX + "editor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessmentInstance_asInstructorRemovingResultPoints_shouldClearTheAssessor() throws Exception {
+        PresentationAssessmentInstance instance = saveInstanceWithAssessor("student1", "tutor1");
+
+        request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(), ungradedRequest(instance), PresentationAssessmentInstanceDTO.class,
+                HttpStatus.OK);
+
+        assertThat(storedAssessorLogin(instance.getId())).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void savePresentationAssessmentInstances_asTutorForAnotherAssessor_shouldReturnForbidden() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
         var dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, 10.0, List.of(TEST_PREFIX + "student1"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null,
@@ -1517,6 +1559,11 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     private PresentationAssessmentInstanceRequestDTO gradeRequest(PresentationAssessmentInstance instance, String assessorLogin) {
         return new PresentationAssessmentInstanceRequestDTO(instance.getId(), FIXED_DATE, 10.0, instance.getStudent().getLogin(), "en", PresentationAssessmentMode.IN_PERSON, null,
                 null, null, assessorLogin);
+    }
+
+    private PresentationAssessmentInstanceRequestDTO ungradedRequest(PresentationAssessmentInstance instance) {
+        return new PresentationAssessmentInstanceRequestDTO(instance.getId(), FIXED_DATE, null, instance.getStudent().getLogin(), "en", PresentationAssessmentMode.IN_PERSON, null,
+                null, null, null);
     }
 
     private String storedAssessorLogin(long instanceId) {
