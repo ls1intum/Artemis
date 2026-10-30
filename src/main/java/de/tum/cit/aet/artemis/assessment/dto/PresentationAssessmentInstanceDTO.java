@@ -24,6 +24,13 @@ public record PresentationAssessmentInstanceDTO(Long id, @NotNull ZonedDateTime 
         @NotNull PresentationAssessmentMode mode, @Size(max = 255) String location, @Size(max = 1000) String meetingLink, @Size(max = 1000) String remark,
         PresentationAssessmentStudentDTO student, UserNameAndLoginDTO assessor, UserNameAndLoginDTO gradeEditedBy) {
 
+    /**
+     * Creates the DTO of an instance whose student, assessor and grader are loaded. The person who last changed the grade is only included when they are not
+     * the assessor, as only then the client names them.
+     *
+     * @param instance the presentation assessment instance
+     * @return the DTO of the instance
+     */
     public static PresentationAssessmentInstanceDTO of(PresentationAssessmentInstance instance) {
         User gradedBy = instance.getGradedBy();
         boolean gradeEditedByOther = gradedBy != null && (instance.getAssessor() == null || !gradedBy.getId().equals(instance.getAssessor().getId()));
