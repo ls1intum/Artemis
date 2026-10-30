@@ -75,7 +75,7 @@ public class TutorialGroupScheduleService {
         }
         // The schedule changed: a regenerated session that starts at the same time as an existing one is the same session, so keep its
         // id and recorded attendance and let its end and location follow the new schedule. Existing sessions whose start no longer
-        // occurs are removed. Delete and insert commit together so the schedule is never left without its sessions.
+        // occurs are removed.
         List<TutorialGroupSession> sessionsToPersist = new ArrayList<>();
         for (TutorialGroupSession generatedSession : generatedSessions) {
             TutorialGroupSession existingSession = existingSessionsByStart.remove(generatedSession.getStart().toInstant());
@@ -91,7 +91,12 @@ public class TutorialGroupScheduleService {
                 sessionsToPersist.add(generatedSession);
             }
         }
-        tutorialGroupSessionRepository.replaceScheduleSessions(List.copyOf(existingSessionsByStart.values()), sessionsToPersist);
+        // Save kept/new sessions before deleting obsolete ones, so an interruption leaves extra sessions, never missing ones.
+        tutorialGroupSessionRepository.saveAll(sessionsToPersist);
+        List<TutorialGroupSession> sessionsToRemove = List.copyOf(existingSessionsByStart.values());
+        if (!sessionsToRemove.isEmpty()) {
+            tutorialGroupSessionRepository.deleteAll(sessionsToRemove);
+        }
     }
 
     /**

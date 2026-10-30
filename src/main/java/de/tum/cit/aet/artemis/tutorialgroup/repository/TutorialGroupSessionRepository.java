@@ -210,17 +210,4 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
     @Modifying
     void deleteByTutorialGroupId(Long tutorialGroupId);
 
-    /**
-     * Replaces a schedule's sessions in a single transaction: the outdated sessions are deleted and the kept/regenerated ones saved
-     * together, so a failure can never leave a schedule without its sessions.
-     *
-     * @param sessionsToRemove  existing sessions whose start no longer occurs under the new schedule
-     * @param sessionsToPersist sessions to keep (updated) or create under the new schedule
-     */
-    @Transactional // ok because the delete of the outdated sessions and the save of the regenerated ones must commit together
-    default void replaceScheduleSessions(List<TutorialGroupSession> sessionsToRemove, List<TutorialGroupSession> sessionsToPersist) {
-        deleteAll(sessionsToRemove);
-        saveAll(sessionsToPersist);
-    }
-
 }
