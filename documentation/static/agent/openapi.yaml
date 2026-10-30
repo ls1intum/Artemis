@@ -95,7 +95,11 @@ paths:
       - name: hyperionCompetencyId
         in: query
         required: false
-        schema: {type: array, maxItems: 100}
+        schema:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+          maxItems: 10000
       requestBody:
         content:
           application/json:
@@ -232,6 +236,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -329,6 +334,7 @@ paths:
           type: array
           items: {type: integer, format: int64}
           uniqueItems: true
+          maxItems: 10000
       requestBody:
         content:
           application/json:
@@ -489,6 +495,7 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/CompetencyRelationDTO'}
                 uniqueItems: true
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -546,6 +553,7 @@ paths:
             schema:
               type: array
               items: {type: integer, format: int64}
+              maxItems: 10000
         required: true
       responses:
         '201':
@@ -555,6 +563,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/CompetencyImportResponseDTO'}
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -581,6 +590,7 @@ paths:
             schema:
               type: array
               items: {$ref: '#/components/schemas/CourseCompetencyRequestDTO'}
+              maxItems: 10000
         required: true
       responses:
         '201':
@@ -590,6 +600,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -620,6 +631,7 @@ paths:
               type: array
               items: {$ref: '#/components/schemas/ProgrammingExerciseTestCaseDTO'}
               uniqueItems: true
+              maxItems: 10000
         required: true
       responses:
         '200':
@@ -630,6 +642,7 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/ProgrammingExerciseTestCaseResponseDTO'}
                 uniqueItems: true
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -756,6 +769,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TextExerciseListItemDTO'}
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -818,6 +832,7 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/ProgrammingExerciseTestCaseResponseDTO'}
                 uniqueItems: true
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -846,6 +861,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/ProgrammingExerciseListItemDTO'}
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -900,6 +916,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/ModelingExerciseListItemDTO'}
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -931,6 +948,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/LectureUnitCombinedStatusDTO'}
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -955,6 +973,7 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/CourseDropdownDTO'}
                 uniqueItems: true
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -988,6 +1007,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+                maxItems: 10000
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or
@@ -1077,6 +1097,7 @@ components:
         structuredGradingInstructions:
           type: array
           items: {$ref: '#/components/schemas/GradingInstructionDTO'}
+          maxItems: 10000
     GradingInstructionDTO:
       type: object
       properties:
@@ -1115,6 +1136,7 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         difficulty:
           type: string
           enum: [EASY, MEDIUM, HARD]
@@ -1142,10 +1164,12 @@ components:
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
         competencyLinks:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
           uniqueItems: true
+          maxItems: 10000
         plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
     AssessmentNoteDTO:
       type: object
@@ -1284,6 +1308,7 @@ components:
         results:
           type: array
           items: {$ref: '#/components/schemas/ParticipationSubmissionResultDTO'}
+          maxItems: 10000
     ParticipationSubmissionResultDTO:
       type: object
       properties:
@@ -1311,6 +1336,7 @@ components:
         feedbacks:
           type: array
           items: {$ref: '#/components/schemas/FeedbackDTO'}
+          maxItems: 10000
         assessmentType:
           type: string
           enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
@@ -1342,6 +1368,7 @@ components:
         submissions:
           type: array
           items: {$ref: '#/components/schemas/ParticipationSubmissionDTO'}
+          maxItems: 10000
         repositoryUri: {type: string}
         buildPlanId: {type: string}
         branch: {type: string}
@@ -1371,6 +1398,7 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/UserNameDTO'}
+          maxItems: 10000
     TestCaseDTO:
       type: object
       properties:
@@ -1439,6 +1467,7 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         channelName: {type: string}
         allowComplaintsForAutomaticAssessments: {type: boolean}
         allowFeedbackRequests: {type: boolean}
@@ -1452,16 +1481,19 @@ components:
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
         competencyLinks:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
           uniqueItems: true
+          maxItems: 10000
         plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
         gradingInstructionFeedbackUsed: {type: boolean}
         exampleSubmissions:
           type: array
           items: {$ref: '#/components/schemas/ExampleSubmissionDTO'}
           uniqueItems: true
+          maxItems: 10000
         teamMode: {type: boolean}
         exerciseGroup: {$ref: '#/components/schemas/TextExerciseExamGroupDTO'}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReferenceDTO'}
@@ -1484,9 +1516,11 @@ components:
         results:
           type: array
           items: {$ref: '#/components/schemas/ResultDTO'}
+          maxItems: 10000
         blocks:
           type: array
           items: {$ref: '#/components/schemas/TextBlockDTO'}
+          maxItems: 10000
     UserNameDTO:
       type: object
       properties:
@@ -1554,6 +1588,7 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         difficulty:
           type: string
           enum: [EASY, MEDIUM, HARD]
@@ -1576,15 +1611,18 @@ components:
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
         competencyLinks:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
           uniqueItems: true
+          maxItems: 10000
         testRepositoryUri: {type: string}
         solutionRepositoryUri: {type: string}
         auxiliaryRepositories:
           type: array
           items: {$ref: '#/components/schemas/AuxiliaryRepositoryDTO'}
+          maxItems: 10000
         allowOnlineEditor: {type: boolean}
         allowOfflineIde: {type: boolean}
         allowOnlineIde: {type: boolean}
@@ -1713,6 +1751,7 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         difficulty:
           type: string
           enum: [EASY, MEDIUM, HARD]
@@ -1742,10 +1781,12 @@ components:
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
         competencyLinks:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
           uniqueItems: true
+          maxItems: 10000
         plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
         programmingLanguage:
           type: string
@@ -1778,9 +1819,11 @@ components:
         studentParticipations:
           type: array
           items: {$ref: '#/components/schemas/ProgrammingExerciseStudentParticipationDTO'}
+          maxItems: 10000
         auxiliaryRepositories:
           type: array
           items: {$ref: '#/components/schemas/AuxiliaryRepositoryDTO'}
+          maxItems: 10000
         exerciseType:
           type: string
           enum: [text, programming, modeling, file-upload, quiz]
@@ -1813,6 +1856,7 @@ components:
         submissions:
           type: array
           items: {$ref: '#/components/schemas/ProgrammingSubmissionWithResultsDTO'}
+          maxItems: 10000
     ProgrammingSubmissionWithResultsDTO:
       type: object
       properties:
@@ -1828,6 +1872,7 @@ components:
         results:
           type: array
           items: {$ref: '#/components/schemas/ResultDTO'}
+          maxItems: 10000
     TemplateSolutionParticipationDTO:
       type: object
       properties:
@@ -1842,6 +1887,7 @@ components:
         submissions:
           type: array
           items: {$ref: '#/components/schemas/ProgrammingSubmissionWithResultsDTO'}
+          maxItems: 10000
     ProgrammingExerciseTimelineUpdateDTO:
       type: object
       properties:
@@ -1868,6 +1914,7 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         difficulty:
           type: string
           enum: [EASY, MEDIUM, HARD]
@@ -1902,10 +1949,12 @@ components:
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
         competencyLinks:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
           uniqueItems: true
+          maxItems: 10000
     ExampleModelingSubmissionDTO:
       type: object
       properties:
@@ -1916,6 +1965,7 @@ components:
         results:
           type: array
           items: {$ref: '#/components/schemas/ResultDTO'}
+          maxItems: 10000
         submissionExerciseType: {type: string}
     ModelingExampleSubmissionDTO:
       type: object
@@ -1974,6 +2024,7 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         channelName: {type: string}
         allowComplaintsForAutomaticAssessments: {type: boolean}
         courseId: {type: integer, format: int64}
@@ -1986,16 +2037,19 @@ components:
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
         competencyLinks:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
           uniqueItems: true
+          maxItems: 10000
         plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
         gradingInstructionFeedbackUsed: {type: boolean}
         exampleSubmissions:
           type: array
           items: {$ref: '#/components/schemas/ModelingExampleSubmissionDTO'}
           uniqueItems: true
+          maxItems: 10000
         teamMode: {type: boolean}
         exerciseGroup: {$ref: '#/components/schemas/ModelingExerciseExamGroupDTO'}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReferenceDTO'}
@@ -2074,13 +2128,16 @@ components:
         userProgress:
           type: array
           items: {$ref: '#/components/schemas/CompetencyProgressDTO'}
+          maxItems: 10000
         course: {$ref: '#/components/schemas/CourseInfoDTO'}
         exerciseLinks:
           type: array
           items: {$ref: '#/components/schemas/CompetencyExerciseLinkResponseDTO'}
+          maxItems: 10000
         lectureUnitLinks:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLectureUnitLinkResponseDTO'}
+          maxItems: 10000
     CourseInfoDTO:
       type: object
       properties:
@@ -2118,6 +2175,7 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         teamMode: {type: boolean}
         studentAssignedTeamId: {type: integer, format: int64}
         studentAssignedTeamIdComputed: {type: boolean}
@@ -2172,6 +2230,7 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         difficulty:
           type: string
           enum: [EASY, MEDIUM, HARD]
@@ -2216,13 +2275,16 @@ components:
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
         competencyLinks:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
           uniqueItems: true
+          maxItems: 10000
         auxiliaryRepositories:
           type: array
           items: {$ref: '#/components/schemas/AuxiliaryRepositoryDTO'}
+          maxItems: 10000
         submissionPolicy: {$ref: '#/components/schemas/SubmissionPolicyDTO'}
         plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
         course: {$ref: '#/components/schemas/CourseRefDTO'}
@@ -2267,10 +2329,12 @@ components:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
           uniqueItems: true
+          maxItems: 10000
         attachment: {$ref: '#/components/schemas/AttachmentDTO'}
         slides:
           type: array
           items: {$ref: '#/components/schemas/SlideDTO'}
+          maxItems: 10000
         completed: {type: boolean}
         visibleToStudents: {type: boolean}
         lecture: {$ref: '#/components/schemas/LectureReferenceDTO'}
@@ -2324,6 +2388,7 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ReactionResponseDTO'}
           uniqueItems: true
+          maxItems: 10000
         verified: {type: boolean}
     ConversationRefDTO:
       type: object
@@ -2365,9 +2430,11 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ReactionResponseDTO'}
           uniqueItems: true
+          maxItems: 10000
         answers:
           type: array
           items: {$ref: '#/components/schemas/AnswerPostResponseDTO'}
+          maxItems: 10000
     ReactionResponseDTO:
       type: object
       properties:
@@ -2473,9 +2540,11 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
         courseId: {type: integer, format: int64}
         course: {$ref: '#/components/schemas/CourseRefDTO'}
         examId: {type: integer, format: int64}
@@ -2497,6 +2566,7 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         releaseDate: {type: string, format: date-time}
         startDate: {type: string, format: date-time}
         dueDate: {type: string, format: date-time}
@@ -2555,9 +2625,11 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+          maxItems: 10000
         gradingCriteria:
           type: array
           items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
         courseId: {type: integer, format: int64}
         course: {$ref: '#/components/schemas/CourseRefDTO'}
         examId: {type: integer, format: int64}

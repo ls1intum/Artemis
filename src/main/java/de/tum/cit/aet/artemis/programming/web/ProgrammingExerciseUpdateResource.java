@@ -65,8 +65,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGua
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 
 /**
  * REST controller for updating complete programming exercise entities.
@@ -169,7 +167,7 @@ public class ProgrammingExerciseUpdateResource {
             participations, and the change must keep releaseDate in the future. Anything else can be changed only in the Artemis web interface.""")
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText,
-            @Parameter(array = @ArraySchema(maxItems = 100)) @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
+            @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
         log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
 
         if (updateDTO.id() == null || updateDTO.id() == 0) {

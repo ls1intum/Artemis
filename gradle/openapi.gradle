@@ -167,6 +167,12 @@
                     flattenDiscriminatorAllOfBackReferences(prunedSpecificationMap)
                     failOnMethodNameCollisions(prunedSpecificationMap)
                 }
+                else {
+                    // Static analysis of an API description asks for an upper bound on every array. The bound is far above any
+                    // list a course has and is not enforced by the server, so it is set here, on the final document: springdoc
+                    // adds the component schemas only after its customizers have run.
+                    boundArrays(prunedSpecificationMap)
+                }
 
                 // The specification was read from a throwaway server whose port can be overridden with -PopenApiServerPort.
                 // Keep the committed file independent of it.
@@ -182,6 +188,21 @@
                 )
                 println "✔ Pruned specification written to ${outputFile}"
             }
+        }
+    }
+
+    /**
+     * Sets {@code maxItems} on every array schema of the given node that has none, descending through maps and lists.
+     */
+    def boundArrays(Object node) {
+        if (node instanceof Map) {
+            if (node.type == 'array' && !node.containsKey('maxItems')) {
+                node.maxItems = 10000
+            }
+            node.values().each { boundArrays(it) }
+        }
+        else if (node instanceof List) {
+            node.each { boundArrays(it) }
         }
     }
 
