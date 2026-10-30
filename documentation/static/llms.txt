@@ -1,0 +1,22 @@
+# Artemis
+
+> Artemis is an open-source learning platform for programming, quiz, text, modeling and file upload exercises, exams, lectures, competencies and communication, developed at the Technical University of Munich.
+
+Artemis lets an instructor give a coding agent limited access through a personal access token. A token acts as its owner with at most the owner's role in each course, only on operations its scopes allow. Content created through the API is a draft until a person publishes it in the web interface.
+
+## Coding agent access
+
+- [Agent API description (OpenAPI)](https://docs.artemis.tum.de/agent/openapi.yaml): every operation a token can call, with parameters, scopes and errors
+- [Working with coding agents](https://docs.artemis.tum.de/instructor/integrations/coding-agents): how an instructor creates a token and what it can and cannot do
+- [Enable agent access](https://docs.artemis.tum.de/admin/agent-access): the server configuration for administrators
+- [Skill: access](https://docs.artemis.tum.de/agent-skills/artemis-access/SKILL.md): connecting, errors and safety rules
+- [Skill: competencies](https://docs.artemis.tum.de/agent-skills/artemis-competencies/SKILL.md): reading and drafting competencies and the competency graph
+- [Skill: announcements](https://docs.artemis.tum.de/agent-skills/artemis-announcements/SKILL.md): drafting and posting announcements
+- [Skill: exercises](https://docs.artemis.tum.de/agent-skills/artemis-exercises/SKILL.md): draft text and modeling exercises
+- [Skill: programming exercises](https://docs.artemis.tum.de/agent-skills/artemis-programming-exercises/SKILL.md): draft programming exercises and their code
+- [Skill: lectures](https://docs.artemis.tum.de/agent-skills/artemis-lectures/SKILL.md): lectures, slides and their processing status
+
+## Documentation for people
+
+- [Instructor guide](https://docs.artemis.tum.de/instructor/intro): creating and running courses, exercises, exams and lectures
+- [Administrator guide](https://docs.artemis.tum.de/admin/intro): installing and operating Artemis

@@ -1,0 +1,108 @@
+---
+id: coding-agents
+title: Working with Coding Agents
+sidebar_label: Coding Agents
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+A coding agent such as Claude Code, Codex or Antigravity can do routine course work for you through the Artemis REST
+API: draft competencies and their graph, announcements, exercises and lecture units, and keep them in sync with your
+teaching material. This page explains how to give an agent access, what it can and cannot do, and how to keep that
+access safe.
+
+<Callout variant={CalloutVariant.info}>
+
+  Agent access is off by default. If you do not see **Agent Access** in your user settings, your Artemis
+  administrator has not enabled it on this instance. See
+  [Agent Access](/admin/agent-access) for what they need to do.
+
+</Callout>
+
+## How access works
+
+You create a **personal access token** in Artemis and give it to the agent. Every request the agent makes with the
+token is treated as a request from you, with two limits:
+
+- **The token can do no more than you can.** If you are an editor in a course, the agent is an editor in that
+  course, and in no other.
+- **The token can do only what its scopes allow.** You choose the scopes when you create it, and a token that holds
+  `competencies:read` cannot post an announcement.
+
+Administrators cannot use tokens at all. An agent that works for an administrator account is rejected.
+
+## Create a token
+
+1. Open your user settings and choose **Agent Access**.
+2. Click **Create token**.
+3. Enter a **Name** that tells you later which agent or laptop the token belongs to.
+4. Select the **Scopes** the agent needs, and nothing more.
+5. Set the **Lifetime in days**. A token expires on its own; the longest lifetime is set by your administrator
+   (90 days unless they changed it).
+6. Click **Create** and copy the secret that appears. It starts with `art_pat_`.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Artemis shows the secret only once and stores just a fingerprint of it, so nobody can read it back later. Treat it
+  like a password. Anyone who has it can act as you, within the token's scopes, until it expires or you revoke it.
+
+</Callout>
+
+The list on the same page shows each token's name, the first characters of its secret, its scopes, when it expires and
+when it was last used. Click **Revoke** to stop a token immediately.
+
+## Scopes
+
+| Scope in the interface | What the agent can do | Role it still needs in the course |
+|------------------------|-----------------------|-----------------------------------|
+| Read your courses | List your courses | any |
+| Read competencies | Read competencies, prerequisites and the relations between them | student, editor for the relations |
+| Create and edit competencies | Create, bulk create, import standardized, update competencies; create and retype relations | editor |
+| Post announcements | Post an announcement to the course | instructor |
+| Create and edit unpublished exercises | Create and update text and modeling exercises | editor |
+| Create and edit unpublished programming exercises | Create programming exercises; update their settings, dates, problem statement and test case weights | editor |
+| Create and edit lectures and slides | Create lectures, add units with slides, read the processing status | editor |
+
+## What stays in your hands
+
+Some things are deliberately not available to an agent, however it is configured:
+
+- **Publishing.** Exercises and lecture units that an agent creates must have a release date in the future, so
+  students cannot see them. An agent can also change only content that is still unpublished. Publish in the Artemis
+  web interface once you have reviewed it. Programming exercises additionally must have no student participations.
+- **Deleting.** An agent can create and change competencies, relations, exercises and units, but not delete them.
+- **Grades, exams and student data.** No scope covers them.
+
+**Announcements are the exception to the draft rule.** An announcement is visible to students, and they are notified,
+the moment it is posted. Ask your agent to show you the text first, and give it the **Post announcements** scope only
+when you want that.
+
+## Give the agent the tools
+
+An agent needs three things: the address of your Artemis instance, the token, and a description of what it may call.
+
+The API description is an OpenAPI file that lists exactly the operations a token can use, with their parameters and
+errors. It is published with this documentation at `/agent/openapi.yaml`, and `/llms.txt` points agents to it.
+
+Agent skills teach an agent the common workflows, for example how to maintain a competency graph. Copy the skill
+folders you need from `/agent-skills/` into the skills folder of your agent:
+
+| Agent | Skills folder |
+|-------|---------------|
+| Claude Code | `.claude/skills/` in your project, or `~/.claude/skills/` for all projects |
+| Codex and Antigravity | `.agents/skills/` in your project, or `~/.agents/skills/` for all projects |
+
+Then give the agent the address and the token, for example by exporting `ARTEMIS_URL` and `ARTEMIS_TOKEN` in the
+terminal where it runs. The skills explain how they use them.
+
+## Keep it safe
+
+- Create one token per agent and device, with the fewest scopes that do the job.
+- Prefer a short lifetime. Create a new token when an old one expires.
+- Revoke a token as soon as you no longer use it, or if you suspect it leaked.
+- Course content that students wrote, such as forum posts and submissions, can contain text that tries to steer an
+  agent. Do not combine a token that can post announcements or change exercises with tasks that read student text.
+- Check what the agent did. Everything it created is unpublished until you publish it, and your administrator can see
+  which token made which request.
+- Do not paste a token into a chat, an issue or a commit.
