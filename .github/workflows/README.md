@@ -469,3 +469,10 @@ assigned in SonarQube Cloud, configured there rather than here.
      branch-protection change is needed; the gate's `name:` field is what's required.
    - Add `<name>` to `ci-summary`'s `needs:` so it appears in the Summary table. For an
      **advisory** check, add it to `ci-summary`'s `ADVISORY` env **instead of** the gate's `needs:`.
+
+### Hyperion sandbox image
+
+`hyperion-sandbox-image.yml` publishes independently versioned toolchain images on manual dispatch.
+It is separate from Artemis release CI, like the build agents' build-image lifecycle.
+See [the sandbox operations guide](../../deployment/docker/hyperion/README.md#offline-java-build-image-gradle-and-maven)
+for publication, version updates and the first-publication check.

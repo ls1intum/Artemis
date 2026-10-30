@@ -1,0 +1,49 @@
+name: Publish Hyperion Sandbox Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_version:
+        description: 'New toolchain version (for example java25-1). Published versions must never be overwritten.'
+        required: true
+        type: string
+
+concurrency:
+  group: hyperion-sandbox-image-${{ inputs.image_version }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  version:
+    name: Validate Hyperion Sandbox Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Require a new toolchain version
+        id: version
+        env:
+          IMAGE_VERSION: ${{ inputs.image_version }}
+        run: |
+          set -Eeuo pipefail
+          if [[ ! "$IMAGE_VERSION" =~ ^java[0-9]+-[0-9]+$ ]]; then
+            echo '::error::Use a toolchain version such as java25-1.'
+            exit 1
+          fi
+          echo "tag=${IMAGE_VERSION}" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Build and Push Hyperion Sandbox Image
+    needs: version
+    permissions:
+      contents: read
+      packages: write
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@ee1b52f07891ed489887681c09c52b4a83fa9fb2 # v1.2.0
+    with:
+      ref: ${{ github.sha }}
+      image-name: ls1intum/artemis-hyperion-sandbox
+      docker-file: ./deployment/docker/hyperion/sandbox.Dockerfile
+      tags: type=raw,value=${{ needs.version.outputs.tag }}

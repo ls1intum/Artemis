@@ -23,8 +23,6 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.support.StaticListableBeanFactory;
-import org.springframework.boot.info.GitProperties;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -79,8 +77,7 @@ class DockerGradleBuildTest {
         docker = new DockerConfiguration().dockerClient();
         var settings = new WorkerSettings("gradle-test-" + UUID.randomUUID(), System.getenv("HYPERION_GRADLE_TEST_IMAGE"), "runc", 2L * 1024 * 1024 * 1024, 200_000, 256,
                 Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofMinutes(2), 1, "hyperion-generation", "java-gradle");
-        sandbox = new DockerSandboxService(docker,
-                new WorkerSandboxConfiguration().sandboxPolicy(settings, docker, new StaticListableBeanFactory().getBeanProvider(GitProperties.class)));
+        sandbox = new DockerSandboxService(docker, new WorkerSandboxConfiguration().sandboxPolicy(settings, docker));
     }
 
     @AfterEach

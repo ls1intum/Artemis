@@ -120,9 +120,11 @@ The selected distributed-data provider supplies the shared client.
 Startup rejects `core`, `localci`, `localvc`, and `buildagent` with `aiworker`,
 and rejects any attempt to turn the HTTP server back on. Do not run this profile
 on a core node. Keep the core container away from the worker's Docker socket.
-The sandbox image is published with each release, like the build agents' build images. Without
-`artemis.aiworker.image`, the worker pulls `ghcr.io/ls1intum/artemis-hyperion-sandbox:sha-<commit>` for
-its own commit at startup and uses that image's registry digest from then on.
+Like the build agents' default build images, the sandbox has its own toolchain version.
+The shipped default is `ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-1`.
+The worker reuses the local image if present and pulls it only when missing. Before accepting jobs,
+it resolves the reference to an immutable local image ID. Registry access is not needed to reuse a cached image.
+An Artemis upgrade can keep using the same sandbox version; no image is selected from the Artemis commit.
 Configuration files containing secrets must be readable only by the deployment account
 and worker UID, and mounted read-only.
 
@@ -141,7 +143,7 @@ artemis:
         provider: hazelcast # Or redis, matching the core nodes.
     aiworker:
         id: worker-1
-        # Optional: defaults to the published sandbox image of this Artemis commit.
+        # Optional: override the shipped toolchain version for a private registry or custom image.
         # image: registry.example/hyperion-sandbox@sha256:<digest>
         max-concurrent-executions: 1
         runtime: runc
@@ -153,8 +155,9 @@ artemis:
         shutdown-timeout: PT2M
 ```
 
-Set `image` only for a build without a published sandbox image, such as a local or pull-request build;
-it must then be pinned by its 64-digit SHA-256 digest.
+Leave `image` unset for normal deployments, including local and pull-request Artemis builds.
+An override can be a versioned tag, a registry digest or a local SHA-256 image ID.
+Use a new version when changing the toolchain; do not overwrite published version tags.
 The environment-based entry point also accepts `AI_WORKER_ID` and `AI_WORKER_SANDBOX_IMAGE`.
 The workload defaults to `hyperion-generation`, schema `1`, profile `java-gradle`; set
 `artemis.aiworker.workload` and `artemis.aiworker.profile` only for another installed workload. Configure provider access through

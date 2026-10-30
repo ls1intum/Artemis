@@ -434,7 +434,7 @@ bounded assignment, selects a qualified toolchain and returns typed generation e
 The generic transport does not interpret briefs, tests, quality findings or exercise IDs.
 
 The worker selects workload `hyperion-generation`, schema `1`, profile `java-gradle` by default;
-the offline sandbox image published for the same commit is pulled automatically. The profile name predates Maven support:
+the shipped versioned offline sandbox image is pulled only if missing locally, as with build-agent images. The profile name predates Maven support:
 the same profile and image serve Java exercises built with Gradle or Maven, and the brief names
 the build tool. Only Java is qualified; naming another profile does not add a language implementation. Core admission
 and returned evidence must agree on the workload schema, profile, image and execution.

@@ -26,10 +26,23 @@ for other workloads. Keep the worker process in an isolated VM.
 
 ## Offline Java build image (Gradle and Maven)
 
-CI publishes this image for every `develop` push and release as
-`ghcr.io/ls1intum/artemis-hyperion-sandbox`, with the same tags as the Artemis image. A worker without
-`AI_WORKER_SANDBOX_IMAGE` pulls the tag `sha-<commit>` of its own build. Build it yourself only for a
-local or pull-request build, from the repository root:
+This image has an independent toolchain version, like the build agents' build images.
+The worker's shipped default is `ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-1`.
+It reuses a cached image or pulls it when missing, then uses the immutable local image ID.
+Normal Artemis upgrades and PR builds use the same default; no per-commit image is required.
+
+Maintainers publish a new toolchain version through the **Publish Hyperion Sandbox Image**
+workflow (`hyperion-sandbox-image.yml`), using a reviewed source revision and a new version such as
+`java25-2`. The workflow builds both amd64 and arm64 using the same shared publisher
+as Artemis. Always use a new version; published tags must not be overwritten. Publish and qualify that version before changing
+the default in `application-aiworker.yml`. The first `java25-1` publication must complete before
+using the default in a deployment. Check that the GHCR package is publicly readable.
+
+The sandbox has a separate release lifecycle: ordinary Artemis releases do not publish it.
+When the canonical harness, JDK or dependencies change, build and test a new sandbox version and
+update the shipped default in the same change. Retain previous versions for rollback.
+
+For a custom sandbox, build from the repository root:
 
 ```sh
 docker build -f deployment/docker/hyperion/sandbox.Dockerfile -t hyperion-sandbox:local .
