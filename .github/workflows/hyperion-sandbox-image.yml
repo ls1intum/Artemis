@@ -2,14 +2,9 @@ name: Publish Hyperion Sandbox Image
 
 on:
   workflow_dispatch:
-    inputs:
-      image_version:
-        description: 'New toolchain version (for example java25-1). Published versions must never be overwritten.'
-        required: true
-        type: string
 
 concurrency:
-  group: hyperion-sandbox-image-${{ inputs.image_version }}
+  group: hyperion-sandbox-image
   cancel-in-progress: false
 
 permissions: {}
@@ -19,21 +14,32 @@ jobs:
     name: Validate Hyperion Sandbox Version
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       tag: ${{ steps.version.outputs.tag }}
     steps:
-      - name: Require a new toolchain version
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+      - name: Read the reviewed toolchain version
         id: version
-        env:
-          IMAGE_VERSION: ${{ inputs.image_version }}
         run: |
-          set -Eeuo pipefail
-          if [[ ! "$IMAGE_VERSION" =~ ^java[0-9]+-[0-9]+$ ]]; then
-            echo '::error::Use a toolchain version such as java25-1.'
-            exit 1
-          fi
-          echo "tag=${IMAGE_VERSION}" >> "$GITHUB_OUTPUT"
+          python3 - <<'PYTHON'
+          import os
+          import re
+          from pathlib import Path
+
+          config = Path('src/main/resources/config/application-aiworker.yml').read_text()
+          versions = re.findall(
+              r'^\s+image: \$\{AI_WORKER_SANDBOX_IMAGE:ghcr\.io/ls1intum/artemis-hyperion-sandbox:(java[0-9]+-[0-9]+)\}$',
+              config, re.MULTILINE,
+          )
+          if len(versions) != 1:
+              raise SystemExit('Expected one versioned Hyperion sandbox default in application-aiworker.yml')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'tag={versions[0]}\n')
+          PYTHON
 
   publish:
     name: Build and Push Hyperion Sandbox Image

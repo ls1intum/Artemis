@@ -67,8 +67,8 @@ class WorkerSandboxImageTest {
         missingImage();
         when(pull.exec(any())).thenThrow(new NotFoundException("manifest unknown"));
 
-        assertThatThrownBy(() -> WorkerSandboxImage.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class).hasMessageContaining(REFERENCE, "AI_WORKER_SANDBOX_IMAGE")
-                .hasCauseInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> WorkerSandboxImage.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContainingAll(REFERENCE, "AI_WORKER_SANDBOX_IMAGE").hasCauseInstanceOf(NotFoundException.class);
     }
 
     @ParameterizedTest
