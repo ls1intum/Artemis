@@ -18,11 +18,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
 
 import de.tum.cit.aet.artemis.account.service.PersonalAccessTokenService;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentAccessErrors;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.PersonalAccessTokenAuthentication;
 
 /**
@@ -59,14 +61,14 @@ public class PersonalAccessTokenFilter extends GenericFilterBean {
 
         if (WebUtils.getCookie(request, JWT_COOKIE_NAME) != null) {
             // The same single-method rule the JWT filter applies to a cookie together with a bearer token.
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            AgentAccessErrors.reject(response, HttpStatus.BAD_REQUEST, "Send either a personal access token or a session cookie, not both.");
             return;
         }
 
         PersonalAccessTokenService service = personalAccessTokenService.getIfAvailable();
         Optional<PersonalAccessTokenAuthentication> authentication = service != null ? service.authenticate(secret) : Optional.empty();
         if (authentication.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            AgentAccessErrors.reject(response, HttpStatus.UNAUTHORIZED, "The token is unknown, expired or revoked, or its owner may not use tokens.");
             return;
         }
 

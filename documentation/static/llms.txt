@@ -9,6 +9,7 @@ Artemis lets an instructor give a coding agent limited access through a personal
 - [Agent API description (OpenAPI)](https://docs.artemis.tum.de/agent/openapi.yaml): every operation a token can call, with parameters, scopes and errors
 - [Working with coding agents](https://docs.artemis.tum.de/instructor/integrations/coding-agents): how an instructor creates a token and what it can and cannot do
 - [Enable agent access](https://docs.artemis.tum.de/admin/agent-access): the server configuration for administrators
+- MCP server: each Artemis instance with agent access enabled serves the Model Context Protocol at `/api/core/agent/mcp` (Streamable HTTP, bearer token); the tools a token sees depend on its scopes
 - [Skill: access](https://docs.artemis.tum.de/agent-skills/artemis-access/SKILL.md): connecting, errors and safety rules
 - [Skill: competencies](https://docs.artemis.tum.de/agent-skills/artemis-competencies/SKILL.md): reading and drafting competencies and the competency graph
 - [Skill: announcements](https://docs.artemis.tum.de/agent-skills/artemis-announcements/SKILL.md): drafting and posting announcements

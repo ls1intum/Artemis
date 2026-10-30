@@ -56,6 +56,17 @@ The scopes are `courses:read`, `competencies:read`, `competencies:write`, `annou
 `exercises:draft`, `programming:draft` and `lectures:write`. Posting an announcement is the one action whose result
 students see at once.
 
+## The MCP endpoint
+
+With agent access enabled, Artemis also serves the Model Context Protocol at `/api/core/agent/mcp`. It answers every request with
+one JSON document and keeps no session, so it needs nothing beyond the setting above and works behind a load balancer without
+sticky sessions. It accepts only personal access tokens.
+
+Each tool of the endpoint calls the REST API of the same server over the loopback interface, with the token of the request. It
+therefore needs the server to be reachable on its own port from itself, which is the normal case, and its calls appear in the audit
+log like any other request. In a setup where requests to `localhost` leave the machine through a proxy, exclude `localhost` from the
+proxy.
+
 ## What Artemis records
 
 Artemis stores a token's name, the first characters of its secret, its scopes, its expiry date and when it was last

@@ -96,6 +96,30 @@ folders you need from `/agent-skills/` into the skills folder of your agent:
 Then give the agent the address and the token, for example by exporting `ARTEMIS_URL` and `ARTEMIS_TOKEN` in the
 terminal where it runs. The skills explain how they use them.
 
+## Connect through MCP
+
+Instead of skills and the API description, an agent can use Artemis as an MCP server, the Model Context Protocol that many
+agents and chat applications understand. Artemis offers it at `/api/core/agent/mcp` on your instance, over HTTP, and it
+accepts only personal access tokens. In Claude Code you add it like this:
+
+```bash
+claude mcp add --transport http artemis "$ARTEMIS_URL/api/core/agent/mcp" --header "Authorization: Bearer $ARTEMIS_TOKEN"
+```
+
+Other agents and applications have their own way to add a remote MCP server; look for the option that takes a server
+address and a bearer token or header.
+
+The agent then sees a small set of tools, each for a task you would name yourself: list your courses, read and change the
+competency graph, post an announcement, list, read, create and change exercises, set up a programming exercise's problem
+statement, dates and test case weights, and create a lecture and check how far the processing of its slides has come.
+Which tools it sees depends on the scopes of the token. The tools call the same operations as the API description lists, so
+the same limits apply to them: the roles, the scopes and the draft rule.
+
+- **Announcements need your approval.** The announcement tool refuses to post until the agent confirms that you approved
+  the exact text, and the agent is told to ask you first.
+- **Slides are not uploaded through MCP.** A PDF does not fit into a tool call. Use the lectures skill, or upload the slides
+  in the Artemis web interface.
+
 ## Keep it safe
 
 - Create one token per agent and device, with the fewest scopes that do the job.

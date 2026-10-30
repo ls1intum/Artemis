@@ -23,6 +23,7 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import io.swagger.v3.oas.annotations.Hidden;
 
 /**
  * Keeps {@link AllowedScopes} a narrowing of access and never a replacement for the role check.
@@ -59,7 +60,9 @@ class AllowedScopesArchitectureTest extends AbstractArchitectureTest {
      */
     @Test
     void theAgentSpecificationListsEveryEndpointOptedInToTokens() throws IOException {
-        long optedIn = productionClasses.stream().flatMap(javaClass -> javaClass.getMethods().stream()).filter(method -> method.isAnnotatedWith(AllowedScopes.class)).count();
+        // The MCP endpoint is hidden: it is a protocol, not an operation, and its tools are described by the protocol itself.
+        long optedIn = productionClasses.stream().flatMap(javaClass -> javaClass.getMethods().stream())
+                .filter(method -> method.isAnnotatedWith(AllowedScopes.class) && !method.isAnnotatedWith(Hidden.class)).count();
 
         JsonNode paths = YAMLMapper.builder().build().readTree(AGENT_SPECIFICATION.toFile()).path("paths");
         long documented = 0;

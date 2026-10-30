@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -33,13 +34,13 @@ public class AllowedScopesInterceptor implements HandlerInterceptor {
 
         AllowedScopes allowedScopes = handler instanceof HandlerMethod handlerMethod ? handlerMethod.getMethod().getAnnotation(AllowedScopes.class) : null;
         if (allowedScopes == null) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "This endpoint cannot be called with a personal access token.");
+            AgentAccessErrors.reject(response, HttpStatus.FORBIDDEN, "This endpoint cannot be called with a personal access token.");
             return false;
         }
 
         boolean holdsAllScopes = Arrays.stream(allowedScopes.value()).allMatch(tokenAuthentication.getScopes()::contains);
         if (!holdsAllScopes) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "The personal access token lacks a scope required by this endpoint.");
+            AgentAccessErrors.reject(response, HttpStatus.FORBIDDEN, "The personal access token lacks a scope required by this endpoint.");
             return false;
         }
         return true;
