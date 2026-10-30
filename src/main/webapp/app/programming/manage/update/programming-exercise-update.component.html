@@ -61,10 +61,12 @@
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
             <hr class="mb-5" />
-            @if (!isImportFromExistingExercise && !isImportFromFile && !isImportFromSharing && securityFrameworkInstructor()) {
-                <!-- Security Framework (Ares 2), available in simple and advanced mode. -->
+            @if (securityFrameworkInstructor()) {
+                <!-- Security Framework (Ares 2), available in simple and advanced mode, when creating, editing and importing. -->
                 <jhi-programming-exercise-security
                     [programmingExercise]="programmingExercise"
+                    [mode]="securityCardMode()"
+                    [sourceExerciseId]="securitySourceExerciseId()"
                     [selectedProgrammingLanguage]="getProgrammingExerciseCreationConfig().selectedProgrammingLanguage"
                     [projectType]="programmingExercise.projectType"
                     [stagedChoice]="stagedSecurityChoice()"

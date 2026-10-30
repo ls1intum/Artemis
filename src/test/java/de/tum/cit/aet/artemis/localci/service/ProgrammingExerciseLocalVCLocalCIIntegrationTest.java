@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.jupiter.api.AfterEach;
@@ -89,6 +90,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkAction;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
@@ -96,6 +99,9 @@ import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkVersionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.TemplateSolutionParticipationDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
@@ -1332,6 +1338,172 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         List<String> testFiles = filesOf(createdExercise, RepositoryType.TESTS);
         assertThat(testFiles).as("the tests are cleared as well").filteredOn(path -> path.startsWith("test/")).containsExactly("test/.gitkeep");
         assertThat(testFiles).as("the test project file is kept").contains("build.gradle");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateJavaProgrammingExerciseWithTheSecurityFrameworkSwitchedOffCommitsTheTestsOnce() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setChannelName("testchannel-pe-security-off");
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        ObjectNode body = objectMapper.valueToTree(CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()));
+        body.set("securityFramework", objectMapper.valueToTree(new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null)));
+
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/setup", body, ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise createdExercise = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
+        createdExercisesToCleanUp.add(createdExercise);
+
+        // The choice is part of the first commit of the tests repository, so the template and the solution are built once.
+        LocalVCRepositoryUri testsRepositoryUri = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(),
+                createdExercise.generateRepositoryName(RepositoryType.TESTS));
+        try (Git git = Git.open(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath).toFile())) {
+            assertThat(git.log().call()).hasSize(1);
+        }
+        assertThat(readFileOf(createdExercise, RepositoryType.TESTS, "test/" + createdExercise.getPackageFolderName() + "/ClassTest.java"))
+                .contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", activated = false)");
+        // The template policy stays, so activating later brings back exactly its permissions.
+        assertThat(filesOf(createdExercise, RepositoryType.TESTS)).contains("SecurityPolicy.yaml");
+        for (var participation : List.of(createdExercise.getTemplateParticipation(), createdExercise.getSolutionParticipation())) {
+            assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId())).hasSize(1);
+        }
+        String securityPath = "/api/programming/programming-exercises/" + createdExercise.getId() + "/security-framework";
+        assertThat(request.get(securityPath, HttpStatus.OK, SecurityFrameworkConfigDTO.class).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+
+        // Activating later keeps the template policy byte for byte, including its permissions.
+        String templatePolicy = readFileOf(createdExercise, RepositoryType.TESTS, "SecurityPolicy.yaml");
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("frameworkVersion",
+                request.get("/api/programming/security-framework/versions", HttpStatus.OK, SecurityFrameworkVersionsDTO.class).selectableVersions().getFirst());
+        var activated = request.putWithResponseBodyAndParams(securityPath + "/activate", null, SecurityFrameworkConfigDTO.class, HttpStatus.OK, params);
+        assertThat(activated.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(readFileOf(createdExercise, RepositoryType.TESTS, "SecurityPolicy.yaml")).isEqualTo(templatePolicy);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCreateProgrammingExerciseWithAChangedSecurityFrameworkRequiresAnInstructor() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setTitle("Security choice by an editor");
+        ObjectNode body = objectMapper.valueToTree(CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()));
+        body.set("securityFramework", objectMapper.valueToTree(new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null)));
+        long exercisesBefore = programmingExerciseRepository.count();
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", body, ProgrammingExerciseResponseDTO.class, HttpStatus.FORBIDDEN);
+
+        // The choice is checked before anything is persisted, so no half-created exercise is left behind.
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateProgrammingExerciseRejectsASecurityChoiceWithoutAction() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        ObjectNode body = objectMapper.valueToTree(CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()));
+        body.set("securityFramework", objectMapper.createObjectNode().putNull("action"));
+        long exercisesBefore = programmingExerciseRepository.count();
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", body, ProgrammingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportProgrammingExerciseWithTheSecurityFrameworkSwitchedOffChangesOnlyTheNewExercise() throws Exception {
+        LocalVCRepositoryUri sourceTestsUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
+        localVCRepositoryTestService.writeFilesAndPush(sourceTestsUri,
+                Map.of("build.gradle", "ext {\n    aresVersion = '2.2.1'\n}\n", "SecurityPolicy.yaml",
+                        "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - \"de.example.SortingTest\"\n", "test/de/example/SortingTest.java",
+                        "package de.example;\n\nimport org.junit.jupiter.api.Test;\n\n@de.tum.cit.ase.ares.api.jupiter.Public\n"
+                                + "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\nclass SortingTest {\n\n    @Test\n    void sorts() {\n    }\n}\n"),
+                "Set up the tests with Ares");
+        String sourceHead;
+        try (Git git = Git.open(sourceTestsUri.getLocalRepositoryPath(localVCBasePath).toFile())) {
+            sourceHead = git.getRepository().resolve("HEAD").name();
+        }
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("SecurityImport", "secimport", programmingExercise,
+                courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
+        exerciseToBeImported.setChannelName("testchannel-pe-security-import");
+        ObjectNode body = objectMapper.valueToTree(ImportProgrammingExerciseRequestDTO.of(exerciseToBeImported, null));
+        body.set("securityFramework", objectMapper.valueToTree(new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null)));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "true");
+
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), body,
+                ProgrammingExercise.class, params, HttpStatus.OK);
+        ProgrammingExercise imported = programmingExerciseRepository.findWithAllParticipationsById(importedExercise.getId()).orElseThrow();
+        createdExercisesToCleanUp.add(imported);
+
+        assertThat(readFileOf(imported, RepositoryType.TESTS, "test/de/example/SortingTest.java"))
+                .contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", activated = false)");
+        assertThat(filesOf(imported, RepositoryType.TESTS)).doesNotContain("SecurityPolicy.yaml");
+        try (Git git = Git.open(sourceTestsUri.getLocalRepositoryPath(localVCBasePath).toFile())) {
+            assertThat(git.getRepository().resolve("HEAD").name()).isEqualTo(sourceHead);
+        }
+        assertThat(readFileOf(programmingExercise, RepositoryType.TESTS, "test/de/example/SortingTest.java")).doesNotContain("activated = false");
+    }
+
+    private ObjectNode importBodyWithSecurityChoice(ObjectNode securityFramework, String shortName) throws Exception {
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("SecurityImport " + shortName, shortName, programmingExercise,
+                courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
+        exerciseToBeImported.setChannelName("testchannel-pe-" + shortName);
+        ObjectNode body = objectMapper.valueToTree(ImportProgrammingExerciseRequestDTO.of(exerciseToBeImported, null));
+        body.set("securityFramework", securityFramework);
+        return body;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportProgrammingExerciseRejectsASecurityChoiceWithoutAction() throws Exception {
+        long exercisesBefore = programmingExerciseRepository.count();
+        ObjectNode body = importBodyWithSecurityChoice(objectMapper.createObjectNode().putNull("action"), "secnoaction");
+
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), body, ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportProgrammingExerciseWithASecurityChoiceRequiresAnInstructor() throws Exception {
+        long exercisesBefore = programmingExerciseRepository.count();
+        ObjectNode body = importBodyWithSecurityChoice(objectMapper.valueToTree(new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null)), "seceditor");
+
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), body, ProgrammingExercise.class,
+                HttpStatus.FORBIDDEN);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportProgrammingExerciseCompletesUnchangedIfTheSecurityChoiceCannotBeApplied() throws Exception {
+        // The source tests repository pins no Ares version, so the Security Framework cannot manage it.
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        ObjectNode body = importBodyWithSecurityChoice(objectMapper.valueToTree(new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null)), "secunsupported");
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "true");
+
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), body,
+                ProgrammingExercise.class, params, HttpStatus.OK);
+        ProgrammingExercise imported = programmingExerciseRepository.findWithAllParticipationsById(importedExercise.getId()).orElseThrow();
+        createdExercisesToCleanUp.add(imported);
+
+        LocalVCRepositoryUri testsRepositoryUri = localVCRepositoryTestService.repositoryUri(imported.getProjectKey(), imported.generateRepositoryName(RepositoryType.TESTS));
+        try (Git git = Git.open(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath).toFile())) {
+            for (var commit : git.log().call()) {
+                assertThat(commit.getFullMessage()).doesNotContain("Security-Framework-Action");
+            }
+        }
+        var config = request.get("/api/programming/programming-exercises/" + imported.getId() + "/security-framework", HttpStatus.OK, SecurityFrameworkConfigDTO.class);
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.UNSUPPORTED.name());
     }
 
     @Test

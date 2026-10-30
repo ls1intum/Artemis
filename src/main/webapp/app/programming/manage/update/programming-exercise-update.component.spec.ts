@@ -21,7 +21,14 @@ import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } 
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
-import { SecurityActivationStatus } from 'app/programming/shared/entities/security-framework-config.model';
+import {
+    SecurityActivationStatus,
+    SecurityFrameworkAction,
+    SecurityFrameworkChoice,
+    SecurityUnsupportedReasonType,
+} from 'app/programming/shared/entities/security-framework-config.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -572,82 +579,202 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.save();
 
             // THEN
-            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
+            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity, false, undefined);
             expect(comp.isSaving()).toBe(false);
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
-        describe('applies the Security Framework choice made while creating', () => {
+        describe('sends the Security Framework choice with the create or import request', () => {
             let securityFrameworkService: SecurityFrameworkService;
+            let navigationUtilService: ArtemisNavigationUtilService;
+            const deactivate: SecurityFrameworkChoice = { action: SecurityFrameworkAction.DEACTIVATE };
+            const pinVersion: SecurityFrameworkChoice = { action: SecurityFrameworkAction.ACTIVATE, frameworkVersion: '2.3.0' };
 
-            const saveNewJavaExercise = () => {
+            const newJavaExercise = (projectType = ProjectType.PLAIN_GRADLE) => {
                 const entity = new ProgrammingExercise(undefined, undefined);
                 entity.releaseDate = dayjs();
                 entity.programmingLanguage = ProgrammingLanguage.JAVA;
-                vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
+                entity.projectType = projectType;
                 comp.programmingExercise = entity;
                 comp.backupExercise = {} as ProgrammingExercise;
                 comp.programmingExercise.course = course;
+                comp.courseId.set(course.id!);
+                return entity;
+            };
+
+            const saveNewJavaExercise = (projectType = ProjectType.PLAIN_GRADLE) => {
+                const entity = newJavaExercise(projectType);
+                vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
                 comp.save();
+                return entity;
             };
 
             beforeEach(() => {
+                vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(true);
                 securityFrameworkService = TestBed.inject(SecurityFrameworkService);
-                vi.spyOn(securityFrameworkService, 'activate').mockReturnValue(of({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: '2.2.1' }));
-                vi.spyOn(securityFrameworkService, 'deactivate').mockReturnValue(of({ status: SecurityActivationStatus.INACTIVE }));
+                navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
+                vi.spyOn(navigationUtilService, 'navigateForwardFromExerciseUpdateOrCreation').mockImplementation(() => {});
+                vi.spyOn(securityFrameworkService, 'activate');
+                vi.spyOn(securityFrameworkService, 'deactivate');
+                vi.spyOn(securityFrameworkService, 'updateFrameworkVersion');
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.INACTIVE }));
             });
 
-            it('keeps the template setting when nothing was changed', () => {
-                saveNewJavaExercise();
-
+            const expectNoSecondRequest = () => {
                 expect(securityFrameworkService.activate).not.toHaveBeenCalled();
                 expect(securityFrameworkService.deactivate).not.toHaveBeenCalled();
+                expect(securityFrameworkService.updateFrameworkVersion).not.toHaveBeenCalled();
+            };
+
+            it('keeps the template setting when nothing was changed and does not verify it', () => {
+                const entity = saveNewJavaExercise();
+
+                expect(programmingExerciseService.automaticSetup).toHaveBeenCalledExactlyOnceWith(entity, false, undefined);
+                expect(securityFrameworkService.getConfig).not.toHaveBeenCalled();
+                expectNoSecondRequest();
                 expect(comp.isSaving()).toBe(false);
+                expect(navigationUtilService.navigateForwardFromExerciseUpdateOrCreation).toHaveBeenCalledOnce();
             });
 
-            it('deactivates the Security Framework after creation when it was turned off', () => {
-                comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+            it('puts the deactivation into the setup request instead of a second request after creation', () => {
+                comp.stagedSecurityChoice.set(deactivate);
+
+                const entity = saveNewJavaExercise();
+
+                expect(programmingExerciseService.automaticSetup).toHaveBeenCalledExactlyOnceWith(entity, false, deactivate);
+                expectNoSecondRequest();
+                expect(securityFrameworkService.getConfig).toHaveBeenCalledExactlyOnceWith(2);
+                expect(comp.isSaving()).toBe(false);
+                expect(navigationUtilService.navigateForwardFromExerciseUpdateOrCreation).toHaveBeenCalledOnce();
+            });
+
+            it('puts a chosen version into the setup request', () => {
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: '2.3.0' }));
+                const alertSpy = vi.spyOn(alertService, 'warning');
+                comp.stagedSecurityChoice.set(pinVersion);
+
+                const entity = saveNewJavaExercise();
+
+                expect(programmingExerciseService.automaticSetup).toHaveBeenCalledExactlyOnceWith(entity, false, pinVersion);
+                expectNoSecondRequest();
+                expect(alertSpy).not.toHaveBeenCalled();
+            });
+
+            it('does not send a choice for a black-box exercise', () => {
+                comp.stagedSecurityChoice.set(deactivate);
+
+                const entity = saveNewJavaExercise(ProjectType.MAVEN_BLACKBOX);
+
+                expect(programmingExerciseService.automaticSetup).toHaveBeenCalledExactlyOnceWith(entity, false, undefined);
+                expect(securityFrameworkService.getConfig).not.toHaveBeenCalled();
+            });
+
+            it('does not send a choice for an editor without the instructor role', () => {
+                vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
+                comp.stagedSecurityChoice.set(deactivate);
+
+                const entity = saveNewJavaExercise();
+
+                expect(programmingExerciseService.automaticSetup).toHaveBeenCalledExactlyOnceWith(entity, false, undefined);
+            });
+
+            it('warns, naming the status and its reasons, when the created exercise did not end up in the chosen state', () => {
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(
+                    of({ status: SecurityActivationStatus.UNSUPPORTED, unsupportedReasons: [{ location: 'build.gradle', type: SecurityUnsupportedReasonType.ARES_1 }] }),
+                );
+                const alertSpy = vi.spyOn(alertService, 'warning');
+                comp.stagedSecurityChoice.set(deactivate);
 
                 saveNewJavaExercise();
 
-                expect(securityFrameworkService.deactivate).toHaveBeenCalledWith(2);
-                expect(securityFrameworkService.activate).not.toHaveBeenCalled();
+                expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.security.notApplied.status', {
+                    status: 'artemisApp.programmingExercise.security.status.unsupported',
+                    details: 'artemisApp.programmingExercise.security.unsupportedReason.ARES_1',
+                });
                 expect(comp.isSaving()).toBe(false);
+                expect(navigationUtilService.navigateForwardFromExerciseUpdateOrCreation).toHaveBeenCalledOnce();
             });
 
-            it('does not apply a choice to a black-box exercise', () => {
-                comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
-                const entity = new ProgrammingExercise(undefined, undefined);
-                entity.releaseDate = dayjs();
-                entity.programmingLanguage = ProgrammingLanguage.JAVA;
-                entity.projectType = ProjectType.MAVEN_BLACKBOX;
-                vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
-                comp.programmingExercise = entity;
-                comp.backupExercise = {} as ProgrammingExercise;
-                comp.programmingExercise.course = course;
+            it('warns when the created exercise pins another version than the chosen one', () => {
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: '2.2.1' }));
+                const alertSpy = vi.spyOn(alertService, 'warning');
+                comp.stagedSecurityChoice.set(pinVersion);
+
+                saveNewJavaExercise();
+
+                expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.security.notApplied.version', { actual: '2.2.1', expected: '2.3.0' });
+            });
+
+            it('finishes saving and navigates when the verification request fails, without treating the save as failed', () => {
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+                const warningSpy = vi.spyOn(alertService, 'warning');
+                const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+                comp.stagedSecurityChoice.set(deactivate);
+
+                saveNewJavaExercise();
+
+                expect(warningSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.security.notApplied.verificationFailed');
+                expect(addAlertSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.DANGER }));
+                expect(comp.isSaving()).toBe(false);
+                expect(navigationUtilService.navigateForwardFromExerciseUpdateOrCreation).toHaveBeenCalledOnce();
+                expectNoSecondRequest();
+            });
+
+            it('sends the choice with an import from an exercise and verifies the new exercise, not the source', () => {
+                const entity = newJavaExercise();
+                entity.id = 7;
+                comp.isImportFromExistingExercise = true;
+                comp.stagedSecurityChoice.set(deactivate);
+                vi.spyOn(programmingExerciseService, 'importExercise').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 9 } })));
 
                 comp.save();
 
-                expect(securityFrameworkService.deactivate).not.toHaveBeenCalled();
+                expect(programmingExerciseService.importExercise).toHaveBeenCalledExactlyOnceWith(entity, comp.importOptions, deactivate);
+                expect(securityFrameworkService.getConfig).toHaveBeenCalledExactlyOnceWith(9);
+                expectNoSecondRequest();
             });
 
-            it('pins the chosen version after creation when it stays on', () => {
-                comp.stagedSecurityChoice.set({ active: true, frameworkVersion: '2.3.0' });
+            it('sends the choice with an import from a file', () => {
+                const entity = newJavaExercise();
+                comp.isImportFromFile = true;
+                comp.stagedSecurityChoice.set(deactivate);
+                vi.spyOn(programmingExerciseService, 'importFromFile').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 9 } })));
 
-                saveNewJavaExercise();
+                comp.save();
 
-                expect(securityFrameworkService.activate).toHaveBeenCalledWith(2, '2.3.0');
+                expect(programmingExerciseService.importFromFile).toHaveBeenCalledExactlyOnceWith(entity, course.id, deactivate);
+                expect(securityFrameworkService.getConfig).toHaveBeenCalledExactlyOnceWith(9);
             });
 
-            it('warns but still finishes saving when applying the choice fails', () => {
-                vi.spyOn(securityFrameworkService, 'deactivate').mockReturnValue(throwError(() => new Error('PUSH_FAILED')));
-                const alertSpy = vi.spyOn(alertService, 'addAlert');
-                comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+            it('sends the choice with an import from the sharing platform', () => {
+                const entity = newJavaExercise();
+                comp.isImportFromSharing = true;
+                comp.stagedSecurityChoice.set(pinVersion);
+                vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 9 } })));
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: '2.3.0' }));
 
-                saveNewJavaExercise();
+                comp.save();
 
-                expect(alertSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'artemisApp.programmingExercise.security.activationFailedOnCreate' }));
-                expect(comp.isSaving()).toBe(false);
+                expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledExactlyOnceWith(entity, course.id, comp['sharingInfo'], pinVersion);
+                expect(securityFrameworkService.getConfig).toHaveBeenCalledExactlyOnceWith(9);
+            });
+
+            it('tells the card which form it is part of, so an import never counts as editing the source', () => {
+                comp.programmingExercise = newJavaExercise();
+                expect(comp.securityCardMode()).toBe('create');
+                expect(comp.securitySourceExerciseId()).toBeUndefined();
+
+                comp.programmingExercise.id = 7;
+                expect(comp.securityCardMode()).toBe('edit');
+
+                comp.isImportFromExistingExercise = true;
+                expect(comp.securityCardMode()).toBe('import');
+                expect(comp.securitySourceExerciseId()).toBe(7);
+
+                comp.isImportFromExistingExercise = false;
+                comp.isImportFromFile = true;
+                expect(comp.securityCardMode()).toBe('import');
+                expect(comp.securitySourceExerciseId()).toBeUndefined();
             });
         });
 
@@ -662,7 +789,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const created = Object.assign(new ProgrammingExercise(course, undefined), entity, { id: 42, templateParticipation: { id: 420 } });
             const setup = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: created })));
             comp.save();
-            expect(setup).toHaveBeenCalledExactlyOnceWith(entity);
+            expect(setup).toHaveBeenCalledExactlyOnceWith(entity, false, undefined);
         });
 
         it('should trim the exercise title before saving', () => {
@@ -688,7 +815,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.save();
 
             // THEN
-            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
+            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity, false, undefined);
             expect(entity.title).toBe('My Exercise');
         });
 
@@ -899,7 +1026,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         it('should drop a staged Security Framework choice when switching to the black-box project type', () => {
             comp.ngOnInit();
             fixture.detectChanges();
-            comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+            comp.stagedSecurityChoice.set({ action: SecurityFrameworkAction.DEACTIVATE });
 
             comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
 
@@ -909,7 +1036,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         it('should drop a staged Security Framework choice when the language changes away from Java', () => {
             comp.ngOnInit();
             fixture.detectChanges();
-            comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+            comp.stagedSecurityChoice.set({ action: SecurityFrameworkAction.DEACTIVATE });
 
             comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
 
@@ -1372,7 +1499,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.save();
 
             // THEN
-            expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity, 1);
+            expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity, 1, undefined);
             expect(comp.isSaving()).toBe(false);
         });
 
@@ -1530,7 +1657,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.save();
 
             // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo'], undefined);
         });
 
         it('should call create service on save for new sharing entity, but save failed', () => {
@@ -1551,7 +1678,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.save();
 
             // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo'], undefined);
         });
 
         it('should import without buildConfig and reset dates, id, project key and store zipFile', () => {

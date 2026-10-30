@@ -1,0 +1,197 @@
+---
+id: security-framework
+title: Security Framework (Ares 2 Sandbox)
+sidebar_label: Security Framework
+---
+
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+
+The Java test templates run the student code inside the [Ares 2](https://ls1intum.github.io/Ares2/) sandbox. This
+page explains what the sandbox restricts, how to read its state on the **Security** card of the exercise form, and
+what Artemis changes in the tests repository when you activate or deactivate it.
+
+## What the Sandbox Restricts
+
+While the tests run, Ares 2 restricts what the student code may do: access the file system, open network
+connections, execute commands, start threads, import packages, and run longer than the allowed time. Anything the
+policy does not permit fails the test with a security message, so a submission cannot read the tests, crash the
+build agent or report a fake result.
+
+Two things in the tests repository control the sandbox:
+
+- **The policy file**, `SecurityPolicy.yaml` in the root of the tests repository by default. It lists the test
+  classes in `theFollowingClassesAreTestClasses` and the resources the student code may use in
+  `theFollowingResourceAccessesArePermitted`. The [Ares 2 policy reference](https://ls1intum.github.io/Ares2/instructor/policy-reference)
+  describes every key.
+- **The `@Policy` annotation** on each test class, which names the policy file the class enforces:
+
+  ```java
+  @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+  ```
+
+  With `activated = false` as an additional argument, the class runs without the sandbox.
+
+Keep the sandbox on for graded exercises. Switch it off for an exercise whose solution legitimately needs resources
+the sandbox blocks, when you do not want to maintain a policy that permits them. The tests themselves stay
+unchanged either way. See [Testing with Ares](/instructor/exercises/programming-exercise/write-code-and-tests#testing-with-ares)
+for writing tests with Ares.
+
+## Where to Find the Setting
+
+The **Security** card sits in the creation, edit and import form of Java programming exercises, between the
+**Language** and **Version Control** sections. It is shown in both simple and advanced mode. It is not shown for the
+DejaGnu (black-box) project type, whose tests run without Ares.
+
+The card has two controls: the **Activate Security Framework** toggle and the **Framework version** selector. Only
+instructors see the card and can change it.
+
+## States of the Card
+
+The card always shows the state of the tests repository as Ares applies it when the tests run. Artemis stores no
+separate setting, so a change you make in the repository yourself is reflected the next time you open the form.
+
+### Active
+
+At least one test class enforces a policy. A test class you switched off yourself (with `activated = false`) does
+not change this, as long as another class still enforces a policy.
+
+### Inactive
+
+Every test class runs without the sandbox.
+
+### Misconfigured
+
+An active `@Policy` annotation points to a policy file that Ares cannot use: the file is missing, its path is
+invalid, it is too large, or it is not a valid policy. Ares then fails the tests on purpose, so the results of the
+template, the solution and every student drop until the problem is fixed.
+
+- **Repair** restores a missing policy file from the repository history, or generates a default policy if the
+  exercise never had one. The annotations stay as they are.
+- **Deactivate** switches the sandbox off instead, as described in [Deactivate the Sandbox](#deactivate-the-sandbox).
+
+An invalid path, a file that is too large and a file that is not a valid policy are not repaired automatically,
+because Artemis cannot tell what the file should contain. Fix them in the tests repository by hand.
+
+### Not Supported
+
+The tests use Ares in a way Artemis does not change automatically, because it could not do so reliably. The card
+lists the reasons, which can be:
+
+- The tests use Ares 1, whose own sandbox Artemis does not control.
+- No test class uses Ares 2.
+- The build file does not pin an Ares version through `aresVersion` (Gradle) or `ares.version` (Maven).
+- A `@Policy` annotation is on a method, a field or a nested class, or on an annotation type.
+- Tests or Ares annotations are inside a nested class.
+- A file declares several top-level types that are test classes or carry a `@Policy` annotation.
+- A test class registers Ares but has no `@Policy` annotation of its own.
+- A test class does not register Ares through `@Public`, `@Hidden`, `@PublicTest` or `@HiddenTest`.
+- A `@Policy` argument is an expression instead of a literal.
+
+The toggle cannot change such an exercise. Resolve the listed reasons in the tests repository, or keep managing
+the policy by hand.
+
+### Test Classes Missing from the Policy
+
+The card also warns when a test class enforces a policy but is not listed in that policy's
+`theFollowingClassesAreTestClasses`. Ares treats such a class like student code, so its own file access or
+reflection can fail the test. Add the class to the list, or activate the sandbox again, which adds it for you.
+
+### Error
+
+If an activation, deactivation or version change fails, the card shows **Error** together with the reason, and
+**Retry** runs the failed operation again.
+
+## Deactivate the Sandbox
+
+Switching off **Activate Security Framework** opens a confirmation dialog first. After you confirm, Artemis creates
+one commit in the tests repository that:
+
+- deletes `SecurityPolicy.yaml`, and
+- sets `activated = false` on every `@Policy` annotation. Other arguments, such as a custom policy path, stay.
+
+The template and solution builds then run again. The Ares library stays in the build file, because tests also use
+its other features, such as structural tests, `@StrictTimeout` and the reflection helpers.
+
+Deactivating an exercise that is already inactive changes nothing.
+
+## Activate the Sandbox
+
+Switching on **Activate Security Framework** creates one commit in the tests repository that:
+
+- switches the `@Policy` annotations back on as they were before the last deactivation. A test class you had
+  switched off yourself stays off. Test classes added since then are switched on, and a renamed class counts as a
+  new one.
+- restores the previous policy file from the repository history, or generates a default policy if the exercise
+  never had one.
+- adds test classes that are missing from the policy's `theFollowingClassesAreTestClasses`. It never removes an
+  entry.
+- pins the selected framework version in the build file.
+
+The template and solution builds then run again.
+
+## Choose the Framework Version
+
+**Framework version** is the Ares version pinned in the build file of the tests repository. Artemis supports Ares
+2.2.1 and later. By default, the version the Java templates use is the only one you can select. Administrators can
+offer further versions with the `artemis.programming.security-framework.supported-versions` setting; it should only
+list published versions, and versions older than 2.2.1 are ignored.
+
+The version can only be changed while the sandbox is active, and the change is again one commit followed by new
+template and solution builds. If the repository pins a version that is no longer offered, the selector shows it as
+no longer supported, and you can switch to a supported one.
+
+## When You Create an Exercise
+
+The card starts as **Active** with the version of the selected template. Artemis applies your choice to the tests
+repository before the first build, so the exercise is built only once.
+
+If you create the exercise with the sandbox switched off, the template's `SecurityPolicy.yaml` stays in the
+repository and only the annotations are switched off. Activating the sandbox later therefore brings back exactly
+the permissions of the template.
+
+The card is not available together with empty repositories for [AI-assisted code generation](/instructor/exercises/programming-exercise/ai-assisted-authoring#ai-assisted-code-generation).
+
+## When You Import an Exercise
+
+- **From an existing exercise**, the card shows the state of the source exercise. A change applies only to the new
+  exercise, never to the source.
+- **From a file or the sharing platform**, the state is unknown until the import has finished. Choose **Keep as
+  imported** (the default), **Activate** or **Deactivate**.
+
+If your choice cannot be applied, for example because the imported tests use Ares 1, the import still completes
+with the tests unchanged, and a warning tells you why.
+
+## Edit the Policy by Hand
+
+You can still edit `SecurityPolicy.yaml`, the `@Policy` annotations and the build file yourself, in the online
+editor or through Git. This is how you permit additional resources for an exercise. The card always shows the state
+of the repository, so it picks up your changes.
+
+A custom policy path such as `@Policy("custom.yaml")` is kept and respected by every operation. The path must stay
+inside the repository; a path that leaves it, points into `.git` or to a directory makes the exercise
+**Misconfigured**.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Every change you make to the policy affects the next build of every participation. Check the template and
+  solution results after editing it, before students start working.
+
+</Callout>
+
+## Limitations
+
+- Nested test classes are not added to the policy automatically.
+- Renamed test classes are not tracked. After a rename, activating treats the class as new.
+- Exercises that use Ares 1 are not migrated automatically. They show as **Not supported**.
+- Artemis adds a test class only to the policy file its own `@Policy` names. If a test calls a helper method of another
+  test class, that call runs under the calling test's policy, so add the other test class to that policy file by hand.
+
+## Related Pages
+
+- [Testing with Ares](/instructor/exercises/programming-exercise/write-code-and-tests#testing-with-ares): writing
+  tests with Ares 2.
+- [Ares 2 policy reference](https://ls1intum.github.io/Ares2/instructor/policy-reference): every key of the
+  policy file.
+- [Create a Programming Exercise](/instructor/exercises/programming-exercise/create-an-exercise): the rest of the
+  creation form.

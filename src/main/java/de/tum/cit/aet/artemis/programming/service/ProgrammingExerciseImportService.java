@@ -16,11 +16,15 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.api.dtos.ParticipationReservation;
@@ -32,15 +36,19 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class ProgrammingExerciseImportService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
 
     /** Everything that is not alphanumeric, which a short name may not contain. */
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9]");
@@ -71,13 +79,17 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final SecurityFrameworkService securityFrameworkService;
+
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
-            Optional<HyperionExerciseMutationApi> mutationApi, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+            Optional<HyperionExerciseMutationApi> mutationApi, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            SecurityFrameworkService securityFrameworkService) {
+        this.securityFrameworkService = securityFrameworkService;
         this.mutationApi = mutationApi;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -185,7 +197,7 @@ public class ProgrammingExerciseImportService {
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, @NonNull ProgrammingExercise newExercise, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) {
-        return importGuarded(sourceExercise, null, newExercise, null, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+        return importGuarded(sourceExercise, null, newExercise, null, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, null, null);
     }
 
     /**
@@ -203,11 +215,33 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig,
             @NonNull ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) {
-        return importGuarded(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+        return importGuarded(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, null, null);
+    }
+
+    /**
+     * Imports a programming exercise like {@link #importProgrammingExercise(ProgrammingExercise, ProgrammingExerciseBuildConfig, ProgrammingExercise,
+     * ProgrammingExerciseBuildConfig, boolean, boolean)} and applies a Security Framework choice to the copied tests repository before the first builds run.
+     *
+     * @param sourceExercise                      the Programming Exercise which should be used as a blueprint
+     * @param sourceBuildConfig                   the stored build configuration of the source exercise
+     * @param newExercise                         The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param newBuildConfig                      the build configuration the request carries, or {@code null} to copy the source's
+     * @param recreateBuildPlans                  if the build plans should be recreated
+     * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
+     * @param securityFrameworkChoice             the validated Security Framework setting; null to keep the copied one
+     * @param user                                the acting user, who authors the commit that applies the choice
+     * @return the imported programming exercise
+     */
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig,
+            @NonNull ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate, @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice, @Nullable User user) {
+        return importGuarded(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, securityFrameworkChoice,
+                user);
     }
 
     private ProgrammingExercise importGuarded(ProgrammingExercise sourceExercise, @Nullable ProgrammingExerciseBuildConfig sourceBuildConfig, ProgrammingExercise newExercise,
-            @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate) {
+            @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate,
+            @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice, @Nullable User user) {
         long sourceId = sourceExercise.getId();
         var coordination = sourceExercise.isExamExercise() ? Optional.<HyperionExerciseMutationApi>empty() : mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled);
         try (var reservation = coordination.map(api -> api.reserveParticipation(sourceId)).orElseGet(() -> new ParticipationReservation(() -> {
@@ -225,14 +259,16 @@ public class ProgrammingExerciseImportService {
             else if (sourceBuildConfig == null) {
                 sourceBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(sourceExercise.getId());
             }
-            return importCoordinated(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+            return importCoordinated(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate,
+                    securityFrameworkChoice, user);
         }
     }
 
     private ProgrammingExercise importCoordinated(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig, ProgrammingExercise newExercise,
-            @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate) {
+            @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate,
+            @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice, @Nullable User user) {
         ProgrammingExercise prepared = prepareImport(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig);
-        return completeImport(sourceExercise, prepared, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+        return completeImport(sourceExercise, prepared, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, securityFrameworkChoice, user);
     }
 
     /**
@@ -276,7 +312,27 @@ public class ProgrammingExerciseImportService {
      */
     public ProgrammingExercise completeImport(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) {
+        return completeImport(sourceExercise, newExercise, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, null, null);
+    }
+
+    /**
+     * Finishes a previously prepared import and applies a Security Framework choice to the copied tests repository before the builds are triggered, so the
+     * imported exercise is built once with the chosen setting.
+     *
+     * @param sourceExercise                      source with import associations initialized
+     * @param newExercise                         prepared destination
+     * @param recreateBuildPlans                  create new plans rather than copying them
+     * @param setTestCaseVisibilityToAfterDueDate override copied visibility when requested
+     * @param securityFrameworkChoice             the validated Security Framework setting; null to keep the copied one
+     * @param user                                the acting user, who authors the commit that applies the choice; required with a choice
+     * @return the imported destination
+     */
+    public ProgrammingExercise completeImport(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate, @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice, @Nullable User user) {
         programmingExerciseImportBasicService.importRepositories(sourceExercise, newExercise);
+        if (securityFrameworkChoice != null && user != null) {
+            applySecurityFrameworkChoice(newExercise, securityFrameworkChoice, user);
+        }
 
         if (setTestCaseVisibilityToAfterDueDate) {
             Set<ProgrammingExerciseTestCase> testCases = this.programmingExerciseTestCaseRepository.findByExerciseId(newExercise.getId());
@@ -304,4 +360,17 @@ public class ProgrammingExerciseImportService {
         return newExercise;
     }
 
+    /**
+     * Applies the Security Framework choice to the copied tests repository. If the copied repository cannot be changed, e.g. because it uses Ares 1, the import
+     * still completes with the repository as copied; the client compares the resulting state with the choice and warns the instructor. A failure while
+     * pushing is not caught, because the repository state is unknown then.
+     */
+    private void applySecurityFrameworkChoice(ProgrammingExercise newExercise, SecurityFrameworkChoiceDTO securityFrameworkChoice, User user) {
+        try {
+            securityFrameworkService.applyChoiceToImportedExercise(newExercise, securityFrameworkChoice, user);
+        }
+        catch (BadRequestAlertException e) {
+            log.warn("The Security Framework choice was not applied to the imported exercise {}: {}", newExercise.getId(), e.getMessage());
+        }
+    }
 }

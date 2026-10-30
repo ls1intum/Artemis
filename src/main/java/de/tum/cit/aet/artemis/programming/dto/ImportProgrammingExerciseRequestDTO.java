@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * @param exerciseGroup                              the target exam exercise group; mutually exclusive with the course
  * @param templateParticipation                      the source template participation reference
  * @param solutionParticipation                      the source solution participation reference
+ * @param securityFramework                          the Security Framework setting to apply before the first builds; absent to keep the imported one
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 // bare @JsonInclude(): request bodies must keep nulls and empty collections on the wire, and the shared
@@ -100,7 +101,8 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         ProgrammingLanguage programmingLanguage, ProjectType projectType, String projectKey, String testRepositoryUri, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
         List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup, SourceParticipationRefDTO templateParticipation,
-        SourceParticipationRefDTO solutionParticipation) implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
+        SourceParticipationRefDTO solutionParticipation, @Nullable SecurityFrameworkChoiceDTO securityFramework)
+        implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
     /**
      * Builds the import request body describing an exercise and the build configuration the import should use. The
@@ -137,7 +139,7 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
                 exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(), exercise.getProjectKey(),
                 exercise.getTestRepositoryUri(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy,
                 plagiarismDetectionConfig, exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
-                exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()), null, null);
+                exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()), null, null, null);
     }
 
     /**

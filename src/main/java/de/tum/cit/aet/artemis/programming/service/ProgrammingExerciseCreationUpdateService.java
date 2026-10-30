@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -206,6 +207,24 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, boolean emptyRepositories,
             boolean skipRepositoryAndBuildTrigger) throws GitAPIException, IOException {
+        return createProgrammingExercise(programmingExercise, buildConfig, emptyRepositories, skipRepositoryAndBuildTrigger, null);
+    }
+
+    /**
+     * Setups the context of a new programming exercise with optional repository cleanup for AI generation and a Security Framework choice.
+     *
+     * @param programmingExercise           The programmingExercise that should be setup
+     * @param buildConfig                   Its build configuration, which is stored as a row of its own
+     * @param emptyRepositories             if true, clear sources in template, solution, and test repositories after setup
+     * @param skipRepositoryAndBuildTrigger if true, skip repository setups, initial submissions, and build plan setup
+     * @param securityFrameworkChoice       the validated Security Framework setting to apply to the tests repository before its first commit; null to keep
+     *                                          the template's
+     * @return The new setup exercise
+     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
+     * @throws IOException     If the template files couldn't be read
+     */
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, boolean emptyRepositories,
+            boolean skipRepositoryAndBuildTrigger, @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice) throws GitAPIException, IOException {
         if (programmingExercise == null) {
             throw new BadRequestAlertException("ProgrammingExercise must not be null", "ProgrammingExercise", "programmingExerciseNull");
         }
@@ -268,7 +287,7 @@ public class ProgrammingExerciseCreationUpdateService {
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         if (!skipRepositoryAndBuildTrigger) {
-            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, savedBuildConfig, exerciseCreator, emptyRepositories);
+            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, savedBuildConfig, exerciseCreator, emptyRepositories, securityFrameworkChoice);
             savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
         }
 

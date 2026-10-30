@@ -59,6 +59,18 @@
     --sf-syncline-color: var(--tumaet-ui-state-danger-foreground);
 }
 
+.sf-card--misconfigured {
+    --sf-accent: var(--tumaet-ui-state-danger);
+    --sf-foreground: var(--tumaet-ui-state-danger-foreground);
+    --sf-syncline-color: var(--tumaet-ui-state-danger-foreground);
+}
+
+.sf-card--unsupported {
+    --sf-accent: var(--tumaet-ui-state-warning);
+    --sf-foreground: var(--tumaet-ui-state-warning-foreground);
+    --sf-syncline-color: var(--tumaet-ui-muted-color);
+}
+
 .sf-title-row {
     display: flex;
     align-items: center;
@@ -69,6 +81,24 @@
 .sf-desc {
     margin-top: 0.3rem;
     color: var(--tumaet-ui-muted-color);
+}
+
+.sf-list {
+    margin: 0.3rem 0 0;
+    padding-left: 1.1rem;
+    list-style: disc;
+}
+
+.sf-hint {
+    margin-top: 0.4rem;
+    color: var(--tumaet-ui-muted-color);
+}
+
+.sf-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
 }
 
 .sf-version {

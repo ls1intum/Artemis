@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,10 +21,14 @@ import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
+
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkState;
 
 /**
  * Reads and rewrites the Ares 2 security setup inside a checked-out exercise-tests repository.
@@ -31,7 +37,7 @@ import org.jspecify.annotations.Nullable;
  * repository root contains {@code SecurityPolicy.yaml}, and the build file pins the Ares version ({@code aresVersion} in Gradle, {@code ares.version} in
  * Maven). This class is the single place that knows that layout:
  * <ul>
- * <li>the Security Framework is <em>active</em> when {@code SecurityPolicy.yaml} exists,</li>
+ * <li>the state of the Security Framework is what Ares applies when the tests run, see {@link #evaluate(Map, PolicyFileReader, BuildFiles)},</li>
  * <li>deactivating deletes the policy file and switches every {@code @Policy} annotation to {@code activated = false}, so Ares stops enforcing a sandbox
  * (removing the annotation alone would not do that, because Ares then applies its strict default policy),</li>
  * <li>activating writes a policy file and switches the annotations back on.</li>
@@ -52,15 +58,9 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<]+)(</ares\\.version>)");
 
-    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w.]+)\\s*;", Pattern.MULTILINE);
+    private static final String ARES_1_ARTIFACT = "artemis-java-test-sandbox";
 
-    /**
-     * Marks a test class: an Ares {@code @Policy} annotation, or a JUnit Jupiter annotation that makes a method a test, i.e. {@code @Test},
-     * {@code @RepeatedTest}, {@code @TestFactory} and {@code @TestTemplate} from {@code org.junit.jupiter.api} and {@code @ParameterizedTest} from
-     * {@code org.junit.jupiter.params}, each with or without its package.
-     */
-    private static final Pattern TEST_CLASS_MARKER = Pattern.compile("@(org\\.junit\\.jupiter\\.api\\.)?(Test|RepeatedTest|TestFactory|TestTemplate)\\b"
-            + "|@(org\\.junit\\.jupiter\\.params\\.)?ParameterizedTest\\b|@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy\\b");
+    private static final Pattern WINDOWS_DRIVE = Pattern.compile("[A-Za-z]:");
 
     /** Directories that never contain test sources of the exercise, wherever they appear. */
     private static final Set<String> IGNORED_DIRECTORIES = Set.of(".git", ".gradle", ".idea", "node_modules");
@@ -72,8 +72,6 @@ public final class SecurityPolicyRepositoryFiles {
     private static final Set<String> BUILD_OUTPUT_DIRECTORIES = Set.of("build", "target");
 
     private static final Set<String> BUILD_FILES = Set.of(GRADLE_BUILD_FILE, "build.gradle.kts", MAVEN_BUILD_FILE);
-
-    private static final Pattern JAVA_FILE_SUFFIX = Pattern.compile("\\.java$");
 
     /** The build tool of the exercise-tests repository, which selects the Ares language configuration of a generated policy. */
     public enum BuildTool {
@@ -92,106 +90,283 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * @param repositoryRoot root of the checked-out exercise-tests repository
-     * @return whether the repository contains the Ares security policy file, i.e. whether the Security Framework is active
+     * The build files at the root of the tests repository, as far as they exist.
+     *
+     * @param gradleBuild content of {@code build.gradle}
+     * @param mavenPom    content of {@code pom.xml}
      */
-    public static boolean isPolicyPresent(Path repositoryRoot) {
-        return Files.isRegularFile(repositoryRoot.resolve(POLICY_FILE_NAME));
+    public record BuildFiles(@Nullable String gradleBuild, @Nullable String mavenPom) {
+
+        /**
+         * @return whether a build file refers to the Ares 1 library {@code artemis-java-test-sandbox}
+         */
+        boolean usesAres1() {
+            return (gradleBuild != null && gradleBuild.contains(ARES_1_ARTIFACT)) || (mavenPom != null && mavenPom.contains(ARES_1_ARTIFACT));
+        }
     }
 
     /**
-     * Whether Ares enforces a policy for the tests of the repository. This is the single rule for the state of the Security Framework:
+     * The content of a policy file as far as it could be read.
+     *
+     * @param problem why the file cannot be used; absent if it was read
+     * @param content the content; absent if there is a problem
+     */
+    public record PolicyFileContent(SecurityFrameworkState.@Nullable PolicyFileProblem problem, @Nullable String content) {
+
+        static PolicyFileContent of(String content) {
+            return new PolicyFileContent(null, content);
+        }
+
+        static PolicyFileContent failed(SecurityFrameworkState.PolicyFileProblem problem) {
+            return new PolicyFileContent(problem, null);
+        }
+    }
+
+    /**
+     * Reads a policy file of the repository by its validated path, see {@link #validatePolicyPath(String)}. A checkout and a committed tree implement it
+     * differently, but both reject everything that is not a regular file and check the size before reading.
+     */
+    @FunctionalInterface
+    public interface PolicyFileReader {
+
+        /**
+         * @param path a validated path relative to the repository root
+         * @return the content or the problem
+         */
+        PolicyFileContent read(String path);
+    }
+
+    /**
+     * Determines the Security Framework state of a tests repository, as Ares applies it when the tests run. This is the single rule for the state:
      * <ul>
-     * <li>if a test switches its {@code @Policy} annotation off, the framework is off, because that test runs without a sandbox;</li>
-     * <li>otherwise, if the tests have {@code @Policy} annotations, the framework is on if one of them enforces a policy: either Ares's strict default (no
-     * policy file given) or a policy file that exists, such as an instructor's own one;</li>
-     * <li>without any annotation, the framework is on if {@link #POLICY_FILE_NAME} exists.</li>
+     * <li>{@code UNSUPPORTED} if the repository uses Ares in a way the Security Framework cannot manage reliably, see
+     * {@link SecurityFrameworkState.UnsupportedReasonType};</li>
+     * <li>{@code MISCONFIGURED} if an active {@code @Policy} annotation points to a policy file that is missing, invalid or unreadable, because Ares then fails
+     * the tests;</li>
+     * <li>{@code ACTIVE} if at least one test class has an active {@code @Policy} annotation;</li>
+     * <li>{@code INACTIVE} otherwise.</li>
      * </ul>
+     * Only the policy files of active annotations are read, because Ares does not read the others either.
      *
-     * The state can only be determined if every annotation can be evaluated, see {@link #findUnevaluableAnnotations(Map)}; callers reject other
-     * repositories first.
-     *
-     * @param javaSources the contents of the Java files of the repository
-     * @param fileExists  whether a path, relative to the repository root, is a file of the repository
-     * @return whether the Security Framework is active
-     * @throws IllegalArgumentException if an annotation cannot be evaluated, because the state is then unknown
+     * @param javaSources the Java sources of the repository by their path relative to its root, see {@link #isJavaSourcePath(String, Predicate)}
+     * @param reader      reads the policy files of the repository
+     * @param buildFiles  the build files at the root of the repository
+     * @return the state
      */
-    public static boolean isEnforcing(Iterable<String> javaSources, Predicate<String> fileExists) {
-        boolean anyAnnotation = false;
-        boolean anyEnforcingAnnotation = false;
-        for (String javaSource : javaSources) {
-            for (AresPolicyAnnotations.Annotation annotation : AresPolicyAnnotations.find(javaSource)) {
-                if (!annotation.isEvaluable()) {
-                    throw new IllegalArgumentException("A @Policy annotation uses an expression that is not evaluated: " + annotation.name());
-                }
-                if (!annotation.isActivated()) {
-                    return false;
-                }
-                anyAnnotation = true;
-                anyEnforcingAnnotation |= annotation.policyPath().map(fileExists::test).orElse(true);
+    public static SecurityFrameworkState evaluate(Map<String, String> javaSources, PolicyFileReader reader, BuildFiles buildFiles) {
+        List<AresTestSources.Summary> summaries = javaSources.entrySet().stream().map(source -> AresTestSources.analyze(source.getKey(), source.getValue())).toList();
+        List<SecurityFrameworkState.UnsupportedReason> reasons = new ArrayList<>();
+        boolean usesAres1 = buildFiles.usesAres1() || summaries.stream().anyMatch(AresTestSources.Summary::usesAres1);
+        if (usesAres1) {
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(buildFiles.gradleBuild() != null ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE,
+                    SecurityFrameworkState.UnsupportedReasonType.ARES_1));
+        }
+        if (detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom()).isEmpty()) {
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(buildFiles.mavenPom() != null ? MAVEN_BUILD_FILE : GRADLE_BUILD_FILE,
+                    SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED));
+        }
+        summaries.forEach(summary -> summary.problems().forEach(problem -> reasons.add(new SecurityFrameworkState.UnsupportedReason(summary.path(), problem))));
+
+        List<AresTestSources.TypeDeclaration> testClasses = testClasses(summaries);
+        if (!usesAres1) {
+            reasons.addAll(testClassReasons(testClasses));
+        }
+        if (!reasons.isEmpty()) {
+            return new SecurityFrameworkState(SecurityActivationStatus.UNSUPPORTED, List.of(), List.of(), List.copyOf(reasons));
+        }
+
+        List<String> disabledTestClasses = new ArrayList<>();
+        Map<String, List<String>> classesByPolicyPath = new TreeMap<>();
+        boolean anyActive = false;
+        for (AresTestSources.TypeDeclaration testClass : testClasses) {
+            AresPolicyAnnotations.Annotation annotation = testClass.policies().getFirst();
+            if (!annotation.isActivated()) {
+                disabledTestClasses.add(testClass.qualifiedName());
+                continue;
             }
+            anyActive = true;
+            annotation.policyPath().filter(path -> !path.isBlank())
+                    .ifPresent(path -> classesByPolicyPath.computeIfAbsent(path, _ -> new ArrayList<>()).add(testClass.qualifiedName()));
         }
-        return anyAnnotation ? anyEnforcingAnnotation : fileExists.test(POLICY_FILE_NAME);
-    }
+        List<SecurityFrameworkState.PolicyFile> policyFiles = new ArrayList<>();
+        classesByPolicyPath.forEach((path, referencedBy) -> policyFiles.add(policyFile(path, referencedBy.stream().sorted().toList(), reader)));
 
-    /**
-     * Lists the Java sources with an Ares {@code @Policy} annotation that cannot be evaluated, see {@link AresPolicyAnnotations.Annotation#isEvaluable()}.
-     * For such a source, the state cannot be determined and a change could not be applied correctly, so a repository that has one is neither reported
-     * nor changed.
-     *
-     * @param javaSources the contents of the Java sources of the repository by their path relative to its root
-     * @return the paths of the sources with an annotation that cannot be evaluated, sorted; empty if there are none
-     */
-    public static List<String> findUnevaluableAnnotations(Map<String, String> javaSources) {
-        return javaSources.entrySet().stream().filter(source -> AresPolicyAnnotations.find(source.getValue()).stream().anyMatch(annotation -> !annotation.isEvaluable()))
-                .map(Map.Entry::getKey).sorted().toList();
-    }
-
-    /**
-     * @param repositoryRoot root of the checked-out exercise-tests repository
-     * @return the paths of the Java sources with an annotation that cannot be evaluated, see {@link #findUnevaluableAnnotations(Map)}
-     */
-    public static List<String> findUnevaluableAnnotations(Path repositoryRoot) {
-        Map<String, String> javaSources = new TreeMap<>();
-        for (Path javaFile : javaFiles(repositoryRoot)) {
-            javaSources.put(repositoryRoot.relativize(javaFile).toString().replace('\\', '/'), readFile(javaFile));
+        SecurityActivationStatus status;
+        if (policyFiles.stream().anyMatch(policyFile -> policyFile.problem() != null && policyFile.problem().breaksTheSandbox())) {
+            status = SecurityActivationStatus.MISCONFIGURED;
         }
-        return findUnevaluableAnnotations(javaSources);
+        else {
+            status = anyActive ? SecurityActivationStatus.ACTIVE : SecurityActivationStatus.INACTIVE;
+        }
+        disabledTestClasses.sort(String::compareTo);
+        return new SecurityFrameworkState(status, List.copyOf(disabledTestClasses), List.copyOf(policyFiles), List.of());
     }
 
     /**
      * @param repositoryRoot root of the checked-out exercise-tests repository; it may be relative or contain {@code .} and {@code ..}, e.g. below a relative
      *                           {@code artemis.temp-path}
-     * @return whether the Security Framework is active, see {@link #isEnforcing(Iterable, Predicate)}
+     * @return the state of the checkout, see {@link #evaluate(Map, PolicyFileReader, BuildFiles)}
      */
-    public static boolean isEnforcing(Path repositoryRoot) {
+    public static SecurityFrameworkState evaluate(Path repositoryRoot) {
         Path root = repositoryRoot.toAbsolutePath().normalize();
-        return isEnforcing(javaFiles(root).stream().map(SecurityPolicyRepositoryFiles::readFile).toList(), path -> isRepositoryFile(root, path));
+        return evaluate(javaSources(root), path -> readPolicyFile(root, path), buildFiles(root));
     }
 
     /**
-     * @param root the absolute, normalized repository root
-     * @param path a path relative to the root
-     * @return whether the path is a regular file inside the repository; a path that leaves the repository or is not valid is none
+     * The test classes are the relevant top-level types of the sources, see {@link AresTestSources.TypeDeclaration#isRelevant()}, and every class that
+     * extends one of them, because it inherits its tests. Such a subclass must then carry its own annotation as well.
      */
-    private static boolean isRepositoryFile(Path root, String path) {
+    private static List<AresTestSources.TypeDeclaration> testClasses(List<AresTestSources.Summary> summaries) {
+        List<AresTestSources.TypeDeclaration> allTypes = summaries.stream().flatMap(summary -> summary.topLevelTypes().stream()).toList();
+        Set<String> allTypeNames = allTypes.stream().map(AresTestSources.TypeDeclaration::qualifiedName).collect(Collectors.toSet());
+        Set<String> testClassNames = new HashSet<>();
+        allTypes.stream().filter(AresTestSources.TypeDeclaration::isRelevant).forEach(type -> testClassNames.add(type.qualifiedName()));
+        boolean added = true;
+        while (added) {
+            added = false;
+            for (AresTestSources.TypeDeclaration type : allTypes) {
+                if (superclassOf(type, allTypeNames).filter(testClassNames::contains).isPresent() && testClassNames.add(type.qualifiedName())) {
+                    added = true;
+                }
+            }
+        }
+        return allTypes.stream().filter(type -> testClassNames.contains(type.qualifiedName())).sorted(Comparator.comparing(AresTestSources.TypeDeclaration::qualifiedName))
+                .toList();
+    }
+
+    /**
+     * The class a type extends, among the types of the repository: like Java, the first candidate that exists wins, so a class of the type's own package
+     * takes precedence over one of a wildcard import.
+     */
+    private static Optional<String> superclassOf(AresTestSources.TypeDeclaration type, Set<String> allTypeNames) {
+        return type.superclass().stream().filter(allTypeNames::contains).findFirst();
+    }
+
+    private static List<SecurityFrameworkState.UnsupportedReason> testClassReasons(List<AresTestSources.TypeDeclaration> testClasses) {
+        if (!testClasses.isEmpty() && testClasses.stream().noneMatch(testClass -> testClass.registersSandbox() || !testClass.policies().isEmpty())) {
+            return List.of(new SecurityFrameworkState.UnsupportedReason(testClasses.getFirst().qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.NO_ARES_2));
+        }
+        List<SecurityFrameworkState.UnsupportedReason> reasons = new ArrayList<>();
+        for (AresTestSources.TypeDeclaration testClass : testClasses) {
+            if (testClass.policies().size() != 1) {
+                reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(),
+                        testClass.policies().isEmpty() ? SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY
+                                : SecurityFrameworkState.UnsupportedReasonType.UNEVALUABLE_ARGUMENTS));
+            }
+            if (!testClass.registersSandbox()) {
+                reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES));
+            }
+        }
+        return reasons;
+    }
+
+    private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader) {
+        Optional<String> validPath = validatePolicyPath(path);
+        if (validPath.isEmpty()) {
+            return new SecurityFrameworkState.PolicyFile(path, referencedBy, SecurityFrameworkState.PolicyFileProblem.INVALID_PATH, List.of());
+        }
+        PolicyFileContent content = reader.read(validPath.get());
+        if (content.problem() != null || content.content() == null) {
+            return new SecurityFrameworkState.PolicyFile(path, referencedBy, content.problem(), List.of());
+        }
+        SecurityPolicyYaml.ReadPolicy policy = SecurityPolicyYaml.read(content.content());
+        if (!policy.valid()) {
+            return new SecurityFrameworkState.PolicyFile(path, referencedBy, SecurityFrameworkState.PolicyFileProblem.UNPARSEABLE, List.of());
+        }
+        if (policy.testClasses().isEmpty()) {
+            return new SecurityFrameworkState.PolicyFile(path, referencedBy, SecurityFrameworkState.PolicyFileProblem.TEST_CLASS_LIST_NOT_FOUND, List.of());
+        }
+        List<String> missing = referencedBy.stream().filter(testClass -> !policy.testClasses().get().contains(testClass)).toList();
+        return new SecurityFrameworkState.PolicyFile(path, referencedBy, null, missing);
+    }
+
+    /**
+     * The boundary for every policy path that comes from an annotation: only a relative path that stays inside the repository and does not point into its
+     * {@code .git} directory is ever read, restored or written.
+     *
+     * @param path a policy path as an annotation names it
+     * @return the normalized path relative to the repository root with forward slashes; empty if the path is not acceptable
+     */
+    public static Optional<String> validatePolicyPath(String path) {
+        if (path.isBlank() || path.indexOf('\0') >= 0 || path.startsWith("/") || path.startsWith("\\") || WINDOWS_DRIVE.matcher(path).lookingAt()) {
+            return Optional.empty();
+        }
+        String normalized;
         try {
-            Path file = root.resolve(path).normalize();
-            return file.startsWith(root) && Files.isRegularFile(file);
+            normalized = Path.of(path).normalize().toString().replace('\\', '/');
         }
         catch (InvalidPathException e) {
-            return false;
+            return Optional.empty();
         }
+        if (normalized.isEmpty() || normalized.equals("..") || normalized.startsWith("../") || normalized.equals(".git") || normalized.startsWith(".git/")) {
+            return Optional.empty();
+        }
+        return Optional.of(normalized);
     }
 
     /**
-     * @param repositoryRoot root of the checked-out exercise-tests repository
-     * @return whether a test points its {@code @Policy} annotation to {@link #POLICY_FILE_NAME}, or no test has one, so that file is the one Ares reads
+     * Reads a policy file of a checkout without following symbolic links, neither for the file nor for a directory above it.
+     *
+     * @param root an absolute, normalized repository root
+     * @param path a validated path relative to the root
+     * @return the content or the problem
      */
-    public static boolean isPolicyFileUsed(Path repositoryRoot) {
-        List<AresPolicyAnnotations.Annotation> annotations = javaFiles(repositoryRoot).stream().flatMap(javaFile -> AresPolicyAnnotations.find(readFile(javaFile)).stream())
-                .toList();
-        return annotations.isEmpty() || annotations.stream().anyMatch(annotation -> annotation.policyPath().filter(POLICY_FILE_NAME::equals).isPresent());
+    static PolicyFileContent readPolicyFile(Path root, String path) {
+        Path file = root.resolve(path).normalize();
+        if (!file.startsWith(root) || hasSymbolicLinkOnPath(root, file)) {
+            return PolicyFileContent.failed(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH);
+        }
+        if (!Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
+            return PolicyFileContent.failed(SecurityFrameworkState.PolicyFileProblem.MISSING);
+        }
+        if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
+            return PolicyFileContent.failed(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH);
+        }
+        try {
+            if (Files.size(file) > SecurityPolicyYaml.MAX_POLICY_SIZE) {
+                return PolicyFileContent.failed(SecurityFrameworkState.PolicyFileProblem.TOO_LARGE);
+            }
+            return PolicyFileContent.of(Files.readString(file, StandardCharsets.UTF_8));
+        }
+        catch (IOException e) {
+            return PolicyFileContent.failed(SecurityFrameworkState.PolicyFileProblem.UNPARSEABLE);
+        }
+    }
+
+    private static boolean hasSymbolicLinkOnPath(Path root, Path file) {
+        for (Path current = file; current != null && current.startsWith(root) && !current.equals(root); current = current.getParent()) {
+            if (Files.isSymbolicLink(current)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param repositoryRoot an absolute, normalized repository root
+     * @return the Java sources of the checkout by their path relative to the root, with forward slashes
+     */
+    public static Map<String, String> javaSources(Path repositoryRoot) {
+        Map<String, String> javaSources = new TreeMap<>();
+        for (Path javaFile : javaFiles(repositoryRoot)) {
+            javaSources.put(repositoryRoot.relativize(javaFile).toString().replace('\\', '/'), readFile(javaFile));
+        }
+        return javaSources;
+    }
+
+    private static BuildFiles buildFiles(Path repositoryRoot) {
+        return new BuildFiles(readFileIfPresent(repositoryRoot.resolve(GRADLE_BUILD_FILE)).orElse(null), readFileIfPresent(repositoryRoot.resolve(MAVEN_BUILD_FILE)).orElse(null));
+    }
+
+    /**
+     * @param javaSources the Java sources of a repository by their path relative to its root
+     * @return for every source whose test class has an evaluable {@code @Policy} annotation whether it is switched on, by the path of the source
+     */
+    public static Map<String, Boolean> annotationStates(Map<String, String> javaSources) {
+        Map<String, Boolean> states = new TreeMap<>();
+        javaSources.forEach((path, source) -> AresTestSources.relevantType(AresTestSources.analyze(path, source)).filter(type -> type.policies().size() == 1)
+                .map(type -> type.policies().getFirst()).filter(AresPolicyAnnotations.Annotation::isEvaluable).ifPresent(annotation -> states.put(path, annotation.isActivated())));
+        return states;
     }
 
     /**
@@ -295,13 +470,21 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * Writes the policy file.
+     * Writes a policy file. The path must have passed {@link #validatePolicyPath(String)}; it is checked again against the checkout, so neither a symbolic
+     * link nor a path outside the repository is ever written.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param policyPath     the validated path of the policy file relative to the root
      * @param policy         the policy content
      */
-    public static void writePolicy(Path repositoryRoot, String policy) {
-        writeIfChanged(repositoryRoot.resolve(POLICY_FILE_NAME), readFileIfPresent(repositoryRoot.resolve(POLICY_FILE_NAME)).orElse(null), policy);
+    public static void writePolicy(Path repositoryRoot, String policyPath, String policy) {
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        Path file = root.resolve(policyPath).normalize();
+        if (validatePolicyPath(policyPath).isEmpty() || !file.startsWith(root) || hasSymbolicLinkOnPath(root, file)
+                || (Files.exists(file, LinkOption.NOFOLLOW_LINKS) && !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS))) {
+            throw new IllegalArgumentException("Refusing to write the policy file " + policyPath);
+        }
+        writeIfChanged(file, readFileIfPresent(file).orElse(null), policy);
     }
 
     /**
@@ -328,14 +511,46 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the number of files that changed
      */
     public static int setPolicyAnnotationsActive(Path repositoryRoot, boolean active) {
+        return setPolicyAnnotationsActive(repositoryRoot, _ -> active);
+    }
+
+    /**
+     * Switches the Ares {@code @Policy} annotations of each Java file on or off, as decided per file. The Security Framework only changes repositories in
+     * which every file has at most one relevant top-level type, see {@link AresTestSources}, so one decision per file is one decision per test class.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param activeForPath  whether the annotations of the file at a path, relative to the root with forward slashes, should enforce their policy
+     * @return the number of files that changed
+     */
+    public static int setPolicyAnnotationsActive(Path repositoryRoot, Predicate<String> activeForPath) {
         int changedFiles = 0;
         for (Path javaFile : javaFiles(repositoryRoot)) {
             String content = readFile(javaFile);
+            boolean active = activeForPath.test(repositoryRoot.relativize(javaFile).toString().replace('\\', '/'));
             if (writeIfChanged(javaFile, content, AresPolicyAnnotations.setActive(content, active))) {
                 changedFiles++;
             }
         }
         return changedFiles;
+    }
+
+    /**
+     * Adds test classes to the list of test classes of a policy file, see {@link SecurityPolicyYaml#addTestClasses(String, List)}.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param policyPath     the validated path of the policy file relative to the root
+     * @param testClasses    the fully qualified names to add
+     * @return whether the list now contains the classes; false if the file cannot be read or its list cannot be located, in which case it is unchanged
+     */
+    public static boolean addTestClassesToPolicy(Path repositoryRoot, String policyPath, List<String> testClasses) {
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        PolicyFileContent content = readPolicyFile(root, policyPath);
+        if (content.content() == null) {
+            return false;
+        }
+        Optional<String> updated = SecurityPolicyYaml.addTestClasses(content.content(), testClasses);
+        updated.ifPresent(policy -> writePolicy(root, policyPath, policy));
+        return updated.isPresent();
     }
 
     /**
@@ -377,18 +592,9 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the fully qualified names of all classes in the repository that contain tests, sorted
      */
     static List<String> findTestClasses(Path repositoryRoot) {
-        List<String> testClasses = new ArrayList<>();
-        for (Path javaFile : javaFiles(repositoryRoot)) {
-            String content = AresPolicyAnnotations.mask(readFile(javaFile));
-            if (!TEST_CLASS_MARKER.matcher(content).find()) {
-                continue;
-            }
-            String simpleName = JAVA_FILE_SUFFIX.matcher(javaFile.getFileName().toString()).replaceFirst("");
-            Matcher packageMatcher = PACKAGE_DECLARATION.matcher(content);
-            testClasses.add(packageMatcher.find() ? packageMatcher.group(1) + "." + simpleName : simpleName);
-        }
-        testClasses.sort(String::compareTo);
-        return testClasses;
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        List<AresTestSources.Summary> summaries = javaSources(root).entrySet().stream().map(source -> AresTestSources.analyze(source.getKey(), source.getValue())).toList();
+        return testClasses(summaries).stream().map(AresTestSources.TypeDeclaration::qualifiedName).sorted().toList();
     }
 
     /**

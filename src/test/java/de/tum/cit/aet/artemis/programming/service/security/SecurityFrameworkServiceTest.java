@@ -67,6 +67,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkAction;
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkState;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkVersionsDTO;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
@@ -110,6 +113,7 @@ class SecurityFrameworkServiceTest {
             import org.junit.jupiter.api.Test;
 
             // The fully qualified name is required, because the exercise itself contains a class named Policy
+            @de.tum.cit.ase.ares.api.jupiter.Public
             @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
             class SortingTest {
 
@@ -471,9 +475,9 @@ class SecurityFrameworkServiceTest {
                 StandardCharsets.UTF_8));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
 
-        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user))
-                .matches(exception -> "securityFrameworkNotActive".equals(exception.getErrorKey()));
+        // The test class in the package named build is scanned: its switched off policy is reported, while the other test class keeps the framework active.
+        assertThat(securityFrameworkService.getConfig(exercise).disabledTestClasses()).containsExactly("de.example.build.SortingTest");
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
     }
 
     @ParameterizedTest
@@ -483,7 +487,10 @@ class SecurityFrameworkServiceTest {
         String headBefore = pushedHead();
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
 
-        assertRejectedAsUnevaluable(() -> securityFrameworkService.getConfig(exercise));
+        SecurityFrameworkConfigDTO config = securityFrameworkService.getConfig(exercise);
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.UNSUPPORTED.name());
+        assertThat(config.unsupportedReasons()).extracting(SecurityFrameworkConfigDTO.UnsupportedReasonDTO::type)
+                .contains(SecurityFrameworkState.UnsupportedReasonType.UNEVALUABLE_ARGUMENTS.name());
         assertRejectedAsUnevaluable(() -> securityFrameworkService.activate(exercise, "2.2.1", user));
         assertRejectedAsUnevaluable(() -> securityFrameworkService.deactivate(exercise, user));
         assertRejectedAsUnevaluable(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user));
@@ -495,7 +502,7 @@ class SecurityFrameworkServiceTest {
 
     private static void assertRejectedAsUnevaluable(ThrowingCallable call) {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(call)
-                .matches(exception -> "securityFrameworkUnevaluableAnnotation".equals(exception.getErrorKey()) && exception.getMessage().contains("SortingTest.java"));
+                .matches(exception -> "securityFrameworkUnsupportedRepository".equals(exception.getErrorKey()) && exception.getMessage().contains("SortingTest.java"));
     }
 
     @Test
@@ -732,5 +739,206 @@ class SecurityFrameworkServiceTest {
         securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
 
         verifyNoInteractions(localVCServletService);
+    }
+
+    private static final String SECOND_TEST_CLASS = TEST_CLASS.replace("SortingTest", "ClassTest");
+
+    private static final String NEW_TEST_CLASS = TEST_CLASS.replace("SortingTest", "NewTest");
+
+    @Test
+    void aDeliberatelyDisabledTestClassStaysDisabledAcrossADeactivateActivateCycle() throws Exception {
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/ClassTest.java").toFile(),
+                SECOND_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        SecurityFrameworkConfigDTO mixed = securityFrameworkService.getConfig(exercise);
+        assertThat(mixed.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(mixed.disabledTestClasses()).containsExactly("de.example.ClassTest");
+
+        securityFrameworkService.deactivate(exercise, user);
+        // A test class added while the framework is off runs with the sandbox once it is activated again.
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/NewTest.java").toFile(),
+                NEW_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
+        SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise, "2.2.1", user);
+
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(config.disabledTestClasses()).containsExactly("de.example.ClassTest");
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
+        assertThat(readPushed("test/de/example/NewTest.java")).contains(NEW_TEST_CLASS);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME))
+                .contains(CUSTOM_POLICY.replace("    - \"de.example.SortingTest\"\n", "    - \"de.example.SortingTest\"\n    - \"de.example.NewTest\"\n"));
+    }
+
+    @Test
+    void aMissingPolicyFileIsReportedAsMisconfiguredAndRepairedWithoutTouchingTheAnnotations() throws Exception {
+        pushCheckoutChange(checkout -> {
+            FileUtils.writeStringToFile(checkout.resolve("test/de/example/ClassTest.java").toFile(),
+                    SECOND_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8);
+            Files.delete(checkout.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME));
+        });
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        SecurityFrameworkConfigDTO misconfigured = securityFrameworkService.getConfig(exercise);
+        assertThat(misconfigured.status()).isEqualTo(SecurityActivationStatus.MISCONFIGURED.name());
+        assertThat(misconfigured.policyFiles()).singleElement().satisfies(policyFile -> {
+            assertThat(policyFile.policyPath()).isEqualTo(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME);
+            assertThat(policyFile.problem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.MISSING.name());
+            assertThat(policyFile.referencedBy()).containsExactly("de.example.SortingTest");
+        });
+
+        SecurityFrameworkConfigDTO repaired = securityFrameworkService.activate(exercise, "2.2.1", user);
+
+        assertThat(repaired.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(repaired.disabledTestClasses()).containsExactly("de.example.ClassTest");
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
+    }
+
+    @Test
+    void deactivatingAnInactiveExerciseCreatesNoCommit() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        String headAfterFirstDeactivation = pushedHead();
+
+        assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThat(pushedHead()).isEqualTo(headAfterFirstDeactivation);
+    }
+
+    @Test
+    void aDeactivationThatSwitchedNothingOffIsNoRestorePoint() throws Exception {
+        // Everything is switched off by hand, but the policy file stays; deactivating then only deletes the policy file.
+        pushTestClassChange(source -> source.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+    }
+
+    @Test
+    void ares1RepositoriesAreReportedAsUnsupportedAndNeverChanged() throws Exception {
+        pushCheckoutChange(checkout -> {
+            FileUtils.writeStringToFile(checkout.resolve("build.gradle").toFile(), "dependencies {\n    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'\n}\n",
+                    StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(checkout.resolve("test/de/example/SortingTest.java").toFile(),
+                    "package de.example;\n\nimport org.junit.jupiter.api.Test;\n\nimport de.tum.in.test.api.jupiter.Public;\n\n@Public\nclass SortingTest {\n\n    @Test\n    void sorts() {\n    }\n}\n",
+                    StandardCharsets.UTF_8);
+        });
+        String headBefore = pushedHead();
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        SecurityFrameworkConfigDTO config = securityFrameworkService.getConfig(exercise);
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.UNSUPPORTED.name());
+        assertThat(config.unsupportedReasons()).extracting(SecurityFrameworkConfigDTO.UnsupportedReasonDTO::type)
+                .contains(SecurityFrameworkState.UnsupportedReasonType.ARES_1.name(), SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED.name());
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
+                .matches(exception -> "securityFrameworkUnsupportedRepository".equals(exception.getErrorKey()));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.activate(exercise, "2.2.1", user))
+                .matches(exception -> "securityFrameworkUnsupportedRepository".equals(exception.getErrorKey()));
+        assertThat(pushedHead()).isEqualTo(headBefore);
+    }
+
+    @Test
+    void versionsOlderThanTheMinimumOrUnparseableAreNeverSelectableAndTheNewestComesFirst() {
+        SecurityFrameworkService service = createService("2.1.0", "2.2.10", "not-a-version", "2.3.0");
+
+        assertThat(service.getFrameworkVersions().selectableVersions()).containsExactly("2.3.0", "2.2.10", "2.2.1");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> service.activate(exercise(ProgrammingLanguage.JAVA), "2.1.0", user))
+                .matches(exception -> "unsupportedFrameworkVersion".equals(exception.getErrorKey()));
+        assertThat(SecurityFrameworkService.isAtLeastMinimumVersion("2.3.0-SNAPSHOT")).isTrue();
+        assertThat(SecurityFrameworkService.isAtLeastMinimumVersion("2.2.1-SNAPSHOT")).isFalse();
+    }
+
+    @Test
+    void aChoiceWithoutActionIsRejected() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> securityFrameworkService.validateChoice(ProgrammingLanguage.JAVA, ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(null, null)))
+                .matches(exception -> "securityFrameworkChoiceIncomplete".equals(exception.getErrorKey()));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.validateChoice(ProgrammingLanguage.JAVA, ProjectType.MAVEN_BLACKBOX,
+                new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null))).matches(exception -> "onlyJavaSupported".equals(exception.getErrorKey()));
+    }
+
+    @Test
+    void onlyAChoiceThatChangesTheTemplateDeviatesFromIt() {
+        String templateVersion = securityFrameworkService.getFrameworkVersions().templateVersions().get(ProjectType.PLAIN_GRADLE);
+
+        assertThat(securityFrameworkService.deviatesFromTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, null))).isFalse();
+        assertThat(securityFrameworkService.deviatesFromTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, templateVersion)))
+                .isFalse();
+        assertThat(securityFrameworkService.deviatesFromTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.3.0"))).isTrue();
+        assertThat(securityFrameworkService.deviatesFromTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null))).isTrue();
+    }
+
+    @Test
+    void deactivatingANewTestRepositoryKeepsTheTemplatePolicy() throws Exception {
+        Path checkout = newDirectory("template-");
+        Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call().close();
+
+        SecurityFrameworkService.applyChoiceToNewTestRepository(checkout, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, "2.3.0"));
+
+        assertThat(Files.readString(checkout.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME))).isEqualTo(CUSTOM_POLICY);
+        assertThat(Files.readString(checkout.resolve("test/de/example/SortingTest.java"))).contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        assertThat(Files.readString(checkout.resolve("build.gradle"))).contains("aresVersion = '2.3.0'");
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(checkout).status()).isEqualTo(SecurityActivationStatus.INACTIVE);
+    }
+
+    @Test
+    void anImportedExerciseGetsTheChoiceWithoutPushProcessingAndKeepsItsRestorePoint() throws Exception {
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/ClassTest.java").toFile(),
+                SECOND_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        securityFrameworkService.applyChoiceToImportedExercise(exercise, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null), user);
+
+        verifyNoInteractions(localVCServletService);
+        try (Git git = Git.open(remote.toFile())) {
+            String message = git.log().setMaxCount(1).call().iterator().next().getFullMessage();
+            assertThat(message).contains("Security-Framework-Action: deactivate").doesNotContain("Changed-by: Artemis Security Framework");
+        }
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        // A later action never mistakes the import commit for an unprocessed change.
+        securityFrameworkService.deactivate(exercise, user);
+        verifyNoInteractions(localVCServletService);
+
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).disabledTestClasses()).containsExactly("de.example.ClassTest");
+    }
+
+    @Test
+    void aChoiceForAnUnsupportedImportedRepositoryIsRejectedBeforeAnythingIsPushed() throws Exception {
+        pushTestClassChange(source -> source.replace("@de.tum.cit.ase.ares.api.jupiter.Public\n", ""));
+        String headBefore = pushedHead();
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> securityFrameworkService.applyChoiceToImportedExercise(exercise(ProgrammingLanguage.JAVA),
+                        new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null), user))
+                .matches(exception -> "securityFrameworkUnsupportedRepository".equals(exception.getErrorKey()));
+        assertThat(pushedHead()).isEqualTo(headBefore);
+    }
+
+    @Test
+    void activatingAnImportedExerciseWithoutAVersionNeverPinsAnUnsupportedOne() throws Exception {
+        pushCheckoutChange(checkout -> {
+            FileUtils.writeStringToFile(checkout.resolve("build.gradle").toFile(), "ext {\n    aresVersion = '2.1.0'\n}\n", StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(checkout.resolve("test/de/example/SortingTest.java").toFile(),
+                    TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8);
+        });
+
+        securityFrameworkService.applyChoiceToImportedExercise(exercise(ProgrammingLanguage.JAVA), new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, null), user);
+
+        assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
+    }
+
+    @Test
+    void aPolicyBehindASymbolicLinkInACommitIsAnInvalidPathAndNotMissing() throws Exception {
+        assumeTrue(FS.DETECTED.supportsSymlinks(), "The file system does not support symbolic links");
+        pushCheckoutChange(checkout -> {
+            FileUtils.writeStringToFile(checkout.resolve("test/de/example/SortingTest.java").toFile(),
+                    TEST_CLASS.replace("value = \"SecurityPolicy.yaml\"", "value = \"policies/SecurityPolicy.yaml\""), StandardCharsets.UTF_8);
+            Files.createSymbolicLink(checkout.resolve("policies"), checkout.resolve("test"));
+        });
+
+        SecurityFrameworkConfigDTO config = securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA));
+
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.MISCONFIGURED.name());
+        assertThat(config.policyFiles()).singleElement()
+                .satisfies(policyFile -> assertThat(policyFile.problem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH.name()));
     }
 }

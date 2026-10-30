@@ -10,13 +10,18 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
+import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 
 /**
  * Orchestrates importing programming exercises from the Sharing Platform into Artemis.
@@ -40,14 +45,24 @@ public class ProgrammingExerciseImportFromSharingService {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final SecurityFrameworkService securityFrameworkService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final CourseService courseService;
+
     public ProgrammingExerciseImportFromSharingService(ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService,
             ExerciseSharingService exerciseSharingService, UserRepository userRepository, CourseRepository courseRepository,
-            CompetencyExerciseLinkService competencyExerciseLinkService) {
+            CompetencyExerciseLinkService competencyExerciseLinkService, SecurityFrameworkService securityFrameworkService, AuthorizationCheckService authCheckService,
+            CourseService courseService) {
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.exerciseSharingService = exerciseSharingService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.securityFrameworkService = securityFrameworkService;
+        this.authCheckService = authCheckService;
+        this.courseService = courseService;
     }
 
     /**
@@ -102,7 +117,17 @@ public class ProgrammingExerciseImportFromSharingService {
             // exercise, exactly as the entity request body used to leave them there.
             competencyExerciseLinkService.updateCompetencyLinks(sharingSetupInfo.exercise(), exercise);
 
-            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, buildConfig, zip, course, user, true);
+            // A Security Framework choice changes the imported tests repository, so it needs the instructor role in the target course, like the endpoints that
+            // change the sandbox later.
+            SecurityFrameworkChoiceDTO securityFrameworkChoice = sharingSetupInfo.exercise().securityFramework();
+            if (securityFrameworkChoice != null) {
+                securityFrameworkService.validateChoice(exercise.getProgrammingLanguage(), exercise.getProjectType(), securityFrameworkChoice);
+                // An exam exercise belongs to the course of its exercise group, so the instructor role is checked there.
+                Course targetCourse = exercise.isExamExercise() ? courseService.retrieveCourseOverExerciseGroupOrCourseId(exercise) : course;
+                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, targetCourse, user);
+            }
+
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, buildConfig, zip, course, user, true, securityFrameworkChoice);
         }
     }
 }
