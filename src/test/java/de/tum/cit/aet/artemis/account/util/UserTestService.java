@@ -343,6 +343,21 @@ public class UserTestService {
     }
 
     // Test
+    public void updateUserWithOnlyRetiredRoles() throws Exception {
+        student.setInternal(true);
+        // the global teaching authorities no longer exist, so API clients that still send them must not end up without any role
+        student.setAuthorities(Set.of(new Authority("ROLE_INSTRUCTOR")));
+
+        var managedUserVM = new ManagedUserVM(student, "foobar1234");
+
+        final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
+        assertThat(response).isNotNull();
+
+        final var updatedUserInDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        assertThat(updatedUserInDB.getAuthorities()).containsExactly(new Authority(Role.STUDENT.getAuthority()));
+    }
+
+    // Test
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         student.setPassword(null);
         final var oldPassword = userTestRepository.findById(student.getId()).orElseThrow().getPassword();

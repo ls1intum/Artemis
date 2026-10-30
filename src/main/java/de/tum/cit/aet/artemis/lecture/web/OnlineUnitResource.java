@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLi
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
@@ -271,7 +272,7 @@ public class OnlineUnitResource {
      */
     @GetMapping("lectures/online-units/fetch-online-resource")
     @EnforceAtLeastEditorInCourse
-    @LimitRequestsPerMinute
+    @LimitRequestsPerMinute(type = RateLimitType.ONLINE_RESOURCE_FETCH)
     public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link, @RequestParam("courseId") Long courseId) {
         // Ensure that the link is a correctly formed URL
         URL url = validateUrlStringAndReturnUrl(link);

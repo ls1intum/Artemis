@@ -185,6 +185,19 @@ describe('TeamParticipationTableComponent', () => {
         expect(find).toHaveBeenCalledWith(comp.course(), comp.team(), 'student');
     });
 
+    it('should link to the student routes in the student overview', () => {
+        const row = { id: 7, type: ExerciseType.TEXT, team: { id: 3 } } as unknown as Parameters<typeof comp.teamLink>[0];
+        expect(comp.exerciseLink(row)).toEqual(['/courses', comp.course().id, 'exercises', 7]);
+        expect(comp.teamLink(row)).toEqual(['/courses', comp.course().id, 'exercises', 7, 'teams', 3]);
+    });
+
+    it('should keep staff in course management, because the student team route requires team membership', () => {
+        fixture.componentRef.setInput('overviewPurpose', 'staff');
+        const row = { id: 7, type: ExerciseType.TEXT, team: { id: 3 } } as unknown as Parameters<typeof comp.teamLink>[0];
+        expect(comp.exerciseLink(row)).toEqual(['/course-management', comp.course().id, 'text-exercises', 7]);
+        expect(comp.teamLink(row)).toEqual(['/course-management', comp.course().id, 'exercises', 7, 'teams', 3]);
+    });
+
     afterEach(() => {
         vi.restoreAllMocks();
     });

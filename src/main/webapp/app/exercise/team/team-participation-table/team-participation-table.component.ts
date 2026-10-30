@@ -245,6 +245,29 @@ export class TeamParticipationTableComponent implements OnInit {
     }
 
     /**
+     * Link to the exercise of a row. The staff overview stays in course management, because the student route would
+     * only open exercises the user may read as a student and shows the student projection.
+     * @param exercise the exercise of the row
+     */
+    exerciseLink(exercise: Exercise): (string | number | undefined)[] {
+        if (this.overviewPurpose() === 'staff') {
+            return ['/course-management', this.course().id, exercise.type + '-exercises', exercise.id];
+        }
+        return ['/courses', this.course().id, 'exercises', exercise.id];
+    }
+
+    /**
+     * Link to the team page of a row. The student route requires membership in the team, so staff stay in course management.
+     * @param exercise the exercise of the row, carrying its team
+     */
+    teamLink(exercise: ExerciseForTeam): (string | number | undefined)[] {
+        if (this.overviewPurpose() === 'staff') {
+            return ['/course-management', this.course().id, 'exercises', exercise.id, 'teams', exercise.team?.id];
+        }
+        return ['/courses', this.course().id, 'exercises', exercise.id, 'teams', exercise.team?.id];
+    }
+
+    /**
      * Returns whether the assessment button should be disabled
      * @param exercise Exercise for which the submission is to be assessed
      * @param submission Submission that is to be assessed

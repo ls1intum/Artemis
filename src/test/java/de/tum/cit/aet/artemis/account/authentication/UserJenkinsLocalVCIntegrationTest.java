@@ -248,6 +248,12 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateUserOnlyRetiredRoles() throws Exception {
+        userTestService.updateUserWithOnlyRetiredRoles();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldBlockUserIfAccountNotActivated() throws Exception {
         String password = "this is a password";
         userTestService.student.setPassword(passwordService.hashPassword(password));

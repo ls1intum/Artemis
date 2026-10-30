@@ -360,12 +360,23 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         exerciseRepository.save(exercise);
         request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
-        request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, ExerciseDetailsDTO.class);
+        // the course overview lists unreleased exercises for staff and links to the details page, so that read stays open for them
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
         var titles = request.getList("/api/exercise/courses/" + course.getId() + "/exercise-titles", HttpStatus.OK, ExerciseTitleDTO.class);
         assertThat(titles).isEmpty();
         var staffTitles = request.getList("/api/exercise/courses/" + course.getId() + "/exercise-titles/for-staff", HttpStatus.OK, ExerciseTitleDTO.class);
         assertThat(staffTitles).extracting(ExerciseTitleDTO::id).containsExactly(exercise.getId());
         request.get("/api/exercise/exercises/" + exercise.getId() + "/for-staff", HttpStatus.OK, ExerciseResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void exerciseDetailsOfUnreleasedExerciseAreForbiddenForStudents() throws Exception {
+        var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, ExerciseDetailsDTO.class);
     }
 
     @ParameterizedTest

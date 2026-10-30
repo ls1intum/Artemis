@@ -446,9 +446,9 @@ public class ExerciseResource {
         }
 
         // if exercise is not yet released to the students they should not have any
-        // access to it
+        // access to it, but course staff still open it from the course overview, which lists unreleased exercises for them
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        if (!exercise.isVisibleToStudents()) {
+        if (!exercise.isVisibleToStudents() && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             throw new AccessForbiddenException();
         }
         // the page offers the AI feedback request based on these, and the config is lazy
