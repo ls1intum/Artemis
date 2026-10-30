@@ -179,11 +179,30 @@ The following permissions apply to all exercise types. Exercise-type-specific se
     **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
 </Callout>
 
-Tutors and editors can open course exercise participation and score lists using anonymous participation IDs. Student
-names, logins, team identities, and identifying repository links are visible only to instructors. Searching or sorting
-these lists by participant identity and exporting submissions selected by student login or team name also require
-instructor access. Tutors can still download anonymized programming submissions selected by participation ID for
-assessment. Students retain access to their own participation and repository details.
+For **course programming exercises**, tutors and editors can see student names and team identities on the
+participations page to help students with questions. The **Code** button opens a read-only repository view
+and provides clone URLs. Tutors can clone and pull student repositories, but cannot push or reset them.
+
+When **manual or semi-automatic assessment** is enabled, this support access ends at the **exercise due date**:
+non-instructors see anonymous participation IDs, and student names, identity search and sorting, and direct
+repository links are hidden. Tutors can no longer read or clone another student's live repository, including with
+previously issued tokens or SSH keys. They can still view submitted code and download anonymized submissions through
+the **Assessment Dashboard**. The restriction uses the exercise due date for the whole list, including participations
+with individual extensions and practice participations, so that those cannot expose identities during assessment.
+
+For automatically assessed course programming exercises, support access remains available after the due date.
+A manually assessed course programming exercise without a due date also keeps support access; anonymity starts if
+a due date is subsequently set and reached. The participations page explains the current access and any
+upcoming restriction.
+
+**Course quizzes** are always assessed automatically, so there is no tutor assessment to keep anonymous. Tutors and
+editors see student names next to the quiz scores on the participations page.
+
+Other exercise types and exam exercises, including exam quizzes, retain anonymous participation views for
+non-instructors. The participations list of an exam exercise is only available to instructors, and the direct
+participation lookups of other staff stay anonymous. Instructors retain named views, and participation owners retain
+access to their own details. Exports
+selected by student login or team name and identity exports continue to require instructor access.
 
 ### Shared Submission and Assessment Features
 
@@ -267,6 +286,11 @@ In addition to the [General Functionality](#general-functionality) above, Progra
 |-----------------------------|--------------------|------------|
 | *READ*, *WRITE*, *RESET*    | *READ*             | restricted |
 
+For another student's assignment repository, tutor _READ_ access is subject to the support window described above:
+it ends at the exercise due date when manual or semi-automatic assessment is enabled. Tutors cannot directly access
+student assignment repositories of exam exercises. Read access to template, solution, test and auxiliary repositories
+is unaffected; anonymous assessment snapshots remain available.
+
 **Access on own repositories (graded participation):**
 
 | Context                                        | Instructor / Editor      | Teaching Assistant       | Student                  |
@@ -297,6 +321,7 @@ In addition to the [General Functionality](#general-functionality) above, Quiz E
 
 [//]: # (Refers to QuizExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseResource.java)
 [//]: # (Refers to QuizSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/openapi/QuizSubmissionResource.java)
+[//]: # (Refers to QuizAssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizAssessmentResource.java)
 
 <Callout variant={CalloutVariant.info}>
   Quiz exercises use a different submission and assessment model from other exercise types.
@@ -314,6 +339,7 @@ In addition to the [General Functionality](#general-functionality) above, Quiz E
 | Recalculate Statistics      | ✔                   | ✔                   | ✔                   |                     |
 | Evaluate Quiz               | ✔                   |                     |                     |                     |
 | Re-evaluate Quiz            | ✔                   |                     |                     |                     |
+| Delete Result               | ✔                   |                     |                     |                     |
 | Submit (Live Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
 | Submit (Practice Mode)      | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) |
 | Submit (Exam Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |

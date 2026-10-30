@@ -123,6 +123,67 @@ The subsequent sections provide guidance on the naming conventions and outline t
      - "Fix an issue when clicking on the start exercise button"
      - "Add the possibility for instructors to define submission policies"
 
+### Pull Request Readiness
+
+The author owns the PR description, checklist, labels and milestone throughout review. These requirements
+apply to human developers and coding agents alike, including small fixes and documentation changes.
+
+#### Prepare the Description and Checklist
+
+Use the [PR template](https://github.com/ls1intum/Artemis/blob/develop/.github/PULL_REQUEST_TEMPLATE.md).
+Explain the problem and solution, link the related issue when applicable, and provide reproducible testing
+steps and evidence of checks run. Replace example text and remove empty or irrelevant sections.
+
+Before requesting review, go through every item in the author **Checklist**:
+
+- Check completed, applicable tasks with `- [x]` only after actually doing the work.
+- Delete tasks that do not apply, along with sections that become empty. For example, remove client tasks
+  and UI screenshots for a documentation-only change. Explain an omission if its applicability is unclear.
+- Keep unfinished, applicable tasks unchecked, including CI and validation that will finish during review.
+  Do not delete an applicable task merely to make the checklist appear complete. Draft status depends on
+  whether the implementation is finished, not on whether every validation task is complete.
+
+The **Review Progress** checklist tracks work performed during review. Keep applicable code review, manual
+test, exam mode and performance items unchecked until those reviews or tests have actually happened.
+Remove only items that do not apply; required code reviews remain. When later changes invalidate a
+completed review or test, uncheck the affected item and request verification again.
+Before merge, every remaining task in the entire PR description must be checked.
+
+#### Set the Milestone
+
+Set the PR's **Milestone** to the intended Artemis release before requesting review, and keep it current
+if the release target changes. An issue's milestone does not replace the PR's milestone. If the intended
+release is unclear or you cannot edit milestones, ask a maintainer to assign it and make the missing
+milestone explicit; do not silently leave it unset or guess a release.
+
+#### Maintain the Readiness Labels
+
+GitHub's draft state and the repository labels serve different purposes. Marking a draft **Ready for review**
+changes its state; the **ready for review** label makes it discoverable in the team's review queue.
+
+Use drafts only for unfinished implementations. Open a completed implementation as a non-draft PR, or
+mark it **Ready for review** as soon as the implementation is finished. Full CI and automated review bots
+do not run on drafts, so waiting for them before leaving draft prevents the validation needed for review.
+Pending or failing CI, outstanding reviews and test-server validation do not by themselves require draft
+status. Record that work honestly in the checklist and complete it before merge.
+
+| Stage | Author's action |
+| --- | --- |
+| Implementation is unfinished | Keep the PR in draft and remove **ready for review** and **ready to merge**. |
+| Implementation is complete | Prepare the description, record completed and pending validation, and set the milestone. Open a non-draft PR or mark it **Ready for review**, verify **ready for review** is present, and follow CI and automated reviews while they run. |
+| Ready for maintainer merge | Verify at least four reviewer approvals, including required maintainer reviews, all remaining tasks checked, all review threads resolved, passing required checks, no merge conflicts and the correct milestone. Replace **ready for review** with **ready to merge**. |
+
+The ready-for-review workflow adds **ready for review** when a draft transitions to ready. If the PR was
+opened without a draft, add the label yourself. If you cannot edit labels, ask a maintainer to update them.
+
+Adding **ready to merge** triggers a validator for unchecked tasks and unresolved review threads. It can
+remove the label and explain what remains. Fix the reported issues before re-adding it. This check does
+not verify approvals, CI results or the milestone; the author still verifies every merge requirement.
+
+Keep labels accurate after each update. Remove **ready to merge** whenever a merge requirement no longer
+holds. Keep **ready for review** while CI, validation or reviews are pending. Return to draft and remove
+both labels only when the implementation becomes unfinished again. A maintainer performs the final merge.
+
 ### Steps to Create and Merge a Pull Request
 
 #### Preconditions (For Developers Only)
@@ -134,16 +195,20 @@ The subsequent sections provide guidance on the naming conventions and outline t
 
 #### Begin Implementation (For Developers Only)
 
-- [Open a draft pull request.](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request) This allows for code related questions and discussions.
+- If you open a pull request while the implementation is unfinished, use a
+  [draft pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request)
+  for early questions and discussion.
 
 #### Complete Implementation (For Developers Only)
 
-- Make sure all steps in the [Checklist](https://github.com/ls1intum/Artemis/blob/develop/.github/PULL_REQUEST_TEMPLATE.md) are completed.
+- Record completed author tasks and prepare the description, milestone and labels according to
+  [Pull Request Readiness](#pull-request-readiness). Pending validation and review tasks stay open until verified.
 - Add or update the "Steps for Testing" in the description of your pull request.
 - Make sure that the changes in the pull request are only the ones necessary.
 - Make sure that the PR is up-to-date with develop.
-- Make sure at least all required checks pass.
-- Mark the pull request as [ready for review.](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request)
+- Open the completed implementation as a non-draft PR, or mark the pull request as
+  [ready for review](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request)
+  immediately. Follow the full CI run and automated reviews; do not wait for them before leaving draft.
 
 #### Review Process
 
@@ -172,8 +237,10 @@ The subsequent sections provide guidance on the naming conventions and outline t
 
 - Use the pull request to discuss comments or ask questions.
 - Update your code where necessary.
-- Revert to draft if the changes will take a while during which review is not needed/possible.
-- Set back to ready for review afterwards.
+- Remove **ready to merge** when revisions invalidate merge readiness. Return to draft and remove
+  **ready for review** only while the implementation is unfinished again.
+- Once the implementation is complete, mark it ready for review immediately and verify the
+  **ready for review** label is present, even if CI or other validation is still pending.
 - After making revisions, re-request reviews through GitHub initially. If you receive no response, then follow up with a targeted message on Slack to the relevant reviewers.
 - Comment on "inline comments" (e.g. "Done").
 - Once all changes are made, ensure that the feature-specific maintainer reviews and approves the changes.
@@ -192,7 +259,8 @@ Repeat [Review Process](#review-process) and [Address Review Comments](#address-
 
 #### Merge Changes
 
-A project maintainer merges your changes into the `develop` branch.
+Once the [merge requirements](#maintain-the-readiness-labels) are satisfied, replace **ready for review**
+with **ready to merge**. A project maintainer merges your changes into the `develop` branch.
 
 ### Stale Bot
 

@@ -33,7 +33,13 @@ Reviews work best as a give-and-take: if you'd like your PRs reviewed, make sure
 - Make sure that the PR is marked as "ready for review" and not in a draft state. Afterward, add yourself to the reviewers.
 - Read the pull request (PR) description and related issue(s) to understand the context and requirements.
 - Review the "Steps for Testing" and any provided documentation.
-- Check that all relevant checklist items in the pull request template are checked by the developer and that non-applicable items have been removed. If you notice missing or incorrectly checked items, request clarification or corrections from the author.
+- Check that completed author **Checklist** items are checked and inapplicable tasks and empty sections
+  have been removed. Pending CI, validation and applicable **Review Progress** items remain open until
+  verified; they do not prevent review of a completed implementation.
+  Verify the intended release milestone and **ready for review** label according to
+  [PR readiness](/developer/development-process#pull-request-readiness). Request corrections for missing
+  metadata, unfinished implementation work or incorrectly checked items. Every remaining checklist item
+  and required check must be complete before merge.
 
 ### Testing
 

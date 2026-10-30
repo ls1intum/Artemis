@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisSlideVisibilityDTO;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
@@ -30,16 +29,13 @@ public class PyrisLectureUnitSyncService {
 
     private final PyrisConnectorService pyrisConnectorService;
 
-    private final IrisSettingsService irisSettingsService;
-
     private final VideoSourceResolverService videoSourceResolver;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
-    public PyrisLectureUnitSyncService(PyrisConnectorService pyrisConnectorService, IrisSettingsService irisSettingsService, VideoSourceResolverService videoSourceResolver) {
+    public PyrisLectureUnitSyncService(PyrisConnectorService pyrisConnectorService, VideoSourceResolverService videoSourceResolver) {
         this.pyrisConnectorService = pyrisConnectorService;
-        this.irisSettingsService = irisSettingsService;
         this.videoSourceResolver = videoSourceResolver;
     }
 
@@ -81,7 +77,7 @@ public class PyrisLectureUnitSyncService {
             lectureUnitLink = artemisBaseUrl + ARTEMIS_FILE_PATH_PREFIX + attachmentVideoUnit.getAttachment().getLink();
         }
 
-        ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
+        ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource(), course.getId());
         String videoUrl = resolved.type() != null ? resolved.url() : null;
 
         return new PyrisLectureUnitMetadataWebhookDTO(attachmentVideoUnit.getId(), attachmentVideoUnit.getName(), lectureUnitLink, lecture.getId(), lecture.getTitle(),
@@ -98,15 +94,15 @@ public class PyrisLectureUnitSyncService {
                 slideVisibility);
     }
 
-    private ResolvedVideo resolveVideoUrl(String videoSource) {
+    private ResolvedVideo resolveVideoUrl(String videoSource, long courseId) {
         if (videoSource == null || videoSource.isBlank()) {
             return new ResolvedVideo(null, null, null);
         }
-        return videoSourceResolver.resolve(videoSource);
+        return videoSourceResolver.resolve(videoSource, courseId);
     }
 
+    // Ingested regardless of the course's Iris setting, which only switches off the interactive Iris features (see PyrisWebhookService).
     private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse())
-                && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
+        return PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
     }
 }

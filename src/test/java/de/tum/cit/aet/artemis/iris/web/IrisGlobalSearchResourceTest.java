@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.globalsearch.api.SearchableEntityPrefetchApi;
 import de.tum.cit.aet.artemis.globalsearch.dto.SearchableEntityCandidateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
+import de.tum.cit.aet.artemis.iris.service.IrisSearchScopeService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
@@ -79,7 +81,7 @@ class IrisGlobalSearchResourceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         resource = new IrisGlobalSearchResource(pyrisConnectorService, pyrisJobService, userRepository, userAiPreferenceService, irisAccessContextService,
-                Optional.of(searchableEntityPrefetchApi), irisSettingsService);
+                Optional.of(searchableEntityPrefetchApi), new IrisSearchScopeService(irisSettingsService));
 
         testUser = new User();
         testUser.setId(1L);
@@ -87,14 +89,14 @@ class IrisGlobalSearchResourceTest {
         when(userRepository.getUserWithCourseRolesAndAuthorities()).thenReturn(testUser);
         when(userAiPreferenceService.findDecision(1L)).thenReturn(AiSelectionDecision.CLOUD_AI);
         // Unrestricted, matching an unscoped request's "no ceiling to narrow" path through
-        // lectureSearchScope — resolveAccessContext never legitimately returns null in production.
+        // IrisSearchScopeService.resolveScope — resolveAccessContext never legitimately returns null in production.
         when(irisAccessContextService.resolveAccessContext(testUser)).thenReturn(new PyrisAccessContextDTO(null, null, null, null, null, null, true));
     }
 
     @Test
     void ask_whenEntityPrefetchSucceeds_forwardsTheCandidates() {
         var candidate = new SearchableEntityCandidateDTO("exercise", 8L, 11L, "Test course", "RNN and LSTM Fundamentals", "A quiz", null, "/courses/11/exercises/8", null, null,
-                null, null, null, null, null, 10.0, null, null, "quiz", null, null, null);
+                null, null, null, null, null, 10.0, null, null, "quiz", null, null, null, null);
         when(searchableEntityPrefetchApi.prefetchCandidates(eq(testUser), anyString(), anyInt(), eq((List<Long>) null), eq(List.of()))).thenReturn(List.of(candidate));
 
         var requestDTO = new GlobalSearchAskRequestDTO("is there an rnn quiz", 5, UUID.randomUUID());
@@ -140,7 +142,7 @@ class IrisGlobalSearchResourceTest {
     @Test
     void ask_whenNoPrefetchApiIsConfigured_answersFromLectureContentOnly() {
         resource = new IrisGlobalSearchResource(pyrisConnectorService, pyrisJobService, userRepository, userAiPreferenceService, irisAccessContextService, Optional.empty(),
-                irisSettingsService);
+                new IrisSearchScopeService(irisSettingsService));
 
         var requestDTO = new GlobalSearchAskRequestDTO("what is backpropagation", 5, UUID.randomUUID());
         ResponseEntity<Void> response = resource.ask(requestDTO, principal);
@@ -173,6 +175,10 @@ class IrisGlobalSearchResourceTest {
         verify(searchableEntityPrefetchApi).prefetchCandidates(any(), eq(requestDTO.query()), anyInt(), eq(List.of(12L)), eq(List.of()));
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), AiSelectionDecision.CLOUD_AI,
                 accessContext, List.of(), List.of(12L), null, false);
+        // The material the answer may cite is captured for the narrowed scope before Pyris is asked, so a handoff pins its citations to it.
+        var order = inOrder(pyrisJobService, pyrisConnectorService);
+        order.verify(pyrisJobService).captureGlobalSearchMaterialVersions(principal.getName(), requestDTO.runId().toString(), List.of(12L));
+        order.verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(any(), anyInt(), any(), any(), any(), any(), any(), any(), anyBoolean());
     }
 
     @Test

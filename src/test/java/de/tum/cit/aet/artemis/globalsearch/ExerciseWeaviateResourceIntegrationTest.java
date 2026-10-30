@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExamExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
@@ -9,7 +10,9 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryCha
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -43,8 +46,11 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexRebuildService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateUuidUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -86,7 +92,13 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     private ChannelService channelService;
 
     @Autowired
+    private SearchableEntityIndexRebuildService rebuildService;
+
+    @Autowired
     private WeaviateService weaviateService;
+
+    @Autowired
+    private WeaviateOutboxRepository weaviateOutboxRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -811,10 +823,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             TextExercise finalExercise = noRegExercise;
             assertExerciseExistsInWeaviate(weaviateService, finalExercise);
 
-            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20NoReg&types=exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var titles = getResultTitles(results);
-
-            assertThat(titles).contains(SEARCH_PREFIX + " NoReg ExamExercise");
+            // Object persistence does not imply that the asynchronous BM25 index can already find the exercise.
+            awaitSearchResults("/api/search?q=" + SEARCH_PREFIX + "%20NoReg&types=exercise&courseIds=" + course.getId(),
+                    results -> assertThat(getResultTitles(results)).contains(SEARCH_PREFIX + " NoReg ExamExercise"));
         }
     }
 
@@ -1147,6 +1158,183 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
                 var results = request.getList("/api/search?q=weaviate-archive-search&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
                 var titles = getResultTitles(results);
                 assertThat(titles).doesNotContain("weaviate-archive-search");
+            });
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testChannelIsFoundByItsNameButNotByItsDescription() throws Exception {
+            User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+            Channel channel = new Channel();
+            channel.setName("weaviate-name-search");
+            channel.setDescription("Zvk9ChannelTopic");
+            channel.setIsPublic(true);
+            channel.setIsCourseWide(true);
+            channel.setIsAnnouncementChannel(false);
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepository.save(course);
+            channelService.createChannel(course, channel, Optional.of(instructor));
+
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                var results = request.getList("/api/search?q=name-search&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                assertThat(getResultTitles(results)).contains("weaviate-name-search");
+            });
+
+            // The row is indexed with its description, which a keyword search matches; the name does not hold the word.
+            var results = request.getList("/api/search?q=Zvk9ChannelTopic&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            assertThat(getResultTitles(results)).doesNotContain("weaviate-name-search");
+        }
+    }
+
+    /**
+     * The communication page shows students the channel of an exercise only once the exercise is released; its name repeats
+     * the exercise title, so the search must not show it earlier either.
+     */
+    @Nested
+    class UnreleasedItemChannelTests {
+
+        private TextExercise exercise;
+
+        private Exam exam;
+
+        private Channel indexChannelOfExercise(ZonedDateTime releaseDate, String channelName) throws Exception {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepository.save(course);
+            ZonedDateTime now = ZonedDateTime.now();
+            exercise = TextExerciseFactory.generateTextExercise(releaseDate, now.plusDays(3), now.plusDays(4), course);
+            exercise.setTitle(SEARCH_PREFIX + " " + channelName);
+            exercise = exerciseRepository.save(exercise);
+            Channel channel = channelService.createExerciseChannel(exercise, Optional.of(channelName));
+            assertChannelExistsInWeaviate(weaviateService, channel);
+            return channel;
+        }
+
+        private List<String> searchChannelTitles(String channelName) throws Exception {
+            return getResultTitles(request.getList("/api/search?q=" + channelName + "&types=channel&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class));
+        }
+
+        private void indexChannelOfExam(ZonedDateTime visibleDate, String channelName) throws Exception {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepository.save(course);
+            exam = examUtilService.addExam(course, visibleDate, visibleDate.plusDays(2), visibleDate.plusDays(3));
+            Channel channel = examUtilService.addExamChannel(exam, channelName);
+            searchableEntityWeaviateService.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
+            assertChannelExistsInWeaviate(weaviateService, channel);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentDoesNotSeeExamChannelBeforeVisibleDate() throws Exception {
+            indexChannelOfExam(ZonedDateTime.now().plusDays(1), "hidden-exam-channel");
+            awaitKeywordSearchable("hidden-exam-channel");
+
+            assertThat(searchChannelTitles("hidden-exam-channel")).doesNotContain("hidden-exam-channel");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testInstructorSeesExamChannelBeforeVisibleDate() throws Exception {
+            indexChannelOfExam(ZonedDateTime.now().plusDays(1), "staff-sees-exam-channel");
+
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(searchChannelTitles("staff-sees-exam-channel")).contains("staff-sees-exam-channel");
+            });
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExamVisibilityChangesRewriteChannelSearchVisibility() throws Exception {
+            String channelName = "exam-date-change-channel";
+            indexChannelOfExam(ZonedDateTime.now().plusDays(1), channelName);
+            exam.setVisibleDate(ZonedDateTime.now().minusHours(1));
+            exam = examRepository.save(exam);
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam));
+
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(searchChannelTitles(channelName)).contains(channelName);
+            });
+
+            exam.setVisibleDate(ZonedDateTime.now().plusDays(1));
+            exam = examRepository.save(exam);
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam));
+
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(searchChannelTitles(channelName)).doesNotContain(channelName);
+            });
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentDoesNotSeeTheChannelOfAnUnreleasedExercise() throws Exception {
+            indexChannelOfExercise(ZonedDateTime.now().plusDays(2), "unreleased-exercise-channel");
+
+            assertThat(searchChannelTitles("unreleased-exercise-channel")).doesNotContain("unreleased-exercise-channel");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testInstructorSeesTheChannelOfAnUnreleasedExercise() throws Exception {
+            indexChannelOfExercise(ZonedDateTime.now().plusDays(2), "staff-sees-exercise-channel");
+
+            // The stored row can reach the keyword index a moment later, so the positive check waits for it.
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(searchChannelTitles("staff-sees-exercise-channel")).contains("staff-sees-exercise-channel");
+            });
+        }
+
+        /**
+         * A channel row written before channel rows carried the visibility date stays hidden from students, and the
+         * startup check of the index queues it for a rewrite that adds the date.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChannelRowWithoutTheVisibilityDateIsHiddenAndRewrittenAtStartup() throws Exception {
+            Channel channel = indexChannelOfExercise(ZonedDateTime.now().minusDays(1), "old-format-channel");
+            // Creation and the explicit test upsert both queue writes. Finish them before replacing the row with the old format.
+            awaitIndexing(() -> assertThat(weaviateOutboxRepository.existsByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId())).isFalse());
+            Map<String, Object> oldFormat = new HashMap<>(queryChannelProperties(weaviateService, channel.getId()));
+            oldFormat.remove(SearchableEntitySchema.Properties.RELEASE_DATE);
+            weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data
+                    .replace(WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId()), row -> row.properties(oldFormat));
+            assertThat(queryChannelProperties(weaviateService, channel.getId()).get(SearchableEntitySchema.Properties.RELEASE_DATE)).isNull();
+
+            assertThat(searchChannelTitles("old-format-channel")).doesNotContain("old-format-channel");
+
+            assertThat(rebuildService.ensureIndexMatchesConfiguration()).isFalse();
+
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(queryChannelProperties(weaviateService, channel.getId()).get(SearchableEntitySchema.Properties.RELEASE_DATE)).isNotNull();
+                assertThat(searchChannelTitles("old-format-channel")).contains("old-format-channel");
+            });
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentSeesTheChannelOnceTheExerciseIsReleased() throws Exception {
+            indexChannelOfExercise(ZonedDateTime.now().plusDays(2), "released-later-channel");
+            assertThat(searchChannelTitles("released-later-channel")).doesNotContain("released-later-channel");
+
+            exercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+            exercise = exerciseRepository.save(exercise);
+            // An exercise update rewrites its channel row too, which carries the release date.
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(exercise));
+
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(searchChannelTitles("released-later-channel")).contains("released-later-channel");
             });
         }
     }

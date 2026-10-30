@@ -32,7 +32,7 @@ describe('ExerciseActionBarComponent', () => {
 
     describe('hiddenIds / hasOverflow', () => {
         it('shows nothing hidden before the row width is measured', () => {
-            fixture.componentRef.setInput('items', buildActions(['participations', 'scores', 'edit', 'delete']));
+            fixture.componentRef.setInput('items', buildActions(['participations', 'statistics', 'edit', 'delete']));
             expect(component.hiddenIds().size).toBe(0);
             expect(component.hasOverflow()).toBe(false);
             expect(component.hiddenActions()).toEqual([]);
@@ -47,8 +47,8 @@ describe('ExerciseActionBarComponent', () => {
             component['buttonWidths'].set(widths);
         };
 
-        it('keeps the default-priority ids (delete, edit, scores) inline and overflows the rest first', () => {
-            fixture.componentRef.setInput('items', buildActions(['participations', 'scores', 'statistics', 'preview', 'solution', 'edit', 'delete']));
+        it('keeps the default-priority ids (delete, edit, participations) inline and overflows the rest first', () => {
+            fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'statistics', 'preview', 'solution', 'edit', 'delete']));
 
             // Each button 100px wide. With a 360px row (available 352 after the safety margin, budget 308 after the
             // ellipsis + gap) exactly three 100px buttons plus their gaps fit.
@@ -59,11 +59,11 @@ describe('ExerciseActionBarComponent', () => {
             const hidden = component.hiddenActions().map((a) => a.id);
             expect(component.hasOverflow()).toBe(true);
             // The three highest-priority actions stay inline regardless of their display position.
-            expect(hidden).not.toContain('scores');
+            expect(hidden).not.toContain('participations');
             expect(hidden).not.toContain('edit');
             expect(hidden).not.toContain('delete');
             // The type-specific extras collapse into the ellipsis menu.
-            expect(hidden).toEqual(expect.arrayContaining(['participations', 'statistics', 'preview', 'solution']));
+            expect(hidden).toEqual(expect.arrayContaining(['teams', 'statistics', 'preview', 'solution']));
         });
 
         it('respects a custom keepPriorityIds ordering', () => {
@@ -105,6 +105,23 @@ describe('ExerciseActionBarComponent', () => {
             fixture.detectChanges();
             expect(tooltipTextOf()).toBe('');
         });
+    });
+
+    it('disables the native action button while pending and restores its callback when enabled', () => {
+        const onClick = vi.fn();
+        const action: ActionItem = { id: 'variant', labelKey: 'label.variant', icon: faTable, severity: 'warn', kind: 'button', onClick };
+        fixture.componentRef.setInput('items', [{ ...action, disabled: true }]);
+        fixture.detectChanges();
+        const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="exercise-action-variant"]');
+        expect(button.disabled).toBe(true);
+        button.click();
+        expect(onClick).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('items', [{ ...action, disabled: false }]);
+        fixture.detectChanges();
+        expect(button.disabled).toBe(false);
+        button.click();
+        expect(onClick).toHaveBeenCalledExactlyOnceWith();
     });
 
     describe('menu interactions', () => {

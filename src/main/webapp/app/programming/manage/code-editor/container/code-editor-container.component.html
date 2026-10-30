@@ -38,6 +38,7 @@
         [errorFiles]="errorFiles()"
         [editorState]="editorState"
         [isTutorAssessment]="isTutorAssessment()"
+        [commitId]="commitId()"
         [highlightFileChanges]="highlightFileChanges()"
         [fileBadges]="fileBadges()"
         [allowHiddenFiles]="allowHiddenFiles()"
@@ -46,6 +47,7 @@
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
+        (repositoryFilesLoaded)="onRepositoryFilesLoaded.emit()"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     />
@@ -71,6 +73,7 @@
             [readOnlyManualFeedback]="readOnlyManualFeedback()"
             [disableActions]="!editable()"
             [isTutorAssessment]="isTutorAssessment()"
+            [commitId]="commitId()"
             [highlightDifferences]="highlightDifferences()"
             [selectedFile]="selectedFile === problemStatementIdentifier ? undefined : selectedFile"
             [selectedRepository]="selectedRepository()"

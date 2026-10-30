@@ -49,7 +49,7 @@ jobs:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
       - name: Setup Java
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
@@ -60,11 +60,14 @@ jobs:
         uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           languages: javascript, java
+          config-file: ./.github/codeql/codeql-config.yml
       - name: Install pnpm dependencies
         run: pnpm install --frozen-lockfile
       - name: Prepare client source
         run: pnpm run clean-www && pnpm run prebuild
+      # Only the compile has to run under the tracer. `bootWar` would add resource processing, the
+      # git properties, the SBOM tasks and the WAR packaging, none of which CodeQL reads.
       - name: Build Java
-        run: ./gradlew -Pprod -Pwar bootWar -x webapp
+        run: ./gradlew -Pprod -Pwar compileJava -x webapp
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3

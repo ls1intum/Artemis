@@ -158,7 +158,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
             assertThat(usage.getCostPerMillionInputTokens()).isEqualTo(expectedCost.costPerMillionInputToken());
             assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
-            assertThat(usage.getNumCachedInputTokens()).isEqualTo(expectedCost.numCachedInputTokens());
+            assertThat(usage.getNumCachedInputTokens()).isEqualTo(Math.toIntExact(expectedCost.numCachedInputTokens()));
             assertThat(usage.getCostPerMillionCachedInputTokens()).isCloseTo(expectedCost.costPerMillionCachedInputToken(), Offset.offset(0.001f));
             assertThat(usage.getNumCacheWriteInputTokens()).isEqualTo(expectedCost.numCacheWriteInputTokens());
             assertThat(usage.getCostPerMillionCacheWriteInputTokens()).isCloseTo(expectedCost.costPerMillionCacheWriteInputToken(), Offset.offset(0.001f));
@@ -230,7 +230,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendStatus(String jobId, String result, PyrisRunState runState, List<LLMRequest> tokens) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, runState, null, null, null, tokens, null, null), HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status", new PyrisChatStatusUpdateDTO(result, runState, null, null, null, tokens),
+                HttpStatus.OK, headers);
     }
 }

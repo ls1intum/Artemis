@@ -1,3 +1,4 @@
+import { onUserChange } from 'app/core/auth/user-change.util';
 import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
@@ -7,7 +8,7 @@ import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { AccountService } from 'app/core/auth/account.service';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Service for managing course notification settings.
@@ -23,17 +24,10 @@ export class CourseNotificationSettingService implements OnDestroy {
     private settingInfoSubjects: Record<number, BehaviorSubject<CourseNotificationSettingInfo | undefined>> = {};
 
     private stateGeneration = 0;
-    private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
     constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.resetState();
-            }
-        });
+        this.authenticationStateSubscription = onUserChange(this.accountService, () => this.resetState());
     }
 
     ngOnDestroy(): void {
@@ -108,7 +102,8 @@ export class CourseNotificationSettingService implements OnDestroy {
 
         if (currentValue) {
             if (copyPreset) {
-                currentValue.notificationTypeChannels = copyPreset.presetMap;
+                // A copy: the preset is shared by every course, and the channels of this one are changed on their own afterwards.
+                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap);
             }
             const updatedValue = cloneWith(currentValue, { selectedPreset: presetTypeId });
             subject.next(updatedValue);
@@ -135,7 +130,9 @@ export class CourseNotificationSettingService implements OnDestroy {
 
         if (currentValue) {
             if (copyPreset) {
-                currentValue.notificationTypeChannels = copyPreset.presetMap;
+                // Customizing starts from the chosen preset. Without one, the channels in the cache are the ones that apply to the user
+                // and stay as they are, so that changing one channel does not bring back what the effective settings leave out.
+                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap);
             }
             if (currentValue.notificationTypeChannels[notificationSettingSpecification.typeId]) {
                 currentValue.notificationTypeChannels[notificationSettingSpecification.typeId] = notificationSettingSpecification.channelSetting;

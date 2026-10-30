@@ -259,7 +259,7 @@
             },
             "autoOrchestration": {
                 "label": "Atlas Auto-Orchestration Enabled",
-                "tooltip": "Lets Atlas automatically review and update this course's competencies whenever an exercise's content changes. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
+                "tooltip": "Lets Atlas update this course's competencies and their links to exercises and lecture units without asking for approval, whenever exercises or lecture units are created or their content changes. Only changes made after you turn it on are considered. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
                 "overridePlaceholder": "Use default",
                 "overridePlaceholderWithValue": "Use default ({{ value }})",
                 "debounceWindowSecondsOverride": {
@@ -361,6 +361,9 @@
                     "required": "Enter a short name.",
                     "hint": "Between 3 and 24 letters or digits, starting with a letter. It appears in URLs and group names and cannot be changed later.",
                     "hintReadOnly": "The short name cannot be changed after the course has been created."
+                },
+                "description": {
+                    "maxlength": "Description must not exceed 2000 characters."
                 },
                 "startDate": {
                     "invalid": "Must be before the end date of the course",
@@ -478,6 +481,7 @@
                     "startDateRequired": "Please set a start date for the course.",
                     "endDateRequired": "Please set an end date for the course.",
                     "semesterRequired": "Please select a semester for the course.",
+                    "dateTextInvalid": "A date field contains text that is not a date. Please correct it.",
                     "startDateBeforeEndDate": "The start date must be before the end date.",
                     "enrollmentStartDateBeforeEndDate": "The enrollment start date must be before the enrollment end date.",
                     "enrollmentRequiresCourseDates": "Enrollment dates require the course to have a start and end date. Please set them in the General Settings step.",

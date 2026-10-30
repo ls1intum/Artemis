@@ -18,6 +18,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -70,6 +71,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         TumAetUiDialogComponent,
         TumAetUiFormFieldComponent,
         TumAetUiInputDirective,
+        PointsInputComponent,
         TumAetUiMessageComponent,
         TumAetUiTagComponent,
         TumAetUiTooltipDirective,
@@ -494,6 +496,34 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Returns true when the grace period is set to a negative value, which the minimum of 0 seconds rules out.
+     */
+    get isGracePeriodNegative(): boolean {
+        return this.exam.gracePeriod !== undefined && this.exam.gracePeriod !== null && this.exam.gracePeriod < 0;
+    }
+
+    /**
+     * Returns true when the maximum points are missing or below the minimum of 1. Values above the maximum have their own explanation.
+     */
+    get isMaxPointsMissingOrTooLow(): boolean {
+        return !((this.exam.examMaxPoints ?? 0) >= 1);
+    }
+
+    /**
+     * Returns true when the number of exercises is set below the minimum of 1. An empty number of exercises is valid.
+     */
+    get isNumberOfExercisesTooLow(): boolean {
+        return this.exam.numberOfExercisesInExam !== undefined && this.exam.numberOfExercisesInExam !== null && this.exam.numberOfExercisesInExam < 1;
+    }
+
+    /**
+     * Returns true when the channel name field is shown but was emptied. The title fills it initially, so it is only empty after the user cleared it.
+     */
+    get isChannelNameMissing(): boolean {
+        return !this.hideChannelNameInput() && this.exam.channelName === '';
+    }
+
+    /**
      * Maximum working time in seconds (30 days).
      */
     readonly maxWorkingTimeSeconds = 2592000;
@@ -598,6 +628,51 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Returns the translation key explaining why the release date of results is invalid, or undefined if it is valid.
+     */
+    get publishResultsDateErrorKey(): string | undefined {
+        if (this.isValidPublishResultsDate) {
+            return undefined;
+        }
+        return this.exam.endDate ? 'error.examPublishResultsDateAfterEnd' : 'error.examPublishResultsDateEndMissing';
+    }
+
+    /**
+     * Returns the translation key explaining why the begin of the student review is invalid, or undefined if it is valid.
+     */
+    get examStudentReviewStartErrorKey(): string | undefined {
+        if (this.isValidExamStudentReviewStart) {
+            return undefined;
+        }
+        return this.exam.publishResultsDate ? 'error.examStudentReviewStartAfterRelease' : 'error.examStudentReviewStartReleaseMissing';
+    }
+
+    /**
+     * Returns the translation key explaining why the submission overview date is invalid, or undefined if it is valid.
+     */
+    get examSummaryPublicationDateErrorKey(): string | undefined {
+        if (this.isValidExamSummaryPublicationDate) {
+            return undefined;
+        }
+        if (!this.exam.endDate) {
+            return 'error.examSummaryPublicationDateEndMissing';
+        }
+        const afterEndDate = dayjs(this.exam.examSummaryPublicationDate).isAfter(this.exam.endDate);
+        return afterEndDate ? 'error.examSummaryPublicationDateBeforeRelease' : 'error.examSummaryPublicationDateAfterEnd';
+    }
+
+    /**
+     * Returns the translation key explaining why the example solution publication date is invalid, or undefined if it is valid.
+     */
+    get exampleSolutionPublicationDateErrorKey(): string | undefined {
+        if (this.isValidExampleSolutionPublicationDate) {
+            return undefined;
+        }
+        const beforeEndDate = dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null);
+        return beforeEndDate ? 'error.examExampleSolutionPublicationDateAfterEnd' : 'error.examExampleSolutionPublicationDateAfterVisible';
+    }
+
+    /**
      * Default exam start text, which can be edited by instructors in the text editor
      */
     get examDefaultStartText(): string {
@@ -650,6 +725,7 @@ export const prepareExamForImport = (exam: Exam): Exam =>
             'publishResultsDate',
             'examStudentReviewStart',
             'examStudentReviewEnd',
+            'exampleSolutionPublicationDate',
             'examSummaryPublicationDate',
             'examUsers',
             'studentExams',

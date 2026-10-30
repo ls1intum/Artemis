@@ -1,5 +1,5 @@
 <div class="version-history-layout">
-    <p-splitter [panelSizes]="[30, 70]" styleClass="version-history-splitter" layout="horizontal">
+    <p-splitter [panelSizes]="[30, 70]" [gutterSize]="6" styleClass="version-history-splitter" layout="horizontal">
         <ng-template #panel>
             <section class="left-pane">
                 <ng-content select="[version-history-left]" />

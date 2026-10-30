@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -85,7 +86,7 @@ class PyrisStatusUpdateServiceTest {
     @EnumSource(PyrisRunState.class)
     void chatJobLifecycleUsesRunState(PyrisRunState runState) {
         var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO(null, runState, null, null, null, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, runState, null, null, null, null);
         when(irisChatSessionService.handleStatusUpdate(job, statusUpdate)).thenReturn(job);
 
         service.handleStatusUpdate(job, statusUpdate);
@@ -166,7 +167,7 @@ class PyrisStatusUpdateServiceTest {
 
         verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
                 eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer.[1]", null, null, null, List.of(entitySource), false, false, null, null, null)));
-        verify(pyrisJobService).removeJob(job);
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, null, true);
     }
 
     @Test
@@ -181,7 +182,20 @@ class PyrisStatusUpdateServiceTest {
 
         verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"), eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", false,
                 "About the course.[1] About the slide.[2]", null, null, null, List.of(entitySource), false, false, null, null, List.of("entity", "lecture"))));
-        verify(pyrisJobService).removeJob(job);
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, null, true);
+    }
+
+    @Test
+    void globalSearchKeepsTheCitedMaterialVersionsOnlyForAnAnswer() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var source = new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), new PyrisLectureSearchResultDTO.LectureDTO(3L, "W03"),
+                new PyrisLectureSearchResultDTO.LectureUnitDTO(42L, "Slides", "/courses/9/lectures/3", 4, "slide", Map.of("unit", 42, "page", 4), null), "snippet");
+
+        service.handleStatusUpdate(job, new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "Slides.[1]", List.of(source)));
+        service.handleStatusUpdate(job, new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FAILED, null, null, List.of(source)));
+
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, List.of(source), true);
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, List.of(source), false);
     }
 
     @Test
@@ -254,7 +268,7 @@ class PyrisStatusUpdateServiceTest {
 
         verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
                 eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer", null)));
-        verify(pyrisJobService).removeJob(job);
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, null, true);
 
         var failedJob = new GlobalSearchAnswerJob("global-failed-run", "student1");
         var failedUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FAILED, null, null, null);
@@ -265,7 +279,7 @@ class PyrisStatusUpdateServiceTest {
         // produce the identical isThinking=false, answer=null shape), so the client can offer a retry.
         verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
                 eq(new IrisGlobalSearchAnswerWebsocketDTO("global-failed-run", false, null, null, null, null, null, false, true, null, null, null)));
-        verify(pyrisJobService).removeJob(failedJob);
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(failedJob, null, false);
     }
 
     @ParameterizedTest(name = "result={0}, state={1}, errorCode={2}")
@@ -300,8 +314,8 @@ class PyrisStatusUpdateServiceTest {
     @Test
     void nullRunStateIsTreatedAsFailedTerminalForEveryStatusUpdateType() {
         var chatJob = new ChatJob("chat-null", 1L, 2L, 3L, null, null, null);
-        var chatUpdate = new PyrisChatStatusUpdateDTO("answer", null, null, null, null, null, null, null);
-        var normalizedChatUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.FAILED, null, null, null, null, null, null, null, null, null, null);
+        var chatUpdate = new PyrisChatStatusUpdateDTO("answer", null, null, null, null, null);
+        var normalizedChatUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.FAILED, null, null, null, null, null, null, null, null);
         when(irisChatSessionService.handleStatusUpdate(chatJob, normalizedChatUpdate)).thenReturn(chatJob);
 
         service.handleStatusUpdate(chatJob, chatUpdate);
@@ -327,7 +341,8 @@ class PyrisStatusUpdateServiceTest {
         // failed=true, not the same shape as a considered no-answer result.
         verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
                 eq(new IrisGlobalSearchAnswerWebsocketDTO("global-null", false, null, null, null, null, null, false, true, null, null, null)));
-        verify(pyrisJobService).removeJob(globalJob);
+        // A run without a state ends as failed, so it keeps no material versions for a handoff.
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(globalJob, null, false);
 
         var lectureJob = new LectureIngestionWebhookJob("lecture-null", 1L, 2L, 42L);
 

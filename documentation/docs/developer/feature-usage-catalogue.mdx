@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 148 features, 1063 REST endpoints in 28 modules, and 62 interaction overrides.
+Currently 20 product areas, 151 features, 1094 REST endpoints in 29 modules, and 63 interaction overrides.
 
 ## Courses
 
@@ -59,7 +59,8 @@ Currently 20 product areas, 148 features, 1063 REST endpoints in 28 modules, and
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | assessment | `GradeStepResource` | 0 | 2 | 0 | 0 |
-| exercise | `ExerciseScoresChartResource` | 0 | 1 | 0 | 0 |
+| exercise | `ExerciseScoresChartResource` | 0 | 2 | 0 | 0 |
+| lecture | `LectureResource` | 0 | 1 | 0 | 0 |
 
 ### Course calendar
 
@@ -75,7 +76,7 @@ Currently 20 product areas, 148 features, 1063 REST endpoints in 28 modules, and
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| globalsearch | `GlobalSearchResource` | 0 | 1 | 0 | 0 |
+| globalsearch | `GlobalSearchResource` | 0 | 2 | 0 | 0 |
 | iris | `IrisGlobalSearchResource` | 0 | 1 | 0 | 0 |
 
 ## Course management
@@ -248,7 +249,7 @@ Currently 20 product areas, 148 features, 1063 REST endpoints in 28 modules, and
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | exercise | `ParticipationDeletionResource` | 2 | 0 | 0 | 0 |
-| exercise | `ParticipationRetrievalResource` | 0 | 4 | 0 | 0 |
+| exercise | `ParticipationRetrievalResource` | 0 | 3 | 0 | 0 |
 | exercise | `ParticipationUpdateResource` | 2 | 0 | 0 | 0 |
 | exercise | `SubmissionResource` | 1 | 1 | 0 | 0 |
 
@@ -370,7 +371,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | programming | `ProgrammingExerciseGradingResource` | 1 | 0 | 0 | 0 |
 | programming | `ProgrammingExerciseUpdateResource` | 1 | 0 | 0 | 0 |
-| programming | `ProgrammingSubmissionResource` | 2 | 0 | 0 | 0 |
+| programming | `ProgrammingSubmissionResource` | 2 | 0 | 1 | 0 |
 
 ### Submission policies
 
@@ -454,6 +455,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
+| quiz | `QuizAssessmentResource` | 1 | 0 | 0 | 0 |
 | quiz | `QuizExerciseEvaluationResource` | 2 | 0 | 0 | 0 |
 | quiz | `QuizStatisticsResource` | 0 | 3 | 0 | 0 |
 
@@ -538,7 +540,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | modeling | `ModelingSubmissionResource` | 0 | 3 | 0 | 0 |
 | programming | `ProgrammingAssessmentResource` | 4 | 0 | 0 | 0 |
 | programming | `ProgrammingSubmissionResource` | 0 | 3 | 0 | 0 |
-| programming | `RepositoryProgrammingExerciseParticipationResource` | 0 | 1 | 0 | 0 |
+| programming | `RepositoryProgrammingExerciseParticipationResource` | 0 | 4 | 0 | 0 |
 | text | `TextAssessmentResource` | 5 | 1 | 0 | 0 |
 | text | `TextSubmissionResource` | 0 | 2 | 0 | 0 |
 
@@ -744,8 +746,8 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
+| lecture | `AttachmentVideoUnitPlaylistResource` | 0 | 1 | 0 | 0 |
 | lecture | `LectureTranscriptionResource` | 0 | 1 | 0 | 0 |
-| videosource | `TumLiveResource` | 0 | 1 | 0 | 0 |
 
 ### Create and manage lectures
 
@@ -760,6 +762,8 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | lecture | `LectureUnitResource` | 2 | 1 | 0 | 0 |
 | lecture | `OnlineUnitResource` | 2 | 2 | 0 | 0 |
 | lecture | `TextUnitResource` | 2 | 1 | 0 | 0 |
+| videosource | `GocastApprovalCallbackResource` | 0 | 1 | 0 | 0 |
+| videosource | `GocastIntegrationResource` | 2 | 1 | 0 | 0 |
 
 ### Slide splitting and hidden pages
 
@@ -845,6 +849,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
+| communication | `FaqImportResource` | 1 | 1 | 0 | 0 |
 | communication | `FaqResource` | 3 | 5 | 0 | 0 |
 
 ## Notifications
@@ -990,19 +995,10 @@ Also recorded outside REST by `CourseNotificationService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| iris | `IrisChatSessionResource` | 3 | 2 | 2 | 0 |
+| iris | `IrisChatSessionResource` | 4 | 2 | 2 | 0 |
 | iris | `IrisMessageResource` | 5 | 1 | 0 | 0 |
 | iris | `IrisResource` | 0 | 0 | 1 | 0 |
 | iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 2 |
-
-### Iris memories
-
-`IRIS_MEMORY`: What Iris remembers about a student, and deleting it.
-
-| Module | Resource | Actions | Views | Automatic | System |
-|--------|----------|--------:|------:|----------:|-------:|
-| account | `AccountResource` | 1 | 0 | 0 | 0 |
-| iris | `IrisMemoryResource` | 2 | 2 | 0 | 0 |
 
 ### Iris struggle intervention
 
@@ -1036,7 +1032,6 @@ Also recorded outside REST by `CourseNotificationService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| communication | `FaqResource` | 1 | 0 | 0 | 0 |
 | iris | `IrisResource` | 0 | 1 | 0 | 0 |
 | iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
 
@@ -1086,6 +1081,31 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | hyperion | `HyperionCodeGenerationResource` | 1 | 0 | 1 | 0 |
 
+### AI exercise generation
+
+`HYPERION_EXERCISE_GENERATION`: Generating a whole programming exercise from a brief or selected review feedback.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionAuthoringRunResource` | 1 | 2 | 0 | 0 |
+| hyperion | `HyperionExerciseGenerationResource` | 4 | 5 | 0 | 0 |
+
+### AI generation monitoring
+
+`HYPERION_GENERATION_MONITORING`: Inspecting and stopping whole-exercise generation jobs.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `AdminHyperionGenerationMonitoringResource` | 1 | 1 | 0 | 0 |
+
+### AI generation recovery
+
+`HYPERION_GENERATION_RECOVERY`: Inspecting and releasing blocked exercise mutation slots.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `AdminHyperionGenerationResource` | 1 | 1 | 0 | 0 |
+
 ### AI exercise variants
 
 `HYPERION_VARIANT_GENERATION`: Generating variants of an existing exercise.
@@ -1093,6 +1113,7 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | hyperion | `HyperionExerciseVariantResource` | 2 | 0 | 2 | 0 |
+| hyperion | `HyperionProgrammingVariantResource` | 1 | 0 | 0 | 0 |
 
 ### AI quiz questions
 
@@ -1101,6 +1122,7 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | hyperion | `HyperionQuizQuestionGenerationResource` | 3 | 0 | 0 | 0 |
+| hyperion | `HyperionQuizQuestionPoolResource` | 2 | 3 | 0 | 0 |
 
 ### AI grading criteria
 
@@ -1321,6 +1343,14 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 | admin | `AdminBuildJobQueueResource` | 9 | 9 | 0 | 0 |
 | localvc | `PublicBuildAgentAddressResource` | 0 | 0 | 0 | 1 |
 
+### AI workers
+
+`AI_WORKERS`: Checking the status and capacity of AI workers.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| aiworker | `AdminAiWorkerResource` | 0 | 1 | 0 | 0 |
+
 ## Administration and operations
 
 ### User management
@@ -1498,6 +1528,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/programming/plantuml/svg` (`EXERCISE_DETAILS`)
 * `GET api/programming/programming-exercise-participations/{participationId}/latest-pending-submission` (`PROGRAMMING_RESULTS`)
 * `GET api/programming/programming-exercises/{exerciseId}/latest-pending-submissions` (`PROGRAMMING_RESULTS`)
+* `GET api/programming/programming-exercises/{exerciseId}/selected-build-runs/{selectedBuildRunId}` (`PROGRAMMING_REEVALUATION`)
 * `GET api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title` (`TUTORIAL_GROUPS`)
 * `PATCH api/communication/courses/{courseId}/conversations/{conversationId}/mark-as-read` (`CONVERSATION_ORGANIZATION`)
 * `POST api/iris/chat/sessions/current` (`IRIS_CHAT`)

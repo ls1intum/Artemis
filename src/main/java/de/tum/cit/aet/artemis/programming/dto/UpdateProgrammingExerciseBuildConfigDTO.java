@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 
 /**
@@ -15,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentialTestRuns, String branch, String buildPlanConfiguration, String buildScript,
         boolean checkoutSolutionRepository, String testCheckoutPath, String assignmentCheckoutPath, String solutionCheckoutPath, int timeoutSeconds, String dockerFlags,
-        @Nullable String theiaImage, boolean allowBranching, @Nullable String branchRegex) {
+        @Nullable String theiaImage, @Nullable OnlineIdeExperienceLevel onlineIdeExperienceLevel, boolean allowBranching, @Nullable String branchRegex) {
 
     /**
      * Creates a DTO from a ProgrammingExerciseBuildConfig entity.
@@ -31,7 +32,7 @@ public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentia
         return new UpdateProgrammingExerciseBuildConfigDTO(buildConfig.getId(), buildConfig.hasSequentialTestRuns(), buildConfig.getBranch(),
                 buildConfig.getBuildPlanConfiguration(), buildConfig.getBuildScript(), buildConfig.getCheckoutSolutionRepository(), buildConfig.getTestCheckoutPath(),
                 buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(), buildConfig.getTimeoutSeconds(), buildConfig.getDockerFlags(),
-                buildConfig.getTheiaImage(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex());
+                buildConfig.getTheiaImage(), buildConfig.getOnlineIdeExperienceLevel(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex());
     }
 
     /**
@@ -42,7 +43,7 @@ public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentia
      */
     public UpdateProgrammingExerciseBuildConfigDTO withoutId() {
         return new UpdateProgrammingExerciseBuildConfigDTO(null, sequentialTestRuns, branch, buildPlanConfiguration, buildScript, checkoutSolutionRepository, testCheckoutPath,
-                assignmentCheckoutPath, solutionCheckoutPath, timeoutSeconds, dockerFlags, theiaImage, allowBranching, branchRegex);
+                assignmentCheckoutPath, solutionCheckoutPath, timeoutSeconds, dockerFlags, theiaImage, onlineIdeExperienceLevel, allowBranching, branchRegex);
     }
 
     /**
@@ -65,6 +66,7 @@ public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentia
         buildConfig.setTimeoutSeconds(timeoutSeconds);
         buildConfig.setDockerFlags(dockerFlags);
         buildConfig.setTheiaImage(theiaImage);
+        buildConfig.setOnlineIdeExperienceLevel(onlineIdeExperienceLevel);
         buildConfig.setAllowBranching(allowBranching);
         buildConfig.setBranchRegex(branchRegex);
         return buildConfig;

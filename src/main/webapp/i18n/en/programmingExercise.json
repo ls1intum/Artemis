@@ -62,6 +62,7 @@
                     "branch": "Branch",
                     "dockerFlags": "Docker Flags",
                     "theiaImage": "Online IDE Image",
+                    "onlineIdeExperienceLevel": "Online IDE Experience Level",
                     "postDueDateHandling": "Post Due Date Handling",
                     "assignmentCheckoutPath": "Assignment Checkout Path",
                     "solutionCheckoutPath": "Solution Checkout Path",
@@ -174,7 +175,7 @@
                 "resultPaths": "Result Paths",
                 "resultPathsHelp": "Add glob patterns for test result files produced by this phase, for example JUnit XML reports.",
                 "testsExpected": "Tests expected",
-                "expectedTestsBeforeDueDateWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date. To fix this, go to \"Edit\", switch to \"advanced mode\", check \"Customize build configuration\" and find \"Build Phases\".",
+                "expectedTestsBeforeDueDateWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date. To fix this, click \"Edit build plan\" at the top of this page, set the \"Inclusion condition\" of the phase to \"After due date\" and click \"Submit\".",
                 "expectedTestsBeforeDueDateEditorWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date.",
                 "resultPathPlaceholder": "e.g. **/results/*.xml",
                 "addResultPath": "Add Result Path",
@@ -274,6 +275,16 @@
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
                 "alert": "A valid configuration for the Online IDE must be selected."
             },
+            "onlineIdeExperienceLevel": {
+                "title": "Starting experience level in the Online IDE",
+                "notSet": "Not set (Artemis adds no configuration)",
+                "description": "Students start at this experience level when they open the exercise in the Online IDE. Artemis writes it into .vscode/eduide.json of every student repository it creates from the template, replacing a file of the template at that path. If not set, Artemis adds no file: students start at the level in the template's own .vscode/eduide.json if it has one, otherwise at the Online IDE's default level. Students can still choose another level, and repositories that already exist are not changed.",
+                "levels": {
+                    "BEGINNER": "Beginner",
+                    "ADVANCED": "Advanced",
+                    "EXPERT": "Expert"
+                }
+            },
             "appName": "App Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",
@@ -333,63 +344,6 @@
                     "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
                 },
                 "diffLineStatTooltip": "Lines added and removed by the AI refinement."
-            },
-            "codeGeneration": {
-                "creationAssistance": "Creation Assistance",
-                "generateCode": "Generate Code",
-                "generateWithAi": "Generate with AI",
-                "generating": "Generating...",
-                "runningTitle": "Code generation in progress",
-                "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",
-                "description": "Generate solution, template, and test code using AI",
-                "tooltip": "AI Code Generation - Generate solution, template, and test code",
-                "confirmTitle": "Confirm Code Generation",
-                "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
-                "success": "{{repositoryType}} code generation completed.",
-                "warning": "{{repositoryType}} code generation completed with issues.",
-                "error": "{{repositoryType}} code generation failed. Please try again later.",
-                "timeoutDetails": "The generation timed out after waiting too long for a response.",
-                "queueReleaseTimeoutDetails": "The previous repository generation did not finish cleanup in time, so the next repository could not start.",
-                "unsupportedRepository": "Code generation is only supported for Template, Solution, and Test repositories.",
-                "noRepositorySelected": "Select at least one repository before starting code generation.",
-                "settingsTitle": "Generation Settings",
-                "settingsTooltip": "Select repositories to generate",
-                "statusTitle": "Generation Status",
-                "statusTooltip": "Show live generation status",
-                "executionOrder": "Selected repositories run consecutively in this order: Solution, Template, Test.",
-                "selectedFeedback": {
-                    "title": "Selected Feedback Threads",
-                    "description": "These selected threads will be forwarded as feedback context for code generation.",
-                    "count": "{{count}} selected",
-                    "empty": "No threads are currently selected as feedback.",
-                    "showThreads": "Show Threads",
-                    "hideThreads": "Hide Threads",
-                    "viewThread": "View Thread",
-                    "line": "Line {{line}}",
-                    "unknownLocation": "Unknown location"
-                },
-                "repositories": {
-                    "template": "Template Repository",
-                    "solution": "Solution Repository",
-                    "tests": "Tests Repository"
-                },
-                "activityTitle": "File Activity",
-                "iteration": "Iteration {{iteration}}",
-                "noActivity": "No files have been created, updated, or removed yet.",
-                "attempts": "Attempts made: {{attempts}}",
-                "status": {
-                    "idle": "Not started",
-                    "queued": "Queued",
-                    "running": "Running",
-                    "success": "Completed",
-                    "warning": "Completed with issues",
-                    "error": "Failed",
-                    "skipped": "Skipped",
-                    "skippedMessage": "Skipped because a previous repository generation failed.",
-                    "fileCreated": "created",
-                    "fileUpdated": "updated",
-                    "fileDeleted": "removed"
-                }
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -836,7 +790,9 @@
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
+                "GRADLE_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_MAVEN": "Maven",
                 "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",

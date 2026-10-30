@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,7 +7,7 @@ import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-di
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,7 +18,9 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
-import { CreateVariantWithAiButtonComponent } from 'app/course/manage/exercises/create-variant-modal/create-variant-with-ai-button.component';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
@@ -27,6 +29,8 @@ import { CreateVariantWithAiButtonComponent } from 'app/course/manage/exercises/
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
+    private quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
+    private quizExerciseEvaluationApi = inject(QuizExerciseEvaluationApi);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
     private exerciseService = inject(ExerciseService);
@@ -36,7 +40,6 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     protected readonly ActionType = ActionType;
     readonly faEye = faEye;
     readonly faSignal = faSignal;
-    readonly faTable = faTable;
     readonly faFileExport = faFileExport;
     readonly faWrench = faWrench;
     readonly faTrash = faTrash;
@@ -84,8 +87,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizExercise(exportAll: boolean) {
-        this.quizExerciseService.find(this.quizExercise().id!).subscribe((response: HttpResponse<QuizExercise>) => {
-            const exercise = response.body!;
+        this.quizExerciseService.find(this.quizExercise().id!).subscribe((exercise) => {
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }
@@ -94,7 +96,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * Deletes quiz exercise
      */
     deleteQuizExercise() {
-        this.quizExerciseService.delete(this.quizExercise().id!).subscribe({
+        this.quizExerciseDeletionApi.deleteQuizExercise(this.quizExercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
@@ -129,7 +131,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
 
     evaluateQuizExercise() {
         this.isEvaluatingQuizExercise.set(true);
-        this.exerciseService.evaluateQuizExercise(this.quizExercise().id!).subscribe({
+        this.quizExerciseEvaluationApi.evaluateQuizExercise(this.quizExercise().id!).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
                 this.isEvaluatingQuizExercise.set(false);

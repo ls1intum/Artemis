@@ -66,6 +66,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @Query("""
             SELECT DISTINCT modelingExercise
             FROM ModelingExercise modelingExercise
+                LEFT JOIN FETCH modelingExercise.course
                 LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
                 LEFT JOIN FETCH exampleSubmissions.submission submission
                 LEFT JOIN FETCH submission.results results
@@ -99,7 +100,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
      * @param exerciseId the id of the exercise to fetch
      * @return {@link ModelingExercise}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "gradingCriteria" })
+    @EntityGraph(type = LOAD, attributePaths = { "course", "competencyLinks", "categories", "gradingCriteria" })
     Optional<ModelingExercise> findForVersioningById(long exerciseId);
 
     /**

@@ -57,6 +57,8 @@ const sidebars: SidebarsConfig = {
         'local-user-management',
         'open-source',
         'system-design',
+        'security-assurance',
+        'best-practices',
         'feature-usage',
         'feature-usage-catalogue',
         'test-servers',
@@ -80,7 +82,7 @@ const sidebars: SidebarsConfig = {
         {
             type: 'category',
             label: 'Hyperion',
-            items: ['hyperion/consistency-check', 'hyperion/quiz-generation'],
+            items: ['hyperion/consistency-check', 'hyperion/quiz-generation', 'hyperion/worker-modules'],
         },
     ],
 };

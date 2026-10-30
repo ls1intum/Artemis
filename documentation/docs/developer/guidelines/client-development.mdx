@@ -127,6 +127,21 @@ when native HTML, Angular Aria, or Angular CDK already provides the behavior. Fo
 [TUM AET UI package guide](/developer/guidelines/tum-aet-ui-kit) for ownership, public API, stories, and
 validation.
 
+#### Points inputs
+
+Every field in which a user enters points, bonus points or credits uses `jhi-points-input` (`PointsInputComponent` in
+`app/shared-ui/tum-aet-ui-integration/points-input`), never a native `<input type="number">` or a PrimeNG number input. It wraps
+`tumaet-ui-input-number` with one fixed setup, so that all of them accept and show a number in the same way: up to three fraction
+digits (a longer fraction is cut off while typing), `.` and `,` as decimal separator whatever the browser language, and no digit
+grouping. It works with `ngModel`, `formControlName` and `formControl`.
+
+Bind `[min]` and `[max]` on the component: a native `min` or `max` attribute does not validate a custom control. The bounds are
+applied when the field is left and reported as `min` and `max` errors of the control as long as the typed value violates them.
+Pass `inputId` for a `<label for>` and for end-to-end locators, because the id belongs to the inner `<input>`.
+
+Inputs for numbers that are not points, such as percentages, durations, counts and sizes, are not points inputs. They use
+`tumaet-ui-input-number` directly, with the integer or fraction setup that fits their meaning.
+
 <Callout variant={CalloutVariant.danger}>
 **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
 
@@ -678,7 +693,7 @@ this.userIdentity.update((current) => {
 });
 ```
 
-`AccountService.setImageUrl` and `AccountService.setUserEnabledMemiris` are the canonical examples.
+`AccountService.setImageUrl` and `AccountService.setUserLLMSelectionDecision` are the canonical examples.
 
 Two things this rule does **not** cover:
 
@@ -816,6 +831,17 @@ that selector.
 </div>
 ```
 
+### Dividers between panels
+
+Every divider between two panels is 6px wide, the `--spacing-divider` token from `tailwind.css`. Never size
+one in percentages or with its own pixel value.
+
+- A resizable side panel (`jhiResizable`) gives its handle the global `panel-divider-x` class, for example
+  `<div class="draggable-left panel-divider-x"></div>`. The class sets the width, the small grip and a grab area that reaches
+  4px into the following panel.
+- A PrimeNG `p-splitter` sets `[gutterSize]="6"` and draws the grip from two 2px bars with a 1px gap, as
+  `resizable-panels.component.scss` does. Its default gutter is 4px.
+
 ### Styling
 
 Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
@@ -857,6 +883,8 @@ When an application component needs owned class selectors, use [BEM](https://get
 | `text-muted`                                                    | an application style using the semantic `--text-body-secondary` property                                                                                              |
 | `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info`                                                                                 |
 | `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | Tailwind logical spacing; convert by target size and write the steps 3 to 5 with `!` (Bootstrap `mb-3` is `1rem`, so `mb-4!`; see _Ambiguous Spacing Utilities_)      |
+
+**Date and time fields use `tumaet-ui-date-picker`.** It is a signal-forms control: bind `[(value)]` to a `dayjs` signal or property, or `[formField]` on a signal form. `[min]` and `[max]` grey out the days outside a range in the calendar, but text typed into the field is not limited by them. The picker has no required flag and no message for an external error, so the consumer checks the range or the required state, marks the field with `[invalid]`, and explains the error next to it (`[ariaDescribedBy]` ties the text to the field). Typed text that is not a date leaves the last valid value in `value` and is reported through `(inputValidityChange)`, so a consumer must not submit while that is `false`. Use `[dateOnly]` for a date, `[timeOnly]` for a time and `[startAt]` for the month a calendar opens on while the field is empty. A reactive form that has not moved to signal forms adds `DatePickerControlDirective` (`app/shared-ui/date-picker-control`) to keep `formControlName`; it reports unparseable text as an `invalidDate` control error and goes away with the last such form. The field never gets narrower than its text needs: 15rem for a date and time, 11.5rem with `[dateOnly]` and 8rem with `[timeOnly]`; the `[inline]` variant has no minimum. A flex or grid parent therefore has to wrap or grow instead of squeezing it, so use `grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]` (or the matching minimum) rather than a fixed column count. To keep at most two columns, use `grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]` with `gap-4`. Do not stack indents in front of a picker on a phone, because a clipping parent hides its buttons. Give the picker its `labelName` and project a help icon next to it with the `tumAetUiDatePickerLabelAddon` attribute, so label, icon and time-zone indicator stay on one line; combine `[hideLabelName]` with an external label only together with `[shouldDisplayTimeZoneWarning]="false"`. For a range, use two pickers rather than a range component.
 
 **Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a _primitive_ token names a value (`red-500`); a _semantic_ token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
 
@@ -1289,13 +1317,13 @@ not compile either.
 as a string as well and are not type checked, so they are no substitute. The rule does not cover them, because they are not
 calls to `setInput`.
 
-`packages/tum-aet-ui` must not import from the application and keeps its own internal copy of the helper in
-`packages/tum-aet-ui/src/lib/internal/set-inputs.ts`. Keep the two in step.
+`@tumaet/ui-angular` owns and exports the shared implementation in `packages/tum-aet-ui/src/lib/internal/set-inputs.ts`.
+The application utility re-exports it, so existing callers keep their import path without a second implementation.
 
 `localRules/no-component-ref-set-input` (`config/eslint/rules/no-component-ref-set-input.mjs`) bans any use of the `setInput`
 member in production code under `src/main/webapp` and `packages/tum-aet-ui` at error level, so aliasing, destructuring and
-`call`, `apply` or `bind` do not get around it. Specs are exempt, because they set inputs on fixtures. The two helpers are the
-only places that disable the rule.
+`call`, `apply` or `bind` do not get around it. Specs are exempt, because they set inputs on fixtures. The package helper is the
+only place that disables the rule.
 
 ## Advanced Topics
 

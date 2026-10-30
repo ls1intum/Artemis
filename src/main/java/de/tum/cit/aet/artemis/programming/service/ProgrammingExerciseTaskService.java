@@ -87,12 +87,14 @@ public class ProgrammingExerciseTaskService {
      * Instructors can change the color of UML elements by using e.g {@code <color:testsColor(testConstructors[LinkedList])>+ LinkedList()</color>}
      * <p>
      * The first capture group of this pattern will contain the test name, in the example above {@code testConstructors[LinkedList]}.
-     * It's currently not possible to assign multiple test cases to a single UML element.
+     * The test name may contain spaces (e.g. a JUnit DisplayName such as {@code Test Attributes of Class}), but no parentheses except a trailing parameter list, which may be
+     * separated from the name by spaces or tabs.
+     * It's currently not possible to assign multiple test cases to a single UML element, so the whole capture is one test name and is never split at commas.
      * <p>
      * This is coupled to the value used in `ProgrammingExercisePlantUmlExtensionWrapper` in the client.
      * If you change the regex, make sure to change it in all places!
      */
-    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\((\\s*+[^()\\s]++(\\([^()]*+\\))?)\\)");
+    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\((\\s*+[^()\\s]++(?:[ \\t]++[^()\\s]++)*+([ \\t]*+\\([^()]*+\\))?)\\)");
 
     private static final String TESTID_START = "<testid>";
 
@@ -249,7 +251,7 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Finds every test reference in the problem statement's task markers that does NOT resolve to an ACTIVE test
-     * case of the exercise (by exact name or {@code <testid>} id) — e.g. a typo, a stale name left over from
+     * case of the exercise (by exact name, unique case-insensitive name or {@code <testid>} id) — e.g. a typo, a stale name left over from
      * before a rename, or a test the transformation removed without updating the marker. Unlike
      * {@link #extractTasks}, which silently drops unresolved references when building tasks, this reports them so
      * callers can surface a precise error instead of a silently-broken task-test link.
@@ -295,7 +297,15 @@ public class ProgrammingExerciseTaskService {
             return testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst();
         }
         else {
-            return testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
+            // New name references use active candidates; stored ID references above retain their historical links.
+            String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
+            var activeTestCases = testCases.stream().filter(testCase -> Boolean.TRUE.equals(testCase.isActive())).toList();
+            var exactMatch = activeTestCases.stream().filter(tc -> tc.getTestName().equals(storedTestName)).findFirst();
+            if (exactMatch.isPresent()) {
+                return exactMatch;
+            }
+            var caseInsensitiveMatches = activeTestCases.stream().filter(tc -> tc.getTestName().equalsIgnoreCase(storedTestName)).limit(2).toList();
+            return caseInsensitiveMatches.size() == 1 ? Optional.of(caseInsensitiveMatches.getFirst()) : Optional.empty();
         }
     }
 
@@ -382,13 +392,7 @@ public class ProgrammingExerciseTaskService {
      * @return the new replacement to be used in the problem statement
      */
     private String convertTestNameToTestIdReplacement(String testName, Set<ProgrammingExerciseTestCase> testCases) {
-        for (ProgrammingExerciseTestCase testCase : testCases) {
-            if (testName.equals(testCase.getTestName())) {
-                String id = testCase.getId().toString();
-                return TESTID_START + id + TESTID_END;
-            }
-        }
-        return testName;
+        return findTestCaseFromProblemStatement(testName, testCases).map(testCase -> TESTID_START + testCase.getId() + TESTID_END).orElse(testName);
     }
 
     /**
@@ -401,7 +405,7 @@ public class ProgrammingExerciseTaskService {
     public void replaceTestIdsWithNames(ProgrammingExercise exercise) {
         // Also replace inactive test cases; don't send any test ids (e.g. ids referring to previously active test cases) to the editor.
         // The client will then show a warning that the mentioned test name no longer exists.
-        replaceInProblemStatement(exercise, this::extractTestNamesFromTestIds, false);
+        replaceInProblemStatement(exercise, this::extractTestNamesFromTestIds, this::convertTestIdToTestName, false);
     }
 
     private String extractTestNamesFromTestIds(String capturedTestCaseIds, Set<ProgrammingExerciseTestCase> testCases) {
@@ -440,7 +444,7 @@ public class ProgrammingExerciseTaskService {
     public void replaceTestNamesWithIds(ProgrammingExercise exercise) {
         // Only replace active test cases (tests that actually exist in the repository).
         // The other test cases will get replaced as soon as they get active.
-        replaceInProblemStatement(exercise, this::extractTestCaseIdReplacementsFromNames, true);
+        replaceInProblemStatement(exercise, this::extractTestCaseIdReplacementsFromNames, this::convertTestNameToTestIdReplacement, true);
     }
 
     /**
@@ -455,7 +459,16 @@ public class ProgrammingExerciseTaskService {
         return testCaseNames.stream().map(testName -> convertTestNameToTestIdReplacement(testName, testCases)).collect(Collectors.joining(","));
     }
 
-    private void replaceInProblemStatement(ProgrammingExercise exercise, BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer, boolean onlyActive) {
+    /**
+     * Replaces the test references of all tasks and PlantUML diagrams in the problem statement.
+     *
+     * @param exercise       the exercise whose problem statement is updated
+     * @param listReplacer   converts the comma separated test list of a task
+     * @param singleReplacer converts the single test reference of a {@code testsColor(...)} element; it must not split at commas, as a test name may contain them
+     * @param onlyActive     whether only active test cases are used for the lookup
+     */
+    private void replaceInProblemStatement(ProgrammingExercise exercise, BiFunction<String, Set<ProgrammingExerciseTestCase>, String> listReplacer,
+            BiFunction<String, Set<ProgrammingExerciseTestCase>, String> singleReplacer, boolean onlyActive) {
         var problemStatement = exercise.getProblemStatement();
         if (problemStatement == null || problemStatement.isEmpty()) {
             return;
@@ -472,8 +485,8 @@ public class ProgrammingExerciseTaskService {
             return;
         }
 
-        problemStatement = replaceTaskTests(problemStatement, testCases, replacer);
-        problemStatement = replacePlantUMLTestCases(problemStatement, testCases, replacer);
+        problemStatement = replaceTaskTests(problemStatement, testCases, listReplacer);
+        problemStatement = replacePlantUMLTestCases(problemStatement, testCases, singleReplacer);
 
         exercise.setProblemStatement(problemStatement);
     }
@@ -506,12 +519,13 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Looks for all test cases integrated into plantuml diagrams in the given problem statement, and replaces its test case using the given replacer method.
-     * Replacer methods are {@link ProgrammingExerciseTaskService#extractTestCaseIdReplacementsFromNames(String, Set)}
-     * or {@link ProgrammingExerciseTaskService#extractTestNamesFromTestIds(String, Set)}.
+     * Each {@code testsColor(...)} captures exactly one test reference, so the replacer gets the whole capture and must not split it at commas.
+     * Replacer methods are {@link ProgrammingExerciseTaskService#convertTestNameToTestIdReplacement(String, Set)}
+     * or {@link ProgrammingExerciseTaskService#convertTestIdToTestName(String, Set)}.
      *
      * @param problemStatement the problem statement to replace the plantuml diagram tests
      * @param testCases        all test cases of the exercise; used to look up the new value to use
-     * @param replacer         the replacer method that gets executed when a test case gets found
+     * @param replacer         the replacer method that gets executed with the single test reference when one gets found
      * @return the new problem statement
      */
     private String replacePlantUMLTestCases(String problemStatement, Set<ProgrammingExerciseTestCase> testCases,
@@ -528,7 +542,7 @@ public class ProgrammingExerciseTaskService {
                 // group 1: test name, e.g, testAttributes[BubbleSort]
                 String testName = testsMatchResult.group(1);
                 // id to insert, e.g., <testid>15</testid>
-                String testId = replacer.apply(testName, testCases);
+                String testId = replacer.apply(testName.strip(), testCases);
                 return Matcher.quoteReplacement(fullMatch.replace(testName, testId));
             }));
         });
@@ -544,20 +558,16 @@ public class ProgrammingExerciseTaskService {
      * @param newTestCaseIdByOldId a map indicating which ids should be replaced with their corresponding new ones.
      */
     public void updateTestIds(ProgrammingExercise exercise, Map<Long, Long> newTestCaseIdByOldId) {
-        replaceInProblemStatement(exercise, ((capture, testCases) -> {
-            // Input old ids (<testid>27</testid>), output new ids (<testid>123</testid>)
-            var capturedTestIds = extractTestCaseNames(capture);
-
-            return capturedTestIds.stream().map(tc -> {
-                Long id = extractTestId(tc);
-                if (id == null) {
-                    return tc;
-                }
-                if (newTestCaseIdByOldId.containsKey(id)) {
-                    return TESTID_START + newTestCaseIdByOldId.get(id) + TESTID_END;
-                }
-                return tc;
-            }).collect(Collectors.joining(","));
-        }), false);
+        // Input old ids (<testid>27</testid>), output new ids (<testid>123</testid>)
+        BiFunction<String, Set<ProgrammingExerciseTestCase>, String> remapSingleId = (testReference, testCases) -> {
+            Long id = extractTestId(testReference);
+            if (id == null || !newTestCaseIdByOldId.containsKey(id)) {
+                return testReference;
+            }
+            return TESTID_START + newTestCaseIdByOldId.get(id) + TESTID_END;
+        };
+        replaceInProblemStatement(exercise,
+                (capture, testCases) -> extractTestCaseNames(capture).stream().map(testReference -> remapSingleId.apply(testReference, testCases)).collect(Collectors.joining(",")),
+                remapSingleId, false);
     }
 }

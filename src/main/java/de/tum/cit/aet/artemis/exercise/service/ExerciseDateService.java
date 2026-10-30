@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -40,6 +42,46 @@ public class ExerciseDateService {
         this.participationRepository = participationRepository;
         this.examDateApi = examDateApi;
         this.studentExamApi = studentExamApi;
+    }
+
+    /**
+     * Whether participation identities must be hidden from non-instructor staff. Course programming exercises allow
+     * student support until their exercise due date, and indefinitely when assessment is automatic or no due date is set.
+     * Course quizzes are always assessed automatically, so no tutor assessment needs to be anonymous and staff may see
+     * who achieved which score. Other exercise types and exams retain anonymous assessment throughout.
+     *
+     * @param exercise the exercise being accessed
+     * @return whether anonymous assessment applies
+     */
+    public boolean isAssessmentAnonymizationActive(Exercise exercise) {
+        if (exercise instanceof QuizExercise) {
+            return exercise.isExamExercise();
+        }
+        return !(exercise instanceof ProgrammingExercise) || isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.getAssessmentType(), exercise.getDueDate());
+    }
+
+    /**
+     * Applies the same deadline rule to the projection used on every Git operation, including previously issued tokens.
+     *
+     * @param exercise the programming exercise access projection
+     * @return whether anonymous assessment applies
+     */
+    public boolean isAssessmentAnonymizationActive(GitRepositoryAccessDTO exercise) {
+        return isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.assessmentType(), exercise.dueDate());
+    }
+
+    /**
+     * Applies the same cutoff to loaded exercises and repository access projections. Exam assessment always hides
+     * identities; course assessment does so from the due date onward only for manual or semi-automatic assessment.
+     *
+     * @param examExercise   whether the exercise belongs to an exam
+     * @param assessmentType the configured assessment mode
+     * @param dueDate        the course exercise deadline, or {@code null} when none is configured
+     * @return whether anonymous assessment is active now
+     */
+    private boolean isAssessmentAnonymizationActive(boolean examExercise, AssessmentType assessmentType, ZonedDateTime dueDate) {
+        return examExercise
+                || ((assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC) && dueDate != null && !ZonedDateTime.now().isBefore(dueDate));
     }
 
     /**

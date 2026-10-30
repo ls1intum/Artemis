@@ -174,7 +174,8 @@ public class TutorialGroupResource {
         var user = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         boolean isAdminOrInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor);
+        boolean isAtLeastTutor = isAdminOrInstructor || authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor, isAtLeastTutor);
         return ResponseEntity.ok(tutorialGroups.stream().map(TutorialGroupSummaryDTO::from).toList());
     }
 
@@ -319,8 +320,9 @@ public class TutorialGroupResource {
             throw new BadRequestException("The course has no time zone");
         }
 
-        boolean titleChanges = !tutorialGroup.getTitle().equals(updateTutorialGroupRequestDTO.title());
-        if (titleChanges && tutorialGroupRepository.existsByTitleAndCourse(updateTutorialGroupRequestDTO.title(), course)) {
+        String updatedTitle = updateTutorialGroupRequestDTO.title().trim();
+        boolean titleChanges = !tutorialGroup.getTitle().equals(updatedTitle);
+        if (titleChanges && tutorialGroupRepository.existsByTitleAndCourse(updatedTitle, course)) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
         }
 
@@ -345,7 +347,7 @@ public class TutorialGroupResource {
             }
         }
 
-        tutorialGroup.setTitle(updateTutorialGroupRequestDTO.title().trim());
+        tutorialGroup.setTitle(updatedTitle);
         tutorialGroup.setTeachingAssistant(newTutor);
         tutorialGroup.setAdditionalInformation(updateTutorialGroupRequestDTO.additionalInformation());
         tutorialGroup.setCapacity(updateTutorialGroupRequestDTO.capacity());
@@ -358,7 +360,9 @@ public class TutorialGroupResource {
         TutorialGroupSchedule newSchedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
         tutorialGroupScheduleService.updateScheduleAndSessionsIfChanged(course, tutorialGroup, Optional.ofNullable(oldSchedule), Optional.ofNullable(newSchedule));
 
-        tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannelIfItExists(tutorialGroup);
+        if (titleChanges) {
+            tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannelIfItExists(tutorialGroup);
+        }
 
         return ResponseEntity.noContent().build();
     }
@@ -522,7 +526,7 @@ public class TutorialGroupResource {
      * @return the list of registrations with information about the success of the import sorted by tutorial group title
      */
     @PostMapping("courses/{courseId}/tutorial-groups/import")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<TutorialGroupImportDataDTO>> importTutorialGroupsWithRegistrations(@PathVariable Long courseId,
             @RequestBody @Valid Set<TutorialGroupImportDataDTO> importDTOs) {
         log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);

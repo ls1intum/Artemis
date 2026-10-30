@@ -3,16 +3,37 @@
         <div class="me-2">
             <jhi-posting-markdown-editor
                 formControlName="content"
-                [editorHeight]="editorHeight"
+                [draftIdentity]="'reply:' + posting()?.post?.id + ':' + (posting()?.id ?? 'new')"
+                [isReply]="true"
                 [maxContentLength]="maxContentLength"
                 [isInputLengthDisplayed]="false"
                 (keydown.enter)="confirm()"
+                (keydown.control.enter)="confirm()"
+                (keydown.meta.enter)="confirm()"
                 [isButtonLoading]="isLoading()"
                 [isFormGroupValid]="formGroup.valid"
                 [editType]="editType"
-                [showCloseButton]="true"
+                [showCloseButton]="editType !== EditType.UPDATE"
                 (closeEditor)="close()"
             />
+            @if (editType === EditType.UPDATE) {
+                <div class="mt-2 flex justify-end gap-2">
+                    <tumaet-ui-button severity="secondary" size="small" variant="outlined" data-testid="answer-post-edit-cancel" [disabled]="isLoading()" (clicked)="close()">
+                        {{ 'entity.action.cancel' | artemisTranslate }}
+                    </tumaet-ui-button>
+                    <tumaet-ui-button
+                        severity="primary"
+                        size="small"
+                        variant="outlined"
+                        type="submit"
+                        data-testid="answer-post-edit-save"
+                        [loading]="isLoading()"
+                        [disabled]="!formGroup.valid"
+                    >
+                        {{ 'artemisApp.conversationsLayout.saveMessage' | artemisTranslate }}
+                    </tumaet-ui-button>
+                </div>
+            }
         </div>
     </form>
 </ng-template>

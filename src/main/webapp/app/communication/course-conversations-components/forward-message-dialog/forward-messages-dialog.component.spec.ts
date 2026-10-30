@@ -11,7 +11,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MessageEditorComponent } from 'app/communication/message-editor/message-editor.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -31,7 +31,7 @@ describe('ForwardMessageDialogComponent', () => {
                 FormsModule,
                 ForwardMessageDialogComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(MarkdownEditorMonacoComponent),
+                MockComponent(MessageEditorComponent),
                 MockComponent(ProfilePictureComponent),
                 MockComponent(PostingContentComponent),
             ],
@@ -43,8 +43,8 @@ describe('ForwardMessageDialogComponent', () => {
             ],
         })
             .overrideComponent(ForwardMessageDialogComponent, {
-                remove: { imports: [PostingContentComponent] },
-                add: { imports: [MockComponent(PostingContentComponent)] },
+                remove: { imports: [PostingContentComponent, MessageEditorComponent] },
+                add: { imports: [MockComponent(PostingContentComponent), MockComponent(MessageEditorComponent)] },
             })
             .overrideComponent(ForwardMessageDialogComponent, {
                 remove: { providers: [CommunicationService] },
@@ -86,6 +86,23 @@ describe('ForwardMessageDialogComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('uses the rich editor for the forwarding comment and immediately sends its latest content', () => {
+        component.courseId.set(123);
+        fixture.detectChanges();
+        const editorElement = fixture.debugElement.query(By.directive(MessageEditorComponent));
+        expect(editorElement).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-markdown-editor-monaco')).toBeNull();
+        const editor = editorElement.componentInstance as MessageEditorComponent;
+        expect(editor.courseId()).toBe(123);
+        expect(editor.suppressNewlineOnEnter()).toBe(false);
+        editor.contentChange.emit('**Lecture notes**');
+        component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
+        const close = vi.spyOn(TestBed.inject(DynamicDialogRef), 'close');
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('[data-testid="forward-send-button"]') as HTMLButtonElement).click();
+        expect(close).toHaveBeenCalledExactlyOnceWith({ channels: component.selectedChannels, users: [], messageContent: '**Lecture notes**' });
     });
 
     it('should create the component', () => {
@@ -187,12 +204,26 @@ describe('ForwardMessageDialogComponent', () => {
         expect(() => component.focusInput()).not.toThrow();
     });
 
-    it('should open dropdown when input is focused and close when clicked outside', () => {
+    it('should not open the dropdown when the input is focused automatically while the dialog opens', () => {
+        fixture.detectChanges();
         const inputElement = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
 
         inputElement.dispatchEvent(new Event('focus'));
         fixture.detectChanges();
+
+        expect(component.showDropdown()).toBe(false);
+        expect(fixture.debugElement.query(By.css('[data-testid="forward-destination-option"]'))).toBeNull();
+    });
+
+    it('should open dropdown when the input is clicked and close when clicked outside', () => {
+        fixture.detectChanges();
+        const inputElement = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
+
+        inputElement.dispatchEvent(new Event('focus'));
+        inputElement.click();
+        fixture.detectChanges();
         expect(component.showDropdown()).toBe(true);
+        expect(fixture.debugElement.query(By.css('[data-testid="forward-destination-option"]'))).not.toBeNull();
 
         document.body.click();
         fixture.detectChanges();

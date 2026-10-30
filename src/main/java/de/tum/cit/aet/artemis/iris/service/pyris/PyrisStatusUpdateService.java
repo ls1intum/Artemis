@@ -247,7 +247,8 @@ public class PyrisStatusUpdateService {
         else if (isTerminal) {
             irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(), new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(),
                     statusUpdate.sources(), null, null, statusUpdate.entitySources(), false, runState == PyrisRunState.FAILED, null, null, statusUpdate.citationSourceTypes()));
-            pyrisJobService.removeJob(job);
+            boolean hasAnswer = runState == PyrisRunState.FINISHED && statusUpdate.answer() != null && !statusUpdate.answer().isBlank();
+            pyrisJobService.finishGlobalSearchAnswerJob(job, statusUpdate.sources(), hasAnswer);
         }
         else {
             pyrisJobService.updateJob(job);
@@ -378,8 +379,8 @@ public class PyrisStatusUpdateService {
             return statusUpdate;
         }
         return new PyrisChatStatusUpdateDTO(statusUpdate.result(), runState, statusUpdate.error(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
-                statusUpdate.accessedMemories(), statusUpdate.createdMemories(), statusUpdate.partialResult(), statusUpdate.partialSeq(), statusUpdate.activities(),
-                statusUpdate.activitySeq(), statusUpdate.finalResult(), statusUpdate.suggestedContext(), statusUpdate.compaction());
+                statusUpdate.partialResult(), statusUpdate.partialSeq(), statusUpdate.activities(), statusUpdate.activitySeq(), statusUpdate.finalResult(),
+                statusUpdate.suggestedContext(), statusUpdate.compaction());
     }
 
     private PyrisCompetencyStatusUpdateDTO withRunState(PyrisCompetencyStatusUpdateDTO statusUpdate, PyrisRunState runState) {

@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -70,6 +71,27 @@ public class ParticipationAuthorizationCheckService {
         this.submissionRepository = submissionRepository;
         this.studentExamApi = studentExamApi;
         this.studentParticipationRepository = studentParticipationRepository;
+    }
+
+    /**
+     * Whether authorized course staff may see participant identities and identifying repository metadata.
+     * Callers must check access to the exercise separately.
+     *
+     * @param exercise the exercise being accessed
+     * @return whether the current user may see identities
+     */
+    public boolean canSeeParticipantInformation(Exercise exercise) {
+        return authCheckService.isAtLeastInstructorForExercise(exercise) || !exerciseDateService.isAssessmentAnonymizationActive(exercise);
+    }
+
+    /**
+     * Keeps an owner's direct access to their own data during anonymous assessment.
+     *
+     * @param participation the participation being accessed
+     * @return whether the current user may see its identifying data
+     */
+    public boolean canSeeParticipantInformation(StudentParticipation participation) {
+        return authCheckService.isOwnerOfParticipation(participation) || canSeeParticipantInformation(participation.getExercise());
     }
 
     /**
@@ -206,26 +228,7 @@ public class ParticipationAuthorizationCheckService {
             return true;
         }
 
-        if (exercise.isExamExercise()) {
-            var api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-            Optional<Boolean> studentExamSubmitted;
-            if (exercise.isTestExamExercise()) {
-                studentExamSubmitted = api.isSubmitted(participation.getId());
-            }
-            else {
-                studentExamSubmitted = api.isSubmitted(exercise.examId(), participation.getParticipant().getId());
-            }
-            // if the corresponding student exam was already submitted, the participation is locked
-            // if the student exam does not exist yet, the participation should not exist either
-            return studentExamSubmitted.orElse(true);
-        }
-
-        var submissionPolicy = submissionPolicyRepository.findByProgrammingExerciseId(exercise.exerciseId());
-
-        if (submissionPolicy != null && submissionPolicy.isActive() && submissionPolicy instanceof LockRepositoryPolicy) {
-            return submissionRepository.countByParticipationId(participation.getId()) >= submissionPolicy.getSubmissionLimit();
-        }
-        return false;
+        return isLockedByExamOrSubmissionPolicy(participation, exercise.exerciseId(), exercise.isExamExercise(), exercise::isTestExamExercise, () -> exercise.examId());
     }
 
     /**
@@ -257,28 +260,20 @@ public class ParticipationAuthorizationCheckService {
             return true;
         }
 
-        if (exercise.isExamExercise()) {
+        return isLockedByExamOrSubmissionPolicy(participation, exercise.getId(), exercise.isExamExercise(), exercise::isTestExamExercise, () -> exercise.getExam().getId());
+    }
+
+    /** Resolves the exam id lazily because repeated test exams only require the participation id. */
+    private boolean isLockedByExamOrSubmissionPolicy(ProgrammingExerciseStudentParticipation participation, Long exerciseId, boolean examExercise,
+            java.util.function.BooleanSupplier testExam, java.util.function.Supplier<Long> examId) {
+        if (examExercise) {
             var api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-            Optional<Boolean> studentExamSubmitted;
-            if (exercise.isTestExamExercise()) {
-                studentExamSubmitted = api.isSubmitted(participation.getId());
-            }
-            else {
-                studentExamSubmitted = api.isSubmitted(exercise.getExam().getId(), participation.getParticipant().getId());
-            }
-            // if the corresponding student exam was already submitted, the participation is locked
-            // if the student exam does not exist yet, the participation should not exist either
-            return studentExamSubmitted.orElse(true);
+            Optional<Boolean> submitted = testExam.getAsBoolean() ? api.isSubmitted(participation.getId()) : api.isSubmitted(examId.get(), participation.getParticipant().getId());
+            // A missing student exam cannot have an unlocked participation.
+            return submitted.orElse(true);
         }
-
-        var submissionPolicy = submissionPolicyRepository.findByProgrammingExerciseId(exercise.getId());
-
-        // NOTE: in case a submission policy is set for the corresponding programming exercise, set the locked value of the participation properly, in particular for exams
-        if (submissionPolicy != null && submissionPolicy.isActive() && submissionPolicy instanceof LockRepositoryPolicy) {
-
-            // the participation is locked when the submission count is at least as high as the submission limit
-            return submissionRepository.countByParticipationId(participation.getId()) >= submissionPolicy.getSubmissionLimit();
-        }
-        return false;
+        var policy = submissionPolicyRepository.findByProgrammingExerciseId(exerciseId);
+        return policy != null && policy.isActive() && policy instanceof LockRepositoryPolicy
+                && submissionRepository.countByParticipationId(participation.getId()) >= policy.getSubmissionLimit();
     }
 }

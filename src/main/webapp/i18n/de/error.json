@@ -1,10 +1,13 @@
 {
     "error": {
+        "exerciseGenerationCancellationUnavailable": "Der Abbruch konnte nicht bestätigt werden. Prüfe den aktuellen Status des Laufs und versuche es erneut.",
         "title": "Fehlerseite!",
         "http": {
             "400": "Ungültige Anfrage.",
             "401": "Du bist nicht authentifiziert, um auf diese Seite zuzugreifen.",
-            "403": "Du hast nicht die nötigen Berechtigungen, um diese Seite anzuzeigen.",
+            "403": "Du hast keine Berechtigung, auf diesen Inhalt zuzugreifen oder diese Aktion auszuführen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.",
+            "403Read": "Du hast keine Berechtigung, den angeforderten Inhalt anzusehen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.",
+            "403Action": "Du hast keine Berechtigung, diese Aktion auszuführen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.",
             "404": "Die Seite existiert nicht.",
             "405": "Die verwendete Anfrage Methode ist für diese URL nicht erlaubt.",
             "409": "Es gab einen Konflikt bei der Bearbeitung Deiner Anfrage.",
@@ -48,8 +51,11 @@
         "studentNotFound": "Studierende:r konnte in diesem Kurs nicht gefunden werden.",
         "cantSaveFile": "Die hochgeladene Datei {{ fileName }} konnte nicht gespeichert werden.",
         "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut.",
+        "invalidPdf": "Die hochgeladene PDF-Datei ist ungültig oder beschädigt. Bitte lade eine gültige PDF-Datei hoch.",
         "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Einreichungsfrist erstellt werden.",
         "externalSubmissionForQuizExercise": "Externe Einreichungen können nicht für Quiz Übungen erstellt werden.",
+        "exerciseNotInStudentExam": "Die individuelle Klausur dieser Person enthält diese Aufgabe nicht.",
+        "noWorkingPeriod": "Für diese:n Studierende:n gibt es in dieser Klausur keine Bearbeitungszeit, weil keine individuelle Klausur existiert. Erstelle zuerst die individuellen Klausuren.",
         "noSubmissions": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
         "feedbackCreditsNull": "Fehler! Wenn Feedback vorhanden ist, muss das Feedback eine Punktzahl haben.",
         "faqRewriteFailed": "FAQ konnte nicht umgeschrieben werden. Bitte versuche es erneut.",
@@ -72,6 +78,7 @@
         "internalServerError": "Interner Serverfehler",
         "server.not.reachable": "Server ist nicht erreichbar",
         "url.not.found": "Nicht gefunden",
+        "Email": "Feld {{fieldName}} muss eine gültige E-Mail-Adresse sein!",
         "NotBlank": "Feld {{fieldName}} darf nicht leer sein!",
         "NotNull": "Feld {{fieldName}} darf nicht leer sein!",
         "Size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Längenanforderungen!",
@@ -82,6 +89,7 @@
         "concurrentModification": "Die Präsentation wurde geändert, während deine Änderung geprüft wurde. Bitte lade die Seite neu und versuche es erneut.",
         "studentNotInCourse": "Die ausgewählte Person ist keine Studentin oder kein Student dieses Kurses.",
         "maxPointsBelowExistingResult": "Die maximale Punktzahl darf nicht unter einem bereits eingetragenen Ergebnis liegen.",
+        "maxScoreInvalid": "Die maximale Punktzahl einer Aufgabe muss größer als 0 sein.",
         "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximale Punktzahl nicht überschreiten.",
         "exerciseNotInCourse": "Die verknüpfte Aufgabe muss zu diesem Kurs gehören.",
         "studentAlreadyAssigned": "Diese Studierenden haben diese Präsentation bereits: {{ logins }}",
@@ -301,6 +309,20 @@
         "examTitleEmpty": "Der Titel der Prüfung darf nicht leer sein.",
         "examTitleTooLong": "Der Titel der Prüfung ist zu lang. Bitte gib höchstens 255 Zeichen ein.",
         "examNumberOfExercisesTooHigh": "Die Anzahl der Aufgaben ist zu hoch. Bitte gib einen Wert zwischen 1 und 100 ein.",
+        "examGracePeriodNegative": "Die Nachfrist darf nicht negativ sein. Bitte gib einen Wert zwischen 0 und 3600 Sekunden ein.",
+        "examMaxPointsMissingOrTooLow": "Die maximale Punktzahl fehlt oder ist zu niedrig. Bitte gib eine ganze Zahl zwischen 1 und 9999 ein.",
+        "examNumberOfExercisesTooLow": "Die Anzahl der Aufgaben ist zu niedrig. Bitte gib einen Wert zwischen 1 und 100 ein oder lasse das Feld leer.",
+        "examCorrectionRoundsInvalid": "Die Anzahl der Korrekturläufe muss 1 oder 2 sein.",
+        "examChannelNameMissing": "Der Kanalname darf nicht leer sein.",
+        "examPublishResultsDateAfterEnd": "Die Veröffentlichung der Ergebnisse muss nach dem Ende der Klausur liegen.",
+        "examPublishResultsDateEndMissing": "Lege zuerst das Ende der Klausur fest. Die Veröffentlichung der Ergebnisse muss danach liegen.",
+        "examSummaryPublicationDateAfterEnd": "Die Abgabenübersicht muss nach dem Ende der Klausur sichtbar werden.",
+        "examSummaryPublicationDateEndMissing": "Lege zuerst das Ende der Klausur fest. Die Abgabenübersicht muss danach sichtbar werden.",
+        "examSummaryPublicationDateBeforeRelease": "Die Abgabenübersicht darf nicht nach der Veröffentlichung der Ergebnisse sichtbar werden.",
+        "examStudentReviewStartAfterRelease": "Der Beginn der Klausureinsicht muss nach der Veröffentlichung der Ergebnisse liegen.",
+        "examStudentReviewStartReleaseMissing": "Lege zuerst die Veröffentlichung der Ergebnisse fest. Die Klausureinsicht muss danach beginnen.",
+        "examExampleSolutionPublicationDateAfterEnd": "Das Veröffentlichungsdatum der Beispiellösung darf nicht vor dem Ende der Klausur liegen.",
+        "examExampleSolutionPublicationDateAfterVisible": "Das Veröffentlichungsdatum der Beispiellösung darf nicht vor dem Sichtbarkeitsdatum der Klausur liegen.",
         "examTextTooLong": "Ein Prüfungstext ist zu lang. Bitte gib höchstens 10.000 Zeichen ein.",
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "Du bist kein Super-Administrator und kannst daher keine Administrator-Accounts verwalten.",
@@ -315,11 +337,9 @@
             "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
             "courseHasNoTimeZone": "Für diesen Kurs ist keine Zeitzone konfiguriert.",
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
-
             "tutorialPeriodMissing": "Das Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
             "tutorialPeriodInvalidFormat": "Das Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
             "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
-
             "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
             "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
         },
@@ -338,6 +358,9 @@
         "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
-        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
+        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
+        "generationBriefRequired": "Gib eine Aufgabenbeschreibung ein, bevor du eine Aufgabe ohne Problemstellung generierst.",
+        "generationCapacityUnavailable": "Artemis hat gerade keine freie Kapazität für die KI-Generierung. Es wurde nichts generiert — versuche es in ein paar Minuten erneut.",
+        "exerciseGenerationRunning": "Die Aufgabe ist durch einen anderen Vorgang oder eine unvollständige Wiederherstellung gesperrt. Versuche es später erneut; wende dich bei einer erforderlichen Wiederherstellung an die Administration."
     }
 }

@@ -44,7 +44,7 @@ import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-ass
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
-import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
+import { toQuizExerciseCreate } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
 
 type PatchProgrammingExerciseTestVisibilityDto = {
     id: number;
@@ -116,6 +116,8 @@ export class ExerciseAPIRequests {
         allowOnlineEditor?: boolean;
         /** Whether students may clone the repository and work in their own IDE; the server default of the template applies when omitted. */
         allowOfflineIde?: boolean;
+        /** Whether students may complain about an automatic result, which a tutor then answers manually; the server default of the template applies when omitted. */
+        allowComplaintsForAutomaticAssessments?: boolean;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -141,6 +143,7 @@ export class ExerciseAPIRequests {
             auxiliaryRepositories,
             allowOnlineEditor,
             allowOfflineIde,
+            allowComplaintsForAutomaticAssessments,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -167,6 +170,7 @@ export class ExerciseAPIRequests {
             ...(projectType ? { projectType } : {}),
             ...(allowOnlineEditor !== undefined ? { allowOnlineEditor } : {}),
             ...(allowOfflineIde !== undefined ? { allowOfflineIde } : {}),
+            ...(allowComplaintsForAutomaticAssessments !== undefined ? { allowComplaintsForAutomaticAssessments } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
@@ -714,7 +718,7 @@ export class ExerciseAPIRequests {
         if (competencyLinks) {
             newQuizExercise.competencyLinks = competencyLinks;
         }
-        const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
+        const quizExerciseDTO = toQuizExerciseCreate(newQuizExercise);
         const multipartData: Record<string, { name: string; mimeType: string; buffer: Buffer }> = {
             exercise: {
                 name: 'exercise',

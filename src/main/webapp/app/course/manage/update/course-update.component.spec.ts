@@ -25,6 +25,7 @@ import { CourseAdminService } from 'app/course/manage/services/course-admin.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
@@ -198,6 +199,26 @@ describe('Course Management Update Component', () => {
             expect(maxPointsControl.hasError('notInteger')).toBe(false);
             expect(maxPointsControl.hasError('min')).toBe(false);
         });
+
+        it('should write the typed max points into the form control and report a fractional value as not an integer', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsInput = fixture.nativeElement.querySelector('#field_maxPoints') as HTMLInputElement;
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+
+            typeIntoInputNumber(maxPointsInput, '120');
+            expect(maxPointsControl.value).toBe(120);
+            expect(maxPointsControl.valid).toBe(true);
+
+            typeIntoInputNumber(maxPointsInput, '10.5');
+            expect(maxPointsControl.value).toBe(10.5);
+            expect(maxPointsControl.hasError('notInteger')).toBe(true);
+        });
     });
 
     describe('ngOnInit', () => {
@@ -307,6 +328,84 @@ describe('Course Management Update Component', () => {
             comp.shortName.setValue('a'.repeat(25));
             comp.shortName.updateValueAndValidity();
             expect(comp.shortName.errors?.maxlength).toBeDefined();
+        });
+    });
+
+    describe('description validation', () => {
+        beforeEach(async () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+        });
+
+        it('should accept a 2000-character description (boundary)', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2000));
+            comp.courseForm.get('description')!.updateValueAndValidity();
+            expect(comp.courseForm.get('description')!.errors?.maxlength).toBeUndefined();
+        });
+
+        it('should reject a 2001-character description', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2001));
+            comp.courseForm.get('description')!.updateValueAndValidity();
+            expect(comp.courseForm.get('description')!.errors?.maxlength).toBeDefined();
+        });
+
+        const counterElement = () => fixture.nativeElement.querySelector('[data-testid="course-description-counter"]') as HTMLElement;
+        const descriptionTextarea = () => fixture.nativeElement.querySelector('#field_description') as HTMLTextAreaElement;
+        const saveButton = () => fixture.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+
+        it('should expose the live description length via the descriptionLength signal', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(1234));
+            fixture.detectChanges();
+            expect(comp.descriptionLength()).toBe(1234);
+        });
+
+        it('should render the character counter with the current length and the limit', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(1500));
+            fixture.detectChanges();
+            expect(counterElement().textContent).toContain('1500 / 2000');
+        });
+
+        it('should apply the danger token when over the limit and clear it when back within the limit', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+            expect(counterElement().classList).toContain('text-state-danger');
+            expect(counterElement().classList).not.toContain('text-muted-color');
+
+            comp.courseForm.get('description')!.setValue('a'.repeat(2000));
+            fixture.detectChanges();
+            expect(counterElement().classList).toContain('text-muted-color');
+            expect(counterElement().classList).not.toContain('text-state-danger');
+        });
+
+        it('should show 0 / 2000 without the danger token for an empty description', () => {
+            comp.courseForm.get('description')!.setValue('');
+            fixture.detectChanges();
+            expect(comp.descriptionLength()).toBe(0);
+            expect(counterElement().textContent).toContain('0 / 2000');
+            expect(counterElement().classList).not.toContain('text-state-danger');
+        });
+
+        it('should no longer hard-cap the textarea with a maxlength attribute', () => {
+            expect(descriptionTextarea().getAttribute('maxlength')).toBeNull();
+        });
+
+        it('should update the counter through a real textarea input event (soft cap allows over-limit input)', () => {
+            const textarea = descriptionTextarea();
+            textarea.value = 'a'.repeat(2001);
+            textarea.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            expect(comp.descriptionLength()).toBe(2001);
+            expect(counterElement().textContent).toContain('2001 / 2000');
+            expect(counterElement().classList).toContain('text-state-danger');
+        });
+
+        it('should list the description as an issue and keep the save button aria-disabled (never hard disabled) when over the limit', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+            expect(comp.issues().some((issue) => issue.control === 'description')).toBe(true);
+            expect(saveButton().getAttribute('aria-disabled')).toBe('true');
+            expect(saveButton().hasAttribute('disabled')).toBe(false);
         });
     });
 
@@ -2066,7 +2165,121 @@ describe('Course Management Update Component Create', () => {
 
         expect(component.showError('title')).toBe(false);
         expect(component.showDateMissing('startDate')).toBe(false);
-        expect(fixture.nativeElement.querySelector('[data-testid="date-picker-validation-message"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#field_startDate_input-error')).toBeNull();
+    });
+
+    describe('date pickers', () => {
+        const pickerInput = (name: string) => fixture.nativeElement.querySelector(`tumaet-ui-date-picker#field_${name} input#field_${name}_input`) as HTMLInputElement;
+        const type = (name: string, text: string) => {
+            const input = pickerInput(name);
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        };
+        const render = () => {
+            fixture.detectChanges();
+            httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+            fixture.detectChanges();
+        };
+
+        it('keeps the ids of the course date fields and labels the inputs by their form field', () => {
+            render();
+
+            for (const name of ['startDate', 'endDate']) {
+                const input = pickerInput(name);
+                expect(input).not.toBeNull();
+                expect(input.getAttribute('aria-required')).toBe('true');
+                const label = fixture.nativeElement.querySelector(`label[for="field_${name}_input"]`) as HTMLElement;
+                expect(label).not.toBeNull();
+                expect(input.getAttribute('aria-labelledby')).toBe(label.id);
+            }
+        });
+
+        it('writes a typed start and end date to the form and the course', () => {
+            render();
+
+            type('startDate', '01.04.2030 08:00');
+            type('endDate', '30.09.2030 18:30');
+
+            expect(component.courseForm.get('startDate')!.value?.format('YYYY-MM-DD HH:mm')).toBe('2030-04-01 08:00');
+            expect(component.course.startDate?.format('YYYY-MM-DD HH:mm')).toBe('2030-04-01 08:00');
+            expect(component.course.endDate?.format('YYYY-MM-DD HH:mm')).toBe('2030-09-30 18:30');
+            expect(component.isValidDate).toBe(true);
+        });
+
+        it('shows a date set on the form control', () => {
+            render();
+
+            component.courseForm.get('startDate')!.setValue(dayjs('2030-04-01T08:00'));
+            fixture.detectChanges();
+
+            expect(pickerInput('startDate').value).toBe('01.04.2030 08:00');
+        });
+
+        it('reports a missing required date after the field was left and describes the input with the message', () => {
+            render();
+            const input = pickerInput('startDate');
+            expect(input.getAttribute('aria-invalid')).toBe('false');
+
+            input.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+
+            expect(component.showDateMissing('startDate')).toBe(true);
+            expect(input.getAttribute('aria-invalid')).toBe('true');
+            const error = fixture.nativeElement.querySelector('tumaet-ui-form-field [role="alert"]:not([hidden])') as HTMLElement;
+            expect(error.textContent).toContain('artemisApp.course.form.startDate.required');
+            expect(input.getAttribute('aria-describedby')).toBe(error.id);
+        });
+
+        it('leaves text that is not a date to the picker, keeps the control invalid and blocks saving', () => {
+            render();
+
+            type('startDate', '13.06.');
+
+            expect(component.courseForm.get('startDate')!.hasError('invalidDate')).toBe(true);
+            expect(component.courseForm.invalid).toBe(true);
+            expect(fixture.nativeElement.querySelector('#field_startDate_input-error')).not.toBeNull();
+            expect(pickerInput('startDate').getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('marks both pickers invalid when the end date is not after the start date', () => {
+            render();
+
+            type('startDate', '30.09.2030 18:00');
+            type('endDate', '01.04.2030 08:00');
+
+            expect(component.isDateOrderInvalid).toBe(true);
+            expect(pickerInput('startDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('endDate').getAttribute('aria-invalid')).toBe('true');
+
+            type('endDate', '30.10.2030 18:00');
+
+            expect(component.isDateOrderInvalid).toBe(false);
+            expect(pickerInput('startDate').getAttribute('aria-invalid')).toBe('false');
+            expect(pickerInput('endDate').getAttribute('aria-invalid')).toBe('false');
+        });
+
+        it('renders the enrollment and unenrollment pickers and marks them invalid outside the course period', () => {
+            render();
+            type('startDate', '01.04.2030 08:00');
+            type('endDate', '30.09.2030 18:00');
+
+            component.changeEnrollmentEnabled();
+            component.changeUnenrollmentEnabled();
+            fixture.detectChanges();
+
+            expect(pickerInput('enrollmentStartDate').value).toBe('01.04.2030 08:00');
+            expect(pickerInput('enrollmentEndDate').value).toBe('30.09.2030 17:59');
+            expect(pickerInput('unenrollmentEndDate').value).toBe('30.09.2030 18:00');
+            expect(pickerInput('enrollmentStartDate').getAttribute('aria-invalid')).toBe('false');
+
+            type('enrollmentEndDate', '01.10.2030 08:00');
+
+            expect(component.isValidEnrollmentPeriod).toBe(false);
+            expect(pickerInput('enrollmentStartDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('enrollmentEndDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('unenrollmentEndDate').getAttribute('aria-invalid')).toBe('true');
+        });
     });
 });
 

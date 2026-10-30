@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, signal, untracked, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, afterRenderEffect, effect, inject, input, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
@@ -9,7 +9,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { User } from 'app/account/user/user.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { HttpResponse } from '@angular/common/http';
-import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronLeft, faChevronRight, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/communication/directive/course-discussion.directive';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -67,6 +67,10 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private ngUnsubscribe = new Subject<void>();
     private previousScrollDistanceFromTop = 0;
     private page = 1;
+    private postRequestId = 0;
+    private isFetchingPosts = false;
+    private readonly pendingPageScrollDistance = signal<number | undefined>(undefined);
+    private pageScrollFrame?: number;
     private readonly PAGE_SIZE = 50;
     private totalNumberOfPosts = 0;
     private get messagesContainerHeight(): number {
@@ -86,7 +90,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
-    faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
     faLongArrowRight = faLongArrowRight;
 
@@ -97,6 +100,22 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             const exerciseValue = this.exercise();
             const lectureValue = this.lecture();
             untracked(() => this.loadData(exerciseValue, lectureValue));
+        });
+        afterRenderEffect(() => {
+            this.messages();
+            const distance = this.pendingPageScrollDistance();
+            if (distance === undefined) return;
+            untracked(() => {
+                if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
+                const requestId = this.postRequestId;
+                this.pageScrollFrame = window.requestAnimationFrame(() => {
+                    this.pageScrollFrame = undefined;
+                    if (requestId !== this.postRequestId) return;
+                    const element = this.content()?.nativeElement;
+                    if (element) element.scrollTop = element.scrollHeight - distance;
+                    this.pendingPageScrollDistance.set(undefined);
+                });
+            });
         });
     }
 
@@ -138,7 +157,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     })
                     .reverse(),
             );
-            this.isLoading.set(false);
             if (this.currentPostId && this.posts().length > 0) {
                 this.currentPost.set(this.posts().find((post) => post.id === this.currentPostId));
             }
@@ -155,6 +173,10 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * on leaving the page, the modal should be closed
      */
     ngOnDestroy(): void {
+        ++this.postRequestId;
+        this.clearPageScroll();
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
         super.onDestroy();
         this.postCreateEditModal()?.close();
     }
@@ -186,7 +208,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         return;
                     }
 
-                    this.communicationService.getFilteredPosts(this.currentPostContextFilter, true, this.channel());
+                    this.fetchPosts(true);
 
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -232,6 +254,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     handleScrollOnNewMessage = () => {
+        if (this.pendingPageScrollDistance() !== undefined) return;
         if ((this.posts().length > 0 && this.content()?.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
@@ -243,28 +266,74 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
     }
 
-    fetchNextPage() {
-        const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
-        if (morePostsAvailable) {
-            this.page += 1;
-            this.fetchPosts();
+    /** Loads one older page at a time. An initial request without an applied response retries page zero. */
+    fetchNextPage(): void {
+        if (this.isFetchingPosts || this.pendingPageScrollDistance() !== undefined) return;
+        if (this.page === 0) {
+            this.page = 1;
+            this.fetchPosts(true, 0);
+            return;
         }
-        if (this.content()?.nativeElement) {
-            this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollTop + this.PAGE_SIZE;
+        if (this.posts().length < this.totalNumberOfPosts) {
+            const previousPage = this.page;
+            this.page += 1;
+            this.fetchPosts(false, previousPage);
         }
     }
 
-    public fetchPosts(forceUpdate = false) {
-        if (this.currentPostContextFilter) {
-            this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: this.page - 1 });
-            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel());
-        }
+    /**
+     * Fetches this page with request-scoped completion. Live publications cannot unlock pagination, and superseded
+     * completions cannot change a newer context. Restore the last applied page when no response was applied.
+     * @param forceUpdate whether to replace the context rather than append a page
+     * @param previousPage the last applied one-based page; zero means the initial context has not loaded
+     */
+    public fetchPosts(forceUpdate = false, previousPage = forceUpdate ? 0 : this.page): void {
+        if (!this.currentPostContextFilter || (this.isFetchingPosts && !forceUpdate)) return;
+        if (forceUpdate) this.clearPageScroll();
+        const requestId = ++this.postRequestId;
+        this.isFetchingPosts = true;
+        if (forceUpdate) this.isLoading.set(true);
+        this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: this.page - 1 });
+        this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel(), {
+            beforeApply: () => {
+                if (requestId !== this.postRequestId || forceUpdate) return;
+                // Capture after any reader movement/live updates, immediately before this page changes the list.
+                const element = this.content()?.nativeElement;
+                this.pendingPageScrollDistance.set(element ? element.scrollHeight - element.scrollTop : undefined);
+            },
+            complete: (applied) => {
+                if (requestId !== this.postRequestId) return;
+                this.isFetchingPosts = false;
+                this.isLoading.set(false);
+                if (!applied) {
+                    this.clearPageScroll();
+                    this.page = previousPage;
+                    this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: Math.max(previousPage - 1, 0) });
+                }
+            },
+        });
+    }
+
+    /** Cancels deferred viewport restoration when a context is replaced, fails or is destroyed. */
+    private clearPageScroll(): void {
+        if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
+        this.pageScrollFrame = undefined;
+        this.pendingPageScrollDistance.set(undefined);
+    }
+
+    /** Replaces the context through the same request lifecycle used by initial loads and pagination. */
+    override onSelectContext(): void {
+        this.setFilterAndSort();
+        this.fetchPosts(true);
     }
 
     /**
      * sets the filter options after receiving user input
      */
     setFilterAndSort(): void {
+        ++this.postRequestId;
+        this.clearPageScroll();
+        this.isFetchingPosts = false;
         this.page = 1;
         this.scrollToBottomOfMessages();
         this.currentPostContextFilter = {

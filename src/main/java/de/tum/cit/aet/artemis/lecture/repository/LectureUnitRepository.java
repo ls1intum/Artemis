@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -20,8 +21,10 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitVideoSourceDTO;
 
 /**
  * Spring Data JPA repository for the Lecture Unit entity.
@@ -58,6 +61,21 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             ORDER BY lectureUnit.id ASC
             """)
     List<Long> findIndexableUnitIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO(
+                unit.lecture.id, unit.lecture.title,
+                CASE WHEN TYPE(unit) = AttachmentVideoUnit THEN 'attachment' WHEN TYPE(unit) = TextUnit THEN 'text' ELSE 'online' END,
+                COUNT(unit.id), SUM(CASE WHEN completion.user.id IS NOT NULL THEN 1 ELSE 0 END))
+            FROM LectureUnit unit
+                LEFT JOIN unit.completedUsers completion ON completion.user.id = :userId
+                LEFT JOIN Attachment attachment ON attachment.attachmentVideoUnit.id = unit.id
+            WHERE unit.lecture.course.id = :courseId
+                AND TYPE(unit) IN (AttachmentVideoUnit, TextUnit, OnlineUnit)
+                AND (COALESCE(unit.releaseDate, attachment.releaseDate) IS NULL OR COALESCE(unit.releaseDate, attachment.releaseDate) < :now)
+            GROUP BY unit.lecture.id, unit.lecture.title, TYPE(unit)
+            """)
+    List<LectureLearningStatisticsDTO> findLearningStatistics(@Param("courseId") long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT lu
@@ -109,27 +127,27 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithPdfAttachmentForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     /**
-     * Returns the (courseId, unitId) pairs of the attachment/video units in the given courses that have a non-blank
-     * video source on a lecture that is not a tutorial lecture, the conditions under which the ingestion path processes
-     * a video (see {@code PyrisLectureUnitEligibility}). Transcript coverage expects exactly this set, so a tutorial
-     * lecture's video counted here would be reported missing permanently.
+     * Returns the video sources of the attachment/video units in the given courses that have a non-blank video source on a
+     * lecture that is not a tutorial lecture. The ingestion path processes a video only under these conditions and only
+     * from a supported source (see {@code PyrisLectureUnitEligibility}); the source check needs the URL, so the caller
+     * applies it to the returned sources. A tutorial lecture's video counted here would be reported missing permanently.
      * <p>
      * The {@code TRIM(...) <> ''} check treats an empty or space-only source as absent; it approximates the trigger's
      * {@code String.isBlank()} rather than matching it exactly, since JPQL {@code TRIM} strips only spaces (not tabs or
      * newlines), a gap that is moot for URL video sources. Bulk: all requested courses in a single query.
      *
      * @param courseIds the ids of the courses
-     * @return the (courseId, unitId) pairs of units with a video source
+     * @return the course, unit and video source of each unit with a video source
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(avu.lecture.course.id, avu.id)
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.LectureUnitVideoSourceDTO(avu.lecture.course.id, avu.id, avu.videoSource)
             FROM AttachmentVideoUnit avu
             WHERE avu.lecture.course.id IN :courseIds
                 AND avu.lecture.isTutorialLecture = FALSE
                 AND avu.videoSource IS NOT NULL
                 AND TRIM(avu.videoSource) <> ''
             """)
-    List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithVideoForCourses(@Param("courseIds") Collection<Long> courseIds);
+    List<LectureUnitVideoSourceDTO> findVideoSourcesForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     @Query("""
             SELECT lu

@@ -19,14 +19,15 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
  * Contains the public attributes of a tutorial group plus flattened transient fields populated by
  * {@code TutorialGroupService.setTransientPropertiesForUser}. Privacy-sensitive fields are cleared
  * by {@code TutorialGroup.hidePrivacySensitiveInformation} for users who do not have managing
- * rights for the tutorial group.
+ * rights for the tutorial group. Course staff keep the tutor name and the number of registered users
+ * of such groups, which the management overview needs to tell the groups apart and to show their capacity.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupSummaryDTO(Long id, String title, @Nullable Integer capacity, @Nullable String campus, @Nullable String language, @Nullable String additionalInformation,
         Boolean isOnline, @Nullable TutorialGroupSummaryScheduleDTO tutorialGroupSchedule, @Nullable List<TutorialGroupSummarySessionDTO> tutorialGroupSessions,
         @Nullable ChannelDTO channel, @Nullable Boolean isUserRegistered, @Nullable Boolean isUserTutor, @Nullable Integer numberOfRegisteredUsers,
-        @Nullable String teachingAssistantName, @Nullable Long teachingAssistantId, @Nullable String teachingAssistantImageUrl, @Nullable String courseTitle,
-        @Nullable TutorialGroupSummarySessionDTO nextSession, @Nullable Integer averageAttendance) {
+        @Nullable Boolean capacityReached, @Nullable String teachingAssistantName, @Nullable Long teachingAssistantId, @Nullable String teachingAssistantImageUrl,
+        @Nullable String courseTitle, @Nullable TutorialGroupSummarySessionDTO nextSession, @Nullable Integer averageAttendance) {
 
     /**
      * Builds a {@link TutorialGroupSummaryDTO} from a tutorial group entity enriched with summary information.
@@ -38,8 +39,8 @@ public record TutorialGroupSummaryDTO(Long id, String title, @Nullable Integer c
         return new TutorialGroupSummaryDTO(tutorialGroup.getId(), tutorialGroup.getTitle(), tutorialGroup.getCapacity(), tutorialGroup.getCampus(), tutorialGroup.getLanguage(),
                 tutorialGroup.getAdditionalInformation(), tutorialGroup.getIsOnline(), TutorialGroupSummaryScheduleDTO.from(tutorialGroup.getTutorialGroupSchedule()), null,
                 tutorialGroup.getChannel(), tutorialGroup.getIsUserRegistered(), tutorialGroup.getIsUserTutor(), tutorialGroup.getNumberOfRegisteredUsers(),
-                tutorialGroup.getTeachingAssistantName(), tutorialGroup.getTeachingAssistantId(), tutorialGroup.getTeachingAssistantImageUrl(), tutorialGroup.getCourseTitle(),
-                TutorialGroupSummarySessionDTO.from(tutorialGroup.getNextSession()), tutorialGroup.getAverageAttendance());
+                tutorialGroup.getCapacityReached(), tutorialGroup.getTeachingAssistantName(), tutorialGroup.getTeachingAssistantId(), tutorialGroup.getTeachingAssistantImageUrl(),
+                tutorialGroup.getCourseTitle(), TutorialGroupSummarySessionDTO.from(tutorialGroup.getNextSession()), tutorialGroup.getAverageAttendance());
     }
 
     /**

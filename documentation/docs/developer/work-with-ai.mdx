@@ -28,6 +28,21 @@ skills into an instruction file: imports load at startup rather than on demand. 
 [Agent Skills specification](https://agentskills.io/specification) and
 [Codex skill documentation](https://developers.openai.com/codex/skills) for discovery behavior.
 
+## Preparing Pull Requests with an Agent
+
+Coding agents follow the same [PR readiness requirements](/developer/development-process#pull-request-readiness)
+as human authors. When creating or updating a PR, have the agent clean up the template, check only work
+actually completed, remove inapplicable tasks and empty sections, and set the intended release milestone.
+Keep pending validation and applicable review tasks unchecked until the checks, reviews or tests take place.
+Use drafts only for unfinished implementations. Open completed work as non-draft or mark it ready for
+review immediately, so full CI and automated review bots run. Pending CI, reviews or test-server validation
+do not require draft status; all merge requirements still apply. Keep **ready for review** /
+**ready to merge** labels accurate after updates.
+
+An agent must not invent test results, reviewer approvals or a release target. If it cannot edit PR
+metadata or determine the milestone, it reports the missing action and requests maintainer help.
+The shared rules in `AGENTS.md` make this part of every PR task, independent of the implementation skill.
+
 ## Installing
 
 ### Skills CLI

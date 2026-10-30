@@ -36,7 +36,7 @@ import { User } from 'app/account/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, finalize, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -60,6 +60,11 @@ export class CommunicationService implements OnDestroy {
     private pinnedPosts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
 
     private currentPostContextFilter: PostContextFilter = {};
+    private filteredPostsRequestId = 0;
+    private filteredPostsRequestFailed = false;
+    private pendingPostUpdates?: PostBroadcastDTO[];
+    private pendingPostCountHistory?: number[];
+    private cachedPostCountContext?: string;
     private currentConversation?: ConversationDTO = undefined;
     private user!: User; // set in constructor from accountService.identity()
     private pageType!: PageType; // set via setPageType() before use
@@ -170,6 +175,7 @@ export class CommunicationService implements OnDestroy {
      */
     setCourse(course: Course | undefined): void {
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
+            this.cachedPostCountContext = undefined;
             this.courseId = course.id!;
             this.course = course;
 
@@ -179,6 +185,12 @@ export class CommunicationService implements OnDestroy {
 
             const coursewideTopic = `/topic/communication/courses/${this.courseId}`;
             this.courseWideTopicSubscription = this.websocketService.subscribe<PostBroadcastDTO>(coursewideTopic).subscribe((postDTO: PostBroadcastDTO) => {
+                // Personal-topic posts are reconciled by CourseConversationsService. Forward course-wide posts only here,
+                // rather than again when the visible-message stream subscribes to this same topic.
+                const conversationId = postDTO.post.conversation?.id;
+                if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post.author?.id !== this.user.id) {
+                    this.courseConversationsService.handleNewMessage(conversationId);
+                }
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         }
@@ -198,38 +210,114 @@ export class CommunicationService implements OnDestroy {
      * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
      * @param forceUpdate if true, forces a re-fetch even if filter property did not change
      * @param conversation active conversation if available
+     * @param requestCallbacks hooks for this request only; shared WebSocket emissions do not invoke them
      */
-    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, conversation: ConversationDTO | undefined = undefined): void {
+    getFilteredPosts(
+        postContextFilter: PostContextFilter,
+        forceUpdate = true,
+        conversation: ConversationDTO | undefined = undefined,
+        requestCallbacks?: { beforeApply: () => void; complete: (applied: boolean) => void },
+    ): void {
         // check if the post context did change
         if (
             forceUpdate ||
+            this.filteredPostsRequestFailed ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
             postContextFilter?.conversationIds !== this.currentPostContextFilter?.conversationIds ||
             this.hasDifferentContexts(postContextFilter) ||
             postContextFilter?.plagiarismCaseId !== this.currentPostContextFilter?.plagiarismCaseId ||
             postContextFilter?.page !== this.currentPostContextFilter?.page
         ) {
+            const countContext = this.getPostCountContext(postContextFilter);
+            this.pendingPostCountHistory = this.cachedPostCountContext === countContext ? [this.cachedTotalNumberOfPosts] : undefined;
+            if (!this.pendingPostCountHistory) this.cachedPostCountContext = undefined;
             this.currentPostContextFilter = postContextFilter;
             this.currentConversation = conversation;
-            this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
-                if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
-                    // if infinite scroll enabled, add fetched posts to the end of cachedPosts
-                    this.cachedPosts.push(...res.body!);
-                } else {
-                    // if the context changed, we need to fetch posts and dismiss cached posts
-                    this.cachedPosts = res.body!;
-                }
-                this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
-                this.posts$.next(this.cachedPosts);
-                this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
-                this.createSubscriptionFromPostContextFilter();
-            });
+            const cachedPostIdsBeforeRequest = new Set(this.cachedPosts.map((post) => post.id));
+            const requestId = ++this.filteredPostsRequestId;
+            this.pendingPostUpdates = [];
+            this.filteredPostsRequestFailed = false;
+            let applied = false;
+            // Loading the messages of a single conversation resets its unread count on the server, unless a search is used.
+            const loadedConversationId = postContextFilter.conversationIds?.length === 1 && !postContextFilter.searchText ? postContextFilter.conversationIds[0] : undefined;
+            const readRequest = loadedConversationId !== undefined ? this.courseConversationsService.messagesRequested(loadedConversationId) : undefined;
+            this.postService
+                .getPosts(this.courseId, postContextFilter)
+                .pipe(
+                    finalize(() => {
+                        // A failed page is not cached. Ignore older failures after a newer request has taken ownership.
+                        if (requestId === this.filteredPostsRequestId) {
+                            this.filteredPostsRequestFailed = !applied;
+                            this.pendingPostUpdates = undefined;
+                            this.pendingPostCountHistory = undefined;
+                        }
+                        requestCallbacks?.complete(applied);
+                    }),
+                )
+                .subscribe((res) => {
+                    // The server reset the count even when a newer request has taken over the cache.
+                    if (loadedConversationId !== undefined && readRequest) {
+                        this.courseConversationsService.messagesLoaded(loadedConversationId, readRequest);
+                    }
+                    // A newer request owns the shared cache, including its messages, total and subscription context.
+                    if (requestId !== this.filteredPostsRequestId) {
+                        return;
+                    }
+                    requestCallbacks?.beforeApply();
+                    const responsePostCount = res.body!.length;
+                    let snapshotPostCount = responsePostCount;
+                    if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
+                        // if infinite scroll enabled, add fetched posts to the end of cachedPosts
+                        // The current cache can already contain broadcasts received while this page was pending.
+                        snapshotPostCount = new Set([...cachedPostIdsBeforeRequest, ...res.body!.map((post) => post.id)]).size;
+                        const cachedIds = new Set(this.cachedPosts.map((post) => post.id));
+                        for (const post of res.body!) {
+                            // Live inserts can shift offset-based page boundaries; keep overlapping rows only once.
+                            if (!cachedIds.has(post.id)) {
+                                this.cachedPosts.push(post);
+                                cachedIds.add(post.id);
+                            }
+                        }
+                    } else {
+                        // if the context changed, we need to fetch posts and dismiss cached posts
+                        this.cachedPosts = res.body!;
+                    }
+                    // A snapshot can arrive after a broadcast or successful mutation. Reapply those changes in order,
+                    // including create -> update -> delete sequences, before publishing the page once.
+                    const liveUpdates = this.pendingPostUpdates ?? [];
+                    const countHistory = this.pendingPostCountHistory;
+                    this.pendingPostUpdates = undefined;
+                    this.pendingPostCountHistory = undefined;
+                    this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
+                    for (const update of liveUpdates) this.handleNewOrUpdatedMessage(update, false);
+                    if (countHistory?.includes(this.cachedTotalNumberOfPosts)) {
+                        // The header can reflect any prefix of our observed changes, including an intermediate count.
+                        this.cachedTotalNumberOfPosts = countHistory.at(-1)!;
+                    } else if (!countHistory && this.cachedTotalNumberOfPosts === responsePostCount) {
+                        // Without a prior total, only a complete snapshot proves the replay's count delta.
+                        // Partial pages cannot reveal whether their total already includes changes on unloaded pages.
+                        this.cachedTotalNumberOfPosts = Math.max(0, this.cachedTotalNumberOfPosts + this.cachedPosts.length - snapshotPostCount);
+                    }
+                    this.cachedTotalNumberOfPosts = Math.max(this.cachedPosts.length, this.cachedTotalNumberOfPosts);
+                    this.cachedPostCountContext = countContext;
+                    this.posts$.next(this.cachedPosts);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+                    this.createSubscriptionFromPostContextFilter();
+                    applied = true;
+                });
         } else {
+            requestCallbacks?.beforeApply();
             // if we do not require force update, e.g. because only the post title or content changed,
             // we can emit the previously cached posts
-            this.posts$.next(this.cachedPosts);
-            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+            this.publishCachedPosts();
+            requestCallbacks?.complete(true);
         }
+    }
+
+    /** Publishes live cache changes without issuing a request or consuming a pending failed-page retry. */
+    private publishCachedPosts(): void {
+        this.posts$.next(this.cachedPosts);
+        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
     }
 
     /**
@@ -241,10 +329,17 @@ export class CommunicationService implements OnDestroy {
         return this.postService.create(this.courseId, post).pipe(
             map((res: HttpResponse<Post>) => res.body!),
             tap((createdPost: Post) => {
+                // Apply the current conversation and search filters even when they changed while sending.
+                if (createdPost.conversation?.id !== undefined && this.currentPostContextFilter.conversationIds?.length) {
+                    this.handleNewOrUpdatedMessage({ action: CommunicationCrudAction.CREATE, post: createdPost });
+                    return;
+                }
+                this.pendingPostUpdates?.push({ action: CommunicationCrudAction.CREATE, post: createdPost });
                 const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === createdPost.id);
                 // Update the cached posts after successfully creating a new post if it is not already cached (can happen if the WebSocket message arrives before the HTTP response)
                 if (indexToUpdate === -1) {
                     this.cachedPosts = [createdPost, ...this.cachedPosts];
+                    this.changePostCount(1);
                     this.posts$.next(this.cachedPosts);
                     this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 }
@@ -298,6 +393,7 @@ export class CommunicationService implements OnDestroy {
         return this.postService.update(this.courseId, post).pipe(
             map((res: HttpResponse<Post>) => res.body!),
             tap((updatedPost: Post) => {
+                this.pendingPostUpdates?.push({ action: CommunicationCrudAction.UPDATE, post: updatedPost });
                 const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
                 if (indexToUpdate > -1) {
                     updatedPost.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
@@ -387,6 +483,12 @@ export class CommunicationService implements OnDestroy {
                     // Delete the cached post if it still exists (might be already deleted due to WebSocket message)
                     if (indexToUpdate > -1) {
                         this.cachedPosts.splice(indexToUpdate, 1);
+                        this.changePostCount(-1);
+                    } else if (post.conversation?.id && this.currentPostContextFilter.conversationIds?.includes(post.conversation.id)) {
+                        this.invalidatePostCountForUnloadedDeletion(post);
+                    }
+                    this.pendingPostUpdates?.push({ action: CommunicationCrudAction.DELETE, post });
+                    if (indexToUpdate > -1) {
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -700,6 +802,8 @@ export class CommunicationService implements OnDestroy {
     }
 
     public resetCachedPosts() {
+        this.cachedPostCountContext = undefined;
+        this.pendingPostCountHistory = undefined;
         this.cachedPosts = [];
         this.posts$.next(this.cachedPosts);
         this.cachedTotalNumberOfPosts = 0;
@@ -723,7 +827,8 @@ export class CommunicationService implements OnDestroy {
         }
     }
 
-    private handleNewOrUpdatedMessage = (postDTO: PostBroadcastDTO): void => {
+    /** Applies live changes immediately; replay after a snapshot suppresses intermediate cache emissions. */
+    private handleNewOrUpdatedMessage = (postDTO: PostBroadcastDTO, publish = true): void => {
         const postConvId = postDTO.post.conversation?.id;
         const isValidPostContext = !!postConvId && !!this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length > 0;
         const postIsFromCurrentConversation = isValidPostContext && this.currentPostContextFilter.conversationIds?.includes(postConvId);
@@ -731,14 +836,11 @@ export class CommunicationService implements OnDestroy {
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
 
-        if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post.conversation?.id !== this.currentConversation?.id && postDTO.post.author?.id !== this.user.id) {
-            this.courseConversationsService.handleNewMessage(postConvId, postDTO.post.creationDate);
-        }
-
         if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
             return;
         }
 
+        const previousPostCount = this.cachedPosts.length;
         postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
         postDTO.post.answers?.forEach((answer: AnswerPost) => {
             answer.creationDate = dayjs(answer.creationDate);
@@ -765,13 +867,6 @@ export class CommunicationService implements OnDestroy {
                     } else {
                         this.cachedPosts = [postDTO.post, ...this.cachedPosts];
                     }
-                }
-
-                if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
-                    setTimeout(() => {
-                        // We add a small timeout to avoid concurrency issues
-                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds![0]).subscribe();
-                    }, 1000);
                 }
 
                 break;
@@ -816,6 +911,8 @@ export class CommunicationService implements OnDestroy {
                 const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToDelete > -1) {
                     this.cachedPosts.splice(indexToDelete, 1);
+                } else if (publish) {
+                    this.invalidatePostCountForUnloadedDeletion(postDTO.post);
                 }
                 const currentPinnedPosts = this.pinnedPosts$.getValue();
                 const isPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postDTO.post.id);
@@ -828,19 +925,10 @@ export class CommunicationService implements OnDestroy {
             default:
                 break;
         }
-        // emit updated version of cachedPosts to subscribing components...
-        if (PageType.OVERVIEW === this.pageType) {
-            const oldPage = this.currentPostContextFilter.page;
-            const oldPageSize = this.currentPostContextFilter.pageSize;
-            this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
-            this.currentPostContextFilter.page = 0;
-            // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
-            this.getFilteredPosts(this.currentPostContextFilter, !postConvId, this.currentConversation);
-            this.currentPostContextFilter.pageSize = oldPageSize;
-            this.currentPostContextFilter.page = oldPage;
-        } else {
-            // ...by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
-            this.getFilteredPosts(this.currentPostContextFilter, false);
+        if (publish) {
+            this.pendingPostUpdates?.push(postDTO);
+            this.changePostCount(this.cachedPosts.length - previousPostCount);
+            this.publishCachedPosts();
         }
     };
 
@@ -963,9 +1051,7 @@ export class CommunicationService implements OnDestroy {
                 // Send a creation request for each ForwardedMessage
                 const createForwardedMessageObservables = forwardedMessages.map((message) =>
                     this.forwardedMessageService.createForwardedMessage(message).pipe(
-                        // Return the locally-built ForwardedMessage entity (which carries `destinationPost`, used by the
-                        // cache-marking logic below) updated with the server-assigned id, rather than casting the response
-                        // DTO — which only exposes `destinationPostId` — to the entity type.
+                        // Preserve the ForwardedMessage result shape; the response DTO exposes destinationPostId instead.
                         map((res: HttpResponse<ForwardedMessageDTO>) => {
                             message.id = res.body?.id;
                             return message;
@@ -974,27 +1060,11 @@ export class CommunicationService implements OnDestroy {
                 );
 
                 return forkJoin(createForwardedMessageObservables).pipe(
-                    tap((createdForwardedMessages: ForwardedMessage[]) => {
+                    tap(() => {
                         // If the target is the currently active conversation, update the local cache
                         if (targetConversation.id === this.currentConversation?.id) {
-                            const existingPostIndex = this.cachedPosts.findIndex((post) => post.id === createdPostBody.id);
-                            if (existingPostIndex === -1) {
-                                this.cachedPosts = [createdPostBody, ...this.cachedPosts];
-                            }
-
-                            // Mark posts as having forwarded messages
-                            createdForwardedMessages.forEach((fm) => {
-                                const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
-                                if (postIndex > -1) {
-                                    const post = this.cachedPosts[postIndex];
-                                    this.cachedPosts[postIndex] = cloneWith(post, { hasForwardedMessages: true });
-                                }
-                            });
-
-                            // Emit updated posts and post count
-                            this.posts$.next(this.cachedPosts);
-                            this.cachedTotalNumberOfPosts += 1;
-                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+                            createdPostBody.hasForwardedMessages = true;
+                            this.handleNewOrUpdatedMessage({ action: CommunicationCrudAction.CREATE, post: createdPostBody });
                         }
                     }),
                     catchError((error) => {
@@ -1006,6 +1076,32 @@ export class CommunicationService implements OnDestroy {
                 return throwError(() => error);
             }),
         );
+    }
+
+    /** Replies also affect server filters, so only an already observed deletion has a known count delta. */
+    private invalidatePostCountForUnloadedDeletion(post: Post): void {
+        if (this.pendingPostUpdates?.some((update) => update.action === CommunicationCrudAction.DELETE && update.post.id === post.id)) {
+            return;
+        }
+        this.pendingPostCountHistory = undefined;
+        this.cachedPostCountContext = undefined;
+    }
+
+    /** Records actual membership changes after callers deduplicate HTTP and WebSocket updates by post id. */
+    private changePostCount(delta: number): void {
+        if (delta === 0) return;
+        this.cachedTotalNumberOfPosts = Math.max(0, this.cachedTotalNumberOfPosts + delta);
+        this.pendingPostCountHistory?.push(this.cachedTotalNumberOfPosts);
+    }
+
+    /** Identifies a total's membership filters; pagination and sorting change the visible slice, not its global count. */
+    private getPostCountContext(filter: PostContextFilter): string {
+        const pageOptions = ['page', 'pageSize', 'pagingEnabled', 'postSortCriterion', 'sortingOrder'];
+        const membership = Object.entries(filter)
+            .filter(([key, value]) => !pageOptions.includes(key) && value !== undefined)
+            .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+            .map(([key, value]) => [key, Array.isArray(value) ? [...value].sort((left, right) => left - right) : value]);
+        return JSON.stringify([this.courseId, membership]);
     }
 
     private hasDifferentContexts(other: PostContextFilter): boolean {

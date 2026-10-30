@@ -26,12 +26,14 @@ const sidebars: SidebarsConfig = {
                 'production-setup/multiple-artemis-instances',
             ],
         },
+        'aiworker',
         'hyperion',
         'deimos',
         'adaptive-learning',
         'user-registration',
         'user-deletion',
         'user-email-uniqueness',
+        'email-delivery',
         'jenkins-localvc',
         'saml2-login-registration',
         'oidc-login-registration',
@@ -44,6 +46,7 @@ const sidebars: SidebarsConfig = {
         'feature-usage',
         'cleanup-service',
         'extensions-setup',
+        'tum-live-course-connection',
     ],
 };
 

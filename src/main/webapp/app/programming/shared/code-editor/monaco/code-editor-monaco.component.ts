@@ -37,7 +37,7 @@ import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChang
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import {
     getFirstCommentByCreatedDateThenId,
     isReviewCommentsSupportedRepository,
@@ -85,6 +85,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly readOnlyManualFeedback = input<boolean>(false);
     readonly highlightDifferences = input<boolean>(false);
     readonly isTutorAssessment = input<boolean>(false);
+    /** The full hash of the commit to show. If set, files are read from exactly this commit instead of the working copy on the server. */
+    readonly commitId = input<string | undefined>(undefined);
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
     readonly selectedRepository = input<RepositoryType>();
@@ -124,7 +126,29 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     );
 
     readonly feedbackInternal = linkedSignal<Feedback[]>(() => this.feedbacks());
-    private reviewCommentManager?: ReviewCommentWidgetManager;
+    private readonly feedbackWidgetKeys = new WeakMap<Feedback, string>();
+    private nextFeedbackWidgetKey = 0;
+
+    /** Feedback without a database ID still needs a distinct card and widget, even on the same line. */
+    protected getFeedbackKey(feedback: Feedback): string {
+        let key = this.feedbackWidgetKeys.get(feedback);
+        if (!key) {
+            key = feedback.id !== undefined ? 'feedback-' + feedback.id : 'feedback-unsaved-' + this.nextFeedbackWidgetKey++;
+            this.feedbackWidgetKeys.set(feedback, key);
+        }
+        return key;
+    }
+
+    // Lazy manager creation must invalidate draft checks made before it exists.
+    private readonly reviewCommentManagerValue = signal<ReviewCommentWidgetManager | undefined>(undefined);
+
+    private get reviewCommentManager(): ReviewCommentWidgetManager | undefined {
+        return this.reviewCommentManagerValue();
+    }
+
+    private set reviewCommentManager(manager: ReviewCommentWidgetManager | undefined) {
+        this.reviewCommentManagerValue.set(manager);
+    }
 
     /**
      * The feedback objects themselves (same references as in {@link feedbackInternal}, not clones) - the template
@@ -148,10 +172,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private pendingReviewRenderFile?: string;
     // Tracks the most-recently-requested file for the cascade so a slow load for an earlier file
     // does not run follow-up work (feedback widgets, review widgets, etc.) against the now-current file.
-    private pendingLoadFileName?: string;
+    private fileLoadGeneration = 0;
     private fileSyncReadySubscription?: Subscription;
     private fileSyncStateReplacedSubscription?: Subscription;
-    private suppressNextDirtySignal = new Set<string>();
+    private dirtySignalContentToSuppress = new Map<string, string>();
     private dirtySignalSuppressedDuringInitialSync = new Set<string>();
 
     // Consolidated snapshot of previous tracked-input values for the cascade effect.
@@ -239,7 +263,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 return;
             }
             this.fileSyncReadySubscription = syncService.initialSyncFinalized$.subscribe((event) => this.onFileInitialSyncFinalized(event));
-            this.fileSyncStateReplacedSubscription = syncService.stateReplaced$.subscribe(({ filePath }) => this.onFileSyncStateReplaced(filePath));
+            this.fileSyncStateReplacedSubscription = syncService.stateReplaced$.subscribe(({ filePath, text }) => this.onFileSyncStateReplaced(filePath, text.toJSON()));
         });
 
         effect(() => {
@@ -277,13 +301,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             if (prevSelectedFile && this.fileSession()[prevSelectedFile]) {
                 this.fileSession()[prevSelectedFile].scrollTop = this.editor().getScrollTop();
             }
-            // Record the file we're about to load so a slow response for an earlier file
-            // cannot trigger feedback / review-comment rendering against the now-current file.
-            this.pendingLoadFileName = selectedFile;
-            await this.selectFileInEditor(selectedFile);
-            if (this.pendingLoadFileName !== selectedFile) {
-                // Another file load was requested while we were awaiting this one — drop all
-                // follow-up work; the newer cascade owns the editor state from here.
+            const loadGeneration = ++this.fileLoadGeneration;
+            await this.selectFileInEditor(selectedFile, loadGeneration);
+            if (this.fileLoadGeneration !== loadGeneration || this.selectedFile() !== selectedFile) {
                 return;
             }
             this.setBuildAnnotations(this.annotationsArray);
@@ -296,7 +316,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.pendingReviewRenderFile = selectedFile;
             this.tryRenderPendingReviewCommentWidgets(selectedFile);
         } else if (selectedFileChanged && !selectedFile) {
-            this.pendingLoadFileName = undefined;
+            this.fileLoadGeneration++;
             this.selectedFileAwaitingInitialSync.set(false);
         }
 
@@ -319,7 +339,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
     }
 
-    async selectFileInEditor(fileName: string | undefined): Promise<void> {
+    async selectFileInEditor(fileName: string | undefined, loadGeneration = ++this.fileLoadGeneration): Promise<void> {
         this.revokeImagePreview();
         if (!fileName) {
             return;
@@ -328,7 +348,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         try {
             // Images are fetched as binary blobs and rendered directly; the text-based code path would corrupt them on UTF-8 decoding.
             if (this.fileTypeService.isImageFile(fileName)) {
-                await this.loadImagePreview(fileName);
+                await this.loadImagePreview(fileName, loadGeneration);
                 return;
             }
 
@@ -336,10 +356,11 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 let fileContent = '';
                 let loadingError = false;
                 try {
-                    fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
-                        (fileObj) => fileObj.fileContent,
-                    );
+                    fileContent = await firstValueFrom(
+                        this.repositoryFileService.getFile(fileName, undefined, this.commitId()).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)),
+                    ).then((fileObj) => fileObj.fileContent);
                 } catch (error) {
+                    if (this.fileLoadGeneration !== loadGeneration || this.selectedFile() !== fileName) return;
                     loadingError = true;
                     const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
                     if (message === ConnectionError.message) {
@@ -348,6 +369,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                         this.onError.emit('loadingFailed');
                     }
                 }
+                if (this.fileLoadGeneration !== loadGeneration || this.selectedFile() !== fileName) return;
                 this.fileSession.set(
                     cloneWith(this.fileSession(), { [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } } }),
                 );
@@ -356,7 +378,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             // File fetch is async; if the user switched files while it was in flight, ignore the result
             // entirely — otherwise a slow (binary) load would set binaryFileSelected and hide Monaco for the
             // now-selected file.
-            if (this.selectedFile() !== fileName) {
+            if (this.fileLoadGeneration !== loadGeneration || this.selectedFile() !== fileName) {
                 return;
             }
             const code = this.fileSession()[fileName].code;
@@ -369,19 +391,18 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
     }
 
-    private async loadImagePreview(fileName: string): Promise<void> {
+    private async loadImagePreview(fileName: string, loadGeneration: number): Promise<void> {
         this.binaryFileSelected.set(false);
         this.imagePreviewError.set(false);
         try {
-            const blob = await firstValueFrom(this.repositoryFileService.getFileAsBlob(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)));
+            const blob = await firstValueFrom(this.repositoryFileService.getFileAsBlob(fileName, undefined, this.commitId()).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)));
             // The user may have switched files while the request was in flight.
-            if (this.selectedFile() !== fileName) {
+            if (this.fileLoadGeneration !== loadGeneration || this.selectedFile() !== fileName) {
                 return;
             }
             const mimeType = this.fileTypeService.getImageMimeType(fileName);
             const typedBlob = mimeType ? new Blob([blob], { type: mimeType }) : blob;
-            // If two fetches for the same file resolve back-to-back (e.g. ngOnChanges re-entering via editorWasRefreshed),
-            // both pass the stale check above. Revoke the previous URL before replacing it so we do not orphan a blob handle.
+            // Release the previous preview before publishing the current response.
             const previousUrl = this.imagePreviewUrl();
             if (previousUrl) {
                 URL.revokeObjectURL(previousUrl);
@@ -389,7 +410,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.imagePreviewUrl.set(URL.createObjectURL(typedBlob));
         } catch (error) {
             // The user may have switched files while the request was in flight; don't clobber the new file's state.
-            if (this.selectedFile() !== fileName) {
+            if (this.fileLoadGeneration !== loadGeneration || this.selectedFile() !== fileName) {
                 return;
             }
             this.imagePreviewError.set(true);
@@ -436,7 +457,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                     }),
                 );
 
-                if (!this.shouldSuppressDirtySignal(fileName)) {
+                if (!this.shouldSuppressDirtySignal(fileName, text)) {
                     this.onFileContentChange.emit({ fileName, text });
                 }
             }
@@ -526,7 +547,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param lineNumber The line (as shown in the editor) to render the widget in.
      */
     addNewFeedback(lineNumber: number): void {
-        // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
         if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
             this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
@@ -543,13 +563,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * updating content in place would otherwise tear down and recreate the widget's DOM node - including the
      * focused textarea - on every character typed.
      * @param feedback The feedback item to save.
+     * @param originalFeedback The bound item whose edit emitted this feedback, which may be a working copy.
      */
-    updateFeedback(feedback: Feedback) {
+    updateFeedback(feedback: Feedback, originalFeedback = feedback) {
         const line = Feedback.getReferenceLine(feedback);
-        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f.reference === feedback.reference);
+        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f === originalFeedback || (feedback.id !== undefined && f.id === feedback.id));
         if (existingFeedbackIndex !== -1) {
             // Existing feedback -> update content only, no widget re-render needed.
             const feedbackArray = [...this.feedbackInternal()];
+            // Automatic feedback emits a working copy. Keep its card and focused input when that copy is committed.
+            this.feedbackWidgetKeys.set(feedback, this.getFeedbackKey(feedbackArray[existingFeedbackIndex]));
             feedbackArray[existingFeedbackIndex] = feedback;
             this.feedbackInternal.set(feedbackArray);
         } else {
@@ -576,9 +599,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     /**
      * Removes an existing feedback item and renders the updated state.
      * @param feedback The feedback to remove.
+     * @param originalFeedback The bound item when the editor emits a working copy.
      */
-    deleteFeedback(feedback: Feedback) {
-        this.feedbackInternal.set(this.feedbackInternal().filter((f) => !Feedback.areIdentical(f, feedback)));
+    deleteFeedback(feedback: Feedback, originalFeedback = feedback) {
+        this.feedbackInternal.set(this.feedbackInternal().filter((f) => f !== originalFeedback && !(feedback.id !== undefined && f.id === feedback.id)));
         this.onUpdateFeedback.emit(this.feedbackInternal());
         this.renderFeedbackWidgets();
     }
@@ -667,11 +691,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Handles late leader replacement for an already opened file.
      *
      * The replacement updates model content via the binding and must not be interpreted as a
-     * local user edit, so the next dirty signal for this file is suppressed.
+     * local user edit, so only the matching dirty signal for this file is suppressed.
      */
-    private onFileSyncStateReplaced(filePath: string): void {
+    private onFileSyncStateReplaced(filePath: string, replacementContent: string, contentDivergedFromBaseline?: boolean): void {
+        const normalizedReplacement = replacementContent.replaceAll('\r\n', '\n');
+        const persistedFallback = this.fileSession()[filePath]?.code.replaceAll('\r\n', '\n');
+        if (contentDivergedFromBaseline ?? (persistedFallback !== undefined && persistedFallback !== normalizedReplacement)) {
+            this.emitDirtySignalFromInitialSync(filePath, normalizedReplacement);
+        }
         if (this.selectedFile() === filePath) {
-            this.suppressNextDirtySignal.add(filePath);
+            this.dirtySignalContentToSuppress.set(filePath, normalizedReplacement);
             this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
             this.selectedFileAwaitingInitialSync.set(false);
         }
@@ -704,7 +733,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         // post-finalize change so hydration does not mark the file as locally dirty.
         if (isSelectedFile && this.dirtySignalSuppressedDuringInitialSync.has(filePath)) {
             this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
-            this.suppressNextDirtySignal.add(filePath);
+            this.dirtySignalContentToSuppress.set(filePath, finalContent.replaceAll('\r\n', '\n'));
         }
         if (isSelectedFile) {
             this.selectedFileAwaitingInitialSync.set(false);
@@ -756,13 +785,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Decides whether the current text-change event should be treated as local dirty input.
      *
      * Suppresses:
-     * - the next change after state replacement/finalize handoff,
+     * - the matching change after state replacement/finalize handoff,
      * - any change while initial sync is still pending.
      */
-    private shouldSuppressDirtySignal(filePath: string): boolean {
-        if (this.suppressNextDirtySignal.has(filePath)) {
-            this.suppressNextDirtySignal.delete(filePath);
-            return true;
+    private shouldSuppressDirtySignal(filePath: string, content: string): boolean {
+        const contentToSuppress = this.dirtySignalContentToSuppress.get(filePath);
+        if (contentToSuppress !== undefined) {
+            this.dirtySignalContentToSuppress.delete(filePath);
+            if (contentToSuppress === content) {
+                return true;
+            }
         }
         const syncService = this.fileSyncService();
         if (!syncService?.isInitialized() || !syncService.isFileOpen(filePath)) {
@@ -816,10 +848,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 onApplyInlineFix: ({ thread }) => this.persistInlineFixApplication(thread),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
-                showFeedbackAction: (thread) =>
-                    thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
-                    thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
-                    thread.targetType === CommentThreadLocationType.TEST_REPO,
             });
         }
         return this.reviewCommentManager;
@@ -850,7 +878,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                         this.onError.emit('saveFailed');
                         return;
                     }
-                    this.onSavedFiles.emit({ [fileName]: undefined });
+                    if (this.fileSession()[fileName]?.code === currentText) {
+                        this.onSavedFiles.emit({ [fileName]: undefined });
+                    }
                     this.onInlineFixCommitted.emit();
                     this.exerciseReviewCommentService.markInlineFixAppliedInContext(commentId);
                 },
@@ -876,12 +906,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         this.reviewCommentManager?.clearDrafts();
     }
 
+    hasReviewCommentDrafts(): boolean {
+        return this.reviewCommentManager?.hasDrafts() ?? false;
+    }
+
     /**
      * Retrieves the feedback node currently rendered at the specified line and throws an error if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
-    getInlineFeedbackNodeOrElseThrow(line: number): HTMLElement {
-        const element = this.getInlineFeedbackNode(line);
+    getInlineFeedbackNodeOrElseThrow(line: number, feedback?: Feedback): HTMLElement {
+        const element = this.getInlineFeedbackNode(line, feedback);
         if (!element) {
             throw new Error('No feedback node found at line ' + line);
         }
@@ -892,8 +926,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Retrieves the feedback node currently rendered at the specified line, or undefined if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
-    getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return this.inlineFeedbackComponents().find((comp) => comp.codeLine() === line)?.elementRef?.nativeElement;
+    getInlineFeedbackNode(line: number, feedback?: Feedback): HTMLElement | undefined {
+        return this.inlineFeedbackComponents().find((comp) => comp.codeLine() === line && (feedback === undefined || comp.feedback() === feedback))?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {
@@ -901,11 +935,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         if (line === undefined) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
-        // TODO: In the future, there may be more than one feedback node per line. The ID should be unique.
-        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line, feedback);
         // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
         const oneBasedLine = line + 1;
-        this.editor().addLineWidget(oneBasedLine, 'feedback-' + feedback.id + '-line-' + oneBasedLine, feedbackNode);
+        this.editor().addLineWidget(oneBasedLine, this.getFeedbackKey(feedback) + '-line-' + oneBasedLine, feedbackNode);
     }
 
     /**

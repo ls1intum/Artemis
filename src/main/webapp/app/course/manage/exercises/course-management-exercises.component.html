@@ -136,11 +136,11 @@
         >
             <ng-container tumAetUiEmptyStateActions>
                 @if (!search() && course()?.isAtLeastEditor) {
-                    <tumaet-ui-button [icon]="faPlus" (clicked)="openCreateModal()">
-                        <span jhiTranslate="artemisApp.exerciseManagement.empty.create"></span>
-                    </tumaet-ui-button>
                     <tumaet-ui-button [icon]="faFileImport" variant="outlined" (clicked)="openImportModal()">
                         <span jhiTranslate="artemisApp.exerciseManagement.empty.import"></span>
+                    </tumaet-ui-button>
+                    <tumaet-ui-button [icon]="faPlus" (clicked)="openCreateModal()">
+                        <span jhiTranslate="artemisApp.exerciseManagement.empty.create"></span>
                     </tumaet-ui-button>
                 }
             </ng-container>
@@ -267,6 +267,8 @@
         (visibleChange)="addModalVisible.set($event)"
         (groupCreate)="onAddModalGroupCreate()"
         (exportRequested)="openQuizExportDialog()"
+        (exerciseCreated)="onGeneratedExerciseCreated($event)"
+        (exerciseDeleted)="onGeneratedExerciseDeleted($event)"
     />
 
     <!-- Declarative modals. Each with a required input is gated by its data signal, so it waits for the data. -->

@@ -112,7 +112,7 @@
             <div class="justify-content-center">
                 <div class="row">
                     <!-- loading messages -->
-                    @if (isFetchingPosts()) {
+                    @if (isFetchingPosts() && posts().length === 0) {
                         <div class="envelope">
                             <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
                         </div>
@@ -130,31 +130,34 @@
                     <div
                         id="scrollableDiv"
                         #container
-                        [ngClass]="{ 'posting-infinite-scroll-container': posts().length !== 0, 'is-fetching-posts': isFetchingPosts() }"
+                        [ngClass]="{ 'posting-infinite-scroll-container': posts().length !== 0, 'is-fetching-posts': isFetchingPosts() && posts().length === 0 }"
                         infinite-scroll
                         [scrollWindow]="false"
+                        [infiniteScrollDisabled]="isFetchingPosts() || posts().length >= totalNumberOfPosts()"
                         (scrolledUp)="fetchNextPage()"
                     >
                         <!-- list of all top level posts -->
                         <!-- answers are opened in the thread sidebar -->
-                        @for (post of posts(); track postsTrackByFn($index, post)) {
-                            <div class="pt-2" style="cursor: pointer">
-                                <jhi-posting-thread
-                                    #postingThread
-                                    [lastReadDate]="post.conversation?.lastMessageDate"
-                                    [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
-                                    [id]="'item-' + post.id"
-                                    [post]="post"
-                                    [showAnswers]="false"
-                                    [searchConfig]="courseWideSearchConfig()"
-                                    [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
-                                    [isCommunicationPage]="true"
-                                    [showChannelReference]="true"
-                                    (openThread)="setPostForThread($event)"
-                                    (click)="onTriggerNavigateToPost(post)"
-                                />
-                            </div>
-                        }
+                        <div #resultContent data-testid="course-wide-search-results">
+                            @for (post of posts(); track postsTrackByFn($index, post)) {
+                                <div class="pt-2" style="cursor: pointer">
+                                    <jhi-posting-thread
+                                        #postingThread
+                                        [lastReadDate]="post.conversation?.lastMessageDate"
+                                        [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
+                                        [id]="'item-' + post.id"
+                                        [post]="post"
+                                        [showAnswers]="false"
+                                        [searchConfig]="courseWideSearchConfig()"
+                                        [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
+                                        [isCommunicationPage]="true"
+                                        [showChannelReference]="true"
+                                        (openThread)="setPostForThread($event)"
+                                        (click)="onTriggerNavigateToPost(post)"
+                                    />
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>

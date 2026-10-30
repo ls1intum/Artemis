@@ -1,4 +1,5 @@
-<div class="modal-body">
+<!-- The list stays in the DOM while a quiz is previewed, so that the search, the page and the focus target of the row survive. -->
+<div class="modal-body pt-2!" [hidden]="preview() !== undefined">
     <div class="form-group form-inline">
         <span jhiTranslate="artemisApp.exercise.import.search"></span>:
         <input [attr.aria-label]="'artemisApp.exercise.import.search' | artemisTranslate" class="form-control mx-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
@@ -70,7 +71,24 @@
                         </div>
                     </td>
                     <td class="col-1">
-                        <jhi-button (onClick)="selectImport(exercise)" class="import" [title]="'artemisApp.exercise.import.table.doImport'" />
+                        <div class="flex items-center gap-2">
+                            @if (isPreviewAvailable()) {
+                                <tumaet-ui-button
+                                    severity="secondary"
+                                    variant="outlined"
+                                    size="small"
+                                    [icon]="faEye"
+                                    [loading]="previewLoadingId() === exercise.id"
+                                    [disabled]="previewLoadingId() !== undefined"
+                                    [ariaLabel]="'artemisApp.exercise.import.preview.buttonLabel' | artemisTranslate: { title: exercise.title }"
+                                    [tumAetUiTooltip]="'entity.action.preview' | artemisTranslate"
+                                    tumAetUiTooltipDescribesHost="false"
+                                    [attr.data-testid]="'preview-exercise-' + exercise.id"
+                                    (clicked)="openPreview(exercise, $event)"
+                                />
+                            }
+                            <jhi-button (onClick)="selectImport(exercise)" class="import" [title]="'artemisApp.exercise.import.table.doImport'" />
+                        </div>
                     </td>
                 </tr>
             }
@@ -80,3 +98,40 @@
         <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
     </div>
 </div>
+@if (preview(); as current) {
+    <!-- The preview replaces the list inside the dialog that hosts this component. A dialog of its own would have to stack above that
+         dialog, and the layers of the two libraries are independent of each other. Escape leads back to the list, like the button. -->
+    <div class="flex flex-col gap-4 px-4 pb-4" data-testid="exercise-import-preview">
+        <!-- The heading comes first so that the focus it receives is followed by the buttons. The header stays in view while the questions scroll. -->
+        <div class="sticky top-0 z-10 flex items-center justify-between gap-2 bg-(--module-bg) py-2">
+            <h3 #previewHeading tabindex="-1" class="m-0! min-w-0 flex-1 text-lg font-semibold break-words" data-testid="exercise-import-preview-title">
+                {{ 'artemisApp.exercise.import.preview.title' | artemisTranslate: { title: current.quiz.title } }}
+            </h3>
+            <div class="flex shrink-0 items-center gap-2">
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" [icon]="faArrowLeft" data-testid="exercise-import-preview-back" (clicked)="closePreview()">
+                    <span jhiTranslate="artemisApp.exercise.import.preview.backToList"></span>
+                </tumaet-ui-button>
+                <tumaet-ui-button size="small" data-testid="exercise-import-preview-import" (clicked)="importPreviewed()">
+                    <span jhiTranslate="artemisApp.exercise.import.table.doImport"></span>
+                </tumaet-ui-button>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm" data-testid="exercise-import-preview-summary">
+            <span>
+                <span class="font-semibold" jhiTranslate="artemisApp.quizExercise.totalPoints"></span>:
+                <span data-testid="exercise-import-preview-points">{{ previewTotalPoints() }}</span>
+            </span>
+            @if (current.quiz.duration !== undefined) {
+                <span>
+                    <span class="font-semibold" jhiTranslate="artemisApp.quizExercise.duration"></span>:
+                    <span data-testid="exercise-import-preview-duration">{{ current.quiz.duration | artemisDurationFromSeconds }}</span>
+                </span>
+            }
+        </div>
+        @for (question of current.quiz.quizQuestions; track question.id; let i = $index) {
+            <jhi-quiz-question-preview [question]="question" [questionIndex]="i + 1" />
+        } @empty {
+            <p data-testid="exercise-import-preview-empty" jhiTranslate="artemisApp.quizExercise.noQuestions"></p>
+        }
+    </div>
+}

@@ -57,8 +57,9 @@
                     [disabled]="isReadOnlyMode()"
                     class="reaction-button clickable"
                     [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
-                    (click)="updateReaction(reactionMetaData.key)"
+                    (click)="reactingUsersTooltip.close(false); updateReaction(reactionMetaData.key)"
                     [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
+                    #reactingUsersTooltip="ngbTooltip"
                 >
                     <div class="emoji-container">
                         <jhi-emoji [emoji]="reactionMetaData.key" />
@@ -124,7 +125,8 @@
         @if (!isEmojiCount() && mayDelete()) {
             <div class="reaction-button clickable fs-small" data-testid="posting-reaction-delete">
                 <jhi-confirm-icon
-                    iconSize="sm"
+                    iconSize="1x"
+                    [fillParent]="true"
                     (confirmEvent)="deletePosting()"
                     [initialTooltip]="'artemisApp.communication.delete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
                     [confirmTooltip]="'artemisApp.communication.confirmDelete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"

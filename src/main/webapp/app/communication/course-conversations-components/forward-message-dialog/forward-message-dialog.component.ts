@@ -1,16 +1,7 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, signal, viewChild } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
-import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
-import { UnderlineAction } from 'app/editor/monaco-editor/model/actions/underline.action';
-import { QuoteAction } from 'app/editor/monaco-editor/model/actions/quote.action';
-import { CodeAction } from 'app/editor/monaco-editor/model/actions/code.action';
-import { CodeBlockAction } from 'app/editor/monaco-editor/model/actions/code-block.action';
-import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
-import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
-import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { catchError, map, of } from 'rxjs';
@@ -20,6 +11,7 @@ import { NgClass } from '@angular/common';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { FormsModule } from '@angular/forms';
+import { MessageEditorComponent } from 'app/communication/message-editor/message-editor.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
@@ -41,7 +33,7 @@ interface CombinedOption {
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
-    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective, FaIconComponent],
+    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MessageEditorComponent, FormsModule, TranslateDirective, FaIconComponent],
     providers: [CommunicationService, LinkPreviewService, LinkifyService, CourseConversationsService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
@@ -54,14 +46,12 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     users = signal<UserPublicInfoDTO[]>([]);
     postToForward = signal<Post | undefined>(undefined);
     courseId = signal<number | undefined>(undefined);
-    editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     filteredChannels: (ChannelDTO | GroupChatDTO)[] = [];
     readonly filteredUsers = signal<UserPublicInfoDTO[]>([]);
     selectedChannels: (ChannelDTO | GroupChatDTO)[] = [];
     selectedUsers: UserPublicInfoDTO[] = [];
     readonly combinedOptions = signal<CombinedOption[]>([]);
     readonly filteredOptions = signal<CombinedOption[]>([]);
-    readonly defaultActions = signal<TextEditorAction[]>([]);
     searchTerm: string = '';
     newPost = new Post();
     isInputFocused = false;
@@ -93,7 +83,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             }
         }
         this.filteredChannels = this.channels() || [];
-        this.defaultActions.set([new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()]);
         this.filteredUsers.set(this.users());
 
         // Combine users and channels into a single options list
@@ -150,6 +139,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     filterItems(event: Event): void {
         this.searchTerm = (event.target as HTMLInputElement).value;
         this.filterOptions();
+        this.showDropdown.set(true);
     }
 
     /**
@@ -277,9 +267,13 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         return content.length <= this.maxContentLength;
     }
 
-    /** Sets input focus and opens dropdown */
+    /** Remembers the input focus. The dropdown is not opened here, because the input is also focused programmatically when the dialog opens. */
     onInputFocus(): void {
         this.isInputFocused = true;
+    }
+
+    /** Opens the dropdown when the user clicks into the search input */
+    onInputClick(): void {
         this.showDropdown.set(true);
     }
 
@@ -306,6 +300,5 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         }
     }
 
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

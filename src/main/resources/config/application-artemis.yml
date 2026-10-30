@@ -3,6 +3,11 @@
 # ===================================================================
 
 artemis:
+  tum-live:
+    integration-enabled: false
+    # api-base-url: https://live.example.edu/api/v2
+    # web-base-url: https://live.example.edu
+    # api-key: <deployment-secret>
   course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
   legal-path: ./legal                             # a folder in which legal documents (imprint and privacy statements) are stored.
   repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
@@ -105,6 +110,20 @@ artemis:
   git:
     name: Artemis
     email: artemis@xcit.tum.de
+  mail:
+    # A mail the SMTP server does not accept for a temporary reason (above all an exhausted daily quota) is kept in memory and
+    # tried again, see the documentation page "E-Mail Delivery". All values below are the defaults.
+    retry:
+      enabled: true
+      max-queue-size: 5000 # Mails one node keeps for another attempt, which are a few tens of megabytes
+      initial-delay: PT1M # Wait before the second attempt, doubled with every further failed attempt
+      max-delay: PT1H # Longest wait between two attempts
+      quota-pause: PT15M # How long a node stops contacting the SMTP server after it reported that the quota is used up
+      unavailable-pause: PT2M # How long a node stops contacting the SMTP server after it could not be reached
+      transactional-max-age: PT12H # Age after which a password reset or a security notification is dropped instead of sent
+      bulk-max-age: PT48H # Age after which the e-mail of a course notification is dropped instead of sent
+      drain-interval: PT30S # Pause between two runs of the job that works off the queue
+      drain-batch-size: 200 # Most mails one run of the job sends
   rate-limiting:
     enabled: false
     account-management-requests-per-minute: 5
@@ -124,16 +143,43 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
+    exercise-generation:
+      enabled: false # Set consistently on all core/localvc writers. Authoring also requires LocalCI and a separate worker.
+    agent:
+      max-job-duration: PT45M
+      stale-job-timeout: PT50M
+    generation:
+      terminal-replay-ttl: PT4H
+      max-concurrent-jobs-per-core-node: 2
+      shutdown-drain-timeout: PT11M
+      test-case-sync-timeout: PT10M
+    quiz-pool:
+      # Model (for Azure: deployment name) that generates pool questions; blank uses the default chat model configured below.
+      generator-model:
+      # Model (for Azure: deployment name) that judges generated questions; blank uses the default chat model configured below.
+      judge-model:
+      question-types: single-choice,multiple-choice
+      difficulties: easy,medium,hard
+      # Questions requested per generation call; a cell larger than this is filled in several calls.
+      generation-batch-size: 8
+      # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.
+      stale-claim-minutes: 30
+      # Characters of a lecture unit's text (slide PDF, transcript or text unit) that a generation prompt receives at most.
+      max-material-characters: 60000
+      # How long a running build holds its course's lease without a heartbeat before another node may build the course.
+      build-lease-minutes: 10
+  aiworker:
+    enabled: false # Optional standalone coordination; Hyperion generation enables this automatically on eligible core nodes.
+    # ids: [worker-1]
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    # Token costs (EUR per million tokens). Baselines (gpt-5-mini, gpt-5.4, gpt-5.4-mini) are seeded in
-    # LLMModelCostConfiguration. Add entries here only to override or register a model. Keep this commented:
-    # an active entry here uses a literal key (e.g. gpt-5-mini) that would collide with the same model
-    # configured via environment variables (where it arrives stripped, e.g. gpt5mini). Dotted keys must be
-    # bracket-quoted, e.g. "[gpt-5.4]".
+    # Shared services retain their default prices. Generation uses only explicitly supplied EUR rates; missing rates remain unknown.
+    # Use dated provider rates and bracket-quote dotted model keys. Configure each model in
+    # one source only: environment variables normalize model keys differently from YAML.
     # model-costs:
-    #   "[gpt-5.4]":
-    #     input-cost-per-million-eur: 2.30
-    #     output-cost-per-million-eur: 13.80
+    #   "[provider/model]":
+    #     input-cost-per-million-eur: <your-input-rate>
+    #     output-cost-per-million-eur: <your-output-rate>
+    #     cached-input-cost-per-million-eur: <your-cached-input-rate>
   atlas:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini
@@ -357,18 +403,15 @@ management:
   tracing:
     sampling:
       probability: 1.0
-  otlp:
+    export:
+      # The custom Langfuse exporter remains available when default OTLP export is off.
+      otlp:
+        enabled: false
+  opentelemetry:
     tracing:
-      # LangFuse accepts OTLP over HTTP at the traces path only
-      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
-#     endpoint: https://example.com
-#     transport: http
-#     headers:
-        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-#        Authorization: "Basic <base64(public_key:secret_key)>"
-
-     # Important: Set export.enabled: false to disable the *default* OTLP exporter.
-     # Hyperion uses its own custom exporter to send LLM traces to Langfuse,
-     # so disabling the default exporter will NOT stop LLM trace export.
-     export:
-       enabled: false
+      export:
+        otlp:
+          # Langfuse accepts OTLP over HTTP at the traces path only.
+          # endpoint: https://example.com/api/public/otel/v1/traces
+          # headers:
+          #   Authorization: "Basic <base64(public_key:secret_key)>"

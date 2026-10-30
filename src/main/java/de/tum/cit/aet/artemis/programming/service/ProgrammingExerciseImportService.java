@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -20,6 +21,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.api.dtos.ParticipationReservation;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
@@ -30,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
 @Profile(PROFILE_CORE)
@@ -62,12 +67,19 @@ public class ProgrammingExerciseImportService {
 
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
+    private final Optional<HyperionExerciseMutationApi> mutationApi;
+
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            Optional<HyperionExerciseMutationApi> mutationApi, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+        this.mutationApi = mutationApi;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
@@ -173,8 +185,7 @@ public class ProgrammingExerciseImportService {
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, @NonNull ProgrammingExercise newExercise, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) {
-        var sourceBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(sourceExercise.getId());
-        return importProgrammingExercise(sourceExercise, sourceBuildConfig, newExercise, null, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+        return importGuarded(sourceExercise, null, newExercise, null, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
     }
 
     /**
@@ -192,6 +203,50 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig,
             @NonNull ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) {
+        return importGuarded(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+    }
+
+    private ProgrammingExercise importGuarded(ProgrammingExercise sourceExercise, @Nullable ProgrammingExerciseBuildConfig sourceBuildConfig, ProgrammingExercise newExercise,
+            @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate) {
+        long sourceId = sourceExercise.getId();
+        var coordination = sourceExercise.isExamExercise() ? Optional.<HyperionExerciseMutationApi>empty() : mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled);
+        try (var reservation = coordination.map(api -> api.reserveParticipation(sourceId)).orElseGet(() -> new ParticipationReservation(() -> {
+        }))) {
+            if (coordination.isPresent()) {
+                var freshSource = programmingExerciseRepository.findByIdForImportElseThrow(sourceExercise.getId());
+                if (freshSource.isExamExercise() != sourceExercise.isExamExercise()
+                        || !Objects.equals(freshSource.getCourseViaExerciseGroupOrCourseMember().getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+                    throw new ConflictException("Source exercise placement changed; authorize the import again", "programmingExercise", "sourceExerciseChanged");
+                }
+                freshSource.setTasks(new ArrayList<>(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(freshSource.getId())));
+                sourceExercise = freshSource;
+                sourceBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(sourceExercise.getId());
+            }
+            else if (sourceBuildConfig == null) {
+                sourceBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(sourceExercise.getId());
+            }
+            return importCoordinated(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+        }
+    }
+
+    private ProgrammingExercise importCoordinated(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig, ProgrammingExercise newExercise,
+            @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate) {
+        ProgrammingExercise prepared = prepareImport(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig);
+        return completeImport(sourceExercise, prepared, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+    }
+
+    /**
+     * Creates the database portion of an import, without copying repositories or triggering builds.
+     * Callers that expose asynchronous preparation must protect the returned draft before committing it.
+     *
+     * @param sourceExercise    source with the import associations initialized
+     * @param sourceBuildConfig stored source configuration
+     * @param newExercise       destination metadata
+     * @param newBuildConfig    optional destination configuration
+     * @return persisted destination with its import associations
+     */
+    public ProgrammingExercise prepareImport(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig, ProgrammingExercise newExercise,
+            @Nullable ProgrammingExerciseBuildConfig newBuildConfig) {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
         newExercise.setShortName(NON_ALPHANUMERIC.matcher(newExercise.getShortName()).replaceAll(""));
         newExercise.generateAndSetProjectKey();
@@ -207,6 +262,20 @@ public class ProgrammingExerciseImportService {
                 programmingExerciseRepository.save(newExercise);
             }
         }
+        return newExercise;
+    }
+
+    /**
+     * Finishes a previously prepared import. The caller protects the source and destination throughout repository copying.
+     *
+     * @param sourceExercise                      source with import associations initialized
+     * @param newExercise                         prepared destination
+     * @param recreateBuildPlans                  create new plans rather than copying them
+     * @param setTestCaseVisibilityToAfterDueDate override copied visibility when requested
+     * @return the imported destination
+     */
+    public ProgrammingExercise completeImport(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate) {
         programmingExerciseImportBasicService.importRepositories(sourceExercise, newExercise);
 
         if (setTestCaseVisibilityToAfterDueDate) {

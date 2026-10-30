@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -40,11 +39,11 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -404,7 +403,7 @@ public class FileUploadExerciseResource {
         validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate);
 
         // Retrieve the course over the exerciseGroup or the given courseId
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExerciseBeforeUpdate);
+        Course course = courseService.retrieveCourseOfLoadedExercise(fileUploadExerciseBeforeUpdate);
         validateCourseId(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate, course);
 
         // Check that the user is authorized to update the exercise
@@ -489,14 +488,7 @@ public class FileUploadExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
         // Sync with AtlasML for AI-based features
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(persistedExercise, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
-            }
-        });
+        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
 
         // Create a version snapshot for history tracking
         exerciseVersionService.createExerciseVersion(persistedExercise);
@@ -620,9 +612,9 @@ public class FileUploadExerciseResource {
         teamAssignmentConfigRepository.attachTo(exercise);
         plagiarismDetectionConfigRepository.attachTo(exercise);
         if (exercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
-            if (channel != null) {
-                exercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(exercise.getId());
+            if (channelName != null) {
+                exercise.setChannelName(channelName);
             }
         }
 
@@ -722,7 +714,7 @@ public class FileUploadExerciseResource {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
         validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, existingExercise);
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(existingExercise);
+        Course course = courseService.retrieveCourseOfLoadedExercise(existingExercise);
         validateCourseId(updateFileUploadExerciseDTO, existingExercise, course);
 
         var user = userRepository.getUserWithAuthorities();
@@ -795,31 +787,7 @@ public class FileUploadExerciseResource {
             return;
         }
 
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
-
-        // Build lookup map for existing criteria by ID
-        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
-                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
-
-        // Process each DTO: update existing criteria or create new ones
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
-            // DTO with id=null means "create new criterion"
-            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
-            if (criterion == null) {
-                // Create new criterion from DTO
-                criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-            }
-            else {
-                // Update existing criterion in place (preserves Hibernate managed state)
-                gcDto.applyTo(criterion);
-            }
-            return criterion;
-        }).collect(Collectors.toSet());
-
-        // Replace collection contents (criteria not in DTO are removed via orphanRemoval)
-        managedCriteria.clear();
-        managedCriteria.addAll(updated);
+        GradingCriteriaMapper.replace(dto.gradingCriteria(), exercise);
     }
 
     /**
@@ -850,18 +818,7 @@ public class FileUploadExerciseResource {
         String newProblemStatement = updateFileUploadExerciseDTO.problemStatement() == null ? "" : updateFileUploadExerciseDTO.problemStatement();
         exercise.setProblemStatement(newProblemStatement);
 
-        exercise.setChannelName(updateFileUploadExerciseDTO.channelName());
-        exercise.setCategories(updateFileUploadExerciseDTO.categories());
-        exercise.setDifficulty(updateFileUploadExerciseDTO.difficulty());
-
-        exercise.setMaxPoints(updateFileUploadExerciseDTO.maxPoints());
-        exercise.setBonusPoints(updateFileUploadExerciseDTO.bonusPoints());
-        exercise.setIncludedInOverallScore(updateFileUploadExerciseDTO.includedInOverallScore());
-
-        exercise.setReleaseDate(updateFileUploadExerciseDTO.releaseDate());
-        exercise.setStartDate(updateFileUploadExerciseDTO.startDate());
-        exercise.setDueDate(updateFileUploadExerciseDTO.dueDate());
-        exercise.setAssessmentDueDate(updateFileUploadExerciseDTO.assessmentDueDate());
+        updateFileUploadExerciseDTO.applyMetadataTo(exercise);
         exercise.setExampleSolutionPublicationDate(updateFileUploadExerciseDTO.exampleSolutionPublicationDate());
 
         // A variant group owns its members' timeline, so pin the dates back to the group before validating.
@@ -873,15 +830,7 @@ public class FileUploadExerciseResource {
         // Boolean fields use null-check to support partial updates:
         // If the client omits a field (null), the existing value is preserved.
         // This matches the pattern in ModelingExerciseResource.
-        if (updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments());
-        }
-        if (updateFileUploadExerciseDTO.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(updateFileUploadExerciseDTO.presentationScoreEnabled());
-        }
-        if (updateFileUploadExerciseDTO.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(updateFileUploadExerciseDTO.secondCorrectionEnabled());
-        }
+        updateFileUploadExerciseDTO.applyAssessmentFlagsTo(exercise);
         exercise.setGradingInstructions(updateFileUploadExerciseDTO.gradingInstructions());
 
         exercise.setExampleSolution(updateFileUploadExerciseDTO.exampleSolution());

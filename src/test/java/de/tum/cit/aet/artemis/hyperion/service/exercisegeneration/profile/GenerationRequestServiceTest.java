@@ -1,0 +1,182 @@
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+
+class GenerationRequestServiceTest {
+
+    private static final String SAMPLE = "Implement the example sample task supplied by the programming exercise template.";
+
+    private final ResourceLoaderService resources = mock();
+
+    private final de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository buildConfigRepository = mock();
+
+    @org.junit.jupiter.api.BeforeEach
+    void configureBuildConfig() {
+        when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong())).thenReturn(new ProgrammingExerciseBuildConfig());
+    }
+
+    private final GenerationRequestService service = new GenerationRequestService(buildConfigRepository, resources);
+
+    @Test
+    void examEligibilityRejectsEvenFutureUnassignedExams() {
+        var exercise = exercise();
+        var exam = new de.tum.cit.aet.artemis.exam.domain.Exam();
+        var group = new de.tum.cit.aet.artemis.exam.domain.ExerciseGroup();
+        group.setExam(exam);
+        exercise.setExerciseGroup(group);
+        exercise.setCourse(null);
+        exercise.setReleaseDate(java.time.ZonedDateTime.now().plusDays(10));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
+        exam.setStartDate(java.time.ZonedDateTime.now().minusDays(1));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
+        exam.setStartDate(java.time.ZonedDateTime.now().plusDays(1));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
+        assertThat(service.isGenerationSupported(exercise)).isFalse();
+        org.mockito.Mockito.verify(buildConfigRepository, org.mockito.Mockito.never()).getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong());
+        // A course-only release field cannot make an exam eligible.
+        exercise.setReleaseDate(java.time.ZonedDateTime.now().minusDays(1));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Pacific/Kiritimati", "America/Los_Angeles" })
+    void releaseEligibilityComparesInstantsAcrossTimeZones(String zone) {
+        var exercise = exercise();
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of(zone));
+        exercise.setReleaseDate(now.minusMinutes(5));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
+        exercise.setReleaseDate(now.plusMinutes(5));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isFalse();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "short", "                                       " })
+    void placeholdersAreNotAuthoritative(String statement) {
+        var exercise = exercise();
+        exercise.setProblemStatement(statement);
+        assertThat(service.isAuthoritativeProblemStatement(exercise)).isFalse();
+    }
+
+    @Test
+    void sampleReadmeIsWhitespaceInsensitiveAndCachedAndItsStreamIsClosed() throws Exception {
+        Resource resource = mock();
+        var input = org.mockito.Mockito.spy(new ByteArrayInputStream(SAMPLE.getBytes(StandardCharsets.UTF_8)));
+        when(resource.exists()).thenReturn(true);
+        when(resource.getInputStream()).thenReturn(input);
+        when(resources.getResource(any(Path.class))).thenReturn(resource);
+        var exercise = exercise();
+        exercise.setProblemStatement(" \n" + SAMPLE.replace(" ", "\r\n  ") + "\n");
+        assertThat(service.isAuthoritativeProblemStatement(exercise)).isFalse();
+        assertThat(service.isAuthoritativeProblemStatement(exercise)).isFalse();
+        verify(resources, times(1)).getResource(any(Path.class));
+        verify(input).close();
+    }
+
+    @Test
+    void unreadableProjectReadmeFallsBackToLanguageReadme() throws Exception {
+        when(resources.getResource(any(Path.class))).thenThrow(new IllegalStateException("missing")).thenReturn(new ByteArrayResource(SAMPLE.getBytes(StandardCharsets.UTF_8)));
+        var exercise = exercise();
+        exercise.setProblemStatement(SAMPLE);
+        assertThat(service.isAuthoritativeProblemStatement(exercise)).isFalse();
+        verify(resources, times(2)).getResource(any(Path.class));
+    }
+
+    @Test
+    void generationBriefOutranksExistingSpecAndAdaptationStaysScoped() {
+        var exercise = exercise();
+        exercise.setProblemStatement("An instructor-authored contract covering the original stack exercise and all operations.");
+        assertThat(service.resolvePrompt(request(GenerationMode.GENERATE, "  change to queues  "), exercise)).contains("authoritative for this run", "change to queues");
+        assertThat(service.resolvePrompt(request(GenerationMode.ADAPT, "fix push"), exercise)).contains("targeted revision", "fix push");
+        assertThat(service.resolvePrompt(request(GenerationMode.GENERATE, null), exercise)).contains("authoritative specification");
+        exercise.setProblemStatement(null);
+        assertThat(service.resolvePrompt(request(GenerationMode.GENERATE, "  build a stack  "), exercise)).isEqualTo("build a stack");
+        assertThat(service.resolvePrompt(request(GenerationMode.GENERATE, " "), exercise)).contains("template that compiles but fails");
+        exercise.setProgrammingLanguage(null);
+        exercise.setProblemStatement(SAMPLE);
+        assertThat(service.isAuthoritativeProblemStatement(exercise)).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(ProjectType.class)
+    void onlyGradleAndMavenAreQualified(ProjectType type) {
+        var exercise = exercise();
+        exercise.setProjectType(type);
+        // The sandbox verifies the Gradle and Maven test harnesses; black-box Maven and non-Java project types stay unqualified.
+        assertThat(service.isGenerationSupported(exercise))
+                .isEqualTo(type == ProjectType.GRADLE_GRADLE || type == ProjectType.PLAIN_GRADLE || type == ProjectType.PLAIN_MAVEN || type == ProjectType.MAVEN_MAVEN);
+    }
+
+    @Test
+    void missingBuildConfigurationIsNotQualified() {
+        var exercise = exercise();
+        when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId())).thenReturn(null);
+        assertThat(service.isGenerationSupported(exercise)).isFalse();
+    }
+
+    @Test
+    void unsetProjectTypeIsNotQualified() {
+        var exercise = exercise();
+        exercise.setProjectType(null);
+        assertThat(service.isGenerationSupported(exercise)).isFalse();
+    }
+
+    @Test
+    void unsupportedLanguageScaSequentialAndAuxiliaryConfigurationsStayClosed() {
+        assertThat(service.supportedGenerationLanguages()).containsExactly(ProgrammingLanguage.JAVA);
+        assertThat(service.isGenerationSupported(null)).isFalse();
+        var exercise = exercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        assertThat(service.isGenerationSupported(exercise)).isFalse();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setStaticCodeAnalysisEnabled(true);
+        assertThat(service.isGenerationSupported(exercise)).isFalse();
+        exercise.setStaticCodeAnalysisEnabled(false);
+        var config = new ProgrammingExerciseBuildConfig();
+        config.setSequentialTestRuns(true);
+        when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId())).thenReturn(config);
+        assertThat(service.isGenerationSupported(exercise)).isFalse();
+        config.setSequentialTestRuns(false);
+        assertThat(LanguageGenerationProfile.isSupported(exercise, config, true)).isFalse();
+        assertThat(LanguageGenerationProfile.isSupported(exercise, config, false)).isTrue();
+    }
+
+    private static ProgrammingExercise exercise() {
+        var exercise = new ProgrammingExercise();
+        exercise.setId(42L);
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProjectType(ProjectType.GRADLE_GRADLE);
+        return exercise;
+    }
+
+    private static ExerciseGenerationRequestDTO request(GenerationMode mode, String prompt) {
+        return new ExerciseGenerationRequestDTO(mode, prompt, null);
+    }
+}

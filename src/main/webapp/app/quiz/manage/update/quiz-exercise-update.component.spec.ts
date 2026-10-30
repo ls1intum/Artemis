@@ -43,7 +43,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -195,7 +195,7 @@ describe('QuizExerciseUpdateComponent', () => {
             courseManagementServiceStub = vi.spyOn(courseManagementService, 'find');
             exerciseGroupServiceStub = vi.spyOn(exerciseGroupService, 'find');
             initStub = vi.spyOn(comp, 'init');
-            quizExerciseServiceStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            quizExerciseServiceStub.mockReturnValue(of(quizExercise));
             courseManagementServiceStub.mockReturnValue(of(new HttpResponse<Course>({ body: course })));
             exerciseGroupServiceStub.mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: undefined })));
         };
@@ -362,7 +362,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.cacheValidation();
 
                 if (quizMode !== QuizMode.SYNCHRONIZED) {
-                    comp.addQuizBatch();
+                    comp.quizExercise().quizBatches = [...(comp.quizExercise().quizBatches ?? []), new QuizBatch()];
                 }
 
                 const now = dayjs();
@@ -390,7 +390,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.cacheValidation();
 
                 if (quizMode !== QuizMode.SYNCHRONIZED) {
-                    comp.addQuizBatch();
+                    comp.quizExercise().quizBatches = [...(comp.quizExercise().quizBatches ?? []), new QuizBatch()];
                 }
 
                 const now = dayjs();
@@ -417,6 +417,67 @@ describe('QuizExerciseUpdateComponent', () => {
                     // dueDate for SYNCHRONIZED quizzes are calculated so no need to validate.
                     expect(comp.hasErrorInQuizBatches()).toBe(true);
                 }
+            });
+        });
+
+        describe('date change handlers', () => {
+            beforeEach(() => {
+                resetQuizExercise();
+                comp.course = course;
+                comp.init();
+                comp.quizExercise.set(quizExercise);
+                comp.duration = new Duration(5, 15);
+            });
+
+            it('should store a picked release date and validate afterwards', () => {
+                const cacheValidationSpy = vi.spyOn(comp, 'cacheValidation');
+                const releaseDate = dayjs('2030-06-01T12:00:00');
+
+                comp.onReleaseDateChange(releaseDate);
+
+                expect(comp.quizExercise().releaseDate).toBe(releaseDate);
+                expect(cacheValidationSpy).toHaveBeenCalledOnce();
+
+                comp.onReleaseDateChange(undefined);
+
+                expect(comp.quizExercise().releaseDate).toBeUndefined();
+            });
+
+            it('should flag a due date before the release date as soon as it is picked', () => {
+                comp.quizExercise().quizMode = QuizMode.INDIVIDUAL;
+                comp.onReleaseDateChange(dayjs('2030-06-02T12:00:00'));
+                expect(comp.quizExercise().dueDateError).toBeFalsy();
+
+                comp.onDueDateChange(dayjs('2030-06-01T12:00:00'));
+
+                expect(comp.quizExercise().dueDate!.isSame(dayjs('2030-06-01T12:00:00'))).toBe(true);
+                expect(comp.quizExercise().dueDateError).toBe(true);
+
+                comp.onDueDateChange(dayjs('2030-06-03T12:00:00'));
+
+                expect(comp.quizExercise().dueDateError).toBeFalsy();
+            });
+
+            it('should flag a start time before the release date as soon as it is picked', () => {
+                comp.quizExercise().quizMode = QuizMode.SYNCHRONIZED;
+                comp.scheduleQuizStart = true;
+                comp.cacheValidation();
+                const batch = comp.quizExercise().quizBatches![0];
+                comp.onReleaseDateChange(dayjs('2030-06-02T12:00:00'));
+
+                comp.onBatchStartTimeChange(batch, dayjs('2030-06-01T12:00:00'));
+
+                expect(batch.startTime!.isSame(dayjs('2030-06-01T12:00:00'))).toBe(true);
+                expect(batch.startTimeError).toBe(true);
+                expect(comp.hasErrorInQuizBatches()).toBe(true);
+
+                comp.onBatchStartTimeChange(batch, dayjs('2030-06-03T12:00:00'));
+
+                expect(batch.startTimeError).toBe(false);
+            });
+
+            it('should not treat a missing date picker text as invalid without any picker', () => {
+                expect(comp.hasInvalidDateText()).toBe(false);
             });
         });
 
@@ -1171,9 +1232,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 resetQuizExercise();
                 comp.quizExercise.set(quizExercise);
                 quizExerciseServiceCreateStub = vi.spyOn(quizExerciseService, 'create');
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+                quizExerciseServiceCreateStub.mockReturnValue(of(quizExercise));
                 quizExerciseServiceUpdateStub = vi.spyOn(quizExerciseService, 'update');
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+                quizExerciseServiceUpdateStub.mockReturnValue(of(quizExercise));
                 const calendarService = TestBed.inject(CalendarService);
                 refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
                 exerciseSanitizeSpy = vi.spyOn(Exercise, 'sanitize');
@@ -1206,7 +1267,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise());
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), {});
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), undefined);
                 expect(refreshSpy).toHaveBeenCalled();
             });
 
@@ -1235,26 +1296,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise());
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), { notificationText: 'test' });
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), 'test');
                 expect(refreshSpy).toHaveBeenCalled();
-            });
-
-            it('should call alert service if response has no body on create', () => {
-                comp.quizExercise().id = undefined;
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
-            });
-
-            it('should call alert service if response has no body on update', () => {
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
-            });
-
-            it('should call alert service if response has no body on import', () => {
-                comp.isImport.set(true);
-                comp.quizExercise().id = undefined;
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
             });
 
             it('should call alert service if create fails', () => {
@@ -1302,7 +1345,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 savedResponse.quizBatches = [];
                 savedResponse.isAtLeastEditor = true;
                 savedResponse.isEditable = undefined;
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: savedResponse })));
+                quizExerciseServiceUpdateStub.mockReturnValue(of(savedResponse));
 
                 saveQuizWithPendingChangesCache();
 
@@ -1322,7 +1365,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 savedResponse.quizBatches = [];
                 savedResponse.isAtLeastEditor = true;
                 savedResponse.isEditable = false;
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: savedResponse })));
+                quizExerciseServiceUpdateStub.mockReturnValue(of(savedResponse));
 
                 saveQuizWithPendingChangesCache();
 
@@ -1785,13 +1828,6 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('quiz mode', () => {
-            const b1 = new QuizBatch();
-            const b2 = new QuizBatch();
-            const b3 = new QuizBatch();
-            b1.id = 1;
-            b2.id = 2;
-            b3.id = 3;
-
             beforeEach(() => {
                 resetQuizExercise();
                 comp.quizExercise.set(quizExercise);
@@ -1806,30 +1842,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.scheduleQuizStart = false;
                 comp.cacheValidation();
                 expect(quizExercise.quizBatches).toHaveLength(0);
-            });
-
-            it('should add batches', () => {
-                expect(quizExercise.quizBatches).toHaveLength(0);
-                comp.addQuizBatch();
-                expect(quizExercise.quizBatches).toHaveLength(1);
-            });
-
-            it('should add batches when none exist', () => {
-                quizExercise.quizBatches = undefined;
-                comp.addQuizBatch();
-                expect(quizExercise.quizBatches).toHaveLength(1);
-            });
-
-            it('should remove batches', () => {
-                quizExercise.quizBatches = [b1, b2, b3];
-                comp.removeQuizBatch(b2);
-                expect(quizExercise.quizBatches).toEqual([b1, b3]);
-            });
-
-            it('should not remove batches when they dont exist', () => {
-                quizExercise.quizBatches = [b1, b3];
-                comp.removeQuizBatch(b2);
-                expect(quizExercise.quizBatches).toEqual([b1, b3]);
             });
         });
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -24,30 +25,47 @@ import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
+import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxyUtil;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.LoggingAspect;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.NewAnnouncementPayloadDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailPriority;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
 
+@Isolated("Mutates logger levels and appenders")
+@Execution(ExecutionMode.SAME_THREAD)
 class CourseNotificationEmailServiceTest {
 
     private static final ZonedDateTime FIXED_CREATION_DATE = ZonedDateTime.parse("2025-01-15T10:00:00+01:00");
@@ -84,7 +102,108 @@ class CourseNotificationEmailServiceTest {
         ReflectionTestUtils.setField(courseNotificationEmailService, "artemisServerUrl", serverUrl);
         // sendEmailSync now reports whether the mail went out, and a boolean-returning mock answers false by default,
         // which would make every test here see a failed delivery. Lenient because several of these never reach the send.
-        lenient().when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean())).thenReturn(true);
+        lenient().when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class))).thenReturn(true);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void renderingFailureDoesNotLogRecipientData(boolean subjectFails) {
+        String privateEmail = "private-notification-recipient@example.org";
+        String privateLogin = "private-notification-login";
+        User user = createUser(privateLogin, "en");
+        user.setId(7391564280L);
+        user.setEmail(privateEmail);
+        var notification = createNotification("ANNOUNCEMENT", 123L);
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Subject");
+        if (subjectFails) {
+            when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenThrow(new NoSuchMessageException(privateEmail));
+        }
+        else {
+            when(templateEngine.process(anyString(), any(Context.class)))
+                    .thenThrow(new TemplateProcessingException("Template for " + privateEmail, new IllegalStateException(privateLogin)));
+        }
+
+        Logger serviceLogger = (Logger) LoggerFactory.getLogger(CourseNotificationEmailService.class);
+        Logger aspectLogger = (Logger) LoggerFactory.getLogger(LoggingAspect.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        Level previousServiceLevel = serviceLogger.getLevel();
+        Level previousAspectLevel = aspectLogger.getLevel();
+        serviceLogger.setLevel(Level.DEBUG);
+        aspectLogger.setLevel(Level.DEBUG);
+        serviceLogger.addAppender(appender);
+        aspectLogger.addAppender(appender);
+        try {
+            var factory = new AspectJProxyFactory(courseNotificationEmailService);
+            factory.addAspect(new LoggingAspect(new MockEnvironment().withProperty("spring.profiles.active", "dev")));
+            CourseNotificationEmailService proxy = (CourseNotificationEmailService) factory.getProxy();
+
+            var result = proxy.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(user)));
+
+            assertThat(result).isCompletedExceptionally();
+            String logged = appender.list.stream()
+                    .map(event -> event.getFormattedMessage() + (event.getThrowableProxy() == null ? "" : ThrowableProxyUtil.asString(event.getThrowableProxy())))
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(logged).doesNotContain("7391564280", privateEmail, privateLogin);
+            assertThat(logged).contains(subjectFails ? "NoSuchMessageException" : "TemplateProcessingException");
+            assertThat(logged).contains(subjectFails ? "email.courseNotification.ANNOUNCEMENT.title" : "mail/course_notification/ANNOUNCEMENT");
+        }
+        finally {
+            serviceLogger.detachAppender(appender);
+            aspectLogger.detachAppender(appender);
+            serviceLogger.setLevel(previousServiceLevel);
+            aspectLogger.setLevel(previousAspectLevel);
+            appender.stop();
+        }
+    }
+
+    @Test
+    void realMarkdownRenderersDoNotLogPersonalDataFromTheMailBody() {
+        String privateEmail = "private-markdown-recipient@example.org";
+        String privateLogin = "private-markdown-recipient-login";
+        var links = new MarkdownCustomLinkRendererService();
+        ReflectionTestUtils.setField(links, "artemisServerUrl", serverUrl);
+        var service = new CourseNotificationEmailService(messageSource, templateEngine, mailSendingService, proxied(links), proxied(new MarkdownCustomReferenceRendererService()));
+        ReflectionTestUtils.setField(service, "artemisServerUrl", serverUrl);
+        var notification = new CourseNotificationDTO("newAnnouncementNotification", 1L, 123L, FIXED_CREATION_DATE, CourseNotificationCategory.COMMUNICATION, "Test Course", null,
+                new NewAnnouncementPayloadDTO(1L, "Test Announcement", "Contact " + privateEmail + " or [user]" + privateLogin + "(1)[/user]", "Test Author", null, 2L, 3L), "/");
+        var recipient = createUser(privateLogin, "en");
+        recipient.setEmail(privateEmail);
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Subject");
+        when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Content");
+        Logger aspectLogger = (Logger) LoggerFactory.getLogger(LoggingAspect.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        Level previousLevel = aspectLogger.getLevel();
+        aspectLogger.setLevel(Level.DEBUG);
+        aspectLogger.addAppender(appender);
+        try {
+            aspectLogger.debug("Mail renderer log capture active");
+            assertThat(service.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)))).isCompletedWithValue(null);
+
+            String logged = appender.list.stream()
+                    .map(event -> event.getFormattedMessage() + (event.getThrowableProxy() == null ? "" : ThrowableProxyUtil.asString(event.getThrowableProxy())))
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(logged).contains("Mail renderer log capture active").doesNotContain(privateEmail, privateLogin);
+            verify(templateEngine).process(anyString(), contextCaptor.capture());
+            @SuppressWarnings("unchecked")
+            var parameters = (Map<String, Object>) contextCaptor.getValue().getVariable("parameters");
+            assertThat((String) parameters.get("postMarkdownContent")).contains(privateEmail, "@" + privateLogin).doesNotContain("[user]");
+        }
+        finally {
+            aspectLogger.detachAppender(appender);
+            aspectLogger.setLevel(previousLevel);
+            appender.stop();
+        }
+    }
+
+    private static <T> T proxied(T target) {
+        var factory = new AspectJProxyFactory(target);
+        factory.setProxyTargetClass(true);
+        factory.addAspect(new LoggingAspect(new MockEnvironment().withProperty("spring.profiles.active", "dev")));
+        @SuppressWarnings("unchecked")
+        T proxy = (T) factory.getProxy();
+        return proxy;
     }
 
     @Test
@@ -100,7 +219,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(templateEngine).process(eq("mail/course_notification/ANNOUNCEMENT"), contextCaptor.capture());
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true), eq(MailPriority.BULK));
 
             Context capturedContext = contextCaptor.getValue();
             assertThat(capturedContext.getVariable("serverUrl")).isEqualTo(serverUrl);
@@ -108,6 +227,61 @@ class CourseNotificationEmailServiceTest {
             assertThat(capturedContext.getVariable("recipient")).isEqualTo(CourseNotificationRecipientDTO.from(recipient));
             assertThat(capturedContext.getVariable("courseId")).isEqualTo(123L);
         });
+    }
+
+    /** Renders the announcement mail with the real templates and returns its content. */
+    private String renderAnnouncementMail() {
+        var resolver = new ClassLoaderTemplateResolver();
+        resolver.setPrefix("templates/");
+        resolver.setSuffix(".html");
+        var renderingEngine = new SpringTemplateEngine();
+        renderingEngine.setTemplateResolver(resolver);
+        courseNotificationEmailService = new CourseNotificationEmailService(messageSource, renderingEngine, mailSendingService, markdownCustomLinkRendererService,
+                markdownCustomReferenceRendererService);
+        ReflectionTestUtils.setField(courseNotificationEmailService, "artemisServerUrl", serverUrl);
+
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = new CourseNotificationDTO("newAnnouncementNotification", 1L, 123L, FIXED_CREATION_DATE, CourseNotificationCategory.COMMUNICATION,
+                "Test Course", null, new NewAnnouncementPayloadDTO(1L, "Test Announcement", "Test content", "Test Author", null, 2L, 3L), "/courses/123");
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(markdownCustomLinkRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(markdownCustomReferenceRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        assertThat(delivery).isCompletedWithValue(null);
+        var contentCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mailSendingService).sendEmailSync(any(), eq("Test Subject"), contentCaptor.capture(), eq(false), eq(true), eq(MailPriority.BULK));
+        return contentCaptor.getValue();
+    }
+
+    @Test
+    void shouldRenderAnnouncementImagesFromTheInstallationUrl() {
+        assertThat(renderAnnouncementMail()).contains("href=\"https://example.org/logo/favicon.svg\"", "src=\"https://example.org/public/images/logo.png\"",
+                "href=\"https://example.org/courses/123/settings\"").doesNotContain("null/");
+    }
+
+    @Test
+    void shouldKeepTheFooterLinkReadableOnTheDarkFooter() {
+        // Mail clients such as Gmail replace the color of links unless the rule is important, as it is for the buttons of the same stylesheet
+        assertThat(renderAnnouncementMail()).containsPattern("footer a\\s*\\{[^}]*color:\\s*#9cc9f2\\s*!important");
+    }
+
+    @Test
+    void shouldHandThePlainMailLayerTheTestUserFlagOfTheRecipient() {
+        User testUser = createUser("testuser1", "en");
+        testUser.setTestUser(true);
+        CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);
+
+        when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
+
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(testUser)));
+
+        // Without the flag, the mail layer could not recognize a test user that has not opted in, and would send it the mail.
+        Awaitility.await().atMost(2, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(mailSendingService).sendEmailSync(argThat(mailRecipient -> mailRecipient.testUser() && "testuser1".equals(mailRecipient.login())),
+                        anyString(), anyString(), eq(false), eq(true), eq(MailPriority.BULK)));
     }
 
     @Test
@@ -127,8 +301,8 @@ class CourseNotificationEmailServiceTest {
             verify(messageSource, times(1)).getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(messageSource, times(1)).getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), eq(Locale.forLanguageTag("de")));
             verify(templateEngine, times(2)).process(eq("mail/course_notification/ASSIGNMENT_RELEASED"), any(Context.class));
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(englishUser)), anyString(), anyString(), eq(false), eq(true));
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(germanUser)), anyString(), anyString(), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(englishUser)), anyString(), anyString(), eq(false), eq(true), eq(MailPriority.BULK));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(germanUser)), anyString(), anyString(), eq(false), eq(true), eq(MailPriority.BULK));
         });
     }
 
@@ -141,7 +315,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().during(1, TimeUnit.SECONDS).atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource, never()).getMessage(anyString(), any(), any(Locale.class));
             verify(templateEngine, never()).process(anyString(), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean());
+            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class));
         });
     }
 
@@ -162,7 +336,7 @@ class CourseNotificationEmailServiceTest {
         CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);
         when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
-        when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean())).thenReturn(false);
+        when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class))).thenReturn(false);
 
         var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
 
@@ -207,7 +381,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.UNKNOWN_TYPE.title"), any(), any(Locale.class));
             verify(templateEngine, never()).process(anyString(), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean());
+            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class));
         });
     }
 
@@ -224,7 +398,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.VALID_TYPE.title"), any(), any(Locale.class));
             verify(templateEngine).process(eq("mail/course_notification/VALID_TYPE"), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean());
+            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class));
         });
     }
 
@@ -246,8 +420,8 @@ class CourseNotificationEmailServiceTest {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("de")));
             verify(templateEngine).process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(eq(expectedMailRecipient(user1)), anyString(), anyString(), anyBoolean(), anyBoolean());
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(user2)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService, never()).sendEmailSync(eq(expectedMailRecipient(user1)), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(user2)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true), eq(MailPriority.BULK));
         });
     }
 
@@ -328,7 +502,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq(expectedLocalePrefix), any(), any(Locale.class));
             verify(templateEngine).process(eq(expectedTemplatePath), any(Context.class));
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true), eq(MailPriority.BULK));
         });
     }
 
@@ -346,7 +520,7 @@ class CourseNotificationEmailServiceTest {
      * {@link User} fixture happens to set an activation/reset key.
      */
     private static MailRecipientDTO expectedMailRecipient(User user) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName());
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null, user.isTestUser());
     }
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {

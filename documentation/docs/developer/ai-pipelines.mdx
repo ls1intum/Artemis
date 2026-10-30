@@ -4,9 +4,9 @@ title: AI Pipelines and Service Boundaries
 sidebar_label: AI Pipelines
 ---
 
-This catalog describes the **Artemis-owned control plane** for AI-enabled workflows: the requests Artemis creates, the data and authorization it owns, and the integration contracts it exposes. It is not generated API documentation and does not replace the implementation documentation of Iris, Athena, AtlasML, Logos, or Memiris.
+This catalog describes the **Artemis-owned control plane** for AI-enabled workflows: the requests Artemis creates, the data and authorization it owns, and the integration contracts it exposes. It is not generated API documentation and does not replace the implementation documentation of Iris, Athena, AtlasML, or Logos.
 
-Use this page together with the [Artemis Intelligence ecosystem map](../admin/artemis-intelligence). It intentionally avoids deployment-specific hosts, credentials, model assignments, provider aliases, capacity, topology, and rollout state. Feature flags and configuration determine whether a boundary is enabled; they do not establish how a particular deployment is configured.
+Use this page together with the [Artemis Intelligence ecosystem map](/admin/artemis-intelligence). It intentionally avoids deployment-specific hosts, credentials, model assignments, provider aliases, capacity, topology, and rollout state. Feature flags and configuration determine whether a boundary is enabled; they do not establish how a particular deployment is configured.
 
 ## Ownership at a glance
 
@@ -41,7 +41,7 @@ These paths are conditional on Iris being enabled. Artemis creates the request a
 
 `PyrisWebhookService` connects Artemis content lifecycles to Iris ingestion. It creates tracked lecture or FAQ ingestion jobs and delegates transport to `PyrisConnectorService`. Ingestion status returns through the authenticated internal webhook endpoints.
 
-- **Lecture units:** Artemis queues lecture-unit ingestion in `lecture_unit_processing_state`, and the Iris ingestion worker claims jobs through `PyrisInternalIngestionWorkerResource`, which prepares each payload with `PyrisWebhookService#prepareLectureUnitIngestion`. `IrisLectureApi` exposes `PyrisWebhookService` to the lecture module; `deleteLectureFromPyrisDB` sends unit identifiers for deletion. Course Iris settings gate eligible additions. `PyrisStatusUpdateService` forwards checkpoint data, heartbeats, and terminal completion to the lecture processing API, allowing Artemis to maintain its processing state.
+- **Lecture units:** Artemis queues lecture-unit ingestion in `lecture_unit_processing_state`, and the Iris ingestion worker claims jobs through `PyrisInternalIngestionWorkerResource`, which prepares each payload with `PyrisWebhookService#prepareLectureUnitIngestion`. `IrisLectureApi` exposes `PyrisWebhookService` to the lecture module; `deleteLectureFromPyrisDB` sends unit identifiers for deletion. The course Iris settings do not gate lecture units, because global search needs their content in every course; `LectureIngestionReconcileService` limits catch-up work to courses within `artemis.iris.ingestion.course-window`. `PyrisStatusUpdateService` forwards checkpoint data, heartbeats, and terminal completion to the lecture processing API, allowing Artemis to maintain its processing state.
 - **FAQs:** `FaqService` uses `PyrisFaqApi` and `PyrisWebhookService` to ingest changed FAQs or remove deleted ones. FAQ ingestion is governed by the course Iris settings. Artemis tracks the request lifecycle, while Iris owns indexing and retrieval behavior.
 - **Callback integrity:** `PyrisInternalStatusUpdateResource` has separate callback contracts for lecture and FAQ ingestion. A callback must authenticate a matching tracked job and have the expected job type before Artemis accepts it.
 
@@ -145,17 +145,6 @@ Do not conflate Artemis Global Search with the two Iris-backed endpoints in `Iri
 
 Both paths use Iris retrieval rather than Artemis’s Global Search schemas or query authorization layer.
 
-### Memiris management through Iris
-
-`IrisMemoryResource` exposes the Artemis user-management boundary for memories when both Iris and `Feature.Memiris` are enabled. It obtains the current Artemis user and delegates to `PyrisConnectorService` for:
-
-- aggregated memory data;
-- a single memory with its learning and connection details;
-- single-memory deletion; and
-- delete-all forwarding.
-
-Artemis owns the authenticated user boundary and the response DTOs. Iris and Memiris own memory creation, semantic retrieval, relationships, memory storage, and periodic sleep orchestration. For the Iris integration and runtime pipeline details, use the [Iris pipeline system](https://ls1intum.github.io/edutelligence/iris/docs/developer/pipeline-system); the reusable library is documented in the [Memiris source repository](https://github.com/ls1intum/edutelligence/tree/main/memiris).
-
 ## Athena
 
 Athena is an external assessment service. Artemis determines which configured Athena module is applicable to an exercise and owns all Artemis assessment data before and after a request. Athena owns module execution and, for modules that use LLMs, its own module-level AI selection.
@@ -180,7 +169,7 @@ The `AthenaInternalResource` is a deliberately narrow contract: it is an authent
 
 ## Hyperion authoring pipelines
 
-Hyperion is Artemis-native and uses Artemis Spring AI integration. It is enabled through Artemis configuration; the associated authoring resources and services remain within the Artemis server. See [Hyperion setup](../admin/hyperion) and the [Spring AI development guide](./spring-ai) for configuration-oriented documentation.
+Hyperion is Artemis-native and uses Artemis Spring AI integration. It is enabled through Artemis configuration; the associated authoring resources and services remain within the Artemis server. See [Hyperion setup](/admin/hyperion) and the [Spring AI development guide](./spring-ai) for configuration-oriented documentation.
 
 The authoring resources expose focused workflows, rather than one monolithic pipeline:
 
@@ -203,13 +192,27 @@ Atlas contains two related but distinct Artemis-side responsibilities: native co
 
 `AtlasAgentResource` accepts course chat requests and delegates them through `AtlasAgentService` and `AtlasAgentDelegationService`. Artemis owns the course context, authorization, agent-session history, and tool contract. These beans require `artemis.atlas.atlasllm.enabled`, which is disabled by default and additionally requires the Artemis Atlas module.
 
-The agents, the orchestrator, the tool surfaces, and the Responses adapter all sit behind that one flag, because none of them can do anything without a configured chat model. An installation that leaves it off keeps competencies, learning paths, and learner profiles, and loads none of those beans, the content-change scheduler, or the autonomous exercise event listener. `artemis.atlas.enabled` therefore describes the competency feature set alone, and the two AI submodules, `atlasml` and `atlasllm`, are opted into separately.
+The agents, the orchestrator, the tool surfaces, and the Responses adapter all sit behind that one flag, because none of them can do anything without a configured chat model. An installation that leaves it off keeps competencies, learning paths, and learner profiles, and loads none of those beans, the content-change scheduler, or the autonomous exercise and lecture-unit event listeners. `artemis.atlas.enabled` therefore describes the competency feature set alone, and the two AI submodules, `atlasml` and `atlasllm`, are opted into separately.
 
-`CompetencyOrchestrationResource` starts programming-exercise orchestration and additionally requires `Feature.AtlasAgent`. `CompetencyOrchestrationService` coordinates the workflow, while `AtlasAgentToolCallbackService` handles agent-tool callbacks. The supporting tool services (`AtlasAgentToolsService`, `CompetencyExpertToolsService`, `CompetencyMappingToolsService`, `ExerciseMappingToolsService`, and `OrchestratorToolsService`) apply Artemis-owned competency, mapping, and course operations. Their results are persisted in Artemis through the normal competency and course services.
+The chat tool services (`AtlasAgentToolsService` for the main agent, `CompetencyExpertToolsService`, `CompetencyMappingToolsService`, and `ExerciseMappingToolsService` for its sub-agents) and the orchestration tool services (`OrchestratorReadToolsService`, `OrchestratorPlanningToolsService`, `OrchestratorDelegationToolsService`, the worker services `CreatorToolsService`, `EditorToolsService`, and `AssignerToolsService`, and the terminal tools `AtlasOrchestratorTerminalToolService` and `AtlasWorkerTerminalToolService`) apply Artemis-owned competency, mapping, and course operations. `AtlasAgentToolConfig` gives every agent role its own tool surface. Results are persisted in Artemis through the normal competency and course services.
 
-`ContentExtractionService` is a native Atlas preprocessing flow for supported programming exercises. It uses Artemis Spring AI to identify narrowly removable flavor-text edits, applies those edits locally, and supplies the resulting learning-focused content before competency orchestration and optional AtlasML mapping suggestions. If the chat client or flavor-strip model is unavailable, it passes the raw content through unchanged.
+`ContentExtractionService` is a native Atlas preprocessing flow for all exercise types and for the lecture units that orchestration supports (text units with content, online units, and attachment or video units with a description). It uses Artemis Spring AI to identify narrowly removable flavor-text edits, applies those edits locally, and supplies the resulting learning-focused content before competency orchestration and optional AtlasML mapping suggestions. If the chat client or flavor-strip model is unavailable, it passes the raw content through unchanged.
 
-Autonomous rounds and flavor stripping use an isolated Responses `ChatClient` by default; interactive Atlas and other modules retain the shared client. The adapter preserves ordered Responses output items, including encrypted reasoning, while the Spring AI tool advisor executes callbacks. Each run owns one shared tool budget and a `completeOrchestration(verified, message)` terminal decision. A successful index refresh after the latest work is required for verified completion. Budget exhaustion or missing/unverified completion is terminal and preserves applied actions without automatically replaying the run. See [Atlas model configuration](../admin/artemis-intelligence#atlas-model-configuration) for defaults and the explicit transport fallback.
+Autonomous rounds and flavor stripping use an isolated Responses `ChatClient` by default; interactive Atlas and other modules retain the shared client. The adapter preserves ordered Responses output items, including encrypted reasoning, while the Spring AI tool advisor executes callbacks. Each run owns one shared tool budget and a `completeOrchestration(verified, message)` terminal decision. A successful index refresh after the latest work is required for verified completion. Budget exhaustion or missing/unverified completion is terminal and preserves applied actions without automatically replaying the run. See [Atlas model configuration](/admin/artemis-intelligence#atlas-model-configuration) for defaults and the explicit transport fallback.
+
+The shared budget in `AtlasToolCallBudget` allows 256 attempted tool callbacks per run, including reads and failed calls. After callback 224, only reads and completion remain available, and the last callback is reserved for the main orchestrator's completion. Nested calls inherit the same budget. `OrchestratorToolContextKeys.MAX_DELEGATION_CALLS` permits at most 16 synchronous worker delegations per run. Workers receive only course-scoped reads, their role-specific mutations, and a one-shot completion tool; they cannot delegate further.
+
+#### Chat flow
+
+`AtlasAgentResource` is instructor-only and has no `@FeatureToggle`; the client hides the chat when `Feature.AtlasAgent` or the `atlasllm` module is off. `AtlasAgentService` keeps the conversation in the JDBC chat memory, keyed by course and user, and the main agent delegates to the Competency Expert, Competency Mapper, and Exercise Mapper. A multi-step request becomes a plan in `ExecutionPlanStateManagerService` that the instructor approves first. Each sub-agent returns a preview, which `AtlasAgentSessionCacheService` holds until the instructor approves it in the client; the approval then calls the sub-agent's save tool. The rule that nothing is saved before approval lives in the prompts, not in code: the save tools are always registered.
+
+#### Orchestration flow
+
+`AutonomousCompetencyExerciseEventListener` (on `ExerciseVersionCreatedEvent`, limited to `ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS`) and `AutonomousCompetencyLectureUnitEventListener` (on `LectureUnitContentChangedEvent`) check `Feature.AtlasAgent` and the course's `autoOrchestratorEnabled` and queue the change in `ContentChangeAccumulatorService`, a per-course distributed map. On the scheduling node, `ContentChangeScheduler` claims a course once its debounce window has passed and its daily cap allows another run, and calls `CompetencyOrchestrationService.runBatch`. `CompetencyOrchestrationResource` (guarded by `Feature.AtlasAgent`) runs a single exercise or lecture unit immediately, together with anything already queued, and skips the debounce window and the daily cap. Each run holds a per-course lock, so only one run per course is active. Turning off the course switch discards the queued changes of that course.
+
+Workers commit every write immediately, and the run reports them as applied actions. A failed run that wrote nothing is queued again, unless it stopped at the tool budget or did not finish verifiably; a partial run is never queued again, so committed changes are not applied twice. Learning objects whose content extraction failed are queued again after any run. Results reach the client through the `AtlasWebsocketTopics.ORCHESTRATION_SUMMARY` topic and, for automatic runs, through `AtlasCompetencyUpdateNotificationService`.
+
+To change agent behavior, edit the prompt templates in `src/main/resources/prompts/atlas/`, which `AtlasPromptTemplateService` renders. A new tool must be registered for its role in `AtlasAgentToolConfig`; orchestration tools count against the shared budget. Tests are under `src/test/java/de/tum/cit/aet/artemis/atlas/agent` and `.../atlas/service`.
 
 ### Optional AtlasML REST boundary
 
@@ -223,7 +226,7 @@ Artemis Global Search is a standalone Artemis feature, not an Iris pipeline. Whe
 
 The searchable-entity schema covers Artemis content such as courses, exercises, exams, lectures and lecture units, FAQs, and communication entities. Entity lifecycle callers update or remove the corresponding Artemis documents; startup migration services manage the Artemis schema lifecycle.
 
-A Weaviate instance can be shared with Iris, but the two consumers use independent collection namespaces and data flows. Artemis Global Search does not call Iris RAG, and Iris lecture answers do not use the Artemis Global Search authorization/query contract. For setup and operational details, use [Global Search & Weaviate Setup](../admin/global-search-weaviate) and [Weaviate Setup](./weaviate-setup).
+A Weaviate instance can be shared with Iris, but the two consumers use independent collection namespaces and data flows. Artemis Global Search does not call Iris RAG, and Iris lecture answers do not use the Artemis Global Search authorization/query contract. For setup and operational details, use [Global Search & Weaviate Setup](/admin/global-search-weaviate) and [Weaviate Setup](./weaviate-setup).
 
 ## Change guidance
 

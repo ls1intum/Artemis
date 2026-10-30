@@ -17,7 +17,7 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
 
 @Component({
     selector: 'jhi-course-import-standardized-prerequisites',
-    templateUrl: './course-import-standardized-prerequisites.component.html',
+    templateUrl: './course-import-standardized-course-competencies.component.html',
     imports: [
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,
@@ -36,6 +36,8 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
 })
 export class CourseImportStandardizedPrerequisitesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
     private prerequisiteService = inject(PrerequisiteService);
+
+    protected override readonly importTitle = 'artemisApp.standardizedCompetency.courseImport.prerequisiteTitle';
 
     protected override importCompetencies() {
         super.importCompetencies(this.prerequisiteService);

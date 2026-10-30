@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.notification.domain.course_notifications;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
-import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.dto.payload.NewAnswerPayloadDTO;
 import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
@@ -40,24 +37,15 @@ public class NewAnswerNotification extends CourseNotification {
     }
 
     @Override
-    public CourseNotificationCategory getCourseNotificationCategory() {
-        return CourseNotificationCategory.COMMUNICATION;
-    }
-
-    @Override
-    public Duration getCleanupDuration() {
-        return Duration.ofDays(7);
-    }
-
-    @Override
-    public List<NotificationChannelOption> getSupportedChannels() {
-        return List.of(NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
+    protected CourseNotificationDeliveryPolicy getDeliveryPolicy() {
+        return CourseNotificationDeliveryPolicy.COMMUNICATION;
     }
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/communication?conversationId=" + payload.channelId() + "&focusPostId=" + payload.postId() + "&openThreadOnFocus=1&postInThread="
-                + payload.replyId();
+        // messageId is the parent post that seeds the thread; focusReplyId highlights the reply within it.
+        return "/courses/" + courseId + "/communication?conversationId=" + payload.channelId() + "&focusPostId=" + payload.postId() + "&openThreadOnFocus=1&messageId="
+                + payload.postId() + "&focusReplyId=" + payload.replyId();
     }
 
     @Override

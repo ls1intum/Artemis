@@ -1344,6 +1344,16 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
+    void createProgrammingExercise_notIncludedZeroMaxScore_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        programmingExercise.setMaxPoints(0.0);
+        // The error key tells the rejected points apart from the title of the fixture, which already exists in the course and is checked later.
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig)))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("maxScoreInvalid"));
+    }
+
     void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(10.0);
@@ -1701,10 +1711,11 @@ public class ProgrammingExerciseIntegrationTestService {
             programmingExerciseTestCaseRepository.saveAndFlush(test);
         });
 
-        // Resetting plus versioning takes 28 queries; mapping the reset test cases must not pull their exercise or tasks back in
+        // Resetting plus versioning takes 31 queries and the global search lookup of the exercise's channel one more; mapping the reset test cases must not
+        // pull their exercise or tasks back in
         final var testCasesResponse = QueryCountAssert
                 .assertThatDb(queryInterceptor, () -> request.patchWithResponseBody("/api" + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
-                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(31);
+                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(32);
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var expectedTestCases = testsInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
 

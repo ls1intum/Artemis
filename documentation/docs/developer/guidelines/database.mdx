@@ -278,7 +278,7 @@ A `String`, or an attribute converted to one, needs no annotation at all: bound 
 private List<PyrisActivityDTO> toolActivity;
 ```
 
-Where the value is structured rather than free text, `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column is the other option - `IrisMessage.accessedMemories` uses it. It costs the column its equality operator on PostgreSQL, which is why a query fetching such an entity cannot use `DISTINCT`; `IrisChatSessionRepository.findAllWithMessagesByCourseId` returns a `Set` and deduplicates in Java for exactly that reason.
+Where the value is structured rather than free text, `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column is the other option. It costs the column its equality operator on PostgreSQL, so a query fetching such an entity cannot use `DISTINCT` and has to deduplicate in Java instead.
 
 ## Relationships
 
@@ -480,6 +480,19 @@ The `@EntityGraph` annotation is the simplest way to specify a graph of relation
 @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
 Course findWithEagerExercisesById(long courseId);
 ```
+
+### Reading an exercise reads its course
+
+`Exercise.course` is an eager `@ManyToOne`, so every query that returns an exercise brings its course along, and when the course is not part of the statement, Hibernate reads it with a second one. Every wide load of an exercise therefore costs two statements unless the course is named in the graph:
+
+```java
+@EntityGraph(type = LOAD, attributePaths = { "course", "templateParticipation", "solutionParticipation" })
+Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(long exerciseId);
+```
+
+The same holds for a `JOIN FETCH` query: add `LEFT JOIN FETCH exercise.course`. Adding a path to a method that already has more than five does not change the over-fetch count of the Query Quality check.
+
+A graph that is assembled from several queries, to avoid the product of several collections, must not read the exercise again for each of them. Select the part by the id of the exercise, from the part's own entity, and put it on the exercise in Java. The children point back at the exercise with an eager `@ManyToOne`, so run the queries in one read-only transaction on the repository method: they share one session, and the exercise and its course the first query read are found in it. `ProgrammingExerciseRepository.findForCreationById` and `findForVersioningById` are the worked examples, and `ProgrammingExerciseGraphQueryCountTest` pins them. If a flow needs only a few values of an exercise or of its course, read them as a projection instead, as `findSubmissionPolicyValuesByExerciseId` does.
 
 ### JOIN FETCH
 

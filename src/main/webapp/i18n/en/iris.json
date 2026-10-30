@@ -313,9 +313,7 @@
                 "lectureSuccess": "Lecture processing in Iris has started",
                 "lectureError": "Error while sending lecture to Iris",
                 "allLecturesSuccess": "All Lectures are now being processed",
-                "allFaqsSuccess": "All Faq processing in Iris started successfully",
                 "allLecturesError": "Error while sending all lectures to Iris",
-                "allFaqsError": "Error while sending all Faqs to Iris",
                 "lectureNotFound": "Could not send lecture to Iris, no lecture found with the provided id.",
                 "pyrisUnavailable": "Iris is currently unavailable.",
                 "pyrisError": "An error occurred while getting processing status from Iris.",
@@ -385,49 +383,6 @@
                 "privacyDisclaimer": "Review your institution's privacy policy for details.",
                 "tryIris": "Try Iris",
                 "close": "Close"
-            },
-            "memories": {
-                "title": "Memories",
-                "loadingList": "Loading memories...",
-                "empty": "No memories found.",
-                "delete": "Delete",
-                "deleting": "Deleting...",
-                "indicator": {
-                    "usedSingular": "1 memory used",
-                    "usedPlural": "{{count}} memories used",
-                    "createdSingular": "1 created",
-                    "createdPlural": "{{count}} created",
-                    "compactUsed": "{{count}} used",
-                    "compactCreated": "{{count}} created",
-                    "usedSectionTitle": "Used memories",
-                    "createdSectionTitle": "Created memories"
-                },
-                "conflict": {
-                    "warning": "There are conflicts between memories that need to be resolved.",
-                    "resolve": "Resolve",
-                    "modalTitle": "Resolve Memory Conflicts",
-                    "noConflicts": "No conflicts.",
-                    "conflictCount": "Conflict {{ current }} of {{ total }}",
-                    "keepThis": "Keep this",
-                    "previous": "Previous",
-                    "next": "Next",
-                    "memoryId": "ID"
-                },
-                "details": {
-                    "loading": "Loading details...",
-                    "learnings": "Learnings",
-                    "connections": "Connections",
-                    "reference": "Reference",
-                    "memories": "Memories",
-                    "weight": "Weight",
-                    "none": "None",
-                    "noDetails": "No details available."
-                },
-                "error": {
-                    "loadFailed": "Failed to load memories.",
-                    "deleteFailed": "Failed to delete memory.",
-                    "detailsLoadFailed": "Failed to load memory details."
-                }
             }
         },
         "pyrisSearchAskRequest": {

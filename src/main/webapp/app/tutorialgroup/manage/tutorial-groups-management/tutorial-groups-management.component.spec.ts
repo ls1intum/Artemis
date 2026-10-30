@@ -9,8 +9,8 @@ import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
+import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
@@ -152,7 +152,8 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should get all tutorial groups for course', () => {
-        expect(component.tutorialGroups()).toEqual([tutorialGroupOne, tutorialGroupTwo]);
+        expect(component.tutorialGroups().map((tutorialGroup) => tutorialGroup.id)).toEqual([tutorialGroupOne.id, tutorialGroupTwo.id]);
+        expect(component.tutorialGroups().map((tutorialGroup) => tutorialGroup.title)).toEqual([tutorialGroupOne.title, tutorialGroupTwo.title]);
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
@@ -390,5 +391,29 @@ describe('TutorialGroupsManagementComponent', () => {
         // Both calls to action sit in the empty state: create beside import.
         expect(fixture.debugElement.query(By.css('[data-testid="empty-create-tutorial-group-btn"]'))).not.toBeNull();
         expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
+    });
+
+    describe('as an editor', () => {
+        beforeEach(() => {
+            course.isAtLeastInstructor = false;
+        });
+
+        afterEach(() => {
+            course.isAtLeastInstructor = true;
+        });
+
+        it('should offer import and holidays but not configuration or export', async () => {
+            await setUp([tutorialGroupOne]);
+            const actions = renderTitleBarActions();
+            expect(actions.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
+            expect(actions.query(By.css('[data-testid="free-periods-btn"]'))).not.toBeNull();
+            expect(actions.query(By.css('[data-testid="edit-configuration-btn"]'))).toBeNull();
+            expect(actions.query(By.directive(TutorialGroupsExportButtonComponent))).toBeNull();
+        });
+
+        it('should offer import in the empty state', async () => {
+            await setUp([]);
+            expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
+        });
     });
 });

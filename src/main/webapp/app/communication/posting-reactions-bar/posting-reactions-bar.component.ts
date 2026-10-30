@@ -29,7 +29,7 @@ import dayjs from 'dayjs/esm';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { CourseConversationsService } from '../service/course-conversations.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { map } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
@@ -115,6 +115,8 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                     this.getPostingType() === 'answerPost' ? this.communicationService.currentUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false,
                 );
                 if (this.getPostingType() === 'post') {
+                    // The permission to pin depends on the conversation of the posting, which differs when the component is reused
+                    this.updateCanPin();
                     this.resetTooltipsAndPriority();
                 }
                 this.setMayDelete();
@@ -199,8 +201,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
         );
 
         if (this.getPostingType() === 'post') {
-            const currentConversation = this.communicationService.getCurrentConversation();
-            this.setCanPin(currentConversation);
+            this.updateCanPin();
             this.resetTooltipsAndPriority();
         }
         this.setMayDelete();
@@ -224,11 +225,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      */
     setCanPin(currentConversation: ConversationDTO | undefined) {
         if (!currentConversation) {
-            this.canPin.set(this.communicationService.currentUserIsAtLeastTutorInCourse());
-            return;
-        }
-
-        if (isChannelDTO(currentConversation)) {
+            // Pinning is a moderation right of the conversation, so the user is not offered it while the conversation is unknown
+            this.canPin.set(false);
+        } else if (isChannelDTO(currentConversation)) {
             this.canPin.set(currentConversation.hasChannelModerationRights ?? false);
         } else if (isGroupChatDTO(currentConversation)) {
             this.canPin.set(currentConversation.creator?.id === this.accountService.userIdentity()?.id);
@@ -236,6 +235,19 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             this.canPin.set(true);
         }
         this.canPinOutput.emit(this.canPin());
+    }
+
+    private updateCanPin() {
+        this.setCanPin(this.communicationService.getCurrentConversation() ?? this.getCachedConversationOfPost());
+    }
+
+    /**
+     * Posts outside of a selected conversation (e.g. in the course-wide search) only carry a reference to their conversation,
+     * which lacks what the user may do in it. The cached conversation of the user has it.
+     */
+    private getCachedConversationOfPost(): ConversationDTO | undefined {
+        const conversationId = (this.posting() as Post).conversation?.id;
+        return conversationId === undefined ? undefined : this.courseConversationsService.getCachedConversation(conversationId);
     }
 
     private resetTooltipsAndPriority() {
@@ -309,6 +321,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      */
     readonly reactionMetaDataMap = signal<ReactionMetaDataMap>({});
 
+    /** keys (posting id and emoji id) of the create or delete requests that have not finished yet */
+    private readonly pendingRequestKeys = new Set<string>();
+
     /**
      * builds and returns a Reaction model out of an emojiId and thereby sets the answerPost property properly
      * @param emojiId emojiId to build the model for
@@ -357,24 +372,61 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * @param emojiId emojiId representing the reaction to be added/removed
      */
     addOrRemoveReaction(emojiId: string): void {
-        const existingReactionIdx = (this.posting() as Posting).reactions
-            ? (this.posting() as Posting).reactions!.findIndex((reaction) => reaction.user?.id === this.communicationService.getUser().id && reaction.emojiId === emojiId)
+        // The posting is captured now: the thread sidebar reuses this component for another posting, so the response may arrive while another one is shown.
+        const targetPosting = this.posting() as Posting;
+        const isTargetStillShown = () => this.posting()?.id === targetPosting.id;
+        // The decision below relies on the reactions of the posting, which only change once the server answered. A second click before that would
+        // act on stale data and send the same request twice, which the server rejects, so the click would seem to have no effect.
+        const requestKey = `${targetPosting.id}-${emojiId}`;
+        if (this.pendingRequestKeys.has(requestKey)) {
+            return;
+        }
+        const existingReactionIdx = targetPosting.reactions
+            ? targetPosting.reactions.findIndex((reaction) => reaction.user?.id === this.communicationService.getUser().id && reaction.emojiId === emojiId)
             : -1;
-        if ((this.posting() as Posting).reactions && existingReactionIdx > -1) {
-            const reactionToDelete = (this.posting() as Posting).reactions![existingReactionIdx];
-            this.communicationService.deleteReaction(reactionToDelete).subscribe(() => {
-                (this.posting() as Posting).reactions = (this.posting() as Posting).reactions?.filter((reaction) => reaction.id !== reactionToDelete.id);
-                this.updatePostingWithReactions();
-                this.showReactionSelector.set(false);
-                this.reactionsUpdated.emit((this.posting() as Posting).reactions!);
-            });
+        this.pendingRequestKeys.add(requestKey);
+        if (targetPosting.reactions && existingReactionIdx > -1) {
+            const reactionToDelete = targetPosting.reactions[existingReactionIdx];
+            this.communicationService
+                .deleteReaction(reactionToDelete)
+                .pipe(finalize(() => this.pendingRequestKeys.delete(requestKey)))
+                .subscribe({
+                    next: () => {
+                        if (!isTargetStillShown()) {
+                            return;
+                        }
+                        const posting = this.posting() as Posting;
+                        posting.reactions = posting.reactions?.filter((reaction) => reaction.id !== reactionToDelete.id);
+                        this.updatePostingWithReactions();
+                        this.showReactionSelector.set(false);
+                        this.reactionsUpdated.emit(posting.reactions!);
+                    },
+                    // the error handler interceptor already reports failed requests
+                    error: () => {},
+                });
         } else {
             const reactionToCreate = this.buildReaction(emojiId);
-            this.communicationService.createReaction(reactionToCreate).subscribe(() => {
-                this.updatePostingWithReactions();
-                this.showReactionSelector.set(false);
-                this.reactionsUpdated.emit((this.posting() as Posting).reactions || []);
-            });
+            this.communicationService
+                .createReaction(reactionToCreate)
+                .pipe(finalize(() => this.pendingRequestKeys.delete(requestKey)))
+                .subscribe({
+                    next: (createdReaction) => {
+                        if (!isTargetStillShown()) {
+                            return;
+                        }
+                        // The websocket update that carries the new reaction can arrive after the response. Add the reaction here so that the next click
+                        // already sees it, unless the websocket update was faster.
+                        const posting = this.posting() as Posting;
+                        if (createdReaction && !posting.reactions?.some((reaction) => reaction.id === createdReaction.id)) {
+                            posting.reactions = [...(posting.reactions ?? []), createdReaction];
+                        }
+                        this.updatePostingWithReactions();
+                        this.showReactionSelector.set(false);
+                        this.reactionsUpdated.emit(posting.reactions || []);
+                    },
+                    // the error handler interceptor already reports failed requests
+                    error: () => {},
+                });
         }
     }
 
@@ -513,12 +565,14 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * Uses openForwardMessageView from PostingsReactionsBarDirective to show the forward dialog.
      */
     forwardMessage(): void {
-        const isAnswer = this.getPostingType() === 'answerPost';
-        if (!this.posting()!.content || this.posting()!.content === '') {
-            this.openForwardMessageView(this.originalPostDetails()!, isAnswer);
-        } else {
-            this.openForwardMessageView(this.posting()!, isAnswer);
+        const posting = this.posting();
+        const source = posting?.content ? posting : this.originalPostDetails();
+        if (!source) {
+            return;
         }
+        // A received forward is a post even when its selected source is a reply without private parent metadata.
+        const isAnswer = 'resolvesPost' in source || 'post' in source;
+        this.openForwardMessageView(source, isAnswer);
     }
 
     markMessageAsUnread() {
@@ -561,6 +615,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                         ForwardMessageDialogComponent,
                         cloneWith(defaultFirstLayerDialogOptions, {
                             closable: false,
+                            focusOnShow: false,
                             data: {
                                 users: [],
                                 channels: this.channels,

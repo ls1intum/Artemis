@@ -1,9 +1,14 @@
 {
     "artemisApp": {
         "participation": {
+            "onlineEditor": "Online-Editor",
             "home": {
                 "title": "Teilnahmen",
                 "createLabel": "Teilnahme erstellen"
+            },
+            "filterGroup": {
+                "submissions": "Abgaben",
+                "results": "Ergebnisse"
             },
             "created": "Teilnahme erstellt mit ID {{ param }}",
             "updated": "Teilnahme von {{ param }} aktualisiert",
@@ -68,6 +73,13 @@
                 "submissionsForParticipation": "Abgaben von {{ participant }} für die Übung {{ exercise }}",
                 "action": "Aktion",
                 "delete": "Soll diese Abgabe wirklich gelöscht werden?"
+            },
+            "tutorAccess": {
+                "untilDueDate": "Du kannst die Namen der Studierenden sehen und über Code ihre Repositorys öffnen oder klonen, um Fragen zu beantworten. Tutor:innen haben nur Lesezugriff. Nach der Einreichungsfrist der Aufgabe ({{ dueDate }}) werden Namen und der direkte Repositoryzugriff ausgeblendet, da die manuelle Bewertung aktiviert ist.",
+                "available": "Du kannst die Namen der Studierenden sehen und über Code ihre Repositorys öffnen oder klonen, um Fragen zu beantworten. Tutor:innen haben nur Lesezugriff. Diese Aufgabe wird automatisch bewertet, deshalb bleibt der Zugriff nach der Einreichungsfrist erhalten.",
+                "anonymousAssessment": "Die Einreichungsfrist der Aufgabe ist abgelaufen und die manuelle Bewertung ist aktiviert. Namen der Studierenden und der direkte Repositoryzugriff sind ausgeblendet, damit die Bewertung anonym bleibt. Im Bewertungsdashboard kannst du weiterhin anonymisierte Einreichungen ansehen und herunterladen.",
+                "assessmentDashboard": "Bewertungsdashboard öffnen",
+                "noDueDate": "Du kannst die Namen der Studierenden sehen und über Code ihre Repositorys öffnen oder klonen, um Fragen zu beantworten. Tutor:innen haben nur Lesezugriff. Die manuelle Bewertung ist aktiviert, aber für die Aufgabe ist keine Einreichungsfrist festgelegt. Sobald eine Frist festgelegt wird und abläuft, werden Namen und der direkte Repositoryzugriff ausgeblendet."
             }
         }
     }

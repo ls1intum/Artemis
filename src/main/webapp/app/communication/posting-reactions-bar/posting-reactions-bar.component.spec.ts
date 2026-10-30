@@ -39,17 +39,18 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { User } from 'app/account/user/user.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
 describe('PostingReactionsBarComponent', () => {
     let component: PostingReactionsBarComponent<Posting>;
@@ -396,6 +397,20 @@ describe('PostingReactionsBarComponent', () => {
         expect(component.showReactionSelector()).toBeFalsy();
     });
 
+    it('should close the reacting users tooltip when a reaction button is clicked so that no outdated list stays open', () => {
+        fixture.componentRef.setInput('isEmojiCount', true);
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(of(undefined));
+
+        const reactionButton = fixture.debugElement.query(By.css('button.reaction-button.clickable[class*="reaction-button--reacted"]'));
+        const tooltip = reactionButton.injector.get(NgbTooltip);
+        const closeSpy = vi.spyOn(tooltip, 'close');
+
+        reactionButton.nativeElement.click();
+
+        expect(closeSpy).toHaveBeenCalledOnce();
+    });
+
     it('should invoke communication service method with own reaction to delete it', () => {
         post.author!.id = 99;
         fixture.componentRef.setInput('posting', post);
@@ -405,6 +420,130 @@ describe('PostingReactionsBarComponent', () => {
         component.addOrRemoveReaction(reactionToDelete.emojiId!);
         expect(communicationServiceDeleteReactionMock).toHaveBeenCalledWith(reactionToDelete);
         expect(component.showReactionSelector()).toBeFalsy();
+    });
+
+    describe('quickly toggling the same reaction', () => {
+        beforeEach(() => {
+            post.reactions = [];
+            fixture.componentRef.setInput('posting', post);
+            component.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+        });
+
+        it('should ignore further clicks on an emoji while its request is still running', () => {
+            const createSubject = new Subject<Reaction>();
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should show the created reaction as soon as the response arrived', () => {
+            const createSubject = new Subject<Reaction>();
+            vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+
+            component.updateReaction('+1');
+            createSubject.next(createdReaction('+1', 10));
+            createSubject.complete();
+
+            expect(post.reactions).toHaveLength(1);
+            expect(component.reactionMetaDataMap()['+1'].hasReacted).toBe(true);
+        });
+
+        it('should remove the reaction on the next click even if the websocket update has not arrived yet', () => {
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(of(createdReaction('+1', 10)));
+            const deleteReactionSpy = vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(of(undefined));
+
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledOnce();
+            expect(deleteReactionSpy).toHaveBeenCalledOnce();
+            expect(post.reactions).toHaveLength(0);
+        });
+
+        it('should not add the reaction twice when the websocket update arrived before the response', () => {
+            const reaction = createdReaction('+1', 10);
+            const createSubject = new Subject<Reaction>();
+            vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+
+            component.updateReaction('+1');
+            post.reactions = [reaction];
+            createSubject.next(reaction);
+
+            expect(post.reactions).toHaveLength(1);
+        });
+
+        it('should accept a click on an emoji again after its request failed', () => {
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(throwError(() => new Error('conflict')));
+
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should not add a created reaction to the posting that is shown after the request was sent', () => {
+            const otherPost = new Post();
+            otherPost.id = 2;
+            otherPost.reactions = [];
+            const createSubject = new Subject<Reaction>();
+            vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+            const reactionsUpdatedSpy = vi.spyOn(component.reactionsUpdated, 'emit');
+
+            component.updateReaction('+1');
+            // the thread sidebar reuses the component for another post before the response arrives
+            fixture.componentRef.setInput('posting', otherPost);
+            createSubject.next(createdReaction('+1', 10));
+            createSubject.complete();
+
+            expect(otherPost.reactions).toHaveLength(0);
+            expect(reactionsUpdatedSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not remove a reaction from the posting that is shown after the request was sent', () => {
+            const ownReaction = createdReaction('+1', 10);
+            post.reactions = [ownReaction];
+            const otherPost = new Post();
+            otherPost.id = 2;
+            const otherReaction = createdReaction('smile', 10);
+            otherPost.reactions = [otherReaction];
+            const deleteSubject = new Subject<void>();
+            vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(deleteSubject);
+            const reactionsUpdatedSpy = vi.spyOn(component.reactionsUpdated, 'emit');
+
+            component.updateReaction('+1');
+            fixture.componentRef.setInput('posting', otherPost);
+            deleteSubject.next();
+            deleteSubject.complete();
+
+            expect(otherPost.reactions).toEqual([otherReaction]);
+            expect(reactionsUpdatedSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not block the same emoji on another posting while a request for the previous posting is running', () => {
+            const otherPost = new Post();
+            otherPost.id = 2;
+            otherPost.reactions = [];
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(new Subject<Reaction>());
+
+            component.updateReaction('+1');
+            fixture.componentRef.setInput('posting', otherPost);
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledTimes(2);
+        });
+
+        function createdReaction(emojiId: string, id: number): Reaction {
+            const reaction = new Reaction();
+            reaction.id = id;
+            reaction.emojiId = emojiId;
+            reaction.user = communicationUser1;
+            return reaction;
+        }
     });
 
     it('should invoke communication service method with own reaction to remove it', () => {
@@ -562,6 +701,71 @@ describe('PostingReactionsBarComponent', () => {
         expect(communicationServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
     });
 
+    describe('pinning outside of a selected conversation (e.g. in the course-wide search)', () => {
+        const searchResultInConversation = (conversationId: number | undefined) => {
+            const searchResult = new Post();
+            searchResult.id = 99;
+            searchResult.displayPriority = DisplayPriority.NONE;
+            searchResult.conversation = conversationId === undefined ? undefined : ({ id: conversationId, type: ConversationType.CHANNEL } as Conversation);
+            return searchResult;
+        };
+
+        beforeEach(() => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+            vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        });
+
+        it('should not offer pinning to a tutor who has no moderation rights in the channel of the post', () => {
+            vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue({
+                id: 5,
+                type: ConversationType.CHANNEL,
+                hasChannelModerationRights: false,
+            } as ChannelDTO);
+            fixture.componentRef.setInput('posting', searchResultInConversation(5));
+
+            component.ngOnInit();
+
+            expect(component.canPin()).toBe(false);
+        });
+
+        it('should offer pinning to a user who has moderation rights in the channel of the post', () => {
+            const cachedConversationSpy = vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue({
+                id: 5,
+                type: ConversationType.CHANNEL,
+                hasChannelModerationRights: true,
+            } as ChannelDTO);
+            fixture.componentRef.setInput('posting', searchResultInConversation(5));
+
+            component.ngOnInit();
+
+            expect(cachedConversationSpy).toHaveBeenCalledExactlyOnceWith(5);
+            expect(component.canPin()).toBe(true);
+        });
+
+        it('should recalculate the pin permission when the component gets a post of another conversation', () => {
+            vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockImplementation(
+                (conversationId) => ({ id: conversationId, type: ConversationType.CHANNEL, hasChannelModerationRights: conversationId === 5 }) as ChannelDTO,
+            );
+
+            fixture.componentRef.setInput('posting', searchResultInConversation(5));
+            fixture.detectChanges();
+            expect(component.canPin()).toBe(true);
+
+            fixture.componentRef.setInput('posting', searchResultInConversation(6));
+            fixture.detectChanges();
+            expect(component.canPin()).toBe(false);
+        });
+
+        it('should not offer pinning when the conversation of the post is not known', () => {
+            vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue(undefined);
+            fixture.componentRef.setInput('posting', searchResultInConversation(undefined));
+
+            component.ngOnInit();
+
+            expect(component.canPin()).toBe(false);
+        });
+    });
+
     it('should emit isDeleteEvent when deletePosting is called', () => {
         const spy = vi.spyOn(component.isDeleteEvent, 'emit');
         component.deletePosting();
@@ -616,6 +820,29 @@ describe('PostingReactionsBarComponent', () => {
         expect(openForwardMessageViewSpy).toHaveBeenCalledWith(originalPost, false);
     });
 
+    it.each([
+        { id: 42, content: 'Forwarded reply', resolvesPost: false },
+        { id: 42, content: 'Forwarded reply', post: { id: 41 } },
+    ])('forwards a received reply as an answer using the selected source', (source) => {
+        const openForwardMessageViewSpy = vi.spyOn(component, 'openForwardMessageView').mockImplementation(() => undefined);
+        fixture.componentRef.setInput('posting', { id: 1, content: '', hasForwardedMessages: true } as Post);
+        fixture.componentRef.setInput('originalPostDetails', source);
+
+        component.forwardMessage();
+
+        expect(openForwardMessageViewSpy).toHaveBeenCalledExactlyOnceWith(source, true);
+    });
+
+    it('does not open a forward dialog when the received source is unavailable', () => {
+        const openForwardMessageViewSpy = vi.spyOn(component, 'openForwardMessageView').mockImplementation(() => undefined);
+        fixture.componentRef.setInput('posting', { id: 1, content: '', hasForwardedMessages: true } as Post);
+        fixture.componentRef.setInput('originalPostDetails', undefined);
+
+        component.forwardMessage();
+
+        expect(openForwardMessageViewSpy).not.toHaveBeenCalled();
+    });
+
     it('should call openForwardMessageView with posting when posting content is not empty', () => {
         const openForwardMessageViewSpy = vi.spyOn(component, 'openForwardMessageView');
         const postingWithContent = { id: 1, content: 'Non-empty content' } as Post;
@@ -624,6 +851,36 @@ describe('PostingReactionsBarComponent', () => {
 
         expect(openForwardMessageViewSpy).toHaveBeenCalledOnce();
         expect(openForwardMessageViewSpy).toHaveBeenCalledWith(postingWithContent, false);
+    });
+
+    it.each([{ logins: ['student-two'] }, { logins: ['student-two', 'student-three'] }])('keeps the reply source type when forwarding to $logins', async ({ logins }) => {
+        const source = { id: 42, content: 'Shared reply', resolvesPost: false };
+        const destination = { id: 1337, type: logins.length === 1 ? ConversationType.ONE_TO_ONE : ConversationType.GROUP_CHAT } as ConversationDTO;
+        const selection = new Subject<{ channels: Conversation[]; users: { id: number; login: string }[]; messageContent: string }>();
+        vi.spyOn(TestBed.inject(ConversationService), 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(component['dialogService'], 'open').mockReturnValue({ onClose: selection.asObservable() } as any);
+        const conversations = TestBed.inject(CourseConversationsService);
+        const directSpy = vi.fn().mockReturnValue(of(new HttpResponse({ body: destination })));
+        conversations.createDirectConversation = directSpy;
+        const groupSpy = vi.fn().mockReturnValue(of(new HttpResponse({ body: destination })));
+        conversations.createGroupConversation = groupSpy;
+        createForwardedMessagesSpy.mockReturnValue(of([]));
+        fixture.componentRef.setInput('course', { id: 1 });
+        fixture.componentRef.setInput('posting', { id: 1, content: '', hasForwardedMessages: true } as Post);
+        fixture.componentRef.setInput('originalPostDetails', source);
+
+        component.forwardMessage();
+        selection.next({ channels: [], users: logins.map((login, index) => ({ id: index + 2, login })), messageContent: 'For next week' });
+
+        await vi.waitFor(() => expect(createForwardedMessagesSpy).toHaveBeenCalledExactlyOnceWith([source], destination, true, 'For next week'));
+        if (logins.length === 1) {
+            expect(directSpy).toHaveBeenCalledExactlyOnceWith(logins[0]);
+            expect(groupSpy).not.toHaveBeenCalled();
+        } else {
+            expect(groupSpy).toHaveBeenCalledExactlyOnceWith(logins);
+            expect(directSpy).not.toHaveBeenCalled();
+        }
+        selection.complete();
     });
 
     it('should not call openForwardMessageView when course id is not set', async () => {
@@ -639,6 +896,19 @@ describe('PostingReactionsBarComponent', () => {
 
         expect(dialogServiceSpy).not.toHaveBeenCalled();
         expect(createForwardedMessagesSpy).not.toHaveBeenCalled();
+    });
+
+    it('should open the forward dialog without moving focus away from the recipient search input', () => {
+        const conversationService = TestBed.inject(ConversationService);
+        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const dialogOpenSpy = vi.spyOn(component['dialogService'], 'open').mockReturnValue({ onClose: new Subject().asObservable() } as any);
+
+        fixture.componentRef.setInput('course', { id: 1 });
+
+        component.openForwardMessageView({ id: 5 } as Post, false);
+
+        expect(dialogOpenSpy).toHaveBeenCalledOnce();
+        expect(dialogOpenSpy.mock.calls[0][1]).toEqual(expect.objectContaining({ focusOnShow: false }));
     });
 
     it('should call createForwardedMessages with the correct arguments', () => {

@@ -4,9 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -35,13 +33,11 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -72,12 +68,12 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
-import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.dto.ImportModelingExerciseDTO;
@@ -368,14 +364,7 @@ public class ModelingExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
         // Notify AtlasML about the modeling exercise update
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(persistedExercise, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about modeling exercise update: {}", e.getMessage());
-            }
-        });
+        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
@@ -426,9 +415,9 @@ public class ModelingExerciseResource {
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
 
         if (modelingExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(modelingExercise.getId());
-            if (channel != null) {
-                modelingExercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(modelingExercise.getId());
+            if (channelName != null) {
+                modelingExercise.setChannelName(channelName);
             }
         }
 
@@ -621,25 +610,7 @@ public class ModelingExerciseResource {
             return;
         }
 
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
-
-        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
-                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
-
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
-            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
-            if (criterion == null) {
-                criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-            }
-            else {
-                gcDto.applyTo(criterion);
-            }
-            return criterion;
-        }).collect(Collectors.toSet());
-
-        managedCriteria.clear();
-        managedCriteria.addAll(updated);
+        GradingCriteriaMapper.replace(dto.gradingCriteria(), exercise);
     }
 
     /**
@@ -685,18 +656,7 @@ public class ModelingExerciseResource {
         String newProblemStatement = updateModelingExerciseDTO.problemStatement() == null ? "" : updateModelingExerciseDTO.problemStatement();
         exercise.setProblemStatement(newProblemStatement);
 
-        exercise.setChannelName(updateModelingExerciseDTO.channelName());
-        exercise.setCategories(updateModelingExerciseDTO.categories());
-        exercise.setDifficulty(updateModelingExerciseDTO.difficulty());
-
-        exercise.setMaxPoints(updateModelingExerciseDTO.maxPoints());
-        exercise.setBonusPoints(updateModelingExerciseDTO.bonusPoints());
-        exercise.setIncludedInOverallScore(updateModelingExerciseDTO.includedInOverallScore());
-
-        exercise.setReleaseDate(updateModelingExerciseDTO.releaseDate());
-        exercise.setStartDate(updateModelingExerciseDTO.startDate());
-        exercise.setDueDate(updateModelingExerciseDTO.dueDate());
-        exercise.setAssessmentDueDate(updateModelingExerciseDTO.assessmentDueDate());
+        updateModelingExerciseDTO.applyMetadataTo(exercise);
         exercise.setExampleSolutionPublicationDate(updateModelingExerciseDTO.exampleSolutionPublicationDate());
 
         // A variant group owns its members' timeline, so pin the dates back to the group before validating.
@@ -707,15 +667,7 @@ public class ModelingExerciseResource {
 
         // Only set boolean values if they are explicitly provided (not null)
         // This allows partial updates without requiring all boolean fields
-        if (updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
-        }
-        if (updateModelingExerciseDTO.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(updateModelingExerciseDTO.presentationScoreEnabled());
-        }
-        if (updateModelingExerciseDTO.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(updateModelingExerciseDTO.secondCorrectionEnabled());
-        }
+        updateModelingExerciseDTO.applyAssessmentFlagsTo(exercise);
         exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
         if (updateModelingExerciseDTO.plagiarismDetectionConfig() != null) {
             // Carried to the repository after the save, which updates the stored row of this exercise in place.
@@ -776,37 +728,13 @@ public class ModelingExerciseResource {
         if (dto.plagiarismDetectionConfig() != null) {
             exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(dto.plagiarismDetectionConfig()));
         }
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        dto.applyAssessmentFlagsTo(exercise);
 
         // Transfer grading criteria from the DTO
-        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
-            for (var gcDto : dto.gradingCriteria()) {
-                GradingCriterion criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-                exercise.getGradingCriteria().add(criterion);
-            }
-        }
+        exercise.getGradingCriteria().addAll(GradingCriteriaMapper.create(dto.gradingCriteria(), exercise));
 
         // Transfer competency links from the DTO (extractCompetencyLinksForCreation will handle them)
-        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
-            for (var linkDto : dto.competencyLinks()) {
-                if (linkDto == null || linkDto.competency() == null) {
-                    throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
-                }
-                Competency competencyRef = new Competency();
-                competencyRef.setId(linkDto.competency().id());
-                CompetencyExerciseLink link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-                exercise.getCompetencyLinks().add(link);
-            }
-        }
+        exercise.getCompetencyLinks().addAll(CompetencyExerciseLinkService.toTransientLinks(dto, exercise, ENTITY_NAME));
 
         // Set course and/or exercise group references from the ids. The exclusivity invariant (exactly one of the two) is
         // validated downstream by checkCourseAndExerciseGroupExclusivity, so a request carrying both is correctly rejected.
@@ -837,42 +765,7 @@ public class ModelingExerciseResource {
             throw new BadRequestAlertException("No modeling exercise was provided.", ENTITY_NAME, "isNull");
         }
         ModelingExercise exercise = new ModelingExercise();
-        exercise.setId(dto.id());
-        exercise.setTitle(dto.title());
-        exercise.setChannelName(dto.channelName());
-        exercise.setShortName(dto.shortName());
-        exercise.setProblemStatement(dto.problemStatement());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-        // mode and includedInOverallScore have non-null entity defaults (INDIVIDUAL, INCLUDED_COMPLETELY) that the old
-        // entity request body preserved when a client omitted them. Guard the setters so an import payload that omits
-        // them keeps those defaults instead of overwriting with null. Mirrors the create path's mode guard.
-        if (dto.mode() != null) {
-            exercise.setMode(dto.mode());
-        }
-        // Modeling exercises are always manually assessed (mirrors the create path); the import DTO does not carry
-        // assessmentType, so set it explicitly to avoid copyExerciseBasis persisting null.
-        exercise.setAssessmentType(AssessmentType.MANUAL);
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        if (dto.includedInOverallScore() != null) {
-            exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-        }
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
-        exercise.setGradingInstructions(dto.gradingInstructions());
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
-        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+        dto.applyImportSettingsTo(exercise);
         // Modeling-specific fields (copyModelingExerciseBasis copies these from the imported exercise → null otherwise).
         exercise.setDiagramType(dto.diagramType());
         exercise.setExampleSolutionModel(dto.exampleSolutionModel());
@@ -885,41 +778,7 @@ public class ModelingExerciseResource {
             exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(dto.plagiarismDetectionConfig()));
         }
 
-        // Grading criteria (with their structured grading instructions, needed for the copy tracker during import)
-        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
-            Set<GradingCriterion> criteria = new HashSet<>();
-            dto.gradingCriteria().forEach(gcDto -> {
-                GradingCriterion criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-                criteria.add(criterion);
-            });
-            exercise.setGradingCriteria(criteria);
-        }
-
-        // Competency links as new unmanaged objects referencing only the competency id
-        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
-            Set<CompetencyExerciseLink> links = new HashSet<>();
-            for (CompetencyLinkDTO linkDto : dto.competencyLinks()) {
-                if (linkDto == null || linkDto.competency() == null) {
-                    throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
-                }
-                Competency competencyRef = new Competency();
-                competencyRef.setId(linkDto.competency().id());
-                links.add(new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight()));
-            }
-            exercise.setCompetencyLinks(links);
-        }
-
-        // Attach a managed Course and/or ExerciseGroup so role checks see the configured groups. The exclusivity invariant
-        // (exactly one of the two) is validated downstream by checkCourseAndExerciseGroupExclusivity.
-        if (dto.courseId() != null) {
-            Course course = courseRepository.findByIdElseThrow(dto.courseId());
-            exercise.setCourse(course);
-        }
-        if (dto.exerciseGroupId() != null) {
-            ExerciseGroup exerciseGroup = exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class)).findByIdElseThrow(dto.exerciseGroupId());
-            exercise.setExerciseGroup(exerciseGroup);
-        }
+        ExerciseImportService.applyImportReferences(dto, exercise, courseRepository, exerciseGroupApi, ENTITY_NAME);
         return exercise;
     }
 

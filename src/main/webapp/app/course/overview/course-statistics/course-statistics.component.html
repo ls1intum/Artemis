@@ -1,296 +1,332 @@
 <ng-template #controls>
-    <div class="d-flex row course-overview-controls text-end">
-        <div class="col" aria-label="Filter Dropdown" ngbDropdown>
-            <button
-                type="button"
-                class="btn"
-                [class.btn-secondary]="!numberOfAppliedFilters()"
-                [class.btn-success]="!!numberOfAppliedFilters()"
-                ngbDropdownToggle
-                id="filter-dropdown-button"
-            >
-                <fa-icon [icon]="faFilter" />
-                <span jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: numberOfAppliedFilters() }"></span>
-            </button>
-            <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                <li class="mb-1">
-                    <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeStandardCategories"></b>
-                </li>
-                <li>
-                    <label>
-                        <input
-                            class="ms-2 form-check-input"
-                            (change)="toggleNotIncludedInScoreExercises()"
-                            [checked]="currentlyHidingNotIncludedInScoreExercises()"
-                            type="checkbox"
-                        />
-                        <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises"></span>
-                    </label>
-                </li>
-                <li class="mt-1 mb-1">
-                    <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></b>
-                </li>
-                <li>
-                    <label class="mb-1">
-                        <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="categoryFilter.allCategoriesSelected" type="checkbox" />
-                        <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"></b>
-                    </label>
-                </li>
-                @if (categoryFilter.exercisesWithoutCategoriesPresent) {
-                    <li>
-                        <label>
-                            <input
-                                class="ms-2 form-check-input"
-                                (change)="toggleExercisesWithNoCategory()"
-                                [checked]="categoryFilter.includeExercisesWithNoCategory"
-                                type="checkbox"
-                            />
-                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.exercisesWithNoCategories"></span>
-                        </label>
-                    </li>
-                }
-                @for (category of categoryFilter.exerciseCategories; track category) {
-                    <li>
-                        <label>
-                            <input class="ms-2 form-check-input" (change)="toggleCategory(category)" [checked]="categoryFilter.getCurrentFilterState(category)" type="checkbox" />
-                            <span class="ms-2">{{ category }}</span>
-                        </label>
-                    </li>
-                }
-            </ul>
-        </div>
-    </div>
+    <tumaet-ui-button severity="secondary" size="small" [ariaExpanded]="showFilters()" (clicked)="toggleFilters()"
+        ><fa-icon [icon]="faFilter" /><span jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: numberOfAppliedFilters() }"></span
+    ></tumaet-ui-button>
 </ng-template>
 @if (course(); as course) {
-    <div>
-        @if (course.exercises && course.exercises.length > 0) {
-            <div class="row">
-                <div class="statistic-summary">
-                    <div class="d-flex align-items-center">
-                        <h2 class="mb-0" jhiTranslate="artemisApp.courseOverview.statistics.totalScore"></h2>
-                        <jhi-documentation-button [type]="documentationType" />
-                    </div>
-                    <div class="row d-flex justify-content-center align-items-start">
-                        <div class="chart-container col-md-6" #doughnutref>
-                            <div class="chart-text">
-                                <h2 class="text-center">{{ currentRelativeScore() }} %</h2>
-                                <h4 class="text-center">{{ overallPoints() }} / {{ reachablePoints() }} Pts</h4>
-                            </div>
-
-                            <tumaet-ui-doughnut-chart
-                                class="h-[350px] w-[350px]"
-                                [labels]="doughnutData().labels"
-                                [series]="doughnutData().series"
-                                [config]="doughnutConfig"
-                                [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
-                            />
-                        </div>
-                        <div class="col-md-3 d-flex flex-column align-self-end color-legend-container">
-                            @for (entry of doughnutChartEntries(); track $index) {
-                                <div class="color-legend-entry">
-                                    <div class="color-indicator" [style.background]="entry.color"></div>
-                                    <h5 class="fw-bolder">{{ entry.name | artemisTranslate }}</h5>
-                                </div>
-                            }
-                        </div>
-                        <div class="col-md-3">
-                            @if (courseHasExerciseVariants()) {
-                                <h5 class="fw-bolder" id="total-course-score">
-                                    <span jhiTranslate="artemisApp.courseOverview.statistics.yourTotalPoints" [translateValues]="{ number: overallPointsTotal() }"></span>
-                                    <fa-icon
-                                        class="me-1"
-                                        [icon]="faQuestionCircle"
-                                        ngbTooltip="{{ 'artemisApp.courseOverview.statistics.yourTotalPointsHelp' | artemisTranslate }}"
-                                    />
-                                </h5>
-                                <h5 class="fw-bolder" id="credited-course-score">
-                                    <span jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPoints" [translateValues]="{ number: overallPoints() }"></span>
-                                    <fa-icon
-                                        class="me-1"
-                                        [icon]="faQuestionCircle"
-                                        ngbTooltip="{{ 'artemisApp.courseOverview.statistics.yourCreditedPointsHelp' | artemisTranslate }}"
-                                    />
-                                </h5>
-                            } @else {
-                                <h5
-                                    class="fw-bolder"
-                                    id="absolute-course-score"
-                                    jhiTranslate="artemisApp.courseOverview.statistics.yourPoints"
-                                    [translateValues]="{ number: overallPoints() }"
-                                ></h5>
-                            }
-                            <h5 class="fw-bolder" id="reachable-course-score">
-                                <span
-                                    jhiTranslate="artemisApp.courseOverview.statistics.reachablePoints"
-                                    [translateValues]="{ number: reachablePoints(), relative: currentRelativeScore() }"
-                                ></span>
-                                <fa-icon
-                                    id="reachable-help"
-                                    class="me-1"
-                                    [icon]="faQuestionCircle"
-                                    ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | artemisTranslate }}"
-                                />
-                            </h5>
-                            <h5 class="mb-4 statistics-legend" id="max-course-score">
-                                <span
-                                    jhiTranslate="artemisApp.courseOverview.statistics.totalPoints"
-                                    [translateValues]="{ number: overallMaxPoints(), relative: totalRelativeScore() }"
-                                ></span>
-                                <fa-icon
-                                    id="total-help"
-                                    class="me-1"
-                                    [icon]="faQuestionCircle"
-                                    ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | artemisTranslate }}"
-                                />
-                            </h5>
-                            @if (gradingScaleExists()) {
-                                <div class="mb-5">
-                                    @if (!isBonus()) {
-                                        <h5 class="fw-bolder">{{ 'artemisApp.courseOverview.statistics.grade' | artemisTranslate }}: {{ gradeDTO()?.gradeName }}</h5>
-                                    } @else {
-                                        <h5 class="fw-bolder">{{ 'artemisApp.courseOverview.statistics.bonus' | artemisTranslate }}: {{ gradeDTO()?.gradeName }}</h5>
-                                    }
-                                    <h6>
-                                        {{ 'artemisApp.courseOverview.statistics.gradeInfo' | artemisTranslate }}
-                                        <fa-icon
-                                            id="reachable-help"
-                                            class="me-1"
-                                            [icon]="faQuestionCircle"
-                                            ngbTooltip="{{
-                                                isBonus()
-                                                    ? ('artemisApp.courseOverview.statistics.bonusHelp' | artemisTranslate)
-                                                    : ('artemisApp.courseOverview.statistics.gradeHelp' | artemisTranslate)
-                                            }}"
-                                        />
-                                    </h6>
-                                    <div class="mt-3">
-                                        <a class="btn btn-primary" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO()?.gradeName }">
-                                            <fa-icon [icon]="faClipboard" />
-                                            <span
-                                                jhiTranslate="{{ isBonus() ? 'artemisApp.exam.examSummary.gradeKeyButtonBonus' : 'artemisApp.exam.examSummary.gradeKeyButton' }}"
-                                            ></span>
-                                        </a>
-                                    </div>
-                                </div>
-                            }
-                            @if (course?.presentationScore) {
-                                <div>
-                                    <h5
-                                        class="fw-bolder"
-                                        jhiTranslate="artemisApp.courseOverview.statistics.totalPresentationScore"
-                                        [translateValues]="{ number: overallPresentationScore() }"
-                                    ></h5>
-                                    <h5
-                                        class="fw-bolder"
-                                        jhiTranslate="artemisApp.courseOverview.statistics.presentationScoreBonus"
-                                        [translateValues]="{ number: course?.presentationScore }"
-                                    ></h5>
-                                </div>
-                            }
-                            @if (reachablePresentationPoints()) {
-                                <div>
-                                    <h5
-                                        class="fw-bolder"
-                                        jhiTranslate="artemisApp.courseOverview.statistics.totalPresentationPoints"
-                                        [translateValues]="{ number: overallPresentationScore() }"
-                                    ></h5>
-                                    <h5
-                                        class="fw-bolder"
-                                        jhiTranslate="artemisApp.courseOverview.statistics.achievablePresentationPoints"
-                                        [translateValues]="{ number: reachablePresentationPoints() }"
-                                    ></h5>
-                                    <h6>
-                                        {{ 'artemisApp.courseOverview.statistics.gradeInfo' | artemisTranslate }}
-                                        <fa-icon
-                                            id="reachable-help"
-                                            class="me-1"
-                                            [icon]="faQuestionCircle"
-                                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.presentationHelp' | artemisTranslate }}"
-                                        />
-                                    </h6>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                    <hr />
-                </div>
-                <jhi-exercise-scores-chart class="col-12" [filteredExerciseIDs]="filteredExerciseIDs()" />
-                <hr />
-                <div class="col-12 mb-3">
-                    <h2 jhiTranslate="artemisApp.courseOverview.statistics.pointsPerExercise"></h2>
-                    @for (exerciseGroup of ngxExerciseGroups() | keyvalue; let index = $index; track index) {
-                        @if (exerciseGroup.value[0]) {
-                            <div class="row mt-3 d-flex justify-content-end" id="{{ exerciseGroup.value[0]?.type }}-wrapper">
-                                <div class="col-12 mb-1 d-flex align-items-center">
-                                    <h4
-                                        jhiTranslate="artemisApp.courseOverview.statistics.exerciseCount"
-                                        [translateValues]="{ number: exerciseGroup.value.length, type: exerciseGroup.key }"
-                                    ></h4>
-                                </div>
-                                <div class="col-12 col-md-8">
-                                    <div [style.height.px]="exerciseGroup.value[0].height">
-                                        <tumaet-ui-bar-chart
-                                            [labels]="groupChartData().get(exerciseGroup.key)!.labels"
-                                            [series]="groupChartData().get(exerciseGroup.key)!.series"
-                                            [config]="groupChartConfigs().get(exerciseGroup.key)!"
-                                            interactive
-                                            (dataSelect)="onSelect($event)"
-                                            [ariaLabel]="
-                                                'artemisApp.courseOverview.statistics.exerciseCount'
-                                                    | artemisTranslate: { number: exerciseGroup.value.length, type: exerciseGroup.key }
-                                            "
-                                        />
-                                    </div>
-                                </div>
-                                @if (exerciseGroup.value && exerciseGroup.value.length) {
-                                    <div class="col-12 col-md-3 align-self-top mt-2">
-                                        <h5
-                                            class="fw-bolder"
-                                            id="absolute-score"
-                                            jhiTranslate="artemisApp.courseOverview.statistics.yourPoints"
-                                            [translateValues]="{ number: exerciseGroup.value[0].absoluteScore }"
-                                        ></h5>
-                                        <h5 class="fw-bolder" id="reachable-score">
-                                            <span
-                                                jhiTranslate="artemisApp.courseOverview.statistics.reachablePoints"
-                                                [translateValues]="{ number: exerciseGroup.value[0].reachablePoints, relative: exerciseGroup.value[0].currentRelativeScore }"
-                                            ></span>
-                                            <fa-icon
-                                                id="reachable-help"
-                                                class="me-1"
-                                                [icon]="faQuestionCircle"
-                                                ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelpExerciseGroup' | artemisTranslate }}"
-                                            />
-                                        </h5>
-                                        <h5 class="fw-bolder" id="max-score">
-                                            <span
-                                                jhiTranslate="artemisApp.courseOverview.statistics.totalPoints"
-                                                [translateValues]="{ number: exerciseGroup.value[0].overallMaxPoints, relative: exerciseGroup.value[0].relativeScore }"
-                                            ></span>
-                                            <fa-icon
-                                                id="total-help"
-                                                class="me-1"
-                                                [icon]="faQuestionCircle"
-                                                ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelpExerciseGroup' | artemisTranslate }}"
-                                            />
-                                        </h5>
-                                        @if (exerciseGroup.value[0].presentationScoreEnabled && course?.presentationScore) {
-                                            <h5
-                                                class="fw-bolder"
-                                                id="presentation-score"
-                                                jhiTranslate="artemisApp.courseOverview.statistics.presentationScore"
-                                                [translateValues]="{ number: exerciseGroup.value[0].presentationScore }"
-                                            ></h5>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        }
+    <div class="statistics-page">
+        <header class="mb-6! flex flex-wrap items-start justify-between gap-4!">
+            <div>
+                <h1 class="m-0! text-2xl! font-semibold! tracking-tight" jhiTranslate="artemisApp.courseOverview.statistics.redesign.title"></h1>
+                <p class="mt-2! mb-0! text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.subtitle"></p>
+            </div>
+            <a
+                href="https://docs.artemis.tum.de/student/progress-analytics/learning-analytics"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2! text-sm text-(--tumaet-ui-accent-color) hover:underline"
+                ><fa-icon [icon]="faQuestionCircle" /><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.calculation"></span
+            ></a>
+        </header>
+        @if (showFilters()) {
+            <fieldset data-testid="statistics-filters" class="mb-6! rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5!">
+                <legend class="float-none w-auto px-2! text-base! font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></legend>
+                <p class="mb-4! text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.filterScope"></p>
+                <div class="flex flex-wrap gap-x-6! gap-y-3!">
+                    <label class="flex! items-center gap-2! text-sm font-normal!"
+                        ><tumaet-ui-checkbox [checked]="currentlyHidingNotIncludedInScoreExercises()" (checkedChange)="toggleNotIncludedInScoreExercises()" /><span
+                            jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises"
+                        ></span
+                    ></label>
+                    @if (categoryOptions().length) {
+                        <label class="flex! items-center gap-2! text-sm font-normal!"
+                            ><tumaet-ui-checkbox [checked]="categoryFilter.allCategoriesSelected" (checkedChange)="toggleAllCategories()" /><span
+                                jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"
+                            ></span
+                        ></label>
+                    }
+                    @if (categoryFilter.exercisesWithoutCategoriesPresent) {
+                        <label class="flex! items-center gap-2! text-sm font-normal!"
+                            ><tumaet-ui-checkbox [checked]="categoryFilter.includeExercisesWithNoCategory" (checkedChange)="toggleExercisesWithNoCategory()" /><span
+                                jhiTranslate="artemisApp.courseOverview.statistics.exercisesWithNoCategories"
+                            ></span
+                        ></label>
+                    }
+                    @for (option of categoryOptions(); track option.category) {
+                        <label class="flex! items-center gap-2! text-sm font-normal!"
+                            ><tumaet-ui-checkbox [checked]="option.selected" (checkedChange)="toggleCategory(option.category)" /><span>{{ option.category }}</span></label
+                        >
                     }
                 </div>
-            </div>
-        } @else {
-            <tumaet-ui-empty-state class="mt-5" [icon]="faChartColumn" [title]="'artemisApp.courseOverview.statistics.noStatistics' | artemisTranslate" />
+            </fieldset>
         }
+        <div class="mb-6! grid gap-5! xl:grid-cols-[minmax(28rem,1.2fr)_minmax(0,1fr)]">
+            <section class="rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5!" aria-labelledby="statistics-score-title">
+                <h2 id="statistics-score-title" class="m-0! text-lg! font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.totalScore"></h2>
+                <div class="mt-4! flex flex-wrap items-center justify-center gap-6! sm:justify-start">
+                    <div class="statistics-score-ring" data-testid="total-score-doughnut">
+                        <tumaet-ui-doughnut-chart
+                            class="block h-full w-full"
+                            [labels]="doughnutData().labels"
+                            [series]="doughnutData().series"
+                            [config]="doughnutConfig"
+                            [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
+                        />
+                        @if (!hasScoreRingData()) {
+                            <svg data-testid="statistics-empty-score-ring" class="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" aria-hidden="true">
+                                <circle cx="50" cy="50" r="35" fill="none" stroke="var(--tumaet-ui-border-color)" stroke-width="10" />
+                            </svg>
+                        }
+                        <div data-testid="total-score-label" class="statistics-score-center" [attr.aria-hidden]="hasScoreRingData() ? 'true' : null">
+                            <strong class="text-3xl font-semibold tabular-nums">{{ displayedScores().currentPercentage }}%</strong
+                            ><span class="mt-1! text-sm tabular-nums text-(--tumaet-ui-muted-color)"
+                                >{{ displayedScores().creditedPoints }} / {{ displayedScores().attainablePoints }} pt</span
+                            >
+                        </div>
+                    </div>
+                    <ul class="m-0! flex list-none flex-col gap-3! p-0! text-sm">
+                        @for (entry of doughnutChartEntries(); track entry.name) {
+                            <li class="flex items-center gap-2!">
+                                <span class="h-3 w-3 shrink-0 rounded-sm" [style.background]="entry.color"></span><span>{{ entry.name | artemisTranslate }}</span
+                                ><strong class="ml-auto pl-3! font-medium tabular-nums">{{ entry.value }}</strong>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                @if (usesCreditedPointsRing()) {
+                    <p
+                        data-testid="statistics-type-totals-explanation"
+                        class="mt-3! mb-0! text-xs text-(--tumaet-ui-muted-color)"
+                        jhiTranslate="artemisApp.courseOverview.statistics.redesign.typeTotalsExplanation"
+                    ></p>
+                }
+                @if (gradingScaleExists()) {
+                    <div class="mt-4! flex flex-wrap items-center justify-between gap-3! border-t border-(--tumaet-ui-border-color) pt-4!">
+                        <span class="font-medium"
+                            >{{ (isBonus() ? 'artemisApp.courseOverview.statistics.bonus' : 'artemisApp.courseOverview.statistics.grade') | artemisTranslate }}:
+                            {{ gradeDTO()?.gradeName }}</span
+                        ><a tumAetUiButton size="small" variant="outlined" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO()?.gradeName }"
+                            ><fa-icon [icon]="faClipboard" /><span
+                                [jhiTranslate]="isBonus() ? 'artemisApp.exam.examSummary.gradeKeyButtonBonus' : 'artemisApp.exam.examSummary.gradeKeyButton'"
+                            ></span
+                        ></a>
+                    </div>
+                }
+            </section>
+            <section
+                class="flex flex-col divide-y divide-(--tumaet-ui-border-color) rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background)"
+                [attr.aria-label]="'artemisApp.courseOverview.statistics.redesign.participation' | artemisTranslate"
+            >
+                <div class="flex flex-1 items-center justify-between gap-4! p-6!">
+                    <div>
+                        <h2 class="m-0! text-sm! font-medium! text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.submittedExercises"></h2>
+                        <p class="mt-2! mb-0! text-xs text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.submissionMeaning"></p>
+                    </div>
+                    <span class="whitespace-nowrap text-3xl font-semibold tabular-nums"
+                        >{{ submittedExerciseCount() }} <span class="text-lg font-normal text-(--tumaet-ui-muted-color)">/ {{ releasedExercises().length }}</span></span
+                    >
+                </div>
+                @if (showMaterials()) {
+                    <div class="flex flex-1 items-center justify-between gap-4! p-6!">
+                        <div>
+                            <h2
+                                class="m-0! text-sm! font-medium! text-(--tumaet-ui-muted-color)"
+                                jhiTranslate="artemisApp.courseOverview.statistics.redesign.learningMaterials"
+                            ></h2>
+                            <p class="mt-2! mb-0! text-xs text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.markedComplete"></p>
+                        </div>
+                        <span class="whitespace-nowrap text-3xl font-semibold tabular-nums">
+                            @if (materialsLoading() || materialsFailed()) {
+                                —
+                            } @else {
+                                {{ materialCompleted() }} <span class="text-lg font-normal text-(--tumaet-ui-muted-color)">/ {{ materialTotal() }}</span>
+                            }
+                        </span>
+                    </div>
+                }
+                @if (showCompetencies()) {
+                    <div class="flex flex-1 items-center justify-between gap-4! p-6!">
+                        <h2
+                            class="m-0! text-sm! font-medium! text-(--tumaet-ui-muted-color)"
+                            jhiTranslate="artemisApp.courseOverview.statistics.redesign.masteredCompetencies"
+                        ></h2>
+                        <span class="whitespace-nowrap text-3xl font-semibold tabular-nums">
+                            @if (competenciesLoading() || competenciesFailed()) {
+                                —
+                            } @else {
+                                {{ masteredCompetencies() }} <span class="text-lg font-normal text-(--tumaet-ui-muted-color)">/ {{ competencies().length }}</span>
+                            }
+                        </span>
+                    </div>
+                }
+            </section>
+        </div>
+        <div class="statistics-content-grid" [attr.data-materials]="showMaterials()">
+            <jhi-course-statistics-performance class="min-w-0" [courseId]="activeCourseId()" [refresh]="refresh()" [excludedExerciseIds]="filteredExerciseIDs()" />
+            @if (showMaterials()) {
+                <section class="rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5!" aria-labelledby="statistics-material-title">
+                    <h2 id="statistics-material-title" class="m-0! text-lg! font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialCompletion"></h2>
+                    <p class="mt-1! text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialScope"></p>
+                    @if (materialsLoading()) {
+                        <p role="status" class="py-10! text-center" jhiTranslate="artemisApp.courseOverview.statistics.redesign.loading"></p>
+                    } @else if (materialsFailed()) {
+                        <tumaet-ui-message severity="warn"
+                            ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialError"></span
+                            ><tumaet-ui-button variant="text" size="small" (clicked)="loadLearningStatistics()"
+                                ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.retry"></span></tumaet-ui-button
+                        ></tumaet-ui-message>
+                    } @else {
+                        <div class="my-6! flex flex-col gap-5!">
+                            @for (row of materialBreakdown(); track row.type) {
+                                <div>
+                                    <div class="mb-2! flex justify-between gap-4! text-sm">
+                                        <span>{{ 'artemisApp.courseOverview.statistics.redesign.materialTypes.' + row.type | artemisTranslate }}</span
+                                        ><span class="tabular-nums">{{ row.completed }} / {{ row.total }}</span>
+                                    </div>
+                                    <tumaet-ui-progress-bar
+                                        size="small"
+                                        [value]="(100 * row.completed) / row.total"
+                                        [showValue]="false"
+                                        [ariaLabel]="'artemisApp.courseOverview.statistics.redesign.materialTypes.' + row.type | artemisTranslate"
+                                    />
+                                </div>
+                            } @empty {
+                                <p class="text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.noMaterials"></p>
+                            }
+                        </div>
+                        <p class="mb-0! text-xs leading-relaxed text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.completionMeaning"></p>
+                    }
+                </section>
+            }
+        </div>
+        @if (showCompetencies()) {
+            <section class="mb-6! overflow-hidden rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background)">
+                <h2 class="m-0! p-5! text-lg! font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.redesign.competencyProgress"></h2>
+                @if (competenciesLoading()) {
+                    <p role="status" class="p-5!" jhiTranslate="artemisApp.courseOverview.statistics.redesign.loading"></p>
+                } @else if (competenciesFailed()) {
+                    <tumaet-ui-message severity="warn" class="m-5!"
+                        ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.competencyError"></span
+                        ><tumaet-ui-button variant="text" size="small" (clicked)="loadLearningStatistics()"
+                            ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.retry"></span></tumaet-ui-button
+                    ></tumaet-ui-message>
+                } @else {
+                    <div class="overflow-x-auto">
+                        <table tumAetUiTable>
+                            <thead>
+                                <tr>
+                                    <th scope="col" jhiTranslate="artemisApp.courseOverview.statistics.redesign.competency"></th>
+                                    <th scope="col" jhiTranslate="artemisApp.courseOverview.statistics.redesign.progress"></th>
+                                    <th scope="col" jhiTranslate="artemisApp.courseOverview.statistics.redesign.mastery"></th>
+                                    <th scope="col" jhiTranslate="artemisApp.courseOverview.statistics.redesign.threshold"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of competencyRows(); track row.competency.id) {
+                                    <tr>
+                                        <td>
+                                            <a
+                                                [routerLink]="['/courses', activeCourseId(), 'competencies', row.competency.id]"
+                                                class="font-medium text-(--tumaet-ui-accent-color) hover:underline"
+                                                >{{ row.competency.title }}</a
+                                            >
+                                        </td>
+                                        <td>
+                                            <span class="tabular-nums">{{ row.progress }}%</span
+                                            ><tumaet-ui-progress-bar
+                                                size="small"
+                                                class="mt-2! min-w-28"
+                                                [value]="row.progress"
+                                                [showValue]="false"
+                                                [ariaLabel]="'artemisApp.courseOverview.statistics.redesign.progress' | artemisTranslate"
+                                            />
+                                        </td>
+                                        <td>
+                                            <span class="tabular-nums">{{ row.mastery }}%</span
+                                            ><tumaet-ui-progress-bar
+                                                size="small"
+                                                class="mt-2! min-w-28"
+                                                severity="success"
+                                                [value]="row.mastery"
+                                                [showValue]="false"
+                                                [ariaLabel]="'artemisApp.courseOverview.statistics.redesign.mastery' | artemisTranslate"
+                                            />
+                                        </td>
+                                        <td class="tabular-nums">{{ row.threshold }}%</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="m-0! p-5! text-xs text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.masteryMeaning"></p>
+                }
+            </section>
+        }
+        <jhi-course-statistics-results [courseId]="activeCourseId()" [exercises]="resultExercises()" [course]="course" />
+        <details class="mt-6! border-t border-(--tumaet-ui-border-color) pt-4!">
+            <summary class="cursor-pointer text-sm font-medium" jhiTranslate="artemisApp.courseOverview.statistics.redesign.pointDetails"></summary>
+            <div class="mt-4! grid gap-3! text-sm sm:grid-cols-2">
+                @if (courseHasExerciseVariants()) {
+                    <p
+                        id="total-course-score"
+                        class="m-0!"
+                        jhiTranslate="artemisApp.courseOverview.statistics.yourTotalPoints"
+                        [translateValues]="{ number: displayedScores().totalEarnedPoints }"
+                    ></p>
+                    <p
+                        id="credited-course-score"
+                        class="m-0!"
+                        jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPoints"
+                        [translateValues]="{ number: displayedScores().creditedPoints }"
+                    ></p>
+                    <p class="m-0! text-(--tumaet-ui-muted-color) sm:col-span-2" jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPointsHelp"></p>
+                } @else {
+                    <p
+                        id="absolute-course-score"
+                        class="m-0!"
+                        jhiTranslate="artemisApp.courseOverview.statistics.yourPoints"
+                        [translateValues]="{ number: displayedScores().creditedPoints }"
+                    ></p>
+                }
+                <p
+                    id="reachable-course-score"
+                    class="m-0!"
+                    jhiTranslate="artemisApp.courseOverview.statistics.reachablePoints"
+                    [translateValues]="{ number: displayedScores().attainablePoints, relative: displayedScores().currentPercentage }"
+                ></p>
+                <p
+                    id="max-course-score"
+                    class="m-0!"
+                    jhiTranslate="artemisApp.courseOverview.statistics.totalPoints"
+                    [translateValues]="{ number: displayedScores().maximumPoints, relative: displayedScores().overallPercentage }"
+                ></p>
+                @if (course.presentationScore) {
+                    <p class="m-0!" jhiTranslate="artemisApp.courseOverview.statistics.totalPresentationScore" [translateValues]="{ number: overallPresentationScore() }"></p>
+                    <p class="m-0!" jhiTranslate="artemisApp.courseOverview.statistics.presentationScoreBonus" [translateValues]="{ number: course.presentationScore }"></p>
+                }
+                @if (reachablePresentationPoints()) {
+                    <p class="m-0!" jhiTranslate="artemisApp.courseOverview.statistics.totalPresentationPoints" [translateValues]="{ number: overallPresentationScore() }"></p>
+                    <p
+                        class="m-0!"
+                        jhiTranslate="artemisApp.courseOverview.statistics.achievablePresentationPoints"
+                        [translateValues]="{ number: reachablePresentationPoints() }"
+                    ></p>
+                }
+            </div>
+            <div class="mt-4! overflow-x-auto">
+                <table tumAetUiTable size="small">
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.courseOverview.statistics.redesign.exerciseType"></th>
+                            <th scope="col" jhiTranslate="artemisApp.courseOverview.statistics.redesign.points"></th>
+                            <th scope="col" jhiTranslate="artemisApp.courseOverview.statistics.redesign.attainable"></th>
+                            <th scope="col" jhiTranslate="artemisApp.courseOverview.statistics.redesign.total"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (group of pointBreakdown(); track group.type) {
+                            @if (group.total) {
+                                <tr>
+                                    <td>{{ 'artemisApp.courseOverview.statistics.redesign.types.' + group.type | artemisTranslate }}</td>
+                                    <td class="tabular-nums">{{ group.achieved }}</td>
+                                    <td class="tabular-nums">{{ group.attainable }}</td>
+                                    <td class="tabular-nums">{{ group.total }}</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </details>
     </div>
 }

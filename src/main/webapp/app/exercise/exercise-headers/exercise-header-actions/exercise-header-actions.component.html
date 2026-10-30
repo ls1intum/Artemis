@@ -45,6 +45,7 @@
                     jhi-exercise-action-button
                     [buttonIcon]="faPaperPlane"
                     [buttonLabel]="'entity.action.submit' | artemisTranslate"
+                    [forceDisabled]="hasPendingAthenaFeedback()"
                     [smallButton]="smallButtons()"
                     (click)="submitAndShowPopover()"
                 ></button>
@@ -56,7 +57,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faPaperPlane"
                 [buttonLabel]="(exercise().type === ExerciseType.QUIZ ? submitLabel() : 'entity.action.submit') | artemisTranslate"
-                [overwriteDisabled]="exercise().type === ExerciseType.QUIZ && submitDisabled()"
+                [forceDisabled]="hasPendingAthenaFeedback() || (exercise().type === ExerciseType.QUIZ && submitDisabled())"
                 [smallButton]="smallButtons()"
                 (click)="onSubmitExercise()!()"
             ></button>
@@ -95,49 +96,7 @@
         <!-- QUIZ EXERCISE ACTIONS END -->
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
-            <div class="d-flex flex-wrap gap-1">
-                @if (isTeamAvailable()) {
-                    <button
-                        type="button"
-                        class="view-team"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faUsers"
-                        [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                        [smallButton]="smallButtons()"
-                        [hideLabelMobile]="true"
-                        [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
-                    ></button>
-                }
-                @if (isStartExerciseAvailable()) {
-                    <span
-                        [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
-                        [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
-                    >
-                        <button
-                            type="button"
-                            [id]="'start-exercise-' + exercise().id"
-                            class="start-exercise"
-                            jhi-exercise-action-button
-                            [buttonIcon]="faPlayCircle"
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                            [buttonLoading]="isLoading()"
-                            [smallButton]="smallButtons()"
-                            [hideLabelMobile]="false"
-                            [overwriteDisabled]="isBeforeStartDateAndStudent"
-                            (click)="startExercise()"
-                        ></button>
-                    </span>
-                }
-                @if (isStartPracticeAvailable()) {
-                    <jhi-start-practice-mode-button
-                        [id]="'start-practice-' + exercise().id"
-                        class="start-practice"
-                        [smallButtons]="smallButtons()"
-                        [exercise]="exercise()"
-                        (practiceModeStarted)="receiveNewParticipation($event)"
-                    />
-                }
+            <div class="d-flex flex-wrap gap-1" jhi-programming-exercise-participation-actions [actions]="this">
                 @if (exercise().type === ExerciseType.PROGRAMMING && showFeedbackPopover() && activeParticipationForCode() && programmingExercise()?.allowOnlineEditor === false) {
                     <jhi-request-feedback-button
                         [exercise]="exercise()"
@@ -149,51 +108,17 @@
                 @if (shouldDisplayIDEButtons()) {
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
-                            [loading]="isLoading()"
-                            [smallButtons]="smallButtons()"
-                            [participations]="studentParticipations()"
-                            [exercise]="exercise()"
-                            [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
+                            [disabled]="isLoading()"
+                            [size]="smallButtons() ? 'small' : 'default'"
+                            [programmingLanguage]="programmingExercise()?.programmingLanguage"
+                            [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
+                            [exerciseId]="exercise().id!"
+                            [repositoryViewLink]="repositoryViewLink()"
                             [hideLabelMobile]="true"
-                            [repositoryUri]="''"
-                            [isPractice]="participationMode() === 'practice'"
+                            [repositoryUri]="repositoryUriForCodeButton()"
+                            [vcsAccessTokenSourceInfo]="vcsAccessTokenDataForCodeButton()"
                         />
                     }
-                }
-                @if (
-                    (gradedParticipation()?.initializationState === InitializationState.INACTIVE || gradedParticipation()?.initializationState === InitializationState.FINISHED) &&
-                    isResumeExerciseAvailable(gradedParticipation())
-                ) {
-                    <button
-                        type="button"
-                        [id]="'resume-exercise-' + exercise().id"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faPlayCircle"
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
-                        [buttonLoading]="isLoading()"
-                        [smallButton]="smallButtons()"
-                        [hideLabelMobile]="false"
-                        (click)="resumeProgrammingExercise(false)"
-                    ></button>
-                }
-                @if (
-                    (practiceParticipation()?.initializationState === InitializationState.INACTIVE ||
-                        practiceParticipation()?.initializationState === InitializationState.FINISHED) &&
-                    isResumeExerciseAvailable(practiceParticipation())
-                ) {
-                    <button
-                        type="button"
-                        [id]="'resume-practice-exercise-' + exercise().id"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faPlayCircle"
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        [buttonLabel]="'artemisApp.exerciseActions.resumeExercisePractice' | artemisTranslate"
-                        [buttonLoading]="isLoading()"
-                        [smallButton]="smallButtons()"
-                        [hideLabelMobile]="false"
-                        (click)="resumeProgrammingExercise(true)"
-                    ></button>
                 }
             </div>
         }
@@ -228,7 +153,7 @@
                             [buttonLoading]="isLoading()"
                             [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
-                            [overwriteDisabled]="isBeforeStartDateAndStudent"
+                            [forceDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
                     </span>

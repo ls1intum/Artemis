@@ -10,6 +10,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
 import { GradingInstructionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
 import { GradingCreditsAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-credits.action';
 import { GradingScaleAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-scale.action';
@@ -20,7 +21,7 @@ import { GradingCriterionAction } from 'app/editor/monaco-editor/model/actions/g
 import { TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { parseMarkdownForDomainActions } from 'app/editor/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
+import { AssessmentCriteriaGenerationService } from 'app/hyperion/assessment/assessment-criteria-generation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -254,6 +255,68 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.setEditMode(false);
 
             expect(component.showEditMode()).toBe(false);
+        });
+
+        describe('instruction credits input', () => {
+            const creditsInput = () => fixture.nativeElement.querySelector('[data-testid="instruction-credits"] input') as HTMLInputElement;
+
+            /** The points input writes a model value to its inner input one microtask late, after the outer ngModel's. */
+            const settle = async () => {
+                for (let round = 0; round < 2; round++) {
+                    fixture.detectChanges();
+                    await fixture.whenStable();
+                }
+                fixture.detectChanges();
+            };
+
+            beforeEach(() => {
+                exercise.gradingInstructionFeedbackUsed = true;
+                exercise.gradingCriteria = [gradingCriterion];
+            });
+
+            it('should show the credits in the inner input, which carries the id of the label', async () => {
+                await settle();
+
+                expect(creditsInput().id).toBe('instruction-credits-0-0');
+                expect(fixture.nativeElement.querySelector('label[for="instruction-credits-0-0"]')).not.toBeNull();
+                expect(creditsInput().value).toBe('1');
+                expect(creditsInput().placeholder).toBe('0');
+            });
+
+            it('should store typed credits with a decimal separator or a comma and report the change', async () => {
+                await settle();
+                const updateSpy = vi.spyOn(component, 'updateGradingInstruction');
+
+                typeIntoInputNumber(creditsInput(), '2.25');
+                expect(gradingInstruction.credits).toBe(2.25);
+                expect(updateSpy).toHaveBeenCalledWith(gradingInstruction, gradingCriterion);
+                expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].credits).toBe(2.25);
+
+                typeIntoInputNumber(creditsInput(), '1,5');
+                expect(gradingInstruction.credits).toBe(1.5);
+            });
+
+            it('should accept negative credits and step them by half a point', async () => {
+                await settle();
+
+                typeIntoInputNumber(creditsInput(), '-2');
+                expect(gradingInstruction.credits).toBe(-2);
+
+                creditsInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+                expect(gradingInstruction.credits).toBe(-1.5);
+            });
+
+            it('should disable the credits input when the component is not editable', async () => {
+                fixture.componentRef.setInput('editable', false);
+                await settle();
+
+                expect(creditsInput().disabled).toBe(true);
+
+                fixture.componentRef.setInput('editable', true);
+                await settle();
+
+                expect(creditsInput().disabled).toBe(false);
+            });
         });
 
         it('should render structured instruction fields when grading instruction feedback is used', () => {

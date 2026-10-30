@@ -120,6 +120,17 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   `documentation/docs/developer/guidelines/`. Use `.github/PULL_REQUEST_TEMPLATE.md`, including
   the problem and solution, linked issue when applicable, checks run, screenshots for UI changes
   and documentation updates when relevant.
+- Before creating or updating a PR, follow [PR readiness](documentation/docs/developer/development-process.mdx#pull-request-readiness).
+  Check completed author tasks with `[x]`, leave pending validation unchecked, and remove only inapplicable
+  tasks and empty sections. Leave applicable review tasks open until verified. Never claim tests or reviews
+  that were not performed.
+- Use drafts only for unfinished implementations. Open completed work as non-draft or mark it ready for
+  review immediately so full CI and review bots run. Pending CI, reviews or test-server validation do not
+  require draft status; required checks and applicable reviews must still pass before merge.
+- Set the PR milestone to the intended release. Keep draft state and the `ready for review` / `ready to merge`
+  labels aligned with the documented stage; recheck them after updates. Add `ready to merge` only after
+  all remaining tasks, required approvals, resolved threads, passing checks and mergeability are verified.
+  If metadata permissions or release context are missing, report the gap and request maintainer help.
 - PR titles use a backticked module followed by a colon, e.g. `` `Development`: Improve documentation ``.
   Allowed modules and the exact pattern are in `.github/workflows/validate-pr-title.yml`.
   Do not infer the format from squash-merge subjects, which omit the backticks.

@@ -319,7 +319,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.monacoEditor()!.loadingCount()).toBe(0);
         expect(container.monacoEditor()!.fileSession()).toHaveProperty(selectedFile);
         expect(getFileStub).toHaveBeenCalledOnce();
-        expect(getFileStub).toHaveBeenCalledWith(selectedFile);
+        expect(getFileStub).toHaveBeenCalledWith(selectedFile, undefined, undefined);
 
         containerFixture.changeDetectorRef.detectChanges();
         expect(container.getText()).toBe(fileContent);
@@ -337,7 +337,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.changeDetectorRef.detectChanges();
 
         expect(getFileStub).toHaveBeenCalledOnce();
-        expect(getFileStub).toHaveBeenCalledWith(selectedFile);
+        expect(getFileStub).toHaveBeenCalledWith(selectedFile, undefined, undefined);
         expect(container.unsavedFiles).toEqual({ [selectedFile]: newFileContent });
         expect(container.fileBrowser()!.unsavedFiles()).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);
@@ -576,7 +576,6 @@ describe('CodeEditorContainerIntegration', () => {
             { reference: 'file:src/Test3.java_line:11', text: 'FeedbackSuggestion:' },
         ] as Feedback[]);
         containerFixture.detectChanges();
-        container.updateFileBadges();
         expect(container.fileBadges()).toEqual({
             'src/Test1.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'src/Test2.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],

@@ -1,11 +1,11 @@
-<div class="mx-2 d-flex flex-column justify-content-between h-100">
+<div class="mx-2 d-flex flex-column justify-content-between h-100" data-testid="exercise-statistic-card">
     @if (titleLink()) {
         <a [routerLink]="titleLink()">
-            <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle() | artemisTranslate }}</h4>
+            <h4 class="text-center doughnut-chart-heading" data-testid="exercise-statistic-heading">{{ 'exercise-statistics.' + doughnutChartTitle() | artemisTranslate }}</h4>
         </a>
     }
     @if (!titleLink()) {
-        <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle() | artemisTranslate }}</h4>
+        <h4 class="text-center doughnut-chart-heading" data-testid="exercise-statistic-heading">{{ 'exercise-statistics.' + doughnutChartTitle() | artemisTranslate }}</h4>
     }
     <div
         class="doughnut-chart-container position-relative"
@@ -32,6 +32,7 @@
             }
         </div>
         <tumaet-ui-doughnut-chart
+            data-testid="exercise-statistic-ring"
             [labels]="chartData().labels"
             [series]="chartData().series"
             [config]="chartConfig()"

@@ -5,6 +5,9 @@ import { ProgrammingExerciseInstructionService } from 'app/programming/shared/in
 import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/services/programming-exercise-plant-uml.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 
 /**
  * Tests for ProgrammingExercisePlantUmlExtensionWrapper.
@@ -78,6 +81,40 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
 
             expect(ids).toHaveLength(1);
             expect(ids[0]).toBe('plantUml-42-0');
+        });
+    });
+
+    describe('same exercise rendered by two component instances', () => {
+        it('should generate different container IDs for different instance IDs', () => {
+            extension.setExerciseId(10);
+            extension.setInstanceId(1);
+            const idsOfFirstInstance = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+            extension.setInstanceId(2);
+            const idsOfSecondInstance = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+
+            expect(idsOfFirstInstance).toEqual(['plantUml-10-1-0']);
+            expect(idsOfSecondInstance).toEqual(['plantUml-10-2-0']);
+        });
+    });
+
+    describe('instance ID scoping', () => {
+        it('should ignore the instance ID when no exercise ID is set, so it cannot collide with an exercise-scoped ID', () => {
+            extension.setExerciseId(undefined);
+            extension.setInstanceId(7);
+            const ids = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+
+            expect(ids).toEqual(['plantUml-0']);
+        });
+
+        it('should not leak the instance ID of a previous render into a render that only sets the exercise ID', () => {
+            extension.setExerciseId(10);
+            extension.setInstanceId(3);
+            extension.replaceText(singleDiagramText);
+
+            extension.setExerciseId(11);
+            const ids = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+
+            expect(ids).toEqual(['plantUml-11-0']);
         });
     });
 
@@ -322,5 +359,84 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
             // A callback is still emitted, but it should be a no-op (empty forEach)
             expect(callbackCaptures).toHaveLength(1);
         });
+    });
+
+    describe('testsColor', () => {
+        const normalizedParameterizedName = 'parameterizedContract (' + 'x'.repeat(166) + '-3f580033defa04b30340fd418c5c4495cabbe40431a2383d0e1944dfeb615e97)';
+        const testCases = [
+            { id: 1, testName: 'testBubbleSort' },
+            { id: 2, testName: 'Test Attributes of Class' },
+            { id: 3, testName: 'Test Methods of Class(1, 2)' },
+            { id: 4, testName: 'Failing Test With Spaces' },
+            { id: 5, testName: 'Adds items, preserves order' },
+            { id: 6, testName: 'Fails to add, keeps order' },
+            { id: 7, testName: 'parameterizedContract (InsertMock, 1)' },
+            { id: 8, testName: normalizedParameterizedName },
+        ] as ProgrammingExerciseTestCase[];
+        const latestResult = {
+            successful: false,
+            feedbacks: [
+                { testCase: { id: 1 }, positive: true },
+                { testCase: { id: 2 }, positive: true },
+                { testCase: { id: 3 }, positive: true },
+                { testCase: { id: 4 }, positive: false },
+                { testCase: { id: 5 }, positive: true },
+                { testCase: { id: 6 }, positive: false },
+                { testCase: { id: 7 }, positive: true },
+                { testCase: { id: 8 }, positive: false },
+            ],
+        } as Result;
+
+        function renderedPlantUml(diagram: string): string {
+            const getPlantUmlSvg = vi.spyOn(TestBed.inject(ProgrammingExercisePlantUmlService), 'getPlantUmlSvg').mockReturnValue(of('<svg></svg>'));
+            extension.subscribeForInjectableElementsFound().subscribe((inject) => inject());
+            extension.setTestCases(testCases);
+            extension.setLatestResult(latestResult);
+            extension.replaceText(`@startuml\n${diagram}\n@enduml`);
+            expect(getPlantUmlSvg).toHaveBeenCalledOnce();
+            return getPlantUmlSvg.mock.calls[0][0];
+        }
+
+        it('should resolve a test name without spaces', () => {
+            expect(renderedPlantUml('<color:testsColor(testBubbleSort)>+ sort()</color>')).toBe('@startuml\n<color:green>+ sort()</color>\n@enduml');
+        });
+
+        it('should resolve a test name that contains spaces', () => {
+            expect(renderedPlantUml('<color:testsColor(Test Attributes of Class)>-foo: String</color>')).toBe('@startuml\n<color:green>-foo: String</color>\n@enduml');
+        });
+
+        it('should resolve a test name that contains a comma and spaces as one test', () => {
+            const rendered = renderedPlantUml(
+                '<color:testsColor(Adds items, preserves order)>+ add()</color>\nclass A #testsColor(Fails to add, keeps order)\nclass B #testsColor(<testid>5</testid>)',
+            );
+            expect(rendered).toBe('@startuml\n<color:green>+ add()</color>\nclass A #red\nclass B #green\n@enduml');
+        });
+
+        it('should render a test name with a comma as unknown when it does not exist', () => {
+            expect(renderedPlantUml('class A #testsColor(Adds items, preserves)')).toBe('@startuml\nclass A #grey\n@enduml');
+        });
+
+        it('should resolve a failing test name that contains spaces and parameters', () => {
+            const rendered = renderedPlantUml('class A #testsColor(Failing Test With Spaces)\nclass B #text:testsColor(Test Methods of Class(1, 2))');
+            expect(rendered).toBe('@startuml\nclass A #red\nclass B #text:green\n@enduml');
+        });
+
+        it.each([
+            ['parameterizedContract (InsertMock, 1)', 'green'],
+            [normalizedParameterizedName, 'red'],
+        ])('colors a parameterized test with a space before its arguments: %s', (name, color) => {
+            const rendered = renderedPlantUml(`class Contract #testsColor(${name})\n<color:testsColor(${name})>+ check()</color>`);
+
+            expect(rendered).toBe(`@startuml\nclass Contract #${color}\n<color:${color}>+ check()</color>\n@enduml`);
+        });
+
+        it.each(['', '   ', '(1, 2)', 'parameterizedContract (1, 2', 'parameterizedContract (1, (2))'])(
+            'leaves an empty or unbalanced test reference unchanged: %s',
+            (reference) => {
+                const diagram = `class Contract #testsColor(${reference})`;
+
+                expect(renderedPlantUml(diagram)).toBe(`@startuml\n${diagram}\n@enduml`);
+            },
+        );
     });
 });

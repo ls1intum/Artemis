@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -255,6 +256,66 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(loadedQuiz.getQuizQuestions()).as("Questions loadable from DB after creation with competencies").hasSize(3);
         // Verify competency links are saved
         assertThat(loadedQuiz.getCompetencyLinks()).as("Competency links saved").hasSize(1);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,255,CREATED", "false,256,BAD_REQUEST", "true,255,CREATED", "true,256,BAD_REQUEST" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuizExercise_DragItemTextLength(boolean examQuiz, int textLength, HttpStatus expectedStatus) throws Exception {
+        QuizExercise quizExercise;
+        if (examQuiz) {
+            ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
+            quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
+            quizExercise.setDuration(3600);
+        }
+        else {
+            quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        }
+        String text = "a".repeat(textLength);
+        textDragItem(quizExercise).setText(text);
+
+        QuizExercise createdQuiz = createQuizExerciseWithFiles(quizExercise, expectedStatus, true);
+        if (expectedStatus == HttpStatus.CREATED) {
+            assertThat(textDragItem(createdQuiz).getText()).isEqualTo(text);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "255,OK", "256,BAD_REQUEST" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateQuizExercise_DragItemTextLength(int textLength, HttpStatus expectedStatus) throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        String originalText = textDragItem(quizExercise).getText();
+        String text = "a".repeat(textLength);
+        textDragItem(quizExercise).setText(text);
+
+        updateQuizExerciseWithFiles(quizExercise, List.of(), expectedStatus);
+
+        QuizExercise reloadedQuiz = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        assertThat(textDragItem(reloadedQuiz).getText()).isEqualTo(expectedStatus == OK ? text : originalText);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "255,OK", "256,BAD_REQUEST" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReevaluateQuizExercise_DragItemTextLength(int textLength, HttpStatus expectedStatus) throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
+        quizExerciseService.endQuiz(quizExercise);
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+        String originalText = textDragItem(quizExercise).getText();
+        String text = "a".repeat(textLength);
+        textDragItem(quizExercise).setText(text);
+
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), expectedStatus);
+
+        QuizExercise reloadedQuiz = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        assertThat(textDragItem(reloadedQuiz).getText()).isEqualTo(expectedStatus == OK ? text : originalText);
+    }
+
+    private static DragItem textDragItem(QuizExercise quizExercise) {
+        return quizExercise.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast)
+                .flatMap(question -> question.getDragItems().stream()).filter(item -> item.getPictureFilePath() == null).findFirst().orElseThrow();
     }
 
     @Test
@@ -932,6 +993,13 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectExerciseSearchWithoutSortedColumn() throws Exception {
+        request.performMvcRequest(get("/api/quiz/quiz-exercises").param("page", "0").param("pageSize", "20").param("sortingOrder", "ASCENDING").param("searchTerm", "quiz"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateQuizQuestionWithMoreSolutions() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
         QuizQuestion question = quizExercise.getQuizQuestions().get(2);
@@ -961,6 +1029,36 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         ShortAnswerQuestion receivedShortAnswerQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
         assertThat(receivedShortAnswerQuestion.getSolutions()).hasSize(3);
         assertThat(receivedShortAnswerQuestion.getCorrectMappings()).hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReEvaluateShortAnswerSolutionTextChangeIsPersisted() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
+        ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+
+        // the student fills every spot with the original solution text, so the short answer question is fully correct before the edit
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerFor(shortAnswerQuestion, true));
+        quizSubmission.submitted(true);
+        quizSubmission.submissionDate(ZonedDateTime.now().minusHours(3));
+        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        double scoreBeforeReEvaluation = quizExercise.getScoreForSubmission(quizSubmission);
+        participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, scoreBeforeReEvaluation, true);
+        assertThat(scoreBeforeReEvaluation).isPositive();
+
+        ShortAnswerSolution editedSolution = shortAnswerQuestion.getSolutions().getFirst();
+        editedSolution.setText("corrected solution");
+
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), OK);
+
+        QuizExercise updatedQuizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
+        ShortAnswerQuestion updatedQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
+        assertThat(updatedQuestion.findSolutionById(editedSolution.getId()).getText()).isEqualTo("corrected solution");
+
+        // the submitted original text no longer matches the edited solution, so the stored result must be graded against the new text
+        var reEvaluatedResult = resultRepository.findDistinctBySubmissionId(quizSubmission.getId()).orElseThrow();
+        assertThat(reEvaluatedResult.getScore()).isLessThan(scoreBeforeReEvaluation);
     }
 
     @Test
@@ -1755,6 +1853,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asString()).isEqualTo("before-quiz-start");
         assertThat(json.has("quizQuestions")).isFalse();
 
         QuizExerciseWithoutQuestionsDTO dto = objectMapper.readValue(content, QuizExerciseWithoutQuestionsDTO.class);
@@ -1780,6 +1879,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asString()).isEqualTo("after-quiz-end");
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
 
@@ -1817,6 +1917,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asString()).isEqualTo("live-quiz");
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
 
