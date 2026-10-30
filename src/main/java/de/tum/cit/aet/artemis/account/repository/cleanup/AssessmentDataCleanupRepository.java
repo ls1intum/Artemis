@@ -167,6 +167,23 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
             """)
     int detachAssessedPresentationAssessmentInstances(@Param("userId") long userId);
 
+    @Query("""
+            SELECT instance.gradedBy.id AS userId, COUNT(instance) AS count
+            FROM PresentationAssessmentInstance instance
+            WHERE instance.gradedBy.id IN :userIds
+            GROUP BY instance.gradedBy.id
+            """)
+    List<UserReferenceCount> countGradedPresentationAssessmentInstances(@Param("userIds") Collection<Long> userIds);
+
+    @Modifying
+    @Transactional // ok because of update
+    @Query("""
+            UPDATE PresentationAssessmentInstance instance
+            SET instance.gradedBy = NULL
+            WHERE instance.gradedBy.id = :userId
+            """)
+    int detachGradedPresentationAssessmentInstances(@Param("userId") long userId);
+
     /**
      * Deletes the responses to the complaints the account raised, so that the complaints themselves can be removed.
      * A response written by the account on somebody else's complaint is detached instead, by

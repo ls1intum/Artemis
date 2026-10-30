@@ -1466,6 +1466,80 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void savePresentationAssessmentInstances_asTutor_shouldRecordTheTutorAsGraderWithoutEditNote() throws Exception {
+        PresentationAssessmentInstanceDTO created = createSearchInstance(presentationAssessment, "student1", 10.0);
+
+        assertThat(created.gradeEditedBy()).isNull();
+        assertThat(storedGraderLogin(created.id())).isEqualTo(TEST_PREFIX + "tutor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessmentInstance_asInstructorEditingTheTutorsGrade_shouldNameTheInstructor() throws Exception {
+        PresentationAssessmentInstance instance = saveGradedInstance("student1", "tutor1", "tutor1");
+
+        PresentationAssessmentInstanceDTO updated = request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(),
+                gradeRequest(instance, 8.0, TEST_PREFIX + "tutor1"), PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+
+        assertThat(updated.gradeEditedBy().login()).isEqualTo(TEST_PREFIX + "instructor1");
+        assertThat(storedGraderLogin(instance.getId())).isEqualTo(TEST_PREFIX + "instructor1");
+        assertThat(storedAssessorLogin(instance.getId())).isEqualTo(TEST_PREFIX + "tutor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessmentInstance_asInstructorEditingTheGradeAsAssessor_shouldNotNameAnEditor() throws Exception {
+        PresentationAssessmentInstance instance = saveGradedInstance("student1", "tutor1", "tutor1");
+
+        PresentationAssessmentInstanceDTO updated = request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(),
+                gradeRequest(instance, 8.0, TEST_PREFIX + "instructor1"), PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+
+        assertThat(updated.gradeEditedBy()).isNull();
+        assertThat(storedGraderLogin(instance.getId())).isEqualTo(TEST_PREFIX + "instructor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessmentInstance_asInstructorOnlyChangingTheAssessor_shouldNameTheTutorWhoGraded() throws Exception {
+        PresentationAssessmentInstance instance = saveGradedInstance("student1", "tutor1", "tutor1");
+
+        PresentationAssessmentInstanceDTO updated = request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(),
+                gradeRequest(instance, 10.0, TEST_PREFIX + "editor1"), PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+
+        assertThat(updated.gradeEditedBy().login()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(storedGraderLogin(instance.getId())).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(storedAssessorLogin(instance.getId())).isEqualTo(TEST_PREFIX + "editor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessmentInstance_removingResultPoints_shouldClearTheGrader() throws Exception {
+        PresentationAssessmentInstance instance = saveGradedInstance("student1", "tutor1", "tutor1");
+
+        request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + instance.getId(), ungradedRequest(instance), PresentationAssessmentInstanceDTO.class,
+                HttpStatus.OK);
+
+        assertThat(storedGraderLogin(instance.getId())).isNull();
+        assertThat(storedAssessorLogin(instance.getId())).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPresentationAssessmentStudentRows_shouldReturnWhoEditedTheGrade() throws Exception {
+        PresentationAssessmentInstance edited = saveGradedInstance("student1", "tutor1", "instructor1");
+        PresentationAssessmentInstance graded = saveGradedInstance("student2", "tutor1", "tutor1");
+
+        List<PresentationAssessmentInstanceDTO> instances = request
+                .getList(getBaseUrl(course) + "/student-rows?assessmentId=" + presentationAssessment.getId(), HttpStatus.OK, PresentationAssessmentStudentRowDTO.class).stream()
+                .map(PresentationAssessmentStudentRowDTO::instance).toList();
+
+        assertThat(instances).filteredOn(instance -> instance.id().equals(edited.getId())).singleElement()
+                .satisfies(instance -> assertThat(instance.gradeEditedBy().login()).isEqualTo(TEST_PREFIX + "instructor1"));
+        assertThat(instances).filteredOn(instance -> instance.id().equals(graded.getId())).singleElement().satisfies(instance -> assertThat(instance.gradeEditedBy()).isNull());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void searchPresentationAssessors_shouldReturnOnlyCourseStaff() throws Exception {
         List<UserNameAndLoginDTO> assessors = request.getList(getBaseUrl(course) + "/assessors?searchTerm=" + TEST_PREFIX.toUpperCase(Locale.ROOT), HttpStatus.OK,
@@ -1546,6 +1620,17 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     private PresentationAssessmentInstance saveInstanceWithAssessor(String studentSuffix, String assessorSuffix) {
+        return presentationAssessmentInstanceRepository.save(newInstance(studentSuffix, assessorSuffix));
+    }
+
+    private PresentationAssessmentInstance saveGradedInstance(String studentSuffix, String assessorSuffix, String graderSuffix) {
+        PresentationAssessmentInstance instance = newInstance(studentSuffix, assessorSuffix);
+        instance.setResultPoints(10.0);
+        instance.setGradedBy(userUtilService.getUserByLogin(TEST_PREFIX + graderSuffix));
+        return presentationAssessmentInstanceRepository.save(instance);
+    }
+
+    private PresentationAssessmentInstance newInstance(String studentSuffix, String assessorSuffix) {
         var instance = new PresentationAssessmentInstance();
         instance.setPresentationAssessment(presentationAssessment);
         instance.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + studentSuffix));
@@ -1553,7 +1638,12 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         instance.setPresentationDate(FIXED_DATE);
         instance.setLanguage("en");
         instance.setMode(PresentationAssessmentMode.IN_PERSON);
-        return presentationAssessmentInstanceRepository.save(instance);
+        return instance;
+    }
+
+    private PresentationAssessmentInstanceRequestDTO gradeRequest(PresentationAssessmentInstance instance, double points, String assessorLogin) {
+        return new PresentationAssessmentInstanceRequestDTO(instance.getId(), FIXED_DATE, points, instance.getStudent().getLogin(), "en", PresentationAssessmentMode.IN_PERSON,
+                null, null, null, assessorLogin);
     }
 
     private PresentationAssessmentInstanceRequestDTO gradeRequest(PresentationAssessmentInstance instance, String assessorLogin) {
@@ -1564,6 +1654,12 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     private PresentationAssessmentInstanceRequestDTO ungradedRequest(PresentationAssessmentInstance instance) {
         return new PresentationAssessmentInstanceRequestDTO(instance.getId(), FIXED_DATE, null, instance.getStudent().getLogin(), "en", PresentationAssessmentMode.IN_PERSON, null,
                 null, null, null);
+    }
+
+    private String storedGraderLogin(long instanceId) {
+        User gradedBy = presentationAssessmentInstanceRepository
+                .findByIdAndPresentationAssessmentIdAndPresentationAssessmentCourseId(instanceId, presentationAssessment.getId(), course.getId()).orElseThrow().getGradedBy();
+        return gradedBy == null ? null : gradedBy.getLogin();
     }
 
     private String storedAssessorLogin(long instanceId) {

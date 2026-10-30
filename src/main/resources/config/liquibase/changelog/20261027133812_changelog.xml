@@ -22,4 +22,25 @@
             <column name="assessor_id"/>
         </createIndex>
     </changeSet>
+
+    <!--
+        The person who last changed the result points. It differs from the assessor when an instructor edits the grade of a tutor or assigns another assessor,
+        and the client then shows who edited the grade. Instances graded before this change and accounts deleted later leave it empty.
+    -->
+    <changeSet id="20261027133812-02-add-presentation-instance-graded-by" author="suckart">
+        <addColumn tableName="presentation_assessment_instance">
+            <column name="graded_by_id" type="bigint"/>
+        </addColumn>
+
+        <addForeignKeyConstraint baseColumnNames="graded_by_id"
+                                 baseTableName="presentation_assessment_instance"
+                                 constraintName="fk_presentation_instance_graded_by_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+
+        <createIndex indexName="idx_presentation_instance_graded_by_id"
+                     tableName="presentation_assessment_instance">
+            <column name="graded_by_id"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>

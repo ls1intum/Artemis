@@ -288,9 +288,11 @@ public class PresentationAssessmentService {
         }
         rejectAlreadyAssignedStudents(assessmentId, students);
 
-        User assessor = resolveAssessor(courseId, null, dto.resultPoints(), dto.assessorLogin());
+        User currentUser = userRepository.getUser();
+        User assessor = resolveAssessor(courseId, currentUser, null, dto.resultPoints(), dto.assessorLogin());
+        User gradedBy = dto.resultPoints() != null ? currentUser : null;
         List<PresentationAssessmentInstance> instances = students.stream()
-                .map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, assessor)).toList();
+                .map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, assessor, gradedBy)).toList();
         return presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances);
     }
 
@@ -321,9 +323,18 @@ public class PresentationAssessmentService {
                 && presentationAssessmentInstanceRepository.existsByPresentationAssessmentIdAndStudentIdAndIdNot(assessment.getId(), student.getId(), instance.getId())) {
             throwStudentAlreadyAssigned(List.of(student.getLogin()));
         }
+        Double previousResultPoints = instance.getResultPoints();
         applyInstanceData(assessment, instance, dto);
         instance.setStudent(student);
-        instance.setAssessor(resolveAssessor(courseId, instance.getAssessor(), dto.resultPoints(), dto.assessorLogin()));
+        User currentUser = userRepository.getUser();
+        instance.setAssessor(resolveAssessor(courseId, currentUser, instance.getAssessor(), dto.resultPoints(), dto.assessorLogin()));
+        // Who last changed the points; the client names them when they differ from the assessor.
+        if (dto.resultPoints() == null) {
+            instance.setGradedBy(null);
+        }
+        else if (!Objects.equals(previousResultPoints, dto.resultPoints())) {
+            instance.setGradedBy(currentUser);
+        }
     }
 
     /**
@@ -333,14 +344,14 @@ public class PresentationAssessmentService {
      * Like the assessor of a result, anyone allowed to grade may assess as themselves, so an administrator without a course role can too.
      *
      * @param courseId        the owning course id
+     * @param currentUser     the user who sends the request
      * @param currentAssessor the assessor of the instance being updated, or null for a new instance or one without an assessor
      * @param resultPoints    the requested result points, or null for an ungraded presentation
      * @param assessorLogin   the requested assessor login, only required with result points
      * @return the assessor to store, or null for an ungraded presentation
      */
-    private User resolveAssessor(long courseId, User currentAssessor, Double resultPoints, String assessorLogin) {
+    private User resolveAssessor(long courseId, User currentUser, User currentAssessor, Double resultPoints, String assessorLogin) {
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseId);
-        User currentUser = userRepository.getUser();
         boolean assessedBySomeoneElse = currentAssessor != null && !currentAssessor.getId().equals(currentUser.getId());
         if (!isAtLeastInstructor && assessedBySomeoneElse) {
             throw new AccessForbiddenException("Tutors and editors cannot edit presentations assessed by someone else");
@@ -399,12 +410,14 @@ public class PresentationAssessmentService {
         instance.setRemark(dto.remark());
     }
 
-    private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student, User assessor) {
+    private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student, User assessor,
+            User gradedBy) {
         PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
         instance.setPresentationAssessment(assessment);
         applyInstanceData(assessment, instance, dto);
         instance.setStudent(student);
         instance.setAssessor(assessor);
+        instance.setGradedBy(gradedBy);
         return instance;
     }
 
