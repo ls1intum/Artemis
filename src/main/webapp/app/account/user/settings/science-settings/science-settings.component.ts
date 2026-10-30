@@ -133,6 +133,11 @@ export class ScienceSettingsComponent implements OnInit {
             .subscribe({
                 next: (stored) => {
                     this.applyConsentLocally(courseId, stored.active);
+                    // A list load still running may have read the decision before this save committed, and would then
+                    // overwrite it. Starting it again cancels that read, and the new one sees the stored decision.
+                    if (this.loading()) {
+                        this.loadConsents();
+                    }
                     this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert');
                 },
                 error: (error) => {

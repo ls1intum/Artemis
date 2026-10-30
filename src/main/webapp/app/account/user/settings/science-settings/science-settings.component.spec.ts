@@ -101,6 +101,35 @@ describe('ScienceSettingsComponent', () => {
         expect(component.loading()).toBe(false);
     });
 
+    it('should not let a list read from before a save overwrite the decision it stored', () => {
+        // A deletion in one course reloads the list while a decision in another course is being stored. The reload may
+        // read the decision before the save committed; answering after the save, it would show the old decision.
+        const staleLoad = new Subject<ScienceCourseConsent[]>();
+        const freshLoad = new Subject<ScienceCourseConsent[]>();
+        const pendingSave = new Subject<ScienceCourseConsent>();
+        vi.spyOn(scienceSettingsService, 'getConsents')
+            .mockReturnValueOnce(of([activeConsent, undecidedConsent]))
+            .mockReturnValueOnce(staleLoad.asObservable())
+            .mockReturnValueOnce(freshLoad.asObservable());
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(pendingSave.asObservable());
+        vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+
+        component.toggleConsent(undecidedConsent, true);
+        component.deleteData(activeConsent);
+        fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.accept();
+        pendingSave.next({ ...undecidedConsent, active: true });
+        pendingSave.complete();
+
+        // The read started before the save answered is dropped, and the list is read again.
+        staleLoad.next([activeConsent, undecidedConsent]);
+        expect(staleLoad.observed).toBe(false);
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledTimes(3);
+        freshLoad.next([activeConsent, { ...undecidedConsent, active: true }]);
+        expect(component.consents()[1].active).toBe(true);
+        expect(component.loading()).toBe(false);
+    });
+
     it('should ignore a load that answers after the page was destroyed', () => {
         const pendingLoad = new Subject<ScienceCourseConsent[]>();
         vi.spyOn(scienceSettingsService, 'getConsents').mockReturnValue(pendingLoad.asObservable());
