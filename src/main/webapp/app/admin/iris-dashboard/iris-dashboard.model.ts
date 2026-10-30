@@ -1,60 +1,9 @@
-export interface IrisDashboardOverview {
-    totalSessions: number;
-    activeSessions: number;
-    engagementRate: number;
-    totalMessages: number;
-    uniqueUsers: number;
-    noResponseRate: number;
-    noResponseMessageCount: number;
-    noResponseSessionCount: number;
-    thumbsUpRatio: number;
-    thumbsDownRatio: number;
-    thumbsUpAbsoluteRate: number;
-    thumbsDownAbsoluteRate: number;
-    sessionsWithThumbsUp: number;
-    sessionsWithThumbsDown: number;
-    thumbsUpCount: number;
-    thumbsDownCount: number;
-    avgResponseTimeSeconds: number;
-    p50ResponseTimeSeconds: number;
-    p95ResponseTimeSeconds: number;
-    totalTokenCostEur: number;
-}
+import type { GetBreakdownParams, GetOverviewParams } from 'app/openapi/api/iris-admin-dashboard-api';
 
-export interface IrisDashboardTimeSeriesEntry {
-    bucketStart: string;
-    series: Record<string, number>;
-}
-
-export interface IrisDashboardTimeSeries {
-    metric: IrisDashboardMetric;
-    entries: IrisDashboardTimeSeriesEntry[];
-}
-
-export interface IrisDashboardBreakdownEntry {
-    label: string;
-    values: Record<string, number>;
-}
-
-export interface IrisDashboardConfig {
-    maxQueryWindowDays: number;
-    staleThresholdMinutes: number;
-    digestEnabled: boolean;
-    digestCron: string;
-    alertEnabled: boolean;
-    alertNoResponseRateThreshold: number;
-    alertCheckIntervalMinutes: number;
-    alertCooldownMinutes: number;
-    alertLookbackMinutes: number;
-    alertMinimumEligibleSessions: number;
-    alertMinimumUserMessages: number;
-}
-
+/** UI windows expressed as fixed elapsed days; the server also accepts YEAR buckets. */
 export type IrisDashboardTimeSpan = 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER';
 
-export type IrisDashboardMetric = 'SESSIONS' | 'MESSAGES' | 'NO_RESPONSE_RATE' | 'RESPONSE_TIME' | 'RATINGS' | 'TOKEN_COST' | 'ENGAGEMENT';
-
-export type IrisDashboardBreakdownDimension = 'CHAT_MODE' | 'COURSE' | 'MODEL';
+export type IrisDashboardBreakdownDimension = GetBreakdownParams['dimension'];
 
 /** Restricts the dashboard to users by their current AI selection. ALL applies no filter. */
-export type IrisDashboardAiSelection = 'ALL' | 'CLOUD' | 'LOCAL';
+export type IrisDashboardAiSelection = NonNullable<GetOverviewParams['aiSelection']>;

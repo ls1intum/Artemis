@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { DecimalPipe, JsonPipe } from '@angular/common';
 import {
     TumAetUiButtonComponent,
@@ -16,7 +15,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisDashboardService } from './iris-dashboard.service';
-import { IrisDashboardAiSelection, IrisDashboardBreakdownEntry, IrisDashboardConfig, IrisDashboardOverview, IrisDashboardTimeSpan } from './iris-dashboard.model';
+import { IrisDashboardAiSelection, IrisDashboardTimeSpan } from './iris-dashboard.model';
+import { getConfigResource } from 'app/openapi/api/iris-admin-dashboard-api';
+import { IrisDashboardBreakdownEntry } from 'app/openapi/model/iris-dashboard-breakdown-entry';
+import { IrisDashboardOverview } from 'app/openapi/model/iris-dashboard-overview';
 import { faRobot, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Subscription } from 'rxjs';
@@ -55,13 +57,13 @@ type AiSelectionOption = { label: string; value: IrisDashboardAiSelection };
 export class IrisDashboardComponent implements OnInit, OnDestroy {
     private dashboardService = inject(IrisDashboardService);
     private translateService = inject(TranslateService);
-    private destroyRef = inject(DestroyRef);
 
     protected readonly faSync = faSync;
     protected readonly faRobot = faRobot;
 
     readonly overview = signal<IrisDashboardOverview | undefined>(undefined);
-    readonly config = signal<IrisDashboardConfig | undefined>(undefined);
+    private readonly configResource = getConfigResource();
+    readonly config = computed(() => (this.configResource.hasValue() ? this.configResource.value() : undefined));
     readonly loading = signal(true);
     readonly error = signal(false);
     readonly activeBreakdownTab = signal(0);
@@ -111,10 +113,6 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
         ]);
         this.selectedAiSelection.set(this.aiSelectionOptions()[0]);
         this.loadData();
-        this.dashboardService
-            .getConfig()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((cfg) => this.config.set(cfg));
     }
 
     ngOnDestroy(): void {
