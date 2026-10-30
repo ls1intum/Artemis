@@ -18,7 +18,7 @@ public record WorkerSettings(String id, String image, @DefaultValue("runc") Stri
 
     private static final Pattern WORKER_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{1,64}");
 
-    private static final Pattern IMAGE_PATTERN = Pattern.compile("(?:[^\\s]+@)?sha256:[a-f0-9]{64}|[^\\s@]+:(?!latest$)[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}");
+    private static final Pattern IMAGE_PATTERN = Pattern.compile("(?:[^\\s]+@)?sha256:[a-f0-9]{64}|(?!sha256:)[^\\s@]+:(?!latest$)[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}");
 
     public WorkerSettings(String id, String image, String runtime, long memoryBytes, long cpuQuota, long pids, Duration heartbeatInterval, Duration connectionGrace,
             Duration shutdownTimeout, int maxConcurrentExecutions, String workload, String profile) {

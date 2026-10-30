@@ -39,6 +39,9 @@ final class WorkerSandboxImage {
             return imageId(dockerClient, reference);
         }
         catch (NotFoundException e) {
+            if (IMAGE_ID.matcher(reference).matches()) {
+                throw new IllegalStateException("Local sandbox image " + reference + " is not available. Load it on this Docker daemon or configure AI_WORKER_SANDBOX_IMAGE.", e);
+            }
             log.info("Pulling sandbox image {}", reference);
         }
         try (var pull = dockerClient.pullImageCmd(reference); var callback = new PullImageResultCallback()) {

@@ -13,7 +13,10 @@ successfully is not a generation qualification test.
 Use a dedicated worker VM for staging and production. The supervisor's Docker socket
 is host-level authority; never share core's, the database's or an exam build agent's
 daemon. Generated code runs with a read-only root filesystem and without networking.
-Pin the Artemis and sandbox images by digest and coordinate core and worker
+Pin the Artemis image by digest when promoting a verified build. Leave the sandbox
+image unset to use the shipped versioned default. Custom sandbox overrides accept
+a versioned tag, registry digest or local image ID; the worker resolves them to an
+immutable local ID before admission. Coordinate core and worker
 upgrades after draining active work. Worker process loss is not a durable local-outbox
 guarantee: core must fence the lost incarnation using the evidence it already holds.
 

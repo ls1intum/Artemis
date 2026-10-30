@@ -63,6 +63,16 @@ class WorkerSandboxImageTest {
     }
 
     @Test
+    void doesNotPullAMissingLocalImageIdAsARemoteTag() {
+        when(docker.inspectImageCmd(IMAGE_ID)).thenReturn(inspect);
+        when(inspect.exec()).thenThrow(new NotFoundException("missing"));
+
+        assertThatThrownBy(() -> WorkerSandboxImage.resolve(docker, IMAGE_ID)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContainingAll("Local sandbox image", IMAGE_ID, "AI_WORKER_SANDBOX_IMAGE").hasCauseInstanceOf(NotFoundException.class);
+        verify(docker, never()).pullImageCmd(any());
+    }
+
+    @Test
     void reportsRegistryFailureWithTheImageAndConfiguration() {
         missingImage();
         when(pull.exec(any())).thenThrow(new NotFoundException("manifest unknown"));

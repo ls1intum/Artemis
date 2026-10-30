@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -104,6 +106,13 @@ class WorkerSettingsBindingTest {
             assertThat(context).hasNotFailed();
             assertThat(context.getBean(WorkerSettings.class).image()).isEqualTo("ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-2");
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "sha256:short", "sha256:", "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" })
+    void rejectsMalformedLocalImageIds(String image) {
+        runner.withPropertyValues("artemis.aiworker.image=" + image).run(context -> assertThat(context).hasFailed());
     }
 
     @Configuration(proxyBeanMethods = false)
