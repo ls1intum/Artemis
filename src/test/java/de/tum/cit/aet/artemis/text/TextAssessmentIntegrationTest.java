@@ -630,7 +630,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @ParameterizedTest
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void saveOrSubmitTextAssessment_privateNoteSurvivesReload(boolean submit) throws Exception {
         TextSubmissionWithoutAssessmentDTO submission = prepareSubmission();
