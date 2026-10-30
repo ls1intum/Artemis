@@ -57,28 +57,6 @@ get_test_paths() {
     jq -r ".mappings[\"$module\"].testPaths[]" "$MAPPING_FILE" 2>/dev/null || echo ""
 }
 
-module_matches_changes() {
-    local module="$1"
-    local source_paths
-    local source_path
-    local file
-
-    source_paths=$(get_source_paths "$module")
-
-    # Determine if any changed file has a literal prefix match to a module source path.
-    for source_path in $source_paths; do
-        if [ -n "$source_path" ]; then
-            while IFS= read -r file; do
-                if [[ "$file" == "$source_path"* ]]; then
-                    return 0
-                fi
-            done <<< "$CHANGED_FILES"
-        fi
-    done
-
-    return 1
-}
-
 add_test_paths_for_module() {
     local module="$1"
     local test_paths
@@ -92,15 +70,24 @@ add_test_paths_for_module() {
     done
 }
 
-# Verify mapping file exists
-if [ ! -f "$MAPPING_FILE" ]; then
-    echo "ERROR: Mapping file not found: $MAPPING_FILE"
+# Fail closed when the comparison or mapping cannot establish a safe selection.
+run_all_tests() {
+    echo "$1 Running all tests."
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
+}
+
+if [ ! -f "$MAPPING_FILE" ] || ! jq -e '
+    (.mappings | type == "object") and
+    (.alwaysRunTests | length > 0) and
+    ([.mappings[].sourcePaths[], .mappings[].testPaths[], .alwaysRunTests[], .allTestPaths[], .runAllTestsPatterns[]]
+        | all(.[]; type == "string" and length > 0 and (test("[[:space:]]") | not)))
+' "$MAPPING_FILE" >/dev/null 2>&1; then
+    run_all_tests "Mapping file is missing or invalid."
 fi
 
 # All e2e test directories/files (top-level)
@@ -146,165 +133,153 @@ echo "Base branch: $BASE_BRANCH"
 echo "Mapping file: $MAPPING_FILE"
 echo ""
 
-# Get list of changed files
+# Compare the complete PR diff with its merge base. Never silently substitute HEAD~1:
+# that loses earlier commits. Disable rename detection to inspect both the removed and added
+# paths, and use NUL delimiters so unusual file names cannot hide an unclassified change.
 cd "$REPO_ROOT"
-CHANGED_FILES=$(git diff --name-only "$BASE_BRANCH"...HEAD 2>/dev/null || git diff --name-only HEAD~1 2>/dev/null || echo "")
-
-if [ -z "$CHANGED_FILES" ]; then
-    echo "No changed files detected. Running all tests."
-    write_output "RUN_ALL_TESTS" "true"
-    write_output "RELEVANT_TESTS" ""
-    write_output "REMAINING_TESTS" ""
-    write_output "RELEVANT_COUNT" "0"
-    write_output "REMAINING_COUNT" "0"
-    exit 0
+CHANGED_FILES_FILE=$(mktemp)
+trap 'rm -f "$CHANGED_FILES_FILE"' EXIT
+if ! git diff --no-renames --name-only -z "$BASE_BRANCH"...HEAD > "$CHANGED_FILES_FILE"; then
+    run_all_tests "Could not compare against the requested base '$BASE_BRANCH'."
+fi
+CHANGED_FILES=()
+while IFS= read -r -d '' file; do
+    CHANGED_FILES+=("$file")
+done < "$CHANGED_FILES_FILE"
+if [ ${#CHANGED_FILES[@]} -eq 0 ]; then
+    run_all_tests "No changed files detected."
 fi
 
 echo "Changed files:"
-echo "$CHANGED_FILES" | head -20
-TOTAL_CHANGED=$(echo "$CHANGED_FILES" | wc -l | tr -d ' ')
-if [ "$TOTAL_CHANGED" -gt 20 ]; then
-    echo "... and $((TOTAL_CHANGED - 20)) more files"
-fi
+printf '  %s\n' "${CHANGED_FILES[@]}"
 echo ""
 
-# Execution precedence (highest to lowest):
-# 1) RUN_ALL_TESTS=true (no changes detected, mapping file missing, runAllTestsPatterns match,
-#    or Playwright infrastructure change) => run the full suite.
-# 2) Only Playwright spec changes (no infrastructure change) => run only RELEVANT_TESTS (skip REMAINING_TESTS).
-# 3) All other changes run RELEVANT_TESTS first, then REMAINING_TESTS (excluding covered paths).
-#
-# Check if we should run all tests (config changes, playwright changes, etc.)
-# Patterns are treated as literal path prefixes (not regex).
-RUN_ALL_TESTS=false
-RUN_ALL_PATTERNS=$(jq -r '.runAllTestsPatterns[]' "$MAPPING_FILE" 2>/dev/null || echo "")
-
-# Track when changes are limited to Playwright test specs vs. test infrastructure.
-ONLY_PLAYWRIGHT_TEST_CHANGES=true
-PLAYWRIGHT_INFRA_CHANGE=false
-
-for pattern in $RUN_ALL_PATTERNS; do
-    while IFS= read -r file; do
-        if [[ "$file" == "$pattern"* ]]; then
-            echo "Found changes in '$pattern' - will run all tests"
-            RUN_ALL_TESTS=true
-            break 2
-        fi
-    done <<< "$CHANGED_FILES"
-done
-
-# Determine relevant test paths based on changed files
+# Cross-cutting source modules affect other modules' workflows. A narrow mapping in these
+# modules is useful for ordering a full run, but cannot prove selective coverage is sufficient.
+GLOBAL_SOURCE_PATHS=(
+    "src/main/java/de/tum/cit/aet/artemis/core/"
+    "src/main/java/de/tum/cit/aet/artemis/account/"
+    "src/main/java/de/tum/cit/aet/artemis/exercise/"
+    "src/main/java/de/tum/cit/aet/artemis/localci/"
+    "src/main/java/de/tum/cit/aet/artemis/localvc/"
+    "src/main/java/de/tum/cit/aet/artemis/buildagent/"
+    "src/main/webapp/app/core/"
+    "src/main/webapp/app/shared/"
+)
+RUN_ALL_PATTERNS=$(jq -r '.runAllTestsPatterns[]' "$MAPPING_FILE")
+MODULES=$(get_modules)
 declare -A RELEVANT_TEST_SET
 
-while IFS= read -r file; do
-    if [[ "$file" == "src/test/playwright/"* ]]; then
-        if [[ "$file" == "src/test/playwright/e2e/"* ]]; then
-            RELEVANT_TEST_SET["${file#src/test/playwright/}"]=1
-        else
-            PLAYWRIGHT_INFRA_CHANGE=true
+for file in "${CHANGED_FILES[@]}"; do
+    for pattern in $RUN_ALL_PATTERNS "${GLOBAL_SOURCE_PATHS[@]}"; do
+        if [[ "$file" == "$pattern"* ]]; then
+            run_all_tests "Found cross-cutting or infrastructure changes in '$pattern'."
         fi
-    else
-        ONLY_PLAYWRIGHT_TEST_CHANGES=false
+    done
+
+    if [[ "$file" == "src/test/playwright/"* ]]; then
+        if [[ "$file" == "src/test/playwright/e2e/"*.spec.ts ]] && [[ "$file" != *[[:space:]]* ]]; then
+            # Deleted specs are still classified, but are not valid Playwright arguments.
+            if [ -f "$REPO_ROOT/$file" ]; then
+                RELEVANT_TEST_SET["${file#src/test/playwright/}"]=1
+            fi
+            continue
+        fi
+        run_all_tests "Found Playwright infrastructure changes in '$file'."
     fi
-done <<< "$CHANGED_FILES"
 
-if [ "$RUN_ALL_TESTS" = "true" ] || [ "$PLAYWRIGHT_INFRA_CHANGE" = "true" ]; then
-    write_output "RUN_ALL_TESTS" "true"
-    write_output "RELEVANT_TESTS" ""
-    write_output "REMAINING_TESTS" ""
-    write_output "RELEVANT_COUNT" "0"
-    write_output "REMAINING_COUNT" "0"
-    exit 0
-fi
+    # Every changed file must have a non-empty mapping. Unknown paths, including modules
+    # without E2E coverage, require the full suite rather than degrading to smoke tests.
+    matched=false
+    for module in $MODULES; do
+        for source_path in $(get_source_paths "$module"); do
+            if [[ "$file" == "$source_path"* ]]; then
+                if [ -z "$(get_test_paths "$module")" ]; then
+                    run_all_tests "Module '$module' has no selective E2E mapping."
+                fi
+                echo "Module '$module' has changes"
+                add_test_paths_for_module "$module"
+                matched=true
+            fi
+        done
+    done
+    if [ "$matched" != true ]; then
+        run_all_tests "No selective E2E mapping for '$file'."
+    fi
+done
 
-# Add always-run tests
-ALWAYS_RUN_TESTS=$(jq -r '.alwaysRunTests[]' "$MAPPING_FILE" 2>/dev/null || echo "")
+# Every selection includes authentication and health smoke coverage. A missing smoke spec
+# means the mapping needs maintenance; do not pass a nonexistent path to Playwright.
+ALWAYS_RUN_TESTS=$(jq -r '.alwaysRunTests[]' "$MAPPING_FILE")
 for test in $ALWAYS_RUN_TESTS; do
-    if [ -n "$test" ]; then
-        RELEVANT_TEST_SET["$test"]=1
-    fi
+    [ -f "$REPO_ROOT/src/test/playwright/$test" ] || run_all_tests "Always-run spec '$test' is missing."
+    RELEVANT_TEST_SET["$test"]=1
 done
 
-# Determine which tests to run by mapping changed files to module source paths.
-MODULES=$(get_modules)
-
-for module in $MODULES; do
-    if module_matches_changes "$module"; then
-        echo "Module '$module' has changes"
-        add_test_paths_for_module "$module"
-    fi
-done
-
-# Convert relevant tests set to array
 RELEVANT_TESTS=()
 for test in "${!RELEVANT_TEST_SET[@]}"; do
+    [ -e "$REPO_ROOT/src/test/playwright/$test" ] || run_all_tests "Mapped E2E path '$test' is missing."
     RELEVANT_TESTS+=("$test")
 done
 
-SKIP_REMAINING_TESTS=false
-if [ "$ONLY_PLAYWRIGHT_TEST_CHANGES" = "true" ] && [ "$PLAYWRIGHT_INFRA_CHANGE" = "false" ]; then
-    SKIP_REMAINING_TESTS=true
-fi
-
+# Always compute the complement, including for spec-only changes. The workflow's
+# run_full_suite input decides whether Phase 2 is needed, so a full override stays full.
 # Determine remaining tests (all tests minus relevant tests)
 # When a relevant test is a child of an all-test path (e.g., relevant=e2e/exercise/quiz-exercise/
 # and all-test=e2e/exercise/), we expand the parent into its direct children and only exclude
 # the ones already covered by Phase 1.
 REMAINING_TESTS=()
 
-if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
-    for test_path in "${ALL_TEST_PATHS[@]}"; do
-        IS_COVERED=false
-        HAS_PARTIAL_OVERLAP=false
+for test_path in "${ALL_TEST_PATHS[@]}"; do
+    IS_COVERED=false
+    HAS_PARTIAL_OVERLAP=false
 
-        for relevant in "${RELEVANT_TESTS[@]}"; do
-            if [ "$test_path" = "$relevant" ]; then
-                IS_COVERED=true
-                break
-            elif [[ "$test_path" == "$relevant"* ]]; then
-                # relevant is a parent of test_path
-                IS_COVERED=true
-                break
-            elif [[ "$relevant" == "$test_path"* ]]; then
-                # relevant is a child of test_path - partial overlap
-                HAS_PARTIAL_OVERLAP=true
-            fi
-        done
-
-        if [ "$IS_COVERED" = "true" ]; then
-            continue
-        fi
-
-        if [ "$HAS_PARTIAL_OVERLAP" = "true" ]; then
-            # Expand this parent directory into its direct children, excluding those covered by Phase 1
-            local_dir="$REPO_ROOT/src/test/playwright/$test_path"
-            if [ -d "$local_dir" ]; then
-                while IFS= read -r child; do
-                    [ -z "$child" ] && continue
-                    if [ -d "$REPO_ROOT/src/test/playwright/$child" ]; then
-                        child_path="$child/"
-                    else
-                        child_path="$child"
-                    fi
-                    # Check if this child is covered by any relevant test
-                    CHILD_COVERED=false
-                    for relevant in "${RELEVANT_TESTS[@]}"; do
-                        if [ "$child_path" = "$relevant" ] || [[ "$child_path" == "$relevant"* ]]; then
-                            CHILD_COVERED=true
-                            break
-                        fi
-                    done
-                    if [ "$CHILD_COVERED" = "false" ]; then
-                        REMAINING_TESTS+=("$child_path")
-                    fi
-                done < <(cd "$REPO_ROOT/src/test/playwright" && find "$test_path" -maxdepth 1 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
-            fi
-        else
-            REMAINING_TESTS+=("$test_path")
+    for relevant in "${RELEVANT_TESTS[@]}"; do
+        if [ "$test_path" = "$relevant" ]; then
+            IS_COVERED=true
+            break
+        elif [[ "$test_path" == "$relevant"* ]]; then
+            # relevant is a parent of test_path
+            IS_COVERED=true
+            break
+        elif [[ "$relevant" == "$test_path"* ]]; then
+            # relevant is a child of test_path - partial overlap
+            HAS_PARTIAL_OVERLAP=true
         fi
     done
-fi
 
+    if [ "$IS_COVERED" = "true" ]; then
+        continue
+    fi
+
+    if [ "$HAS_PARTIAL_OVERLAP" = "true" ]; then
+        # Expand this parent directory into its direct children, excluding those covered by Phase 1
+        local_dir="$REPO_ROOT/src/test/playwright/$test_path"
+        if [ -d "$local_dir" ]; then
+            while IFS= read -r child; do
+                [ -z "$child" ] && continue
+                if [ -d "$REPO_ROOT/src/test/playwright/$child" ]; then
+                    child_path="$child/"
+                else
+                    child_path="$child"
+                fi
+                # Check if this child is covered by any relevant test
+                CHILD_COVERED=false
+                for relevant in "${RELEVANT_TESTS[@]}"; do
+                    if [ "$child_path" = "$relevant" ] || [[ "$child_path" == "$relevant"* ]]; then
+                        CHILD_COVERED=true
+                        break
+                    fi
+                done
+                if [ "$CHILD_COVERED" = "false" ]; then
+                    REMAINING_TESTS+=("$child_path")
+                fi
+            done < <(cd "$REPO_ROOT/src/test/playwright" && find "$test_path" -maxdepth 1 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
+        fi
+    else
+        REMAINING_TESTS+=("$test_path")
+    fi
+done
 # Sort and deduplicate
 if [ ${#RELEVANT_TESTS[@]} -gt 0 ]; then
     mapfile -t RELEVANT_TESTS_SORTED < <(printf '%s\n' "${RELEVANT_TESTS[@]}" | sort -u)

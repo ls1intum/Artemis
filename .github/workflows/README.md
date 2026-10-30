@@ -27,6 +27,7 @@ available to refresh repository settings independently of a push.
 ```text
 ci.yml                                                            (single entry workflow)
 ├── detect-changes               (dorny/paths-filter, emits per-area booleans)
+├── pr-ready                     (current-head check + 90-second settling window before build/test)
 │
 │   REQUIRED — gated by `All required CI Passed` (fast + deterministic, run when relevant):
 ├── build           ── uses ci-build.yml          (the .war + Docker image)
@@ -68,7 +69,7 @@ Its only permission is `actions: read` (the timeline reads the jobs API).
 
 ### Required vs. advisory
 
-The single required check is `CI / All required CI Passed`. It gates on every job that is
+The single required check is `CI / All required CI Passed`. It includes `detect-changes` and `pr-ready`, and gates on every job that is
 **fast and deterministic** — `build`, `test`, `quality`, `gradle-wrapper`, `translation`,
 `docs`, `workflows`, `version-consistency`, `bean-instantiations`. They run in parallel and finish
 within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
@@ -142,6 +143,14 @@ The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for
 A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
 new revision can start.
 
+Before reserving build or self-hosted test capacity, `pr-ready` checks the PR is open and the run's
+head is current. On `synchronize` it waits until 90 seconds after the run was created, then checks
+again. Time already spent queued counts toward that window. Open, reopen and ready-for-review events
+have no delay; non-PR events pass through. It uses a GitHub-hosted runner, and existing PR concurrency
+cancels a settling revision when another push arrives. Quality and lint jobs start immediately.
+API failures fail the required gate closed; an obsolete head skips expensive work. Both the gate
+and the producer are in `all-required-ci-passed.needs`, so an API failure cannot become a green skip.
+
 Jobs that must evaluate failed or skipped dependencies use `!cancelled()` in their job-level `if`,
 including Phase 2, the E2E reporter, coverage reporting, the required gate and the CI summary.
 This overrides the implicit `success()` check while allowing cancellation. Keep the explicit
@@ -173,9 +182,8 @@ The server suite is by far the largest consumer of the self-hosted `aet-large-ub
 (seven shards per run), and E2E is the slowest stage, so a **pull request** skips what it cannot
 affect. `detect-changes` emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to
 `ci-test.yml`, and `run_e2e`, which gates the `e2e` job. The skipped jobs report `skipped`; the `test` call as a whole still reports `success` when the other
-suite passes, which is all the gate sees. A skipped suite produces no coverage artifact (the
-coverage reporters only fetch an artifact when the matching `has_*_changes` is true, which implies
-the suite ran).
+suite passes, which is all the gate sees. A skipped or affected suite produces no full-coverage
+artifact. Coverage reporters show the validation scope and only publish tables from complete suites.
 
 - All three outputs are **deny-lists** in the `relevant` step, so a path nobody has classified runs
   the suite. The server suite is skipped only if every changed file is markdown, `LICENSE`,
@@ -216,6 +224,53 @@ the suite ran).
   suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`).
 - Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
   the server suite uploads none.
+
+### Selecting tests within a pull request
+
+Ordinary PRs use affected selection after the area filters decide a suite is relevant. Selection is
+relative to the merge base with the actual PR target; missing history falls back to complete tests.
+
+- **Server:** `get_changed_modules.sh` delegates to the Python source dependency selector. It follows
+  consumers of changed types through imports, same-package references and inheritance, then runs tests
+  for the resulting modules. It considers both the base and current tree, including deleted sources.
+  Shared contracts, core/configuration, dynamic dependencies, unknown inputs and broad selections run
+  the full seven-shard suite. Planning happens on a public runner before allocating the test runners.
+- **Client:** `pnpm run test:ci:affected --base-ref origin/develop` expands changed Angular templates
+  and styles to their TypeScript owners, including Sass imports, then uses Vitest's transitive dependency
+  graph for both ordinary and Monaco specs. The job prints the selected specs. Shared inputs, unsupported
+  resources, deletions/renames, graph failures or changes with no related specs use `test:ci` instead.
+  Strict TypeScript compilation and custom ESLint-rule tests still run. A selected test failure fails;
+  it does not retry as a full suite.
+- **E2E:** ordinary PRs run mapped specs plus login, logout and system-health smoke specs. Phase 2 is
+  intentionally omitted in this mode. Shared or unmapped inputs and selector failures require the full
+  suite; the reporter still rejects missing expected phases. Full mode retains the Phase 1/Phase 2
+  fail-fast path where applicable, or runs everything in one job.
+
+Affected tests keep JUnit results and diagnostics but omit whole-project coverage generation,
+thresholds and uploads. Both internal and fork PR reporters remove stale coverage tables when a
+complete result is unavailable and state the scope and actual test result. Only successful full-mode
+jobs publish `Server JaCoCo XML` and `Client Coverage Summaries`; fork reporting infers coverage scope
+from these artifacts without executing PR code.
+
+Pushes to `develop`, `main` and `release/*`, merge groups, published Artemis releases and manual CI
+runs retain full suites and coverage. To request complete validation of a PR branch before merging,
+dispatch **CI** on that branch with **Bypass change detection and run every job** enabled. Re-running
+a PR event preserves affected selection. Full validation on a merge group depends on use of the merge
+queue; a normal PR's green required gate certifies its selected scope.
+
+`ci-workflows.yml` runs behavioral tests for selection, revision coalescing and coverage reporting
+when their implementations change. New global inputs or unsupported dependency mechanisms should
+fall back to full validation until their selection is explicitly covered.
+
+### Dependency submission
+
+`dependency-submission.yml` is the sole Gradle dependency snapshot producer. It runs on dependency
+changes on `develop`, weekly and on demand, using GitHub-hosted runners. Keep **Automatic dependency
+submission** disabled under **Settings → Advanced Security**, while leaving **Dependency graph** and
+**Dependabot alerts** enabled. The managed producer also runs on PR updates and branches, duplicating
+work whose non-default-branch snapshots do not update the repository graph. This switch is a repository
+setting, so reviewing or reverting the workflow files does not change it; re-enable the managed producer
+if the dedicated workflow is removed without a replacement.
 
 ## Action pinning policy
 

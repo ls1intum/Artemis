@@ -40,7 +40,6 @@ concurrency:
 permissions: {}
 
 jobs:
-
   detect-changes:
     if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Detect Changed Areas
@@ -258,7 +257,12 @@ jobs:
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
-              - '.github/scripts/sonar-workflow.test.cjs'
+              - '.github/scripts/**'
+              - 'supporting_scripts/get_changed_modules.sh'
+              - 'supporting_scripts/select_server_test_modules.py'
+              - 'supporting_scripts/tests/**'
+              - 'supporting_scripts/client/run-affected-tests*'
+              - 'supporting_scripts/ci/E2E-tests/**'
               - 'deployment/kubernetes/install-localci-kubernetes-ubuntu.sh'
               - 'supporting_scripts/test_verified_installers.py'
               - 'supporting_scripts/check_action_pinning.py'
@@ -388,10 +392,30 @@ jobs:
             } >> "$GITHUB_OUTPUT"
           fi
 
+  # Cheap public-runner gate before builds/tests reserve scarce self-hosted capacity.
+  # Rapid pushes share the existing PR concurrency group and cancel the settling run.
+  pr-ready:
+    name: Check Current PR Revision
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+    outputs:
+      current: ${{ steps.ready.outputs.current }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: ready
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: await require('./.github/scripts/pr-ready.js')({ github, context, core })
+
   build:
     name: Build
-    needs: detect-changes
-    if: needs.detect-changes.outputs.build_relevant == 'true'
+    needs: [detect-changes, pr-ready]
+    if: needs.pr-ready.outputs.current == 'true' && needs.detect-changes.outputs.build_relevant == 'true'
     uses: ./.github/workflows/ci-build.yml
     permissions:
       # These are the CEILING for ci-build.yml, not a grant to its jobs: a called workflow can only
@@ -423,12 +447,13 @@ jobs:
 
   test:
     name: Test
-    needs: detect-changes
+    needs: [detect-changes, pr-ready]
     # `server_test_inputs` keeps a change that `build` ignores but a server test reads (the feature usage
     # catalogue, the markdown templates) from merging unchecked; only the server suite runs for it.
     if: >-
-      needs.detect-changes.outputs.build_relevant == 'true' ||
-      needs.detect-changes.outputs.server_test_inputs == 'true'
+      needs.pr-ready.outputs.current == 'true' &&
+      (needs.detect-changes.outputs.build_relevant == 'true' ||
+      needs.detect-changes.outputs.server_test_inputs == 'true')
     uses: ./.github/workflows/ci-test.yml
     permissions:
       contents: read
@@ -436,8 +461,9 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
-      # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
-      run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+      # PRs select affected tests, falling back to full suites for broad or unknown inputs.
+      # Push, merge-group, release and manual runs retain complete suites and coverage.
+      run_all_tests: ${{ github.event_name != 'pull_request' }}
       run_sandbox_tests: ${{ needs.detect-changes.outputs.has_sandbox_tests == 'true' }}
       # A pull request that cannot affect one suite does not run it (see `detect-changes`). Always true
       # for anything but a pull request.
@@ -492,14 +518,14 @@ jobs:
         with:
           script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
       - name: Download server JaCoCo XML
-        if: steps.changes.outputs.has_server_changes == 'true'
+        if: needs.test.outputs.affected_tests != 'true' && steps.changes.outputs.has_server_changes == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         continue-on-error: true
         with:
           name: Server JaCoCo XML
           path: build/reports/jacoco/
       - name: Download client coverage summaries
-        if: steps.changes.outputs.has_client_changes == 'true'
+        if: needs.test.outputs.affected_tests != 'true' && steps.changes.outputs.has_client_changes == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         continue-on-error: true
         with:
@@ -508,13 +534,13 @@ jobs:
           # local-pr-coverage.mjs reads it (VITEST_COVERAGE_SUMMARY). Don't shorten to build/test-results/.
           path: build/test-results/vitest/coverage/
       - name: Setup Node.js
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        if: needs.test.outputs.affected_tests != 'true' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
       - name: Generate coverage table
         id: coverage
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        if: needs.test.outputs.affected_tests != 'true' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         env:
           CLIENT_MODULES: ${{ steps.changes.outputs.client_modules }}
           SERVER_MODULES: ${{ steps.changes.outputs.server_modules }}
@@ -538,6 +564,7 @@ jobs:
           COVERAGE_TABLE: ${{ steps.coverage.outputs.coverage_table }}
           COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
           # The TEST job result, not the whole-run conclusion (which e2e pollutes on internal PRs).
+          TEST_SCOPE: ${{ needs.test.outputs.affected_tests == 'true' && 'affected' || 'full' }}
           TEST_CONCLUSION: ${{ needs.test.result }}
           TEST_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           POST_AUTHOR_COMMENT: 'false'
@@ -867,6 +894,7 @@ jobs:
       actions: read
       checks: write  # E2E JUnit reports create check runs
     with:
+      run_full_suite: ${{ github.event_name != 'pull_request' }}
       branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
@@ -929,6 +957,7 @@ jobs:
     if: ${{ !cancelled() }}
     needs:
       - detect-changes
+      - pr-ready
       - build
       - test
       - quality
@@ -999,6 +1028,7 @@ jobs:
     if: ${{ !cancelled() }}
     needs:
       - detect-changes
+      - pr-ready
       - build
       - test
       - quality

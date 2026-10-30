@@ -19,6 +19,11 @@ on:
         description: 'True when the umbrella was triggered by pull_request.'
         required: true
         type: boolean
+      run_full_suite:
+        description: 'Run the full suite; false runs relevant and smoke specs unless selection requires all tests.'
+        required: false
+        type: boolean
+        default: true
       pr_number:
         description: 'PR number (0 when not a PR).'
         required: false
@@ -41,6 +46,9 @@ on:
           (failures without history also remain blocking). `e2e` is part of the required
           `all-required-ci-passed` gate; only failures with known-flaky history are exonerated.'
         value: ${{ jobs.report-results.outputs.status }}
+      e2e_scope:
+        description: 'Requested E2E coverage: full suite or selected relevant and smoke specs.'
+        value: ${{ jobs.report-results.outputs.scope }}
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -220,6 +228,7 @@ jobs:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
           INPUT_RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
           INPUT_REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
+          INPUT_RUN_FULL_SUITE: ${{ inputs.run_full_suite }}
           INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
           INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
           INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
@@ -238,6 +247,7 @@ jobs:
 
             const relevantTests = process.env.INPUT_RELEVANT_TESTS || '';
             const remainingTests = process.env.INPUT_REMAINING_TESTS || '';
+            const runFullSuite = process.env.INPUT_RUN_FULL_SUITE === 'true';
             const emoji = process.env.INPUT_STATUS_EMOJI || '';
             const status = process.env.INPUT_STATUS_TEXT || '';
             const details = process.env.INPUT_DETAILS || '';
@@ -253,7 +263,9 @@ jobs:
             body += `| Phase | Status | Details |\n`;
             body += `|-------|--------|---------|\n`;
             body += `| **Phase 1** (Relevant) | ${emoji} ${status} | ${details} |\n`;
-            if (remainingTests) {
+            if (!runFullSuite) {
+              body += `| **Phase 2** (Remaining) | ⏭ Intentionally skipped | Selective PR coverage |\n`;
+            } else if (remainingTests) {
               body += `<!-- PHASE2 -->| **Phase 2** (Remaining) | ⏳ Pending... | |<!-- /PHASE2 -->\n`;
             } else {
               body += `| **Phase 2** (Remaining) | ⏭ Skipped | No remaining tests |\n`;
@@ -262,9 +274,11 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
-            body += `\n\n**Test Strategy:** Two-phase execution\n`;
+            body += runFullSuite
+              ? `\n\n**Requested scope:** Full suite (two-phase execution)\n`
+              : `\n\n**Requested scope:** Selected relevant + smoke specs. The full suite was not requested; Phase 2 is intentionally omitted.\n`;
             body += `- **Phase 1:** \`${relevantTests}\`\n`;
-            body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
+            body += `- **Phase 2 (${runFullSuite ? 'remaining' : 'not selected'}):** \`${remainingTests || 'None'}\`\n`;
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
             if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
@@ -291,6 +305,7 @@ jobs:
     if: |
       !cancelled() &&
       inputs.is_pr &&
+      inputs.run_full_suite &&
       needs.determine-tests.result == 'success' &&
       needs.determine-tests.outputs.run_all_tests != 'true' &&
       needs.determine-tests.outputs.remaining_tests != '' &&
@@ -521,7 +536,7 @@ jobs:
           workflow-run-id: ${{ github.run_id }}
           commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          test-notice: 'Running all tests (infrastructure/config changes detected)'
+          test-notice: 'Running all tests (global, infrastructure, or unclassified changes detected)'
 
       - name: Record test start time
         id: test-timer
@@ -766,10 +781,16 @@ jobs:
       pull-requests: write
     outputs:
       status: ${{ steps.overall-status.outputs.status }}
+      scope: ${{ steps.overall-status.outputs.scope }}
     steps:
       - name: Determine overall status
         id: overall-status
         env:
+          IS_PR: ${{ inputs.is_pr }}
+          RUN_FULL_SUITE: ${{ inputs.run_full_suite }}
+          RUN_ALL_TESTS: ${{ needs.determine-tests.outputs.run_all_tests }}
+          RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
+          REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
           # Raw per-phase test outcome (steps.<id>.outcome, not job `result`: test steps are
           # continue-on-error, so a failed test still leaves the job `success`). Empty when skipped.
           RELEVANT_RESULT: ${{ needs.run-e2e-relevant.outputs.tests }}
@@ -807,7 +828,6 @@ jobs:
               *)       status=error ;;
             esac
           done
-          echo "status=$status" >> "$GITHUB_OUTPUT"
 
           any_real=false; any_flaky=false
           for c in "$RELEVANT_CLASS" "$REMAINING_CLASS" "$ALL_PR_CLASS" "$ALL_NON_PR_CLASS"; do
@@ -838,6 +858,57 @@ jobs:
             esac
           done
 
+          # A skipped job is valid only when its scope was not requested. Explicitly require
+          # the selected path, so a skipped full-suite job or missing Phase 2 cannot look green
+          # merely because a surviving Phase 1 succeeded.
+          scope="Full suite"
+          phase2_intentionally_skipped=false
+          expected_phases=()
+          if [ "$IS_PR" = false ]; then
+            expected_phases+=(ALL_NON_PR)
+          elif [ "$IS_PR" != true ] || [ "$DETERMINE_JOB" != success ]; then
+            any_job_failed=true
+          elif [ "$RUN_ALL_TESTS" = true ] || { [ -z "$RELEVANT_TESTS" ] && [ -z "$REMAINING_TESTS" ]; }; then
+            expected_phases+=(ALL_PR)
+          elif [ "$RUN_ALL_TESTS" != false ] || [ -z "$RELEVANT_TESTS" ]; then
+            any_job_failed=true
+          else
+            expected_phases+=(RELEVANT)
+            if [ "$RUN_FULL_SUITE" = true ]; then
+              # Preserve the fail-fast skip when Phase 1 already has a blocking verdict.
+              if [ -n "$REMAINING_TESTS" ] && { [ "$RELEVANT_RESULT" = success ] || [ "$RELEVANT_CLASS" = flaky ]; }; then
+                expected_phases+=(REMAINING)
+              fi
+            elif [ "$RUN_FULL_SUITE" = false ]; then
+              scope="Selected relevant + smoke specs"
+              phase2_intentionally_skipped=true
+            else
+              any_job_failed=true
+            fi
+          fi
+          for phase in "${expected_phases[@]}"; do
+            job_var="${phase}_JOB"; result_var="${phase}_RESULT"; infra_var="${phase}_INFRA"
+            [ "${!job_var}" = success ] || any_job_failed=true
+            case "${!result_var}" in
+              success|failure) ;;
+              *) any_job_failed=true ;;
+            esac
+            [ "${!infra_var}" = false ] || any_job_failed=true
+          done
+          {
+            echo "scope=$scope"
+            echo "phase2_intentionally_skipped=$phase2_intentionally_skipped"
+          } >> "$GITHUB_OUTPUT"
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            {
+              echo "### Requested E2E scope: $scope"
+              if [ "$phase2_intentionally_skipped" = true ]; then
+                echo "Phase 2 was intentionally omitted for selective PR coverage; this run does not establish full-suite coverage."
+                printf '\nSelected paths: `%s`\n' "$RELEVANT_TESTS"
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
           # Every attempted phase must positively establish complete runner execution. Missing outputs
           # (including a pull/setup/container crash) cannot be exonerated by surviving known-flaky JUnit cases.
           for phase in RELEVANT REMAINING ALL_PR ALL_NON_PR; do
@@ -846,6 +917,13 @@ jobs:
               success|failure) [ "${!infra_var}" = false ] || any_job_failed=true ;;
             esac
           done
+
+          # Do not render a surviving phase's success as green when requested coverage
+          # did not complete. Preserve any actual test failure as the raw failure signal.
+          if [ "$any_job_failed" = true ] && [ "$status" != failure ]; then
+            status=error
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
 
           # The E2E verdict. `neutral` (exonerate) ONLY on positive proof of flakiness (a phase
           # classified `flaky`, none `real`/`unknown`/unclassified, and no job broke).
@@ -868,7 +946,11 @@ jobs:
             description="E2E failed and could not be classified"
           elif [ "$status" = success ] && [ "$any_job_failed" = false ]; then
             conclusion=success
-            description="E2E tests passed"
+            if [ "$phase2_intentionally_skipped" = true ]; then
+              description="Selected E2E tests passed"
+            else
+              description="E2E tests passed"
+            fi
           elif [ "$any_flaky" = true ] && [ "$any_job_failed" = false ] && [ "$status" != error ]; then
             conclusion=neutral
             description="E2E: only known-flaky tests failed (exonerated)"
@@ -903,6 +985,8 @@ jobs:
         continue-on-error: true
         env:
           INPUT_PHASE2_NOTES: ${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}
+          INPUT_SCOPE: ${{ steps.overall-status.outputs.scope }}
+          INPUT_PHASE2_INTENTIONALLY_SKIPPED: ${{ steps.overall-status.outputs.phase2_intentionally_skipped }}
           INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
           INPUT_COMMENT_ID: ${{ steps.find-e2e-comment.outputs.comment-id }}
           INPUT_CONCLUSION: ${{ steps.overall-status.outputs.conclusion }}
@@ -917,10 +1001,13 @@ jobs:
 
             const conclusion = process.env.INPUT_CONCLUSION;
             const description = process.env.INPUT_DESCRIPTION;
+            const scope = process.env.INPUT_SCOPE || 'Unknown';
+            const phase2IntentionallySkipped = process.env.INPUT_PHASE2_INTENTIONALLY_SKIPPED === 'true';
+            const scopeLine = `\n**Requested scope:** ${scope}${phase2IntentionallySkipped ? '. Phase 2 intentionally omitted; full-suite coverage was not requested.' : ''}\n`;
             // The comment carries the full three-state nuance the run conclusion can't: a known-flaky,
             // exonerated run reds nothing (the run passes) but reads as ⚪ here, distinct from a ✅ pass.
             const overallEmoji = conclusion === 'success' ? '✅' : conclusion === 'neutral' ? '⚪' : '❌';
-            const overallLine = `\n**Overall: ${overallEmoji} ${description}**`;
+            const overallLine = `\n**Overall: ${overallEmoji} ${description}**${scopeLine}`;
 
             const phase1Result = process.env.INPUT_PHASE1_RESULT;
             const phase2Result = process.env.INPUT_PHASE2_RESULT;
@@ -934,10 +1021,12 @@ jobs:
 
               if (body.includes('<!-- PHASE2 -->')) {
                 let phase2Reason = 'Skipped';
-                if (phase1Result === 'failure') {
+                if (phase2IntentionallySkipped) {
+                  phase2Reason = 'Intentionally skipped (selective PR coverage)';
+                } else if (phase1Result === 'failure') {
                   phase2Reason = 'Skipped (Phase 1 failed)';
                 } else if (phase2Result === 'skipped') {
-                  phase2Reason = 'Skipped (no remaining tests)';
+                  phase2Reason = 'Skipped (Phase 1 blocked further execution, or no remaining tests)';
                 }
                 body = body.replace(
                   /<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s,
@@ -954,7 +1043,7 @@ jobs:
               });
             } else {
               let body = `## End-to-End Test Results\n\n`;
-              body += `**Overall: ${overallEmoji} ${description}**\n\n`;
+              body += `**Overall: ${overallEmoji} ${description}**\n${scopeLine}\n`;
               body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
               if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
                 body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${context.runId}-phase1)`;

@@ -3,6 +3,7 @@
 // pullrequest-coverage-reporter.yml (fork PRs) so the rendering cannot drift.
 //
 // Env: PR_NUMBER, PR_AUTHOR, HAS_CLIENT, HAS_SERVER, COVERAGE_TABLE, COVERAGE_SUCCESS,
+//      TEST_SCOPE (full|affected|unavailable; omitted means full for existing callers),
 //      TEST_CONCLUSION, TEST_RUN_URL, POST_AUTHOR_COMMENT ('true' to also @-mention the author once
 //      — the fork path sets it true; the high-frequency in-run path sets it false to avoid stacking
 //      a fresh comment on every push, since the description update is already idempotent).
@@ -16,6 +17,7 @@ module.exports = async ({ github, context, core }) => {
     const hasServer = process.env.HAS_SERVER === 'true';
     const coverageTable = (process.env.COVERAGE_TABLE || '').trim();
     const coverageSuccess = process.env.COVERAGE_SUCCESS === 'true';
+    const testScope = process.env.TEST_SCOPE || 'full';
     const testConclusion = process.env.TEST_CONCLUSION;
     const testRunUrl = process.env.TEST_RUN_URL;
     const postAuthorComment = process.env.POST_AUTHOR_COMMENT === 'true';
@@ -31,9 +33,7 @@ module.exports = async ({ github, context, core }) => {
     }
     const afterCoverage = body.substring(coverageIndex + coverageSection.length);
     const nextSectionMatch = afterCoverage.match(/\n###\s/);
-    const nextSectionIndex = nextSectionMatch
-        ? coverageIndex + coverageSection.length + nextSectionMatch.index
-        : body.length;
+    const nextSectionIndex = nextSectionMatch ? coverageIndex + coverageSection.length + nextSectionMatch.index : body.length;
 
     const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
 
@@ -45,23 +45,30 @@ module.exports = async ({ github, context, core }) => {
         '<!-- The line coverage must be above 90% for changed files, and you must use extensive and useful assertions for server tests and expect statements for client tests. -->',
         '<!-- Note: Confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->',
         '<!--       Remove rows with only trivial changes from the table. -->',
-        ''
+        '',
     ];
 
     const noChanges = !hasClient && !hasServer;
     if (noChanges) {
         lines.push('**No code changes detected** - test coverage not required for this PR.', '');
+    } else if (testScope === 'affected') {
+        lines.push(
+            `**Affected test selection:** CI used affected-test selection for changed code. The selected-test workflow concluded with status \`${testConclusion}\`; full-suite coverage was not generated. See [workflow logs](${testRunUrl}).`,
+            '',
+        );
+    } else if (testScope !== 'full') {
+        lines.push(
+            `**Warning:** Full-suite coverage is unavailable for this run. Required coverage artifacts are missing or incomplete, so this run may contain only an affected-test selection. The workflow concluded with status \`${testConclusion}\`. See [workflow logs](${testRunUrl}).`,
+            '',
+        );
     } else if (!coverageSuccess) {
         lines.push(
             `**Warning:** Coverage table could not be generated. The \`Test\` job concluded with status \`${testConclusion}\`; coverage artifacts may be missing or incomplete. See [workflow logs](${testRunUrl}).`,
-            ''
+            '',
         );
     } else {
         if (testConclusion !== 'success') {
-            lines.push(
-                `**Note:** Some tests in the [Test job](${testRunUrl}) did not pass (\`${testConclusion}\`). Coverage below may be partial.`,
-                ''
-            );
+            lines.push(`**Note:** Some tests in the [Test job](${testRunUrl}) did not pass (\`${testConclusion}\`). Coverage below may be partial.`, '');
         }
         if (coverageTable) {
             lines.push(coverageTable, '');
@@ -79,10 +86,20 @@ module.exports = async ({ github, context, core }) => {
     // Notify the author (fork path only — the in-run path updates the description in place on every
     // push, so a fresh @-mention each time would be comment spam).
     if (!postAuthorComment || noChanges) return;
-    const commentBody = coverageSuccess
-        ? `@${author} Test coverage has been automatically updated in the PR description.`
-        : `@${author} Coverage table could not be generated. See the [workflow run](${testRunUrl}) for details.`;
+    let commentBody;
+    if (testScope === 'affected') {
+        commentBody = `@${author} Affected test selection status (\`${testConclusion}\`) has been updated in the PR description; full-suite coverage was not generated. See the [workflow run](${testRunUrl}).`;
+    } else if (testScope !== 'full') {
+        commentBody = `@${author} Full-suite coverage is unavailable for this run. The PR description now marks the coverage as incomplete. See the [workflow run](${testRunUrl}) for details.`;
+    } else {
+        commentBody = coverageSuccess
+            ? `@${author} Test coverage has been automatically updated in the PR description.`
+            : `@${author} Coverage table could not be generated. See the [workflow run](${testRunUrl}) for details.`;
+    }
     await github.rest.issues.createComment({
-        owner, repo, issue_number: prNumber, body: commentBody
+        owner,
+        repo,
+        issue_number: prNumber,
+        body: commentBody,
     });
 };

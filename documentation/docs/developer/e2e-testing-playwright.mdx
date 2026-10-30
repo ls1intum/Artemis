@@ -15,14 +15,14 @@ import e2eCiPipelineSsd from './assets/playwright_ci_pipeline_ssd.png';
 
 The Playwright test suite contains system tests verifying the most important features of Artemis.
 System tests test the whole system and therefore require a complete deployment of Artemis first.
-In order to prevent as many faults (bugs) as possible from being introduced into the develop branch,
-we want to execute the Playwright test suite whenever new commits are pushed to a Git branch
-(just like the unit and integration test suites).
+CI runs selected E2E tests for eligible internal pull requests and the full suite on integration-branch
+pushes and other full-run events.
 
 Artemis uses GitHub Actions as its CI platform. E2E tests run on self-hosted runners because they require
 substantial compute resources, access to a PostgreSQL database, and a locally deployed Artemis instance.
-To keep feedback cycles short, the pipeline uses a **two-phase execution model**: Phase 1 runs only the tests
-mapped to the files changed in the pull request, and Phase 2 runs the remaining tests only when Phase 1 passes.
+Ordinary PR runs execute the tests mapped to changed files plus authentication and health smoke specs.
+Cross-cutting or unclassified changes require the full suite. The reusable workflow also supports full PR
+coverage through two-phase execution.
 See the [CI Pipeline](#ci-pipeline) section for details.
 
 <Callout variant={CalloutVariant.info}>
@@ -663,21 +663,30 @@ misread the application state.
 
 ## CI Pipeline
 
-### Overview: two-phase execution
+### Overview: PR selection and full-suite runs {/* #overview-two-phase-execution */}
 
-Every pull request triggers a two-phase E2E pipeline. Phase 1 runs only the tests mapped to the files changed in
-the pull request; Phase 2 runs all remaining tests, but only when Phase 1 passes.
-This architecture ensures developers receive targeted feedback within minutes for the tests most likely to surface
-a regression, while still running the full suite before merge.
+For eligible internal pull requests, CI sets the reusable E2E workflow's `run_full_suite` input to `false`.
+When the selector establishes a safe mapping, Phase 1 runs the relevant tests plus `Login`, `Logout`, and
+`SystemHealth` smoke specs. Phase 2 is intentionally omitted, including when Phase 1 passes. A green result
+establishes coverage of that selected scope; it does not establish full-suite coverage.
+
+Configuration, shared infrastructure, cross-cutting source code, and unclassified changes require the full
+suite in a single PR job. Fork PRs do not start E2E because they cannot publish the required container image.
+The umbrella's change filters also skip E2E for drafts and changes limited to tests or documentation.
+
+Full PR mode remains available to callers of the reusable workflow with `run_full_suite=true`, its default.
+For mapped changes, Phase 1 runs first, then Phase 2 covers the remaining tests after Phase 1 passes its gate.
+A blocking Phase 1 verdict skips Phase 2; positively classified known-flaky failures can pass the gate.
+The diagram below describes this full PR mode, not ordinary selective PR runs.
 
 <Image
     src={e2eCiPipelineSsd}
-    alt="Two-phase CI pipeline activity diagram showing Developer, CI Pipeline, Helios, and Reports Dashboard swimlanes"
+    alt="Two-phase full PR mode with Developer, CI Pipeline, Helios, and Reports Dashboard swimlanes"
     size={ImageSize.large}
-    caption="Two-phase CI pipeline activity diagram. Phase 1 runs change-relevant tests first. If Phase 1 passes, Phase 2 runs the remaining tests. Both phases query Helios for flakiness scores and upload artifacts to the Reports Dashboard before posting the PR comment."
+    caption="Full PR mode only: Phase 1 runs change-relevant tests first, then Phase 2 runs remaining tests after Phase 1 passes its gate. Ordinary PR runs omit Phase 2. Full-suite fallback and non-PR runs use one full-suite job."
 />
 
-**Observed performance** (across 89 measured runs):
+**Observed full PR mode performance** (across 89 measured runs):
 
 | Metric          | Phase 1 |                       Phase 2 | Full suite (single-phase baseline) |
 | --------------- | ------: | ----------------------------: | ---------------------------------: |
@@ -685,14 +694,21 @@ a regression, while still running the full suite before merge.
 | P90 duration    | 8.3 min |                      29.4 min |                           32.2 min |
 | Pass rate       |     82% | 64.4% (of runs that reach it) |                                  — |
 
-When Phase 1 detects a failure, developers receive feedback within approximately four minutes and Phase 2
-does not consume compute resources.
+**Non-PR runs use the full suite:** pushes to `develop`, `main`, and release branches, published releases,
+merge-group events when a merge queue is configured, and manual CI runs. These runs use one full-suite job.
+Full-suite execution before every merge depends on which events the repository uses; a selective PR result
+alone makes no such guarantee.
 
-**For pushes to `develop` or `main`:** the pipeline skips the two-phase logic and runs the full suite in a single job.
-That job uses the multi-node stack (three Artemis nodes behind nginx) with Redis (Valkey) as distributed data provider, so
-no Hazelcast instance is created. The suite runs once, not once per provider, because the E2E cleanup stops every
-container on its host. Locally, `run-e2e-tests-local-multinode.sh --middleware redis` (or the `-fast` variant) runs the
-same configuration, and the default `hazelcast` middleware runs the embedded cluster.
+To request full CI and E2E for a branch, dispatch the **CI** workflow with `force_build=true`:
+
+```bash
+gh workflow run ci.yml --ref <branch> -f force_build=true
+```
+
+Non-PR E2E uses the multi-node stack (three Artemis nodes behind nginx) with Redis (Valkey) as the distributed
+data provider, so no Hazelcast instance is created. The suite runs once, not once per provider, because E2E
+cleanup stops every container on its host. Locally, `run-e2e-tests-local-multinode.sh --middleware redis`
+(or the `-fast` variant) runs the same configuration; the default `hazelcast` middleware uses the embedded cluster.
 
 ### Selective test execution and `e2e-test-mapping.json`
 
@@ -700,29 +716,20 @@ The `determine-tests` CI job reads `supporting_scripts/ci/E2E-tests/e2e-test-map
 The mapping file lists, for each Artemis module, the source paths that belong to it and the test paths that cover it.
 All `testPaths` and `allTestPaths` entries are resolved relative to `src/test/playwright/` (the Playwright test root).
 
+This excerpt shows two module mappings; the checked-in file contains the complete list.
+
 ```json
 {
     "allTestPaths": [
         "e2e/atlas/",
         "e2e/course/",
-        "e2e/exam/ExamAssessment.spec.ts",
-        "e2e/exam/ExamChecklists.spec.ts",
-        "e2e/exam/ExamCreationDeletion.spec.ts",
-        "e2e/exam/ExamDateVerification.spec.ts",
-        "e2e/exam/ExamManagement.spec.ts",
-        "e2e/exam/ExamParticipation.spec.ts",
-        "e2e/exam/ExamResults.spec.ts",
-        "e2e/exam/ExamTestRun.spec.ts",
-        "e2e/exam/test-exam/",
-        "e2e/exercise/ExerciseImport.spec.ts",
-        "e2e/exercise/file-upload/",
-        "e2e/exercise/modeling/",
-        "e2e/exercise/programming/",
-        "e2e/exercise/quiz-exercise/",
-        "e2e/exercise/text/",
+        "e2e/exam/",
+        "e2e/exercise/",
         "e2e/lecture/",
         "e2e/Login.spec.ts",
         "e2e/Logout.spec.ts",
+        "e2e/Passkey.spec.ts",
+        "e2e/PasskeyReminderPersistence.spec.ts",
         "e2e/SystemHealth.spec.ts"
     ],
     "mappings": {
@@ -736,19 +743,35 @@ All `testPaths` and `allTestPaths` entries are resolved relative to `src/test/pl
         }
     },
     "alwaysRunTests": ["e2e/Login.spec.ts", "e2e/Logout.spec.ts", "e2e/SystemHealth.spec.ts"],
-    "runAllTestsPatterns": ["src/main/resources/config/", "deployment/docker/", "build.gradle", "angular.json"]
+    "runAllTestsPatterns": [
+        "src/main/resources/config/",
+        "deployment/docker/",
+        "build.gradle",
+        "angular.json",
+        "config/client/",
+        "config/pnpm/",
+        "supporting_scripts/client/",
+        "supporting_scripts/e2e/",
+        "supporting_scripts/ci/E2E-tests/"
+    ]
 }
 ```
 
-The `determine-tests` job compares the PR branch against the base branch and maps each changed file to its module.
-The union of the test paths from all matched modules, plus the `alwaysRunTests` entries, forms the Phase 1 set.
-The remaining entries from `allTestPaths` form the Phase 2 set.
+The `determine-tests` job compares the complete committed PR diff from its merge base against the actual base
+branch. Renames classify both the old and new paths; deleted specs are not passed as Playwright arguments.
+The union of mapped tests, changed specs, and `alwaysRunTests` forms Phase 1. The selector computes the rest of
+the suite from `allTestPaths` plus discovered test paths even for spec-only changes. The workflow's
+`run_full_suite` input determines whether that remaining set runs as Phase 2.
 
-**Special cases:**
+Selection fails closed to one full-suite job when a file has no mapping, a mapped module has no tests, the
+mapping is invalid, a required mapped test is missing, or the base comparison cannot be computed. An empty
+committed diff also selects the full suite. Shared Playwright helpers and infrastructure require all tests,
+including helpers placed inside `e2e/`; only changed spec files can select themselves.
 
-- If a changed file matches a `runAllTestsPatterns` entry (e.g., a Docker or Gradle file), the pipeline runs all tests in a single job.
-- If only Playwright spec files were changed, Phase 2 is skipped and only Phase 1 runs.
-- If no module mapping is found for a changed file, it falls through to Phase 2.
+Entries in `runAllTestsPatterns` also require the full suite. Cross-cutting server modules (core, account,
+exercise, local CI, local VC, and build agent) and client core/shared code have the same full-suite fallback.
+A mapped Java API change in a domain such as quiz selects that domain's E2E tests plus the smoke specs;
+unknown source paths never degrade to smoke-only coverage.
 
 **Adding tests for a new module:** add an entry to `mappings` in `e2e-test-mapping.json` and add the test path(s) to `allTestPaths`.
 
@@ -760,11 +783,10 @@ time per phase; the test file paths assigned to each phase; links to the workflo
 a collapsible section listing each failed test name and its duration; and a flakiness score table for any failed
 tests when Helios data is available.
 
-Three outcomes are possible:
-
-1. **Both phases pass** — example: [PR #12516](https://github.com/ls1intum/Artemis/pull/12516)
-2. **Phase 1 passes, Phase 2 fails** — example: [PR #12489](https://github.com/ls1intum/Artemis/pull/12489)
-3. **Phase 1 fails, Phase 2 skipped** — example: [PR #12487](https://github.com/ls1intum/Artemis/pull/12487)
+The comment and job summary state the requested scope. Selective runs explicitly mark Phase 2 as
+intentionally omitted and report **Selected E2E tests passed** when successful. Full-suite fallback runs
+report all tests; full PR mode reports both phases or the blocking Phase 1 verdict that prevented Phase 2.
+Missing or cancelled jobs in the requested scope remain blocking rather than counting as a successful skip.
 
 ### Helios flakiness scores
 
@@ -849,7 +871,10 @@ When a new Artemis module is created or an existing module is significantly reor
 `supporting_scripts/ci/E2E-tests/e2e-test-mapping.json`:
 
 1. Add a new entry to `mappings` with the module's `sourcePaths` and `testPaths`.
-2. Add all new test paths to `allTestPaths` so Phase 2 covers them on unrelated PRs.
+2. Add all new test paths to `allTestPaths` so full PR mode includes them in its remaining-test set.
+
+A module without mapped tests keeps the full-suite fallback. Review the source-to-test mapping when shared
+behavior changes rather than assuming that every module can safely use selective coverage.
 
 ## Functionalities Covered
 

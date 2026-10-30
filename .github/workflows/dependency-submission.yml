@@ -10,8 +10,9 @@ name: Dependency Submission (Gradle)
 # default branch GitHub discards the result: "The snapshot was accepted, but it is not for the
 # default branch. It will not update dependency results for the repository."
 #
-# Turn that setting off once this workflow is on develop (Settings > Advanced Security > Dependency
-# graph > Automatic dependency submission), otherwise both run.
+# Keep Automatic dependency submission disabled in Settings > Advanced Security. This workflow is
+# the sole Gradle snapshot producer; Dependency graph and Dependabot alerts must remain enabled.
+# This repository setting is separate from workflow YAML (see README.md, Dependency submission).
 on:
   push:
     branches:

@@ -8,7 +8,7 @@ description: Diagnose failed, stuck, or missing Artemis CI checks and distinguis
 ## Keep completed implementations available for CI and review
 
 Use drafts only while the implementation is unfinished. Once implementation is complete, open the PR
-as non-draft or mark it ready for review immediately: full CI and review bots do not run on drafts.
+as non-draft or mark it ready for review immediately: E2E, CodeQL and review bots do not run on drafts.
 Pending or failing CI, reviews and test-server validation do not by themselves require draft status.
 Keep unverified checklist items open and require passing checks and approvals before merge; follow
 [PR readiness](../../documentation/docs/developer/development-process.mdx#pull-request-readiness).
@@ -28,6 +28,28 @@ before claiming that an advisory failure blocks merging.
 PR and non-PR E2E jobs can use different topologies: a pull request runs one node, develop runs three
 nodes with Redis (Valkey) as distributed data provider. Compare their definitions in
 `.github/workflows/ci-e2e.yml` before treating a develop-only failure as flaky.
+
+## Check the validation scope
+
+Ordinary pull requests run affected server modules and related client specs. The server planner's
+summary lists its module selection; the client job prints every selected spec. Shared contracts,
+configuration, missing history and ambiguous dependencies fall back to the full suite. Check the
+actual planner/helper output rather than assuming a PR always ran a subset.
+
+Affected runs keep test results but omit whole-project coverage gates and artifacts. The PR coverage
+section states the scope and result; a selected green run does not prove full-suite coverage. E2E
+runs relevant specs plus login, logout and health smoke tests, with full fallback for broad or unmapped
+changes. Phase 2 is intentionally skipped only in selected PR mode. Missing expected results still fail.
+
+Pushes to develop/main/release branches, merge-group events, releases and manual CI runs use full
+suites. To validate the complete PR branch before merging, dispatch **CI** with that branch and
+**Bypass change detection and run every job** enabled. Re-running an existing PR event preserves
+its affected scope. A merge group only provides pre-merge full validation when the repository uses it.
+
+The **Check Current PR Revision** job waits until a synchronize event has settled for 90 seconds,
+then checks that its head is still current. It runs on a GitHub-hosted runner before expensive
+build/test jobs reserve self-hosted capacity; lint starts immediately. API failures fail the required
+gate closed. Obsolete revisions skip expensive work and are superseded by the new PR run.
 
 ## Classify before changing code
 
