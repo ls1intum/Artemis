@@ -23,7 +23,8 @@ const REFERENCE_ATTRIBUTE = 'data-posting-reference';
 
 /** Marks the spot of the reference with this index in the Markdown that {@link PostingMarkdownComponent} renders. */
 export function postingReferencePlaceholder(index: number): string {
-    return `<span ${REFERENCE_ATTRIBUTE}="${index}"></span>`;
+    // The index is a number the posting computed itself, so no user text enters the markup.
+    return ['<span ', REFERENCE_ATTRIBUTE, '="', String(index), '"></span>'].join('');
 }
 
 /**
