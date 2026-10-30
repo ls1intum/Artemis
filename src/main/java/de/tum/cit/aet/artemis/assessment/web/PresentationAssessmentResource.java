@@ -129,7 +129,7 @@ public class PresentationAssessmentResource {
      * @return the name and login of the matching tutors, editors and instructors, at most 25
      */
     @GetMapping("courses/{courseId}/presentation-assessments/assessors")
-    @EnforceAtLeastEditorInCourse
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<UserNameAndLoginDTO>> searchPresentationAssessors(@PathVariable long courseId, @RequestParam String searchTerm) {
         return ResponseEntity.ok(presentationAssessmentService.searchAssessorOptions(courseId, searchTerm));
     }

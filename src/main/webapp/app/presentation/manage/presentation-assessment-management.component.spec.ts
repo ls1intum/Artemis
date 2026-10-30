@@ -360,9 +360,11 @@ describe('PresentationAssessmentManagementComponent', () => {
     });
 
     it.each([
-        { role: 'tutor', isAtLeastEditor: false, editable: [true, true, false] },
-        { role: 'editor', isAtLeastEditor: true, editable: [true, true, true] },
-    ])('should let a $role edit the matching rows', async ({ isAtLeastEditor, editable }) => {
+        { role: 'tutor', login: 'tutor1', isAtLeastEditor: false, isAtLeastInstructor: false, editable: [true, true, false] },
+        { role: 'editor', login: 'editor1', isAtLeastEditor: true, isAtLeastInstructor: false, editable: [true, false, true] },
+        { role: 'instructor', login: 'instructor1', isAtLeastEditor: true, isAtLeastInstructor: true, editable: [true, true, true] },
+    ])('should let a $role edit the matching rows', async ({ login, isAtLeastEditor, isAtLeastInstructor, editable }) => {
+        TestBed.inject(AccountService).userIdentity.set(Object.assign(new User(), { login }));
         presentationAssessmentService.findStudentRows.mockReturnValue(
             of(
                 new HttpResponse({
@@ -375,7 +377,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 }),
             ),
         );
-        component.course.set({ ...course, isAtLeastEditor } as Course);
+        component.course.set({ ...course, isAtLeastEditor, isAtLeastInstructor } as Course);
         component.retryLoading();
         fixture.detectChanges();
         await fixture.whenStable();
