@@ -399,6 +399,9 @@ public class SecurityConfiguration {
                         new AuthorizationDecision(elevatedAccessService.getObject().isAdminElevationActive(authentication.get())))
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
+                    // The agent API group of the specification generation, see OpenAPIConfiguration#agentApi. Like the two above, it
+                    // answers only while springdoc is enabled, which it is not on a running server.
+                    .requestMatchers(("/api-docs/agent")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
                     .requestMatchers("/api/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile

@@ -2,18 +2,22 @@ package de.tum.cit.aet.artemis;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
@@ -25,6 +29,9 @@ import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 
 /**
  * Configuration class for OpenAPI Spec customization.
@@ -46,6 +53,18 @@ public class OpenAPIConfiguration {
     private static final int RESOURCE_NUMBER_OF_CHARACTERS = 9;
 
     private static final int DTO_NUMBER_OF_CHARACTERS = 3;
+
+    private static final String AGENT_API_GROUP = "agent";
+
+    private static final String AGENT_SECURITY_SCHEME = "personalAccessToken";
+
+    private static final String AGENT_API_VERSION = "1";
+
+    private static final String AGENT_API_DESCRIPTION = """
+            The part of the Artemis REST API that a personal access token can call. Create a token in User Settings under Agent Access \
+            and send it as `Authorization: Bearer art_pat_...`. A token acts as its owner, with at most the owner's role in each course, \
+            and only on operations whose scopes it holds. Content created through this API is a draft until a person publishes it in \
+            the Artemis web interface; announcements are the exception and are visible to students at once.""";
 
     @Value("${artemis.version}")
     private String version;
@@ -205,6 +224,47 @@ public class OpenAPIConfiguration {
                             ? value.substring(0, value.length() - DTO_NUMBER_OF_CHARACTERS)
                             : value);
         }
+    }
+
+    /**
+     * Registers the agent API, a second specification that lists only the endpoints a personal access token can call, that is those
+     * annotated with {@link AllowedScopes}. It exists only while the specifications are generated, so a running server does not
+     * serve it. It is deliberately not limited to the packages of the application specification, which feeds the generated client.
+     *
+     * @return the group for the agent API
+     */
+    @Bean
+    @ConditionalOnProperty(name = "artemis.openapi-docs-generation", havingValue = "true")
+    public GroupedOpenApi agentApi() {
+        return GroupedOpenApi.builder().group(AGENT_API_GROUP).packagesToScan("de.tum.cit.aet.artemis")
+                .addOpenApiMethodFilter(method -> method.isAnnotationPresent(AllowedScopes.class)).addOpenApiCustomizer(agentApiCustomizer()).build();
+    }
+
+    /**
+     * Describes the agent API for the people and programs that read it: how to authenticate, what the scopes mean, which errors
+     * every operation can return. It is applied only to the agent group, never to the application specification.
+     */
+    private OpenApiCustomizer agentApiCustomizer() {
+        return openApi -> {
+            // The version of this contract, not of Artemis: it would otherwise fall behind with every release, because the file is
+            // published rather than bumped with the application version. Which operations exist depends on the instance's version.
+            openApi.info(new Info().title("Artemis API for coding agents").version(AGENT_API_VERSION).description(AGENT_API_DESCRIPTION));
+            openApi.servers(List.of(new Server().url("https://artemis.example.org").description("Replace with the address of your Artemis instance.")));
+            if (openApi.getComponents() == null) {
+                openApi.components(new Components());
+            }
+            openApi.getComponents().addSecuritySchemes(AGENT_SECURITY_SCHEME,
+                    new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").description("A personal access token, which starts with art_pat_."));
+            openApi.addSecurityItem(new SecurityRequirement().addList(AGENT_SECURITY_SCHEME));
+            openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
+                ApiResponses responses = operation.getResponses();
+                responses.putIfAbsent("400", new ApiResponse()
+                        .description("The request is invalid. The body is an RFC 7807 problem document with a message and, for validation errors, a list of fieldErrors."));
+                responses.putIfAbsent("401", new ApiResponse().description("The token is missing, unknown, expired or revoked, or its owner is an administrator."));
+                responses.putIfAbsent("403", new ApiResponse().description("The token lacks a scope this operation needs, or its owner lacks the required role in the course."));
+                responses.putIfAbsent("404", new ApiResponse().description("The course or object does not exist, or is not visible to the token's owner."));
+            }));
+        };
     }
 
     /**

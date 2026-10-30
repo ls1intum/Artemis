@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.security.allowedScopes.PersonalAccessTokenAut
 public class PersonalAccessTokenFilter extends GenericFilterBean {
 
     /** A separate logger so that operators can route the audit trail of token calls independently. */
-    private static final Logger auditLog = LoggerFactory.getLogger("de.tum.cit.aet.artemis.agentaccess.audit");
+    private static final Logger log = LoggerFactory.getLogger("de.tum.cit.aet.artemis.agentaccess.audit");
 
     private static final String API_PREFIX = "/api/";
 
@@ -76,7 +76,7 @@ public class PersonalAccessTokenFilter extends GenericFilterBean {
         }
         finally {
             // The path only, never the query string, which can carry user data.
-            auditLog.info("token={} user={} {} {} -> {}", authentication.get().getTokenId(), authentication.get().getName(), request.getMethod(), request.getRequestURI(),
+            log.info("token={} user={} {} {} -> {}", authentication.get().getTokenId(), authentication.get().getName(), request.getMethod(), request.getRequestURI(),
                     response.getStatus());
         }
     }
