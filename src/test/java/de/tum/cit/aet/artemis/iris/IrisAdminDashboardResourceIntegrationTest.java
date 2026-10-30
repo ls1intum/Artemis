@@ -12,9 +12,16 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
@@ -31,8 +38,10 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardBreakdownEntryDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardConfigDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesEntryDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -64,6 +73,9 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
 
     @Autowired
     private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
+
+    @Autowired
+    private JsonMapper jsonMapper;
 
     @BeforeEach
     void initTestCase() {
@@ -104,6 +116,136 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getBreakdown_asAdmin_succeeds() throws Exception {
         request.get(BASE_URL + "breakdown?from=2026-05-26T00:00:00Z&to=2026-05-27T00:00:00Z&dimension=MODEL", HttpStatus.OK, Object.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "overview", "time-series&span=DAY&metric=SESSIONS", "breakdown&dimension=MODEL", "config" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void dashboardReads_asStudent_forbidden(String endpoint) throws Exception {
+        request.get(dashboardUrl(endpoint), HttpStatus.FORBIDDEN, Object.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "overview", "time-series&span=DAY&metric=SESSIONS", "breakdown&dimension=MODEL", "config" })
+    @WithAnonymousUser
+    void dashboardReads_asAnonymous_unauthorized(String endpoint) throws Exception {
+        request.get(dashboardUrl(endpoint), HttpStatus.UNAUTHORIZED, Object.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "overview", "time-series&span=DAY&metric=SESSIONS", "breakdown&dimension=MODEL", "breakdown&dimension=CHAT_MODE", "breakdown&dimension=COURSE" })
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void dashboardReads_omittedSelectionEqualsAll(String endpoint) throws Exception {
+        JsonNode implicit = request.get(dashboardUrl(endpoint), HttpStatus.OK, JsonNode.class);
+        JsonNode explicit = request.get(dashboardUrl(endpoint) + "&aiSelection=ALL", HttpStatus.OK, JsonNode.class);
+        assertThat(implicit).isEqualTo(explicit);
+        request.get(dashboardUrl(endpoint) + "&aiSelection=NO_AI", HttpStatus.BAD_REQUEST, Object.class);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "overview,to=2023-02-04T00:00:00Z", "overview,from=2023-02-03T00:00:00Z", "overview,from=invalid&to=2023-02-04T00:00:00Z",
+            "time-series,from=2023-02-03T00:00:00Z&to=2023-02-04T00:00:00Z&metric=SESSIONS", "time-series,from=2023-02-03T00:00:00Z&to=2023-02-04T00:00:00Z&span=DAY",
+            "time-series,from=2023-02-03T00:00:00Z&to=2023-02-04T00:00:00Z&span=DAY&metric=INVALID",
+            "time-series,from=2023-02-03T00:00:00Z&to=2023-02-04T00:00:00Z&span=INVALID&metric=SESSIONS", "breakdown,from=2023-02-03T00:00:00Z&to=2023-02-04T00:00:00Z",
+            "breakdown,from=2023-02-03T00:00:00Z&to=2023-02-04T00:00:00Z&dimension=INVALID" })
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void dashboardReads_invalidParameters_badRequest(String endpoint, String query) throws Exception {
+        request.get(BASE_URL + endpoint + "?" + query, HttpStatus.BAD_REQUEST, Object.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "overview", "time-series&span=DAY&metric=SESSIONS", "breakdown&dimension=MODEL" })
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void dashboardReads_missingWindowParameters_badRequest(String endpoint) throws Exception {
+        request.get(dashboardUrl(endpoint).replace("from=2023-02-03T00:00:00Z&", ""), HttpStatus.BAD_REQUEST, Object.class);
+        request.get(dashboardUrl(endpoint).replace("&to=2023-02-04T00:00:00Z", ""), HttpStatus.BAD_REQUEST, Object.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "overview", "time-series&span=DAY&metric=SESSIONS", "breakdown&dimension=MODEL" })
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void dashboardReads_windowBoundaries(String endpoint) throws Exception {
+        String url = dashboardUrl(endpoint);
+        request.get(url.replace("2023-02-04T00:00:00Z", "2023-02-03T00:00:00Z"), HttpStatus.BAD_REQUEST, Object.class);
+        request.get(url.replace("2023-02-04T00:00:00Z", "2023-02-02T00:00:00Z"), HttpStatus.BAD_REQUEST, Object.class);
+        // Exactly 90 days is accepted; one extra second exceeds the configured maximum.
+        request.get(url.replace("2023-02-04T00:00:00Z", "2023-05-04T00:00:00Z"), HttpStatus.OK, Object.class);
+        request.get(url.replace("2023-02-04T00:00:00Z", "2023-05-04T00:00:01Z"), HttpStatus.BAD_REQUEST, Object.class);
+        Instant future = de.tum.cit.aet.artemis.core.util.TimeUtil.now().toInstant().plus(Duration.ofDays(3));
+        request.get(url.replace("2023-02-03T00:00:00Z", future.minus(Duration.ofDays(1)).toString()).replace("2023-02-04T00:00:00Z", future.toString()), HttpStatus.BAD_REQUEST,
+                Object.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "day", "WEEK", "MONTH", "QUARTER", "YEAR" })
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void timeSeries_emptyWindow_keepsUtcBucketAndZeroMap(String span) throws Exception {
+        JsonNode body = request.get(dashboardUrl("time-series&span=" + span + "&metric=SESSIONS"), HttpStatus.OK, JsonNode.class);
+        assertThat(body.get("metric").asString()).isEqualTo("SESSIONS");
+        assertThat(body.get("entries").size()).isEqualTo(1);
+        JsonNode bucket = body.get("entries").get(0);
+        assertThat(bucket.get("bucketStart").asString()).isEqualTo("2023-02-03T00:00:00Z");
+        assertThat(bucket.get("series").size()).isEqualTo(2);
+        assertThat(bucket.get("series").get("total").asDouble()).isZero();
+        assertThat(bucket.get("series").get("active").asDouble()).isZero();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "SESSIONS,total active", "MESSAGES,user llm total", "NO_RESPONSE_RATE,rate count", "RESPONSE_TIME,avg p50 p95", "RATINGS,thumbsUp thumbsDown total",
+            "TOKEN_COST,chat other total", "ENGAGEMENT,rate activeSessions totalSessions" })
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void timeSeries_allMetrics_keepCompleteNumericMaps(String metric, String expectedKeys) throws Exception {
+        JsonNode body = request.get(dashboardUrl("time-series&span=DAY&metric=" + metric), HttpStatus.OK, JsonNode.class);
+        assertThat(body.get("metric").asString()).isEqualTo(metric);
+        assertThat(body.get("entries").size()).isEqualTo(1);
+        JsonNode series = body.get("entries").get(0).get("series");
+        String[] keys = expectedKeys.split(" ");
+        assertThat(series.size()).isEqualTo(keys.length);
+        for (String key : keys) {
+            assertThat(series.has(key)).as(key).isTrue();
+            assertThat(series.get(key).isNumber()).isTrue();
+            assertThat(series.get(key).asDouble()).isZero();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void overview_emptyWindow_serializesAllTwentyZeroMetrics() throws Exception {
+        JsonNode body = request.get(dashboardUrl("overview"), HttpStatus.OK, JsonNode.class);
+        assertThat(body.size()).isEqualTo(20);
+        for (var component : IrisDashboardOverviewDTO.class.getRecordComponents()) {
+            assertThat(body.has(component.getName())).as(component.getName()).isTrue();
+            assertThat(body.get(component.getName()).isNumber()).isTrue();
+            assertThat(body.get(component.getName()).asDouble()).isZero();
+        }
+        assertThat(request.get(dashboardUrl("breakdown&dimension=MODEL"), HttpStatus.OK, JsonNode.class).isEmpty()).isTrue();
+    }
+
+    @Test
+    void dashboardSerialization_preservesFalseZeroAndNonEmptyOmissions() {
+        var config = new IrisDashboardConfigDTO(90, 5, false, "", false, 0, 0, 0, 0, 0, 0);
+        JsonNode body = jsonMapper.valueToTree(config);
+        assertThat(body.size()).isEqualTo(10);
+        assertThat(body.has("digestCron")).isFalse();
+        for (var component : IrisDashboardConfigDTO.class.getRecordComponents()) {
+            if (!component.getName().equals("digestCron")) {
+                assertThat(body.has(component.getName())).as(component.getName()).isTrue();
+            }
+        }
+        assertThat(body.get("digestEnabled").asBoolean()).isFalse();
+        assertThat(body.get("alertEnabled").asBoolean()).isFalse();
+        assertThat(body.get("alertNoResponseRateThreshold").asDouble()).isZero();
+        JsonNode entry = jsonMapper.valueToTree(new IrisDashboardBreakdownEntryDTO("", Map.of("sessions", 0.0)));
+        assertThat(entry.has("label")).isFalse();
+        assertThat(entry.get("values").get("sessions").asDouble()).isZero();
+        JsonNode bucket = jsonMapper.valueToTree(new IrisDashboardTimeSeriesEntryDTO(Instant.parse("2023-02-03T00:00:00Z"), Map.of("total", 0.0)));
+        assertThat(bucket.get("bucketStart").asString()).isEqualTo("2023-02-03T00:00:00Z");
+        assertThat(bucket.get("series").get("total").asDouble()).isZero();
+    }
+
+    private static String dashboardUrl(String endpoint) {
+        String[] parts = endpoint.split("&", 2);
+        return BASE_URL + parts[0] + "?from=2023-02-03T00:00:00Z&to=2023-02-04T00:00:00Z" + (parts.length == 2 ? "&" + parts[1] : "");
     }
 
     /**
@@ -281,7 +423,9 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         assertThat(local.sessionsWithThumbsUp()).isZero();
         assertThat(local.sessionsWithThumbsDown()).isEqualTo(1);
 
-        // Time series
+        // Time series: compare defaults with populated data so a wrong implicit filter cannot hide behind an empty result.
+        assertThat(singleDaySeries(window, "RATINGS", "&aiSelection=ALL")).isEqualTo(singleDaySeries(window, "RATINGS", ""));
+        assertThat(singleDaySeries(window, "RESPONSE_TIME", "&aiSelection=ALL")).isEqualTo(singleDaySeries(window, "RESPONSE_TIME", ""));
         assertThat(singleDayResponseTime(window, "")).isCloseTo(90.0, within(0.001));
         assertThat(singleDayResponseTime(window, "&aiSelection=CLOUD")).isCloseTo(10.0, within(0.001));
         assertThat(singleDayResponseTime(window, "&aiSelection=LOCAL")).isCloseTo(200.0, within(0.001));
@@ -290,6 +434,8 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         assertThat(singleDaySeries(window, "RATINGS", "&aiSelection=LOCAL")).containsEntry("thumbsUp", 0.0).containsEntry("thumbsDown", 1.0).containsEntry("total", 1.0);
 
         // Breakdowns: sessions per course and token usage per model
+        assertThat(courseSessions(window, "&aiSelection=ALL", course)).isEqualTo(courseSessions(window, "", course));
+        assertThat(models(window, "&aiSelection=ALL")).containsExactlyElementsOf(models(window, ""));
         assertThat(courseSessions(window, "", course)).isEqualTo(3.0);
         assertThat(courseSessions(window, "&aiSelection=CLOUD", course)).isEqualTo(1.0);
         assertThat(courseSessions(window, "&aiSelection=LOCAL", course)).isEqualTo(1.0);

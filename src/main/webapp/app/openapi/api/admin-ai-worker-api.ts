@@ -15,6 +15,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
 import { WorkerStatus } from '../model/worker-status';
 
 @Injectable({ providedIn: 'root' })
@@ -31,4 +32,17 @@ export class AdminAiWorkerApi {
         return this.http.get<Array<WorkerStatus>>(url);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ */
+export function getWorkersResource(): HttpResourceRef<Array<WorkerStatus> | undefined> {
+    return httpResource<Array<WorkerStatus>>(() => {
+        return `${BASE_PATH}/api/aiworker/admin/workers`;
+    });
 }

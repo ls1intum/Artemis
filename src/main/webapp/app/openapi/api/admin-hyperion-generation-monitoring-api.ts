@@ -15,6 +15,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
 import { ActiveGeneration } from '../model/active-generation';
 import { appendQueryParam } from './query-params';
 
@@ -48,4 +49,17 @@ export class AdminHyperionGenerationMonitoringApi {
         return this.http.get<Array<ActiveGeneration>>(url);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ */
+export function getActiveGenerationsResource(): HttpResourceRef<Array<ActiveGeneration> | undefined> {
+    return httpResource<Array<ActiveGeneration>>(() => {
+        return `${BASE_PATH}/api/hyperion/admin/generations`;
+    });
 }

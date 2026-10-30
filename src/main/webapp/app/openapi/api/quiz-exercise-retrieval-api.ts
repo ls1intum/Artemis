@@ -15,6 +15,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
+import { Signal } from '@angular/core';
 import { SearchResultPageDTOQuizExerciseForSearch } from '../model/search-result-page-dto-quiz-exercise-for-search';
 import { QuizExerciseDetails } from '../model/quiz-exercise-details';
 import { QuizExerciseForStudentResponse } from '../model/quiz-exercise-for-student-response';
@@ -91,4 +93,105 @@ export class QuizExerciseRetrievalApi {
         return this.http.get<Array<QuizExerciseForCourse>>(url);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ * Query parameters for getAllExercisesOnPage
+ */
+export interface GetAllExercisesOnPageParams {
+    page: number;
+    pageSize: number;
+    sortingOrder: 'ASCENDING' | 'DESCENDING';
+    sortedColumn: string;
+    searchTerm?: string;
+    isCourseFilter?: boolean;
+    isExamFilter?: boolean;
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param params Optional signal containing query parameters
+ */
+export function getAllExercisesOnPageResource(params: Signal<GetAllExercisesOnPageParams>): HttpResourceRef<SearchResultPageDTOQuizExerciseForSearch | undefined> {
+    return httpResource<SearchResultPageDTOQuizExerciseForSearch>(() => {
+        const queryParams = params();
+        const searchParams = new URLSearchParams();
+        appendQueryParam(searchParams, 'page', queryParams.page);
+        appendQueryParam(searchParams, 'pageSize', queryParams.pageSize);
+        appendQueryParam(searchParams, 'sortingOrder', queryParams.sortingOrder);
+        appendQueryParam(searchParams, 'sortedColumn', queryParams.sortedColumn);
+        appendQueryParam(searchParams, 'searchTerm', queryParams.searchTerm);
+        appendQueryParam(searchParams, 'isCourseFilter', queryParams.isCourseFilter);
+        appendQueryParam(searchParams, 'isExamFilter', queryParams.isExamFilter);
+        const query = searchParams.toString();
+        return `${BASE_PATH}/api/quiz/quiz-exercises${query ? `?${query}` : ''}`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param quizExerciseId
+ */
+export function getQuizExerciseResource(quizExerciseId: Signal<number | undefined> | number): HttpResourceRef<QuizExerciseDetails | undefined> {
+    return httpResource<QuizExerciseDetails>(() => {
+        const quizExerciseIdValue = typeof quizExerciseId === 'function' ? quizExerciseId() : quizExerciseId;
+        if (quizExerciseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/quiz/quiz-exercises/${quizExerciseIdValue}`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param quizExerciseId
+ */
+export function getQuizExerciseForStudentResource(quizExerciseId: Signal<number | undefined> | number): HttpResourceRef<QuizExerciseForStudentResponse | undefined> {
+    return httpResource<QuizExerciseForStudentResponse>(() => {
+        const quizExerciseIdValue = typeof quizExerciseId === 'function' ? quizExerciseId() : quizExerciseId;
+        if (quizExerciseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/quiz/quiz-exercises/${quizExerciseIdValue}/for-student`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param courseId
+ */
+export function getQuizExercisesForCourseResource(courseId: Signal<number | undefined> | number): HttpResourceRef<Array<QuizExerciseForCourse> | undefined> {
+    return httpResource<Array<QuizExerciseForCourse>>(() => {
+        const courseIdValue = typeof courseId === 'function' ? courseId() : courseId;
+        if (courseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/quiz/courses/${courseIdValue}/quiz-exercises`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param examId
+ */
+export function getQuizExercisesForExamResource(examId: Signal<number | undefined> | number): HttpResourceRef<Array<QuizExerciseForCourse> | undefined> {
+    return httpResource<Array<QuizExerciseForCourse>>(() => {
+        const examIdValue = typeof examId === 'function' ? examId() : examId;
+        if (examIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/quiz/exams/${examIdValue}/quiz-exercises`;
+    });
 }
