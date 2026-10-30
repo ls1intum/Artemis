@@ -263,13 +263,13 @@ describe('ProgrammingFeedbackItemService', () => {
     });
 
     it('should show a non-graded suggestion about the first line with its title and as line 1', () => {
-        const feedback = {
+        const feedback: Feedback = {
             id: 1,
             type: FeedbackType.AUTOMATIC,
             text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Add a package declaration`,
             detailText: 'The file has no package declaration.',
             reference: 'file:src/main/java/Example.java_line:0',
-        } as Feedback;
+        };
 
         const item = service.create([feedback], false)[0];
 
@@ -278,23 +278,23 @@ describe('ProgrammingFeedbackItemService', () => {
     });
 
     it('should show a non-graded suggestion range counted from 1', () => {
-        const feedback = {
+        const feedback: Feedback = {
             id: 1,
             type: FeedbackType.AUTOMATIC,
             text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Simplify the loop`,
             reference: 'file:src/main/java/Example.java_line:0-2',
-        } as Feedback;
+        };
 
         expect(service.create([feedback], false)[0].codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 1, lineEnd: 3 });
     });
 
     it('should not show a code reference for a graded feedback suggestion that refers to line 0', () => {
-        const feedback = {
+        const feedback: Feedback = {
             id: 1,
             type: FeedbackType.MANUAL,
             text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Review the class`,
             reference: 'file:src/main/java/Example.java_line:0',
-        } as Feedback;
+        };
 
         expect(service.create([feedback], false)[0].codeReference).toBeUndefined();
     });
