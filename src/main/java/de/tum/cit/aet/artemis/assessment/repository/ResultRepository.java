@@ -487,18 +487,18 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<Result> findAllByLastModifiedDateAfter(Instant lastModifiedDate);
 
     /**
-     * Returns whether a result exists for the given participation.
+     * Checks if a result for the given participation exists.
      *
-     * @param participationId the participation ID
-     * @return whether a result exists
+     * @param participationId the id of the participation to check.
+     * @return true if a result for the given participation exists, false otherwise.
      */
     boolean existsBySubmissionParticipationId(long participationId);
 
     /**
-     * Returns whether a result exists for the given submission.
+     * Checks if a result exists for the given submission ID.
      *
-     * @param submissionId the submission ID
-     * @return whether a result exists
+     * @param submissionId the ID of the submission to check.
+     * @return true if a result exists for the given submission ID, false otherwise.
      */
     boolean existsBySubmissionId(long submissionId);
 
