@@ -57,7 +57,7 @@ class CourseHomeTeachingContextIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = PREFIX + "instructor1", roles = "USER")
     void contextUpdatePreservesConfigurationAndOmissionPreservesContext() throws Exception {
         var payload = payload();
         payload.put("studentWelcomeContext", "Work together and explain your reasoning.");
@@ -75,7 +75,7 @@ class CourseHomeTeachingContextIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = PREFIX + "instructor1", roles = "USER")
     void rejectsOverlongContextAndAcceptsBoundary() throws Exception {
         var payload = payload();
         payload.put("studentWelcomeContext", "x".repeat(2001));
@@ -119,7 +119,8 @@ class CourseHomeTeachingContextIntegrationTest extends AbstractSpringIntegration
 
     private void assertPreserved(String context) throws Exception {
         var configuration = configurations.findByCourseId(course.getId()).orElseThrow();
-        var loaded = request.get("/api/course/courses/" + course.getId(), org.springframework.http.HttpStatus.OK, de.tum.cit.aet.artemis.course.dto.CourseManagementDTO.class);
+        var loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", org.springframework.http.HttpStatus.OK,
+                de.tum.cit.aet.artemis.course.dto.CourseManagementDTO.class);
         assertThat(loaded.courseConfiguration().studentWelcomeContext()).isEqualTo(context);
         assertThat(configuration.getId()).isEqualTo(configurationId);
         assertThat(configuration.getStudentWelcomeContext()).isEqualTo(context);
