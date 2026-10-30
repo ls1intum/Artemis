@@ -1,6 +1,10 @@
 {
     "artemisApp": {
         "participation": {
+            "triggerOptions": "Trigger builds",
+            "searchHint": "Separate search terms with commas",
+            "searchStudents": "Search students",
+            "searchTeams": "Search teams",
             "onlineEditor": "Online editor",
             "home": {
                 "title": "Participation",
@@ -8,7 +12,11 @@
             },
             "filterGroup": {
                 "submissions": "Submissions",
-                "results": "Results"
+                "results": "Results",
+                "assessmentType": "Assessment type",
+                "mode": "Participation mode",
+                "gradingStatus": "Grading status",
+                "assessmentStatus": "Assessment status"
             },
             "created": "Created new participation with identifier {{ param }}",
             "updated": "Updated participation with identifier {{ param }}",
@@ -80,6 +88,9 @@
                 "anonymousAssessment": "The exercise due date has passed and manual assessment is enabled. Student names and direct repository access are hidden to keep assessment anonymous. You can still view and download anonymized submissions in the assessment dashboard.",
                 "assessmentDashboard": "Open assessment dashboard",
                 "noDueDate": "You can see student names and use Code to view or clone repositories to help students. Tutor access is read-only. Manual assessment is enabled, but no exercise due date is set. Names and direct repository access will be hidden once a due date is set and has passed."
+            },
+            "filters": {
+                "remove": "Remove filter: {{ filter }}"
             }
         }
     }

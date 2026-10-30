@@ -48,6 +48,7 @@ export interface CourseCompetencyFilter {
 export interface CompetencyPageableSearch extends PageableSearch, CourseCompetencyFilter {}
 
 export interface ParticipationSearch extends SearchTermPageableSearch {
+    /** Comma-separated selections: alternatives within a category, combined across categories. */
     filterProp?: string;
     scoreRangeLower?: number;
     scoreRangeUpper?: number;

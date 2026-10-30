@@ -66,7 +66,7 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
         const triggerSpy = vi.spyOn(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').mockReturnValue(of());
 
         fixture.detectChanges();
-        const button = fixture.debugElement.nativeElement.querySelector('#trigger-all-button button');
+        const button = fixture.debugElement.nativeElement.querySelector('#trigger-all-button');
         button.click();
 
         expect(openSpy).toHaveBeenCalledOnce();
@@ -94,7 +94,7 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
         const triggerSpy = vi.spyOn(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').mockReturnValue(of());
 
         fixture.detectChanges();
-        const button = fixture.debugElement.nativeElement.querySelector('#trigger-all-button button');
+        const button = fixture.debugElement.nativeElement.querySelector('#trigger-all-button');
         button.click();
 
         // undefined == dialog dismissed

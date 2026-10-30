@@ -158,7 +158,7 @@ describe('ParticipationComponent', () => {
             componentFixture.detectChanges();
             await componentFixture.whenStable();
             componentFixture.detectChanges();
-            return componentFixture.nativeElement.querySelector('jhi-table-view tbody tr') as HTMLElement;
+            return componentFixture.nativeElement.querySelector('tumaet-ui-table tbody tr') as HTMLElement;
         };
 
         it('should show the state and the result of a participation side by side', () => {
@@ -298,7 +298,7 @@ describe('ParticipationComponent', () => {
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
             const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
             componentFixture.detectChanges();
-            component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50, searchTerm: 'alice', sort: { field: 'participantName', direction: 'asc' } });
             componentFixture.detectChanges();
             expect(component.hideParticipantInformation()).toBe(false);
             search.mockReturnValue(of({ content: [{ participationId: 3, submissionCount: 1, testRun: false }], totalElements: 1 }));
@@ -339,11 +339,11 @@ describe('ParticipationComponent', () => {
             expect(
                 component.columns().some((column) => column.headerKey === 'artemisApp.participation.students' || column.headerKey === 'artemisApp.participation.repository'),
             ).toBe(false);
-            const table: HTMLElement = componentFixture.nativeElement.querySelector('jhi-table-view');
+            const table: HTMLElement = componentFixture.nativeElement.querySelector('tumaet-ui-table');
             expect(table.querySelector('tbody td')?.textContent?.trim()).toBe(String(sampleDto.participationId));
             expect(table.textContent).not.toContain(sampleDto.participantName);
             expect(table.querySelector('a[href*="/teams/"]')).toBeNull();
-            expect(table.querySelector('jhi-search-filter')).toBeNull();
+            expect(table.querySelector('input[type=search]')).toBeNull();
         });
 
         it.each([false, true])('should retain identity columns and search for instructors (team mode: %s)', (teamMode) => {
@@ -361,10 +361,10 @@ describe('ParticipationComponent', () => {
             'should discard stale identity search and sorting for tutors while retaining filters and paging (%s)',
             (sortField) => {
                 component.exercise.set({ ...exercise, isAtLeastInstructor: false });
-                component.activeFilter.set(FilterProp.NO_SUBMISSIONS);
+                component.activeFilters.set([FilterProp.NO_SUBMISSIONS]);
                 const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-                component.onLazyLoad({ first: 50, rows: 25, globalFilter: 'alice', sortField });
+                component.onDataRequest({ pageIndex: 2, pageSize: 25, searchTerm: 'alice', sort: { field: sortField, direction: 'asc' } });
 
                 expect(searchSpy).toHaveBeenCalledWith(
                     exercise.id,
@@ -377,7 +377,7 @@ describe('ParticipationComponent', () => {
             component.exercise.set({ ...exercise, isAtLeastInstructor: true });
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-            component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50, searchTerm: 'alice', sort: { field: 'participantName', direction: 'asc' } });
 
             expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', sortedColumn: 'participantName' }));
         });
@@ -427,7 +427,7 @@ describe('ParticipationComponent', () => {
             await componentFixture.whenStable();
             componentFixture.detectChanges();
 
-            return componentFixture.nativeElement.querySelector('jhi-table-view');
+            return componentFixture.nativeElement.querySelector('tumaet-ui-table');
         }
 
         function bodyRows(table: HTMLElement): HTMLTableRowElement[] {
@@ -516,7 +516,7 @@ describe('ParticipationComponent', () => {
                 .spyOn(participationService, 'searchParticipations')
                 .mockReturnValue(of({ content: [sampleDto], totalElements: 1 } as PageableResult<ParticipationManagementDTO>));
 
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
 
             expect(searchStub).toHaveBeenCalledOnce();
             expect(component.participations()).toEqual([sampleDto]);
@@ -527,14 +527,32 @@ describe('ParticipationComponent', () => {
         it('should update active filter and reload on filter change', () => {
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             searchStub.mockClear();
 
-            component.updateParticipationFilter(FilterProp.FAILED);
+            component.updateParticipationFilter([FilterProp.FAILED, FilterProp.MANUAL]);
 
-            expect(component.activeFilter()).toBe(FilterProp.FAILED);
-            expect(searchStub).toHaveBeenCalledOnce();
+            expect(component.activeFilters()).toEqual([FilterProp.FAILED, FilterProp.MANUAL]);
+            expect(searchStub).toHaveBeenCalledExactlyOnceWith(exercise.id, expect.objectContaining({ filterProp: 'Failed,Manual' }));
         });
+    });
+
+    it('preserves server paging, descending sorting, search and combined filters from the TUM table', () => {
+        component.exercise.set({ ...exercise, isAtLeastInstructor: true });
+        component.activeFilters.set([FilterProp.SUCCESSFUL, FilterProp.MANUAL]);
+        const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+        component.onDataRequest({ pageIndex: 2, pageSize: 25, searchTerm: 'alice', sort: { field: 'score', direction: 'desc' } });
+        expect(search).toHaveBeenCalledExactlyOnceWith(
+            exercise.id,
+            expect.objectContaining({
+                page: 2,
+                pageSize: 25,
+                searchTerm: 'alice',
+                sortedColumn: 'score',
+                sortingOrder: 'DESCENDING',
+                filterProp: 'Successful,Manual',
+            }),
+        );
     });
 
     describe('Filters', () => {
@@ -543,7 +561,7 @@ describe('ParticipationComponent', () => {
 
             expect(filters()).not.toContain(FilterProp.FAILED);
             expect(filters()).not.toContain(FilterProp.BUILD_FAILED);
-            expect(filters()).not.toContain(FilterProp.NO_PRACTICE);
+            expect(filters()).toContain(FilterProp.GRADED);
             expect(filters()).toContain(FilterProp.NO_SUBMISSIONS);
         });
 
@@ -552,20 +570,41 @@ describe('ParticipationComponent', () => {
 
             expect(filters()).toContain(FilterProp.FAILED);
             expect(filters()).toContain(FilterProp.BUILD_FAILED);
-            expect(filters()).toContain(FilterProp.NO_PRACTICE);
+            expect(filters()).toContain(FilterProp.GRADED);
+        });
+
+        it('uses exclusive submission and assessment choices while retaining programming build combinations', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
+            component.newManualResultAllowed.set(true);
+            expect(component.filterGroups().filter((group) => group.items.includes(FilterProp.NO_SUBMISSIONS) || group.items.includes(FilterProp.MANUAL))).toHaveLength(2);
+            expect(component.filterGroups().every((group) => group.items.length === 1 || group.single)).toBe(true);
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+            expect(filters()).toContain(FilterProp.SEMI_AUTOMATIC);
+            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.NO_SUBMISSIONS))?.single).toBe(false);
+            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.SEMI_AUTOMATIC))?.single).toBe(true);
         });
 
         it.each([
             [FilterProp.SUCCESSFUL, { type: ExerciseType.PROGRAMMING } as Exercise, false, true],
             [FilterProp.UNSUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
             [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
-            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, true],
             [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
-            [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
-            [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.MODELING }, true, true],
+            [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, false],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, true],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, false],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
             [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.MODELING }, true, false],
+            [FilterProp.MANUAL, { type: ExerciseType.FILE_UPLOAD }, true, false],
+            [FilterProp.GRADED, { type: ExerciseType.QUIZ }, false, true],
+            [FilterProp.GRADED, { type: ExerciseType.TEXT }, false, true],
+            [FilterProp.GRADED, { type: ExerciseType.MODELING }, false, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC, isAtLeastInstructor: true }, false, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, isAtLeastInstructor: true }, false, false],
         ])('should offer the result filter %s only where it applies', (filter: FilterProp, ex: Partial<Exercise>, newManualResultsAllowed: boolean, expected: boolean) => {
             component.exercise.set(ex as Exercise);
             component.newManualResultAllowed.set(newManualResultsAllowed);
@@ -573,33 +612,59 @@ describe('ParticipationComponent', () => {
             expect(filters().includes(filter)).toBe(expected);
         });
 
+        it('keeps programming lock filtering visible before and after the deadline', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC, isAtLeastInstructor: true });
+            component.newManualResultAllowed.set(false);
+            expect(filters()).toContain(FilterProp.LOCKED);
+            component.newManualResultAllowed.set(true);
+            expect(filters()).toContain(FilterProp.LOCKED);
+        });
+
+        it.each([ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('sends the graded filter to the server (%s)', (type) => {
+            component.exercise.set({ ...exercise, type });
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            searchSpy.mockClear();
+            component.updateParticipationFilter([FilterProp.GRADED]);
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ filterProp: 'Graded' }));
+        });
+
+        it('keeps manual and locked filters when enabling graded programming participations', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.updateParticipationFilter([FilterProp.MANUAL, FilterProp.LOCKED]);
+            component.updateParticipationFilter([FilterProp.MANUAL, FilterProp.LOCKED, FilterProp.GRADED]);
+            expect(searchSpy).toHaveBeenLastCalledWith(exercise.id, expect.objectContaining({ filterProp: 'Manual,Locked,Graded' }));
+        });
+
         it('should pass the score range to the search', () => {
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
             component.rangeFilter.set(new Range(60, 70));
 
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
 
             expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ scoreRangeLower: 60, scoreRangeUpper: 70 }));
         });
 
         it('should reset filter options, drop the range from the URL and reload', () => {
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             component.rangeFilter.set(new Range(0, 10));
-            component.activeFilter.set(FilterProp.SUCCESSFUL);
+            component.activeFilters.set([FilterProp.SUCCESSFUL]);
             searchSpy.mockClear();
 
             component.resetFilterOptions();
 
             expect(component.rangeFilter()).toBeUndefined();
-            expect(component.activeFilter()).toBe(FilterProp.ALL);
+            expect(component.activeFilters()).toEqual([]);
             expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { scoreRangeFilter: undefined } }));
             expect(searchSpy).toHaveBeenCalledOnce();
         });
 
         it('should refresh the current page', () => {
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             searchSpy.mockClear();
 
             component.refresh();
@@ -678,7 +743,7 @@ describe('ParticipationComponent', () => {
             await componentFixture.whenStable();
             componentFixture.detectChanges();
             picker = componentFixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance;
-            saveButton = componentFixture.nativeElement.querySelector('button[title="Save"]');
+            saveButton = componentFixture.nativeElement.querySelector('button[aria-label="entity.action.save"]');
         });
 
         it('should show the existing individual due date and open the calendar on it', () => {
@@ -792,7 +857,7 @@ describe('ParticipationComponent', () => {
 
             const updateStub = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             searchStub.mockClear();
 
             component.saveIndividualDueDate(sampleDto);
@@ -820,7 +885,7 @@ describe('ParticipationComponent', () => {
         it('should delete participation and reload', () => {
             vi.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             searchStub.mockClear();
 
             component.deleteParticipation(sampleDto.participationId);
@@ -831,7 +896,7 @@ describe('ParticipationComponent', () => {
         it('should clean up pending due date and presentation map on delete', () => {
             vi.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
 
             component.startEditDueDate(sampleDto);
             component.changeGradedPresentation(sampleDto);
@@ -850,7 +915,7 @@ describe('ParticipationComponent', () => {
         it('should call cleanupBuildPlan and reload on success', () => {
             const cleanupStub = vi.spyOn(participationService, 'cleanupBuildPlan').mockReturnValue(of(new HttpResponse({ body: {} as any })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             searchStub.mockClear();
 
             component.cleanupProgrammingExerciseParticipation(sampleDto);
@@ -882,7 +947,7 @@ describe('ParticipationComponent', () => {
             component.exercise.set(basicExercise);
             const updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: {} as any })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             searchStub.mockClear();
 
             component.addBasicPresentation(sampleDto);
@@ -930,7 +995,7 @@ describe('ParticipationComponent', () => {
             const dto = { ...sampleDto, presentationScore: 75 };
             const updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: {} as any })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             component.changeGradedPresentation(dto);
             searchStub.mockClear();
 
@@ -1006,7 +1071,7 @@ describe('ParticipationComponent', () => {
             });
             const updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: {} as any })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onLazyLoad({ first: 0, rows: 50 });
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             searchStub.mockClear();
 
             component.removePresentation(sampleDto);
@@ -1053,7 +1118,7 @@ describe('ParticipationComponent', () => {
             const container = document.createElement('div');
             view.rootNodes.forEach((node) => container.append(node));
 
-            expect(!!container.querySelector('button[jhi-exercise-action-button]')).toBe(isAtLeastInstructor);
+            expect(!!container.querySelector('[data-testid="participation-export-button"]')).toBe(isAtLeastInstructor);
             view.destroy();
         });
 

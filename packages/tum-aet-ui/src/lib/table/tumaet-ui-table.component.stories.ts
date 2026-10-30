@@ -37,6 +37,11 @@ const meta = {
     },
     parameters: {
         layout: 'padded',
+        docs: {
+            description: {
+                component: 'Search grows to fill the toolbar by default. Set --tumaet-ui-table-search-max-width on the table host to limit its width alongside tableActions.',
+            },
+        },
     },
     argTypes: {
         rowActions: {

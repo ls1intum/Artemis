@@ -38,7 +38,10 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
     '2xl': 'tumaet:hidden tumaet:2xl:table-cell',
 };
 
-/** Server-driven table whose consumer owns rows and responds to query changes. */
+/**
+ * Server-driven table whose consumer owns rows and responds to query changes.
+ * Set `--tumaet-ui-table-search-max-width` on the host to limit the growing search field.
+ */
 @Component({
     selector: 'tumaet-ui-table',
     templateUrl: './tumaet-ui-table.component.html',
@@ -54,6 +57,8 @@ export class TumAetUiTableComponent<T> {
     readonly rows = input.required<T[]>();
     readonly totalRecords = input(0, { transform: numberAttribute });
     readonly loading = input(false, { transform: booleanAttribute });
+    /** Controls rendered beside the search field, such as category filters. */
+    readonly tableActions = input<TemplateRef<unknown> | undefined>(undefined);
     /** Optional action template receiving the row as its implicit value. */
     readonly rowActions = input<TemplateRef<{ $implicit: T }> | undefined>(undefined);
     /** Predicate identifying rows to highlight. */

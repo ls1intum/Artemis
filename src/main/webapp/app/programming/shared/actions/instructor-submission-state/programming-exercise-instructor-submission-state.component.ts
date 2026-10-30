@@ -4,13 +4,13 @@ import { EMPTY, Subscription, merge, timer } from 'rxjs';
 import { catchError, debounceTime, filter, map, switchMap, take, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
-import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { faChevronDown, faCircleNotch, faClock, faExclamationTriangle, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass } from '@angular/common';
 import { ProgrammingExerciseTriggerAllButtonComponent } from '../trigger-all-button/programming-exercise-trigger-all-button.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
@@ -33,7 +33,19 @@ const AWAITED_RUN_STATUS_POLL_INTERVAL_MS = 30_000;
 @Component({
     selector: 'jhi-programming-exercise-instructor-submission-state',
     templateUrl: './programming-exercise-instructor-submission-state.component.html',
-    imports: [FaIconComponent, NgbTooltip, NgClass, ProgrammingExerciseTriggerAllButtonComponent, ButtonComponent, ArtemisTranslatePipe, DurationPipe],
+    imports: [
+        FaIconComponent,
+        ProgrammingExerciseTriggerAllButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        FeatureToggleDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        DurationPipe,
+    ],
 })
 export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnInit {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
@@ -42,9 +54,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     private destroyRef = inject(DestroyRef);
 
     FeatureToggle = FeatureToggle;
-    ButtonType = ButtonType;
     ButtonSize = ButtonSize;
-    TooltipPlacement = TooltipPlacement;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     readonly exercise = input.required<ProgrammingExercise>();
@@ -83,7 +93,9 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     readonly resultEtaInMs = signal<number | undefined>(undefined);
 
     // Icons
+    readonly faChevronDown = faChevronDown;
     faClock = faClock;
+    readonly faExclamationTriangle = faExclamationTriangle;
     faCircleNotch = faCircleNotch;
     faRedo = faRedo;
 

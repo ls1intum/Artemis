@@ -1,14 +1,20 @@
 @if (participationBuildCanBeTriggered() && (showForSuccessfulSubmissions() || participationHasLatestSubmissionWithoutResult())) {
-    <jhi-button
-        [btnSize]="btnSize()"
-        [btnType]="participationHasLatestSubmissionWithoutResult() ? ButtonType.ERROR : ButtonType.PRIMARY"
-        [icon]="faRedo"
-        [title]="title()"
-        [shouldToggle]="!!title()"
-        [disabled]="isRetrievingBuildStatus()"
-        [isLoading]="isBuilding()"
-        (onClick)="triggerBuild($event)"
-        [tooltip]="participationHasLatestSubmissionWithoutResult() ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit'"
-        [featureToggle]="FeatureToggle.ProgrammingExercises"
-    />
+    <button
+        type="button"
+        tumAetUiButton
+        [size]="btnSize() === ButtonSize.SMALL ? 'small' : btnSize() === ButtonSize.LARGE ? 'large' : 'default'"
+        [severity]="participationHasLatestSubmissionWithoutResult() ? 'danger' : 'primary'"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [forceDisabled]="isRetrievingBuildStatus() || isBuilding()"
+        [attr.aria-label]="title() || 'artemisApp.programmingExercise.resubmit' | artemisTranslate"
+        [attr.aria-busy]="isBuilding()"
+        [tumAetUiTooltip]="
+            (participationHasLatestSubmissionWithoutResult() ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit')
+                | artemisTranslate
+        "
+        (click)="triggerBuild($event)"
+    >
+        <fa-icon [icon]="faRedo" [animation]="isBuilding() ? 'spin' : undefined" />
+        <span [class]="title() ? 'hidden xl:inline' : ''" [jhiTranslate]="title()"></span>
+    </button>
 }
