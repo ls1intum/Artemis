@@ -67,8 +67,11 @@ client, is produced by the same command without `-PopenApiGroup=agent` and cover
 
 `/api/core/agent/mcp` serves the Model Context Protocol. Its tools, in `AgentToolService`, are tasks an instructor would name, not wrappers
 of endpoints, and each one calls the REST API of the same server through `AgentApi` with the token of the request. Opt the endpoint in
-first; a tool never grants anything the endpoint does not. A new tool needs a scope that the token must hold to see it, a JSON schema for its
-arguments and a description that tells the model when to use it and what to confirm first.
+first; a tool never grants anything the endpoint does not. A new tool needs a scope that the token must hold to see it, a description that
+tells the model when to use it and what to confirm first, and typed arguments: a record in `AgentToolArguments` that the arguments are read
+as, and a `JsonSchemaDTO` that describes them to the agent. A body that the tool sends on is the DTO of the endpoint it calls, never a
+`JsonNode`; the whole endpoint, protocol messages included, is written with records, as the
+[REST API guideline](/developer/guidelines/rest-api#use-records-not-the-tree-model) asks.
 
 <Callout variant={CalloutVariant.info}>
 

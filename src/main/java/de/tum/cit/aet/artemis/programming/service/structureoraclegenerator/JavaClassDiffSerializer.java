@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.structureoraclegenerator;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import com.thoughtworks.qdox.model.JavaAnnotatedElement;
 import com.thoughtworks.qdox.model.JavaAnnotation;
@@ -9,11 +11,10 @@ import com.thoughtworks.qdox.model.JavaConstructor;
 import com.thoughtworks.qdox.model.JavaField;
 import com.thoughtworks.qdox.model.JavaMethod;
 
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
-
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.StructureOracleEntry.OracleAttribute;
+import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.StructureOracleEntry.OracleClass;
+import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.StructureOracleEntry.OracleConstructor;
+import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.StructureOracleEntry.OracleMethod;
 
 /**
  * This class is used to serialize the elements that are generally defined in types, e.g. methods and various properties of the types. These properties are defined as the hierarchy
@@ -21,10 +22,8 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
  */
 record JavaClassDiffSerializer(JavaClassDiff javaClassDiff) {
 
-    private static final JsonMapper mapper = JsonObjectMapper.get();
-
     /**
-     * This method is used to serialize the class properties of each type defined in the types diff into a JSON object containing the following information:
+     * This method is used to serialize the class properties of each type defined in the types diff into a typed oracle class containing the following information:
      * - Name of the type
      * - Package of the type
      * - Interface stereotype
@@ -34,130 +33,104 @@ record JavaClassDiffSerializer(JavaClassDiff javaClassDiff) {
      * - Super interfaces (if any)
      * - Annotations (if any)
      *
-     * @return The JSON object consisting of JSON objects representation for the wanted hierarchy properties of a type defined in the types diff.
+     * @return The oracle class consisting of the wanted hierarchy properties of a type defined in the types diff.
      */
-    ObjectNode serializeClassProperties() {
-        ObjectNode classJSON = mapper.createObjectNode();
+    OracleClass serializeClassProperties() {
+        // Adding superclass name, interfaces and annotations only if present
+        String superclass = javaClassDiff.superClassNameDiff.isEmpty() ? null : javaClassDiff.superClassNameDiff;
+        List<String> interfaces = javaClassDiff.superInterfacesDiff.isEmpty() ? null : serializeSuperInterfaces(javaClassDiff.superInterfacesDiff);
+        List<String> annotations = javaClassDiff.annotationsDiff.isEmpty() ? null : serializeAnnotations(javaClassDiff.annotationsDiff);
 
-        // Directly setting values based on class properties
-        classJSON.put("name", javaClassDiff.getName());
-        classJSON.put("package", javaClassDiff.getPackageName());
-        classJSON.put("isInterface", javaClassDiff.isInterfaceDifferent);
-        classJSON.put("isEnum", javaClassDiff.isEnumDifferent);
-        classJSON.put("isAbstract", javaClassDiff.isAbstractDifferent);
-
-        // Adding superclass name if present
-        if (!javaClassDiff.superClassNameDiff.isEmpty()) {
-            classJSON.put("superclass", javaClassDiff.superClassNameDiff);
-        }
-
-        // Serializing interfaces
-        if (!javaClassDiff.superInterfacesDiff.isEmpty()) {
-            classJSON.set("interfaces", serializeSuperInterfaces(javaClassDiff.superInterfacesDiff));
-        }
-
-        // Serializing annotations
-        if (!javaClassDiff.annotationsDiff.isEmpty()) {
-            classJSON.set("annotations", serializeAnnotations(javaClassDiff.annotationsDiff));
-        }
-
-        return classJSON;
+        return new OracleClass(javaClassDiff.getName(), javaClassDiff.getPackageName(), javaClassDiff.isInterfaceDifferent, javaClassDiff.isEnumDifferent,
+                javaClassDiff.isAbstractDifferent, superclass, interfaces, annotations);
     }
 
-    private ArrayNode serializeSuperInterfaces(Iterable<JavaClass> superInterfaces) {
-        ArrayNode superInterfacesNode = mapper.createArrayNode();
-        superInterfaces.forEach(superInterface -> superInterfacesNode.add(superInterface.getSimpleName()));
-        return superInterfacesNode;
+    private List<String> serializeSuperInterfaces(Iterable<JavaClass> superInterfaces) {
+        List<String> superInterfaceNames = new ArrayList<>();
+        superInterfaces.forEach(superInterface -> superInterfaceNames.add(superInterface.getSimpleName()));
+        return superInterfaceNames;
     }
 
-    private ArrayNode serializeAnnotations(Iterable<JavaAnnotation> annotations) {
-        ArrayNode annotationsNode = mapper.createArrayNode();
-        annotations.forEach(annotation -> annotationsNode.add(annotation.getType().getSimpleName()));
-        return annotationsNode;
+    private List<String> serializeAnnotations(Iterable<JavaAnnotation> annotations) {
+        List<String> annotationNames = new ArrayList<>();
+        annotations.forEach(annotation -> annotationNames.add(annotation.getType().getSimpleName()));
+        return annotationNames;
     }
 
     /**
-     * This method is used to serialize the attributes of a class into a JSON array containing the following information for each attribute defined in the classes packed into a
-     * JSON object: - Name - Modifiers (if any) - Type
+     * This method is used to serialize the attributes of a class into a list containing the following information for each attribute defined in the classes diff:
+     * - Name - Modifiers (if any) - Type
      *
-     * @return The JSON array consisting of JSON objects representation for each attribute defined in the classes diff.
+     * @return The list consisting of the oracle representation for each attribute defined in the classes diff.
      */
-    ArrayNode serializeAttributes() {
-        ArrayNode attributesJSON = mapper.createArrayNode();
+    List<OracleAttribute> serializeAttributes() {
+        List<OracleAttribute> attributes = new ArrayList<>();
 
         javaClassDiff.attributesDiff.stream().filter(attribute -> !JavaClassDiffSerializer.isElementToIgnore(attribute))
-                .forEach(attribute -> attributesJSON.add(createAttributeJson(attribute)));
+                .forEach(attribute -> attributes.add(createAttribute(attribute)));
 
-        return attributesJSON;
+        return attributes;
     }
 
-    private ObjectNode createAttributeJson(JavaField attribute) {
-        ObjectNode attributeJSON = SerializerUtil.createJsonObject(attribute.getName(), new HashSet<>(attribute.getModifiers()), attribute, attribute.getAnnotations());
-        attributeJSON.put("type", attribute.getType().getValue());
-        return attributeJSON;
-    }
-
-    /**
-     * This method is used to serialize the enums of a class into a JSON array containing each enum value:
-     *
-     * @return The JSON array consisting of JSON objects representation for each enum defined in the classes diff.
-     */
-    ArrayNode serializeEnums() {
-        ArrayNode enumsJSON = mapper.createArrayNode();
-
-        javaClassDiff.enumsDiff.stream().filter(enumField -> !isElementToIgnore(enumField)).forEach(enumField -> enumsJSON.add(enumField.getName()));
-
-        return enumsJSON;
+    private OracleAttribute createAttribute(JavaField attribute) {
+        List<String> modifiers = SerializerUtil.serializeModifiers(new HashSet<>(attribute.getModifiers()), attribute);
+        List<String> annotations = SerializerUtil.serializeAnnotationsIfPresent(attribute.getAnnotations());
+        return new OracleAttribute(attribute.getName(), modifiers, annotations, attribute.getType().getValue());
     }
 
     /**
-     * This method is used to serialize the constructors of a class into a JSON array containing the following information for each constructor defined in the classes packed into a
-     * JSON object: - Modifiers (if any) - Parameter types (if any)
+     * This method is used to serialize the enums of a class into a list containing each enum value:
      *
-     * @return The JSON array consisting of JSON objects representation for each constructor defined in the classes diff.
+     * @return The list consisting of the name of each enum value defined in the classes diff.
      */
-    ArrayNode serializeConstructors() {
-        ArrayNode constructorsJSON = mapper.createArrayNode();
+    List<String> serializeEnums() {
+        List<String> enums = new ArrayList<>();
 
-        javaClassDiff.constructorsDiff.stream().filter(constructor -> !isElementToIgnore(constructor))
-                .forEach(constructor -> constructorsJSON.add(serializeConstructor(constructor)));
+        javaClassDiff.enumsDiff.stream().filter(enumField -> !isElementToIgnore(enumField)).forEach(enumField -> enums.add(enumField.getName()));
 
-        return constructorsJSON;
+        return enums;
     }
 
-    private ObjectNode serializeConstructor(JavaConstructor constructor) {
-        ObjectNode constructorJSON = mapper.createObjectNode();
+    /**
+     * This method is used to serialize the constructors of a class into a list containing the following information for each constructor defined in the classes diff:
+     * - Modifiers (if any) - Parameter types (if any)
+     *
+     * @return The list consisting of the oracle representation for each constructor defined in the classes diff.
+     */
+    List<OracleConstructor> serializeConstructors() {
+        List<OracleConstructor> constructors = new ArrayList<>();
+
+        javaClassDiff.constructorsDiff.stream().filter(constructor -> !isElementToIgnore(constructor)).forEach(constructor -> constructors.add(serializeConstructor(constructor)));
+
+        return constructors;
+    }
+
+    private OracleConstructor serializeConstructor(JavaConstructor constructor) {
+        // No need to check for isEmpty before adding; let the serializer utility methods decide how to handle empty collections
+        return new OracleConstructor(SerializerUtil.serializeModifiers(new HashSet<>(constructor.getModifiers()), constructor),
+                SerializerUtil.serializeParameters(constructor.getParameters()), SerializerUtil.serializeAnnotations(constructor.getAnnotations()));
+    }
+
+    /**
+     * This method is used to serialize the methods of a type into a list containing the following information for each method defined in the types diff:
+     * - Name - Modifiers (if any) - Parameter types (if any) - Return type
+     *
+     * @return The list consisting of the oracle representation for each method defined in the types diff.
+     */
+    List<OracleMethod> serializeMethods() {
+        List<OracleMethod> methods = new ArrayList<>();
+
+        javaClassDiff.methodsDiff.stream().filter(method -> !isElementToIgnore(method)).forEach(method -> methods.add(createMethod(method)));
+
+        return methods;
+    }
+
+    private OracleMethod createMethod(JavaMethod method) {
+        List<String> modifiers = SerializerUtil.serializeModifiers(new HashSet<>(method.getModifiers()), method);
+        List<String> annotations = SerializerUtil.serializeAnnotationsIfPresent(method.getAnnotations());
 
         // No need to check for isEmpty before adding; let the serializer utility methods decide how to handle empty collections
-        constructorJSON.set("modifiers", SerializerUtil.serializeModifiers(new HashSet<>(constructor.getModifiers()), constructor));
-        constructorJSON.set("parameters", SerializerUtil.serializeParameters(constructor.getParameters()));
-        constructorJSON.set("annotations", SerializerUtil.serializeAnnotations(constructor.getAnnotations()));
-
-        return constructorJSON;
-    }
-
-    /**
-     * This method is used to serialize the methods of a type into a JSON array containing the following information for each method defined in the classes packed into a JSON
-     * object: - Name - Modifiers (if any) - Parameter types (if any) - Return type
-     *
-     * @return The JSON array consisting of JSON objects representation for each method defined in the types diff.
-     */
-    ArrayNode serializeMethods() {
-        ArrayNode methodsJSON = mapper.createArrayNode();
-
-        javaClassDiff.methodsDiff.stream().filter(method -> !isElementToIgnore(method)).forEach(method -> methodsJSON.add(createMethodJson(method)));
-
-        return methodsJSON;
-    }
-
-    private ObjectNode createMethodJson(JavaMethod method) {
-        ObjectNode methodJSON = SerializerUtil.createJsonObject(method.getName(), new HashSet<>(method.getModifiers()), method, method.getAnnotations());
-
-        // No need to check for isEmpty before adding; let the serializer utility methods decide how to handle empty collections
-        methodJSON.set("parameters", SerializerUtil.serializeParameters(method.getParameters()));
-        methodJSON.put("returnType", method.getReturnType().getValue());
-
-        return methodJSON;
+        return new OracleMethod(method.getName(), modifiers, annotations, SerializerUtil.serializeParameters(method.getParameters()), method.getReturnType().getValue());
     }
 
     public static boolean isElementToIgnore(JavaAnnotatedElement element) {

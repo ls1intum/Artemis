@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.repository.PersonalAccessTokenRepository;
 import de.tum.cit.aet.artemis.account.util.PersonalAccessTokenTestUtil;
@@ -76,6 +77,11 @@ class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingI
     private void releaseAt(ZonedDateTime releaseDate) {
         exercise.setReleaseDate(releaseDate);
         exercise.setStartDate(null);
+        // The dates of the fixture lie before a release date in the future, which an update would reject as invalid.
+        exercise.setDueDate(null);
+        exercise.setAssessmentDueDate(null);
+        exercise.setExampleSolutionPublicationDate(null);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         exercise = exerciseRepository.save(exercise);
     }
 
@@ -132,13 +138,18 @@ class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingI
 
         JsonNode read = callTool(token, "get_exercise", Map.of("type", "programming", "exerciseId", exercise.getId()));
         assertThat(read.at("/result/isError").asBoolean()).isFalse();
-        JsonNode readExercise = JsonObjectMapper.get().readTree(read.at("/result/content/0/text").asString());
+        ObjectNode readExercise = (ObjectNode) JsonObjectMapper.get().readTree(read.at("/result/content/0/text").asString());
         assertThat(readExercise.has("courseId")).as("the read shape carries the course as an object").isFalse();
+        // The tool needs the course as courseId, which the description of the tool says to copy from the course object.
+        readExercise.put("courseId", readExercise.at("/course/id").asLong());
 
-        JsonNode update = callTool(token, "update_exercise", Map.of("type", "programming", "exercise", readExercise));
+        JsonNode update = callTool(token, "update_programming_exercise", Map.of("exercise", readExercise));
 
-        // The read shape has no courseId; the tool adds it, so the update is not rejected for a missing course.
-        assertThat(update.at("/result/content/0/text").asString()).doesNotContain("courseId");
+        // The full update needs the ProgrammingLanguageFeatureService, which only the LocalCI and LocalVC profiles provide, so this class
+        // stops short of it. It is enough that the body was read as the update shape and passed the course and date checks: it did not
+        // fail as an invalid argument and was not rejected with a 400.
+        String text = update.at("/result/content/0/text").asString();
+        assertThat(text).doesNotContain("Invalid arguments").doesNotContain("courseId").doesNotContain("HTTP 400");
     }
 
     @Test

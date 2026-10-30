@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.StringNode;
 
 import de.tum.cit.aet.artemis.account.config.AgentAccessEnabled;
 
@@ -57,10 +54,10 @@ public class LoopbackAgentApiService implements AgentApi {
     }
 
     @Override
-    public AgentApiResponse send(HttpMethod method, String path, @Nullable JsonNode body) {
+    public AgentApiResponse send(HttpMethod method, String path, @Nullable Object body) {
         var request = restClient.method(method).uri(path).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN);
         if (body != null) {
-            request.contentType(MediaType.APPLICATION_JSON).body(body.toString());
+            request.contentType(MediaType.APPLICATION_JSON).body(jsonMapper.writeValueAsString(body));
         }
         return execute(request);
     }
@@ -75,19 +72,7 @@ public class LoopbackAgentApiService implements AgentApi {
     private AgentApiResponse execute(RestClient.RequestBodySpec request) {
         return request.exchange((clientRequest, response) -> {
             String text = StreamUtils.copyToString(response.getBody(), StandardCharsets.UTF_8);
-            return new AgentApiResponse(response.getStatusCode().value(), parse(text));
+            return AgentApiResponse.of(jsonMapper, response.getStatusCode().value(), text);
         });
-    }
-
-    private @Nullable JsonNode parse(String text) {
-        if (text.isBlank()) {
-            return null;
-        }
-        try {
-            return jsonMapper.readTree(text);
-        }
-        catch (JacksonException e) {
-            return StringNode.valueOf(text);
-        }
     }
 }

@@ -102,8 +102,8 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
         SavedToken everything = tokenOf("editor1", AgentScope.values());
 
         assertThat(toolNames(rpc(readOnly, "tools/list", Map.of()))).contains("get_competency_graph", "get_competency").doesNotContain("post_announcement", "create_competencies",
-                "create_exercise");
-        assertThat(toolNames(rpc(everything, "tools/list", Map.of()))).contains("list_my_courses", "create_competencies", "post_announcement", "create_exercise",
+                "create_text_exercise");
+        assertThat(toolNames(rpc(everything, "tools/list", Map.of()))).contains("list_my_courses", "create_competencies", "post_announcement", "create_text_exercise",
                 "set_programming_problem_statement", "get_programming_test_cases", "create_lecture");
     }
 
@@ -184,7 +184,7 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
         var exercise = Map.of("title", "Essay", "problemStatement", "Write.", "maxPoints", 10, "includedInOverallScore", "INCLUDED_COMPLETELY", "courseId", course.getId(), "mode",
                 "INDIVIDUAL");
 
-        JsonNode answer = callTool(token, "create_exercise", Map.of("type", "text", "exercise", exercise));
+        JsonNode answer = callTool(token, "create_text_exercise", Map.of("exercise", exercise));
 
         assertThat(answer.at("/result/isError").asBoolean()).isTrue();
         assertThat(answer.at("/result/content/0/text").asString()).contains("HTTP 400").contains("draft");

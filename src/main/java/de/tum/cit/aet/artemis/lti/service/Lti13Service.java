@@ -32,8 +32,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -333,17 +331,24 @@ public class Lti13Service {
         return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
     }
 
+    /**
+     * The body of an LTI 1.3 Assignment and Grading Services score publish request.
+     * It is deliberately not annotated with {@code @JsonInclude}: a missing comment or score is sent as {@code null}, as it always was.
+     *
+     * @param userId           the ID of the user on the platform
+     * @param timestamp        the time at which the score was given
+     * @param activityProgress the progress of the user on the activity
+     * @param gradingProgress  the progress of the grading
+     * @param comment          the feedback of the score
+     * @param scoreGiven       the score that was given
+     * @param scoreMaximum     the maximum score
+     */
+    private record ScorePublishRequest(String userId, String timestamp, String activityProgress, String gradingProgress, String comment, Double scoreGiven, double scoreMaximum) {
+    }
+
     private String getScoreBody(String userId, String comment, Double score) {
-        JsonMapper objectMapper = JsonObjectMapper.get();
-        ObjectNode requestBody = objectMapper.createObjectNode();
-        requestBody.put("userId", userId);
-        requestBody.put("timestamp", new DateTime().toString());
-        requestBody.put("activityProgress", "Submitted");
-        requestBody.put("gradingProgress", "FullyGraded");
-        requestBody.put("comment", comment);
-        requestBody.put("scoreGiven", score);
-        requestBody.put("scoreMaximum", 100D);
-        return objectMapper.writeValueAsString(requestBody);
+        ScorePublishRequest requestBody = new ScorePublishRequest(userId, new DateTime().toString(), "Submitted", "FullyGraded", comment, score, 100D);
+        return JsonObjectMapper.get().writeValueAsString(requestBody);
     }
 
     /**

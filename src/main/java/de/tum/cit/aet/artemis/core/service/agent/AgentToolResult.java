@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.core.service.agent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 
-import tools.jackson.databind.JsonNode;
+import de.tum.cit.aet.artemis.core.dto.agent.AgentFieldErrorDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.AgentProblemDTO;
 
 /**
  * What a tool reports back to the agent: text, and whether it describes a failure. A failure is a result, not an exception, so that
@@ -36,34 +38,35 @@ public record AgentToolResult(String text, boolean isError) {
      */
     public static AgentToolResult of(AgentApiResponse response) {
         if (response.isSuccess()) {
-            return ok(response.body() == null || response.body().isNull() ? "Done (status " + response.status() + ")." : response.body().toString());
+            return ok(response.body() == null ? "Done (status " + response.status() + ")." : response.body());
         }
-        return error("HTTP " + response.status() + ": " + messageOf(response.status(), response.body()) + " " + adviceFor(response.status()));
+        return error("HTTP " + response.status() + ": " + messageOf(response) + " " + adviceFor(response.status()));
     }
 
     /**
      * The explanation in a problem document. Artemis puts the sentence for people in the title and an error key in the message, so
      * both are reported, without the generic name of the status.
      */
-    private static String messageOf(int status, @Nullable JsonNode body) {
-        if (body == null || body.isNull()) {
-            return "no details";
+    private static String messageOf(AgentApiResponse response) {
+        AgentProblemDTO problem = response.problem();
+        if (problem == null) {
+            return response.body() == null ? "no details" : response.body();
         }
-        if (!body.isObject()) {
-            return body.asString(body.toString());
-        }
-        HttpStatus httpStatus = HttpStatus.resolve(status);
+        HttpStatus httpStatus = HttpStatus.resolve(response.status());
         List<String> parts = new ArrayList<>();
-        for (String field : List.of("detail", "title", "message")) {
-            String value = body.path(field).asString("");
-            if (!value.isBlank() && !parts.contains(value) && (httpStatus == null || !value.equals(httpStatus.getReasonPhrase()))) {
+        for (String value : Arrays.asList(problem.detail(), problem.title(), problem.message())) {
+            if (value != null && !value.isBlank() && !parts.contains(value) && (httpStatus == null || !value.equals(httpStatus.getReasonPhrase()))) {
                 parts.add(value);
             }
         }
-        if (body.has("fieldErrors")) {
-            parts.add(body.get("fieldErrors").toString());
+        if (problem.fieldErrors() != null && !problem.fieldErrors().isEmpty()) {
+            parts.add(problem.fieldErrors().stream().map(AgentToolResult::describe).collect(Collectors.joining("; ")));
         }
-        return parts.isEmpty() ? body.toString() : String.join(" | ", parts);
+        return parts.isEmpty() ? (response.body() == null ? "no details" : response.body()) : String.join(" | ", parts);
+    }
+
+    private static String describe(AgentFieldErrorDTO fieldError) {
+        return fieldError.field() + ": " + fieldError.message();
     }
 
     private static String adviceFor(int status) {

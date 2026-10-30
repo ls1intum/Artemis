@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.StringNode;
 
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 
@@ -42,10 +39,10 @@ public class MockMvcAgentApiService implements AgentApi {
     }
 
     @Override
-    public AgentApiResponse send(HttpMethod method, String path, @Nullable JsonNode body) {
+    public AgentApiResponse send(HttpMethod method, String path, @Nullable Object body) {
         var builder = MockMvcRequestBuilders.request(method, path).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON);
         if (body != null) {
-            builder.contentType(MediaType.APPLICATION_JSON).content(body.toString());
+            builder.contentType(MediaType.APPLICATION_JSON).content(jsonMapper.writeValueAsString(body));
         }
         return execute(builder);
     }
@@ -60,22 +57,10 @@ public class MockMvcAgentApiService implements AgentApi {
     private AgentApiResponse execute(AbstractMockHttpServletRequestBuilder<?> builder) {
         try {
             var response = request.performMvcRequest(builder).andReturn().getResponse();
-            return new AgentApiResponse(response.getStatus(), parse(response.getContentAsString(StandardCharsets.UTF_8)));
+            return AgentApiResponse.of(jsonMapper, response.getStatus(), response.getContentAsString(StandardCharsets.UTF_8));
         }
         catch (Exception e) {
             throw new IllegalStateException(e);
-        }
-    }
-
-    private @Nullable JsonNode parse(String text) {
-        if (text.isBlank()) {
-            return null;
-        }
-        try {
-            return jsonMapper.readTree(text);
-        }
-        catch (JacksonException e) {
-            return StringNode.valueOf(text);
         }
     }
 }

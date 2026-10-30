@@ -6,8 +6,8 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 import tools.jackson.databind.DeserializationContext;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ValueDeserializer;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
@@ -28,17 +28,49 @@ public record GroupChatCreationDTO(List<String> memberLogins) {
      */
     static class GroupChatCreationDeserializer extends ValueDeserializer<GroupChatCreationDTO> {
 
+        private static final String MEMBER_LOGINS_PROPERTY = "memberLogins";
+
         @Override
         public GroupChatCreationDTO deserialize(JsonParser parser, DeserializationContext context) {
-            JsonNode node = parser.readValueAsTree();
-            JsonNode loginsNode = node.isArray() ? node : node.get("memberLogins");
             List<String> memberLogins = new ArrayList<>();
-            if (loginsNode != null && loginsNode.isArray()) {
-                // asString(null) on a client-supplied array: Jackson 3 throws on a non-string element where Jackson 2's
-                // asText() returned "", which would turn a bad request body into a 500.
-                loginsNode.forEach(login -> memberLogins.add(login.asString(null)));
+            if (parser.currentToken() == JsonToken.START_ARRAY) {
+                memberLogins = readLogins(parser);
+            }
+            else if (parser.currentToken() == JsonToken.START_OBJECT) {
+                while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
+                    String property = parser.currentName();
+                    parser.nextToken();
+                    if (MEMBER_LOGINS_PROPERTY.equals(property) && parser.currentToken() == JsonToken.START_ARRAY) {
+                        memberLogins = readLogins(parser);
+                    }
+                    else {
+                        parser.skipChildren();
+                        if (MEMBER_LOGINS_PROPERTY.equals(property)) {
+                            // a repeated property keeps its last value, and that value is not an array
+                            memberLogins = new ArrayList<>();
+                        }
+                    }
+                }
             }
             return new GroupChatCreationDTO(memberLogins);
+        }
+
+        /**
+         * Reads the logins of the array the parser points at, leaving the parser on its closing token.
+         * <p>
+         * An element that is not a string is read as its text if it is a scalar, and as {@code null} otherwise. Jackson 3 would throw on a non-string element where Jackson 2
+         * returned "", which would turn a bad request body into a 500.
+         *
+         * @param parser the parser, positioned on the start of the array
+         * @return the logins in the array
+         */
+        private static List<String> readLogins(JsonParser parser) {
+            List<String> logins = new ArrayList<>();
+            while (parser.nextToken() != JsonToken.END_ARRAY) {
+                logins.add(parser.getValueAsString(null));
+                parser.skipChildren();
+            }
+            return logins;
         }
     }
 }

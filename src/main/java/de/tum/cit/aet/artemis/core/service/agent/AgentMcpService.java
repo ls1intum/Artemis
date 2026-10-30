@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,12 +15,26 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import tools.jackson.databind.JsonNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JavaType;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.config.AgentAccessEnabled;
+import de.tum.cit.aet.artemis.core.dto.agent.CallToolResultDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.CapabilitiesDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.InitializeResultDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.JsonRpcIdDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.JsonRpcParamsDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.JsonRpcRequestDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.JsonRpcResponseDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.ListToolsResultDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.PingResultDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.ServerInfoDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.ToolAnnotationsDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.ToolCallRequestDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.ToolContentDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.ToolDescriptionDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.ToolsCapabilityDTO;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
 
 /**
@@ -73,100 +88,93 @@ public class AgentMcpService {
     /**
      * Handles one JSON-RPC message.
      *
-     * @param message     the message the agent sent
+     * @param message     the message the agent sent, as text
      * @param tokenScopes the scopes of the token it sent it with
      * @return the answer, or empty for a notification, which is not answered
      */
-    public Optional<JsonNode> handle(JsonNode message, Set<AgentScope> tokenScopes) {
-        if (!message.isObject() || !"2.0".equals(message.path("jsonrpc").asString("")) || !message.path("method").isString()) {
-            return Optional.of(failure(message.path("id"), INVALID_REQUEST, "This is not a JSON-RPC 2.0 request."));
+    public Optional<JsonRpcResponseDTO<?>> handle(String message, Set<AgentScope> tokenScopes) {
+        JsonRpcRequestDTO request;
+        try {
+            request = jsonMapper.readValue(message, JsonRpcRequestDTO.class);
         }
-        JsonNode id = message.path("id");
-        if (id.isMissingNode()) {
+        catch (JacksonException e) {
+            return Optional.of(JsonRpcResponseDTO.failure(null, INVALID_REQUEST, "This is not a JSON-RPC 2.0 request."));
+        }
+        if (request == null || !"2.0".equals(request.jsonrpc()) || request.method() == null) {
+            return Optional.of(JsonRpcResponseDTO.failure(request == null ? null : request.id(), INVALID_REQUEST, "This is not a JSON-RPC 2.0 request."));
+        }
+        JsonRpcIdDTO id = request.id();
+        if (id == null) {
             // A notification, such as notifications/initialized, expects no answer.
             return Optional.empty();
         }
-        JsonNode params = message.path("params");
-        return Optional.of(switch (message.path("method").asString()) {
-            case "initialize" -> success(id, initialize(params));
-            case "ping" -> success(id, jsonMapper.createObjectNode());
-            case "tools/list" -> success(id, listTools(tokenScopes));
-            case "tools/call" -> callTool(id, params, tokenScopes);
-            default -> failure(id, METHOD_NOT_FOUND, "Unknown method: " + message.path("method").asString());
+        JsonRpcParamsDTO params = request.params();
+        return Optional.of(switch (request.method()) {
+            case "initialize" -> JsonRpcResponseDTO.success(id, initialize(params));
+            case "ping" -> JsonRpcResponseDTO.success(id, new PingResultDTO());
+            case "tools/list" -> JsonRpcResponseDTO.success(id, listTools(tokenScopes));
+            case "tools/call" -> callTool(id, message, params, tokenScopes);
+            default -> JsonRpcResponseDTO.failure(id, METHOD_NOT_FOUND, "Unknown method: " + request.method());
         });
     }
 
-    private ObjectNode initialize(JsonNode params) {
-        String requested = params.path("protocolVersion").asString("");
-        ObjectNode result = jsonMapper.createObjectNode();
-        result.put("protocolVersion", SUPPORTED_PROTOCOL_VERSIONS.contains(requested) ? requested : SUPPORTED_PROTOCOL_VERSIONS.getFirst());
-        result.putObject("capabilities").putObject("tools").put("listChanged", false);
-        ObjectNode serverInfo = result.putObject("serverInfo");
-        serverInfo.put("name", "artemis");
-        serverInfo.put("version", version);
-        result.put("instructions", INSTRUCTIONS);
-        return result;
+    private InitializeResultDTO initialize(@Nullable JsonRpcParamsDTO params) {
+        String requested = params == null || params.protocolVersion() == null ? "" : params.protocolVersion();
+        String protocolVersion = SUPPORTED_PROTOCOL_VERSIONS.contains(requested) ? requested : SUPPORTED_PROTOCOL_VERSIONS.getFirst();
+        return new InitializeResultDTO(protocolVersion, new CapabilitiesDTO(new ToolsCapabilityDTO(false)), new ServerInfoDTO("artemis", version), INSTRUCTIONS);
     }
 
-    private ObjectNode listTools(Set<AgentScope> tokenScopes) {
-        ArrayNode tools = jsonMapper.createArrayNode();
-        for (AgentTool tool : visibleTools(tokenScopes)) {
-            ObjectNode entry = tools.addObject();
-            entry.put("name", tool.name());
-            entry.put("description", tool.description());
-            entry.set("inputSchema", tool.inputSchema());
-            ObjectNode annotations = entry.putObject("annotations");
-            annotations.put("readOnlyHint", tool.readOnly());
-            annotations.put("destructiveHint", false);
-        }
-        ObjectNode result = jsonMapper.createObjectNode();
-        result.set("tools", tools);
-        return result;
+    private ListToolsResultDTO listTools(Set<AgentScope> tokenScopes) {
+        List<ToolDescriptionDTO> described = visibleTools(tokenScopes).stream()
+                .map(tool -> new ToolDescriptionDTO(tool.name(), tool.description(), tool.inputSchema(), new ToolAnnotationsDTO(tool.readOnly(), false))).toList();
+        return new ListToolsResultDTO(described);
     }
 
-    private JsonNode callTool(JsonNode id, JsonNode params, Set<AgentScope> tokenScopes) {
-        String name = params.path("name").asString("");
-        Optional<AgentTool> tool = visibleTools(tokenScopes).stream().filter(candidate -> candidate.name().equals(name)).findFirst();
+    private JsonRpcResponseDTO<?> callTool(JsonRpcIdDTO id, String message, @Nullable JsonRpcParamsDTO params, Set<AgentScope> tokenScopes) {
+        String name = params == null || params.name() == null ? "" : params.name();
+        Optional<AgentTool<?>> tool = visibleTools(tokenScopes).stream().filter(candidate -> candidate.name().equals(name)).findFirst();
         if (tool.isEmpty()) {
-            return failure(id, INVALID_PARAMS, "Unknown tool: " + name);
+            return JsonRpcResponseDTO.failure(id, INVALID_PARAMS, "Unknown tool: " + name);
         }
-        JsonNode arguments = params.path("arguments").isObject() ? params.path("arguments") : jsonMapper.createObjectNode();
-        AgentToolResult result;
+        return JsonRpcResponseDTO.success(id, toResult(run(tool.get(), message)));
+    }
+
+    /**
+     * Reads the arguments as the type the tool declares and runs it. A failure is a result, so that the model can read what went wrong.
+     */
+    private <A> AgentToolResult run(AgentTool<A> tool, String message) {
         try {
-            result = tool.get().handler().call(arguments, agentApi);
+            A arguments = readArguments(tool, message);
+            return tool.handler().call(arguments, agentApi);
+        }
+        catch (JacksonException e) {
+            return AgentToolResult.error("Invalid arguments: " + e.getOriginalMessage() + " (at " + e.getPathReference() + ")");
         }
         catch (IllegalArgumentException e) {
-            result = AgentToolResult.error("Invalid arguments: " + e.getMessage());
+            return AgentToolResult.error("Invalid arguments: " + e.getMessage());
         }
         catch (RuntimeException e) {
-            log.warn("Tool {} failed", name, e);
-            result = AgentToolResult.error("The tool failed unexpectedly. Check what exists before you try again, because creating is not idempotent.");
+            log.warn("Tool {} failed", tool.name(), e);
+            return AgentToolResult.error("The tool failed unexpectedly. Check what exists before you try again, because creating is not idempotent.");
         }
-        ObjectNode answer = jsonMapper.createObjectNode();
-        answer.putArray("content").addObject().put("type", "text").put("text", result.text());
-        answer.put("isError", result.isError());
-        return success(id, answer);
     }
 
-    private List<AgentTool> visibleTools(Set<AgentScope> tokenScopes) {
+    private <A> A readArguments(AgentTool<A> tool, String message) {
+        JavaType argumentsType = jsonMapper.getTypeFactory().constructType(tool.argumentsType());
+        JavaType requestType = jsonMapper.getTypeFactory().constructParametricType(ToolCallRequestDTO.class, argumentsType);
+        ToolCallRequestDTO<A> call = jsonMapper.readValue(message, requestType);
+        if (call.params() == null || call.params().arguments() == null) {
+            // No arguments were sent: read an empty object, so that a tool without required arguments still runs.
+            return jsonMapper.readValue("{}", argumentsType);
+        }
+        return call.params().arguments();
+    }
+
+    private static CallToolResultDTO toResult(AgentToolResult result) {
+        return new CallToolResultDTO(List.of(new ToolContentDTO("text", result.text())), result.isError());
+    }
+
+    private List<AgentTool<?>> visibleTools(Set<AgentScope> tokenScopes) {
         return agentToolService.getTools().stream().filter(tool -> tool.anyOfScopes().stream().anyMatch(tokenScopes::contains)).toList();
-    }
-
-    private ObjectNode success(JsonNode id, JsonNode result) {
-        ObjectNode response = jsonMapper.createObjectNode();
-        response.put("jsonrpc", "2.0");
-        response.set("id", id);
-        response.set("result", result);
-        return response;
-    }
-
-    private ObjectNode failure(JsonNode id, int code, String message) {
-        ObjectNode response = jsonMapper.createObjectNode();
-        response.put("jsonrpc", "2.0");
-        response.set("id", id.isMissingNode() ? jsonMapper.nullNode() : id);
-        ObjectNode error = response.putObject("error");
-        error.put("code", code);
-        error.put("message", message);
-        return response;
     }
 }

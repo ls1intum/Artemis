@@ -15,6 +15,8 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -29,6 +31,12 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 public class ModelingSubmission extends Submission {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingSubmission.class);
+
+    /** Property of an Apollon v3 model that holds its elements. */
+    private static final String ELEMENTS_PROPERTY = "elements";
+
+    /** Property of an Apollon v4 model that holds its nodes. */
+    private static final String NODES_PROPERTY = "nodes";
 
     @Override
     public String getSubmissionExerciseType() {
@@ -98,21 +106,75 @@ public class ModelingSubmission extends Submission {
             if (model == null || model.isBlank()) {
                 return true;
             }
-            var jsonNode = jacksonObjectMapper.readTree(getModel());
+            try (JsonParser parser = jacksonObjectMapper.createParser(getModel())) {
+                // The model is read as a token stream: its size is bounded only by MAX_SUBMISSION_MODEL_LENGTH, and only the emptiness of two properties matters.
+                if (parser.nextToken() != JsonToken.START_OBJECT) {
+                    // A model that is not a JSON object has neither elements nor nodes
+                    parser.skipChildren();
+                    return true;
+                }
+                Boolean elementsEmpty = null;
+                Boolean nodesEmpty = null;
+                while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
+                    String property = parser.currentName();
+                    JsonToken valueToken = parser.nextToken();
+                    // As with a parsed tree, a property that occurs twice counts with its last value
+                    if (ELEMENTS_PROPERTY.equals(property)) {
+                        elementsEmpty = consumeValueAndCheckEmpty(parser, valueToken);
+                    }
+                    else if (NODES_PROPERTY.equals(property)) {
+                        nodesEmpty = consumeValueAndCheckEmpty(parser, valueToken);
+                    }
+                    else {
+                        parser.skipChildren();
+                    }
+                }
 
-            // Check for v3 (elements)
-            var elements = jsonNode.get("elements");
-            if (elements != null) {
-                return elements.isEmpty();
+                // Check for v3 (elements)
+                if (elementsEmpty != null) {
+                    return elementsEmpty;
+                }
+
+                // Check for v4 (nodes)
+                return nodesEmpty == null || nodesEmpty;
             }
-
-            // Check for v4 (nodes)
-            var nodes = jsonNode.get("nodes");
-            return nodes == null || nodes.isEmpty();
         }
         catch (JacksonException ex) {
             log.warn("Failed to parse model JSON", ex);
             return false;
         }
+    }
+
+    /**
+     * Reads the value the parser currently points at to its end and tells whether it is empty. An object or an array is empty if it has no members; a string, a number,
+     * a boolean and null have no members and are therefore empty as well.
+     *
+     * @param parser     the parser, positioned at the first token of the value
+     * @param valueToken the first token of the value
+     * @return true if the value has no members, false otherwise
+     */
+    private static boolean consumeValueAndCheckEmpty(JsonParser parser, JsonToken valueToken) {
+        if (!valueToken.isStructStart()) {
+            return true;
+        }
+        JsonToken token = parser.nextToken();
+        if (token.isStructEnd()) {
+            return true;
+        }
+        // The value has members; read on to the end of the value, which is the closing token that brings the nesting depth back to zero.
+        int depth = 1;
+        while (token != null) {
+            if (token.isStructStart()) {
+                depth++;
+            }
+            else if (token.isStructEnd()) {
+                depth--;
+                if (depth == 0) {
+                    break;
+                }
+            }
+            token = parser.nextToken();
+        }
+        return false;
     }
 }

@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -13,9 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import tools.jackson.databind.JsonNode;
-
 import de.tum.cit.aet.artemis.account.config.AgentAccessEnabled;
+import de.tum.cit.aet.artemis.core.dto.agent.JsonRpcResponseDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.PersonalAccessTokenAuthentication;
@@ -49,17 +50,18 @@ public class AgentMcpResource {
     /**
      * POST /agent/mcp : handles one JSON-RPC message of the Model Context Protocol.
      *
-     * @param message the JSON-RPC message
+     * @param message the JSON-RPC message, as text: it is read by the service, so that a message that is not valid JSON-RPC is answered as a JSON-RPC error
      * @return the JSON-RPC answer, or 202 for a notification
      */
     @Hidden
     @PostMapping(value = "agent/mcp", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedScopes({})
-    public ResponseEntity<JsonNode> handleMessage(@RequestBody JsonNode message) {
+    public ResponseEntity<JsonRpcResponseDTO<?>> handleMessage(@RequestBody String message) {
         if (!(SecurityContextHolder.getContext().getAuthentication() instanceof PersonalAccessTokenAuthentication token)) {
             throw new AccessForbiddenException("The MCP endpoint accepts only personal access tokens.");
         }
-        return agentMcpService.handle(message, token.getScopes()).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.accepted().build());
+        Optional<JsonRpcResponseDTO<?>> answer = agentMcpService.handle(message, token.getScopes());
+        return answer.isPresent() ? ResponseEntity.ok(answer.get()) : ResponseEntity.accepted().build();
     }
 }

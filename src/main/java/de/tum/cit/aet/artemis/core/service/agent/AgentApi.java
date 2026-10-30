@@ -6,8 +6,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import tools.jackson.databind.JsonNode;
-
 /**
  * The REST API of this server as the tools of the MCP endpoint see it.
  * <p>
@@ -18,14 +16,14 @@ import tools.jackson.databind.JsonNode;
 public interface AgentApi {
 
     /**
-     * Calls an endpoint with a JSON body.
+     * Calls an endpoint with a body that is written as JSON.
      *
      * @param method the HTTP method
      * @param path   the path with its query, starting with {@code /api/}
-     * @param body   the JSON body, or null for none
+     * @param body   the DTO to send as the body, or null for none
      * @return the status and the body of the response
      */
-    AgentApiResponse send(HttpMethod method, String path, @Nullable JsonNode body);
+    AgentApiResponse send(HttpMethod method, String path, @Nullable Object body);
 
     /**
      * Calls an endpoint with a plain text body.

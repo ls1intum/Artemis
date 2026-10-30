@@ -25,6 +25,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -90,14 +93,23 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            // asString(null): the token response comes from the platform, and Jackson 3 throws on a non-string node
-            // where Jackson 2's asText() returned "".
-            return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").asString(null);
+            TokenResponse tokenResponse = JsonObjectMapper.get().readValue(exchange.getBody(), TokenResponse.class);
+            return tokenResponse == null ? null : tokenResponse.accessToken();
         }
         catch (HttpClientErrorException | JacksonException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * The part of the OAuth 2.0 token response of an LTI 1.3 platform that is used here.
+     *
+     * @param accessToken the access token for further requests to the platform, absent when the platform did not issue one
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record TokenResponse(@JsonProperty("access_token") String accessToken) {
     }
 
     /**
