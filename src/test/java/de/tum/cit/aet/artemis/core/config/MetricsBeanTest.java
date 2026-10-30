@@ -6,13 +6,9 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -43,11 +39,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "metricsbeans";
-
-    @Autowired
-    private PlatformTransactionManager transactionManager;
-
-    private TransactionStatus transaction;
 
     @Autowired
     private MeterRegistry meterRegistry;
@@ -90,7 +81,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void resetDatabase() {
-        transaction = transactionManager.getTransaction(new DefaultTransactionDefinition());
         SecurityUtils.setAuthorizationObject();
 
         // Reset ALL exams to the past to avoid time-sensitive cleanup issues.
@@ -105,14 +95,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         // Use bulk update to avoid loading QuizExercise entities, which would trigger
         // Hibernate 7's strict @OrderColumn validation on quizQuestions
         exerciseRepository.updateAllExerciseDates(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1));
-    }
-
-    @AfterEach
-    void rollBackDatabaseChanges() {
-        // Restore global dates and submissions so shared demo fixtures remain intact.
-        if (transaction != null) {
-            transactionManager.rollback(transaction);
-        }
     }
 
     @Test
@@ -457,7 +439,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testEnsureCourseInformationIsSet() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setTitle(null);
         course.setShortName("metricCourseShort");
