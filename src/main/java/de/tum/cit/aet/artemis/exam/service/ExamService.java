@@ -1006,7 +1006,8 @@ public class ExamService {
         if (latestSubmissionIds.isEmpty()) {
             return Map.of();
         }
-        return resultRepository.findCorrectionRoundResultsBySubmissionIds(latestSubmissionIds).stream().collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
+        return resultRepository.findCorrectionRoundResultsBySubmissionIds(latestSubmissionIds, SecurityUtils.getCurrentUserLogin().orElse(null)).stream()
+                .collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
     }
 
     private double calculateFirstCorrectionPoints(StudentParticipation participation, Exam exam, ExamGradeScoreDTO examGrade, double plagiarismPointDeductionPercentage,
@@ -1458,7 +1459,7 @@ public class ExamService {
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(exerciseIds);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exerciseIds);
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(examRepository.findByIdElseThrow(examId), exerciseIds);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
         return stats;
     }

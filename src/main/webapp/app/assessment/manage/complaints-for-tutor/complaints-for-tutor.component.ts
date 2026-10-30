@@ -9,7 +9,6 @@ import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/ex
 import { Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Location } from '@angular/common';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/manage/services/assessment.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
@@ -37,7 +36,6 @@ export class ComplaintsForTutorComponent implements OnInit {
     readonly isAssessor = input(false);
     readonly zeroIndent = input(true);
     readonly exercise = input<Exercise>();
-    readonly submission = input<Submission>();
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
     // that should be sent to the server along with the assessment update.
     readonly updateAssessmentAfterComplaint = output<AssessmentAfterComplaint>();
@@ -156,7 +154,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise(), this.submission(), this.isTestRun());
+        assessmentNavigateBack(this.location, this.router, this.exercise(), this.isTestRun());
     }
 
     removeLock() {

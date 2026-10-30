@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -2288,29 +2289,32 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     /**
-     * Returns a page of participation IDs for the given exercise for the management view, applying search, filter, and score-range predicates.
-     * Uses {@link StudentParticipationSpecs} to build the query dynamically via the Criteria API.
-     * <p>
-     * An individual exercise yields the participations of students. A team exercise yields the participations of teams and the practice participations of single students.
+     * Finds participation IDs for management with optional team tutor and practice-mode restrictions.
      *
      * @param exerciseId       the exercise to query
      * @param teamMode         whether the exercise uses teams
-     * @param searchTerm       free-text search (matched against student login/name or team name/shortName)
-     * @param filterProp       filter property name (All, Failed, NoSubmissions, NoPracticeMode, Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
-     * @param stuckBuildCutoff for the Failed filter: participations whose latest submission has no result and was submitted before this timestamp are considered stuck (nullable)
-     * @param scoreRangeLower  inclusive lower bound of score range filter (nullable)
-     * @param scoreRangeUpper  upper bound of score range filter; exclusive unless equal to 100 (nullable)
+     * @param searchTerm       search term for student or team names
+     * @param filterProp       management filter property
+     * @param stuckBuildCutoff cutoff for identifying stuck builds (nullable)
+     * @param scoreRangeLower  inclusive lower score bound (nullable)
+     * @param scoreRangeUpper  upper score bound, exclusive unless equal to 100 (nullable)
      * @param pageable         pagination information
-     * @param sortOrder        ascending or descending
+     * @param sortOrder        sort direction, defaulting to ascending
      * @param sortedColumn     the column to sort by
-     * @return a page of participation IDs
+     * @param teamOwnerId      tutor whose assigned teams to include, or null for all teams
+     * @param excludePractice  whether to exclude practice participations
+     * @return a page of matching participation IDs
      */
     default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
-            Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
+            Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn, @Nullable Long teamOwnerId, boolean excludePractice) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
-                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
-                .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
+                .and(StudentParticipationSpecs.ownedByTeamTutor(teamOwnerId)).and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode))
+                .and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff)).and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
                 .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
+
+        if (excludePractice) {
+            spec = spec.and(StudentParticipationSpecs.isNotPracticeMode());
+        }
 
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
         Page<StudentParticipation> page = findAll(spec, unsortedPageable);

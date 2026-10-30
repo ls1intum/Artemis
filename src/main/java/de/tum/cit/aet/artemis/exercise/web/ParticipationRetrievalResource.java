@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -215,6 +216,38 @@ public class ParticipationRetrievalResource {
 
         List<ParticipationNameExportDTO> result = participationService.getParticipationNamesForExport(exercise);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Gets assessment queue rows independently of participation management and the scores page.
+     *
+     * @param exerciseId the exercise to assess
+     * @param search     pagination, sorting and filtering parameters
+     * @param ownTeams   restrict team exercises to teams owned by the requesting tutor
+     * @return score rows with participant identities hidden unless the requester is an instructor or the team's tutor
+     */
+    @GetMapping("exercises/{exerciseId}/assessment-queue")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ParticipationManagementDTO>> getAssessmentQueue(@PathVariable Long exerciseId, @Valid ParticipationSearchDTO search,
+            @RequestParam(defaultValue = "false") boolean ownTeams) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        Long teamOwnerId = exercise.isTeamMode() && (ownTeams || !authCheckService.isAtLeastInstructorForExercise(exercise)) ? userRepository.getUser().getId() : null;
+        boolean independentAssessment = exercise.isExamExercise() && !authCheckService.isAtLeastInstructorForExercise(exercise);
+        if (independentAssessment && ("score".equals(search.sortedColumn()) || search.scoreRangeLower() != null || search.scoreRangeUpper() != null
+                || "Successful".equals(search.filterProp()) || "Unsuccessful".equals(search.filterProp()))) {
+            throw new AccessForbiddenException("Score filtering and sorting are unavailable during independent assessment.");
+        }
+        boolean hideParticipant = teamOwnerId == null && shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
+        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search, teamOwnerId, true);
+        if (independentAssessment) {
+            page = page.map(row -> row.forIndependentAssessment(exercise.getNumberOfCorrectionRounds()));
+        }
+        if (hideParticipant) {
+            page = page.map(ParticipationManagementDTO::withoutParticipantInformation);
+        }
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 
     private boolean canSeeParticipant(StudentParticipation participation) {

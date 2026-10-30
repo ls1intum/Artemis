@@ -60,9 +60,21 @@ contribution to it.
 <Image src={assessmentDashboard} alt="Assessment dashboard with the per-exercise progress of the course" size={ImageSize.large} caption="Assessment progress across the course" />
 
 **Exercise Dashboard** on any row opens that exercise on its own. This is where a reviewer works: it holds the
-training material, the queue, and **Start new assessment**, which locks the next submission and opens it.
+training material and an assessment queue. **Assess submission** locks the selected submission and opens it;
+**Continue assessment** resumes a draft, and **Open assessment** shows a completed assessment. The same table is used
+for every exercise type, including exams. Individual exercises show **Students’ submissions**. Student identities
+remain hidden from all reviewers, including instructors: the queue displays participation IDs and offers no
+student-name search.
 
 <Image src={exerciseDashboard} alt="Exercise assessment dashboard with the queue and the training material" size={ImageSize.large} caption="A single exercise, as its reviewers see it" />
+
+### Team Exercises
+
+In a [team exercise](/instructor/exercises/team-exercise) a submission belongs to a team, and the team's tutor
+assesses it; instructors can step in from the exercise's participations. **Assess submission** and **Assess next**
+therefore only hand out submissions of the teams you are the tutor of. **Your teams** on the exercise dashboard lists those teams with where each assessment stands, the actions to
+start, continue or open it, and, for programming exercises, links to the team's repository and commit history. A
+team's tutor knows the team, so the team's name stays visible to them.
 
 ## Structured Assessment Criteria
 

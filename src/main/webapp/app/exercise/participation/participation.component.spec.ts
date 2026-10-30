@@ -1125,14 +1125,28 @@ describe('ParticipationComponent', () => {
                 submissionId: 20,
                 resultId: 31,
                 correctionRoundResults: [
-                    { resultId: 30, correctionRound: 0, assessmentType: AssessmentType.MANUAL },
-                    { resultId: 31, correctionRound: 1, assessmentType: AssessmentType.MANUAL },
+                    { resultId: 30, correctionRound: 0, assessmentType: AssessmentType.MANUAL, hasComplaint: false },
+                    { resultId: 31, correctionRound: 1, assessmentType: AssessmentType.MANUAL, hasComplaint: true },
                 ],
             });
 
             const results = participation.submissions![0].results!;
             expect(results.map((result) => result.id)).toEqual([31, 30]);
             expect(results[0].correctionRound).toBe(1);
+            expect(results[0].hasComplaint).toBe(true);
+            expect(results[1].hasComplaint).toBe(false);
+        });
+
+        it.each([ExerciseType.TEXT, ExerciseType.PROGRAMMING])('preserves practice mode and deadline metadata for %s submissions', (type) => {
+            component.exercise.set({ ...exercise, type });
+            const individualDueDate = dayjs('2026-10-27T12:00:00Z');
+            const submissionDate = individualDueDate.subtract(1, 'hour');
+
+            const participation = component.toParticipation({ ...sampleDto, testRun: true, submissionId: 20, individualDueDate, submissionDate });
+
+            expect(participation.testRun).toBe(true);
+            expect(participation.individualDueDate).toEqual(individualDueDate);
+            expect(participation.submissions![0].submissionDate).toEqual(submissionDate);
         });
 
         it('should build a programming participation with a programming submission', () => {

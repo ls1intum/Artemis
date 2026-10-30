@@ -212,7 +212,7 @@ export const withPracticeParticipations = (current: StudentParticipation[] | und
 
 /**
  * Checks whether the given exercise is eligible for receiving manual results.
- * If it is a programming exercise, the due date also has to be in the past.
+ * Tutors must wait for the relevant due date; instructors may assess submitted course work earlier.
  *
  * @param exercise
  */
@@ -220,10 +220,10 @@ export const areManualResultsAllowed = (exercise: Exercise): boolean => {
     if (exercise.type === ExerciseType.QUIZ) {
         return false;
     } else if (exercise.type !== ExerciseType.PROGRAMMING) {
-        return !exercise.dueDate || dayjs().isAfter(exercise.dueDate);
+        return !!exercise.isAtLeastInstructor || !exercise.dueDate || dayjs().isAfter(exercise.dueDate);
     } else {
         const relevantDueDate = (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate ?? exercise.dueDate;
-        return exercise.assessmentType !== AssessmentType.AUTOMATIC && (!relevantDueDate || dayjs().isAfter(relevantDueDate));
+        return exercise.assessmentType !== AssessmentType.AUTOMATIC && (!!exercise.isAtLeastInstructor || !relevantDueDate || dayjs().isAfter(relevantDueDate));
     }
 };
 

@@ -20,6 +20,8 @@ import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import englishTranslations from 'src/main/webapp/i18n/en/exerciseAssessmentDashboard.json';
+import germanTranslations from 'src/main/webapp/i18n/de/exerciseAssessmentDashboard.json';
 
 describe('TeamParticipationTableComponent', () => {
     let comp: TeamParticipationTableComponent;
@@ -221,6 +223,13 @@ describe('TeamParticipationTableComponent', () => {
     it('Assessment Action "open" is triggered', () => {
         const expectedAssessmentAction = comp.assessmentAction(submission4);
         expect(expectedAssessmentAction).toBe('open');
+    });
+
+    it.each([englishTranslations, germanTranslations])('translates every dynamically generated assessment action', (translations) => {
+        for (const submission of [submission2, submission3, submission4]) {
+            const key = `${comp.assessmentAction(submission)}Assessment` as 'startAssessment' | 'continueAssessment' | 'openAssessment';
+            expect(translations.artemisApp.exerciseAssessmentDashboard[key]).toBeTruthy();
+        }
     });
 
     it('Navigate to assessment editor when opening exercise submission', async () => {
