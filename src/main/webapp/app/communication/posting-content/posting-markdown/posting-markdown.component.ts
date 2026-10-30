@@ -115,8 +115,12 @@ export class PostingMarkdownComponent {
         this.unmountReferences();
         this.host.nativeElement.querySelectorAll<HTMLElement>(`[${REFERENCE_ATTRIBUTE}]`).forEach((placeholder) => {
             const reference = references[Number(placeholder.getAttribute(REFERENCE_ATTRIBUTE))];
-            // A reference inside a link label would nest its anchor in the link and lead off site when clicked.
-            if (!reference || placeholder.closest('a')) {
+            if (!reference) {
+                return;
+            }
+            // A reference inside a link label would nest its anchor in the link and lead off site when clicked, so the link shows its text.
+            if (placeholder.closest('a')) {
+                placeholder.textContent = reference.referenceStr ?? '';
                 return;
             }
             const component = createComponent(PostingContentPartComponent, { environmentInjector: this.environmentInjector, hostElement: placeholder });

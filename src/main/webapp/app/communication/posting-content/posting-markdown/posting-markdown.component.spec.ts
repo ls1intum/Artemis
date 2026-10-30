@@ -128,7 +128,7 @@ describe('PostingMarkdownComponent', () => {
         expect(references()).toHaveLength(0);
     });
 
-    it('does not mount a reference inside a link, which would nest an anchor in it', async () => {
+    it('shows the text of a reference inside a link instead of nesting an anchor in it', async () => {
         fixture.componentRef.setInput('markdown', `[open ${postingReferencePlaceholder(0)}](https://example.org) and ${postingReferencePlaceholder(0)}`);
         fixture.componentRef.setInput('references', [user('Ada Example', 'ada_example')]);
         await vi.waitFor(() => {
@@ -138,6 +138,7 @@ describe('PostingMarkdownComponent', () => {
 
         expect(references()).toHaveLength(1);
         expect(view().querySelectorAll('a a')).toHaveLength(0);
+        expect(view().querySelector('a[href]')?.textContent).toBe('open Ada Example');
     });
 
     it('does not run scripts or keep unsafe markup of the content', async () => {
