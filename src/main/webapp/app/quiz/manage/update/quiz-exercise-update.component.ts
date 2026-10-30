@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -318,7 +319,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         /** Query the courseService for the participationId given by the params */
         if (this.courseId()) {
-            this.courseService.find(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
+            this.courseService.findForManagement(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body!;
                 // Load exerciseGroup and set exam mode
                 if (this.isExamMode()) {
@@ -349,7 +350,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             });
         }
         if (quizId) {
-            this.quizExerciseService.find(quizId).subscribe((quiz) => {
+            (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(quizId) : this.quizExerciseService.find(quizId)).subscribe((quiz) => {
                 quiz.quizQuestions ??= [];
                 this.quizExercise.set(quiz);
                 this.init();

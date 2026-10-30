@@ -77,7 +77,7 @@ class AttachmentVideoUnitPlaylistIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void tutorGetsThePlaylistOfAnUnreleasedUnit() throws Exception {
         unit.setReleaseDate(ZonedDateTime.now().plusDays(1));
         attachmentVideoUnitRepository.save(unit);

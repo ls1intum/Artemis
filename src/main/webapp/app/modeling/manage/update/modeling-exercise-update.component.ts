@@ -268,7 +268,7 @@ export class ModelingExerciseUpdateComponent implements OnDestroy, OnInit {
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res.body!));
                             this.exerciseState.patch('course', undefined);
                         } else {
-                            this.courseService.find(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
+                            this.courseService.findForManagement(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
                             this.exerciseState.patch('exerciseGroup', undefined);
                         }
                         this.exerciseState.update(resetForImport);

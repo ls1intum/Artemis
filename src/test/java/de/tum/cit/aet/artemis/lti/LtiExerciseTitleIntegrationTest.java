@@ -50,14 +50,14 @@ class LtiExerciseTitleIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void tutorInOnlineCourseSeesReleasedAndUnreleasedExercisesWithoutLaunches() throws Exception {
         Course course = createEnrolledCourse(true);
         ZonedDateTime now = ZonedDateTime.now();
         TextExercise released = createExercise(course, "released", now.minusDays(2));
         TextExercise unreleased = createExercise(course, "unreleased", now.plusDays(2));
 
-        Set<ExerciseTitleDTO> titles = getExerciseTitles(course);
+        Set<ExerciseTitleDTO> titles = request.getSet("/api/exercise/courses/" + course.getId() + "/exercise-titles/for-staff", HttpStatus.OK, ExerciseTitleDTO.class);
 
         assertThat(titles).as("teaching assistants can select every course exercise without an LTI launch").containsExactlyInAnyOrder(
                 new ExerciseTitleDTO(released.getId(), released.getTitle(), ExerciseType.TEXT), new ExerciseTitleDTO(unreleased.getId(), unreleased.getTitle(), ExerciseType.TEXT));

@@ -18,7 +18,10 @@ import de.tum.cit.aet.artemis.admin.dto.CourseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.admin.service.StatisticsService;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -66,7 +69,8 @@ public class StatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/data-for-content")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<Integer>> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType,
             @RequestParam StatisticsView view, @RequestParam Long entityId) {
         var courseId = 0L;
@@ -87,10 +91,8 @@ public class StatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/course-statistics")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<CourseManagementStatisticsDTO> getCourseStatistics(@RequestParam Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         return ResponseEntity.ok(this.statisticsService.getCourseStatistics(courseId));
     }
 
@@ -102,10 +104,9 @@ public class StatisticsResource {
      */
     @FeatureUsage(UserFeature.EXERCISE_SCORES)
     @GetMapping("management/statistics/exercise-statistics")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<ExerciseManagementStatisticsDTO> getExerciseStatistics(@RequestParam Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         var exerciseManagementStatisticsDTO = statisticsService.getExerciseStatistics(exercise);
         return ResponseEntity.ok(exerciseManagementStatisticsDTO);
     }

@@ -21,6 +21,8 @@ export class GradingKeyOverviewComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private themeService = inject(ThemeService);
 
+    readonly purpose: 'student' | 'management' = this.route.snapshot.data['gradingKeyPurpose'] === 'management' ? 'management' : 'student';
+
     readonly faChevronLeft = faChevronLeft;
     readonly faPrint = faPrint;
 

@@ -205,7 +205,9 @@ export class ExerciseAddModalComponent {
                 if (type === ExerciseType.PROGRAMMING) {
                     this.handleProgrammingImport(exercise, courseId);
                 } else {
-                    void this.router.navigate(['/course-management', courseId, type + '-exercises', exercise.id, 'import']);
+                    void this.router.navigate(['/course-management', courseId, type + '-exercises', exercise.id, 'import'], {
+                        queryParams: { sourceIsExamExercise: !!exercise.exerciseGroup },
+                    });
                 }
             }
         });
@@ -224,7 +226,9 @@ export class ExerciseAddModalComponent {
                 state: { programmingExerciseForImportFromFile: result },
             });
         } else {
-            void this.router.navigate(['/course-management', courseId, 'programming-exercises', 'import', result.id]);
+            void this.router.navigate(['/course-management', courseId, 'programming-exercises', 'import', result.id], {
+                queryParams: { sourceIsExamExercise: !!result.exerciseGroup },
+            });
         }
     }
 

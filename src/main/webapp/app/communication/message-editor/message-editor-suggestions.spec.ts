@@ -15,7 +15,7 @@ describe('Message editor suggestions', () => {
     const emojis = { search: vi.fn() };
     const members = { searchMembersForUserMentions: vi.fn() };
     const channels = { getPublicChannelsOfCourse: vi.fn() };
-    const exercises = { getTitlesForCourse: vi.fn() };
+    const exercises = { getTitlesForAccessibleCourse: vi.fn() };
     const lectures = { findAllByCourseIdForOverview: vi.fn() };
     let suggestions: MessageEditorSuggestions;
 
@@ -27,7 +27,7 @@ describe('Message editor suggestions', () => {
         ]);
         members.searchMembersForUserMentions.mockReturnValue(of(new HttpResponse({ body: [{ name: 'Anna', login: 'anna' }] })));
         channels.getPublicChannelsOfCourse.mockReturnValue(of(new HttpResponse({ body: [{ id: 2, name: 'general' }] })));
-        exercises.getTitlesForCourse.mockReturnValue(of([{ id: 3, title: 'Exercise', type: 'programming' }]));
+        exercises.getTitlesForAccessibleCourse.mockReturnValue(of([{ id: 3, title: 'Exercise', type: 'programming' }]));
         lectures.findAllByCourseIdForOverview.mockReturnValue(of([{ id: 4, title: 'Lecture' }]));
         TestBed.configureTestingModule({
             providers: [
@@ -50,7 +50,7 @@ describe('Message editor suggestions', () => {
         expect(emojis.search).toHaveBeenCalledExactlyOnceWith('jo', undefined, 30);
         expect(members.searchMembersForUserMentions).not.toHaveBeenCalled();
         expect(channels.getPublicChannelsOfCourse).not.toHaveBeenCalled();
-        expect(exercises.getTitlesForCourse).not.toHaveBeenCalled();
+        expect(exercises.getTitlesForAccessibleCourse).not.toHaveBeenCalled();
         expect(lectures.findAllByCourseIdForOverview).not.toHaveBeenCalled();
     });
 

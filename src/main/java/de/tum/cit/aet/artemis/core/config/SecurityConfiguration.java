@@ -243,8 +243,8 @@ public class SecurityConfiguration {
     /**
      * Defines the hierarchy of roles within the application's security context.
      * <p>
-     * Administrator identity and teaching roles are separate. Administrators remain regular users, but only explicit teaching authorities or passkey-backed administrator elevation
-     * can satisfy teaching-role authorization.
+     * Global authorities only tell administrators and signed-in users apart. Teaching roles are not global: they belong to a course and are decided from the course roles in the
+     * database, and an administrator satisfies them only through passkey-backed administrator elevation.
      * </p>
      *
      * <p>
@@ -261,7 +261,7 @@ public class SecurityConfiguration {
         return RoleHierarchyImpl.fromHierarchy("""
                 ROLE_SUPER_ADMIN > ROLE_ADMIN
                 ROLE_ADMIN > ROLE_USER
-                ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS
+                ROLE_USER > ROLE_ANONYMOUS
                 """);
     }
 

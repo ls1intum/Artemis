@@ -107,6 +107,15 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         expect(comp.isSaving).toBe(false);
     });
 
+    it('loads the exam source backup via exam details', () => {
+        dialogConfig.data.quizExercise.exerciseGroup = {};
+        const examFind = vi.spyOn(quizService, 'findForExam').mockReturnValue(of(createQuizExercise()));
+        comp.ngOnInit();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(dialogConfig.data.quizExercise.id);
+        expect(quizService.find).not.toHaveBeenCalled();
+        expect(comp.backUpQuiz).toBeTruthy();
+    });
+
     it('should close the dialog without a result on clear', () => {
         const closeSpy = vi.spyOn(dialogRef, 'close');
         comp.clear();
