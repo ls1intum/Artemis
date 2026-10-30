@@ -1,0 +1,168 @@
+---
+id: science-data-collection
+title: Science Data Collection
+sidebar_label: Science Data Collection
+---
+
+Science data collection records how students move through a course, such as which lectures, exercises, competencies
+and learning paths they open, so that the interaction data can be handed to researchers. It is voluntary for every
+student and configured per course: an administrator decides which courses take part, each student decides for
+themselves, and every export for research is pseudonymized and recorded in an audit trail.
+
+This page is for the administrators who run the collection. What students see, and how they change their decision, is
+described in [Science Data Collection for students](/student/progress-analytics/science-data-collection).
+
+## What is collected
+
+Each event is one row in the `science_event` table: the login of the student, a timestamp, the event type, the course,
+and the id of the resource the event is about. The content of a submission, a message or an answer is never part of
+an event.
+
+| Event type | Recorded when a student | Resource id |
+| --- | --- | --- |
+| `LECTURE__OPEN` | opens a lecture | the lecture |
+| `LECTURE__OPEN_UNIT` | opens a lecture unit | the lecture unit |
+| `EXERCISE__OPEN` | opens an exercise | the exercise |
+| `COMPETENCY__OPEN` | opens the details of a competency | the competency |
+| `COMPETENCY__OPEN_OVERVIEW` | opens the competency overview of a course | the course |
+| `LEARNING_PATH__OPEN` | opens their learning path | the learning path |
+| `LEARNING_PATH__OPEN_NAVIGATION` | opens the learning path navigation | the learning path |
+| `LEARNING_PATH__NAV_NEXT`, `LEARNING_PATH__NAV_PREV` | moves to the next or the previous learning object | the learning path |
+| `LEARNING_PATH__OPEN_GRAPH` | opens the competency graph of their learning path | the learning path |
+| `IRIS__ENTRYPOINT_IMPRESSION` | is shown the Iris entry point in the course sidebar | the course |
+| `IRIS__OPENED_SIDEBAR` | opens Iris from the course sidebar | the course |
+
+Three further types record decisions rather than interactions, and the server writes them itself:
+`SCIENCE__OPT_IN` and `SCIENCE__OPT_OUT` when a student agrees or declines in a course, and `SCIENCE__DATA_DELETED`
+when a student deletes their data for a course. The client cannot submit these, and a student's data deletion keeps
+them.
+
+## When Artemis collects
+
+An interaction is stored only when all three of these hold at the moment it happens:
+
+1. The **Science Data Collection** feature toggle is on. It is off on a new installation unless
+   `artemis.science.event-logging.enable` is `true`, and you switch it under **Administration → Features**. The
+   Atlas module has to be enabled as well, because the science data lives there.
+2. The course is enabled for collection on the **Science data collection** page.
+3. The student has agreed to contribute data in that course.
+
+The server checks the course and the consent together on every event it receives, so a client that keeps sending
+events after a course was disabled or a student withdrew does not get them stored. Switching the feature toggle off
+stops collection on every course at once and hides the administration page; the enabled courses and every student's
+decisions are kept and apply again when the toggle is switched back on.
+
+## Enabling and disabling a course
+
+Open **Administration**, then **Science** in the **Content** group. The page is titled **Science data collection**
+and appears only while the feature toggle is on.
+
+Under **Course activation**, type at least two characters of the course title or short name into **Course**, pick the
+course, and click **Enable**. From then on, students of that course are asked whether they want to contribute data
+until they decide. Nothing is collected from a student before they agree.
+
+To stop collection, click **Disable** in the course's row. Disabling keeps everything: the events already collected,
+each student's decision, and the course's row in the table. Students can still withdraw their consent and delete
+their data for a disabled course, but nobody can agree to it until it is enabled again.
+
+The table below the form is the activation history. It lists every course that was ever enabled, with its **Status**
+(**Active** or **Inactive**) and the time it **Last changed**, most recent first. A course appears in it once, however
+often it was switched on and off.
+
+## Creating a research export
+
+The **Research CSV export** section produces a CSV file of the collected events for a research question.
+
+1. Under **Courses to export**, tick the courses. Inactive courses are offered too, because their earlier events are
+   still stored.
+2. Optionally narrow the time range with **From** and **To**. Both bounds are inclusive.
+3. All event types are ticked; untick those the question does not need. At least one must stay ticked.
+4. Describe the reason for the export in **Purpose**. The purpose is mandatory and is stored in the audit record.
+5. Click **Create CSV export**. The browser downloads the file.
+
+The file has one row per event, with the columns `identity`, `timestamp`, `event_type`, `course_id` and
+`resource_id`. Rows are ordered by course, then by time.
+
+### Which events an export contains
+
+An event is exported only if the student had already recorded a decision in that course when the event happened,
+that is, a `SCIENCE__OPT_IN` or `SCIENCE__OPT_OUT` marker for the same student and course that is not later than the
+event itself. Events stored before a student ever decided in a course are never exported, however the filters are
+set. A decline marker is exported like any other row, so the research record can tell a student who did not interact
+from one who did not agree to be measured.
+
+Withdrawing consent stops further collection, but it does not remove what was collected while the student agreed.
+Those events stay in later exports until the student deletes their data for the course.
+
+### Pseudonymization
+
+The `identity` column does not contain the login. It holds a SHA-256 hash of the login combined with a random salt
+that Artemis generates for this one export and never stores. The same student therefore has the same identity
+throughout one file, so a researcher can follow a student within it, but a different identity in every other export.
+Three consequences follow, and they are deliberate:
+
+- **An export cannot be reproduced.** Running the same filters again yields different identities, so the new file
+  does not match the old one or the checksum recorded for it.
+- **The `identity` column cannot be mapped back to an account.** Not even Artemis can recompute it. The other
+  columns can still be matched against the database by anyone with access to it (see below).
+- **An erasure request cannot be honoured against a file that was already handed over.** Artemis cannot recall or
+  change a file that was handed over, and its `identity` column does not say which rows are the person's. A
+  student's data deletion only affects exports created afterwards.
+
+The pseudonymization is partial. Timestamps, event types, courses and resources are exported unchanged, so two
+exports covering the same period can still be matched on them. Anyone with access to the database can match rows
+against the stored events, and in a small course the pattern of activity alone may identify a student.
+Choose the narrowest filters that answer the research question, and agree with the researchers how the file is
+stored and when it is deleted.
+
+## Export audit
+
+Every export is recorded before the file is handed out, and an export whose audit record cannot be stored is
+discarded. The **Export audit** table lists each one, newest first, with the time it was **Created**, the **Admin**
+who created it, the **Courses** it covered, the **Purpose** given and the **Checksum** of the file. The record also
+stores the time range and event types of the filter.
+
+The checksum is the SHA-256 hash of the downloaded file. It cannot be used to regenerate the export, but it lets you
+confirm whether a file someone holds is exactly the one Artemis produced. Audit records are never deleted, not even
+when the courses or events they describe are.
+
+## Deleting science data
+
+Students delete their own interaction data per course under **User Settings → Science**. The deletion removes their
+interaction events in that course and, if any were removed, records a `SCIENCE__DATA_DELETED` marker; their
+consent decision and the decision markers stay. It does not change the decision, so a student who is still
+contributing continues to be recorded.
+
+Deleting a course deletes its science events, its enablement and the consent decisions made in it. The retention
+operations described in [Cleanup Service](/admin/cleanup-service) do not remove science events, and resetting the
+student data of an old course keeps them. Only the not-enrolled-user deletion touches science data, as a permanent
+account deletion described below.
+
+Permanently deleting an account removes the person's consent decisions, but not their science events. The events are
+renamed to the placeholder identity `deleted-user-<id>`, so nothing points at the person any more. Their decision
+markers are renamed with them, so the events remain part of later research exports under the placeholder. See
+[Deleting User Accounts](/admin/user-deletion).
+
+## Known limitations
+
+**Re-enabling a course resumes the earlier consent.** Students who agreed before the course was disabled are recorded
+again as soon as it is enabled, without being asked a second time. If the purpose of the collection changed in
+between, tell the students in the course, so that they can withdraw under **User Settings → Science**.
+
+**Anonymizing an account keeps its consent decisions.** Where an account is anonymized instead of deleted, its login
+is replaced by a random one and its science events are renamed with it, while its consent rows stay attached to the
+account. Its earlier events therefore remain exportable under the new login.
+
+**Events that predate per-course consent are never exported.** The migration to 10.4 assigns a course to every existing
+event whose resource still exists, so that students can delete those events per course. Since no decision marker
+precedes them, no research export includes them. Events whose course could not be
+determined keep an empty `course_id`; they are part of the student's personal data export but cannot be deleted per
+course. See the [Upgrade Guide](/admin/upgrade-guide#104-course-level-science-data-collection).
+
+## Related pages
+
+- [Science Data Collection for students](/student/progress-analytics/science-data-collection): the consent dialog and
+  the settings students use
+- [Exports](/student/tools-reference/exports): the `science_events.csv` file in a student's personal data export
+- [Deleting User Accounts](/admin/user-deletion): what a permanent deletion does with science events
+- [Cleanup Service](/admin/cleanup-service): the retention operations, which keep science events

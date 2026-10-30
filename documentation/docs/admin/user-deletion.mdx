@@ -132,6 +132,11 @@ Once you confirm, Artemis works through the account in this order:
    to the rest of the team. A team the person was the only member of is deleted together with its work.
 5. It removes the account itself.
 
+Science data collection events are handled differently, because they record a login rather than a reference to the
+account. The person's consent decisions are deleted, and their events are kept under the placeholder identity
+`deleted-user-<id>`. See [Science Data Collection](/admin/science-data-collection#deleting-science-data) for what that
+means for research exports.
+
 Artemis knows a rule for every kind of data that can point at an account, and the build fails if a new kind is added
 without one. Should a deletion nevertheless meet data it cannot place, it stops at that point and reports the account
 as not deleted. Note that it does not undo the steps it already took: the account is left part-way, already deactivated
@@ -225,3 +230,5 @@ owns that data has removed it. Nothing is wrong, and running the job again will 
 - [User Management](user-registration.mdx): account types, how accounts are created, and the `activated` flag
 - [Cleanup Service](cleanup-service.mdx): retention periods, cleanup schedules and audit retention
 - [Access Rights](access-rights.mdx): roles and what each of them may do
+- [Science Data Collection](/admin/science-data-collection): consent decisions and research events, and what a deletion
+  keeps of them

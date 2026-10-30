@@ -69,7 +69,8 @@ export interface SidebarItem {
 })
 export class CourseSidebarComponent {
     layoutService = inject(LayoutService);
-    private readonly scienceService = inject(ScienceService);
+    // Optional: the sidebar also renders in course management, which collects no science data and provides no ScienceService.
+    private readonly scienceService = inject(ScienceService, { optional: true });
     private readonly courseTabRefreshService = inject(CourseTabRefreshService);
 
     protected readonly faChevronRight = faChevronRight;
@@ -180,7 +181,7 @@ export class CourseSidebarComponent {
         }
         const courseId = this.course()?.id;
         if (courseId) {
-            this.scienceService.logEvent(ScienceEventType.IRIS__OPENED_SIDEBAR, courseId);
+            this.scienceService?.logEvent(ScienceEventType.IRIS__OPENED_SIDEBAR, courseId, courseId);
         }
     }
 
@@ -193,7 +194,7 @@ export class CourseSidebarComponent {
         if (!irisItem || irisItem.hidden) {
             return;
         }
-        this.scienceService.logEvent(ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, courseId);
+        this.scienceService?.logEvent(ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, courseId, courseId);
         this.irisImpressionLoggedForCourseId.set(courseId);
     }
 }

@@ -13,6 +13,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MockProvider } from 'ng-mocks';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('LearningPathNavOverviewComponent', () => {
@@ -111,5 +112,15 @@ describe('LearningPathNavOverviewComponent', () => {
         fixture.detectChanges();
 
         expect(openCompetencyGraphSpy).toHaveBeenCalled();
+    });
+
+    it('should log opening the competency graph, which the modal cannot do outside the course overview', () => {
+        const logEventSpy = vi.spyOn(TestBed.inject(ScienceService), 'logEvent');
+        const openSpy = vi.spyOn(TestBed.inject(DialogService), 'open');
+
+        component.openCompetencyGraph();
+
+        expect(logEventSpy).toHaveBeenCalledWith(ScienceEventType.LEARNING_PATH__OPEN_GRAPH, learningPathId);
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 });

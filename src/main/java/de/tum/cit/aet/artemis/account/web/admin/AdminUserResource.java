@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
+import de.tum.cit.aet.artemis.account.service.user.ScienceIdentityRenameService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
@@ -127,9 +128,11 @@ public class AdminUserResource {
 
     private final PermanentUserDeletionService permanentUserDeletionService;
 
+    private final ScienceIdentityRenameService scienceIdentityRenameService;
+
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
             UserCourseRoleRepository userCourseRoleRepository, Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService,
-            UserDeletionPlanService userDeletionPlanService, PermanentUserDeletionService permanentUserDeletionService,
+            UserDeletionPlanService userDeletionPlanService, PermanentUserDeletionService permanentUserDeletionService, ScienceIdentityRenameService scienceIdentityRenameService,
             @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String artemisInternalAdminUsername) {
         this.userRepository = userRepository;
         this.userService = userService;
@@ -140,6 +143,7 @@ public class AdminUserResource {
         this.authorizationCheckService = authorizationCheckService;
         this.userDeletionPlanService = userDeletionPlanService;
         this.permanentUserDeletionService = permanentUserDeletionService;
+        this.scienceIdentityRenameService = scienceIdentityRenameService;
         this.artemisInternalAdminUsername = artemisInternalAdminUsername;
     }
 
@@ -253,7 +257,11 @@ public class AdminUserResource {
         checkCannotRemoveSuperAdminFromDefaultAdmin(existingUser.getLogin(), managedUserVM.getAuthorities());
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
+        final String previousLogin = existingUser.getLogin();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
+        // After the update has recorded and revoked everything a credential change requires: the rename can fail, and the
+        // update has committed by now, so a failure here must not be able to skip any of that.
+        scienceIdentityRenameService.renameScienceEventIdentityIfLoginChanged(previousLogin, updatedUser);
 
         if (shouldActivateUser) {
             userService.activateUser(updatedUser);

@@ -177,6 +177,25 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.4: Course-Level Science Data Collection
+
+Science data collection is enabled per course and needs each student's consent in that course. See
+[Science Data Collection](/admin/science-data-collection). The migration changes the `science_event` table on the
+first start:
+
+- It adds a `course_id` column and fills it for existing events from the lecture, lecture unit, exercise, competency,
+  learning path or course each event refers to. Events whose resource no longer exists keep an empty `course_id`.
+- It adds a foreign key from `course_id` to `course`, so deleting a course deletes its science events, and two indexes,
+  on `course_id, timestamp, id` and on `identity, course_id`.
+- It drops the `science_setting` table, which held the global science preference of each user. These preferences are
+  not carried over: no course collects data until an administrator enables it, and the students of an enabled course
+  are asked again.
+
+The backfill, the foreign key and each index process the whole `science_event` table. On an instance that has
+collected events for a long time, that table can be large, so expect the first start to take correspondingly longer,
+and take the database backup described in the upgrade procedure right before you upgrade. Rolling the migration back
+recreates `science_setting` empty; the dropped preferences can only be restored from that backup.
+
 ### 10.1: Installation Metadata in Production
 
 Every production core node refuses to start until three settings describe who runs the installation, whether or not telemetry is enabled:
