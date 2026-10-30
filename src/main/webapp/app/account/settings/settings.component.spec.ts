@@ -275,6 +275,60 @@ describe('SettingsComponent', () => {
         expect(comp.pendingEmailChange()).toEqual(pendingEmailChange);
     });
 
+    it.each(['new.email@mail.com', 'JOHN.DOE@MAIL.COM'])('should not announce new mails when saving %s returns the existing request', async (email) => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'getPendingEmailChange').mockReturnValue(of(pendingEmailChange));
+        vi.spyOn(accountService, 'save').mockReturnValue(of({ pendingEmailChange }));
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.pendingEmailChange()).toEqual(pendingEmailChange));
+
+        comp.settingsForm.controls.email.setValue(email);
+        comp.saveSettings();
+
+        expect(comp.success()).toBe(true);
+        expect(comp.emailChangeRequested()).toBe(false);
+        expect(comp.pendingEmailChange()).toEqual(pendingEmailChange);
+        expect(comp.currentUser()?.email).toBe('john.doe@mail.com');
+    });
+
+    it.each([
+        ['2026-10-13T10:00:00.123456789Z', '2026-10-13T10:00:00.123Z'],
+        ['2026-10-13T10:00:00.123900000Z', '2026-10-13T10:00:00.124Z'],
+    ])('should recognize the same request after database timestamp rounding from %s to %s', async (createdAt, persistedAt) => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        const created = { ...pendingEmailChange, requestedAt: createdAt };
+        const persisted = { ...pendingEmailChange, requestedAt: persistedAt };
+        vi.spyOn(accountService, 'save')
+            .mockReturnValueOnce(of({ pendingEmailChange: created }))
+            .mockReturnValueOnce(of({ pendingEmailChange: persisted }));
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+
+        comp.settingsForm.controls.email.setValue('new.email@mail.com');
+        comp.saveSettings();
+        expect(comp.emailChangeRequested()).toBe(true);
+        comp.settingsForm.controls.email.setValue('new.email@mail.com');
+        comp.saveSettings();
+
+        expect(comp.emailChangeRequested()).toBe(false);
+        expect(comp.pendingEmailChange()).toEqual(persisted);
+    });
+
+    it('should announce mails when a save replaces the pending request', async () => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'getPendingEmailChange').mockReturnValue(of(pendingEmailChange));
+        const replacement = { ...pendingEmailChange, newEmail: 'another.email@mail.com', requestedAt: '2026-10-13T11:00:00Z' };
+        vi.spyOn(accountService, 'save').mockReturnValue(of({ pendingEmailChange: replacement }));
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.pendingEmailChange()).toEqual(pendingEmailChange));
+
+        comp.settingsForm.controls.email.setValue('another.email@mail.com');
+        comp.saveSettings();
+
+        expect(comp.emailChangeRequested()).toBe(true);
+        expect(comp.pendingEmailChange()).toEqual(replacement);
+    });
+
     it('should load the pending email change on init', async () => {
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
         const getSpy = vi.spyOn(accountService, 'getPendingEmailChange').mockReturnValue(of(pendingEmailChange));
