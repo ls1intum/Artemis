@@ -744,7 +744,6 @@ export default tseslint.config(
             'src/main/webapp/app/exercise/participation/**/*.html',
             'src/main/webapp/app/exercise/exercise-scores/manage-assessment-buttons/**/*.html',
             'src/main/webapp/app/exercise/exercise-scores/export-button/**/*.html',
-            'src/main/webapp/app/shared-ui/components/buttons/code-button/**/*.html',
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',

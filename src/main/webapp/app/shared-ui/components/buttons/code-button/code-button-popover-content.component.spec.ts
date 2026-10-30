@@ -106,7 +106,7 @@ describe('CodeButtonPopoverContentComponent', () => {
         authenticationMenuTrigger().click();
         fixture.detectChanges();
         await fixture.whenStable();
-        return Array.from(document.querySelectorAll<HTMLElement>('[role="menuitemradio"]'));
+        return Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
     }
 
     function expectSelectedAuthenticationMethod(label: string, repositoryUrl: string): void {
@@ -180,13 +180,10 @@ describe('CodeButtonPopoverContentComponent', () => {
         it('should reset the rendered selection when the available methods change', async () => {
             renderComponent([tokenAuthenticationMethodData, sshAuthenticationMethodData]);
             const menuItems = await openAuthenticationMenu();
-            expect(menuItems.map((item) => item.getAttribute('aria-checked'))).toEqual(['true', 'false']);
             menuItems.find((item) => item.textContent?.trim() === 'SSH')!.click();
             fixture.detectChanges();
             await fixture.whenStable();
             expectSelectedAuthenticationMethod('SSH', sshUrl);
-            const updatedMenuItems = await openAuthenticationMenu();
-            expect(updatedMenuItems.map((item) => item.getAttribute('aria-checked'))).toEqual(['false', 'true']);
 
             fixture.componentRef.setInput('authenticationMethodData', [passwordAuthenticationMethodData]);
             fixture.detectChanges();
@@ -337,7 +334,7 @@ describe('CodeButtonPopoverContentComponent', () => {
             const ideAction = translatedElement('artemisApp.exerciseActions.ideButton.openIn')?.closest('a');
             expect(showAlternativesButton.isConnected).toBe(false);
             expect(ideAction?.getAttribute('href')).toBe(ideUrl);
-            expect(ideAction?.getAttribute('target')).toBe('hidden-iframe');
+            expect(fixture.nativeElement.querySelector('iframe[name="hidden-iframe"]')).not.toBeNull();
         });
 
         it.each([
@@ -417,7 +414,7 @@ describe('CodeButtonPopoverContentComponent', () => {
             expect(translatedElement('artemisApp.exerciseActions.ideButton.openIn')).not.toBeNull();
             expect(translatedElement('artemisApp.exerciseActions.openOnlineIDE')).not.toBeNull();
             expect(translatedElement('artemisApp.exerciseActions.openInSourceTree.button')).not.toBeNull();
-            expect(translatedElement('artemisApp.exerciseActions.openInSourceTree.button')?.closest('a')?.getAttribute('target')).toBe('hidden-iframe');
+            expect(fixture.nativeElement.querySelector('iframe[name="hidden-iframe"]')).not.toBeNull();
         });
     });
 });

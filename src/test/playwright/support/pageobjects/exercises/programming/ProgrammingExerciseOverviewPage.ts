@@ -175,7 +175,6 @@ export class ProgrammingExerciseOverviewPage {
             await popover.waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
         }
-        await this.getCloneUrl(GitCloneMethod.httpsWithToken);
         await button.click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();

@@ -136,6 +136,14 @@
                     />
                 </a>
             }
+            <!-- This hidden iframe is used to avoid "Do you want to leave the site" messages in the exam mode -->
+            <iframe
+                name="hidden-iframe"
+                [title]="'accessibility.externalApplicationLauncher' | artemisTranslate"
+                aria-hidden="true"
+                tabindex="-1"
+                class="invisible absolute"
+            ></iframe>
         } @else {
             <div class="flex h-10 items-center justify-center">
                 <button
@@ -158,8 +166,6 @@
             <button
                 type="button"
                 tumAetUiMenuItem
-                menuItemRole="menuitemradio"
-                [menuItemChecked]="selectedLabeledAuthenticationMethodData().authenticationMethodData.authenticationMethod === item.authenticationMethodData.authenticationMethod"
                 (triggered)="selectAuthenticationMethod(item)"
                 [attr.data-testid]="'authentication-method-' + item.authenticationMethodData.authenticationMethod"
             >

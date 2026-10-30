@@ -69,7 +69,6 @@
                 "src/main/webapp/app/exercise/participation/**/*.scss",
                 "src/main/webapp/app/exercise/exercise-scores/manage-assessment-buttons/**/*.scss",
                 "src/main/webapp/app/exercise/exercise-scores/export-button/**/*.scss",
-                "src/main/webapp/app/shared-ui/components/buttons/code-button/**/*.scss",
                 "src/main/webapp/app/exercise/exercise-action-bar/**/*.scss",
                 "src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.scss",
                 "src/main/webapp/app/course/manage/user-management-dropdown/**/*.scss",

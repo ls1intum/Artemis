@@ -163,6 +163,14 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     Optional<LectureUnit> findWithCompetenciesAndSlidesById(@Param("lectureUnitId") long lectureUnitId);
 
     @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                LEFT JOIN FETCH lu.completedUsers
+            WHERE lu.id = :lectureUnitId
+            """)
+    Optional<LectureUnit> findByIdWithCompletedUsers(@Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
             SELECT cu
             FROM LectureUnit lu
                 JOIN lu.completedUsers cu
@@ -295,6 +303,10 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findWithLectureById(@Param("lectureUnitId") long lectureUnitId);
+
+    default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
+        return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);
+    }
 
     default LectureUnit findByIdWithCompetenciesAndSlidesElseThrow(long lectureUnitId) {
         return getValueElseThrow(findWithCompetenciesAndSlidesById(lectureUnitId), lectureUnitId);

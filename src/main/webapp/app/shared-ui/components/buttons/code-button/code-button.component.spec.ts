@@ -160,20 +160,14 @@ describe('CodeButtonComponent', () => {
         createComponent(false);
         await fixture.whenStable();
         const popover = fixture.debugElement.query(By.directive(TumAetUiPopoverComponent)).componentInstance as TumAetUiPopoverComponent;
-        const frame = fixture.nativeElement.querySelector('iframe[name="hidden-iframe"]') as HTMLIFrameElement;
-        expect(frame).not.toBeNull();
 
         component['showAlternatives'].set(true);
         expect(popover.isOpen()).toBe(true);
         expect(component['showAlternatives']()).toBe(true);
 
         popover.close();
-        fixture.detectChanges();
         expect(popover.isOpen()).toBe(false);
         expect(component['showAlternatives']()).toBe(false);
-        expect(fixture.nativeElement.querySelector('iframe[name="hidden-iframe"]')).toBe(frame);
-        expect(frame.getAttribute('aria-hidden')).toBe('true');
-        expect(frame.tabIndex).toBe(-1);
     });
 
     it('should disable trigger if disabled input is set', async () => {
