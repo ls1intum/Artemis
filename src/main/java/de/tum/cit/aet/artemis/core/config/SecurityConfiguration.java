@@ -42,7 +42,9 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.security.PersonalAccessTokenFilter;
 import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.account.service.PersonalAccessTokenService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
@@ -111,6 +113,12 @@ public class SecurityConfiguration {
     private final ModuleFeatureService moduleFeatureService;
 
     /**
+     * Resolved when a request arrives for the same reason as the elevated access service below: the service exists only
+     * when {@code artemis.agent-access.enabled} is true, and no request without a personal access token needs it.
+     */
+    private final ObjectProvider<PersonalAccessTokenService> personalAccessTokenService;
+
+    /**
      * Resolved when a request arrives rather than injected: this class builds the security filter chain during startup,
      * and reaching for the service there would pull it into the startup graph for a decision no request needs yet.
      */
@@ -139,6 +147,7 @@ public class SecurityConfiguration {
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
             PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, PasskeyTokenRenewalService passkeyTokenRenewalService,
             ModuleFeatureService moduleFeatureService, ObjectProvider<ElevatedAccessService> elevatedAccessService,
+            ObjectProvider<PersonalAccessTokenService> personalAccessTokenService,
             @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
@@ -149,6 +158,7 @@ public class SecurityConfiguration {
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.moduleFeatureService = moduleFeatureService;
         this.elevatedAccessService = elevatedAccessService;
+        this.personalAccessTokenService = personalAccessTokenService;
         this.maxSessionLifetimeInSeconds = requireUsableSessionLifetime(maxSessionLifetimeInSeconds);
     }
 
@@ -329,6 +339,8 @@ public class SecurityConfiguration {
             .csrf(CsrfConfigurer::disable)
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+            // Authenticates personal access tokens (bearer tokens starting with art_pat_) on /api/ requests. Inert unless agent access is enabled.
+            .addFilterBefore(new PersonalAccessTokenFilter(personalAccessTokenService), UsernamePasswordAuthenticationFilter.class)
             // Configures exception handling with a custom entry point and access denied handler for authentication issues.
             .exceptionHandling(handler -> handler.authenticationEntryPoint(entryPoint).accessDeniedHandler(deniedHandler))
             // Adds a custom filter for Single Page Applications (SPA), i.e. the client, after the basic authentication filter.

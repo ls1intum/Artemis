@@ -17,6 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.filter.CorsFilter;
 
 import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.account.service.PersonalAccessTokenService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
@@ -57,8 +58,10 @@ class SecurityConfigurationTest {
     private SecurityConfiguration createSecurityConfiguration(long maxSessionLifetimeInSeconds) {
         // Never resolved here: these tests only exercise the session lifetime validation in the constructor.
         ObjectProvider<ElevatedAccessService> elevatedAccessService = mock();
+        ObjectProvider<PersonalAccessTokenService> personalAccessTokenService = mock();
         return new SecurityConfiguration(mock(CorsFilter.class), Optional.empty(), Optional.empty(), mock(PasswordService.class), mock(TokenProvider.class),
-                mock(JWTCookieService.class), mock(PasskeyTokenRenewalService.class), moduleFeatureService, elevatedAccessService, maxSessionLifetimeInSeconds);
+                mock(JWTCookieService.class), mock(PasskeyTokenRenewalService.class), moduleFeatureService, elevatedAccessService, personalAccessTokenService,
+                maxSessionLifetimeInSeconds);
     }
 
     @Test

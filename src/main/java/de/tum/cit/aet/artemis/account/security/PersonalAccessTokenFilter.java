@@ -1,0 +1,91 @@
+package de.tum.cit.aet.artemis.account.security;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.BEARER_PREFIX;
+import static de.tum.cit.aet.artemis.core.config.Constants.JWT_COOKIE_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PERSONAL_ACCESS_TOKEN_PREFIX;
+
+import java.io.IOException;
+import java.util.Optional;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.web.util.WebUtils;
+
+import de.tum.cit.aet.artemis.account.service.PersonalAccessTokenService;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.PersonalAccessTokenAuthentication;
+
+/**
+ * Authenticates requests that carry a personal access token as a bearer token.
+ * <p>
+ * Only {@code /api/} requests are considered. A request with an invalid, expired or revoked token is rejected with 401
+ * instead of falling through as anonymous, so that a client learns that its token is the problem. Which endpoints such a
+ * request may reach is decided afterwards by {@code AllowedScopesInterceptor}.
+ */
+public class PersonalAccessTokenFilter extends GenericFilterBean {
+
+    /** A separate logger so that operators can route the audit trail of token calls independently. */
+    private static final Logger auditLog = LoggerFactory.getLogger("de.tum.cit.aet.artemis.agentaccess.audit");
+
+    private static final String API_PREFIX = "/api/";
+
+    /** Resolved per request rather than injected: the service exists only when agent access is enabled. */
+    private final ObjectProvider<PersonalAccessTokenService> personalAccessTokenService;
+
+    public PersonalAccessTokenFilter(ObjectProvider<PersonalAccessTokenService> personalAccessTokenService) {
+        this.personalAccessTokenService = personalAccessTokenService;
+    }
+
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+        HttpServletResponse response = (HttpServletResponse) servletResponse;
+
+        String secret = extractSecret(request.getHeader(HttpHeaders.AUTHORIZATION));
+        if (secret == null || !request.getRequestURI().startsWith(API_PREFIX)) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+
+        if (WebUtils.getCookie(request, JWT_COOKIE_NAME) != null) {
+            // The same single-method rule the JWT filter applies to a cookie together with a bearer token.
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        PersonalAccessTokenService service = personalAccessTokenService.getIfAvailable();
+        Optional<PersonalAccessTokenAuthentication> authentication = service != null ? service.authenticate(secret) : Optional.empty();
+        if (authentication.isEmpty()) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        SecurityContextHolder.getContext().setAuthentication(authentication.get());
+        try {
+            filterChain.doFilter(servletRequest, servletResponse);
+        }
+        finally {
+            // The path only, never the query string, which can carry user data.
+            auditLog.info("token={} user={} {} {} -> {}", authentication.get().getTokenId(), authentication.get().getName(), request.getMethod(), request.getRequestURI(),
+                    response.getStatus());
+        }
+    }
+
+    private static String extractSecret(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
+            return null;
+        }
+        String credentials = authorizationHeader.substring(BEARER_PREFIX.length()).trim();
+        return credentials.startsWith(PERSONAL_ACCESS_TOKEN_PREFIX) ? credentials : null;
+    }
+}

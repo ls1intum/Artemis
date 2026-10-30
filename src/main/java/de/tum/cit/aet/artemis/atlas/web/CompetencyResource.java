@@ -52,6 +52,8 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
@@ -124,6 +126,7 @@ public class CompetencyResource {
     @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/competencies")
     @EnforceAtLeastStudentInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getCompetenciesWithProgress(@PathVariable long courseId) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         User user = userRepository.getUserWithAuthorities();
@@ -164,6 +167,7 @@ public class CompetencyResource {
      */
     @PostMapping("courses/{courseId}/competencies")
     @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
     public ResponseEntity<CourseCompetencyResponseDTO> createCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest)
             throws URISyntaxException {
         return createCompetency(courseId, competencyRequest, false, "competency creation");
