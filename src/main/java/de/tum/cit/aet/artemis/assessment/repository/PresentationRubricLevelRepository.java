@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -16,4 +19,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Lazy
 @Repository
 public interface PresentationRubricLevelRepository extends ArtemisJpaRepository<PresentationRubricLevel, Long> {
+
+    List<PresentationRubricLevel> findAllByCriterionIdInOrderByPosition(Collection<Long> criterionIds);
 }

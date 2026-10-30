@@ -33,10 +33,11 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricWriteRepository.PresentationRubricChanges;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
@@ -66,15 +67,22 @@ public class PresentationAssessmentService {
 
     private final CourseConfigurationRepository courseConfigurationRepository;
 
+    private final PresentationRubricService presentationRubricService;
+
+    private final PresentationRubricCriterionRepository presentationRubricCriterionRepository;
+
     public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository, CourseRepository courseRepository,
-            CourseConfigurationRepository courseConfigurationRepository) {
+            CourseConfigurationRepository courseConfigurationRepository, PresentationRubricService presentationRubricService,
+            PresentationRubricCriterionRepository presentationRubricCriterionRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.presentationAssessmentInstanceRepository = presentationAssessmentInstanceRepository;
         this.courseRepository = courseRepository;
         this.courseConfigurationRepository = courseConfigurationRepository;
+        this.presentationRubricService = presentationRubricService;
+        this.presentationRubricCriterionRepository = presentationRubricCriterionRepository;
     }
 
     /**
@@ -163,11 +171,14 @@ public class PresentationAssessmentService {
         if (dto.id() != null) {
             throw new BadRequestAlertException("A new presentation assessment cannot already have an ID", PresentationAssessment.ENTITY_NAME, "idExists");
         }
+        presentationRubricService.validateRubricPresence(dto.gradingMethod(), dto.rubricCriteria(), true);
         PresentationAssessment presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(courseRepository.getReferenceById(courseId));
         presentationAssessment.setGradingMethod(dto.gradingMethod());
         ExerciseIdAndTitleDTO exercise = applyDto(presentationAssessment, dto);
-        PresentationAssessment savedAssessment = presentationAssessmentRepository.save(presentationAssessment);
+        PresentationRubricChanges rubric = dto.rubricCriteria() == null ? PresentationRubricChanges.NONE
+                : presentationRubricService.buildReplacement(presentationAssessment, dto.rubricCriteria());
+        PresentationAssessment savedAssessment = presentationRubricCriterionRepository.createWithRubric(presentationAssessment, rubric);
 
         return toDto(savedAssessment, courseId, exercise);
     }
@@ -202,13 +213,14 @@ public class PresentationAssessmentService {
             }
         }
 
-        int updated = presentationAssessmentRepository.updateIfVersionMatches(assessmentId, courseId, expectedVersion, presentationAssessment.getTitle(),
-                presentationAssessment.getDescription(), presentationAssessment.getMaxPoints(), presentationAssessment.getExercise());
-
-        if (updated != 1) {
-            throw new ConflictException("The presentation assessment changed while the update was being validated. Please reload and try again.",
-                    PresentationAssessment.ENTITY_NAME, "concurrentModification");
+        presentationRubricService.validateRubricPresence(presentationAssessment.getGradingMethod(), dto.rubricCriteria(), false);
+        PresentationRubricChanges rubric = PresentationRubricChanges.NONE;
+        if (dto.rubricCriteria() != null) {
+            boolean locked = presentationAssessmentInstanceRepository.countByPresentationAssessmentId(assessmentId) > 0;
+            rubric = locked ? presentationRubricService.buildLockedUpdate(assessmentId, dto.rubricCriteria())
+                    : presentationRubricService.buildReplacement(presentationAssessment, dto.rubricCriteria());
         }
+        presentationRubricCriterionRepository.updateWithRubricIfVersionMatches(courseId, assessmentId, expectedVersion, presentationAssessment, rubric);
 
         return toDto(presentationAssessment, courseId, exercise);
     }

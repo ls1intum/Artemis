@@ -117,6 +117,10 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
 
     long countByPresentationAssessmentCourseId(long courseId);
 
+    long countByPresentationAssessmentId(long presentationAssessmentId);
+
+    long countByPresentationAssessmentIdAndRubricScoreIsNotNull(long presentationAssessmentId);
+
     /**
      * Returns the logins of those of the given students that already have an instance of the presentation assessment.
      *
