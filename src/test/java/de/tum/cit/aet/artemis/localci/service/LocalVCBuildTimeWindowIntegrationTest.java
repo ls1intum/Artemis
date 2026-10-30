@@ -243,7 +243,7 @@ class LocalVCBuildTimeWindowIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void instructorPushOutsideTheWindowIsStillBuilt() throws Exception {
         setBuildTimeWindow(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2));
 

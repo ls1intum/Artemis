@@ -237,7 +237,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseStoresTheBuildTimeWindowAndKeepsBranching() throws Exception {
         ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
         var window = windowInsideTheDatesOf(programmingExercise);
@@ -255,7 +255,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseCanRemoveTheBuildTimeWindowAndKeepsBranching() throws Exception {
         ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
         var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
@@ -273,7 +273,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseRejectsABuildTimeWindowOutsideTheExerciseDates() throws Exception {
         ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
         var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
@@ -287,7 +287,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseRejectsABuildTimeWindowThatEndsBeforeItStarts() throws Exception {
         ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
         var window = windowInsideTheDatesOf(programmingExercise);
@@ -298,7 +298,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReEvaluateRejectsABuildTimeWindowOutsideTheExerciseDates() throws Exception {
         ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
         var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
@@ -312,7 +312,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateTimelineRejectsADueDateBeforeTheEndOfTheBuildTimeWindow() throws Exception {
         ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
         var window = windowInsideTheDatesOf(programmingExercise);

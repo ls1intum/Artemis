@@ -340,7 +340,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testEditingTheBuildPlanKeepsTheBuildTimeWindow() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         var window = new BuildTimeWindow(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
