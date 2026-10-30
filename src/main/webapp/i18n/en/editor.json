@@ -48,6 +48,8 @@
             "loadingFiles": "Loading files",
             "fileLoadedSuccess": "File loaded successfully",
             "fetchingParticipation": "Your participation is being loaded, please wait a moment...",
+            "viewingEarlierSubmission": "You are viewing an earlier submission and its result. It cannot be changed.",
+            "openLatestSubmission": "Back to your latest code",
             "tabSize": "Tab size:",
             "conflict": {
                 "resetRepository": "Reset your repository to continue with your participation",

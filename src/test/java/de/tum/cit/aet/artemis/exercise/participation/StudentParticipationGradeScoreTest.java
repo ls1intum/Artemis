@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.participation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,11 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
@@ -31,7 +37,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * <ul>
  * <li>the latest submission of a participation wins,</li>
  * <li>the latest result of that submission wins,</li>
- * <li>except for quizzes, where the <i>first</i> submission wins.</li>
+ * <li>except for quizzes, where the <i>first</i> submission wins,</li>
+ * <li>and a requested AI feedback of a programming exercise, which only copies a test score, never wins.</li>
  * </ul>
  */
 class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndependentTest {
@@ -52,6 +59,12 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ResultGradeRepository resultGradeRepository;
 
     private ZonedDateTime now;
 
@@ -85,6 +98,48 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         var grades = studentParticipationRepository.findIndividualGradesByCourseId(course.getId());
 
         assertThat(grades).extracting(CourseGradeScoreDTO::score).containsExactly(80.0);
+    }
+
+    /**
+     * A student requests AI feedback before the first build finishes. The AI feedback copies the score of that moment (0), and its
+     * generation finishes after the build reported 60%, so it is the result completed last.
+     */
+    @Test
+    void shouldNotReportARequestedAiFeedbackOfAProgrammingExercise() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise exercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var submission = new ProgrammingSubmission();
+        submission.setSubmissionDate(now.minusHours(1));
+        submission.setSubmitted(true);
+        var savedSubmission = participationUtilService.addSubmission(participation, submission);
+        participationUtilService.addResultToSubmission(savedSubmission, AssessmentType.AUTOMATIC_ATHENA, null, 0.0, true, now.minusMinutes(10));
+        participationUtilService.addResultToSubmission(savedSubmission, AssessmentType.AUTOMATIC, null, 60.0, true, now.minusMinutes(30));
+        long studentId = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
+
+        assertThat(studentParticipationRepository.findIndividualGradesByCourseId(course.getId())).extracting(CourseGradeScoreDTO::score).containsExactly(60.0);
+        assertThat(studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(course.getId()), studentId)).extracting(CourseGradeScoreDTO::score)
+                .containsExactly(60.0);
+        assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), studentId, now)).extracting(CourseGradeScoreDTO::score)
+                .containsExactly(60.0);
+    }
+
+    /**
+     * The same order for the grade published to an LMS: the successful AI feedback with its copied 0% completes after the build reported 60%.
+     */
+    @Test
+    void shouldNotPublishARequestedAiFeedbackOfAProgrammingExerciseAsGrade() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise exercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var submission = new ProgrammingSubmission();
+        submission.setSubmissionDate(now.minusHours(1));
+        submission.setSubmitted(true);
+        var savedSubmission = participationUtilService.addSubmission(participation, submission);
+        Result buildResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusMinutes(30), savedSubmission, true, true, 60.0);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusMinutes(10), savedSubmission, true, true, 0.0);
+
+        assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).get().extracting(Result::getId).isEqualTo(buildResult.getId());
     }
 
     /**

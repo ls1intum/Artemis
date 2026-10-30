@@ -44,8 +44,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * </ul>
      *
      * <p>
-     * This ensures automatic feedback is always visible, manual assessments are only shown
-     * after due dates, and participations without results remain accessible.
+     * This ensures automatic feedback is always visible, AI feedback a student requested is visible once it has finished,
+     * manual assessments are only shown after due dates, and participations without results remain accessible.
      * </p>
      *
      * @param participationId the participation id
@@ -60,6 +60,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             WHERE p.id = :participationId
                 AND (
                     r.assessmentType = 'AUTOMATIC'
+                    OR (r.assessmentType = 'AUTOMATIC_ATHENA' AND r.successful IS NOT NULL)
                     OR (r.completionDate IS NOT NULL AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime))
                     OR r.id IS NULL
                     )
