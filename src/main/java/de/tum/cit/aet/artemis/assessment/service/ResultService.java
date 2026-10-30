@@ -240,6 +240,21 @@ public class ResultService {
     }
 
     /**
+     * Reads the stored credits of the grading instructions the feedback links to, since the credits of an instruction sent by the client are not trusted.
+     *
+     * @param feedbacks the feedback whose instructions are read
+     * @return the stored credits by instruction id; an instruction that does not exist is missing
+     */
+    public Map<Long, Double> getGradingInstructionCredits(Collection<Feedback> feedbacks) {
+        Set<Long> instructionIds = feedbacks.stream().map(Feedback::getGradingInstruction).filter(Objects::nonNull).map(GradingInstruction::getId).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (instructionIds.isEmpty()) {
+            return Map.of();
+        }
+        return gradingInstructionRepository.findAllById(instructionIds).stream().collect(Collectors.toMap(GradingInstruction::getId, GradingInstruction::getCredits));
+    }
+
+    /**
      * Deletes a result and all its dependent data (feedbacks, long feedback texts, complaints, ratings, assessment notes).
      * <p>
      * <b>IMPORTANT — Two deletion paths exist due to Hibernate constraints:</b>
