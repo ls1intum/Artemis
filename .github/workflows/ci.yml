@@ -40,7 +40,6 @@ concurrency:
 permissions: {}
 
 jobs:
-
   detect-changes:
     if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Detect Changed Areas
@@ -50,6 +49,8 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
+      current: ${{ steps.ready.outputs.current }}
+      tests_deferred: ${{ steps.ready.outputs.tests_deferred }}
       build_relevant: ${{ steps.decide.outputs.build_relevant }}
       has_java: ${{ steps.decide.outputs.has_java }}
       has_sandbox_tests: ${{ steps.decide.outputs.has_sandbox_tests }}
@@ -72,6 +73,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
+
+      # Use the existing public runner; no additional checkout/job or timed wait.
+      - name: Check current revision and draft scope
+        id: ready
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: await require('./.github/scripts/pr-ready.js')({ github, context, core })
 
       # dorny/paths-filter handles the edge cases hand-rolled `git diff` does not:
       # initial commits, force-pushes, missing merge-base, and `merge_group` events.
@@ -258,6 +266,12 @@ jobs:
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
+              - '.github/scripts/**'
+              - 'supporting_scripts/get_changed_modules.sh'
+              - 'supporting_scripts/select_server_test_modules.py'
+              - 'supporting_scripts/tests/**'
+              - 'supporting_scripts/client/run-affected-tests*'
+              - 'supporting_scripts/ci/E2E-tests/**'
               - 'deployment/kubernetes/install-localci-kubernetes-ubuntu.sh'
               - 'supporting_scripts/test_verified_installers.py'
               - 'supporting_scripts/check_action_pinning.py'
@@ -352,8 +366,8 @@ jobs:
                 echo "codeql_relevant=false"
               fi
               echo "server_test_inputs=${F_SERVER_TEST_INPUTS:-false}"
-              # Only a pull request may skip a suite or E2E. A push to develop, a merge group and a manual run
-              # still run both: the coverage badge and Sonar read both suites' coverage on develop, and
+              # Only a pull request may select individual suites. When Test is relevant, a push to develop,
+              # a merge group and a manual run still run both: the coverage badge and Sonar read both suites' coverage on develop, and
               # develop is where a change that slipped past the pull request's own run would show up.
               # A pull request that large is also never trusted with a skip: for a pull request the
               # changed files come from the pulls API, which stops at 3000 files, so the filters may
@@ -361,7 +375,12 @@ jobs:
               if [ "$EVENT_NAME" != "pull_request" ] || [ "${CHANGED_FILES:-0}" -ge 3000 ]; then
                 echo "run_server_tests=true"
                 echo "run_client_tests=true"
-                echo "run_e2e=true"
+                # The API cap expands relevant scope; draft deferral still applies.
+                if [ "$EVENT_NAME" != "pull_request" ] || [ "$IS_DRAFT" != "true" ]; then
+                  echo "run_e2e=true"
+                else
+                  echo "run_e2e=false"
+                fi
                 echo "build_pr_image=true"
               else
                 # E2E is the slowest stage, so a draft does not start it; `ready_for_review` starts a
@@ -390,7 +409,7 @@ jobs:
   build:
     name: Build
     needs: detect-changes
-    if: needs.detect-changes.outputs.build_relevant == 'true'
+    if: needs.detect-changes.outputs.current == 'true' && needs.detect-changes.outputs.build_relevant == 'true'
     uses: ./.github/workflows/ci-build.yml
     permissions:
       # These are the CEILING for ci-build.yml, not a grant to its jobs: a called workflow can only
@@ -425,9 +444,12 @@ jobs:
     needs: detect-changes
     # `server_test_inputs` keeps a change that `build` ignores but a server test reads (the feature usage
     # catalogue, the markdown templates) from merging unchecked; only the server suite runs for it.
+    # Drafts retain public style/type/architecture checks; test suites start on ready_for_review.
     if: >-
-      needs.detect-changes.outputs.build_relevant == 'true' ||
-      needs.detect-changes.outputs.server_test_inputs == 'true'
+      needs.detect-changes.outputs.current == 'true' &&
+      needs.detect-changes.outputs.tests_deferred != 'true' &&
+      (needs.detect-changes.outputs.build_relevant == 'true' ||
+      needs.detect-changes.outputs.server_test_inputs == 'true')
     uses: ./.github/workflows/ci-test.yml
     permissions:
       contents: read
@@ -435,8 +457,9 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
-      # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
-      run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+      # PRs select affected tests, falling back to full suites for broad or unknown inputs.
+      # Push, merge-group, release and manual runs retain complete suites and coverage.
+      run_all_tests: ${{ github.event_name != 'pull_request' }}
       run_sandbox_tests: ${{ needs.detect-changes.outputs.has_sandbox_tests == 'true' }}
       # A pull request that cannot affect one suite does not run it (see `detect-changes`). Always true
       # for anything but a pull request.
@@ -466,7 +489,7 @@ jobs:
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.detect-changes.outputs.build_relevant == 'true' &&
-      needs.test.result != 'skipped' && needs.test.result != 'cancelled'
+      (needs.test.result != 'skipped' || needs.detect-changes.outputs.tests_deferred == 'true') && needs.test.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -491,14 +514,14 @@ jobs:
         with:
           script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
       - name: Download server JaCoCo XML
-        if: steps.changes.outputs.has_server_changes == 'true'
+        if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && steps.changes.outputs.has_server_changes == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         continue-on-error: true
         with:
           name: Server JaCoCo XML
           path: build/reports/jacoco/
       - name: Download client coverage summaries
-        if: steps.changes.outputs.has_client_changes == 'true'
+        if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && steps.changes.outputs.has_client_changes == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         continue-on-error: true
         with:
@@ -507,13 +530,13 @@ jobs:
           # local-pr-coverage.mjs reads it (VITEST_COVERAGE_SUMMARY). Don't shorten to build/test-results/.
           path: build/test-results/vitest/coverage/
       - name: Setup Node.js
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
       - name: Generate coverage table
         id: coverage
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         env:
           CLIENT_MODULES: ${{ steps.changes.outputs.client_modules }}
           SERVER_MODULES: ${{ steps.changes.outputs.server_modules }}
@@ -537,6 +560,7 @@ jobs:
           COVERAGE_TABLE: ${{ steps.coverage.outputs.coverage_table }}
           COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
           # The TEST job result, not the whole-run conclusion (which e2e pollutes on internal PRs).
+          TEST_SCOPE: ${{ needs.detect-changes.outputs.tests_deferred == 'true' && 'deferred' || needs.test.outputs.affected_tests == 'true' && 'affected' || 'full' }}
           TEST_CONCLUSION: ${{ needs.test.result }}
           TEST_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           POST_AUTHOR_COMMENT: 'false'
@@ -552,6 +576,7 @@ jobs:
       contents: read
       checks: write  # server-style's architecture-test reporter posts a check-run
     with:
+      check_test_types: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == true }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
       has_java: ${{ needs.detect-changes.outputs.has_java == 'true' }}
@@ -858,6 +883,7 @@ jobs:
     if: >-
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository) &&
+      needs.detect-changes.outputs.tests_deferred != 'true' &&
       needs.detect-changes.outputs.run_e2e != 'false'
     uses: ./.github/workflows/ci-e2e.yml
     permissions:
@@ -866,6 +892,7 @@ jobs:
       actions: read
       checks: write  # E2E JUnit reports create check runs
     with:
+      run_full_suite: ${{ github.event_name != 'pull_request' }}
       branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
@@ -924,7 +951,9 @@ jobs:
   # caught. If a future required job is made to `needs:` another required job's output, add that
   # producer here too, or a cascading skip could pass the gate green over broken code.
   all-required-ci-passed:
-    name: All required CI Passed
+    # Drafts never publish the canonical required status for untested commits. Promotion on the
+    # same SHA must wait for a fresh ready-for-review run rather than reuse a draft's green check.
+    name: ${{ needs.detect-changes.outputs.current == 'false' && 'Superseded revision (tests skipped)' || github.event_name == 'pull_request' && github.event.pull_request.draft == true && 'Draft checks passed (tests deferred)' || 'All required CI Passed' }}
     if: ${{ !cancelled() }}
     needs:
       - detect-changes
@@ -953,6 +982,7 @@ jobs:
       - name: Evaluate gate
         env:
           NEEDS: ${{ toJSON(needs) }}
+          TESTS_DEFERRED: ${{ needs.detect-changes.outputs.tests_deferred }}
         run: |
           set -Eeuo pipefail
           # Fail closed: malformed/empty NEEDS must abort red, never pass green. `jq -e` on a
@@ -971,7 +1001,12 @@ jobs:
           done <<< "$parsed"
 
           if [ "$(( ${#failed[@]} + ${#cancelled[@]} ))" -eq 0 ]; then
-            echo "::notice::All required CI checks passed."
+            if [ "$TESTS_DEFERRED" = "true" ]; then
+              echo "::notice::Draft checks passed. Test suites run when the PR is marked ready for review."
+              echo "Draft checks passed; server, client and sandbox test suites are deferred until ready for review. The required full-test status is not published for this draft." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::notice::All required CI checks passed."
+            fi
             exit 0
           fi
 
@@ -1019,6 +1054,10 @@ jobs:
       actions: read  # actions-timeline reads the run's jobs API
     timeout-minutes: 5
     steps:
+      # workflow_run reporters read this enum from this exact run attempt's GitHub job metadata.
+      # No fork-provided file is executed, and no extra reporting job or artifact is needed.
+      - name: "Test validation scope: ${{ needs.detect-changes.outputs.tests_deferred == 'true' && 'deferred' || needs.test.outputs.affected_tests == 'true' && 'affected' || needs.test.result == 'success' && 'full' || 'unavailable' }}"
+        run: echo 'Test validation scope is recorded in the step name.'
       - name: Render run timeline
         uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf  # v3.2.1
         with:
