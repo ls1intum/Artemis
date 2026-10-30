@@ -26,16 +26,25 @@ class OneToOneChatPairMigrationTest(unittest.TestCase):
             for offset, name in enumerate(self.databases):
                 engine = ENGINES[name]
                 with self.subTest(database=engine.name), Database(engine, "one-to-one-chat-pair-data", 16300 + offset) as database:
-                    self.sql(database, """
+                    timestamp_type = "TIMESTAMP(3)" if name == "postgres" else "DATETIME(3)"
+                    self.sql(database, f"""
                         CREATE TABLE conversation (
                             id BIGINT PRIMARY KEY, course_id BIGINT, discriminator VARCHAR(31) NOT NULL, last_message_date TIMESTAMP NULL
                         );
                         CREATE TABLE conversation_participant (
                             id BIGINT PRIMARY KEY, conversation_id BIGINT, user_id BIGINT,
+                            last_read {timestamp_type} NULL, unread_messages_count BIGINT DEFAULT 0,
+                            is_favorite BOOLEAN DEFAULT FALSE, is_hidden BOOLEAN DEFAULT FALSE, is_muted BOOLEAN DEFAULT FALSE,
                             FOREIGN KEY (conversation_id) REFERENCES conversation(id) ON UPDATE RESTRICT ON DELETE RESTRICT
                         );
                         CREATE UNIQUE INDEX conversation_participant_uq ON conversation_participant (conversation_id, user_id);
                         CREATE TABLE post (id BIGINT PRIMARY KEY, conversation_id BIGINT, FOREIGN KEY (conversation_id) REFERENCES conversation(id) ON UPDATE RESTRICT ON DELETE RESTRICT);
+                        CREATE TABLE course_notification (id BIGINT PRIMARY KEY, course_id BIGINT, type INTEGER);
+                        CREATE TABLE course_notification_parameter (
+                            course_notification_id BIGINT, param_key VARCHAR(20), param_value VARCHAR(512) NOT NULL,
+                            PRIMARY KEY (course_notification_id, param_key),
+                            FOREIGN KEY (course_notification_id) REFERENCES course_notification(id) ON DELETE CASCADE
+                        );
 
                         -- Course 1, users 10 and 20: three chats created by concurrent requests. The oldest has no message yet,
                         -- the two newer ones carry the messages. Written by either user first, so the participants are in both orders.
@@ -65,6 +74,30 @@ class OneToOneChatPairMigrationTest(unittest.TestCase):
                             (10, 1, 'O', '2026-04-01 10:00:00'), (11, 1, 'O', NULL);
                         INSERT INTO conversation_participant (id, conversation_id, user_id) VALUES (14, 10, 40), (15, 10, 50), (16, 11, 50), (17, 11, 40);
                     """)
+                    self.sql(database, """
+                        -- The kept chat has no unread messages, but the other two have three for user 20.
+                        -- A user's settings are merged across all their chats, not copied from an arbitrary duplicate.
+                        UPDATE conversation_participant SET last_read = '2026-01-05 10:00:00' WHERE conversation_id = 1;
+                        UPDATE conversation_participant SET last_read = '2026-01-04 10:00:00' WHERE conversation_id = 2;
+                        UPDATE conversation_participant SET last_read = '2026-01-03 10:00:00' WHERE conversation_id = 3;
+                        UPDATE conversation_participant SET unread_messages_count = 2, is_favorite = TRUE WHERE conversation_id = 2 AND user_id = 20;
+                        UPDATE conversation_participant SET unread_messages_count = 1, last_read = NULL WHERE conversation_id = 3 AND user_id = 20;
+                        UPDATE conversation_participant SET is_hidden = TRUE WHERE conversation_id = 1 AND user_id = 10;
+                        UPDATE conversation_participant SET is_muted = TRUE WHERE conversation_id = 2 AND user_id = 10;
+                        UPDATE conversation_participant SET is_hidden = TRUE WHERE conversation_id IN (10, 11);
+                        UPDATE conversation_participant SET is_favorite = TRUE, unread_messages_count = 2 WHERE conversation_id = 10 AND user_id = 40;
+                        UPDATE conversation_participant SET unread_messages_count = 3 WHERE conversation_id = 11 AND user_id = 40;
+                        UPDATE conversation_participant SET unread_messages_count = NULL WHERE conversation_id IN (10, 11) AND user_id = 50;
+                        -- A chat which is not merged must keep all of its state.
+                        UPDATE conversation_participant SET unread_messages_count = 4, last_read = '2026-02-02 10:00:00',
+                            is_favorite = TRUE, is_hidden = TRUE, is_muted = TRUE WHERE conversation_id = 4 AND user_id = 10;
+
+                        -- Posts, replies and mentions store the target conversation as a string parameter, without a foreign key.
+                        INSERT INTO course_notification (id, course_id, type) VALUES (100, 1, 1), (101, 1, 2), (102, 1, 3), (103, 2, 1), (104, 1, 1);
+                        INSERT INTO course_notification_parameter (course_notification_id, param_key, param_value) VALUES
+                            (100, 'channelId', '2'), (100, 'postId', '1'), (101, 'channelId', '3'), (101, 'postId', '3'),
+                            (102, 'channelId', '2'), (102, 'postId', '2'), (103, 'channelId', '5'), (104, 'channelId', '2-extra');
+                    """)
                     liquibase = Liquibase(workspace)
                     liquibase.apply(database, CHANGELOG)
 
@@ -80,8 +113,22 @@ class OneToOneChatPairMigrationTest(unittest.TestCase):
                                      "1\t2\n4\t2\n5\t2\n6\t1\n8\t2\n10\t2")
                     self.assertEqual(self.sql(database, "SELECT COUNT(*) FROM post WHERE conversation_id NOT IN (SELECT id FROM conversation);"), "0")
 
+                    with self.subTest(behavior="notification targets follow moved messages"):
+                        self.assertEqual(self.sql(database, "SELECT course_notification_id, param_key, param_value FROM course_notification_parameter ORDER BY course_notification_id, param_key;"),
+                                         "100\tchannelId\t1\n100\tpostId\t1\n101\tchannelId\t1\n101\tpostId\t3\n102\tchannelId\t1\n102\tpostId\t2\n103\tchannelId\t5\n104\tchannelId\t2-extra")
+                    with self.subTest(behavior="unread counts and preferences survive merging"):
+                        # CASE normalizes boolean/null rendering across the two database clients.
+                        self.assertEqual(self.sql(database, """
+                            SELECT conversation_id, user_id, unread_messages_count,
+                                CASE WHEN last_read IS NULL THEN 'never' ELSE SUBSTRING(CONCAT(last_read, ''), 1, 19) END,
+                                CASE WHEN is_favorite THEN 1 ELSE 0 END, CASE WHEN is_hidden THEN 1 ELSE 0 END, CASE WHEN is_muted THEN 1 ELSE 0 END
+                            FROM conversation_participant WHERE conversation_id IN (1, 4, 10) ORDER BY conversation_id, user_id;
+                        """), "1\t10\t0\t2026-01-03 10:00:00\t0\t0\t1\n1\t20\t3\tnever\t1\t0\t0\n"
+                              "4\t10\t4\t2026-02-02 10:00:00\t1\t1\t1\n4\t30\t0\tnever\t0\t0\t0\n"
+                              "10\t40\t5\tnever\t1\t1\t0\n10\t50\t0\tnever\t0\t1\t0")
+
                     # The migration leaves no helper table behind.
-                    self.assertNotIn("tmp_one_to_one_chat_duplicate", database.schema().tables)
+                    self.assertFalse(any(table.startswith("tmp_one_to_one_chat_") for table in database.schema().tables))
 
                     # A second chat for a pair is refused from now on, in any order of the users, while a chat written without a key, as the
                     # previous version of the application does, is still accepted.

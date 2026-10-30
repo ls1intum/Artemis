@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticip
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ConversationServiceMarkAllAsReadUnitTest {
 
@@ -39,20 +40,34 @@ class ConversationServiceMarkAllAsReadUnitTest {
 
     private ConversationTestRepository conversationRepository;
 
+    private AuthorizationCheckService authorizationCheckService;
+
     private ConversationService conversationService;
 
     @BeforeEach
     void setUp() {
         conversationParticipantRepository = mock(ConversationParticipantTestRepository.class);
         conversationRepository = mock(ConversationTestRepository.class);
+        authorizationCheckService = mock(AuthorizationCheckService.class);
         conversationService = new ConversationService(mock(ConversationDTOService.class), mock(UserRepository.class), mock(ChannelRepository.class),
                 conversationParticipantRepository, conversationRepository, mock(WebsocketMessagingService.class), mock(OneToOneChatRepository.class), mock(PostRepository.class),
-                mock(GroupChatRepository.class), mock(AuthorizationCheckService.class), mock(CourseRepository.class));
+                mock(GroupChatRepository.class), authorizationCheckService, mock(CourseRepository.class));
     }
 
     private static Channel channel(long id) {
         var channel = new Channel();
         channel.setId(id);
+        return channel;
+    }
+
+    /**
+     * A channel of an exercise that is released in the future, which students must not see yet.
+     */
+    private static Channel channelOfUnreleasedExercise(long id) {
+        var exercise = new TextExercise();
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        var channel = channel(id);
+        channel.setExercise(exercise);
         return channel;
     }
 
@@ -91,5 +106,37 @@ class ConversationServiceMarkAllAsReadUnitTest {
         ArgumentCaptor<ZonedDateTime> markedAsReadAt = ArgumentCaptor.forClass(ZonedDateTime.class);
         verify(conversationParticipantRepository).updateMultipleLastRead(eq(user.getId()), eq(List.of(openedConcurrently.getId())), markedAsReadAt.capture());
         assertThat(createdAsReadAt.getAllValues()).as("every participant is read at the same time, the one created concurrently as well").containsOnly(markedAsReadAt.getValue());
+    }
+
+    @Test
+    void markAllAsRead_forAStudent_doesNotCreateParticipantsOfChannelsHiddenFromStudents() {
+        var user = new User();
+        user.setId(42L);
+        Channel visible = channel(10L);
+        Channel hidden = channelOfUnreleasedExercise(11L);
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(COURSE_ID, user)).thenReturn(false);
+        when(conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(user.getId(), COURSE_ID)).thenReturn(List.of());
+        when(conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(COURSE_ID, user.getId())).thenReturn(List.of(visible, hidden));
+        when(conversationParticipantRepository.createIfAbsent(eq(visible.getId()), eq(user.getId()), eq(false), any(ZonedDateTime.class), eq(0L))).thenReturn(true);
+
+        conversationService.markAllConversationOfAUserAsRead(COURSE_ID, user);
+
+        verify(conversationParticipantRepository).createIfAbsent(eq(visible.getId()), eq(user.getId()), eq(false), any(ZonedDateTime.class), eq(0L));
+        verify(conversationParticipantRepository, never()).createIfAbsent(eq(hidden.getId()), eq(user.getId()), eq(false), any(ZonedDateTime.class), eq(0L));
+    }
+
+    @Test
+    void markAllAsRead_forStaff_createsParticipantsOfChannelsHiddenFromStudents() {
+        var user = new User();
+        user.setId(42L);
+        Channel hidden = channelOfUnreleasedExercise(11L);
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(COURSE_ID, user)).thenReturn(true);
+        when(conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(user.getId(), COURSE_ID)).thenReturn(List.of());
+        when(conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(COURSE_ID, user.getId())).thenReturn(List.of(hidden));
+        when(conversationParticipantRepository.createIfAbsent(eq(hidden.getId()), eq(user.getId()), eq(false), any(ZonedDateTime.class), eq(0L))).thenReturn(true);
+
+        conversationService.markAllConversationOfAUserAsRead(COURSE_ID, user);
+
+        verify(conversationParticipantRepository).createIfAbsent(eq(hidden.getId()), eq(user.getId()), eq(false), any(ZonedDateTime.class), eq(0L));
     }
 }
