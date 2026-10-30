@@ -2,7 +2,7 @@
 
 > Artemis is an open-source learning platform for programming, quiz, text, modeling and file upload exercises, exams, lectures, competencies and communication, developed at the Technical University of Munich.
 
-Artemis lets an instructor give a coding agent limited access through a personal access token. A token acts as its owner with at most the owner's role in each course, only on operations its scopes allow. Content created through the API is a draft until a person publishes it in the web interface.
+Artemis lets an instructor give a coding agent limited access through a personal access token. A token acts as its owner with at most the owner's role in each course, only on operations its scopes allow. Exercises and lecture units created through the API get a release date in the future, so students cannot see them yet; announcements, lectures and competencies are visible at once, so an agent asks first.
 
 ## Coding agent access
 

@@ -162,7 +162,15 @@ public class AgentToolService {
                                 + exerciseGuidance,
                         false, EXERCISE_SCOPES,
                         object(List.of("type", "exercise"), EXERCISE_TYPE, "\"exercise\": {\"type\": \"object\", \"description\": \"The whole exercise, with its id.\"}"),
-                        (arguments, api) -> AgentToolResult.of(api.send(HttpMethod.PUT, exerciseBase(exerciseType(arguments)), objectArgument(arguments, "exercise")))),
+                        (arguments, api) -> {
+                            String type = exerciseType(arguments);
+                            return AgentToolResult.of(api.send(HttpMethod.PUT, exerciseBase(type), updateShape(type, objectArgument(arguments, "exercise"))));
+                        }),
+                tool("get_programming_test_cases",
+                        "List the test cases of a programming exercise with their ids, weights and visibility. Needed to set weights, which refer to the ids.", true,
+                        Set.of(AgentScope.PROGRAMMING_DRAFT), object(List.of("exerciseId"), "\"exerciseId\": {\"type\": \"integer\"}"),
+                        (arguments, api) -> AgentToolResult
+                                .of(api.send(HttpMethod.GET, "/api/programming/programming-exercises/" + id(arguments, "exerciseId") + "/test-cases", null))),
                 tool("set_programming_problem_statement", "Replace the problem statement (Markdown) of a programming exercise that students cannot see and have not started.",
                         false, Set.of(AgentScope.PROGRAMMING_DRAFT),
                         object(List.of("exerciseId", "problemStatement"), "\"exerciseId\": {\"type\": \"integer\"}", "\"problemStatement\": {\"type\": \"string\"}"),
@@ -184,10 +192,16 @@ public class AgentToolService {
     private List<AgentTool> lectureTools() {
         Set<AgentScope> scopes = Set.of(AgentScope.LECTURES_WRITE);
         return List.of(tool("create_lecture",
-                "Create an empty lecture in a course. Students see only units, so add units with a releaseDate in the future. Slides are uploaded with the REST API, not with a tool.",
-                false, scopes, object(List.of("courseId", "title"), COURSE_ID, "\"title\": {\"type\": \"string\"}", "\"description\": {\"type\": \"string\"}",
-                        "\"startDate\": {\"type\": \"string\", \"format\": \"date-time\"}", "\"endDate\": {\"type\": \"string\", \"format\": \"date-time\"}"),
+                "Create an empty lecture in a course. Students can see the lecture with its title and description AT ONCE, only its units can stay hidden with a releaseDate in the future. Show the instructor the title and description first, and set confirm to true only after they approved. Slides are uploaded with the REST API, not with a tool.",
+                false, scopes,
+                object(List.of("courseId", "title", "confirm"), COURSE_ID, "\"title\": {\"type\": \"string\"}", "\"description\": {\"type\": \"string\"}",
+                        "\"startDate\": {\"type\": \"string\", \"format\": \"date-time\"}", "\"endDate\": {\"type\": \"string\", \"format\": \"date-time\"}",
+                        "\"confirm\": {\"type\": \"boolean\", \"description\": \"True only if the instructor approved this title and description.\"}"),
                 (arguments, api) -> {
+                    if (!arguments.path("confirm").asBoolean(false)) {
+                        return AgentToolResult.error(
+                                "Not created. Students see a lecture and its title and description at once. Show the instructor the exact title and description and call again with confirm set to true only after they approve them.");
+                    }
                     ObjectNode lecture = jsonMapper.createObjectNode();
                     lecture.put("title", text(arguments, "title"));
                     lecture.putObject("course").put("id", id(arguments, "courseId"));
@@ -261,6 +275,20 @@ public class AgentToolService {
 
     private static String exerciseBase(String type) {
         return "/api/" + type + "/" + type + "-exercises";
+    }
+
+    /**
+     * The programming exercise is read with a nested course but changed with a courseId, so the exercise as get_exercise returned
+     * it would be rejected. Text and modeling exercises are read with a courseId and need no conversion.
+     */
+    private static JsonNode updateShape(String type, JsonNode exercise) {
+        JsonNode courseId = exercise.path("course").path("id");
+        if (!"programming".equals(type) || exercise.hasNonNull("courseId") || !courseId.isNumber()) {
+            return exercise;
+        }
+        ObjectNode shaped = ((ObjectNode) exercise).deepCopy();
+        shaped.set("courseId", courseId);
+        return shaped;
     }
 
     private static void copyIfPresent(ObjectNode target, JsonNode source, String... fields) {

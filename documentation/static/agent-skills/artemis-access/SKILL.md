@@ -19,7 +19,9 @@ Two environment variables are needed. Ask the instructor to set them if they are
 curl -sS -H "Authorization: Bearer $ARTEMIS_TOKEN" -H "Content-Type: application/json" "$ARTEMIS_URL/api/course/courses/for-dropdown"
 ```
 
-That call lists the instructor's courses with their ids and is the right first check that the token works.
+That call lists the instructor's courses with their ids. It needs the scope `courses:read`, so a token without it answers
+403 here although it is valid for the scopes it has: do not report such a token as broken. With another scope, check with
+one call that scope allows.
 
 The complete list of operations, with parameters, scopes and errors, is the OpenAPI file published with the Artemis
 documentation at `/agent/openapi.yaml`. Read it for any field this skill does not mention.
@@ -36,9 +38,10 @@ documentation at `/agent/openapi.yaml`. Read it for any field this skill does no
 ## Rules
 
 - **Create drafts only.** Exercises and lecture units must have a `releaseDate` in the future. Never try to publish: the
-  instructor does that in the Artemis web interface after reviewing.
-- **Ask before anything students see at once.** An announcement is visible and notifies students the moment it is posted.
-  Show the exact text and wait for a clear yes.
+  instructor reviews in the Artemis web interface, before that date, and can change the date there.
+- **Ask before anything students see at once.** An announcement is visible and notifies students the moment it is posted,
+  and a lecture is listed with its title and description the moment it is created. Show the exact text and wait for a
+  clear yes.
 - **Do not delete.** No operation here deletes content, and you must not ask the instructor to widen the token to do it.
 - **Creating is not idempotent.** If a create call times out or fails with a 5xx, list the existing objects before you
   try again, or you will create a duplicate.

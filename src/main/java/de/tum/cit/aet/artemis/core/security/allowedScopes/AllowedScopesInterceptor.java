@@ -1,28 +1,23 @@
 package de.tum.cit.aet.artemis.core.security.allowedScopes;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Arrays;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
  * Denies requests authenticated with a personal access token unless the endpoint opted in with {@link AllowedScopes} and
  * the token holds every scope the endpoint requires. Requests that are not token-authenticated pass untouched.
+ * <p>
+ * Deliberately not a Spring bean: it has no dependencies, and a bean here would join the startup graph that the bean
+ * instantiation check limits. {@code WebConfigurer} creates it when it registers the interceptors.
  */
-@Profile(PROFILE_CORE)
-@Component
-@Lazy
 public class AllowedScopesInterceptor implements HandlerInterceptor {
 
     @Override

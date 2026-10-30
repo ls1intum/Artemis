@@ -5,16 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 import jakarta.servlet.http.Cookie;
 
@@ -34,6 +28,9 @@ import de.tum.cit.aet.artemis.account.dto.CreatePersonalAccessTokenDTO;
 import de.tum.cit.aet.artemis.account.dto.CreatedPersonalAccessTokenDTO;
 import de.tum.cit.aet.artemis.account.dto.PersonalAccessTokenDTO;
 import de.tum.cit.aet.artemis.account.repository.PersonalAccessTokenRepository;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
+import de.tum.cit.aet.artemis.account.util.PersonalAccessTokenTestUtil;
+import de.tum.cit.aet.artemis.account.util.PersonalAccessTokenTestUtil.SavedToken;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -46,6 +43,9 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private PersonalAccessTokenRepository personalAccessTokenRepository;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @BeforeEach
     void initTestCase() {
@@ -157,6 +157,34 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
+    void aTokenCreatedBeforeTheCredentialsChangedIsUnauthorized() throws Exception {
+        var saved = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.COMPETENCIES_READ), Duration.ofDays(1));
+        performWithToken("/api/core/test/testScopedRead", saved.secret()).andExpect(status().isOk());
+
+        userActivityService.recordCredentialsChanged(saved.token().getUserId(), Instant.now().plusSeconds(1));
+
+        performWithToken("/api/core/test/testScopedRead", saved.secret()).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void theSchemeOfTheAuthorizationHeaderIsCaseInsensitive() throws Exception {
+        var saved = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.COMPETENCIES_READ), Duration.ofDays(1));
+
+        request.performMvcRequest(get("/api/core/test/testScopedRead").header(HttpHeaders.AUTHORIZATION, "bearer " + saved.secret())).andExpect(status().isOk());
+    }
+
+    @Test
+    void aTokenIsNotAuthenticatedOnAPublicEndpoint() throws Exception {
+        var saved = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.values()), Duration.ofDays(1));
+
+        // The request is left to the other filters, so a token cannot start a session through an endpoint such as the LTI launch.
+        int status = request.performMvcRequest(get("/api/core/public/privacy-statement?language=en").header(HttpHeaders.AUTHORIZATION, saved.bearer())).andReturn().getResponse()
+                .getStatus();
+        assertThat(status).as("a public endpoint is not answered as an unauthorized token request").isNotEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(personalAccessTokenRepository.findById(saved.token().getId()).orElseThrow().getLastUsedDate()).isNull();
+    }
+
+    @Test
     void administratorTokenIsUnauthorized() throws Exception {
         String secret = saveToken("admin", Set.of(AgentScope.COMPETENCIES_READ), Duration.ofDays(1)).secret();
 
@@ -186,23 +214,6 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private SavedToken saveToken(String login, Set<AgentScope> scopes, Duration lifetime) {
-        String secret = PERSONAL_ACCESS_TOKEN_PREFIX + UUID.randomUUID().toString().replace("-", "");
-        Instant now = Instant.now();
-        String joinedScopes = scopes.stream().map(AgentScope::getValue).collect(Collectors.joining(","));
-        var token = new PersonalAccessToken(userUtilService.getUserByLogin(login).getId(), "test token", secret.substring(0, PERSONAL_ACCESS_TOKEN_PREFIX.length() + 4),
-                sha256(secret), joinedScopes, now, now.plus(lifetime));
-        return new SavedToken(personalAccessTokenRepository.save(token), secret);
-    }
-
-    private static String sha256(String value) {
-        try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));
-        }
-        catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private record SavedToken(PersonalAccessToken token, String secret) {
+        return PersonalAccessTokenTestUtil.saveToken(personalAccessTokenRepository, userUtilService.getUserByLogin(login).getId(), scopes, lifetime);
     }
 }

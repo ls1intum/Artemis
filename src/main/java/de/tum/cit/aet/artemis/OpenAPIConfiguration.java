@@ -63,8 +63,9 @@ public class OpenAPIConfiguration {
     private static final String AGENT_API_DESCRIPTION = """
             The part of the Artemis REST API that a personal access token can call. Create a token in User Settings under Agent Access \
             and send it as `Authorization: Bearer art_pat_...`. A token acts as its owner, with at most the owner's role in each course, \
-            and only on operations whose scopes it holds. Content created through this API is a draft until a person publishes it in \
-            the Artemis web interface; announcements are the exception and are visible to students at once.""";
+            and only on operations whose scopes it holds. Exercises and lecture units created through this API get a release date in \
+            the future, which publishes them on its own, so a person must review them before it. Announcements, lectures and competencies \
+            are visible to students at once.""";
 
     @Value("${artemis.version}")
     private String version;

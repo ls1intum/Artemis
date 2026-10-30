@@ -9,8 +9,10 @@ Read `artemis-access` first. This skill needs a token with the scope `lectures:w
 
 ## Drafts only
 
-A lecture has no release date of its own. What students see are its units, so every unit you add needs a
-`releaseDate` in the future, and so does its attachment. The instructor publishes in the web interface.
+A lecture has no release date of its own, so students see the lecture with its title and description as soon as you
+create it: show the instructor both and wait for a clear yes first. What stays hidden are its units, so every unit you add
+needs a `releaseDate` in the future, and so does its attachment. The instructor reviews them in the web interface before
+that date. The dates in the examples below are examples: use a time later than now.
 
 ## Create a lecture
 

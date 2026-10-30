@@ -77,7 +77,7 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(answer.at("/result/protocolVersion").asString()).isEqualTo("2025-06-18");
         assertThat(answer.at("/result/serverInfo/name").asString()).isEqualTo("artemis");
         assertThat(answer.at("/result/capabilities/tools").isObject()).isTrue();
-        assertThat(answer.at("/result/instructions").asString()).contains("draft");
+        assertThat(answer.at("/result/instructions").asString()).contains("release date in the future").contains("at once");
     }
 
     @Test
@@ -104,7 +104,7 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(toolNames(rpc(readOnly, "tools/list", Map.of()))).contains("get_competency_graph", "get_competency").doesNotContain("post_announcement", "create_competencies",
                 "create_exercise");
         assertThat(toolNames(rpc(everything, "tools/list", Map.of()))).contains("list_my_courses", "create_competencies", "post_announcement", "create_exercise",
-                "set_programming_problem_statement", "create_lecture");
+                "set_programming_problem_statement", "get_programming_test_cases", "create_lecture");
     }
 
     @Test
@@ -156,6 +156,26 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
 
         assertThat(answer.at("/result/isError").asBoolean()).isTrue();
         assertThat(answer.at("/result/content/0/text").asString()).contains("Not posted");
+    }
+
+    @Test
+    void aLectureIsNotCreatedWithoutTheConfirmationOfTheInstructor() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.LECTURES_WRITE);
+
+        JsonNode answer = callTool(token, "create_lecture", Map.of("courseId", course.getId(), "title", "Week 1"));
+
+        assertThat(answer.at("/result/isError").asBoolean()).isTrue();
+        assertThat(answer.at("/result/content/0/text").asString()).contains("Not created");
+    }
+
+    @Test
+    void aConfirmedLectureIsCreated() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.LECTURES_WRITE);
+
+        JsonNode answer = callTool(token, "create_lecture", Map.of("courseId", course.getId(), "title", "Week 1", "confirm", true));
+
+        assertThat(answer.at("/result/isError").asBoolean()).isFalse();
+        assertThat(answer.at("/result/content/0/text").asString()).contains("Week 1");
     }
 
     @Test

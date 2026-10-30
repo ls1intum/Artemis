@@ -56,18 +56,15 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final ToolsInterceptor toolsInterceptor;
 
-    private final AllowedScopesInterceptor allowedScopesInterceptor;
-
     private final LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor;
 
     private final FeatureUsageInterceptor featureUsageInterceptor;
 
-    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor, AllowedScopesInterceptor allowedScopesInterceptor,
+    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor,
             LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor, FeatureUsageInterceptor featureUsageInterceptor) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
         this.toolsInterceptor = toolsInterceptor;
-        this.allowedScopesInterceptor = allowedScopesInterceptor;
         this.legacyApiPathDeprecationInterceptor = legacyApiPathDeprecationInterceptor;
         this.featureUsageInterceptor = featureUsageInterceptor;
     }
@@ -167,7 +164,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
         // Default-deny for personal access tokens: only endpoints annotated with @AllowedScopes are reachable with one.
         // Includes /api/*/public/** on purpose; a token never needs a public endpoint and none opts in.
-        registry.addInterceptor(allowedScopesInterceptor).addPathPatterns("/api/**");
+        registry.addInterceptor(new AllowedScopesInterceptor()).addPathPatterns("/api/**");
         // Tags responses on every API request that resolved to a multi-path controller (legacy + canonical
         // prefix). The interceptor reads the controller's @RequestMapping to derive the successor URL,
         // so adding a new module migration requires only updating that controller's mapping.

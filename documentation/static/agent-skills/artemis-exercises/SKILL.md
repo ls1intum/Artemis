@@ -38,7 +38,8 @@ curl -sS -X POST "${H[@]}" "$ARTEMIS_URL/api/text/text-exercises" -d '{
 }'
 ```
 
-The response contains the new `id`. A modeling exercise is created the same way at `POST /api/modeling/modeling-exercises`
+The dates are examples. Set `releaseDate` to a time later than now, and `dueDate` after it, or the request is refused
+with 400. The response contains the new `id`. A modeling exercise is created the same way at `POST /api/modeling/modeling-exercises`
 and also needs a `diagramType`, which cannot be changed later. See `/agent/openapi.yaml` for the values.
 
 `includedInOverallScore` is `INCLUDED_COMPLETELY`, `INCLUDED_AS_BONUS` or `NOT_INCLUDED`. Dates must be in order:

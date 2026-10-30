@@ -42,6 +42,8 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDraftGuardS
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST controller for updating partial information of a programming exercise such as the timeline or the problem statement.
@@ -168,7 +170,8 @@ public class ProgrammingExercisePartialUpdateResource {
             The request body is the new problem statement as plain Markdown text, not JSON. Test cases are referenced in tasks as \
             [task][Task name](testName1,testName2). A request with a personal access token can change only an exercise that students \
             cannot see yet and that has no student participations.""")
-    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProblemStatement(@PathVariable long exerciseId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = "text/plain", schema = @Schema(type = "string"))) @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
         var authorizationExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)

@@ -356,8 +356,9 @@ public class JWTFilter extends GenericFilterBean {
     }
 
     private static boolean isPersonalAccessToken(@Nullable String authorizationHeader) {
-        String bearer = getJwtFromBearer(authorizationHeader);
-        return bearer != null && bearer.startsWith(PERSONAL_ACCESS_TOKEN_PREFIX);
+        // The scheme of an Authorization header is case-insensitive; a token sent as "bearer art_pat_..." must not reach the JWT check, which logs the headers.
+        return authorizationHeader != null && authorizationHeader.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())
+                && authorizationHeader.substring(BEARER_PREFIX.length()).trim().startsWith(PERSONAL_ACCESS_TOKEN_PREFIX);
     }
 
     private static String compactHeaders(HttpServletRequest request) {

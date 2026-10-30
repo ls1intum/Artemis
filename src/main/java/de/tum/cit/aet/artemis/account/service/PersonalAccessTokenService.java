@@ -71,12 +71,15 @@ public class PersonalAccessTokenService {
 
     private final UserRepository userRepository;
 
+    private final UserActivityService userActivityService;
+
     private final int maxLifetimeInDays;
 
-    public PersonalAccessTokenService(PersonalAccessTokenRepository personalAccessTokenRepository, UserRepository userRepository,
+    public PersonalAccessTokenService(PersonalAccessTokenRepository personalAccessTokenRepository, UserRepository userRepository, UserActivityService userActivityService,
             @Value("${artemis.agent-access.max-lifetime-in-days:90}") int maxLifetimeInDays) {
         this.personalAccessTokenRepository = personalAccessTokenRepository;
         this.userRepository = userRepository;
+        this.userActivityService = userActivityService;
         this.maxLifetimeInDays = maxLifetimeInDays;
     }
 
@@ -138,7 +141,7 @@ public class PersonalAccessTokenService {
      * Authenticates a request that presented a token secret.
      *
      * @param secret the secret from the Authorization header
-     * @return the authentication, or empty if the secret is unknown, revoked or expired, or its owner may not use tokens
+     * @return the authentication, or empty if the secret is unknown, revoked or expired, was created before the owner's credentials last changed, or its owner may not use tokens
      */
     public Optional<PersonalAccessTokenAuthentication> authenticate(String secret) {
         Instant now = Instant.now();
@@ -152,6 +155,11 @@ public class PersonalAccessTokenService {
         }
         Set<String> authorityNames = owner.get().getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet());
         if (AuthorizationCheckService.isAdminByAuthorityName(authorityNames)) {
+            return Optional.empty();
+        }
+        // A password reset or a changed credential ends the sessions issued before it, and ends the tokens created before it as well.
+        Instant credentialsChangedDate = userActivityService.findCredentialsChangedDate(owner.get().getId());
+        if (credentialsChangedDate != null && token.get().getCreatedDate().isBefore(credentialsChangedDate)) {
             return Optional.empty();
         }
 

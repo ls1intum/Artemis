@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -61,21 +62,24 @@ class AllowedScopesArchitectureTest extends AbstractArchitectureTest {
     @Test
     void theAgentSpecificationListsEveryEndpointOptedInToTokens() throws IOException {
         // The MCP endpoint is hidden: it is a protocol, not an operation, and its tools are described by the protocol itself.
-        long optedIn = productionClasses.stream().flatMap(javaClass -> javaClass.getMethods().stream())
-                .filter(method -> method.isAnnotatedWith(AllowedScopes.class) && !method.isAnnotatedWith(Hidden.class)).count();
+        List<String> optedIn = productionClasses.stream().flatMap(javaClass -> javaClass.getMethods().stream())
+                .filter(method -> method.isAnnotatedWith(AllowedScopes.class) && !method.isAnnotatedWith(Hidden.class)).map(JavaMethod::getName).sorted().toList();
 
         JsonNode paths = YAMLMapper.builder().build().readTree(AGENT_SPECIFICATION.toFile()).path("paths");
-        long documented = 0;
+        List<String> documented = new ArrayList<>();
         for (var path : paths.properties()) {
             for (String verb : HTTP_METHODS) {
                 JsonNode operation = path.getValue().path(verb);
                 if (operation.isObject()) {
-                    documented++;
                     assertThat(operation.path("summary").asString("")).as("summary of " + verb.toUpperCase(Locale.ROOT) + " " + path.getKey()).isNotBlank();
+                    // springdoc names an operation after its handler method and appends _1, _2 to repeated names.
+                    documented.add(operation.path("operationId").asString("").replaceAll("_\\d+$", ""));
                 }
             }
         }
+        documented.sort(null);
 
+        // Comparing the names and not only the counts catches one endpoint opted in while another was removed.
         assertThat(documented).as("Operations in " + AGENT_SPECIFICATION + " against endpoints annotated with @AllowedScopes. Regenerate with "
                 + "'./gradlew generateOpenApiDocs -PopenApiGroup=agent pruneOpenApiSpec -x webapp'.").isEqualTo(optedIn);
     }

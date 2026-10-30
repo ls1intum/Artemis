@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -96,9 +97,15 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/test-cases")
     @EnforceAtLeastTutor
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "List the test cases of a programming exercise", description = """
+            Returns the test cases of a programming exercise with their ids, weights, bonus settings and visibility. Use the ids to \
+            change weights and visibility. Test cases exist once the build has run against the test repository. Exercises of exams \
+            cannot be read with a personal access token.""")
     public ResponseEntity<Set<ProgrammingExerciseTestCaseResponseDTO>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        AgentDraftRules.rejectExamExercise(programmingExercise.isExamExercise());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);

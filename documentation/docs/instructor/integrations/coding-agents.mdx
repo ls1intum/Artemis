@@ -68,15 +68,18 @@ when it was last used. Click **Revoke** to stop a token immediately.
 
 Some things are deliberately not available to an agent, however it is configured:
 
-- **Publishing.** Exercises and lecture units that an agent creates must have a release date in the future, so
-  students cannot see them. An agent can also change only content that is still unpublished. Publish in the Artemis
-  web interface once you have reviewed it. Programming exercises additionally must have no student participations.
+- **Publishing now.** Exercises and lecture units that an agent creates must have a release date in the future, so
+  students cannot see them yet. An agent can also change only content that is still unpublished. A release date
+  schedules publication: review the content before that date, and change the date in the Artemis web interface if you
+  need more time. Programming exercises additionally must have no student participations.
 - **Deleting.** An agent can create and change competencies, relations, exercises and units, but not delete them.
 - **Grades, exams and student data.** No scope covers them.
 
-**Announcements are the exception to the draft rule.** An announcement is visible to students, and they are notified,
-the moment it is posted. Ask your agent to show you the text first, and give it the **Post announcements** scope only
-when you want that.
+**Announcements, lectures and competencies are the exceptions to the draft rule.** An announcement is visible to
+students, and they are notified, the moment it is posted. A lecture is listed for students with its title and
+description as soon as it exists, because only its units have a release date. Competencies and their relations have no
+draft state, so what an agent creates or changes shows in the course at once. Ask your agent to show you the text first, and give it the
+**Post announcements** or **Create and edit lectures and slides** scope only when you want that.
 
 ## Give the agent the tools
 
@@ -127,6 +130,6 @@ the same limits apply to them: the roles, the scopes and the draft rule.
 - Revoke a token as soon as you no longer use it, or if you suspect it leaked.
 - Course content that students wrote, such as forum posts and submissions, can contain text that tries to steer an
   agent. Do not combine a token that can post announcements or change exercises with tasks that read student text.
-- Check what the agent did. Everything it created is unpublished until you publish it, and your administrator can see
+- Check what the agent did. Exercises and units it created are unpublished until their release date, which you can change, and your administrator can see
   which token made which request.
 - Do not paste a token into a chat, an issue or a commit.

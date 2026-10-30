@@ -54,7 +54,7 @@ public class PersonalAccessTokenFilter extends GenericFilterBean {
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
         String secret = extractSecret(request.getHeader(HttpHeaders.AUTHORIZATION));
-        if (secret == null || !request.getRequestURI().startsWith(API_PREFIX)) {
+        if (secret == null || !request.getRequestURI().startsWith(API_PREFIX) || isOpenOrInternalPath(request.getRequestURI())) {
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
@@ -83,8 +83,16 @@ public class PersonalAccessTokenFilter extends GenericFilterBean {
         }
     }
 
+    /**
+     * A token never needs a public or an internal endpoint, and some of them, such as the LTI launch, turn the authentication of the
+     * request into a session. Such a request is left to the other filters, which do not know the token.
+     */
+    private static boolean isOpenOrInternalPath(String requestUri) {
+        return requestUri.contains("/public/") || requestUri.contains("/internal/");
+    }
+
     private static String extractSecret(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
+        if (authorizationHeader == null || !authorizationHeader.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
             return null;
         }
         String credentials = authorizationHeader.substring(BEARER_PREFIX.length()).trim();

@@ -3,9 +3,10 @@ info: {title: Artemis API for coding agents, description: 'The part of the Artem
     REST API that a personal access token can call. Create a token in User Settings
     under Agent Access and send it as `Authorization: Bearer art_pat_...`. A token
     acts as its owner, with at most the owner''s role in each course, and only on
-    operations whose scopes it holds. Content created through this API is a draft
-    until a person publishes it in the Artemis web interface; announcements are the
-    exception and are visible to students at once.', version: '1'}
+    operations whose scopes it holds. Exercises and lecture units created through
+    this API get a release date in the future, which publishes them on its own, so
+    a person must review them before it. Announcements, lectures and competencies
+    are visible to students at once.', version: '1'}
 servers:
 - {url: 'https://artemis.example.org', description: Replace with the address of your
     Artemis instance.}
@@ -94,10 +95,7 @@ paths:
       - name: hyperionCompetencyId
         in: query
         required: false
-        schema:
-          type: array
-          items: {type: integer, format: int64}
-          uniqueItems: true
+        schema: {type: array, maxItems: 100}
       requestBody:
         content:
           application/json:
@@ -660,7 +658,7 @@ paths:
         schema: {type: string}
       requestBody:
         content:
-          application/json:
+          text/plain:
             schema: {type: string}
         required: true
       responses:
@@ -789,6 +787,37 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProgrammingExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/programming/programming-exercises/{exerciseId}/test-cases:
+    get:
+      tags: [programming-exercise-test-case-resource]
+      summary: List the test cases of a programming exercise
+      description: Returns the test cases of a programming exercise with their ids,
+        weights, bonus settings and visibility. Use the ids to change weights and
+        visibility. Test cases exist once the build has run against the test repository.
+        Exercises of exams cannot be read with a personal access token.
+      operationId: getTestCases
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ProgrammingExerciseTestCaseResponseDTO'}
+                uniqueItems: true
         '400': {description: 'The request is invalid. The body is an RFC 7807 problem
             document with a message and, for validation errors, a list of fieldErrors.'}
         '401': {description: 'The token is missing, unknown, expired or revoked, or

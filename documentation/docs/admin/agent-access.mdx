@@ -48,13 +48,17 @@ Three rules hold whatever the configuration:
 
 - **Administrators cannot use tokens.** An account with an administrator role can neither create a token nor
   authenticate with one.
-- **Content stays a draft.** A token can create exercises and lecture units only with a release date in the future,
-  and can change only content that students cannot see yet. Publishing and deleting are done in the web interface.
+- **Exercises and lecture units stay unpublished.** A token can create them only with a release date in the future,
+  and can change only content that students cannot see yet. A release date schedules publication, so content that nobody
+  reviews becomes visible on that date, as it does when an instructor sets the date. Changing a date to now and deleting
+  are done in the web interface.
 - **No grades, exams or student data.** None of the scopes covers them.
 
 The scopes are `courses:read`, `competencies:read`, `competencies:write`, `announcements:post`,
-`exercises:draft`, `programming:draft` and `lectures:write`. Posting an announcement is the one action whose result
-students see at once.
+`exercises:draft`, `programming:draft` and `lectures:write`. Posting an announcement, creating a lecture and creating or
+changing competencies are the actions whose result students see at once: a lecture is listed with its title and
+description as soon as it exists, because a lecture has no release date of its own, and competencies have no draft state.
+A token also stops working when its owner's credentials change, for example after a password reset.
 
 ## The MCP endpoint
 
@@ -73,9 +77,10 @@ Artemis stores a token's name, the first characters of its secret, its scopes, i
 used. It never stores the secret itself, only a one-way hash, so a database dump does not reveal working tokens.
 Deleting a user deletes their tokens.
 
-Every request made with a token is written to a logger named `de.tum.cit.aet.artemis.agentaccess.audit`, with the
-token id, the user, the HTTP method, the path and the response status. The log never contains the query string or
-the token. You can route that logger to its own file or to your log aggregation to see which token did what.
+Every request that a token authenticates is written to a logger named `de.tum.cit.aet.artemis.agentaccess.audit`, with
+the token id, the user, the HTTP method, the path and the response status. The log never contains the query string or
+the token. A request with an unknown, expired or revoked token is answered with 401 before that point and is not
+written there. You can route that logger to its own file or to your log aggregation to see which token did what.
 
 ## Data protection
 

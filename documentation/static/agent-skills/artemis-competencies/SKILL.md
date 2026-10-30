@@ -8,6 +8,9 @@ description: Read, draft and maintain the competencies of an Artemis course and 
 Read `artemis-access` first. This skill needs a token with the scopes `competencies:read` and, to change anything,
 `competencies:write`, and the editor role in the course.
 
+Competencies have no draft state: what you create or change shows in the course for students at once. Propose the list
+to the instructor first, and say exactly what you changed afterwards.
+
 ## Read the current graph
 
 ```bash
