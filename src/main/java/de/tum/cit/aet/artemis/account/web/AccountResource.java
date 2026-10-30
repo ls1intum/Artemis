@@ -32,6 +32,8 @@ import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.dto.CourseAccessRightsDTO;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -39,11 +41,13 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
@@ -81,12 +85,15 @@ public class AccountResource {
 
     private final AccountSecurityNotificationService accountSecurityNotificationService;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
     public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService,
             AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
-            UserVcsAccessTokenService userVcsAccessTokenService, UserAiPreferenceService userAiPreferenceService) {
+            UserVcsAccessTokenService userVcsAccessTokenService, UserAiPreferenceService userAiPreferenceService, UserCourseRoleRepository userCourseRoleRepository) {
         this.userRepository = userRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.userAiPreferenceService = userAiPreferenceService;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.userService = userService;
@@ -94,6 +101,23 @@ public class AccountResource {
         this.fileService = fileService;
         this.accountCredentialRevocationService = accountCredentialRevocationService;
         this.accountSecurityNotificationService = accountSecurityNotificationService;
+    }
+
+    /**
+     * {@code GET /account/course-roles?courseId=} : the roles of the current user in the given course, read from the database on every request.
+     * <p>
+     * The client asks for them right before it decides which view of course data to request, so that a role granted or revoked during the
+     * session takes effect at once instead of when the account is loaded again. A course in which the user has no role yields no roles.
+     *
+     * @param courseId the course to get the roles in
+     * @return the ResponseEntity with status 200 (OK) and the current roles of the user in the course
+     */
+    @GetMapping("course-roles")
+    @EnforceAtLeastStudent
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    public ResponseEntity<CourseAccessRightsDTO> getCourseRoles(@RequestParam long courseId) {
+        long userId = userRepository.getUserIdElseThrow();
+        return ResponseEntity.ok(new CourseAccessRightsDTO(courseId, userCourseRoleRepository.findRolesByUser_IdAndCourse_Id(userId, courseId)));
     }
 
     /**

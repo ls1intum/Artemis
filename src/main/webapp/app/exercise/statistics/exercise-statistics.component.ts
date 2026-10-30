@@ -47,10 +47,13 @@ export class ExerciseStatisticsComponent implements OnInit {
             courseId = Number(params['courseId']);
             exam = !!params['examId'];
         });
+        // the exam views of editors and tutors are different endpoints, so the choice needs the current course roles
         const exerciseSource = exam
-            ? this.accountService.isAtLeastEditorInCourseWithId(courseId)
-                ? this.exerciseService.findForExamManagement(exerciseId)
-                : this.exerciseService.findForExamAssessment(exerciseId)
+            ? this.accountService.withCurrentCourseRoles(courseId, () =>
+                  this.accountService.isAtLeastEditorInCourseWithId(courseId)
+                      ? this.exerciseService.findForExamManagement(exerciseId)
+                      : this.exerciseService.findForExamAssessment(exerciseId),
+              )
             : this.exerciseService.findForStaff(exerciseId);
         exerciseSource.subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             const exercise = exerciseResponse.body!;

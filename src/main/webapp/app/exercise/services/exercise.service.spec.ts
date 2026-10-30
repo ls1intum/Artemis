@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -132,10 +133,16 @@ describe('Exercise Service', () => {
         expect(received?.categories).toEqual([new ExerciseCategory('staff', '#123456')]);
     });
 
-    it.each([false, true])('should select accessible course titles from known course membership: staff=%s', (staff) => {
-        vi.spyOn(TestBed.inject(AccountService), 'isAtLeastTutorInCourseWithId').mockReturnValue(staff);
+    it.each([false, true])('should select accessible course titles from the current course roles: staff=%s', (staff) => {
+        const accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isAtLeastTutorInCourseWithId').mockReturnValue(staff);
+        const withCurrentCourseRoles = vi
+            .spyOn(accountService, 'withCurrentCourseRoles')
+            .mockImplementation(<T>(courseId: number, request: () => Observable<T>): Observable<T> => request());
         let received: ExerciseTitle[] | undefined;
         service.getTitlesForAccessibleCourse(7).subscribe((titles) => (received = titles));
+        // the choice is made from the current course roles, not from those loaded with the account
+        expect(withCurrentCourseRoles).toHaveBeenCalledWith(7, expect.any(Function));
         const request = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/7/exercise-titles${staff ? '/for-staff' : ''}` });
         request.flush([{ id: 1, title: 'Title', type: ExerciseType.TEXT }]);
         expect(received?.[0].title).toBe('Title');

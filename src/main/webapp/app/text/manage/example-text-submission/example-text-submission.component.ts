@@ -199,16 +199,19 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         });
     }
 
-    private exampleResultPurpose(): 'training' | 'instructor' {
-        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+    private exampleResultPurpose(courseId: number): 'training' | 'instructor' {
         return !this.readOnly() && !this.toComplete() && this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'instructor' : 'training';
     }
 
     private fetchExampleResult(): Promise<void> {
+        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         return new Promise((resolve) => {
-            this.assessmentsService
-                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                .getExampleResult(this.exerciseId, this.submission?.id!, this.exampleResultPurpose())
+            this.accountService
+                // the instructor and training views are different endpoints, so the choice needs the current course roles
+                .withCurrentCourseRoles(courseId, () =>
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    this.assessmentsService.getExampleResult(this.exerciseId, this.submission?.id!, this.exampleResultPurpose(courseId)),
+                )
                 .pipe(filter(notUndefined))
                 .subscribe((result) => {
                     if (result && result.id) {

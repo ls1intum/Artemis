@@ -101,15 +101,18 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      * Fetches notification settings and info from the server.
      */
     onCourseIdAvailable(): void {
-        this.courseNotificationSettingService.getSettingInfo(this.courseId, true).subscribe((settingInfo) => {
-            if (settingInfo) {
-                this.settingInfo = settingInfo;
+        // the instructor-only notification types are filtered by the course roles, so they are loaded fresh with the settings
+        this.accountService
+            .withCurrentCourseRoles(this.courseId, () => this.courseNotificationSettingService.getSettingInfo(this.courseId, true))
+            .subscribe((settingInfo) => {
+                if (settingInfo) {
+                    this.settingInfo = settingInfo;
 
-                if (this.info) {
-                    this.initializeValues();
+                    if (this.info) {
+                        this.initializeValues();
+                    }
                 }
-            }
-        });
+            });
 
         this.courseNotificationService.getInfo().subscribe((info) => {
             if (info.body) {

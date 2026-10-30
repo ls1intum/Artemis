@@ -31,6 +31,7 @@ export class MockAccountService implements IAccountService {
     isAtLeastEditorInCourseWithId = (courseId?: number) => true;
     isAtLeastInstructorInCourse = (course?: Course) => course?.isAtLeastInstructor ?? false;
     isAtLeastInstructorInCourseWithId = (courseId?: number) => true;
+    withCurrentCourseRoles = <T>(courseId: number, request: () => Observable<T>): Observable<T> => request();
     isAtLeastTutorForExercise = (exercise?: Exercise) => true;
     isAtLeastEditorForExercise = (exercise?: Exercise) => true;
     isAtLeastInstructorForExercise = (exercise?: Exercise) => true;

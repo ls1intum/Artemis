@@ -46,6 +46,8 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.dto.CourseAccessRightsDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -53,6 +55,7 @@ import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -301,6 +304,26 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(account.getAskToSetupPasskey()).isTrue();
         assertThat(account.isLoggedInWithPasskey()).isFalse();
         assertThat(account.isPasskeySuperAdminApproved()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "courseroles", roles = "USER")
+    void getCourseRoles_readsTheCurrentRolesOnEveryRequest() throws Exception {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "courseroles");
+        Course course = courseUtilService.addEmptyCourse();
+        String url = "/api/account/course-roles?courseId=" + course.getId();
+
+        CourseAccessRightsDTO noRoles = request.get(url, HttpStatus.OK, CourseAccessRightsDTO.class);
+        assertThat(noRoles.courseId()).isEqualTo(course.getId());
+        assertThat(noRoles.roles()).isNullOrEmpty();
+
+        userUtilService.enrollUserInCourse(user, course, CourseRole.TEACHING_ASSISTANT);
+        assertThat(request.get(url, HttpStatus.OK, CourseAccessRightsDTO.class).roles()).containsExactly(CourseRole.TEACHING_ASSISTANT);
+
+        // a change during the session is visible with the next request, because nothing is cached
+        userUtilService.unenrollUserFromCourseByRole(user, course, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(user, course, CourseRole.INSTRUCTOR);
+        assertThat(request.get(url, HttpStatus.OK, CourseAccessRightsDTO.class).roles()).containsExactly(CourseRole.INSTRUCTOR);
     }
 
     /**

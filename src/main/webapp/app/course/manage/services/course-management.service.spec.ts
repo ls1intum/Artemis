@@ -263,22 +263,45 @@ describe('Course Management Service', () => {
         expect(titleSpy).toHaveBeenCalled();
     });
 
+    /** Answers the request for the current course roles, which the management view of a course is chosen from. */
+    const answerCourseRoles = (courseId: number, roles: string[]) =>
+        httpMock.expectOne({ method: 'GET', url: `api/account/course-roles?courseId=${courseId}` }).flush(roles.length ? { courseId, roles } : { courseId });
+
     it.each([
         ['STUDENT', 'for-tutor'],
         ['TEACHING_ASSISTANT', 'for-tutor'],
         ['EDITOR', 'for-tutor'],
         ['INSTRUCTOR', 'for-instructor'],
-    ] as const)('management chooses %s audience before reading a course', (role, suffix) => {
-        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [{ courseId: 7, roles: [role] }] }));
+    ] as const)('management chooses %s audience from the current course roles before reading a course', (role, suffix) => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [] }));
         courseManagementService.findForManagement(7).subscribe();
+        answerCourseRoles(7, [role]);
         httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/${suffix}` }).flush({ id: 7 });
     });
 
-    it('selects the instructor projection for a numeric course ID from route parameters', () => {
+    it('chooses the management audience from the current course roles rather than those loaded with the account', () => {
+        // an instructor when the account was loaded, but only a tutor since then
         accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [{ courseId: 7, roles: ['INSTRUCTOR'] }] }));
+        courseManagementService.findForManagement(7).subscribe();
+        answerCourseRoles(7, ['TEACHING_ASSISTANT']);
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/for-tutor` }).flush({ id: 7 });
+        expect(accountService.isAtLeastInstructorInCourseWithId(7)).toBe(false);
+        expect(accountService.isAtLeastTutorInCourseWithId(7)).toBe(true);
+    });
+
+    it('falls back to the course roles loaded with the account when the current ones cannot be loaded', () => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [{ courseId: 7, roles: ['INSTRUCTOR'] }] }));
+        courseManagementService.findForManagement(7).subscribe();
+        httpMock.expectOne({ method: 'GET', url: 'api/account/course-roles?courseId=7' }).flush(null, { status: 500, statusText: 'Server Error' });
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/for-instructor` }).flush({ id: 7 });
+    });
+
+    it('selects the instructor projection for a numeric course ID from route parameters', () => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [] }));
         const route = new ActivatedRouteSnapshot();
         route.params = { courseId: '7' };
         courseManagementService.findForManagement(route.params['courseId']).subscribe();
+        answerCourseRoles(7, ['INSTRUCTOR']);
         const request = httpMock.expectOne((request) => request.url.startsWith(`${resourceUrl}/7/`));
         request.flush({ id: 7 });
         expect(request.request.url).toBe(`${resourceUrl}/7/for-instructor`);
@@ -288,6 +311,7 @@ describe('Course Management Service', () => {
         accountService.userIdentity.set(Object.assign(new User(), { id: 9, authorities: ['ROLE_ADMIN'], courseRoles: [] }));
         vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
         courseManagementService.findForManagement(7).subscribe();
+        answerCourseRoles(7, []);
         httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/for-tutor` }).flush({ id: 7 });
     });
 
