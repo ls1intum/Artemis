@@ -67,6 +67,49 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
         await expectNoHorizontalOverflow(page, [], { name: 'scrolled course students page' });
     }
 
+    test('keeps graded presentation inputs visible at phone widths in both themes', async ({ page, login, courseManagementAPIRequests }) => {
+        let course: Course | undefined;
+        await login(admin);
+        try {
+            course = await courseManagementAPIRequests.createCourse({ courseName: `Grading layout ${generateUUID()}`, allowCommunication: false, allowMessaging: false });
+            await page.addInitScript(() => localStorage.removeItem('artemisapp.theme.preference'));
+            await page.goto(`/course-management/${course.id}/grading`);
+            await dismissPasskeyReminderIfPresent(page);
+            await page.getByRole('button', { name: 'Graded', exact: true }).click();
+            const presentations = page.locator('jhi-grading-presentations');
+            const number = presentations.getByLabel('Number', { exact: true });
+            const weight = presentations.getByLabel('Combined Weight (%)', { exact: true });
+            await number.fill('3');
+            await weight.fill('20');
+
+            const checkInputs = async () => {
+                for (const input of [number, weight]) {
+                    await expectWithinViewport(input, ['left', 'right'], { name: 'graded presentation input', tolerance: 1 });
+                    await expectInside(input, presentations, ['left', 'right'], { name: 'graded presentation input within its section', tolerance: 1 });
+                }
+                await expectNoHorizontalOverflow(page, [], { name: 'grading page' });
+            };
+            for (const theme of ['light', 'dark'] as const) {
+                await page.emulateMedia({ colorScheme: theme });
+                await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+                await forEachViewport(page, checkInputs);
+                for (const width of [390, 414, 320]) {
+                    await test.step(`${theme} phone at ${width}px`, async () => {
+                        await page.setViewportSize({ width, height: 844 });
+                        await checkInputs();
+                        if (width === 390) {
+                            await attachScreenshot(page, `graded-presentations-${theme}-${width}`);
+                        }
+                    });
+                }
+            }
+        } finally {
+            if (course?.id) {
+                await courseManagementAPIRequests.deleteCourse(course, admin);
+            }
+        }
+    });
+
     test('keeps course students inside a scrollable viewport with a sticky header in light, dark and narrow views', async ({
         page,
         login,
