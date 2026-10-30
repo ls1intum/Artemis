@@ -190,12 +190,18 @@ export class SettingsComponent implements OnInit {
         }
         userToSave.langKey = langKey || undefined;
 
+        const previousRequestTime = this.pendingEmailChange()?.requestedAt;
         this.accountService.save(userToSave).subscribe({
             next: (response) => {
                 this.success.set(true);
                 const pendingEmailChange = response.pendingEmailChange ?? undefined;
                 this.pendingEmailChange.set(pendingEmailChange);
-                this.emailChangeRequested.set(pendingEmailChange !== undefined && userToSave.email !== currentUser.email);
+                // Database reads round the initial Instant to milliseconds; distinct requests are at least a minute apart.
+                this.emailChangeRequested.set(
+                    pendingEmailChange !== undefined &&
+                        userToSave.email !== currentUser.email &&
+                        (previousRequestTime === undefined || Math.abs(Date.parse(pendingEmailChange.requestedAt) - Date.parse(previousRequestTime)) > 2),
+                );
 
                 // The email address of the account stays the current one until the change is confirmed from both addresses.
                 const updatedUser = cloneWith(userToSave, { email: currentUser.email });
