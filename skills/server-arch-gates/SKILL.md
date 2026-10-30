@@ -39,6 +39,7 @@ A single class while iterating:
 | Anything that lowercases or uppercases | Case conversion                                     |
 | Anything that serializes JSON          | Jackson version                                     |
 | A websocket topic or message handler   | Websocket topics                                    |
+| An endpoint a coding agent should call | Endpoints opted in to access tokens                 |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
@@ -122,6 +123,14 @@ is rejected, so a topic that is sent but not declared silently reaches nobody. C
 `/app/...` destinations handled by `@MessageMapping` methods, which check the sender themselves.
 Enforced by `WebsocketTopicArchitectureTest` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/`.
+
+**Endpoints opted in to access tokens.** Opting an endpoint in with `@AllowedScopes` makes it reachable by a coding agent that
+holds a personal access token, so it needs an `@EnforceAtLeast...` annotation, DTOs only in its request body and response, an
+`@Operation` summary, and an entry in the committed agent specification
+(`./gradlew generateOpenApiDocs -PopenApiGroup=agent pruneOpenApiSpec -x webapp`). An endpoint that creates or changes something students
+see also calls `AgentDraftRules`, so that a token cannot publish. Enforced by `AllowedScopesArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`. See
+[agent access](../../documentation/docs/developer/agent-access.mdx).
 
 ## Before adding a cache
 

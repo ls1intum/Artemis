@@ -1,0 +1,79 @@
+---
+id: agent-access
+title: Agent Access for Developers
+sidebar_label: Agent Access
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+Agent access lets a user give a coding agent a personal access token that calls a limited part of the REST API on their behalf.
+This page is for developers who add or change what a token can reach. The setup for administrators is in
+[Agent Access](/admin/agent-access), and what it means for instructors is in
+[Working with Coding Agents](/instructor/integrations/coding-agents).
+
+## How a request is checked
+
+A request with a bearer token that starts with `art_pat_` is authenticated by `PersonalAccessTokenFilter` as the token's owner,
+unless the owner is an administrator. `AllowedScopesInterceptor` then lets it reach a handler only if the handler carries
+`@AllowedScopes` and the token holds every listed scope. The ordinary role annotation of the handler still applies, so a token can do
+at most what its owner can do in that course, and at most what its scopes allow.
+
+Every endpoint is closed to tokens until you opt it in. That is the point: a new endpoint must not become reachable by an agent by
+accident.
+
+## Opt an endpoint in
+
+Add `@AllowedScopes(AgentScope.X)` to the handler, together with an `@EnforceAtLeast...` annotation and an
+`@Operation` with a summary and a description written for an agent, not for a developer: what it does, what it needs, what it refuses.
+Three rules are enforced by `AllowedScopesArchitectureTest`:
+
+- The handler has an `@EnforceAtLeast...` annotation, because a scope narrows access and never replaces the role check.
+- The handler takes and returns DTOs. The agent specification lists only DTO schemas, so an endpoint that uses a domain object would drop out of it
+  without an error.
+- The committed agent specification lists the handler, with a summary. Regenerate it as described below.
+
+Choose the scope by what the endpoint does. There is deliberately no scope for grades, exams, student data, deleting or publishing; do
+not add one without a separate threat review.
+
+## Keep content a draft
+
+An endpoint that creates or changes something students can see must not let a token publish it. `AgentDraftRules` holds the rules, and
+they apply only to token requests:
+
+- `requireDraftDatesForCreate` requires a release date in the future, and a start date after it if one is set.
+- `requireStillDraft` lets a token change only content that is not visible yet, and only in a way that keeps it so.
+- `rejectExamExercise` keeps exam exercises out of reach.
+
+A programming exercise additionally has no student participations, which `ProgrammingExerciseDraftGuardService` checks. Call the rule
+before the request is applied to the stored object, and add a test that a token cannot publish through the endpoint. Announcements are
+the one deliberate exception, because their point is to reach students at once; they sit behind their own scope and a confirmation in
+the MCP tool.
+
+## Regenerate the agent specification
+
+The agent API specification is generated from the annotations and committed to `documentation/static/agent/openapi.yaml`, so that it can be
+published. After you opt an endpoint in or change its documentation, run:
+
+```bash
+./gradlew generateOpenApiDocs -PopenApiGroup=agent pruneOpenApiSpec -x webapp
+```
+
+The run starts a throwaway server on port 8080 and its SSH server on 7921. If a development server uses them, move the throwaway
+server with `-PopenApiServerPort=<port>` and `-PopenApiSshPort=<port>`. The application specification, which feeds the generated
+client, is produced by the same command without `-PopenApiGroup=agent` and covers only the packages listed in `gradle/openapi.gradle`.
+
+## Tools of the MCP endpoint
+
+`/api/core/agent/mcp` serves the Model Context Protocol. Its tools, in `AgentToolService`, are tasks an instructor would name, not wrappers
+of endpoints, and each one calls the REST API of the same server through `AgentApi` with the token of the request. Opt the endpoint in
+first; a tool never grants anything the endpoint does not. A new tool needs a scope that the token must hold to see it, a JSON schema for its
+arguments and a description that tells the model when to use it and what to confirm first.
+
+<Callout variant={CalloutVariant.info}>
+
+  Test a tool with the in-process `MockMvcAgentApiService`, as `AgentMcpIntegrationTest` does. The production client calls over a real
+  connection, which only `AgentAccessLoopbackIntegrationTest` exercises. That is where an error of the container, such as a status
+  swallowed by an error page, shows up.
+
+</Callout>
