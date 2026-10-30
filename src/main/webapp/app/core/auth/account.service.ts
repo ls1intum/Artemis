@@ -2,9 +2,9 @@ import { Service, computed, effect, inject, signal, untracked } from '@angular/c
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
-import { catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
-import { CourseRoleEntry, User } from 'app/account/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/angular';
@@ -13,7 +13,7 @@ import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/ex
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, addPublicFilePrefix } from 'app/app.constants';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -49,7 +49,6 @@ export interface IAccountService {
     isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAtLeastInstructorInCourseWithId: (courseId?: number) => boolean;
-    withCurrentCourseRoles: <T>(courseId: number, request: () => Observable<T>) => Observable<T>;
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
@@ -219,33 +218,6 @@ export class AccountService implements IAccountService {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'INSTRUCTOR');
-    }
-
-    /**
-     * Runs a request whose choice depends on the course roles of the user (for example the view of the course data to load) only after loading the
-     * current roles in the course from the server, which reads them from the database on every request. The roles that came with the account are
-     * loaded once per session, so they miss a role granted or revoked since then. The loaded roles replace those of the course in the identity, so
-     * the synchronous role checks see them as well.
-     *
-     * @param courseId the course whose roles the request depends on
-     * @param request  creates the request; it is called once the roles are loaded, so its role checks see the current roles
-     */
-    withCurrentCourseRoles<T>(courseId: number, request: () => Observable<T>): Observable<T> {
-        return this.http.get<CourseRoleEntry>(`api/account/course-roles?courseId=${courseId}`).pipe(
-            map((entry) => this.replaceCourseRoles(courseId, entry?.roles ?? [])),
-            // Without the current roles the request is still made, based on the roles that came with the account, as it was before.
-            catchError(() => of(undefined)),
-            switchMap(() => request()),
-        );
-    }
-
-    private replaceCourseRoles(courseId: number, roles: string[]): void {
-        const identity = this.userIdentity();
-        if (!identity) {
-            return;
-        }
-        const rolesInOtherCourses = (identity.courseRoles ?? []).filter((entry) => entry.courseId !== courseId);
-        this.userIdentity.set(cloneWith(identity, { courseRoles: roles.length ? [...rolesInOtherCourses, { courseId, roles }] : rolesInOtherCourses }));
     }
 
     private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: CourseRole): boolean {

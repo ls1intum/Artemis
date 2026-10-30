@@ -147,36 +147,36 @@ export class ListOfComplaintsComponent implements OnInit {
     };
 
     loadComplaints() {
-        // the instructor and tutor lists are different endpoints, so the choice needs the current course roles
-        const complaintResponse = this.accountService.withCurrentCourseRoles(this.courseId, () => this.requestComplaints());
+        let complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>;
+
+        if (!this.accountService.isAtLeastInstructorInCourseWithId(this.courseId)) {
+            complaintResponse = this.exerciseId
+                ? this.complaintService.findForTutorByExerciseId(this.exerciseId, this.complaintType())
+                : this.complaintService.findForTutorByCourseId(this.courseId, this.complaintType());
+        } else if (this.tutorId) {
+            if (this.exerciseId) {
+                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType());
+            } else if (this.examId) {
+                // TODO make exam complaints visible for tutors too
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType());
+            } else {
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType());
+            }
+        } else {
+            if (this.exerciseId) {
+                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType());
+            } else if (this.examId) {
+                complaintResponse = this.complaintService.findAllByCourseIdAndExamId(this.courseId, this.examId);
+            } else {
+                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType());
+            }
+        }
         this.mineScopeSubscription?.unsubscribe();
         this.mineScopeSubscription = this.subscribeToComplaintResponse(complaintResponse, 'mine');
         this.courseManagementService.findForManagement(this.courseId).subscribe((response) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.course.set(response?.body!);
         });
-    }
-
-    private requestComplaints(): Observable<HttpResponse<ComplaintDTO[]>> {
-        if (!this.accountService.isAtLeastInstructorInCourseWithId(this.courseId)) {
-            return this.exerciseId
-                ? this.complaintService.findForTutorByExerciseId(this.exerciseId, this.complaintType())
-                : this.complaintService.findForTutorByCourseId(this.courseId, this.complaintType());
-        }
-        if (this.tutorId) {
-            if (this.exerciseId) {
-                return this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType());
-            }
-            // TODO make exam complaints visible for tutors too
-            return this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType());
-        }
-        if (this.exerciseId) {
-            return this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType());
-        }
-        if (this.examId) {
-            return this.complaintService.findAllByCourseIdAndExamId(this.courseId, this.examId);
-        }
-        return this.complaintService.findAllByCourseId(this.courseId, this.complaintType());
     }
 
     /**

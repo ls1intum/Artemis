@@ -188,13 +188,11 @@ export class CourseManagementService implements OnDestroy {
         return this.findWithProjection(courseId, '/for-instructor');
     }
 
-    /** Chooses the management audience from the current course roles of the user before requesting course data. */
+    /** Chooses the management audience from the persisted account context before requesting course data. */
     findForManagement(courseId: number): Observable<EntityResponseType> {
         // Angular route parameters may carry the numeric identifier as a string at runtime.
         const id = Number(courseId);
-        return this.accountService.withCurrentCourseRoles(id, () =>
-            this.accountService.isAtLeastInstructorInCourseWithId(id) ? this.findForInstructor(id) : this.findForTutor(id),
-        );
+        return this.accountService.isAtLeastInstructorInCourseWithId(id) ? this.findForInstructor(id) : this.findForTutor(id);
     }
 
     private findWithProjection(courseId: number, suffix = ''): Observable<EntityResponseType> {

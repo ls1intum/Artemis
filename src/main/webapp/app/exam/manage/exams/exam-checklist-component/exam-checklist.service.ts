@@ -28,14 +28,11 @@ export class ExamChecklistService {
      */
     getExamStatistics(exam: Exam): Observable<ExamChecklist> {
         const courseId = Number(exam.course!.id!);
-        return this.accountService
-            .withCurrentCourseRoles(courseId, () =>
-                this.examService.getExamStatistics(courseId, exam.id!, this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'instructor' : 'tutor'),
-            )
-            .pipe(
-                filter((res) => !!res.body),
-                map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!),
-            );
+        const audience = this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'instructor' : 'tutor';
+        return this.examService.getExamStatistics(courseId, exam.id!, audience).pipe(
+            filter((res) => !!res.body),
+            map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!),
+        );
     }
 
     /**

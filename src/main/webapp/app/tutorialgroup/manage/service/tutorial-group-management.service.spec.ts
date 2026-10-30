@@ -19,15 +19,13 @@ describe('TutorialGroupManagementService', () => {
         ['TEACHING_ASSISTANT', 'for-tutor'],
         ['EDITOR', 'for-tutor'],
         ['INSTRUCTOR', 'for-instructor'],
-    ] as const)('selects %s projection from the current course roles and converts session dates', (role, suffix) => {
-        // the roles loaded with the account are outdated, the projection follows the current ones
-        TestBed.inject(AccountService).userIdentity.set(Object.assign(new User(), { id: 1, courseRoles: [] }));
+    ] as const)('selects %s projection from account and course ID and converts session dates', (role, suffix) => {
+        TestBed.inject(AccountService).userIdentity.set(Object.assign(new User(), { id: 1, courseRoles: [{ courseId: 7, roles: [role] }] }));
         let groups: TutorialGroup[] = [];
         TestBed.inject(TutorialGroupManagementService)
             .getTutorialGroupsForCourse(7)
             .subscribe((response) => (groups = response));
         const http = TestBed.inject(HttpTestingController);
-        http.expectOne({ method: 'GET', url: 'api/account/course-roles?courseId=7' }).flush({ courseId: 7, roles: [role] });
         const summary: TutorialGroupSummary = {
             id: 3,
             title: 'Tutorial',
@@ -62,7 +60,6 @@ describe('TutorialGroupManagementService', () => {
         vi.spyOn(account, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
         TestBed.inject(TutorialGroupManagementService).getTutorialGroupsForCourse(7).subscribe();
         const http = TestBed.inject(HttpTestingController);
-        http.expectOne('api/account/course-roles?courseId=7').flush({ courseId: 7 });
         http.expectOne(`/api/tutorialgroup/courses/7/tutorial-groups/for-tutor`).flush([]);
         http.verify();
     });
@@ -73,7 +70,6 @@ describe('TutorialGroupManagementService', () => {
             .getTutorialGroupsForCourse(7)
             .subscribe({ error: (error) => (status = error.status) });
         const http = TestBed.inject(HttpTestingController);
-        http.expectOne('api/account/course-roles?courseId=7').flush({ courseId: 7, roles: ['TEACHING_ASSISTANT'] });
         http.expectOne(`/api/tutorialgroup/courses/7/tutorial-groups/for-tutor`).flush({}, { status: 403, statusText: 'Forbidden' });
         expect(status).toBe(403);
         http.verify();

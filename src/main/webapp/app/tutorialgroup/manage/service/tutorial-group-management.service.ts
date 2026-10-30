@@ -13,11 +13,9 @@ export class TutorialGroupManagementService {
     private readonly accountService = inject(AccountService);
 
     getTutorialGroupsForCourse(courseId: number): Observable<TutorialGroup[]> {
-        return this.accountService.withCurrentCourseRoles(courseId, () => {
-            const audience = this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'for-instructor' : 'for-tutor';
-            return this.http
-                .get<TutorialGroupSummary[]>(`/api/tutorialgroup/courses/${courseId}/tutorial-groups/${audience}`)
-                .pipe(map(convertTutorialGroupSummaryArrayDatesFromServer));
-        });
+        const audience = this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'for-instructor' : 'for-tutor';
+        return this.http
+            .get<TutorialGroupSummary[]>(`/api/tutorialgroup/courses/${courseId}/tutorial-groups/${audience}`)
+            .pipe(map(convertTutorialGroupSummaryArrayDatesFromServer));
     }
 }

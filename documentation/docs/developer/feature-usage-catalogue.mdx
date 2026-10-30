@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 151 features, 1144 REST endpoints in 29 modules, and 65 interaction overrides.
+Currently 20 product areas, 151 features, 1143 REST endpoints in 29 modules, and 64 interaction overrides.
 
 ## Courses
 
@@ -1252,7 +1252,7 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| account | `AccountResource` | 4 | 0 | 1 | 0 |
+| account | `AccountResource` | 4 | 0 | 0 | 0 |
 | account | `UserResource` | 2 | 0 | 0 | 0 |
 | core | `FileResource` | 0 | 0 | 1 | 0 |
 | core | `PublicAccountResource` | 1 | 0 | 1 | 0 |
@@ -1500,7 +1500,6 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 
 ### Counted as automatic calls
 
-* `GET api/account/course-roles` (`ACCOUNT_SETTINGS`)
 * `GET api/admin/organizations/{organizationId}/title` (`ORGANIZATIONS`)
 * `GET api/admin/websocket/nodes` (`MONITORING`)
 * `GET api/atlas/course-competencies/{competencyId}/title` (`COMPETENCY_PROGRESS`)

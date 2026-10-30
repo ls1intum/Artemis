@@ -173,10 +173,6 @@ describe('ExerciseStatisticsComponent explicit course capability', () => {
         const fixture = TestBed.createComponent(ExerciseStatisticsComponent);
         http = TestBed.inject(HttpTestingController);
         fixture.detectChanges();
-        if (exam) {
-            // the exam views of editors and tutors are different endpoints, so the current course roles are loaded before choosing one
-            http.expectOne(`api/account/course-roles?courseId=${courseId}`).flush({ courseId, roles: [role] });
-        }
         const exerciseRequest = http.expectOne((request) => request.url.startsWith(`api/exercise/exercises/${exerciseId}/`));
         const statisticsRequest = http.expectOne((request) => request.url === 'api/core/management/statistics/exercise-statistics');
         expect(statisticsRequest.request.method).toBe('GET');

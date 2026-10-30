@@ -89,11 +89,9 @@ export class ExerciseService {
         return this.loadTitlesForCourse(courseId, true);
     }
 
-    /** The catalogue is shared by course reference pickers; choose from the current course roles before loading. */
+    /** The catalogue is shared by course reference pickers; choose from the known course membership before loading. */
     getTitlesForAccessibleCourse(courseId: number): Observable<ExerciseTitle[]> {
-        return this.accountService.withCurrentCourseRoles(courseId, () =>
-            this.accountService.isAtLeastTutorInCourseWithId(courseId) ? this.getTitlesForCourseForStaff(courseId) : this.getTitlesForCourse(courseId),
-        );
+        return this.accountService.isAtLeastTutorInCourseWithId(courseId) ? this.getTitlesForCourseForStaff(courseId) : this.getTitlesForCourse(courseId);
     }
 
     private loadTitlesForCourse(courseId: number, staff: boolean): Observable<ExerciseTitle[]> {

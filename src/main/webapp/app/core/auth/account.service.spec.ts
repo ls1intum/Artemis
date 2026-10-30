@@ -156,43 +156,6 @@ describe('AccountService', () => {
         expect(accountService.userIdentity()).toEqual(user);
     });
 
-    describe('withCurrentCourseRoles', () => {
-        it('replaces the roles of the course with the current ones and keeps those of other courses', () => {
-            accountService.userIdentity.set({
-                id: 1,
-                authorities: [Authority.STUDENT],
-                courseRoles: [
-                    { courseId: 7, roles: ['TEACHING_ASSISTANT'] },
-                    { courseId: 8, roles: ['EDITOR'] },
-                ],
-            } as User);
-            let chosenWithInstructorRole: boolean | undefined;
-            accountService
-                .withCurrentCourseRoles(7, () => of(accountService.isAtLeastInstructorInCourseWithId(7)))
-                .subscribe((isInstructor) => (chosenWithInstructorRole = isInstructor));
-
-            httpMock.expectOne({ method: 'GET', url: 'api/account/course-roles?courseId=7' }).flush({ courseId: 7, roles: ['INSTRUCTOR'] });
-
-            expect(chosenWithInstructorRole).toBe(true);
-            expect(accountService.userIdentity()?.courseRoles).toEqual([
-                { courseId: 8, roles: ['EDITOR'] },
-                { courseId: 7, roles: ['INSTRUCTOR'] },
-            ]);
-        });
-
-        it('drops the course when the user no longer has a role in it', () => {
-            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 7, roles: ['INSTRUCTOR'] }] } as User);
-            let chosenWithTutorRole: boolean | undefined;
-            accountService.withCurrentCourseRoles(7, () => of(accountService.isAtLeastTutorInCourseWithId(7))).subscribe((isTutor) => (chosenWithTutorRole = isTutor));
-
-            // the server leaves out an empty role set
-            httpMock.expectOne({ method: 'GET', url: 'api/account/course-roles?courseId=7' }).flush({ courseId: 7 });
-
-            expect(chosenWithTutorRole).toBe(false);
-            expect(accountService.userIdentity()?.courseRoles).toEqual([]);
-        });
-    });
-
     describe('test authority check', () => {
         const usedAuthorities: Authority[] = [];
         it.each(authorities)('should return false if not authenticated, no user id and no authorities are set', async (authority: Authority) => {
