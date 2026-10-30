@@ -125,7 +125,7 @@ export class ContextSelectionComponent {
         this.optionsLoadedForCourseId = courseId;
         forkJoin({
             lectures: this.lectureService.findAllByCourseIdForOverview(courseId),
-            exercises: this.exerciseService.getTitlesForCourse(courseId),
+            exercises: this.exerciseService.getTitlesForAccessibleCourse(courseId),
         })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({

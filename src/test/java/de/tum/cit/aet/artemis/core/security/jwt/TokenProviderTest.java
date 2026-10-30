@@ -5,13 +5,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 
 import javax.crypto.SecretKey;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.authentication.AuthenticationFactory;
@@ -138,6 +144,33 @@ class TokenProviderTest {
         long validity = tokenProvider.getTokenValidity(false);
 
         assertThat(validity).isEqualTo(ONE_MINUTE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ROLE_TA", "ROLE_EDITOR", "ROLE_INSTRUCTOR" })
+    void testCreateTokenUsesOnlyUserAuthorityForLegacyTeachingRole(String teachingAuthority) {
+        var authentication = new UsernamePasswordAuthenticationToken(USER_NAME, "password", List.of(new SimpleGrantedAuthority(teachingAuthority)));
+
+        String token = tokenProvider.createToken(authentication, false);
+
+        assertThat(Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("auth", String.class)).isEqualTo("ROLE_USER");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ROLE_TA", "ROLE_EDITOR", "ROLE_INSTRUCTOR" })
+    void testReadLegacyTeachingTokenPreservesUserAccessOnly(String teachingAuthority) {
+        String token = Jwts.builder().subject(USER_NAME).claim("auth", teachingAuthority).signWith(key, Jwts.SIG.HS512).compact();
+
+        assertThat(tokenProvider.getAuthentication(token).getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactly("ROLE_USER");
+    }
+
+    @Test
+    void testReadLegacyTeachingTokenPreservesAdminAndDeduplicatesUser() {
+        String token = Jwts.builder().subject(USER_NAME).claim("auth", "ROLE_USER,ROLE_TA,ROLE_EDITOR,ROLE_INSTRUCTOR,ROLE_ADMIN,ROLE_SUPER_ADMIN").signWith(key, Jwts.SIG.HS512)
+                .compact();
+
+        assertThat(tokenProvider.getAuthentication(token).getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactly("ROLE_USER", "ROLE_ADMIN",
+                "ROLE_SUPER_ADMIN");
     }
 
     @Test

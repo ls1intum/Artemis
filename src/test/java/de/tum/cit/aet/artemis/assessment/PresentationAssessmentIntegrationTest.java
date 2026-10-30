@@ -132,7 +132,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createPresentationAssessment_shouldCreatePresentationAssessment() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.125, null, null, null);
 
@@ -147,7 +147,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createPresentationAssessment_withCourseExercise_shouldLinkExercise() throws Exception {
         var exercise = textExerciseUtilService.createIndividualTextExercise(course, FIXED_DATE.minusDays(1), FIXED_DATE.plusDays(7), FIXED_DATE.plusDays(14));
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exercise presentation", "Presentation for an exercise", 30.0, course.getId(), exercise.getId(), null);
@@ -169,7 +169,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createPresentationAssessment_withInvalidRequestData_shouldReturnBadRequest() throws Exception {
         request.postWithResponseBody(getBaseUrl(course), new PresentationAssessmentDTO(null, " ", "Course-level presentation assessment", 30.0, null, null, null),
                 PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
@@ -181,7 +181,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createPresentationAssessment_withExerciseOfAnotherCourse_shouldReturnBadRequest() throws Exception {
         var otherCourseExercise = textExerciseUtilService.createIndividualTextExercise(otherCourse, FIXED_DATE.minusDays(1), FIXED_DATE.plusDays(7), FIXED_DATE.plusDays(14));
         long assessmentsBeforeRequest = presentationAssessmentRepository.count();
@@ -193,7 +193,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createPresentationAssessment_withExamExercise_shouldReturnBadRequest() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         var examExercise = textExerciseUtilService.createTextExerciseForExam(exam.getExerciseGroups().getFirst());
@@ -206,7 +206,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createPresentationAssessment_withNonExistingExercise_shouldReturnNotFound() throws Exception {
         long assessmentsBeforeRequest = presentationAssessmentRepository.count();
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exercise presentation", null, 30.0, course.getId(), Long.MAX_VALUE, null);
@@ -217,7 +217,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessments_shouldReturnCoursePresentationAssessments() throws Exception {
         PresentationAssessment otherPresentationAssessment = new PresentationAssessment();
         otherPresentationAssessment.setCourse(otherCourse);
@@ -250,7 +250,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStudentRows_shouldReturnDistinctPagesWithTotalCount() throws Exception {
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null,
                 List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null, currentUserLogin());
@@ -279,27 +279,27 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @ParameterizedTest
     @CsvSource({ "-1, 20", "0, 0", "0, 101" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStudentRows_withInvalidPagination_shouldReturnBadRequest(int page, int size) throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.get(getBaseUrl(course) + "/student-rows").param("page", Integer.toString(page)).param("size", Integer.toString(size)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStudentRows_withMaximumPageSize_shouldReturnOk() throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.get(getBaseUrl(course) + "/student-rows").param("page", "0").param("size", "100")).andExpect(status().isOk());
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "email", "student.login", "id" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStudentRows_withUnsupportedSortField_shouldReturnBadRequest(String sortField) throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.get(getBaseUrl(course) + "/student-rows").param("sortField", sortField)).andExpect(status().isBadRequest());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessment_shouldUpdatePresentationAssessment() throws Exception {
         var originalExercise = textExerciseUtilService.createIndividualTextExercise(course, FIXED_DATE.minusDays(1), FIXED_DATE.plusDays(7), FIXED_DATE.plusDays(14));
         var replacementExercise = textExerciseUtilService.createIndividualTextExercise(course, FIXED_DATE.minusDays(1), FIXED_DATE.plusDays(8), FIXED_DATE.plusDays(15));
@@ -335,7 +335,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessment_withMismatchedId_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId() + 1, "Updated presentation", "Updated description", 25.0, course.getId(), null,
                 null);
@@ -549,7 +549,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessment_belowExistingResult_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
         instance.setPresentationAssessment(presentationAssessment);
@@ -570,7 +570,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessment_withMismatchedCourseId_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, otherCourse.getId(),
                 null, null);
@@ -579,7 +579,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessment_viaUrlOfAnotherCourse_shouldReturnNotFound() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, otherCourse.getId(),
                 null, null);
@@ -591,7 +591,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletePresentationAssessment_shouldDeletePresentationAssessment() throws Exception {
         request.delete(getAssessmentUrl(course, presentationAssessment), HttpStatus.NO_CONTENT);
 
@@ -600,7 +600,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletePresentationAssessment_withInstances_shouldDeleteOnlyItsOwnInstances() throws Exception {
         PresentationAssessmentInstanceDTO first = createSearchInstance(presentationAssessment, "student1", 5.0);
         PresentationAssessmentInstanceDTO second = createSearchInstance(presentationAssessment, "student2", null);
@@ -617,7 +617,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteExercise_linkedToPresentationAssessment_shouldKeepThePresentationAsStandalone() throws Exception {
         PresentationAssessment linkedAssessment = createSearchAssessment("Linked presentation", true);
         long exerciseId = linkedAssessment.getExercise().getId();
@@ -629,7 +629,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessments_withFeatureDisabled_shouldReturnForbidden() throws Exception {
         featureToggleService.disableFeature(Feature.PresentationAssessments);
 
@@ -637,7 +637,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessments_withCourseSettingDisabled_shouldReturnForbidden() throws Exception {
         setPresentationAssessmentsEnabled(course, false);
 
@@ -645,29 +645,29 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCourse_asTutor_shouldTellThatPresentationAssessmentsAreEnabled() throws Exception {
-        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId() + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class);
 
         assertThat(loadedCourse.presentationAssessmentsEnabled()).isTrue();
         assertThat(loadedCourse.courseConfiguration()).isNull();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getCourse_asEditor_shouldTellThatPresentationAssessmentsAreEnabled() throws Exception {
-        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId() + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class);
 
         assertThat(loadedCourse.presentationAssessmentsEnabled()).isTrue();
         assertThat(loadedCourse.courseConfiguration()).isNull();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCourse_asTutor_shouldTellThatPresentationAssessmentsAreDisabled() throws Exception {
         setPresentationAssessmentsEnabled(course, false);
 
-        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId() + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class);
 
         assertThat(loadedCourse.presentationAssessmentsEnabled()).isFalse();
     }
@@ -690,7 +690,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletePresentationAssessment_viaUrlOfAnotherCourse_shouldReturnNotFound() throws Exception {
         request.delete(getAssessmentUrl(otherCourse, presentationAssessment), HttpStatus.NOT_FOUND);
 
@@ -718,7 +718,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void presentationAssessmentReadRequests_asTutor_shouldReturnOk() throws Exception {
         List<PresentationAssessmentDTO> assessments = request.getList(getBaseUrl(course), HttpStatus.OK, PresentationAssessmentDTO.class);
         request.getList(getBaseUrl(course) + "/student-rows", HttpStatus.OK, PresentationAssessmentStudentRowDTO.class);
@@ -728,7 +728,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void assignAndGradeStudent_asTutor_shouldSucceed() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", null);
         PresentationAssessmentInstanceRequestDTO gradeDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), instance.presentationDate(), 15.0,
@@ -744,7 +744,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void presentationChanges_asTutor_shouldReturnForbidden() throws Exception {
         PresentationAssessmentDTO newAssessment = new PresentationAssessmentDTO(null, "Tutor presentation", null, 10.0, course.getId(), null, null);
         PresentationAssessmentDTO changedAssessment = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", null, 25.0, course.getId(), null, null);
@@ -759,7 +759,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void deletePresentationAssessmentInstance_asTutor_shouldReturnForbidden() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", null);
 
@@ -769,7 +769,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void presentationChanges_asEditor_shouldSucceed() throws Exception {
         PresentationAssessmentDTO created = request.postWithResponseBody(getBaseUrl(course),
                 new PresentationAssessmentDTO(null, "Editor presentation", null, 10.0, course.getId(), null, null), PresentationAssessmentDTO.class, HttpStatus.CREATED);
@@ -781,7 +781,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void deletePresentationAssessmentInstance_asEditor_shouldSucceed() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", null);
 
@@ -791,7 +791,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void deletePresentationAssessment_asEditor_shouldReturnForbidden() throws Exception {
         request.delete(getAssessmentUrl(course, presentationAssessment), HttpStatus.FORBIDDEN);
 
@@ -799,7 +799,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createPresentationAssessmentInstance_withoutStudentLogin_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null, List.of(" "), "en",
@@ -811,7 +811,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createPresentationAssessmentInstance_withInvalidRequestData_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
         request.post(getInstancesUrl(course, presentationAssessment), new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null,
@@ -823,7 +823,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createPresentationAssessmentInstance_withDuplicateTrimmedLoginAndResult_shouldCreateSingleAssignment() throws Exception {
         List<PresentationAssessmentInstanceDTO> instancesBeforeRequest = request
                 .getList(getBaseUrl(course) + "/student-rows?assessmentId=" + presentationAssessment.getId(), HttpStatus.OK, PresentationAssessmentStudentRowDTO.class).stream()
@@ -851,7 +851,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessmentInstance_shouldUpdateIndividualResult() throws Exception {
         PresentationAssessmentInstanceDTO individual = createSearchInstance(presentationAssessment, "student1", null);
         PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), 12.5,
@@ -878,7 +878,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessmentInstance_afterStudentLeftCourse_shouldStillRecordResult() throws Exception {
         PresentationAssessmentInstanceDTO individual = createSearchInstance(presentationAssessment, "student1", null);
         userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), course);
@@ -896,7 +896,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessmentInstance_toStudentOutsideCourse_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentInstanceDTO individual = createSearchInstance(presentationAssessment, "student1", null);
         userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "student2"), course);
@@ -912,7 +912,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletePresentationAssessmentInstance_shouldDeleteOnlyThatInstance() throws Exception {
         PresentationAssessmentInstanceDTO first = createSearchInstance(presentationAssessment, "student1", null);
         PresentationAssessmentInstanceDTO second = createSearchInstance(presentationAssessment, "student2", null);
@@ -924,7 +924,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletePresentationAssessmentInstance_withWrongAssessment_shouldReturnNotFound() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", null);
         PresentationAssessment otherAssessment = createSearchAssessment("Other presentation", false);
@@ -935,7 +935,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessmentInstance_withWrongAssessment_shouldReturnNotFound() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", 5.0);
         PresentationAssessment otherAssessment = createSearchAssessment("Other presentation", false);
@@ -948,7 +948,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessmentInstance_withPointsAboveMaximum_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", 5.0);
         PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), instance.presentationDate(),
@@ -961,7 +961,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void savePresentationAssessmentInstances_withDateBefore1970_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(ZonedDateTime.parse("1969-12-31T12:00:00Z"), null,
@@ -973,7 +973,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessmentInstance_withDateBefore1970_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", null);
         PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(instance.id(), ZonedDateTime.parse("1969-12-31T12:00:00Z"), null,
@@ -986,7 +986,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStatistics_shouldCountTotalAndAssessedInstances() throws Exception {
         createSearchInstance(presentationAssessment, "student1", 5.0);
         createSearchInstance(presentationAssessment, "student2", null);
@@ -998,7 +998,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void savePresentationAssessmentInstances_withPointsAboveMaximum_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, presentationAssessment.getMaxPoints() + 1,
@@ -1010,7 +1010,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void savePresentationAssessmentInstances_withStudentWhoAlreadyHasAnInstance_shouldRejectTheWholeRequest() throws Exception {
         createSearchInstance(presentationAssessment, "student1", null);
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null,
@@ -1023,7 +1023,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void savePresentationAssessmentInstances_forSameStudentInAnotherPresentation_shouldBeAllowed() throws Exception {
         createSearchInstance(presentationAssessment, "student1", null);
         PresentationAssessment otherAssessment = createSearchAssessment("Other presentation", false);
@@ -1035,7 +1035,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessmentInstance_toStudentWhoAlreadyHasAnInstance_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentInstanceDTO first = createSearchInstance(presentationAssessment, "student1", null);
         createSearchInstance(presentationAssessment, "student2", null);
@@ -1050,7 +1050,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void presentationAssessmentInstance_forSameStudentTwice_shouldViolateTheUniqueIndex() throws Exception {
         createSearchInstance(presentationAssessment, "student1", null);
         PresentationAssessmentInstance duplicate = new PresentationAssessmentInstance();
@@ -1065,7 +1065,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @ParameterizedTest
     @ValueSource(strings = { "zoom.example.org/j/1", "/j/1", "javascript:alert(1)", "https://", "https://exa mple.org" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void savePresentationAssessmentInstances_withMeetingLinkWithoutHttpScheme_shouldReturnBadRequest(String meetingLink) throws Exception {
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null, List.of(TEST_PREFIX + "student1"), "en",
                 PresentationAssessmentMode.ONLINE, null, meetingLink, null, currentUserLogin());
@@ -1074,7 +1074,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void savePresentationAssessmentInstances_withTooManyStudents_shouldReturnBadRequest() throws Exception {
         List<String> logins = IntStream.range(0, 501).mapToObj(index -> TEST_PREFIX + "student" + index).toList();
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null, logins, "en", PresentationAssessmentMode.IN_PERSON,
@@ -1084,7 +1084,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void savePresentationAssessmentInstances_shouldCreateOneInstancePerStudent() throws Exception {
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.125,
                 List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, "Good presentation", currentUserLogin());
@@ -1103,7 +1103,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void savePresentationAssessmentInstances_withInvalidStudent_shouldNotPersistPartialResults() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.5,
@@ -1115,7 +1115,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void savePresentationAssessmentInstances_withEmptyStudentList_shouldReturnBadRequest() throws Exception {
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
         PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), 15.5, List.of(), "en",
@@ -1127,7 +1127,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updatePresentationAssessmentInstance_shouldNotChangeAnotherStudentsResult() throws Exception {
         PresentationAssessmentInstancesBatchCreateDTO createDto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE.plusDays(14), null,
                 List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null, currentUserLogin());
@@ -1157,7 +1157,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @ParameterizedTest
     @ValueSource(strings = { "STUDENT1", "ADA LOVELACE", "ALPHA TALK" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStudentRows_shouldSearchLoginNameAndTitle(String searchTerm) throws Exception {
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.setFirstName("Ada");
@@ -1173,7 +1173,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStudentRows_shouldSearchEmailCaseInsensitively() throws Exception {
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.setEmail("unique.presentation.mail@example.org");
@@ -1187,7 +1187,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @ParameterizedTest
     @ValueSource(strings = { "%", "_", "\\" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStudentRows_shouldSearchSpecialCharactersLiterally(String character) throws Exception {
         presentationAssessment.setTitle("Topic " + character + " special");
         presentationAssessmentRepository.save(presentationAssessment);
@@ -1201,7 +1201,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @ParameterizedTest
     @CsvSource({ "assessed,true,zero|linked", "assessed,false,pending", "linkedToExercise,true,linked", "linkedToExercise,false,pending|zero",
             "assessmentId,standalone,pending|zero" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStudentRows_shouldApplyIndividualFilters(String filter, String value, String expectedRows) throws Exception {
         var linkedAssessment = createSearchAssessment("Linked presentation", true);
         var pending = createSearchInstance(presentationAssessment, "student1", null);
@@ -1215,7 +1215,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessmentStudentRows_shouldCombineSearchAndFilters() throws Exception {
         var linkedAssessment = createSearchAssessment("Shared presentation", true);
         var otherLinkedAssessment = createSearchAssessment("Shared other presentation", true);

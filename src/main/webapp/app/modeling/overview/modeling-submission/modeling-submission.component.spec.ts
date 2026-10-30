@@ -1,3 +1,4 @@
+import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { Component, EventEmitter, input, output } from '@angular/core';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -40,6 +41,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { User } from 'app/account/user/user.model';
@@ -1161,7 +1163,7 @@ describe('ModelingSubmissionComponent', () => {
 
         comp.ngOnInit();
 
-        expect(submissionsWithResultsSpy).toHaveBeenCalledWith(123);
+        expect(submissionsWithResultsSpy).toHaveBeenCalledWith(123, 'owner');
         expect(comp.sortedSubmissionHistory()).toEqual(expectedSortedSubmissions);
         comp.sortedResultHistory().forEach((result, index) => {
             expect(result?.id).toBe(expectedSortedResults[index].id);
@@ -1357,5 +1359,30 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.result()).toBeUndefined();
         expect(comp.assessmentResult()).toBeUndefined();
         expect(comp['shouldShowLiveEditor']()).toBe(true);
+    });
+    it.each(['owner', 'staff-preview'] as const)('dispatches the explicit %s modeling editor purpose', (purpose) => {
+        createModelingSubmissionComponent();
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        const load = vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        comp.ngOnInit();
+        expect(load).toHaveBeenCalledWith(123, purpose);
+    });
+
+    it.each(['owner', 'staff-preview'] as const)('forwards explicit %s purpose through history and specific-result loading', (purpose) => {
+        createModelingSubmissionComponent(new MockActivatedRoute({ participationId: 123, submissionId: 20, resultId: 100 }));
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        const historicalSubmission = {
+            id: 20,
+            submitted: true,
+            participation,
+            model: validMockModel,
+            results: [{ id: 100, completionDate: dayjs(), assessmentType: AssessmentType.MANUAL }],
+        } as ModelingSubmission;
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(historicalSubmission));
+        const history = vi.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([historicalSubmission]));
+        const assessment = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'getAssessment').mockReturnValue(of({ id: 100, feedbacks: [] }));
+        comp.ngOnInit();
+        expect(history).toHaveBeenCalledWith(123, purpose);
+        expect(assessment).toHaveBeenCalledWith(20, 100, purpose);
     });
 });

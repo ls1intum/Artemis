@@ -82,7 +82,7 @@ describe('FaqUpdateComponent', () => {
                     },
                 },
                 MockProvider(FaqService, {
-                    find: () => {
+                    findForManagement: () => {
                         return of(
                             new HttpResponse({
                                 body: faq1,
@@ -90,7 +90,7 @@ describe('FaqUpdateComponent', () => {
                             }),
                         );
                     },
-                    findAllCategoriesByCourseId: () => {
+                    findAllCategoriesForManagement: () => {
                         return of(
                             new HttpResponse({
                                 body: [],
@@ -122,6 +122,15 @@ describe('FaqUpdateComponent', () => {
         router = TestBed.inject(Router);
         activatedRoute = TestBed.inject(ActivatedRoute);
         faqUpdateComponentFixture.detectChanges();
+    });
+
+    it('reloads newly proposed FAQ using management detail', () => {
+        const management = vi.spyOn(faqService, 'findForManagement');
+        const student = vi.spyOn(faqService, 'find');
+        faqUpdateComponent.faq = new Faq();
+        faqUpdateComponent['onSaveSuccess'](faq1);
+        expect(management).toHaveBeenCalledExactlyOnceWith(faqUpdateComponent.courseId, faq1.id);
+        expect(student).not.toHaveBeenCalled();
     });
 
     it('should create faq', () => {

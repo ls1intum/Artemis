@@ -108,7 +108,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateExamUser_DidCheckFields() throws Exception {
         ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, false, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
@@ -120,7 +120,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddStudentsToExamWithSeatAndRoomFields() throws Exception {
         List<ExamUserDTO> examUserDTOs = new ArrayList<>();
         ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "", null, null, null, null, null,
@@ -147,7 +147,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUploadExamUserImages() throws Exception {
         // registration number is important for the test, exam users should have same registration number as in the test pdf file
         // student2 already exists in the exam and there is no need to add it again
@@ -209,7 +209,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateExamUserDidCheckFieldsAndSigningImage() throws Exception {
         ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
@@ -224,7 +224,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     // TODO enable again - figure out why for one exercise the participations are not created
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testVerifyExamUserAttendance() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true);
         long examId = studentExams.getFirst().getExam().getId();
@@ -393,7 +393,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_returnsAllRegisteredStudents() throws Exception {
         var paginationExam = createPaginationTestExam();
         var params = pageParams("");
@@ -402,7 +402,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamStudentsPaged_allowedForTutor() throws Exception {
         var paginationExam = createPaginationTestExam();
         List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, pageParams(""));
@@ -416,7 +416,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_filterSubmitted_returnsOnlySubmittedStudents() throws Exception {
         var paginationExam = createPaginationTestExam();
         var params = pageParams("Submitted");
@@ -427,7 +427,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_filterStarted_returnsOnlyStartedStudents() throws Exception {
         var paginationExam = createPaginationTestExam();
         var params = pageParams("Started");
@@ -438,7 +438,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_filterNotStarted_returnsOnlyNotStartedStudents() throws Exception {
         var paginationExam = createPaginationTestExam();
         var params = pageParams("NotStarted");
@@ -449,7 +449,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_filterExamMissing_returnsOnlyExamMissingStudents() throws Exception {
         var paginationExam = createPaginationTestExam();
         var params = pageParams("ExamMissing");
@@ -460,7 +460,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_filterDidNotAttend_returnsExamMissingAndNotStartedStudents() throws Exception {
         var paginationExam = createPaginationTestExam();
         // student3 (NotStarted) + student4 (ExamMissing) = 2 students who did not attend
@@ -471,7 +471,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_filterAttendanceChecked_returnsFullyCheckedStudents() throws Exception {
         var paginationExam = createPaginationTestExam();
         var params = pageParams("AttendanceChecked");
@@ -486,7 +486,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_filterAttendanceNotChecked_returnsStartedWithIncompleteChecks() throws Exception {
         var paginationExam = createPaginationTestExam();
         var params = pageParams("AttendanceNotChecked");
@@ -497,7 +497,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_searchByLogin_returnsMatchingStudent() throws Exception {
         var paginationExam = createPaginationTestExam();
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -512,7 +512,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_secondPage_returnsCorrectSubset() throws Exception {
         var paginationExam = createPaginationTestExam();
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -535,7 +535,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchUsersForExamRegistration_byLogin_returnsMatchingUsers() throws Exception {
         List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
                 searchParams(TEST_PREFIX + "student", 0, 10));
@@ -544,7 +544,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchUsersForExamRegistration_marksAlreadyRegisteredUser() throws Exception {
         // student2 is the only one registered for exam1 in @BeforeEach
         List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
@@ -555,7 +555,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchUsersForExamRegistration_nonRegisteredUsersNotFlagged() throws Exception {
         // student1 is not registered for exam1
         List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
@@ -566,7 +566,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchUsersForExamRegistration_paginationRespectsPageSize() throws Exception {
         List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
                 searchParams(TEST_PREFIX + "student", 0, 2));
@@ -574,7 +574,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchUsersForExamRegistration_paginationIsStableAcrossPages() throws Exception {
         // Regression test for issue #13069: consecutive pages must form a stable, non-overlapping partition of the
         // matches, so no student shuffles between pages or disappears and becomes impossible to add to the exam. The
@@ -591,7 +591,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchUsersForExamRegistration_noResultsForUnknownTerm() throws Exception {
         List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
                 searchParams("zzz_no_match_zzz", 0, 10));
@@ -599,7 +599,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSearchUsersForExamRegistration_forbiddenForTutor() throws Exception {
         request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 0, 10));
     }
@@ -714,7 +714,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportExamUsers() throws Exception {
         List<ExamUserDTO> examUserDTOs = getExamUserDTOS();
         request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs, ExamRegistrationResultDTO.class, OK);

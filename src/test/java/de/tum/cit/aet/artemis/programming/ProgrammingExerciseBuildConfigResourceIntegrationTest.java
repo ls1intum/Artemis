@@ -110,13 +110,13 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateBuildConfigAsEditor() throws Exception {
         assertConfigurationPersisted();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateBuildConfigAsInstructor() throws Exception {
         assertConfigurationPersisted();
     }
@@ -128,38 +128,38 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateBuildConfigForbiddenForTutor() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile")), 0), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsDuplicatePhaseNames() throws Exception {
         // different casing must still be rejected, so this also guards the case-insensitive comparison
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("Compile")), 0), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsReservedPhaseName() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("main")), 0), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsBlankPhaseName() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("")), 0), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsEmptyPhases() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(), 0), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsNullPhaseElement() throws Exception {
         var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
@@ -173,7 +173,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsBuildPlanConfigurationExceedingParsingLimit() throws Exception {
         var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
@@ -189,19 +189,19 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsMalformedDockerFlags() throws Exception {
         assertDockerFlagsRejectedAndConfigUnchanged("this is not valid json");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsDisallowedDockerNetwork() throws Exception {
         assertDockerFlagsRejectedAndConfigUnchanged("{\"network\":\"host\",\"cpuCount\":2,\"memory\":1024}");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsInvalidDockerMemory() throws Exception {
         assertDockerFlagsRejectedAndConfigUnchanged("{\"network\":\"none\",\"cpuCount\":2,\"memory\":1}");
     }
@@ -224,7 +224,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsBlankDockerImage() throws Exception {
         var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
@@ -240,7 +240,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     @ParameterizedTest(name = "[{index}] script=\"{0}\"")
     @NullSource
     @ValueSource(strings = { "", "   " })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAcceptsBlankBuildPhaseScript(String blankScript) throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
 
@@ -257,7 +257,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAcceptsNullDockerImageAsDefault() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
 
@@ -271,7 +271,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAddingAfterDueDatePhaseSchedulesTheRebuild() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
@@ -287,7 +287,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRemovingAfterDueDatePhaseClearsTheRebuildDate() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
@@ -303,7 +303,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testDoesNotRescheduleWhenTheBuildAndTestDateIsUnchanged() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         programmingExercise.setDueDate(null);
@@ -325,7 +325,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateBuildConfigForExamExercise() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         var examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();

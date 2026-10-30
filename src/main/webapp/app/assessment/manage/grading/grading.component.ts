@@ -351,7 +351,7 @@ export class GradingComponent implements OnInit {
                         this.onChangeMaxPoints(this.exam()?.examMaxPoints);
                     });
                 } else {
-                    this.courseService.find(this.courseId!).subscribe((courseResponse) => {
+                    this.courseService.findForInstructor(this.courseId!).subscribe((courseResponse) => {
                         this.course.set(courseResponse.body!);
                         this.gradingScaleMeta.course = this.course();
                         this.maxPoints.set(this.course()?.maxPoints);

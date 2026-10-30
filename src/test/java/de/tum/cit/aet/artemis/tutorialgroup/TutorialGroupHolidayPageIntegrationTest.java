@@ -86,7 +86,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_shouldCountSessionsPerDay() throws Exception {
         createSessionOn(MONDAY, 10);
         createSessionOn(MONDAY, 14);
@@ -98,7 +98,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_shouldOmitDaysWithoutSessions() throws Exception {
         createSessionOn(MONDAY, 10);
 
@@ -109,7 +109,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_shouldIncludeTheLastDayOfTheSpan() throws Exception {
         LocalDate lastDay = MONDAY.plusDays(6);
         createSessionOn(lastDay, 10);
@@ -120,7 +120,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_shouldExcludeSessionsOutsideTheSpan() throws Exception {
         createSessionOn(MONDAY.minusDays(1), 10);
         createSessionOn(MONDAY.plusDays(7), 10);
@@ -137,7 +137,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
      * has to be counted on the day the instructor sees it on, because that is the day a holiday would cancel it.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_shouldGroupDaysInTheTimeZoneOfTheCourse() throws Exception {
         LocalDate day = MONDAY.plusDays(1);
         createSessionOn(day, 1);
@@ -151,7 +151,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
 
     /** The span's own ends are read in the same zone, so a session early on its first day is inside it. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_shouldIncludeASessionEarlyOnTheFirstDayOfTheSpan() throws Exception {
         createSessionOn(MONDAY, 1);
 
@@ -161,14 +161,14 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_withInvertedSpan_shouldReturnBadRequest() throws Exception {
         request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(MONDAY.plusDays(6), MONDAY));
     }
 
     /** A year is past anything the page asks for, so the bound has to leave the largest real request alone. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_withTheLongestAllowedSpan_shouldSucceed() throws Exception {
         createSessionOn(MONDAY, 10);
 
@@ -179,21 +179,21 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
 
     /** The dates come straight from the request, and the count loads a row per session in the span. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_withAnOverlongSpan_shouldReturnBadRequest() throws Exception {
         request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(367)));
     }
 
     /** Answering 400 rather than 500: LocalDate.MAX would otherwise overflow the exclusive end the count runs to. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_withAnExtremeEndDate_shouldReturnBadRequest() throws Exception {
         request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(MONDAY, LocalDate.MAX));
     }
 
     /** A single day at the very end of the range is short enough to pass the length check, and still has no bound. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCounts_forTheSingleLastRepresentableDay_shouldReturnBadRequest() throws Exception {
         request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(LocalDate.MAX, LocalDate.MAX));
     }
@@ -215,7 +215,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
 
     /** The reason the per-day counts cannot answer this: a morning holiday must not be credited with the afternoon. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOverlappingSessionCount_shouldCountOnlyTheSessionsTheSpanCovers() throws Exception {
         // createSessionOn runs two hours, so these are 06:00-08:00, 09:00-11:00 and 14:00-16:00.
         createSessionOn(MONDAY, 6);
@@ -231,7 +231,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOverlappingSessionCount_shouldReadTheSpanInTheTimeZoneOfTheCourse() throws Exception {
         createSessionOn(MONDAY.plusDays(1), 1);
 
@@ -242,7 +242,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
 
     /** Cancelling only takes active sessions, so counting one another holiday already took would promise too much. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOverlappingSessionCount_shouldLeaveOutSessionsThatAreAlreadyCancelled() throws Exception {
         createSessionOn(MONDAY, 9);
         var otherHoliday = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(9, 30), MONDAY.atTime(10, 30), "Another");
@@ -256,7 +256,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
 
     /** Editing releases the sessions a holiday had taken before it takes them again, so its own still count. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOverlappingSessionCount_shouldCountTheSessionsTheEditedHolidayItselfCancelled() throws Exception {
         var holiday = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(0, 0), MONDAY.atTime(23, 59), "Whole day");
         cancelSessionOn(MONDAY, 9, holiday);
@@ -276,7 +276,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
      * holiday has cancelled - that is, all the active ones the count exists to find.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOverlappingSessionCount_whileEditing_shouldStillCountActiveSessionsThatNoHolidayHasTouched() throws Exception {
         createSessionOn(MONDAY, 9);
         var holiday = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(0, 0), MONDAY.atTime(23, 59), "Whole day");
@@ -292,7 +292,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
      * end that looked earlier. Bucharest loses 03:00 to 04:00 on the last Sunday of March.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOverlappingSessionCount_withASpanInvertedByADaylightSavingGap_shouldReturnBadRequest() throws Exception {
         LocalDate springForward = LocalDate.of(2025, 3, 30);
 
@@ -300,7 +300,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOverlappingSessionCount_withAnEndBeforeItsStart_shouldReturnBadRequest() throws Exception {
         request.get(overlapCountPath(), HttpStatus.BAD_REQUEST, Long.class, span(MONDAY.atTime(10, 0), MONDAY.atTime(9, 0)));
     }
@@ -313,7 +313,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
 
     /** The list beside the calendar shows one number per holiday, so it has to say what that holiday did. */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCountsPerFreePeriod_shouldCountWhatEachHolidayCancelledAndKeepEmptyPeriods() throws Exception {
         var morningOnly = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(9, 0), MONDAY.atTime(11, 0), "Morning");
         var quietDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.plusDays(3).atTime(0, 0), MONDAY.plusDays(3).atTime(23, 59), "Quiet");
@@ -333,7 +333,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
      * and would contradict the zero the dialog gave for the same span.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSessionCountsPerFreePeriod_shouldNotClaimASessionCancelledByHand() throws Exception {
         var holiday = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(9, 0), MONDAY.atTime(11, 0), "Morning");
         tutorialGroupSessionRepository.saveAndFlush(tutorialGroupUtilService.createTutorialGroupSession(ZonedDateTime.of(MONDAY.atTime(9, 30), ZoneId.of(exampleTimeZone)),
@@ -351,7 +351,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void sessionCounts_asEditor_shouldReturnOk() throws Exception {
         request.getList(sessionCountsPath(), HttpStatus.OK, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(6)));
         request.getList(countsPerPeriodPath(), HttpStatus.OK, TutorialGroupFreePeriodSessionCountDTO.class);
@@ -359,7 +359,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getSessionCounts_asTutor_shouldReturnForbidden() throws Exception {
         request.getList(sessionCountsPath(), HttpStatus.FORBIDDEN, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(6)));
     }
@@ -371,7 +371,7 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "USER")
     void getSessionCounts_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.getList(sessionCountsPath(), HttpStatus.FORBIDDEN, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(6)));
     }

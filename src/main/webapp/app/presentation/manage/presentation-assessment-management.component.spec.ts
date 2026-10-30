@@ -126,7 +126,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 {
                     provide: ExerciseService,
-                    useValue: { getTitlesForCourse: vi.fn().mockReturnValue(of([])) },
+                    useValue: { getTitlesForCourseForStaff: vi.fn().mockReturnValue(of([])) },
                 },
                 {
                     provide: ActivatedRoute,
@@ -288,7 +288,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.courseId()).toBe(courseId);
         expect(component.course()).toBe(course);
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledWith(courseId);
-        expect(TestBed.inject(ExerciseService).getTitlesForCourse).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(TestBed.inject(ExerciseService).getTitlesForCourseForStaff).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(component.presentationAssessments()).toEqual([presentationAssessment]);
     });
 
@@ -1520,7 +1520,7 @@ describe('PresentationAssessmentManagementComponent', () => {
     it('should keep the exercise titles of the current visit when a delayed load of an earlier visit arrives', () => {
         const firstVisit = new Subject<ExerciseTitle[]>();
         const current: ExerciseTitle[] = [{ id: 7, title: 'Current exercise' }];
-        vi.mocked(TestBed.inject(ExerciseService).getTitlesForCourse).mockReturnValueOnce(firstVisit).mockReturnValueOnce(of([])).mockReturnValueOnce(of(current));
+        vi.mocked(TestBed.inject(ExerciseService).getTitlesForCourseForStaff).mockReturnValueOnce(firstVisit).mockReturnValueOnce(of([])).mockReturnValueOnce(of(current));
         visitCourseTwoThenThreeThenTwoAgain();
 
         firstVisit.next([{ id: 8, title: 'Stale exercise' }]);

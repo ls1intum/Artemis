@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -109,8 +108,6 @@ public class UserService {
 
     private final PasswordService passwordService;
 
-    private final AuthorityService authorityService;
-
     private final Optional<LdapUserService> ldapUserService;
 
     private final AuthorityRepository authorityRepository;
@@ -141,7 +138,7 @@ public class UserService {
 
     private final UserActivityService userActivityService;
 
-    public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
+    public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository,
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
@@ -153,7 +150,6 @@ public class UserService {
         this.userActivityService = userActivityService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
-        this.authorityService = authorityService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
         this.passwordService = passwordService;
@@ -714,8 +710,7 @@ public class UserService {
      */
     public void addUserToCourse(User user, Course course, CourseRole role) {
         log.debug("Add user {} to course {} with role {}", user.getLogin(), course.getId(), role);
-        // Idempotent: if the user already holds this role, there is nothing to write and the (coarse, global) authorities
-        // cannot change — skip the reload + authority rebuild + save. This keeps bulk re-enrollment cheap.
+        // Avoid duplicate writes when re-enrolling a user who already holds this course role.
         if (userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
             return;
         }
@@ -731,13 +726,6 @@ public class UserService {
             // The request that inserted the row is the one that rebuilds the authorities, so this one stops here like the check above.
             log.debug("User {} was concurrently added to course {} with role {}", user.getLogin(), course.getId(), role);
             return;
-        }
-        // ROLE_STUDENT is always granted, so adding a STUDENT role never changes the global authorities; only a newly
-        // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
-        if (role != CourseRole.STUDENT) {
-            user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
-            user.setAuthorities(authorityService.buildAuthorities(user));
-            saveUser(user);
         }
     }
 
@@ -766,16 +754,6 @@ public class UserService {
             return;
         }
         userCourseRoleRepository.saveAll(newlyEnrolled.stream().map(user -> new UserCourseRole(user, course, role)).toList());
-
-        // ROLE_STUDENT is always granted, so adding a STUDENT role never changes the global authorities; only a newly
-        // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
-        if (role != CourseRole.STUDENT) {
-            Set<String> logins = newlyEnrolled.stream().map(User::getLogin).collect(Collectors.toSet());
-            List<User> usersWithAuthorities = new ArrayList<>(userRepository.findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(logins));
-            Map<Long, Set<Authority>> rebuiltAuthorities = authorityService.buildAuthoritiesForUsers(usersWithAuthorities);
-            usersWithAuthorities.forEach(user -> user.setAuthorities(rebuiltAuthorities.get(user.getId())));
-            userRepository.saveAll(usersWithAuthorities);
-        }
     }
 
     /**
@@ -788,13 +766,6 @@ public class UserService {
     public void removeUserFromCourse(User user, Course course, CourseRole role) {
         log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
         userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
-        // ROLE_STUDENT is always granted, so revoking a STUDENT role never changes the global authorities; only revoking
-        // a TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
-        if (role != CourseRole.STUDENT) {
-            user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
-            user.setAuthorities(authorityService.buildAuthorities(user));
-            saveUser(user);
-        }
     }
 
     /**

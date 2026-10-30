@@ -87,7 +87,10 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizExercise(exportAll: boolean) {
-        this.quizExerciseService.find(this.quizExercise().id!).subscribe((exercise) => {
+        (this.isExamMode || this.quizExercise().exerciseGroup
+            ? this.quizExerciseService.findForExam(this.quizExercise().id!)
+            : this.quizExerciseService.find(this.quizExercise().id!)
+        ).subscribe((exercise) => {
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }

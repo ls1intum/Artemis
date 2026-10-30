@@ -44,6 +44,7 @@ describe('OnlineUnitFormComponent', () => {
 
         onlineUnitFormComponentFixture = TestBed.createComponent(OnlineUnitFormComponent);
         onlineUnitFormComponent = onlineUnitFormComponentFixture.componentInstance;
+        onlineUnitFormComponentFixture.componentRef.setInput('courseId', 42);
     });
 
     afterEach(() => {
@@ -170,6 +171,7 @@ describe('OnlineUnitFormComponent', () => {
 
         // THEN
         expect(getOnlineResourceStub).toHaveBeenCalledTimes(1);
+        expect(getOnlineResourceStub).toHaveBeenCalledWith('https://example.com', 42);
         expect(onlineUnitFormComponent.sourceControl?.valid).toBe(true);
         expect(onlineUnitFormComponent.sourceControl?.value).toBe('https://example.com');
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(resourceDto.title);

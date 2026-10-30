@@ -16,6 +16,7 @@ import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -365,6 +366,15 @@ describe('ExerciseImportComponent', () => {
             expect(findStub).toHaveBeenCalledExactlyOnceWith(5);
             expect(comp.preview()).toEqual({ exercise: quizExercise, quiz: loadedQuiz });
             expect(comp.previewLoadingId()).toBeUndefined();
+        });
+
+        it('should preview an exam source in a course destination using its source group', () => {
+            quizExercise.exerciseGroup = new ExerciseGroup();
+            const examFind = vi.spyOn(TestBed.inject(QuizExerciseService), 'findForExam').mockReturnValue(of(loadedQuiz));
+            comp.openPreview(quizExercise);
+            expect(examFind).toHaveBeenCalledExactlyOnceWith(5);
+            expect(findStub).not.toHaveBeenCalled();
+            expect(comp.preview()?.quiz).toBe(loadedQuiz);
         });
 
         it('should mark the row as loading until the quiz arrived', () => {

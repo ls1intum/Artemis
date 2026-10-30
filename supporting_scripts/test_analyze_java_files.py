@@ -1,3 +1,5 @@
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -53,6 +55,38 @@ class ConstructorAnalysisTest(unittest.TestCase):
                 public ExampleService(First one, Second two, ExampleRepository repository) {}
             }
         """))
+
+
+class AnalyzerCliEventTest(unittest.TestCase):
+    def run_cli(self, directory, event):
+        return subprocess.run([
+            sys.executable, str(Path(__file__).with_name("analyze_java_files.py")),
+            "--dir", directory, "--event-type", event, "--max-lines", "2",
+            "--max-large-classes", "0", "--max-complex-beans", "0",
+        ], capture_output=True, text=True, check=False)
+
+    def test_supported_events_accept_small_source_tree(self):
+        for event in ("workflow_dispatch", "merge_group", "release"):
+            with self.subTest(event=event), tempfile.TemporaryDirectory() as directory:
+                source = Path(directory, "Small.java")
+                source.write_text("class Small {}\n", encoding="utf-8")
+                result = self.run_cli(directory, event)
+                self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_supported_events_reject_over_budget_source_tree(self):
+        for event in ("workflow_dispatch", "merge_group", "release"):
+            with self.subTest(event=event), tempfile.TemporaryDirectory() as directory:
+                source = Path(directory, "Small.java")
+                source.write_text("class Small {\n    int value;\n}\n", encoding="utf-8")
+                result = self.run_cli(directory, event)
+                self.assertEqual(1, result.returncode, result.stderr)
+                self.assertIn("Too many large classes: 1 > 0", result.stdout)
+
+    def test_unknown_event_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.run_cli(directory, "merge_grop")
+            self.assertEqual(2, result.returncode)
+            self.assertIn("invalid choice", result.stderr)
 
 
 if __name__ == "__main__":

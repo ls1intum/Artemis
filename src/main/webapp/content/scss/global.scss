@@ -850,6 +850,12 @@ Course Info Bar
         display: inline;
     }
 
+    // A posting renders as one document, so its last paragraph (not the one before a reference) stays inline for the "(edited)" label
+    &.posting-markdown > p:last-child {
+        margin-bottom: 0;
+        display: inline;
+    }
+
     /**
      * Adds extra space below ordered and unordered lists
      * within markdown previews. The margin is applied to the end of the list,
