@@ -29,6 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -52,6 +55,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for creating programming exercises.
@@ -117,11 +122,22 @@ public class ProgrammingExerciseCreationResource {
      */
     @PostMapping("programming-exercises/setup")
     @EnforceAtLeastEditor
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
     @FeatureToggle(Feature.ProgrammingExercises)
+    @Operation(summary = "Create a programming exercise", description = """
+            Creates a programming exercise with its template, solution and test repositories and its build plan. This takes a while. \
+            A request with a personal access token must set releaseDate to a time in the future, so the exercise stays a draft until a \
+            person publishes it in the Artemis web interface. Required: title, shortName (unique in the course), course (with its id), \
+            programmingLanguage, buildConfig, staticCodeAnalysisEnabled, maxPoints and at least one of allowOnlineEditor, \
+            allowOfflineIde and allowOnlineIde. A language with project types also needs projectType, and Java and Kotlin need packageName. \
+            To edit the code, clone the repositories with git, using your VCS access token from the user settings.""")
+    @ApiResponse(responseCode = "201", description = "The exercise and its repositories were created as a draft.")
+    @ApiResponse(responseCode = "500", description = "The repositories or the build plan could not be set up. The exercise may be partly created, so check the course before retrying.")
     public ResponseEntity<ProgrammingExerciseResponseDTO> createProgrammingExercise(@RequestBody CreateProgrammingExerciseDTO createDTO,
             @RequestParam(name = "emptyRepositories", defaultValue = "false") boolean emptyRepositories,
             @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
         log.debug("REST request to setup ProgrammingExercise : {}", createDTO.title());
+        AgentDraftRules.requireDraftDatesForCreate(createDTO.releaseDate(), createDTO.startDate());
 
         // The id is mapped onto the entity so that the existing "a new exercise must not have an id" validation still fires
         final ProgrammingExercise programmingExercise = createDTO.toEntity();

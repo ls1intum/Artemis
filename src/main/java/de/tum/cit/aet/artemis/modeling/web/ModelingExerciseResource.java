@@ -45,6 +45,9 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -87,6 +90,8 @@ import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificati
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing ModelingExercise.
@@ -208,11 +213,19 @@ public class ModelingExerciseResource {
     // TODO: we should add courses/{courseId} here
     @PostMapping("modeling-exercises")
     @EnforceAtLeastEditor
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Create a modeling exercise", description = """
+            Creates a modeling exercise in a course (set courseId; exercise groups of exams are not available to tokens). A request with a \
+            personal access token must set releaseDate to a time in the future, so the exercise stays a draft until a person publishes \
+            it in the Artemis web interface. title, diagramType, maxPoints, includedInOverallScore and courseId are required, and the \
+            diagram type cannot be changed later.""")
+    @ApiResponse(responseCode = "201", description = "The exercise was created as a draft.")
     public ResponseEntity<ModelingExerciseResponseDTO> createModelingExercise(@RequestBody UpdateModelingExerciseDTO createModelingExerciseDTO) throws URISyntaxException {
         log.debug("REST request to save ModelingExercise : {}", createModelingExerciseDTO.id());
         if (createModelingExerciseDTO.id() != null) {
             throw new BadRequestAlertException("A new modeling exercise cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        AgentDraftRules.requireDraftDatesForCreate(createModelingExerciseDTO.releaseDate(), createModelingExerciseDTO.startDate());
         ModelingExercise modelingExercise = new ModelingExercise();
         applyDtoToNewExercise(createModelingExerciseDTO, modelingExercise);
 
@@ -297,6 +310,11 @@ public class ModelingExerciseResource {
     // NOTE: IMPORTANT we should NEVER call save on an entity retrieved from the client because it is unsafe and can lead to data loss
     @PutMapping("modeling-exercises")
     @EnforceAtLeastEditor
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Update a modeling exercise", description = """
+            Replaces the editable fields of an existing modeling exercise, so send the whole exercise. A request with a personal access \
+            token can change only an exercise that students cannot see yet (its releaseDate is in the future), and the change must \
+            keep releaseDate in the future. Published exercises can be changed only in the Artemis web interface.""")
     public ResponseEntity<ModelingExerciseResponseDTO> updateModelingExercise(@RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO.id());
@@ -324,6 +342,11 @@ public class ModelingExerciseResource {
                 && !Objects.equals(originalExercise.getExerciseGroup().getId(), updateModelingExerciseDTO.exerciseGroupId())) {
             throw new ConflictException("The exercise group cannot be changed here.", ENTITY_NAME, "exerciseGroupCannotChange");
         }
+
+        // A personal access token may only change an exercise that is still a draft, and must not publish it. Checked before
+        // update() applies the DTO to the managed entity.
+        AgentDraftRules.requireStillDraft(originalExercise.getReleaseDate(), originalExercise.getStartDate(), updateModelingExerciseDTO.releaseDate(),
+                updateModelingExerciseDTO.startDate());
 
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
         ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
@@ -383,6 +406,8 @@ public class ModelingExerciseResource {
      */
     @GetMapping("courses/{courseId}/modeling-exercises")
     @EnforceAtLeastTutor
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "List the modeling exercises of a course", description = "Returns a summary of every modeling exercise of the course, with its id, title, dates and points. Get one exercise for all its fields.")
     public ResponseEntity<List<ModelingExerciseListItemDTO>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -401,9 +426,12 @@ public class ModelingExerciseResource {
      */
     @GetMapping("modeling-exercises/{exerciseId}")
     @EnforceAtLeastTutor
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Get a modeling exercise", description = "Returns all fields of a modeling exercise. Exercises of exams cannot be read with a personal access token.")
     public ResponseEntity<ModelingExerciseResponseDTO> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
+        AgentDraftRules.rejectExamExercise(modelingExercise.isExamExercise());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         // The response reports the team assignment and the plagiarism detection configuration, which an exercise does not
         // carry by itself.

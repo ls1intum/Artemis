@@ -28,6 +28,9 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
@@ -60,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * REST controller for retrieving information about programming exercises.
@@ -143,6 +147,8 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("courses/{courseId}/programming-exercises")
     @EnforceAtLeastTutor
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "List the programming exercises of a course", description = "Returns a summary of every programming exercise of the course. Get one exercise for all its fields.")
     public ResponseEntity<List<ProgrammingExerciseListItemDTO>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -177,10 +183,15 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastTutor
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "Get a programming exercise", description = """
+            Returns all fields of a programming exercise, including its build configuration and the repository addresses of its template, \
+            solution and test repositories. Exercises of exams cannot be read with a personal access token.""")
     public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExercise(@PathVariable long exerciseId,
             @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         var programmingExercise = findProgrammingExercise(exerciseId, withPlagiarismDetectionConfig);
+        AgentDraftRules.rejectExamExercise(programmingExercise.isExamExercise());
         // The response reports the team assignment configuration, which an exercise does not carry by itself.
         teamAssignmentConfigRepository.attachTo(programmingExercise);
         // Fetch grading criterion into exercise of participation

@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDraftGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -56,7 +57,8 @@ class ProgrammingGradingLiveSaveCoordinationTest {
         when(testCases.update(exerciseId, Set.of())).thenReturn(Set.of());
         var versions = mock(ExerciseVersionService.class);
         var resource = new ProgrammingExerciseTestCaseResource(mock(ProgrammingExerciseTestCaseTestRepository.class), testCases,
-                mock(ProgrammingExerciseCreationScheduleService.class), exercises, mock(AuthorizationCheckService.class), users, versions, guard);
+                mock(ProgrammingExerciseCreationScheduleService.class), exercises, mock(AuthorizationCheckService.class), users, versions, guard,
+                mock(ProgrammingExerciseDraftGuardService.class));
         var synchronizing = new CountDownLatch(1);
         var finishSynchronization = new CountDownLatch(1);
 
@@ -114,7 +116,8 @@ class ProgrammingGradingLiveSaveCoordinationTest {
         when(testCases.reset(expected)).thenReturn(java.util.List.of());
         var versions = mock(ExerciseVersionService.class);
         var resource = new ProgrammingExerciseTestCaseResource(mock(ProgrammingExerciseTestCaseTestRepository.class), testCases,
-                mock(ProgrammingExerciseCreationScheduleService.class), exercises, mock(AuthorizationCheckService.class), users, versions, guard);
+                mock(ProgrammingExerciseCreationScheduleService.class), exercises, mock(AuthorizationCheckService.class), users, versions, guard,
+                mock(ProgrammingExerciseDraftGuardService.class));
 
         resource.resetTestCases(exerciseId);
 

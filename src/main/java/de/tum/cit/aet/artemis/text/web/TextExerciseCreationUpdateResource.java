@@ -33,6 +33,9 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -56,6 +59,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for creating and updating text exercises.
@@ -148,6 +153,12 @@ public class TextExerciseCreationUpdateResource {
      */
     @PostMapping("text-exercises")
     @EnforceAtLeastEditor
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Create a text exercise", description = """
+            Creates a text exercise in a course (set courseId; exercise groups of exams are not available to tokens). A request with a \
+            personal access token must set releaseDate to a time in the future, so the exercise stays a draft until a person publishes \
+            it in the Artemis web interface. title, maxPoints, includedInOverallScore and courseId are required.""")
+    @ApiResponse(responseCode = "201", description = "The exercise was created as a draft.")
     public ResponseEntity<TextExerciseResponseDTO> createTextExercise(@RequestBody UpdateTextExerciseDTO createTextExerciseDTO) throws URISyntaxException {
         log.debug("REST request to save TextExercise : {}", createTextExerciseDTO);
         if (createTextExerciseDTO.id() != null) {
@@ -166,6 +177,7 @@ public class TextExerciseCreationUpdateResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     private ResponseEntity<TextExerciseResponseDTO> createTextExerciseInternal(TextExercise textExercise) throws URISyntaxException {
+        AgentDraftRules.requireDraftDatesForCreate(textExercise.getReleaseDate(), textExercise.getStartDate());
         if (textExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
@@ -220,6 +232,11 @@ public class TextExerciseCreationUpdateResource {
      */
     @PutMapping("text-exercises")
     @EnforceAtLeastEditor
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Update a text exercise", description = """
+            Replaces the editable fields of an existing text exercise, so send the whole exercise. A request with a personal access \
+            token can change only an exercise that students cannot see yet (its releaseDate is in the future), and the change must \
+            keep releaseDate in the future. Published exercises can be changed only in the Artemis web interface.""")
     public ResponseEntity<TextExerciseResponseDTO> updateTextExercise(@RequestBody UpdateTextExerciseDTO updateTextExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update TextExercise : {}", updateTextExerciseDTO);
@@ -258,6 +275,11 @@ public class TextExerciseCreationUpdateResource {
                 && !Objects.equals(originalExercise.getExerciseGroup().getId(), updateTextExerciseDTO.exerciseGroupId())) {
             throw new ConflictException("The exercise group cannot be changed here.", ENTITY_NAME, "exerciseGroupCannotChange");
         }
+
+        // A personal access token may only change an exercise that is still a draft, and must not publish it. Checked before
+        // update() applies the DTO to the managed entity.
+        AgentDraftRules.requireStillDraft(originalExercise.getReleaseDate(), originalExercise.getStartDate(), updateTextExerciseDTO.releaseDate(),
+                updateTextExerciseDTO.startDate());
 
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
         ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
