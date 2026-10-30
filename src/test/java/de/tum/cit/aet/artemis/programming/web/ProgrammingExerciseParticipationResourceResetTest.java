@@ -24,8 +24,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
-import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
@@ -91,9 +89,6 @@ class ProgrammingExerciseParticipationResourceResetTest {
     private RepositoryService repositoryService;
 
     @Mock
-    private StudentExamApi studentExamApi;
-
-    @Mock
     private VcsAccessLogRepository vcsAccessLogRepository;
 
     @Mock
@@ -101,9 +96,6 @@ class ProgrammingExerciseParticipationResourceResetTest {
 
     @Mock
     private SharedQueueManagementService sharedQueueManagementService;
-
-    @Mock
-    private ExamApi examApi;
 
     @Mock
     private ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
@@ -118,8 +110,8 @@ class ProgrammingExerciseParticipationResourceResetTest {
     void setUp() throws Exception {
         resource = new ProgrammingExerciseParticipationResource(programmingExerciseParticipationService, resultRepository, participationRepository,
                 programmingExerciseStudentParticipationRepository, submissionService, programmingExerciseRepository, authCheckService, resultService, participationAuthCheckService,
-                repositoryService, Optional.of(studentExamApi), Optional.of(vcsAccessLogRepository), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService),
-                Optional.of(examApi), Optional.of(continuousIntegrationTriggerService));
+                repositoryService, Optional.of(vcsAccessLogRepository), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService),
+                Optional.of(continuousIntegrationTriggerService));
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         exercise.setTemplateParticipation(new TemplateProgrammingExerciseParticipation());
@@ -229,8 +221,7 @@ class ProgrammingExerciseParticipationResourceResetTest {
         // Nothing would ever build the reset repository, so the student would be left without any result at all.
         var resourceWithoutCi = new ProgrammingExerciseParticipationResource(programmingExerciseParticipationService, resultRepository, participationRepository,
                 programmingExerciseStudentParticipationRepository, submissionService, programmingExerciseRepository, authCheckService, resultService, participationAuthCheckService,
-                repositoryService, Optional.of(studentExamApi), Optional.of(vcsAccessLogRepository), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService),
-                Optional.of(examApi), Optional.empty());
+                repositoryService, Optional.of(vcsAccessLogRepository), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService), Optional.empty());
         withAResettableParticipation();
 
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> resourceWithoutCi.resetRepository(PARTICIPATION_ID, null));
@@ -293,8 +284,7 @@ class ProgrammingExerciseParticipationResourceResetTest {
         // Without LocalVC there is no access log at all, and an empty list would look like nobody ever accessed the repository.
         var resourceWithoutLog = new ProgrammingExerciseParticipationResource(programmingExerciseParticipationService, resultRepository, participationRepository,
                 programmingExerciseStudentParticipationRepository, submissionService, programmingExerciseRepository, authCheckService, resultService, participationAuthCheckService,
-                repositoryService, Optional.of(studentExamApi), Optional.empty(), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService), Optional.of(examApi),
-                Optional.of(continuousIntegrationTriggerService));
+                repositoryService, Optional.empty(), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService), Optional.of(continuousIntegrationTriggerService));
 
         assertThat(resourceWithoutLog.getVcsAccessLogForParticipationRepo(PARTICIPATION_ID).getStatusCode().is4xxClientError()).isTrue();
     }

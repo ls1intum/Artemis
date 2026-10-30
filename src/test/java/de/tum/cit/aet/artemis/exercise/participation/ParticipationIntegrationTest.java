@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.eclipse.jgit.errors.LargeObjectException;
 import org.hibernate.Hibernate;
@@ -2086,6 +2087,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationWithLatestResult() throws Exception {
+        // The assessment due date is in the past, so the completed results are released and the student may see them.
+        textExercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(3));
+        exerciseRepository.save(textExercise);
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
         var firstResult = participationUtilService.addResultToSubmission(null, ZonedDateTime.now().minusHours(2), participation.findLatestSubmission().orElseThrow());
@@ -2105,6 +2109,56 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(actualParticipation.submissions()).as("Only latest submission is returned").extracting(ParticipationSubmissionDTO::id).containsExactly(submission.getId());
         assertThat(actualParticipation.submissions().getFirst().results()).as("All results of the latest submission are returned").extracting(ParticipationSubmissionResultDTO::id)
                 .containsExactlyInAnyOrder(firstResult.getId(), latestResult.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getParticipationWithLatestResult_hidesPreliminaryManualResult() throws Exception {
+        // The assessment due date is in the future, so a completed manual result is not released yet and its score must not leak through this generic endpoint either.
+        textExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(3));
+        exerciseRepository.save(textExercise);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        var manualResult = ParticipationFactory.generateResult(true, 88D);
+        manualResult.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(1));
+        manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        manualResult.setExerciseId(textExercise.getId());
+        manualResult = resultRepository.save(manualResult);
+        submission.addResult(manualResult);
+
+        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipationDTO.class);
+
+        assertThat(actualParticipation).isNotNull();
+        var resultIds = actualParticipation.submissions() == null ? List.<Long>of()
+                : actualParticipation.submissions().stream()
+                        .flatMap(currentSubmission -> currentSubmission.results() == null ? Stream.empty() : currentSubmission.results().stream())
+                        .map(ParticipationSubmissionResultDTO::id).toList();
+        assertThat(resultIds).as("The score of a not-yet-released manual result must not leak via with-latest-result").doesNotContain(manualResult.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getParticipationWithLatestResult_showsAutomaticAthenaResultBeforeAssessmentDueDate() throws Exception {
+        // Athena automatic feedback is shown to students before the assessment due date, so it must stay visible here even though the due date has not passed.
+        textExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(3));
+        exerciseRepository.save(textExercise);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        var athenaResult = ParticipationFactory.generateResult(true, 10D);
+        athenaResult.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(1));
+        athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        athenaResult.setExerciseId(textExercise.getId());
+        athenaResult = resultRepository.save(athenaResult);
+        submission.addResult(athenaResult);
+
+        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipationDTO.class);
+
+        assertThat(actualParticipation).isNotNull();
+        var resultIds = actualParticipation.submissions() == null ? List.<Long>of()
+                : actualParticipation.submissions().stream()
+                        .flatMap(currentSubmission -> currentSubmission.results() == null ? Stream.empty() : currentSubmission.results().stream())
+                        .map(ParticipationSubmissionResultDTO::id).toList();
+        assertThat(resultIds).as("Athena automatic feedback stays visible before the assessment due date").contains(athenaResult.getId());
     }
 
     @Test

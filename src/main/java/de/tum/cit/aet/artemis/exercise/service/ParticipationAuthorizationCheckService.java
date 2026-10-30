@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -92,6 +93,38 @@ public class ParticipationAuthorizationCheckService {
      */
     public boolean canSeeParticipantInformation(StudentParticipation participation) {
         return authCheckService.isOwnerOfParticipation(participation) || canSeeParticipantInformation(participation.getExercise());
+    }
+
+    /**
+     * Decides whether the results of an exam exercise participation have to be hidden from the participation's student.
+     * <p>
+     * Exam results stay hidden until the student may see them (the exam is running for a programming exercise, or the
+     * results have been published), unlike a course exercise whose manual results are released by the assessment due
+     * date. Read endpoints that serve a student participation of an exam exercise must apply this before returning any
+     * result, so that the score of a not-yet-published assessment does not leak. It is owner-based, like the sibling
+     * programming endpoints: a tutor or instructor reading a student's exam participation sees the same hiding and uses
+     * the dedicated assessment endpoints to access unpublished results.
+     *
+     * @param participation the student participation whose results are about to be served
+     * @return true if the results must be hidden, false otherwise (also for course exercises and test runs)
+     */
+    public boolean shouldHideExamExerciseResults(StudentParticipation participation) {
+        // Test-run results are never hidden as a whole: the conductor is the instructor who created the test run. Its feedback is still filtered for the student view, see
+        // ResultService#filterSensitiveInformationIfNecessary.
+        if (participation.isTestRun()) {
+            return false;
+        }
+        Exercise exercise = participation.getExercise();
+        if (!exercise.isExamExercise() || exercise.isTestExamExercise()) {
+            return false;
+        }
+        StudentExamApi studentExamApiValue = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+        // Exam exercises are individual, so the student exam is resolved by the exercise and the participation's student, as the programming retrieval endpoints have always done.
+        User student = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
+        // When no student exam exists for the participation (an inconsistency), hide the results rather than failing the read: a student without a student exam may not see results
+        // anyway.
+        return studentExamApiValue.findByExerciseIdAndUserId(exercise.getId(), student.getId())
+                .map(studentExam -> !studentExamApiValue.shouldStudentSeeResult(studentExam, participation)).orElse(true);
     }
 
     /**
