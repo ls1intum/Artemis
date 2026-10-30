@@ -17,11 +17,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -40,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.dto.DetailedParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.DetailedSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -172,13 +173,16 @@ public class ParticipationRetrievalResource {
     /**
      * GET /exercises/:exerciseId/participations/page : get paginated participations for the participation management view.
      *
-     * @param exerciseId the exercise to query
-     * @param search     search parameters including pagination, sorting, search term, filter, and score range
+     * @param exerciseId      the exercise to query
+     * @param search          search parameters including pagination, sorting, search term, and filter
+     * @param scoreRangeLower the optional lower bound of the score range in percent
+     * @param scoreRangeUpper the optional upper bound of the score range in percent
      * @return a paginated list of ParticipationManagementDTO with pagination headers
      */
     @GetMapping("exercises/{exerciseId}/participations/page")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid ParticipationSearchDTO search) {
+    public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid PagedSearchDTO search,
+            @RequestParam(required = false) Integer scoreRangeLower, @RequestParam(required = false) Integer scoreRangeUpper) {
         log.debug("REST request to get paged Participations for Exercise {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -190,7 +194,7 @@ public class ParticipationRetrievalResource {
         }
 
         boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
-        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search);
+        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search, scoreRangeLower, scoreRangeUpper);
         if (hideParticipant) {
             page = page.map(ParticipationManagementDTO::withoutParticipantInformation);
         }

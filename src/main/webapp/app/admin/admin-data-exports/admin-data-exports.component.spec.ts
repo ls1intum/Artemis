@@ -55,7 +55,6 @@ describe('AdminDataExportsComponent', () => {
     const mockPageableResult: PageableResult<AdminDataExport> = {
         content: mockExports,
         totalElements: 50,
-        totalPages: 3,
     };
 
     const mockAdminDataExportsService = {

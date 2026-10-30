@@ -1,9 +1,9 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
-import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
 
 @Service()
 export class RatingService {
@@ -52,16 +52,6 @@ export class RatingService {
             params = params.set('sort', sort);
         }
 
-        return this.http.get<RatingListItem[]>(`api/assessment/courses/${courseId}/rating`, { params, observe: 'response' }).pipe(
-            map((response: HttpResponse<RatingListItem[]>) => {
-                const totalCount = parseInt(response.headers.get('X-Total-Count') ?? '0', 10);
-                const totalPages = Math.ceil(totalCount / size);
-                return {
-                    content: response.body ?? [],
-                    totalElements: totalCount,
-                    totalPages,
-                };
-            }),
-        );
+        return this.http.get<RatingListItem[]>(`api/assessment/courses/${courseId}/rating`, { params, observe: 'response' }).pipe(map(toPageableResult));
     }
 }

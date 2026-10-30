@@ -67,53 +67,17 @@ public class OrganizationSpecs {
     }
 
     /**
-     * Builds the search predicate for a user root: matches login, first name, last name, or email.
-     *
-     * @param builder    the criteria builder
-     * @param userRoot   the User root or join
-     * @param searchTerm the (non-blank) search term
-     * @return the OR predicate over user fields
-     */
-    @NonNull
-    public static Predicate getMemberSearchPredicate(CriteriaBuilder builder, From<?, User> userRoot, String searchTerm) {
-        return buildSearchPredicate(builder, userRoot, searchTerm, User_.LOGIN, User_.FIRST_NAME, User_.LAST_NAME, User_.EMAIL);
-    }
-
-    /**
-     * Builds the full WHERE predicate for a member query: filters by organization id (via the owning-side
-     * {@link User#getOrganizations()} join) and optionally by search term.
-     *
-     * @param builder        the criteria builder
-     * @param userRoot       the User root (used both for joining organizations and for the search predicate)
-     * @param orgJoin        the join from User to Organization (already created by the caller)
-     * @param organizationId the id of the organization to filter by
-     * @param searchTerm     the search term (may be blank, in which case only the org-id filter is applied)
-     * @return the combined predicate
-     */
-    @NonNull
-    public static Predicate getMemberPredicate(CriteriaBuilder builder, Root<User> userRoot, Join<User, Organization> orgJoin, long organizationId, String searchTerm) {
-        Predicate orgFilter = builder.equal(orgJoin.get(Organization_.ID), organizationId);
-        if (searchTerm == null || searchTerm.isBlank()) {
-            return orgFilter;
-        }
-        return builder.and(orgFilter, getMemberSearchPredicate(builder, userRoot, searchTerm));
-    }
-
-    /**
-     * Creates a specification over {@link User} that filters by membership in the given organization
-     * and optionally by a search term. Designed for use in count queries: the spec adds the join to
-     * organizations internally.
+     * Creates a specification over {@link User} that filters by membership in the given organization (via the owning-side
+     * {@link User#getOrganizations()} join) and optionally by login, full name, email or registration number.
      *
      * @param organizationId the id of the organization
      * @param searchTerm     the search term (may be blank, in which case only the org-id filter is applied)
      * @return specification over User with the required join and predicates
      */
     @NonNull
-    public static Specification<User> getMemberSpecification(long organizationId, String searchTerm) {
-        return (root, query, builder) -> {
-            Join<User, Organization> orgJoin = root.join(User_.ORGANIZATIONS, JoinType.INNER);
-            return getMemberPredicate(builder, root, orgJoin, organizationId, searchTerm);
-        };
+    public static Specification<User> getMemberSpecification(long organizationId, @Nullable String searchTerm) {
+        Specification<User> inOrganization = (root, query, builder) -> builder.equal(root.join(User_.ORGANIZATIONS, JoinType.INNER).get(Organization_.ID), organizationId);
+        return inOrganization.and(UserSpecs.searchByLoginNameEmailOrRegistrationNumber(searchTerm));
     }
 
     /**

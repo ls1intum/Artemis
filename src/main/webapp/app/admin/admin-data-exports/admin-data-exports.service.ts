@@ -1,11 +1,10 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { AdminDataExport, DataExport } from 'app/admin/admin-data-exports/data-export.model';
-import { PageableResult } from 'app/foundation/pagination/pageable-table';
-import dayjs from 'dayjs/esm';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 /**
  * Service for admin-level data export operations.
@@ -38,17 +37,13 @@ export class AdminDataExportsService {
         const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
 
         return this.http.get<AdminDataExport[]>(this.resourceUrl, { params, observe: 'response' }).pipe(
-            map((response: HttpResponse<AdminDataExport[]>) => {
-                const totalCount = parseInt(response.headers.get('X-Total-Count') ?? '0', 10);
-                const content = this.convertDates(response.body ?? []);
-                const totalPages = Math.ceil(totalCount / size);
-
-                return {
-                    content,
-                    totalElements: totalCount,
-                    totalPages,
-                };
-            }),
+            map(toPageableResult),
+            tap(({ content }) =>
+                content.forEach((dataExport) => {
+                    dataExport.createdDate = convertDateFromServer(dataExport.createdDate);
+                    dataExport.creationFinishedDate = convertDateFromServer(dataExport.creationFinishedDate);
+                }),
+            ),
         );
     }
 
@@ -86,21 +81,5 @@ export class AdminDataExportsService {
     cancelDataExport(dataExportId: number): Observable<void> {
         const url = `${this.resourceUrl}/${dataExportId}`;
         return this.http.delete<void>(url);
-    }
-
-    /**
-     * Converts date strings from the server response to dayjs objects
-     * for proper date handling in the Angular application.
-     *
-     * @param exports Array of data exports with date strings
-     * @returns Array of data exports with dayjs date objects
-     */
-    private convertDates(exports: AdminDataExport[]): AdminDataExport[] {
-        return exports.map((dataExport) =>
-            cloneWith(dataExport, {
-                createdDate: dataExport.createdDate ? dayjs(dataExport.createdDate) : undefined,
-                creationFinishedDate: dataExport.creationFinishedDate ? dayjs(dataExport.creationFinishedDate) : undefined,
-            }),
-        );
     }
 }

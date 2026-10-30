@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -48,7 +49,6 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
@@ -302,7 +302,7 @@ public class ExamUserService {
      * @param search search term, page index, page size, sort column, sort direction, and an optional filter value (e.g. {@code "Submitted"}, {@code "AttendanceNotChecked"})
      * @return a page of {@link ExamStudentDTO} in the requested order
      */
-    public Page<ExamStudentDTO> findExamStudentsForExamPaged(long examId, ExamStudentSearchDTO search) {
+    public Page<ExamStudentDTO> findExamStudentsForExamPaged(long examId, PagedSearchDTO search) {
         Page<Long> idPage = examUserRepository.findExamUserIdsForExam(examId, search);
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
@@ -322,7 +322,7 @@ public class ExamUserService {
     }
 
     /**
-     * Searches Artemis users by login prefix, full-name substring, email substring, or registration-number substring,
+     * Searches Artemis users whose login, full name, email or registration number contains the search term,
      * excluding course staff (teaching assistants, editors, instructors) and admins,
      * and marks each result as already registered for the given exam.
      *
@@ -336,16 +336,8 @@ public class ExamUserService {
     public Page<UserForRegistrationDTO> searchStudentsForExamRegistration(long courseId, long examId, String searchTerm, int page, int size) {
         // The repository applies a deterministic order for the LIMIT/OFFSET pages, so the pages are stable across
         // requests and no matching user shuffles between pages (see issue #13069).
-        PageRequest pageable = PageRequest.of(page, size);
-        Page<User> users = userRepository.searchNonStaffByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm, courseId);
-
-        List<Long> userIds = users.getContent().stream().map(User::getId).toList();
-        Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : examUserRepository.findRegisteredUserIdsByExamIdAndUserIds(examId, userIds);
-
-        List<UserForRegistrationDTO> dtos = users.getContent().stream().map(user -> new UserForRegistrationDTO(user.getId(), user.getLogin(), user.getName(), user.getEmail(),
-                user.getRegistrationNumber(), user.getImageUrl(), registeredIds.contains(user.getId()))).toList();
-
-        return new PageImpl<>(dtos, pageable, users.getTotalElements());
+        Page<User> users = userRepository.searchNonStaffByLoginOrNameOrEmailOrRegistrationNumber(PageRequest.of(page, size), searchTerm, courseId);
+        return UserForRegistrationDTO.pageOf(users, userIds -> examUserRepository.findRegisteredUserIdsByExamIdAndUserIds(examId, userIds));
     }
 
     private ExamStudentDTO mapToExamStudentDTO(ExamUser eu, Map<Long, ExamStudentDTO.StudentExamSummaryDTO> summaryByUserId) {

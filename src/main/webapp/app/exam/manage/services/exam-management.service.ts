@@ -25,15 +25,15 @@ import { ExamUpdateDTO, toExamUpdateDTO } from 'app/exam/manage/services/exam-up
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
-import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -332,18 +332,19 @@ export class ExamManagementService {
                 observe: 'response',
             })
             .pipe(
-                map((res) => ({
-                    content: (res.body ?? []).map((row) =>
-                        cloneWith(row, { startedDate: convertDateFromServer(row.startedDate), submissionDate: convertDateFromServer(row.submissionDate) }),
-                    ),
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
+                map(toPageableResult),
+                tap(({ content }) =>
+                    content.forEach((row) => {
+                        row.startedDate = convertDateFromServer(row.startedDate);
+                        row.submissionDate = convertDateFromServer(row.submissionDate);
+                    }),
+                ),
             );
     }
 
     /**
      * Search for Artemis users that can be registered for the exam.
-     * Matches login (prefix), full name (contains), email (contains), and registration number (contains).
+     * Matches the search term anywhere in the login, full name, email or registration number.
      * Each result is flagged with {@code isRegistered} if already registered for the exam.
      * @param courseId The course id.
      * @param examId The exam id.
@@ -358,12 +359,7 @@ export class ExamManagementService {
                 params: { searchTerm, page, size },
                 observe: 'response',
             })
-            .pipe(
-                map((res) => ({
-                    content: res.body ?? [],
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
-            );
+            .pipe(map(toPageableResult));
     }
 
     /**
