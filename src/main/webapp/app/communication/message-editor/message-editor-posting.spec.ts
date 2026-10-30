@@ -47,7 +47,7 @@ describe('Message editor content in the actual posting view', () => {
             })
             .compileComponents();
         fixture = TestBed.createComponent(PostingContentComponent);
-        // A fixed input avoids the service's posts stream; the real parent still performs reference splitting.
+        // A fixed input avoids the service's posts stream; the real parent still finds the references.
         fixture.componentRef.setInput('subscribesToPosts', false);
         host = document.createElement('div');
         host.contentEditable = 'true';
@@ -81,13 +81,148 @@ describe('Message editor content in the actual posting view', () => {
     async function render(message: string, assertion: (view: HTMLElement) => void): Promise<void> {
         fixture.componentRef.setInput('content', message);
         fixture.detectChanges();
-        // MarkdownDirective imports its renderer lazily and publishes HTML asynchronously.
+        // PostingMarkdownComponent imports its renderer lazily and publishes HTML asynchronously.
         // Checking the DOM on each retry waits for both the parent effect and actual child rendering.
         await vi.waitFor(() => {
             fixture.detectChanges();
             assertion(fixture.nativeElement as HTMLElement);
         });
     }
+
+    const ada = '[user]Ada Example(ada_example)[/user]';
+    const ben = '[user]Ben Sample(ben_sample)[/user]';
+    const blockTags = new Set(['P', 'DIV', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'PRE']);
+
+    /** Reads what a user sees as separate lines, with bullets as a marker, so the editor and the sent message can be compared. */
+    function visibleLines(root: HTMLElement): string[] {
+        const lines: string[] = [];
+        let current = '';
+        const flush = () => {
+            const line = current.replace(/\s+/g, ' ').trim();
+            if (line) lines.push(line);
+            current = '';
+        };
+        const walk = (node: Node): void => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                current += node.textContent;
+                return;
+            }
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+            const element = node as HTMLElement;
+            if (element.tagName === 'BR') {
+                if (!element.hasAttribute('data-message-placeholder')) flush();
+                return;
+            }
+            if (element.hasAttribute('data-message-reference')) {
+                // The editor labels a mention with its @ sign; the posting shows it as an icon next to the name.
+                current += ' ' + (element.textContent ?? '').replace(/^[@#]/, '') + ' ';
+                return;
+            }
+            if (element.matches('a.reference')) {
+                current += ' ' + (element.textContent ?? '') + ' ';
+                return;
+            }
+            const block = blockTags.has(element.tagName);
+            if (block) flush();
+            if (element.tagName === 'LI') current += '• ';
+            element.childNodes.forEach(walk);
+            if (block) flush();
+        };
+        walk(root);
+        flush();
+        return lines;
+    }
+
+    async function expectPostingToLookLikeEditor(expected: string[]): Promise<string> {
+        expect(visibleLines(host)).toEqual(expected);
+        const message = editorToMessage(host);
+        await render(message, (view) => {
+            expect(visibleLines(view)).toEqual(expected);
+            expect(view.querySelector('li:empty')).toBeNull();
+        });
+        return message;
+    }
+
+    describe('mentions next to line breaks and in lists', () => {
+        beforeEach(() => {
+            editor.load('');
+            selectAll();
+        });
+
+        it('keeps the line break directly after a mention', async () => {
+            editor.insertMarkdown(ada);
+            editor.insertText('\n');
+            editor.insertText('More text ');
+            editor.insertMarkdown(ben);
+            await expectPostingToLookLikeEditor(['Ada Example', 'More text Ben Sample']);
+        });
+
+        it('keeps the line break directly before a mention', async () => {
+            editor.insertText('Some text');
+            editor.insertText('\n');
+            editor.insertMarkdown(ada);
+            editor.insertText(' and more');
+            await expectPostingToLookLikeEditor(['Some text', 'Ada Example and more']);
+        });
+
+        it('keeps the line break between two mentions', async () => {
+            editor.insertMarkdown(ada);
+            editor.insertText('\n');
+            editor.insertMarkdown(ben);
+            await expectPostingToLookLikeEditor(['Ada Example', 'Ben Sample']);
+        });
+
+        it('keeps blank lines and line breaks around mentions across several paragraphs', async () => {
+            editor.insertMarkdown(ada);
+            editor.insertText('\nMore text ');
+            editor.insertMarkdown(ben);
+            editor.insertText('\n\n');
+            editor.insertMarkdown(ada);
+            editor.insertText(' some text\n');
+            editor.insertMarkdown(ben);
+            const message = await expectPostingToLookLikeEditor(['Ada Example', 'More text Ben Sample', 'Ada Example some text', 'Ben Sample']);
+            // The empty line of the editor is an empty line of the message, which the posting shows as a paragraph break.
+            expect(message).toBe(`${ada}\nMore text ${ben}\n\n${ada} some text\n${ben}`);
+            await render(message, (view) => expect(view.querySelectorAll('p')).toHaveLength(2));
+            editor.load(message);
+            expect(visibleLines(host)).toEqual(['Ada Example', 'More text Ben Sample', 'Ada Example some text', 'Ben Sample']);
+        });
+
+        it('renders a bullet list whose items contain mentions without extra or empty bullets', async () => {
+            editor.block('ul');
+            editor.insertMarkdown(ada);
+            editor.insertListItem();
+            editor.insertText('More text ');
+            editor.insertMarkdown(ben);
+            editor.insertListItem();
+            editor.insertMarkdown(ada);
+            editor.insertText(' some text');
+            editor.insertListItem();
+            editor.insertMarkdown(ben);
+            const message = await expectPostingToLookLikeEditor(['• Ada Example', '• More text Ben Sample', '• Ada Example some text', '• Ben Sample']);
+            await render(message, (view) => expect(view.querySelectorAll('li')).toHaveLength(4));
+        });
+
+        it('renders a numbered list and a quote that contain mentions as in the editor', async () => {
+            editor.load(`1. ${ada} first\n2. second ${ben}\n\n> ${ben} quoted`);
+            await expectPostingToLookLikeEditor(['• Ada Example first', '• second Ben Sample', 'Ben Sample quoted']);
+        });
+
+        it('keeps the mounted mentions when the posting is recomputed without a change of its content', async () => {
+            await render(`${ada} and ${ben}`, (view) => expect(view.querySelectorAll('a.reference')).toHaveLength(2));
+            const mounted = Array.from(fixture.nativeElement.querySelectorAll('a.reference'));
+
+            // Every update of the posts stream recomputes the references; unchanged ones must not be rebuilt, which would drop focus and selection.
+            fixture.componentRef.setInput('isEdited', true);
+            await vi.waitFor(() => {
+                fixture.detectChanges();
+                expect(fixture.nativeElement.querySelector('.edited-text')).not.toBeNull();
+            });
+
+            expect(Array.from(fixture.nativeElement.querySelectorAll('a.reference'))).toEqual(mounted);
+            mounted.forEach((reference, index) => expect(fixture.nativeElement.querySelectorAll('a.reference')[index]).toBe(reference));
+        });
+    });
 
     it('renders a numeric entity typed literally without turning it into a post reference', async () => {
         editor.load('');

@@ -834,6 +834,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         const courseId = params['courseId'];
+        this.courseId.set(courseId);
         if (courseId && params['examId'] && params['exerciseGroupId']) {
             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
