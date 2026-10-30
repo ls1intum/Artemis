@@ -254,16 +254,17 @@ public class FaqResource {
     }
 
     /**
-     * GET /courses/:courseId/faq-categories : get all the faq categories of a course
+     * GET /courses/:courseId/faq-categories : get the categories of the accepted faqs of a course, the only faqs students can see.
+     * The categories of all faqs are available to course staff through {@code faq-categories/for-management}.
      *
-     * @param courseId the courseId of the course for which all faq categories should be returned
-     * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
+     * @param courseId the courseId of the course for which the faq categories should be returned
+     * @return the ResponseEntity with status 200 (OK) and the categories of the accepted faqs in body
      */
     @GetMapping("courses/{courseId}/faq-categories")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
-        Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
+        log.debug("REST request to get the Faq Categories of the accepted Faqs of the course with id : {}", courseId);
+        Set<String> faqs = faqRepository.findAllCategoriesByCourseIdAndState(courseId, FaqState.ACCEPTED);
         return ResponseEntity.ok().body(faqs);
     }
 

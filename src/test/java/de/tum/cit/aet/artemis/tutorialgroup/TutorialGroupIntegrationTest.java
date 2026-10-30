@@ -287,10 +287,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         void baseProjectionStaysPrivateForAssignedTutor() throws Exception {
             var groups = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
             assertThat(groups).hasSize(2);
-            groups.forEach(group -> {
-                verifyPrivateInformationIsHidden(group);
-                assertThat(group.isUserTutor()).isFalse();
-            });
+            groups.forEach(this::verifyPrivateInformationIsHidden);
+            // the course overview lists the groups a tutor teaches as their own groups, so the flag about the requesting user stays
+            assertThat(groups).filteredOn(group -> Boolean.TRUE.equals(group.isUserTutor())).extracting(TutorialGroupSummaryDTO::id)
+                    .containsExactly(firstCourseTutorialGroup1.getId());
         }
 
         @Test

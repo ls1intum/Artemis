@@ -89,6 +89,8 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(request.get(base + "/faqs/" + accepted.getId(), HttpStatus.OK, FaqDTO.class).questionAnswer()).isEqualTo("accepted answer");
         assertThat(request.getList(base + "/faq-state/ACCEPTED", HttpStatus.OK, FaqDTO.class)).extracting(FaqDTO::id).containsExactly(accepted.getId());
         assertThat(request.get(base + "/faq-categories/ACCEPTED", HttpStatus.OK, Set.class)).containsExactlyInAnyOrderElementsOf(accepted.getCategories());
+        // the categories of proposed and rejected faqs would reveal what they are about
+        assertThat(request.get(base + "/faq-categories", HttpStatus.OK, Set.class)).containsExactlyInAnyOrderElementsOf(accepted.getCategories());
         request.get(base + "/faqs/" + Long.MAX_VALUE, HttpStatus.NOT_FOUND, FaqDTO.class);
         for (var hidden : List.of(faq, rejected)) {
             request.get(base + "/faqs/" + hidden.getId(), HttpStatus.FORBIDDEN, FaqDTO.class);
@@ -237,8 +239,10 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetFaqCategoriesByCourseId() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
         Set<String> categories = faq.getCategories();
-        Set<String> returnedCategories = request.get("/api/communication/courses/" + faq.getCourse().getId() + "/faq-categories", HttpStatus.OK, Set.class);
+        // the fixture faq is only proposed, so its categories are part of the staff view, but not of the student one
+        Set<String> returnedCategories = request.get("/api/communication/courses/" + faq.getCourse().getId() + "/faq-categories/for-management", HttpStatus.OK, Set.class);
         assertThat(categories).isEqualTo(returnedCategories);
+        assertThat(request.get("/api/communication/courses/" + faq.getCourse().getId() + "/faq-categories", HttpStatus.OK, Set.class)).isEmpty();
     }
 
     @Test
