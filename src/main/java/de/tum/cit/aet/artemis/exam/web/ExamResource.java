@@ -941,8 +941,7 @@ public class ExamResource {
      */
     @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<ExamForAssessmentDashboardDTO> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard");
 
@@ -1143,8 +1142,7 @@ public class ExamResource {
      */
     @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @PostMapping("courses/{courseId}/exams/{examId}/generate-student-exams")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<StudentExamDTO>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
@@ -1193,8 +1191,7 @@ public class ExamResource {
      */
     @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @PostMapping("courses/{courseId}/exams/{examId}/generate-missing-student-exams")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<StudentExamDTO>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         log.info("REST request to generate missing student exams for exam {}", examId);

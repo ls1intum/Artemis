@@ -517,8 +517,7 @@ public class LectureResource {
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("lectures/import")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);

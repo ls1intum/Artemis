@@ -3537,6 +3537,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetTestRunForConduction_asTutor_forbiddenBeforeTheTestRunIsLoaded() throws Exception {
+        // a missing test run would answer 404, so the 403 shows that the course role is checked before the test run is loaded
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-runs/-1/conduction", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateTestRun() throws Exception {
         createTestRun();

@@ -496,6 +496,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGenerateStudentExams_asTutor_forbiddenBeforeTheExamIsLoaded() throws Exception {
+        // a missing exam would answer 404, so the 403 shows that the course role is checked before the exam is loaded
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/-1/generate-student-exams", Optional.empty(), StudentExam.class, HttpStatus.FORBIDDEN);
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/-1/generate-missing-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testSaveExamWithExerciseGroupWithExerciseToDatabase() {
         examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
@@ -1956,7 +1965,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamForExamAssessmentDashboard_notFound() throws Exception {
-        request.get("/api/exam/courses/-1/exams/-1/exam-for-assessment-dashboard", HttpStatus.NOT_FOUND, Course.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/-1/exam-for-assessment-dashboard", HttpStatus.NOT_FOUND, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamForExamAssessmentDashboard_asStudent_forbiddenBeforeTheExamIsLoaded() throws Exception {
+        // a missing exam would answer 404, so the 403 shows that the course role is checked before the exam is loaded
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/-1/exam-for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     @Test

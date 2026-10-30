@@ -100,10 +100,6 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         return "/api/exercise/exercises/" + exercise.getId() + "/teams";
     }
 
-    private String resourceUrlWithWrongExerciseId() {
-        return "/api/exercise/exercises/" + (exercise.getId() + 1) + "/teams";
-    }
-
     private String resourceUrlExistsTeamByShortName(String shortName) {
         return "/api/exercise/courses/" + course.getId() + "/teams/exists?shortName=" + shortName;
     }
@@ -231,8 +227,21 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         Team team2 = teamUtilService.addTeamForExercise(exercise, tutor);
         request.putWithResponseBody(resourceUrl() + "/" + (team2.getId() + 1), TeamInputDTO.of(team2), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
 
-        // Try updating a team with an exercise specified that does not match the exercise id param in the route
-        request.putWithResponseBody(resourceUrlWithWrongExerciseId() + "/" + team2.getId(), TeamInputDTO.of(team2), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
+        // Try updating a team through another exercise of the same course, in which the tutor has the same role
+        Exercise otherExercise = textExerciseUtilService.createTeamTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(2));
+        request.putWithResponseBody("/api/exercise/exercises/" + otherExercise.getId() + "/teams/" + team2.getId(), TeamInputDTO.of(team2), TeamResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateTeam_asStudent_forbiddenBeforeTheTeamIsLoaded() throws Exception {
+        // a missing team would answer 404 and a missing id 400, so the 403s show that the role in the exercise is checked first
+        var dto = new TeamInputDTO(NON_EXISTING_ID, "name", "shortname", null, null, null);
+        request.putWithResponseBody(resourceUrl() + "/" + NON_EXISTING_ID, dto, TeamResponseDTO.class, HttpStatus.FORBIDDEN);
+        var dtoWithoutId = new TeamInputDTO(null, "name", "shortname", null, null, null);
+        request.putWithResponseBody(resourceUrl() + "/" + NON_EXISTING_ID, dtoWithoutId, TeamResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

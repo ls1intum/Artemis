@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
@@ -188,8 +187,7 @@ public class StudentExamConductionResource {
      */
     @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<StudentExamForConductionDTO> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId,
             HttpServletRequest request) {
         long start = System.currentTimeMillis();

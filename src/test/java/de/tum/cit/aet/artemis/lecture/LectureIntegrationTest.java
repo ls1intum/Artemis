@@ -684,6 +684,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testImport_asTutor_forbiddenBeforeTheLectureIsLoaded() throws Exception {
+        // a missing source lecture would answer 404, so the 403 shows that the role in the target course is checked before anything is loaded
+        request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=-1&courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImport() throws Exception {
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);

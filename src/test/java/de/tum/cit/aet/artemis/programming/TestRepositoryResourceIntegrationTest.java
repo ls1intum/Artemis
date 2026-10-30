@@ -107,6 +107,13 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFilesAsStudent_forbiddenBeforeTheExerciseIsLoaded() throws Exception {
+        // a missing exercise would answer 404, so the 403 shows that the role in the exercise is checked before the exercise is loaded
+        request.getMap("/api/programming/programming-exercises/-1/test-repository/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
