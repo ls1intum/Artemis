@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
@@ -81,6 +82,44 @@ class PublishedSandboxImageTest {
     void requiresAFullCommitId() {
         assertThatThrownBy(() -> PublishedSandboxImage.resolve(docker, "0123456")).isInstanceOf(IllegalStateException.class).hasMessageContaining("AI_WORKER_SANDBOX_IMAGE");
         verify(docker, never()).inspectImageCmd(any());
+    }
+
+    @Test
+    void rejectsAnImageWithoutARegistryDigestAfterPulling() {
+        inspectReturns(null);
+        pullCompletes();
+
+        assertThatThrownBy(() -> PublishedSandboxImage.resolve(docker, COMMIT)).isInstanceOf(IllegalStateException.class).hasMessageContaining("no registry digest after pulling");
+    }
+
+    @Test
+    void reportsAPullTimeout() throws InterruptedException {
+        inspectReturns(List.of());
+        PullImageResultCallback callback = mock();
+        when(docker.pullImageCmd(REFERENCE)).thenReturn(pull);
+        when(pull.exec(any())).thenReturn(callback);
+        when(callback.awaitCompletion(30, TimeUnit.MINUTES)).thenReturn(false);
+
+        assertThatThrownBy(() -> PublishedSandboxImage.resolve(docker, COMMIT)).isInstanceOf(IllegalStateException.class).hasMessageContaining("did not finish within 30 minutes");
+    }
+
+    @Test
+    void preservesInterruptionWhenAPullIsStopped() throws InterruptedException {
+        inspectReturns(List.of());
+        PullImageResultCallback callback = mock();
+        when(docker.pullImageCmd(REFERENCE)).thenReturn(pull);
+        when(pull.exec(any())).thenReturn(callback);
+        InterruptedException interrupted = new InterruptedException("stopping");
+        when(callback.awaitCompletion(30, TimeUnit.MINUTES)).thenThrow(interrupted);
+
+        try {
+            assertThatThrownBy(() -> PublishedSandboxImage.resolve(docker, COMMIT)).isInstanceOf(IllegalStateException.class).hasMessageContaining("Interrupted while pulling")
+                    .hasCause(interrupted);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        }
+        finally {
+            Thread.interrupted();
+        }
     }
 
     private void inspectReturns(List<String> digests) {
