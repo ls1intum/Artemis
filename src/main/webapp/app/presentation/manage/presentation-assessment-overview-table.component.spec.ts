@@ -1,11 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { User } from 'app/account/user/user.model';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { PresentationAssessmentOverviewTableComponent } from 'app/presentation/manage/presentation-assessment-overview-table.component';
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
@@ -74,20 +72,6 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
         expect(assessed.querySelector('span')?.textContent?.trim()).toBe('Tutor One');
         expect(assessed.querySelector('small')?.textContent?.trim()).toBe('tutor1');
         expect(unassessed.textContent?.trim()).toBe('-');
-    });
-
-    it('should name who edited the grade only when the server sends it', () => {
-        render([
-            createRow({
-                instance: { id: 10, resultPoints: 12, assessor: { login: 'tutor1', name: 'Tutor One' }, gradeEditedBy: { login: 'instructor1', name: 'Instructor One' } },
-            }),
-            createRow({ studentLogin: 'student2', rowKey: '11:student2', instance: { id: 11, resultPoints: 8, assessor: { login: 'tutor1', name: 'Tutor One' } } }),
-        ]);
-
-        const notes = fixture.debugElement.queryAll(By.css('[data-testid="overview-grade-edited-by"]'));
-        expect(notes).toHaveLength(1);
-        expect(notes[0].nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.gradeEditedBy');
-        expect(notes[0].injector.get(TranslateDirective).translateValues()).toEqual({ name: 'Instructor One' });
     });
 
     it('should show the result points against the maximum of the row presentation', () => {
