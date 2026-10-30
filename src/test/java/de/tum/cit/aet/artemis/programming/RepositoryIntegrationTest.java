@@ -394,6 +394,28 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetFilesAtCommitOtherStudentForbidden() throws Exception {
+        prepareRepository();
+        String commitHash = getCommitHash(studentRepository.workingCopy());
+        // the participation belongs to student1, so another student of the course must not read its files
+        request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetFilesWithInfoAboutChange_otherStudentForbidden() throws Exception {
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-change", HttpStatus.FORBIDDEN, String.class, Boolean.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFilesWithInfoAboutChange_ownerForbidden() throws Exception {
+        // the comparison reads the template repository, which is only for staff, so not even the owner of the participation may request it
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-change", HttpStatus.FORBIDDEN, String.class, Boolean.class);
+    }
+
     @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")

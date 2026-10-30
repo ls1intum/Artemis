@@ -121,13 +121,15 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdatePlagiarismComparisonStatus_forbidden_student() throws Exception {
-        request.put("/api/plagiarism/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(NONE), HttpStatus.FORBIDDEN);
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", new PlagiarismComparisonStatusDTO(NONE),
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdatePlagiarismComparisonStatus_forbidden_tutor() throws Exception {
-        request.put("/api/plagiarism/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(NONE), HttpStatus.FORBIDDEN);
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", new PlagiarismComparisonStatusDTO(NONE),
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -264,19 +266,28 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeletePlagiarismComparisons_student() throws Exception {
-        request.delete("/api/plagiarism/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
+        assertDeletingPlagiarismComparisonsIsForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testDeletePlagiarismComparisons_tutor() throws Exception {
-        request.delete("/api/plagiarism/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
+        assertDeletingPlagiarismComparisonsIsForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testDeletePlagiarismComparisons_editor() throws Exception {
-        request.delete("/api/plagiarism/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
+        assertDeletingPlagiarismComparisonsIsForbidden();
+    }
+
+    /**
+     * Requests the deletion of the unconfirmed comparisons of the test exercise, which only its instructors may do, and checks that nothing was deleted.
+     */
+    private void assertDeletingPlagiarismComparisonsIsForbidden() throws Exception {
+        request.delete("/api/plagiarism/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=false",
+                HttpStatus.FORBIDDEN);
+        assertThat(plagiarismComparisonRepository.findById(plagiarismComparison2.getId())).isPresent();
     }
 
     @Test

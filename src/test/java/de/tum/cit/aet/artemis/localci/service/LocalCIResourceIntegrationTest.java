@@ -33,6 +33,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -377,6 +379,25 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCancelAllRunningBuildJobsForCourse() throws Exception {
         request.delete("/api/localci/courses/" + course.getId() + "/cancel-all-running-jobs", HttpStatus.NO_CONTENT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "tutor1", "instructor2" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCancelBuildJobsForCourse_withoutInstructorRoleInTheCourse_isForbiddenAndCancelsNothing(String login) throws Exception {
+        // tutor1 is a tutor of the course, instructor2 an instructor of no course of this test: neither may stop the builds of the course
+        userUtilService.changeUser(TEST_PREFIX + login);
+        queuedJobs.add(job1);
+        queuedJobs.add(job2);
+        String coursePath = "/api/localci/courses/" + course.getId();
+
+        request.delete(coursePath + "/build-jobs/" + job1.id() + "/cancel", HttpStatus.FORBIDDEN);
+        request.delete(coursePath + "/cancel-all-queued-jobs", HttpStatus.FORBIDDEN);
+        request.delete(coursePath + "/cancel-all-running-jobs", HttpStatus.FORBIDDEN);
+
+        assertThat(queuedJobs.size()).isEqualTo(2);
+        assertThat(processingJobs.get(job1.id())).isNotNull();
+        assertThat(processingJobs.get(job2.id())).isNotNull();
     }
 
     @Test

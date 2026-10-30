@@ -132,23 +132,31 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         return plagiarismCasesList;
     }
 
+    /**
+     * The exam plagiarism case overview of the test exam, whose course enrolls the users of this test with the same roles as the course of the course exercise.
+     */
+    private String examPlagiarismCasesForInstructorUrl() {
+        return "/api/plagiarism/courses/" + examTextExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/exams/" + examTextExercise.getExerciseGroup().getExam().getId()
+                + "/plagiarism-cases/for-instructor";
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismCasesForCourseForInstructor_forbidden_student() throws Exception {
-        request.getList("/api/plagiarism/courses/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.getList("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPlagiarismCasesForCourseForInstructor_forbidden_tutor() throws Exception {
-        request.getList("/api/plagiarism/courses/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.getList("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
 
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetPlagiarismCasesForCourseForInstructor_forbidden_editor() throws Exception {
-        request.getList("/api/plagiarism/courses/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.getList("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
@@ -168,13 +176,13 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismCaseForInstructor_forbidden_student() throws Exception {
-        request.get("/api/plagiarism/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPlagiarismCaseForInstructor_forbidden_tutor() throws Exception {
-        request.get("/api/plagiarism/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
@@ -207,20 +215,20 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismCasesForExamForInstructor_forbidden_student() throws Exception {
-        request.getList("/api/plagiarism/courses/1/exams/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.getList(examPlagiarismCasesForInstructorUrl(), HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPlagiarismCasesForExamForInstructor_forbidden_tutor() throws Exception {
-        request.getList("/api/plagiarism/courses/1/exams/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.getList(examPlagiarismCasesForInstructorUrl(), HttpStatus.FORBIDDEN, PlagiarismCase.class);
 
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetPlagiarismCasesForExamForInstructor_forbidden_editor() throws Exception {
-        request.getList("/api/plagiarism/courses/1/exams/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.getList(examPlagiarismCasesForInstructorUrl(), HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
@@ -278,19 +286,22 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSavePlagiarismCaseVerdict_forbidden_student() throws Exception {
-        request.put("/api/plagiarism/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(NO_PLAGIARISM, "", 0), HttpStatus.FORBIDDEN);
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", new PlagiarismVerdictDTO(NO_PLAGIARISM, "", 0),
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSavePlagiarismCaseVerdict_forbidden_tutor() throws Exception {
-        request.put("/api/plagiarism/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(NO_PLAGIARISM, "", 0), HttpStatus.FORBIDDEN);
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", new PlagiarismVerdictDTO(NO_PLAGIARISM, "", 0),
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testSavePlagiarismCaseVerdict_forbidden_editor() throws Exception {
-        request.put("/api/plagiarism/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(NO_PLAGIARISM, "", 0), HttpStatus.FORBIDDEN);
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", new PlagiarismVerdictDTO(NO_PLAGIARISM, "", 0),
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
