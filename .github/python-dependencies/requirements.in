@@ -13,7 +13,7 @@ charset-normalizer==3.5.2
 click==8.5.0
 cryptography==50.0.2
 distro==1.9.0
-filelock==3.32.7
+filelock==4.2.1
 hvac==2.4.0
 idna==3.20
 importlib_metadata==8.9.0
