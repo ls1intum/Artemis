@@ -28,11 +28,9 @@ for (const name of ['@angular/compiler', '@angular/platform-browser']) {
     dependencies[name] = dependencies['@angular/core'];
 }
 dependencies[manifest.name] = `file:${tarball}`;
-// Vary the published library peers, keeping the build tools fixed so their transitive
-// dependency changes cannot prevent a compatible consumer from being tested.
 const devDependencies = {
-    '@angular/build': catalog['@angular/build'],
-    '@angular/cli': catalog['@angular/cli'],
+    '@angular/build': mode === 'minimum' ? catalog['@angular/build'] : `^${catalog['@angular/build']}`,
+    '@angular/cli': mode === 'minimum' ? catalog['@angular/cli'] : `^${catalog['@angular/cli']}`,
     '@angular/compiler-cli': dependencies['@angular/core'],
 };
 if (mode === 'minimum') devDependencies.typescript = catalog.typescript;
