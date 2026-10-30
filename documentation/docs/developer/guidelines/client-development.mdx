@@ -831,6 +831,17 @@ that selector.
 </div>
 ```
 
+### Dividers between panels
+
+Every divider between two panels is 6px wide, the `--spacing-divider` token from `tailwind.css`. Never size
+one in percentages or with its own pixel value.
+
+- A resizable side panel (`jhiResizable`) gives its handle the global `panel-divider-x` class, for example
+  `<div class="draggable-left panel-divider-x"></div>`. The class sets the width, the small grip and a grab area that reaches
+  4px into the following panel.
+- A PrimeNG `p-splitter` sets `[gutterSize]="6"` and draws the grip from two 2px bars with a 1px gap, as
+  `resizable-panels.component.scss` does. Its default gutter is 4px.
+
 ### Styling
 
 Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
@@ -1330,7 +1341,7 @@ about something they never asked for.
 
 - **Check before a request that runs without a user action.** Call the `AccountService` method that answers what the
   server endpoint requires, and skip the request when the answer is no. The variant job tray, for example, calls
-  `hasEditorAccess()` before it loads `GET /api/hyperion/variant-jobs`, an `@EnforceAtLeastEditor` endpoint.
+  `hasEditorAccess()` before it loads `GET /api/hyperion/variant-jobs`, which only lists the jobs of the caller.
 - **Use the high-level methods, not the raw authorities.** An authority list such as `IS_AT_LEAST_EDITOR` includes the
   administrator authorities, and the administrator authority alone is not what the server checks: on a server that
   requires a passkey for administrator features, an administrator who signed in with a password has no editor access

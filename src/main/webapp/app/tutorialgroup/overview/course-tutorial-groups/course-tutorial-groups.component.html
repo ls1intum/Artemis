@@ -9,6 +9,8 @@
                 [sidebarData]="currentSidebarData"
                 [collapseState]="DEFAULT_COLLAPSE_STATE"
                 [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                [inlineFilterLabel]="tutorialGroups()?.length ? 'artemisApp.courseOverview.sidebar.freeSpotsOnly' : undefined"
+                [(inlineFilterActive)]="freeSpotsOnly"
                 [pageTitle]="pageTitle()"
                 [showSidebarToggle]="true"
                 [isSidebarCollapsed]="isCollapsed()"

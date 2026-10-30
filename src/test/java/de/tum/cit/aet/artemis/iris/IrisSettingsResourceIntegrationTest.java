@@ -46,7 +46,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseSettings_asInstructor() throws Exception {
         enableIrisFor(course1);
 
@@ -85,7 +85,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     // ==================== PUT /api/iris/courses/{courseId}/iris-settings ====================
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_toggleEnabled() throws Exception {
         enableIrisFor(course1);
 
@@ -103,7 +103,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_updateCustomInstructions() throws Exception {
         enableIrisFor(course1);
 
@@ -164,7 +164,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_cannotChangeVariant() throws Exception {
         enableIrisFor(course1);
 
@@ -190,7 +190,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_enablesProactiveStruggle() throws Exception {
         enableIrisFor(course1);
 
@@ -203,7 +203,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_cannotChangeRateLimits() throws Exception {
         enableIrisFor(course1);
 
@@ -227,7 +227,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_nonExistentCourse() throws Exception {
         var update = IrisCourseSettings.of(true, null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
         // Security annotation checks enrollment first, so we get 403 instead of 404

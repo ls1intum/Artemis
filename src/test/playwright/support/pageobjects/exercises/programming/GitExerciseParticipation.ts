@@ -21,7 +21,7 @@ export class GitExerciseParticipation {
     ) {
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
         let repoUrl = await programmingExerciseOverview.copyCloneUrl(cloneMethod);
-        await programmingExerciseOverview.getCodeButton().click();
+        await programmingExerciseOverview.closeCloneMenu();
 
         if (cloneMethod === GitCloneMethod.https) {
             // Force username + password into the URL userinfo deterministically. The scraped clone URL may

@@ -235,7 +235,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                             this.exerciseState.patch('course', undefined);
                         } else {
                             // The target course where we want to import into
-                            this.courseService.find(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
+                            this.courseService.findForManagement(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.exerciseState.patch('exerciseGroup', undefined);
                         }

@@ -537,7 +537,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     /** Loads the exercise titles of the course for the exercise link of a presentation; a response for a previous course is ignored. */
     private loadExercises(courseId: number): void {
         const generation = this.courseContextGeneration;
-        this.exerciseService.getTitlesForCourse(courseId).subscribe({
+        this.exerciseService.getTitlesForCourseForStaff(courseId).subscribe({
             next: (exercises) => {
                 if (generation === this.courseContextGeneration) {
                     this.exercises.set(exercises);

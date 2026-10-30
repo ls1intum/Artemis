@@ -27,12 +27,13 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -75,8 +76,6 @@ public class ProgrammingExerciseRetrievalResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final ExerciseService exerciseService;
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
@@ -108,9 +107,8 @@ public class ProgrammingExerciseRetrievalResource {
     private final RepositoryParticipationService repositoryParticipationService;
 
     public ProgrammingExerciseRetrievalResource(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseRepository programmingExerciseRepository,
-            CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            CourseRepository courseRepository, UserRepository userRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            ExerciseService exerciseService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             GradingCriterionRepository gradingCriterionRepository, ChannelRepository channelRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService,
@@ -121,7 +119,6 @@ public class ProgrammingExerciseRetrievalResource {
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.courseRepository = courseRepository;
-        this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseService = exerciseService;
@@ -142,11 +139,10 @@ public class ProgrammingExerciseRetrievalResource {
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
     @GetMapping("courses/{courseId}/programming-exercises")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<ProgrammingExerciseListItemDTO>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<ProgrammingExercise> exercises = programmingExerciseService.findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(courseId);
         List<ProgrammingExerciseListItemDTO> exerciseDTOs = new ArrayList<>(exercises.size());
         for (ProgrammingExercise exercise : exercises) {
@@ -159,15 +155,6 @@ public class ProgrammingExerciseRetrievalResource {
         return ResponseEntity.ok().body(exerciseDTOs);
     }
 
-    private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
-        if (includePlagiarismDetectionConfig) {
-            // The plagiarism detection configuration is not part of the exercise, so it is read here.
-            plagiarismDetectionConfigRepository.attachTo(programmingExercise);
-        }
-        return programmingExercise;
-    }
-
     /**
      * GET /programming-exercises/:exerciseId : get the "exerciseId" programmingExercise.
      *
@@ -176,11 +163,35 @@ public class ProgrammingExerciseRetrievalResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping("programming-exercises/{exerciseId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExercise(@PathVariable long exerciseId,
             @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+        return loadProgrammingExerciseDetails(exerciseId, withPlagiarismDetectionConfig, false);
+    }
+
+    /**
+     * Retrieves management details of an exam programming exercise.
+     *
+     * @param exerciseId                    the id of the exam exercise to retrieve
+     * @param withPlagiarismDetectionConfig whether to include the plagiarism detection configuration
+     * @return the full management details of the exam exercise
+     */
+    @GetMapping("programming-exercises/{exerciseId}/for-exam")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExerciseForExam(@PathVariable long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+        return loadProgrammingExerciseDetails(exerciseId, withPlagiarismDetectionConfig, true);
+    }
+
+    private ResponseEntity<ProgrammingExerciseResponseDTO> loadProgrammingExerciseDetails(long exerciseId, boolean withPlagiarismDetectionConfig, boolean forExam) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
-        var programmingExercise = findProgrammingExercise(exerciseId, withPlagiarismDetectionConfig);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
+        if (forExam ? !programmingExercise.isExamExercise() : !programmingExercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
+        }
+        if (withPlagiarismDetectionConfig) {
+            plagiarismDetectionConfigRepository.attachTo(programmingExercise);
+        }
         // The response reports the team assignment configuration, which an exercise does not carry by itself.
         teamAssignmentConfigRepository.attachTo(programmingExercise);
         // Fetch grading criterion into exercise of participation
@@ -188,13 +199,6 @@ public class ProgrammingExerciseRetrievalResource {
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
-        // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it, otherwise also TA have access
-        if (programmingExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        }
-        else {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
-        }
         if (programmingExercise.isCourseExercise()) {
             String channelName = channelRepository.findChannelNameByExerciseId(programmingExercise.getId());
             if (channelName != null) {
@@ -233,12 +237,11 @@ public class ProgrammingExerciseRetrievalResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping("programming-exercises/{exerciseId}/with-participations")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise with setup participations : {}", exerciseId);
         User user = userRepository.getUserWithAuthorities();
         var programmingExercise = programmingExerciseService.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(exerciseId, user.getId(), false);
         Set<StudentParticipation> participations = new HashSet<>();
         assignmentParticipation.ifPresent(participations::add);
@@ -290,10 +293,9 @@ public class ProgrammingExerciseRetrievalResource {
      * @return the ResponseEntity with status 200 (OK) and ProgrammingExerciseTestCaseStateDTO. Returns 404 (notFound) if the exercise does not exist.
      */
     @GetMapping("programming-exercises/{exerciseId}/test-case-state")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> getTestCaseState(@PathVariable long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         boolean hasAtLeastOneResult = programmingExerciseService.hasAtLeastOneResult(programmingExercise);
         boolean isReleased = programmingExercise.isReleased();
         ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO(isReleased, hasAtLeastOneResult, programmingExercise.getTestCasesChanged(),
@@ -310,7 +312,8 @@ public class ProgrammingExerciseRetrievalResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("programming-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<SearchResultPageDTO<ProgrammingExerciseListItemDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithAuthorities();
@@ -328,7 +331,8 @@ public class ProgrammingExerciseRetrievalResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("programming-exercises/with-sca")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<SearchResultPageDTO<ProgrammingExerciseListItemDTO>> getAllExercisesWithSCAOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter,
             @RequestParam ProgrammingLanguage programmingLanguage) {
@@ -352,10 +356,9 @@ public class ProgrammingExerciseRetrievalResource {
      *         given programming exercise. 404 when the programming exercise was not found.
      */
     @GetMapping("programming-exercises/{exerciseId}/auxiliary-repository")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<AuxiliaryRepositoryDTO>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         return ResponseEntity.ok(exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList());
     }
 
@@ -372,13 +375,10 @@ public class ProgrammingExerciseRetrievalResource {
      * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Map<String, String>> getSolutionRepositoryFilesWithContent(@PathVariable Long exerciseId) {
         log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
         return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromLastCommit(participation));
     }
@@ -396,13 +396,10 @@ public class ProgrammingExerciseRetrievalResource {
      * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
      */
     @GetMapping("programming-exercises/{exerciseId}/template-files-content")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Map<String, String>> getTemplateRepositoryFilesWithContent(@PathVariable Long exerciseId) {
         log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
         return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromLastCommit(participation));
     }
@@ -418,7 +415,7 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @Profile(PROFILE_LOCALCI)
     @GetMapping("programming-exercises/repository-checkout-directories")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<CheckoutDirectoriesDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage,
             @RequestParam(value = "checkoutSolution", defaultValue = "true") boolean checkoutSolution) {

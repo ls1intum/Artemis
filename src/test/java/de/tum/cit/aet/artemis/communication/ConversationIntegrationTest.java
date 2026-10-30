@@ -85,7 +85,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @MethodSource("courseConfigurationProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration,
             HttpStatus expectedStatus) throws Exception {
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
@@ -97,7 +97,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_shouldReturnConversationsWhereMember() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
@@ -164,7 +164,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_onlyFewDatabaseCalls() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
@@ -197,7 +197,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_shouldCarryTheDatesOfTheReferencedExercise() throws Exception {
         // The sidebar marks a channel as current from these dates. They used to be looked up in the course's exercises,
         // which only worked while the course carried all of its content.
@@ -222,7 +222,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_onlyChannelsIfMessagingDisabled() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
@@ -282,7 +282,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsFavorite_shouldToggleIsFavorite() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -324,7 +324,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsFavorite_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -342,7 +342,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsMuted_shouldToggleIsMuted() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -384,7 +384,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsMuted_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -402,7 +402,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsHidden_shouldToggleIsHidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -444,7 +444,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsHidden_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -462,7 +462,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchConversationMembers_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -485,7 +485,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchMembersOfConversation_shouldFindMembersWhereLoginOrNameMatches() throws Exception {
         var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "student1");
@@ -545,7 +545,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchMembersOfCourseWideChannel_sortedByName_shouldFindMembers() throws Exception {
         Channel courseWideChannel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide-member-search");
 
@@ -643,7 +643,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @CsvSource({ "false,student1", "true,student1", "false,instructor1", "true,instructor1" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletingPost_preservesUnreadRepliesAndDecrementsOnlyUnreadRecipients(boolean postUnread, String deleter) throws Exception {
         var channel = createChannel(false, TEST_PREFIX + "delete-unread");
         addUsersToConversation(channel.getId(), "student1", "tutor1");
@@ -810,7 +810,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_AND_MESSAGING", "COMMUNICATION_ONLY" })
     void testEnableCommunication(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);

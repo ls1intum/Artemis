@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -93,13 +95,16 @@ public class ExamImportService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, Optional<ModelingExerciseImportApi> modelingExerciseImportApi, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
             CourseRepository courseRepository, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             Optional<FileUploadImportApi> fileUploadImportApi, GradingCriterionRepository gradingCriterionRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService,
-            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService, WebsocketMessagingService websocketMessagingService, ExerciseRepository exerciseRepository) {
+            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService, WebsocketMessagingService websocketMessagingService, ExerciseRepository exerciseRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.textExerciseImportApi = textExerciseImportApi;
         this.modelingExerciseImportApi = modelingExerciseImportApi;
         this.examRepository = examRepository;
@@ -117,6 +122,33 @@ public class ExamImportService {
         this.searchableItemWeaviateService = searchableItemWeaviateService;
         this.websocketMessagingService = websocketMessagingService;
         this.exerciseRepository = exerciseRepository;
+        this.authorizationCheckService = authorizationCheckService;
+    }
+
+    /**
+     * Checks that the current user is at least editor in the course of every source exercise that is about to be copied, like the import of a single exercise does.
+     * Without this check, importing into a course the user teaches would allow to copy exercises of any other course by id.
+     * A source exercise that does not exist any more is not checked: the import reports it as skipped without copying anything.
+     * This check has to run before anything is persisted and is not part of the import methods, as the import of a whole course imports its exams without a user request.
+     *
+     * @param exerciseGroupsToCopy the exercise groups whose exercises (identified by their source exercise id) are about to be copied
+     */
+    public void checkEditorAccessToSourceExercisesElseThrow(List<ExerciseGroup> exerciseGroupsToCopy) {
+        if (exerciseGroupsToCopy == null) {
+            return;
+        }
+        Set<Long> checkedSourceExerciseIds = new HashSet<>();
+        for (ExerciseGroup exerciseGroup : exerciseGroupsToCopy) {
+            if (exerciseGroup.getExercises() == null) {
+                continue;
+            }
+            for (Exercise sourceExercise : exerciseGroup.getExercises()) {
+                Long sourceExerciseId = sourceExercise.getId();
+                if (sourceExerciseId != null && checkedSourceExerciseIds.add(sourceExerciseId) && exerciseRepository.existsById(sourceExerciseId)) {
+                    authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.EDITOR, sourceExerciseId);
+                }
+            }
+        }
     }
 
     /**

@@ -26,13 +26,6 @@
         }
     }
 
-    .draggable-left {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 15px;
-    }
-
     .scrollbar {
         position: relative;
         overflow: auto;
@@ -49,7 +42,7 @@
     height: 170px;
     justify-content: space-between;
     flex-flow: column nowrap;
-    margin-left: 15px;
+    margin-left: var(--spacing-divider);
     cursor: pointer;
 
     span {

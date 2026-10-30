@@ -33,7 +33,9 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -147,7 +149,8 @@ public class TextExerciseCreationUpdateResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("text-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<TextExerciseResponseDTO> createTextExercise(@RequestBody UpdateTextExerciseDTO createTextExerciseDTO) throws URISyntaxException {
         log.debug("REST request to save TextExercise : {}", createTextExerciseDTO);
         if (createTextExerciseDTO.id() != null) {
@@ -219,7 +222,8 @@ public class TextExerciseCreationUpdateResource {
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated
      */
     @PutMapping("text-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<TextExerciseResponseDTO> updateTextExercise(@RequestBody UpdateTextExerciseDTO updateTextExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update TextExercise : {}", updateTextExerciseDTO);
@@ -320,7 +324,7 @@ public class TextExerciseCreationUpdateResource {
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated
      */
     @PutMapping("text-exercises/{exerciseId}/re-evaluate")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<TextExerciseResponseDTO> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody UpdateTextExerciseDTO updateTextExerciseDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate TextExercise : {}", updateTextExerciseDTO);
@@ -342,8 +346,8 @@ public class TextExerciseCreationUpdateResource {
         var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         TextExercise exerciseForReevaluation = update(updateTextExerciseDTO, existingExercise);
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        // Loads the course (or the exercise group with its exam) of the exercise for the logging and notifications below
+        courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(exerciseForReevaluation, ENTITY_NAME);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);

@@ -53,7 +53,7 @@ class CourseOverviewServiceTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetOverviewAsInstructor() {
         // Testcase: Instructors see their courses
         // Add three courses, containing one not active and one not belonging to the instructor

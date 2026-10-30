@@ -41,9 +41,9 @@ export class ExerciseVariantGenerationService {
         effect(() => {
             const login = this.accountService.userIdentity()?.login;
             untracked(() => {
-                // Variant generation is an editor tool: the job endpoint is @EnforceAtLeastEditor, and asking without that access
-                // only produces a 403 alert. A user who cannot generate variants has no jobs to show, and the tray stays hidden
-                // either way. Without Hyperion the endpoint is not registered at all, so there is nothing to fetch either.
+                // Variant generation is an editor tool: the job endpoint only lists the jobs of the caller, so a user without
+                // editor access has none and the tray stays hidden either way; asking would only be a pointless request.
+                // Without Hyperion the endpoint is not registered at all, so there is nothing to fetch either.
                 const mayLoadJobs = !!login && this.accountService.hasEditorAccess() && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
                 // Keyed on the access as well as the login, so that a user who gains editor access later in the same session
                 // gets the jobs without a reload

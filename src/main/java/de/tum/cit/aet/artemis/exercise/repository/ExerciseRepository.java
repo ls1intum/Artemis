@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseWithExerciseGroupIdDTO;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long> {
+public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>, ExerciseStatisticsRepository {
 
     @Query("""
             SELECT e

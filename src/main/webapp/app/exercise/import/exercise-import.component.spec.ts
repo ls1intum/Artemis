@@ -16,6 +16,7 @@ import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -364,8 +365,16 @@ describe('ExerciseImportComponent', () => {
 
             expect(findStub).toHaveBeenCalledExactlyOnceWith(5);
             expect(comp.preview()).toEqual({ exercise: quizExercise, quiz: loadedQuiz });
-            expect(comp.previewVisible()).toBe(true);
             expect(comp.previewLoadingId()).toBeUndefined();
+        });
+
+        it('should preview an exam source in a course destination using its source group', () => {
+            quizExercise.exerciseGroup = new ExerciseGroup();
+            const examFind = vi.spyOn(TestBed.inject(QuizExerciseService), 'findForExam').mockReturnValue(of(loadedQuiz));
+            comp.openPreview(quizExercise);
+            expect(examFind).toHaveBeenCalledExactlyOnceWith(5);
+            expect(findStub).not.toHaveBeenCalled();
+            expect(comp.preview()?.quiz).toBe(loadedQuiz);
         });
 
         it('should mark the row as loading until the quiz arrived', () => {
@@ -375,12 +384,12 @@ describe('ExerciseImportComponent', () => {
             comp.openPreview(quizExercise);
 
             expect(comp.previewLoadingId()).toBe(5);
-            expect(comp.previewVisible()).toBe(false);
+            expect(comp.preview()).toBeUndefined();
 
             response.next(loadedQuiz);
 
             expect(comp.previewLoadingId()).toBeUndefined();
-            expect(comp.previewVisible()).toBe(true);
+            expect(comp.preview()).toBeDefined();
         });
 
         it('should load only one quiz at a time', () => {
@@ -398,7 +407,7 @@ describe('ExerciseImportComponent', () => {
             comp.openPreview(new QuizExercise(undefined, undefined));
 
             expect(findStub).not.toHaveBeenCalled();
-            expect(comp.previewVisible()).toBe(false);
+            expect(comp.preview()).toBeUndefined();
         });
 
         it('should alert and stay on the import dialog when loading fails', () => {
@@ -407,20 +416,18 @@ describe('ExerciseImportComponent', () => {
             comp.openPreview(quizExercise);
 
             expect(alertErrorStub).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.import.preview.loadFailed');
-            expect(comp.previewVisible()).toBe(false);
             expect(comp.preview()).toBeUndefined();
             expect(comp.previewLoadingId()).toBeUndefined();
             expect(dialogRefCloseSpy).not.toHaveBeenCalled();
         });
 
-        it('should import the row of the previewed quiz and close the preview', () => {
+        it('should import the row of the previewed quiz', () => {
             const selectedStub = vi.fn();
             comp.selected.subscribe(selectedStub);
             comp.openPreview(quizExercise);
 
             comp.importPreviewed();
 
-            expect(comp.previewVisible()).toBe(false);
             expect(selectedStub).toHaveBeenCalledExactlyOnceWith(quizExercise);
             expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith(quizExercise);
         });
@@ -492,7 +499,10 @@ describe('ExerciseImportComponent template', () => {
         let quiz: QuizExercise;
         let row: QuizExercise;
 
-        const overlayElement = (testId: string): HTMLElement | null => document.body.querySelector(`[data-testid="${testId}"]`);
+        const previewElement = (testId: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+
+        /** The list of the quiz exercises, which stays in the DOM while a quiz is previewed. */
+        const listElement = (): HTMLElement => fixture.nativeElement.querySelector('table').closest('.modal-body');
 
         const showRows = (rows: Exercise[]) => {
             // detect changes first so that ngOnInit runs (it resets the content), then populate the table
@@ -554,18 +564,29 @@ describe('ExerciseImportComponent template', () => {
             expect(fixture.nativeElement.querySelector('[data-testid^="preview-exercise-"]')).toBeNull();
         });
 
-        it('should load the quiz and open the preview dialog with its summary and questions', () => {
+        it('should load the quiz and show it instead of the list, with its summary and questions', () => {
             showRows([row]);
-            expect(overlayElement('exercise-import-preview')).toBeNull();
+            expect(previewElement('exercise-import-preview')).toBeNull();
+            expect(listElement().hidden).toBe(false);
 
             clickPreview(1);
 
             expect(findStub).toHaveBeenCalledExactlyOnceWith(1);
-            expect(overlayElement('exercise-import-preview')).not.toBeNull();
-            expect(overlayElement('exercise-import-preview-points')!.textContent).toBe('7');
-            expect(overlayElement('exercise-import-preview-duration')!.textContent).toBe('1h 30min');
-            expect(document.body.querySelectorAll('jhi-quiz-question-preview')).toHaveLength(2);
-            expect(document.body.querySelector('.tumaet-ui-dialog-title')!.textContent).toContain('artemisApp.exercise.import.preview.title');
+            expect(previewElement('exercise-import-preview')).not.toBeNull();
+            expect(listElement().hidden).toBe(true);
+            expect(previewElement('exercise-import-preview-points')!.textContent).toBe('7');
+            expect(previewElement('exercise-import-preview-duration')!.textContent).toBe('1h 30min');
+            expect(fixture.nativeElement.querySelectorAll('jhi-quiz-question-preview')).toHaveLength(2);
+            expect(previewElement('exercise-import-preview-title')!.textContent).toContain('artemisApp.exercise.import.preview.title');
+        });
+
+        it('should show the preview inside the import dialog and not in an overlay of its own', () => {
+            showRows([row]);
+
+            clickPreview(1);
+
+            expect(fixture.nativeElement.contains(previewElement('exercise-import-preview'))).toBe(true);
+            expect(document.body.querySelector('.cdk-overlay-container [data-testid="exercise-import-preview"]')).toBeNull();
         });
 
         it('should say so when the previewed quiz has no questions', () => {
@@ -574,41 +595,175 @@ describe('ExerciseImportComponent template', () => {
 
             clickPreview(1);
 
-            expect(overlayElement('exercise-import-preview-empty')).not.toBeNull();
-            expect(document.body.querySelector('jhi-quiz-question-preview')).toBeNull();
+            expect(previewElement('exercise-import-preview-empty')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('jhi-quiz-question-preview')).toBeNull();
+        });
+
+        it('should move the focus to the heading of the preview', async () => {
+            showRows([row]);
+
+            clickPreview(1);
+            await fixture.whenStable();
+
+            expect(document.activeElement).toBe(previewElement('exercise-import-preview-title'));
         });
 
         it('should import the exercise from the preview', () => {
             showRows([row]);
             clickPreview(1);
 
-            overlayElement('exercise-import-preview-import')!.querySelector('button')!.click();
+            previewElement('exercise-import-preview-import')!.querySelector('button')!.click();
             fixture.detectChanges();
 
             expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith(row);
-            expect(overlayElement('exercise-import-preview')).toBeNull();
         });
 
-        it('should close only the preview and keep the import dialog when the close button is pressed', () => {
+        it('should show the list again and keep the import dialog open when going back to the list', () => {
             showRows([row]);
             clickPreview(1);
 
-            overlayElement('exercise-import-preview-close')!.querySelector('button')!.click();
+            previewElement('exercise-import-preview-back')!.querySelector('button')!.click();
             fixture.detectChanges();
 
-            expect(overlayElement('exercise-import-preview')).toBeNull();
+            expect(previewElement('exercise-import-preview')).toBeNull();
+            expect(listElement().hidden).toBe(false);
             expect(dialogRefCloseSpy).not.toHaveBeenCalled();
         });
 
-        it('should give the focus back to the preview button of the row when the preview is closed', () => {
+        it('should keep the rows of the list in the document while the preview is shown', () => {
             showRows([row]);
-            clickPreview(1);
-            expect(overlayElement('exercise-import-preview')).not.toBeNull();
+            const rowElement = fixture.nativeElement.querySelector('tbody tr.exercise-1') as HTMLElement;
 
-            overlayElement('exercise-import-preview-close')!.querySelector('button')!.click();
+            clickPreview(1);
+            expect(rowElement.isConnected).toBe(true);
+            previewElement('exercise-import-preview-back')!.querySelector('button')!.click();
             fixture.detectChanges();
 
-            expect(overlayElement('exercise-import-preview')).toBeNull();
+            expect(fixture.nativeElement.querySelector('tbody tr.exercise-1')).toBe(rowElement);
+        });
+
+        it('should show the list instead of closing the import dialog when Escape is pressed in the preview', async () => {
+            const documentListener = vi.fn();
+            document.addEventListener('keydown', documentListener);
+            showRows([row]);
+            clickPreview(1);
+            await fixture.whenStable();
+
+            previewElement('exercise-import-preview-title')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+            document.removeEventListener('keydown', documentListener);
+
+            expect(documentListener).not.toHaveBeenCalled();
+            expect(previewElement('exercise-import-preview')).toBeNull();
+            expect(listElement().hidden).toBe(false);
+            expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+        });
+
+        it('should show the list when Escape is pressed on a control of the dialog outside of the component', async () => {
+            const documentListener = vi.fn();
+            document.addEventListener('keydown', documentListener);
+            const dialogControl = document.createElement('button');
+            document.body.append(dialogControl);
+            showRows([row]);
+            clickPreview(1);
+            await fixture.whenStable();
+
+            dialogControl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+            document.removeEventListener('keydown', documentListener);
+            dialogControl.remove();
+
+            expect(documentListener).not.toHaveBeenCalled();
+            expect(previewElement('exercise-import-preview')).toBeNull();
+            expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not react to other keys while the preview is shown', async () => {
+            showRows([row]);
+            clickPreview(1);
+            await fixture.whenStable();
+
+            previewElement('exercise-import-preview-title')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(previewElement('exercise-import-preview')).not.toBeNull();
+        });
+
+        it('should stop listening for Escape once the preview is closed', async () => {
+            showRows([row]);
+            clickPreview(1);
+            await fixture.whenStable();
+            previewElement('exercise-import-preview-back')!.querySelector('button')!.click();
+            fixture.detectChanges();
+            const documentListener = vi.fn();
+            document.addEventListener('keydown', documentListener);
+
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            document.removeEventListener('keydown', documentListener);
+
+            expect(documentListener).toHaveBeenCalledOnce();
+        });
+
+        it('should leave Escape to the import dialog while the list is shown', () => {
+            const documentListener = vi.fn();
+            document.addEventListener('keydown', documentListener);
+            showRows([row]);
+
+            fixture.nativeElement.querySelector('tbody tr.exercise-1').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            document.removeEventListener('keydown', documentListener);
+
+            expect(documentListener).toHaveBeenCalledOnce();
+        });
+
+        it('should put the heading of the preview before its buttons', () => {
+            showRows([row]);
+
+            clickPreview(1);
+
+            const heading = previewElement('exercise-import-preview-title')!;
+            const back = previewElement('exercise-import-preview-back')!;
+            const importButton = previewElement('exercise-import-preview-import')!;
+            expect(heading.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+            expect(back.compareDocumentPosition(importButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        });
+
+        it('should focus the first preview button of the list when the row of the previewed quiz is gone', async () => {
+            const otherRow = new QuizExercise(undefined, undefined);
+            otherRow.id = 2;
+            otherRow.title = 'Other quiz';
+            showRows([row]);
+            clickPreview(1);
+            await fixture.whenStable();
+            showRows([otherRow]);
+
+            previewElement('exercise-import-preview-back')!.querySelector('button')!.click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[data-testid="preview-exercise-2"] button'));
+        });
+
+        it('should give the focus back to the preview button of the row when loading the quiz fails', async () => {
+            findStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            showRows([row]);
+
+            clickPreview(1);
+            await fixture.whenStable();
+
+            expect(previewElement('exercise-import-preview')).toBeNull();
+            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[data-testid="preview-exercise-1"] button'));
+        });
+
+        it('should give the focus back to the preview button of the row when going back to the list', async () => {
+            showRows([row]);
+            clickPreview(1);
+            await fixture.whenStable();
+
+            previewElement('exercise-import-preview-back')!.querySelector('button')!.click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(previewElement('exercise-import-preview')).toBeNull();
             expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[data-testid="preview-exercise-1"] button'));
         });
 
@@ -630,46 +785,6 @@ describe('ExerciseImportComponent template', () => {
             response.error(new HttpErrorResponse({ status: 500 }));
 
             expect(alertErrorStub).not.toHaveBeenCalled();
-        });
-
-        it('should stop handling Escape for the preview when the component is destroyed while the preview is open', () => {
-            const outerEscapeListener = vi.fn();
-            document.addEventListener('keydown', outerEscapeListener);
-            try {
-                showRows([row]);
-                clickPreview(1);
-                fixture.destroy();
-
-                document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-
-                expect(outerEscapeListener).toHaveBeenCalledOnce();
-            } finally {
-                document.removeEventListener('keydown', outerEscapeListener);
-            }
-        });
-
-        it('should not let Escape reach the import dialog while the preview is open', () => {
-            // The PrimeNG dialog hosting the import closes on a document keydown listener, which this one stands in for.
-            const importDialogEscapeListener = vi.fn();
-            document.addEventListener('keydown', importDialogEscapeListener);
-            try {
-                showRows([row]);
-                clickPreview(1);
-                expect(comp.previewVisible()).toBe(true);
-
-                document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-                fixture.detectChanges();
-
-                expect(importDialogEscapeListener).not.toHaveBeenCalled();
-                expect(comp.previewVisible()).toBe(false);
-                expect(overlayElement('exercise-import-preview')).toBeNull();
-
-                // With the preview closed, Escape reaches the import dialog again.
-                document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-                expect(importDialogEscapeListener).toHaveBeenCalledOnce();
-            } finally {
-                document.removeEventListener('keydown', importDialogEscapeListener);
-            }
         });
     });
 });
