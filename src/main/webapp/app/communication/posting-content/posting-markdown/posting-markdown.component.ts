@@ -13,18 +13,19 @@ import {
     output,
     signal,
 } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { PostingContentPart } from 'app/communication/communication.util';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { renderMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
 import { setInputs } from 'app/foundation/util/set-inputs.util';
 
-const REFERENCE_ATTRIBUTE = 'data-posting-reference';
+// Angular preserves classes in an ordinary innerHTML binding, but removes custom data attributes.
+const REFERENCE_CLASS_PREFIX = 'posting-reference-';
+const REFERENCE_CLASS_PATTERN = /^posting-reference-(\d+)$/;
 
 /** Marks the spot of the reference with this index in the Markdown that {@link PostingMarkdownComponent} renders. */
 export function postingReferencePlaceholder(index: number): string {
     // The index is a number the posting computed itself, so no user text enters the markup.
-    return ['<span ', REFERENCE_ATTRIBUTE, '="', String(index), '"></span>'].join('');
+    return ['<span class="', REFERENCE_CLASS_PREFIX, String(index), '"></span>'].join('');
 }
 
 /**
@@ -38,7 +39,6 @@ export function postingReferencePlaceholder(index: number): string {
     template: '<span class="markdown-preview posting-markdown" [innerHTML]="rendered().html"></span>',
 })
 export class PostingMarkdownComponent {
-    private readonly sanitizer = inject(DomSanitizer);
     private readonly applicationRef = inject(ApplicationRef);
     private readonly environmentInjector = inject(EnvironmentInjector);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -50,7 +50,7 @@ export class PostingMarkdownComponent {
     readonly channelReferenceClicked = output<number>();
 
     // The references travel with the HTML they belong to, so a placeholder never meets the reference of a newer posting content.
-    protected readonly rendered = signal<{ html: SafeHtml; references: PostingContentPart[] }>({ html: '', references: [] });
+    protected readonly rendered = signal<{ html: string; references: PostingContentPart[] }>({ html: '', references: [] });
 
     private readonly allowedHtmlTags = [
         'a',
@@ -82,7 +82,7 @@ export class PostingMarkdownComponent {
         'ul',
         'ol',
     ];
-    private readonly allowedHtmlAttributes = ['href', REFERENCE_ATTRIBUTE];
+    private readonly allowedHtmlAttributes = ['href', 'class'];
 
     private renderGeneration = 0;
     private mountedReferences: ComponentRef<PostingContentPartComponent>[] = [];
@@ -96,7 +96,7 @@ export class PostingMarkdownComponent {
             renderMarkdownToHtml(markdown, [], this.allowedHtmlTags, this.allowedHtmlAttributes, true)
                 .then((html) => {
                     if (generation === this.renderGeneration) {
-                        this.rendered.set({ html: this.sanitizer.bypassSecurityTrustHtml(html), references });
+                        this.rendered.set({ html: this.restrictReferenceClasses(html), references });
                     }
                 })
                 .catch(() => {
@@ -111,10 +111,26 @@ export class PostingMarkdownComponent {
         inject(DestroyRef).onDestroy(() => this.unmountReferences());
     }
 
+    private restrictReferenceClasses(html: string): string {
+        // Only reference markers need a class. User-supplied utility classes could otherwise position a link
+        // over the rest of the application, even though its HTML and URL pass both sanitizers.
+        const document = new DOMParser().parseFromString(html, 'text/html');
+        document.querySelectorAll<HTMLElement>('[class]').forEach((element) => {
+            if (element.tagName !== 'SPAN' || !REFERENCE_CLASS_PATTERN.test(element.className)) {
+                element.removeAttribute('class');
+            }
+        });
+        return document.body.innerHTML;
+    }
+
     private mountReferences(references: PostingContentPart[]): void {
         this.unmountReferences();
-        this.host.nativeElement.querySelectorAll<HTMLElement>(`[${REFERENCE_ATTRIBUTE}]`).forEach((placeholder) => {
-            const reference = references[Number(placeholder.getAttribute(REFERENCE_ATTRIBUTE))];
+        this.host.nativeElement.querySelectorAll<HTMLElement>(`span[class^="${REFERENCE_CLASS_PREFIX}"]`).forEach((placeholder) => {
+            const match = REFERENCE_CLASS_PATTERN.exec(placeholder.className);
+            if (!match) {
+                return;
+            }
+            const reference = references[Number(match[1])];
             if (!reference) {
                 return;
             }
@@ -133,7 +149,13 @@ export class PostingMarkdownComponent {
     }
 
     private unmountReferences(): void {
-        this.mountedReferences.forEach((component) => component.destroy());
+        this.mountedReferences.forEach((component) => {
+            // Destroying a dynamic component removes its host. Keep an empty placeholder for a references-only
+            // update: Angular does not rewrite innerHTML when the rendered HTML string has not changed.
+            const host: HTMLElement = component.location.nativeElement;
+            host.replaceWith(host.cloneNode(false));
+            component.destroy();
+        });
         this.mountedReferences = [];
     }
 }
