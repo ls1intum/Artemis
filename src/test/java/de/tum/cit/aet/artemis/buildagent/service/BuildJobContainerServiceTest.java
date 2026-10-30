@@ -11,16 +11,24 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
@@ -31,6 +39,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
 class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
@@ -44,6 +53,9 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     private static final int MAX_XXX_VALUE = 2;
 
     private static final String DUMMY_CONTAINER_ID = "1234567890";
+
+    @TempDir
+    private Path temporaryDirectory;
 
     @Autowired
     BuildJobContainerService buildJobContainerService;
@@ -128,6 +140,32 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void testAMemoryLimitAboveTheDefaultSwapLimitRunsWithoutSwap() {
+        // the instance default is 2g of memory and a 2g total; a job that sets only 4096 MB of memory would inherit a total below its memory, which Docker refuses
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemory", 8096);
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemorySwap", 8096);
+        var runConfig = new DockerRunConfig(List.of(), "", 0, 4096, 0);
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        HostConfig hostConfig = captureHostConfig();
+        assertThat(hostConfig.getMemory()).isEqualTo(4096L * 1024L * 1024L);
+        assertThat(hostConfig.getMemorySwap()).as("the total is raised to the memory, so the job runs without swap").isEqualTo(4096L * 1024L * 1024L);
+    }
+
+    @Test
+    void testTheMaximumTotalLimitBoundsTheMemoryWhenItIsBelowTheMaximumMemory() {
+        // the administrator allows 8096 MB of memory but a total of 2048 MB; a job asking for 4096/4096 MB keeps both maxima, so it gets 2048/2048 MB
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemory", 8096);
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemorySwap", 2048);
+        var runConfig = new DockerRunConfig(List.of(), "", 0, 4096, 4096);
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        HostConfig hostConfig = captureHostConfig();
+        assertThat(hostConfig.getMemory()).as("the memory is lowered to the maximum total instead of the total being raised above it").isEqualTo(2048L * 1024L * 1024L);
+        assertThat(hostConfig.getMemorySwap()).isEqualTo(2048L * 1024L * 1024L);
+    }
+
+    @Test
     void testNullNetworkIsIgnored() {
         var runConfig = new DockerRunConfig(List.of(), null, 1, 1, 1);
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
@@ -200,5 +238,48 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         // This guards against regression: previously, setup commands accidentally used detached mode.
         verify(execStartCmd, atLeastOnce()).withDetach(false);
         verify(execStartCmd, never()).withDetach(true);
+    }
+
+    @Test
+    void testScopedContainerDoesNotReceiveTestRepository() throws IOException {
+        // A container scoped to exclude the test repository (null test path) must never have the instructor's test files
+        // copied into it. Every command the population issues is captured; none may reference the test checkout path.
+        List<String[]> commands = populateContainerAndCaptureCommands(createRepository("assignment"), null);
+
+        assertThat(referencesCheckoutPath(commands, "assignment_checkout")).as("the assignment repository is provisioned into the container").isTrue();
+        assertThat(referencesCheckoutPath(commands, "instructor_tests_checkout")).as("a scoped container never receives the instructor's test repository").isFalse();
+    }
+
+    @Test
+    void testUnscopedContainerReceivesTestRepository() throws IOException {
+        // The counterpart: a container that is provided the test repository does have its files copied in.
+        List<String[]> commands = populateContainerAndCaptureCommands(createRepository("assignment"), createRepository("tests"));
+
+        assertThat(referencesCheckoutPath(commands, "assignment_checkout")).isTrue();
+        assertThat(referencesCheckoutPath(commands, "instructor_tests_checkout")).as("an unscoped container receives the test repository").isTrue();
+    }
+
+    private Path createRepository(String name) throws IOException {
+        Path repository = Files.createDirectories(temporaryDirectory.resolve(name));
+        FileUtils.writeStringToFile(repository.resolve("file.txt").toFile(), "content", StandardCharsets.UTF_8);
+        return repository;
+    }
+
+    private List<String[]> populateContainerAndCaptureCommands(Path assignmentRepositoryPath, Path testRepositoryPath) {
+        CopyArchiveToContainerCmd copyCmd = mock(CopyArchiveToContainerCmd.class);
+        when(buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(anyString())).thenReturn(copyCmd);
+        when(copyCmd.withRemotePath(anyString())).thenReturn(copyCmd);
+        when(copyCmd.withTarInputStream(any())).thenReturn(copyCmd);
+
+        buildJobContainerService.populateBuildJobContainer(DUMMY_CONTAINER_ID, "build-job-1", assignmentRepositoryPath, testRepositoryPath, null, new Path[0], new String[0],
+                ProgrammingLanguage.JAVA, "assignment_checkout", "instructor_tests_checkout", "solution_checkout");
+
+        ArgumentCaptor<String[]> commandCaptor = ArgumentCaptor.forClass(String[].class);
+        verify(execCreateCmd, atLeastOnce()).withCmd(commandCaptor.capture());
+        return commandCaptor.getAllValues();
+    }
+
+    private static boolean referencesCheckoutPath(List<String[]> commands, String checkoutPath) {
+        return commands.stream().flatMap(Arrays::stream).anyMatch(argument -> argument.contains(checkoutPath));
     }
 }

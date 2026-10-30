@@ -203,6 +203,63 @@ public class ProgrammingLanguageConfiguration {
     }
 
     /**
+     * Returns the memory limit of the default Docker flags, which a build job runs with when neither the exercise nor
+     * its container sets one.
+     *
+     * @return the limit of the {@code --memory} flag in MB, or 0 if the flag is not configured
+     */
+    public int getDefaultMemoryLimitMB() {
+        return defaultFlagValueInMB("--memory");
+    }
+
+    /**
+     * Returns the memory swap limit of the default Docker flags, which a build job runs with when neither the exercise
+     * nor its container sets one.
+     *
+     * @return the limit of the {@code --memory-swap} flag in MB, or 0 if the flag is not configured
+     */
+    public int getDefaultMemorySwapLimitMB() {
+        return defaultFlagValueInMB("--memory-swap");
+    }
+
+    private int defaultFlagValueInMB(String flag) {
+        if (defaultDockerFlags == null) {
+            return 0;
+        }
+        return defaultDockerFlags.stream().filter(dockerFlag -> flag.equals(dockerFlag.flag())).findFirst().map(dockerFlag -> parseMemoryValueInMB(dockerFlag.value())).orElse(0);
+    }
+
+    /**
+     * Parses a Docker memory value such as {@code 2g}, {@code 512m} or {@code 1024k} into MB; a plain number is in bytes,
+     * as Docker reads it.
+     *
+     * @param value the value of the flag
+     * @return the value in MB, or 0 if it cannot be parsed
+     */
+    static int parseMemoryValueInMB(String value) {
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+        String trimmed = value.trim().toLowerCase(Locale.ROOT);
+        try {
+            if (trimmed.endsWith("g")) {
+                return Integer.parseInt(trimmed.substring(0, trimmed.length() - 1)) * 1024;
+            }
+            if (trimmed.endsWith("m")) {
+                return Integer.parseInt(trimmed.substring(0, trimmed.length() - 1));
+            }
+            if (trimmed.endsWith("k")) {
+                return Integer.parseInt(trimmed.substring(0, trimmed.length() - 1)) / 1024;
+            }
+            return (int) (Long.parseLong(trimmed) / (1024L * 1024L));
+        }
+        catch (NumberFormatException e) {
+            log.warn("Could not parse the Docker memory value {} of the default Docker flags", value);
+            return 0;
+        }
+    }
+
+    /**
      * A key-value pair of a CLI flag and its value for a {@code docker run} command.
      * <p>
      * E.g., the CLI option {@code --cpus 2} is represented as flag {@code --cpus} and value {@code 2}.
