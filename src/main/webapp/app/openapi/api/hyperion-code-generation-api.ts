@@ -15,6 +15,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
+import { Signal } from '@angular/core';
 import { CodeGenerationRequest } from '../model/code-generation-request';
 import { CodeGenerationJobStart } from '../model/code-generation-job-start';
 
@@ -44,4 +46,22 @@ export class HyperionCodeGenerationApi {
         return this.http.get<CodeGenerationJobStart>(url);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param exerciseId
+ */
+export function getActiveCodeGenerationJobResource(exerciseId: Signal<number | undefined> | number): HttpResourceRef<CodeGenerationJobStart | undefined> {
+    return httpResource<CodeGenerationJobStart>(() => {
+        const exerciseIdValue = typeof exerciseId === 'function' ? exerciseId() : exerciseId;
+        if (exerciseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/hyperion/programming-exercises/${exerciseIdValue}/code-generation/active-job`;
+    });
 }

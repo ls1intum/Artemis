@@ -40,6 +40,7 @@ api/quiz-exercise-evaluation-resources.ts
 api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
 api/hyperion-programming-variant-resources.ts
+api/iris-admin-dashboard-resources.ts
 api/hyperion-exercise-generation-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/quiz-exercise-deletion-resources.ts

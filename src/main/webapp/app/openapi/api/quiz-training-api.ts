@@ -15,6 +15,8 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
+import { Signal } from '@angular/core';
 import { LeaderboardSetting } from '../model/leaderboard-setting';
 import { QuizQuestionTraining } from '../model/quiz-question-training';
 import { LeaderboardWithCurrentUserEntry } from '../model/leaderboard-with-current-user-entry';
@@ -104,4 +106,33 @@ export class QuizTrainingApi {
         return this.http.put<void>(url, leaderboardSetting);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ */
+export function getLeaderboardSettingsResource(): HttpResourceRef<LeaderboardSetting | undefined> {
+    return httpResource<LeaderboardSetting>(() => {
+        return `${BASE_PATH}/api/quiz/leaderboard-settings`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param courseId
+ */
+export function getQuizTrainingLeaderboardResource(courseId: Signal<number | undefined> | number): HttpResourceRef<LeaderboardWithCurrentUserEntry | undefined> {
+    return httpResource<LeaderboardWithCurrentUserEntry>(() => {
+        const courseIdValue = typeof courseId === 'function' ? courseId() : courseId;
+        if (courseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/quiz/courses/${courseIdValue}/training/leaderboard`;
+    });
 }

@@ -15,6 +15,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
+import { Signal } from '@angular/core';
 import { TutorialGroupConfiguration } from '../model/tutorial-group-configuration';
 
 @Injectable({ providedIn: 'root' })
@@ -55,4 +57,22 @@ export class TutorialGroupsConfigurationApi {
         return this.http.put<TutorialGroupConfiguration>(url, tutorialGroupConfiguration);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param courseId
+ */
+export function getOneOfCourseResource(courseId: Signal<number | undefined> | number): HttpResourceRef<TutorialGroupConfiguration | undefined> {
+    return httpResource<TutorialGroupConfiguration>(() => {
+        const courseIdValue = typeof courseId === 'function' ? courseId() : courseId;
+        if (courseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/tutorialgroup/courses/${courseIdValue}/tutorial-groups-configurations`;
+    });
 }

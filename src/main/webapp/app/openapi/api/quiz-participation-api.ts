@@ -15,6 +15,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
+import { Signal } from '@angular/core';
 import { StudentQuizParticipation } from '../model/student-quiz-participation';
 import { appendQueryParam } from './query-params';
 
@@ -48,4 +50,39 @@ export class QuizParticipationApi {
         return this.http.post<StudentQuizParticipation>(url, null);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ * Query parameters for getParticipationResult
+ */
+export interface GetParticipationResultParams {
+    submissionId?: number;
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param exerciseId
+ * @param participationId
+ * @param params Optional signal containing query parameters
+ */
+export function getParticipationResultResource(exerciseId: Signal<number | undefined> | number, participationId: Signal<number | undefined> | number, params?: Signal<GetParticipationResultParams>): HttpResourceRef<StudentQuizParticipation | undefined> {
+    return httpResource<StudentQuizParticipation>(() => {
+        const exerciseIdValue = typeof exerciseId === 'function' ? exerciseId() : exerciseId;
+        if (exerciseIdValue === undefined) {
+            return undefined;
+        }
+        const participationIdValue = typeof participationId === 'function' ? participationId() : participationId;
+        if (participationIdValue === undefined) {
+            return undefined;
+        }
+        const queryParams = params?.() ?? {};
+        const searchParams = new URLSearchParams();
+        appendQueryParam(searchParams, 'submissionId', queryParams.submissionId);
+        const query = searchParams.toString();
+        return `${BASE_PATH}/api/quiz/quiz-exercises/${exerciseIdValue}/participations/${participationIdValue}/result${query ? `?${query}` : ''}`;
+    });
 }

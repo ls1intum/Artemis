@@ -15,6 +15,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
+import { Signal } from '@angular/core';
 import { QuizPointStatistics } from '../model/quiz-point-statistics';
 import { QuizQuestionStatisticResponse } from '../model/quiz-question-statistic-response';
 import { QuizStatisticsOverview } from '../model/quiz-statistics-overview';
@@ -55,4 +57,59 @@ export class QuizStatisticsApi {
         return this.http.get<QuizStatisticsOverview>(url);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param quizExerciseId
+ */
+export function getQuizPointStatisticResource(quizExerciseId: Signal<number | undefined> | number): HttpResourceRef<QuizPointStatistics | undefined> {
+    return httpResource<QuizPointStatistics>(() => {
+        const quizExerciseIdValue = typeof quizExerciseId === 'function' ? quizExerciseId() : quizExerciseId;
+        if (quizExerciseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/quiz/quiz-exercises/${quizExerciseIdValue}/statistics/points`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param quizExerciseId
+ * @param questionId
+ */
+export function getQuizQuestionStatisticResource(quizExerciseId: Signal<number | undefined> | number, questionId: Signal<number | undefined> | number): HttpResourceRef<QuizQuestionStatisticResponse | undefined> {
+    return httpResource<QuizQuestionStatisticResponse>(() => {
+        const quizExerciseIdValue = typeof quizExerciseId === 'function' ? quizExerciseId() : quizExerciseId;
+        if (quizExerciseIdValue === undefined) {
+            return undefined;
+        }
+        const questionIdValue = typeof questionId === 'function' ? questionId() : questionId;
+        if (questionIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/quiz/quiz-exercises/${quizExerciseIdValue}/statistics/questions/${questionIdValue}`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param quizExerciseId
+ */
+export function getQuizStatisticsOverviewResource(quizExerciseId: Signal<number | undefined> | number): HttpResourceRef<QuizStatisticsOverview | undefined> {
+    return httpResource<QuizStatisticsOverview>(() => {
+        const quizExerciseIdValue = typeof quizExerciseId === 'function' ? quizExerciseId() : quizExerciseId;
+        if (quizExerciseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/quiz/quiz-exercises/${quizExerciseIdValue}/statistics/overview`;
+    });
 }
