@@ -48,10 +48,9 @@ export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {
 
     private splitterPassThrough(layout: 'horizontal' | 'vertical'): SplitterPassThrough {
         const dividerColor = 'color-mix(in srgb, var(--tumaet-ui-text-color) 62%, transparent)';
-        const handleBackground =
-            layout === 'horizontal'
-                ? `linear-gradient(to right, transparent 0 3px, ${dividerColor} 3px 5px, transparent 5px 7px, ${dividerColor} 7px 9px, transparent 9px)`
-                : `linear-gradient(to bottom, transparent 0 3px, ${dividerColor} 3px 5px, transparent 5px 7px, ${dividerColor} 7px 9px, transparent 9px)`;
+        // Two 2px bars with a 1px gap, centred in the 6px gutter.
+        const direction = layout === 'horizontal' ? 'to right' : 'to bottom';
+        const handleBackground = `linear-gradient(${direction}, transparent 0 0.5px, ${dividerColor} 0.5px 2.5px, transparent 2.5px 3.5px, ${dividerColor} 3.5px 5.5px, transparent 5.5px)`;
         return {
             root: { style: { border: '0', background: 'transparent' } },
             panel: { style: { minWidth: '0', minHeight: '0', overflow: 'hidden' } },
@@ -61,13 +60,13 @@ export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {
                     alignItems: 'center',
                     justifyContent: 'center',
                     background: 'transparent',
-                    cursor: layout === 'horizontal' ? 'ew-resize' : 'ns-resize',
+                    cursor: layout === 'horizontal' ? 'col-resize' : 'row-resize',
                 },
             },
             gutterHandle: {
                 style: {
-                    width: layout === 'horizontal' ? '0.75rem' : '1.25rem',
-                    height: layout === 'horizontal' ? '1.25rem' : '0.75rem',
+                    width: layout === 'horizontal' ? '6px' : '12px',
+                    height: layout === 'horizontal' ? '12px' : '6px',
                     background: handleBackground,
                     pointerEvents: 'none',
                 },
