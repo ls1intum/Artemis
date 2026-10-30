@@ -912,23 +912,10 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the currently logged-in user is allowed to retrieve the given result.
-     * The user is allowed to retrieve the result if they are an instructor of the course, or they are at least a student in the corresponding course, the
-     * submission is their submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
-     * Instructors are allowed to retrieve the results for test runs.
-     *
-     * @param exercise      the corresponding exercise
-     * @param participation the participation the result belongs to
-     * @param result        the result that should be sent to the client
-     * @return true if the user is allowed to retrieve the given result, false otherwise
-     */
-    @CheckReturnValue
-    public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
-        return isUserAllowedToGetResult(exercise, participation, result, true);
-    }
-
-    /**
      * Checks result eligibility for an explicitly selected owner or instructor view.
+     * The user is allowed to retrieve the result if they are at least a student in the corresponding course, the submission is their submission (or, in the
+     * instructor view, they are an instructor of the course), the assessment due date of the corresponding exercise is in the past (or not set) and the
+     * result is finished. In the instructor view, instructors are also allowed to retrieve the results of test runs at any time.
      *
      * @param exercise       the owning exercise
      * @param participation  the owning participation

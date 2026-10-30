@@ -77,14 +77,14 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testIsAllowedAsInstructorDuringTestRun() {
-            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result, true);
             assertThat(isUserAllowedToGetResult).isTrue();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsNotAllowedAsStudentDuringTestRun() {
-            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result, true);
             assertThat(isUserAllowedToGetResult).isFalse();
         }
 
@@ -93,7 +93,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         void testIsNotAllowedAsInstructorForNonTestRunExerciseBeforeDeadline() {
             participation.setTestRun(false);
 
-            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result, true);
             assertThat(isUserAllowedToGetResult).isFalse();
         }
 
@@ -102,7 +102,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         void testIsNotAllowedAsStudentForNonTestRunExerciseBeforeDeadline() {
             participation.setTestRun(false);
 
-            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result, true);
             assertThat(isUserAllowedToGetResult).isFalse();
         }
     }

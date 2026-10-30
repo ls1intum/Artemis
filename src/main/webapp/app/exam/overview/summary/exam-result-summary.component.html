@@ -195,7 +195,6 @@
                                     @default {}
                                 }
                                 @if (
-                                    !instructorView() &&
                                     exerciseInfos()[exercise.id!]?.submission &&
                                     exercise.type !== QUIZ &&
                                     isAfterStudentReviewStart() &&
@@ -207,6 +206,7 @@
                                         [result]="exerciseInfos()[exercise.id!]!.participation!.submissions![0].results?.[0]"
                                         [exam]="examWithOnlyIdAndStudentReviewPeriod()"
                                         [testRun]="isTestRun()"
+                                        [forStaff]="instructorView()"
                                     />
                                 }
                             }

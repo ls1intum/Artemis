@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.service.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
@@ -331,10 +333,9 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Test
     void usernameAndPasswordBoundsRejectInvalidInput() {
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> userService.checkUsernameAndPasswordValidityElseThrow("a", null))
-                .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class).hasMessageContaining("at least");
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> userService.checkUsernameAndPasswordValidityElseThrow("a".repeat(256), null))
-                .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class).hasMessageContaining("less than");
+        assertThatThrownBy(() -> userService.checkUsernameAndPasswordValidityElseThrow("a", null)).isInstanceOf(AccessForbiddenException.class).hasMessageContaining("at least");
+        assertThatThrownBy(() -> userService.checkUsernameAndPasswordValidityElseThrow("a".repeat(256), null)).isInstanceOf(AccessForbiddenException.class)
+                .hasMessageContaining("less than");
         userService.checkUsernameAndPasswordValidityElseThrow(TEST_PREFIX + "student1", null);
     }
 

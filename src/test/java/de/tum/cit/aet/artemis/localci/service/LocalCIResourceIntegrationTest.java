@@ -799,4 +799,26 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void buildLogOfDeletedExerciseIsAuthorizedThroughTheCourse() throws Exception {
+        var job = buildJobForStatus(BuildStatus.SUCCESSFUL, "deleted-exercise-log");
+        // build jobs are kept when their exercise is deleted, so the exercise id no longer resolves
+        job.setExerciseId(Long.MAX_VALUE);
+        job = buildJobRepository.save(job);
+        Path log = tempFileUtilService.createTempFile("deleted-exercise-build-log", ".log");
+        FileUtils.writeStringToFile(log.toFile(), "build log of a deleted exercise", StandardCharsets.UTF_8);
+        doReturn(new FileSystemResource(log)).when(fallbackBuildLogEntryService).retrieveBuildLogsFromFileForBuildJob(job.getBuildJobId());
+        String url = "/api/localci/build-jobs/" + job.getBuildJobId() + "/build-log";
+        try {
+            assertThat(request.get(url, HttpStatus.OK, String.class)).isEqualTo("build log of a deleted exercise");
+            userUtilService.changeUser(TEST_PREFIX + "instructor2");
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
+        }
+        finally {
+            doCallRealMethod().when(fallbackBuildLogEntryService).retrieveBuildLogsFromFileForBuildJob(job.getBuildJobId());
+            Files.deleteIfExists(log);
+        }
+    }
+
 }

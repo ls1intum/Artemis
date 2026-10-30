@@ -736,12 +736,14 @@ describe('ExamResultSummaryComponent', () => {
             expect(complaintView.classList.length).toBe(0);
         });
 
-        it('does not render the complaint area when an instructor looks at a student exam, because only the owner may read the complaint', () => {
+        it.each([false, true])('lets the complaint area read the complaint as staff only in the instructor view (%s)', (instructorView) => {
             fixture.componentRef.setInput('studentExam', submittedExam({ examStudentReviewStart: dayjs().subtract(1, 'hour'), examStudentReviewEnd: dayjs().add(1, 'hour') }));
-            fixture.componentRef.setInput('instructorView', true);
+            fixture.componentRef.setInput('instructorView', instructorView);
             fixture.detectChanges();
 
-            expect(element('jhi-complaint-student-view')).toBeNull();
+            const complaintView = fixture.debugElement.query(By.directive(ComplaintsStudentViewComponent));
+            expect(complaintView).not.toBeNull();
+            expect(complaintView.componentInstance.forStaff()).toBe(instructorView);
         });
 
         it('caps the problem statement panel of every exercise card at 45% of the card, but not in the printout', () => {

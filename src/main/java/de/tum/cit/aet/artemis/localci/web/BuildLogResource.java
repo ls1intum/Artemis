@@ -77,17 +77,18 @@ public class BuildLogResource {
     }
 
     /**
-     * Build job ids are not scoped to a course, so the role is derived from the exercise (or, if it is unknown, the course) the build job was run for.
+     * Build job ids are not scoped to a course, so the role is derived from the course (or, if it is unknown, the exercise) the build job was run for.
+     * The course comes first because build jobs outlive their exercise, and the roles in an exercise are the roles in its course.
      * A build job without any of the two can only be read by an admin.
      *
      * @param buildJob the build job whose log is requested
      */
     private void checkIsAtLeastEditorForBuildJobElseThrow(BuildJob buildJob) {
-        if (buildJob.getExerciseId() != null) {
-            authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.EDITOR, buildJob.getExerciseId());
-        }
-        else if (buildJob.getCourseId() != null) {
+        if (buildJob.getCourseId() != null) {
             authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.EDITOR, buildJob.getCourseId());
+        }
+        else if (buildJob.getExerciseId() != null) {
+            authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.EDITOR, buildJob.getExerciseId());
         }
         else {
             authorizationCheckService.checkIsAdminElseThrow(null);

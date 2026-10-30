@@ -531,6 +531,20 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getComplaintOfStudentExam_instructor_readsThroughAssessmentEndpoint() throws Exception {
+        TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Complaint examComplaint = complaintRepo.save(new Complaint().result(textSubmission.getLatestResult()).complaintType(ComplaintType.COMPLAINT));
+
+        // the summary of a student exam that an instructor opens reads the complaint as staff, because the default endpoint serves only the owner
+        request.get("/api/assessment/complaints?submissionId=" + textSubmission.getId(), HttpStatus.FORBIDDEN, ComplaintDTO.class);
+        ComplaintDTO received = request.get("/api/assessment/complaints/for-assessment?submissionId=" + textSubmission.getId(), HttpStatus.OK, ComplaintDTO.class);
+        assertThat(received.id()).isEqualTo(examComplaint.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void complaintListRejectsCombinedCourseAndExerciseSelectors() throws Exception {
         var selector = "?complaintType=COMPLAINT&courseId=" + course.getId() + "&exerciseId=" + modelingExercise.getId();
         request.getList("/api/assessment/complaints" + selector, HttpStatus.BAD_REQUEST, ComplaintDTO.class);
