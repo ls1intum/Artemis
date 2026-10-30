@@ -11,7 +11,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
-import { IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, map, of, throwError } from 'rxjs';
@@ -1084,6 +1085,24 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.url = of([{ path: 'import' } as UrlSegment]);
         });
 
+        it('checks short names in the target course when importing from another course', () => {
+            const sourceCourse = new Course();
+            sourceCourse.id = courseId + 1;
+            const programmingExercise = getProgrammingExerciseForImport();
+            programmingExercise.course = sourceCourse;
+            route.data = of({ programmingExercise });
+            const existingDetailsSpy = vi
+                .spyOn(TestBed.inject(ExerciseService), 'getExistingExerciseDetailsInCourse')
+                .mockReturnValue(of({ exerciseTitles: new Set<string>(), shortNames: new Set<string>() }));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            expect(comp.courseId()).toBe(courseId);
+            expect(existingDetailsSpy).toHaveBeenCalledWith(courseId, ExerciseType.PROGRAMMING);
+            expect(existingDetailsSpy).not.toHaveBeenCalledWith(sourceCourse.id, ExerciseType.PROGRAMMING);
+        });
+
         it('should correctly import into an exam exercise', () => {
             const examId = 1;
             const exerciseGroupId = 1;
@@ -1101,6 +1120,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.course).toBeUndefined();
             expect(comp.isImportFromExistingExercise).toBe(true);
             expect(comp.isExamMode()).toBe(true);
+            expect(comp.courseId()).toBe(courseId);
             expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
         });
 
