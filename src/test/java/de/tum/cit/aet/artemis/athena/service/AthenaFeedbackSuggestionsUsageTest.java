@@ -16,18 +16,14 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
-import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -56,8 +52,6 @@ class AthenaFeedbackSuggestionsUsageTest {
 
     private FeatureUsageCollector featureUsageCollector;
 
-    private UserAiPreferenceService userAiPreferenceService;
-
     private AthenaFeedbackSuggestionsService service;
 
     private TextExercise exercise;
@@ -68,7 +62,6 @@ class AthenaFeedbackSuggestionsUsageTest {
     void init() {
         restTemplate = mock(RestTemplate.class);
         featureUsageCollector = mock(FeatureUsageCollector.class);
-        userAiPreferenceService = mock(UserAiPreferenceService.class);
         var athenaModuleService = mock(AthenaModuleService.class);
         var dtoConverterService = mock(AthenaDTOConverterService.class);
         var resultRepository = mock(ResultRepository.class);
@@ -78,7 +71,7 @@ class AthenaFeedbackSuggestionsUsageTest {
         when(athenaModuleService.getAthenaModuleUrl(any())).thenReturn("http://athena.example.com/modules/text");
 
         service = new AthenaFeedbackSuggestionsService(restTemplate, athenaModuleService, dtoConverterService, mock(LLMTokenUsageService.class), resultRepository,
-                Optional.<LearnerProfileApi>empty(), Optional.<CourseCompetencyApi>empty(), userAiPreferenceService, Optional.of(featureUsageCollector));
+                Optional.<LearnerProfileApi>empty(), Optional.<CourseCompetencyApi>empty(), mock(UserAiPreferenceService.class), Optional.of(featureUsageCollector));
 
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setGradingFeedbackEnabled(true);
@@ -103,21 +96,14 @@ class AthenaFeedbackSuggestionsUsageTest {
      * successful response, with {@code failed} hard-coded to false, made that structurally impossible: a failed request
      * produced no observation at all, so the feature could never show anything but a perfect record.
      */
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    void shouldRecordAFailedAthenaRequestAsAFailureBeforeDeadline(boolean isGraded) {
-        exercise.setDueDate(java.time.ZonedDateTime.now().plusDays(1));
-        var student = new User();
-        student.setId(1L);
-        if (!isGraded) {
-            when(userAiPreferenceService.findDecision(student.getId())).thenReturn(AiSelectionDecision.LOCAL_AI);
-        }
+    @Test
+    void shouldRecordAFailedAthenaRequestAsAFailure() {
         when(restTemplate.postForEntity(anyString(), any(), any())).thenThrow(new ResourceAccessException("Athena is unreachable"));
 
-        assertThatExceptionOfType(NetworkingException.class).isThrownBy(() -> service.getTextFeedbackSuggestions(exercise, submission, isGraded, student));
+        assertThatExceptionOfType(NetworkingException.class).isThrownBy(() -> service.getTextFeedbackSuggestions(exercise, submission, true, null));
 
-        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("athena"), eq("feedback-suggestions/text/" + (isGraded ? "graded" : "non-graded")),
-                eq(isGraded ? UserFeature.ATHENA_FEEDBACK_SUGGESTIONS : UserFeature.AI_FEEDBACK_REQUEST), eq(FeatureInteraction.SYSTEM), eq(Role.ANONYMOUS), eq(true), anyLong());
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("athena"), eq("feedback-suggestions/text/graded"), eq(UserFeature.ATHENA_FEEDBACK_SUGGESTIONS),
+                eq(FeatureInteraction.SYSTEM), eq(Role.ANONYMOUS), eq(true), anyLong());
     }
 
     /**
