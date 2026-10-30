@@ -86,6 +86,24 @@ describe('CodeEditorGridComponent', () => {
             expect(divider('draggableIconForMain')).not.toBeNull();
         });
 
+        it('keeps the build output mounted but hidden when editor controls are disabled', () => {
+            fixture.detectChanges();
+            const buildOutput = comp.buildOutputElement().nativeElement;
+
+            fixture.componentRef.setInput('showEditorBottomArea', false);
+            fixture.detectChanges();
+
+            expect(comp.buildOutputElement().nativeElement).toBe(buildOutput);
+            expect(buildOutput.style.display).toBe('none');
+            expect(divider('draggableIconForMain')).toBeNull();
+
+            fixture.componentRef.setInput('showEditorBottomArea', true);
+            fixture.detectChanges();
+
+            expect(buildOutput.style.display).toBe('');
+            expect(divider('draggableIconForMain')).not.toBeNull();
+        });
+
         it('marks the area below the build output of a tutor assessment', () => {
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('.editor-assessment-bottom')).toBeNull();

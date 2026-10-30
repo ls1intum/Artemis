@@ -6,7 +6,7 @@
     [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()"
     storageKey="exercise-details-split"
 >
-    @if (showEditorPanel()) {
+    @if (showPrimaryEditorPanel()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
                 <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
@@ -147,6 +147,14 @@
         <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment">
             @defer (on idle) {
                 <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
+            }
+        </ng-template>
+    }
+
+    @if (showReadOnlyEditorAsFeedbackTab()) {
+        <ng-template jhiPanel [label]="'artemisApp.feedback.home.title'" [icon]="getIcon(exercise().type)">
+            @if (usesRouterOutlet()) {
+                <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
             }
         </ng-template>
     }

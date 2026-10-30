@@ -1,8 +1,11 @@
+import dayjs from 'dayjs/esm';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterOutlet, convertToParamMap } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { ResultService } from 'app/exercise/result/result.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-participation.base';
@@ -18,8 +21,13 @@ import { ExerciseSplitPanelComponent } from 'app/course/overview/exercise-detail
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import dayjs from 'dayjs/esm';
 import { RouterLink } from '@angular/router';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
@@ -38,6 +46,8 @@ class ResizeObserverMock {
     unobserve = vi.fn();
     disconnect = vi.fn();
 }
+
+const createResult = (partial: Partial<Result>): Result => Object.assign(new Result(), partial);
 
 /**
  * Stands in for the concrete QuizParticipationComponent, which the split panel must recognise through
@@ -67,12 +77,14 @@ describe('ExerciseSplitPanelComponent', () => {
     let fixture: ComponentFixture<ExerciseSplitPanelComponent>;
     let component: ExerciseSplitPanelComponent;
     let accountService: MockAccountService;
+    let router: Router;
 
     beforeEach(async () => {
         vi.stubGlobal('ResizeObserver', ResizeObserverMock);
         await TestBed.configureTestingModule({
             imports: [ExerciseSplitPanelComponent],
             providers: [
+                { provide: ResultService, useValue: { getFeedbackDetailsForResult: vi.fn(() => of(new HttpResponse({ body: [] }))) } },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: IrisChatService, useValue: { openChat: vi.fn() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
@@ -85,7 +97,7 @@ describe('ExerciseSplitPanelComponent', () => {
                 set: {
                     template: `
                         <jhi-resizable-panels [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()">
-                            @if (showEditorPanel()) {
+                            @if (showPrimaryEditorPanel()) {
                                 <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
                             @if (exercise().type !== ExerciseType.QUIZ) {
@@ -97,6 +109,9 @@ describe('ExerciseSplitPanelComponent', () => {
                             @if (showIris()) {
                                 <ng-template jhiPanel [label]="'iris'" [startsCollapsed]="irisPanelStartsCollapsed()">Iris</ng-template>
                             }
+                            @if (showReadOnlyEditorAsFeedbackTab()) {
+                                <ng-template jhiPanel [label]="'artemisApp.feedback.home.title'">Feedback</ng-template>
+                            }
                         </jhi-resizable-panels>
                     `,
                     imports: [ResizablePanelsComponent, PanelDirective],
@@ -107,6 +122,7 @@ describe('ExerciseSplitPanelComponent', () => {
         fixture = TestBed.createComponent(ExerciseSplitPanelComponent);
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+        router = TestBed.inject(Router);
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('irisEnabled', true);
@@ -246,6 +262,186 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.activeRightIndex()).toBe(0);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('Problem Statement');
+    });
+
+    it('should keep wide splitting enabled when online editor is disabled but no read-only editor panel is shown', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', undefined);
+        fixture.detectChanges();
+
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(component.showPrimaryEditorPanel()).toBe(false);
+        expect(resizablePanels.panels().map((panel) => panel.label())).not.toContain('artemisApp.courseOverview.exerciseDetails.codeEditor');
+    });
+
+    it.each([false, undefined])('should hide the primary editor panel without inline feedback when allowOnlineEditor is %s', (allowOnlineEditor) => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
+        fixture.detectChanges();
+
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(component.showPrimaryEditorPanel()).toBe(false);
+        expect(resizablePanels.panels().map((panel) => panel.label())).not.toContain('artemisApp.feedback.home.title');
+    });
+
+    it.each([false, undefined])('should show the feedback tab for a failed build when allowOnlineEditor is %s', (allowOnlineEditor) => {
+        const result = createResult({ id: 2, completionDate: dayjs() });
+        const submission = { buildFailed: true, results: [result] };
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+        expect(component.showPrimaryEditorPanel()).toBe(false);
+        expect(resizablePanels.panels().at(-1)?.label()).toBe('artemisApp.feedback.home.title');
+    });
+
+    it('should show the read-only editor feedback tab for file-line referenced feedback', () => {
+        const feedback = { reference: 'file:src/Main.java_line:4', type: FeedbackType.MANUAL } as Feedback;
+        const result = createResult({ id: 2, completionDate: dayjs(), feedbacks: [feedback] });
+        const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+        expect(component.showPrimaryEditorPanel()).toBe(false);
+    });
+
+    it('should append the feedback tab after the regular detail tabs and keep wide splitting enabled', () => {
+        const feedback = { reference: 'file:src/Main.java_line:4', type: FeedbackType.MANUAL } as Feedback;
+        const result = createResult({ id: 2, completionDate: dayjs(), feedbacks: [feedback] });
+        const submission = { buildFailed: false, results: [result] };
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        expect(resizablePanels.panels().map((panel) => panel.label())).toEqual(['artemisApp.courseOverview.exerciseDetails.details', 'iris', 'artemisApp.feedback.home.title']);
+    });
+
+    it('should only navigate to the programming code editor route when a visible editor panel exists', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(router.navigate).not.toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 1], expect.anything());
+
+        const feedback = { reference: 'file:src/Main.java_line:4', type: FeedbackType.MANUAL } as Feedback;
+        const result = createResult({ id: 2, completionDate: dayjs(), feedbacks: [feedback] });
+        const submission = { buildFailed: false, results: [result] };
+        result.submission = submission;
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(router.navigate).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 1], { relativeTo: {} });
+
+        vi.mocked(router.navigate).mockClear();
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        { reference: 'file:src/Main.java_line:0', type: FeedbackType.MANUAL },
+        { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: '{"filePath":"src/Main.java","startLine":4}', type: FeedbackType.AUTOMATIC },
+    ])('should load missing feedback details before deciding whether to show the tab: %j', (feedback) => {
+        const response = new Subject<HttpResponse<Feedback[]>>();
+        const load = vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(response);
+        const result = createResult({ id: 2, completionDate: dayjs() });
+        const participation = { id: 1, submissions: [{ results: [result] }] } as StudentParticipation;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', participation);
+        fixture.detectChanges();
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(load).toHaveBeenCalledExactlyOnceWith(1, result);
+
+        response.next(new HttpResponse({ body: [feedback] }));
+        fixture.detectChanges();
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+        expect(router.navigate).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 1], { relativeTo: {} });
+
+        fixture.componentRef.setInput('studentParticipation', { ...participation });
+        fixture.detectChanges();
+        expect(load).toHaveBeenCalledTimes(1);
+    });
+
+    it('should discard stale feedback and cancel its request when switching participations', () => {
+        const response = new Subject<HttpResponse<Feedback[]>>();
+        const load = vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(response);
+        const result = createResult({ id: 2, completionDate: dayjs() });
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [{ results: [result] }] } as StudentParticipation);
+        fixture.detectChanges();
+        response.next(new HttpResponse({ body: [{ reference: 'file:Main.java_line:0' }] }));
+        fixture.detectChanges();
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+
+        load.mockReturnValue(throwError(() => new Error('Feedback unavailable')));
+        fixture.componentRef.setInput('studentParticipation', { id: 3, submissions: [{ results: [createResult({ id: 4, completionDate: dayjs() })] }] } as StudentParticipation);
+        fixture.detectChanges();
+        expect(response.observed).toBe(false);
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+    });
+
+    it('should show the feedback tab for successful Athena feedback results even before feedback details are attached', () => {
+        const result = createResult({ id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
+        const submission = { buildFailed: false, results: [result] };
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+        expect(component.showPrimaryEditorPanel()).toBe(false);
+    });
+
+    it('should show the read-only editor feedback tab for static code analysis feedback', () => {
+        const feedback = { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: '{"filePath":"src/Main.java","startLine":4}', type: FeedbackType.AUTOMATIC } as Feedback;
+        const result = createResult({ id: 2, completionDate: dayjs(), feedbacks: [feedback] });
+        const submission = { buildFailed: false, results: [result] };
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+        expect(component.showPrimaryEditorPanel()).toBe(false);
+    });
+
+    it('should not show the read-only editor feedback tab for unreferenced feedback', () => {
+        const feedback = { type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'General feedback' } as Feedback;
+        const result = createResult({ id: 2, completionDate: dayjs(), feedbacks: [feedback] });
+        const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(component.showPrimaryEditorPanel()).toBe(false);
+    });
+
+    it('should not use latest rated result from another participation to show the read-only editor feedback tab', () => {
+        const feedback = { reference: 'file:src/Main.java_line:4', type: FeedbackType.MANUAL } as Feedback;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
+        fixture.componentRef.setInput('latestRatedResult', { id: 2, feedbacks: [feedback] } as Result);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(component.showPrimaryEditorPanel()).toBe(false);
     });
 
     describe('exercise details panel', () => {
@@ -442,6 +638,7 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
         await TestBed.configureTestingModule({
             imports: [ExerciseSplitPanelComponent],
             providers: [
+                { provide: ResultService, useValue: { getFeedbackDetailsForResult: vi.fn(() => of(new HttpResponse({ body: [] }))) } },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: IrisChatService, useValue: { openChat: vi.fn() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },

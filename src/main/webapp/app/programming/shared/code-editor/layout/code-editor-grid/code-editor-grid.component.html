@@ -7,6 +7,7 @@
         class="editor-main"
         jhiResizable
         [resizableEdges]="{ bottom: '.rg-main-bottom' }"
+        [resizableEnabled]="showEditorBottomArea()"
         [resizableConstraints]="{ minHeight: resizableMinHeightMain, maxHeight: maxConstraints().heightMain }"
         (resizeEnd)="onPanelResized(ResizeType.MAIN_BOTTOM)"
     >
@@ -53,16 +54,19 @@
                 <ng-content select="[editorSidebarRight]" />
             </div>
         </div>
-        <div class="rg-main-bottom" data-testid="draggableIconForMain"></div>
+        @if (showEditorBottomArea()) {
+            <div class="rg-main-bottom" data-testid="draggableIconForMain"></div>
+        }
     </div>
     <!-- Build Output -->
     <div
         #buildOutput
+        [style.display]="showEditorBottomArea() ? undefined : 'none'"
         class="editor-bottom collapsable"
         jhiResizable
         [resizableEdges]="{ bottom: '.rg-bottom-bottom' }"
         [resizableConstraints]="{ minHeight: resizableMinHeightBottom, maxHeight: maxConstraints().heightBottom }"
-        [resizableEnabled]="!buildOutputIsCollapsed()"
+        [resizableEnabled]="showEditorBottomArea() && !buildOutputIsCollapsed()"
         (resizeEnd)="onPanelResized(ResizeType.BOTTOM)"
     >
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
