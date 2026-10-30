@@ -14,6 +14,7 @@ api/hyperion-programming-variant-api.ts
 api/hyperion-quiz-question-generation-api.ts
 api/hyperion-quiz-question-pool-api.ts
 api/ingestion-browser-api.ts
+api/iris-admin-dashboard-api.ts
 api/query-params.ts
 api/quiz-assessment-api.ts
 api/quiz-exercise-api.ts
@@ -127,6 +128,11 @@ model/indexed-entity-record.ts
 model/indexed-entity.ts
 model/inferred-competency.ts
 model/ingestion-type-count.ts
+model/iris-dashboard-breakdown-entry.ts
+model/iris-dashboard-config.ts
+model/iris-dashboard-overview.ts
+model/iris-dashboard-time-series-entry.ts
+model/iris-dashboard-time-series.ts
 model/leaderboard-entry.ts
 model/leaderboard-setting.ts
 model/leaderboard-with-current-user-entry.ts

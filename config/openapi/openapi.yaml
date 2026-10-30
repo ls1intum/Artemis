@@ -1819,6 +1819,113 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LeaderboardWithCurrentUserEntry'}
+  /api/iris/admin/dashboard/time-series:
+    get:
+      tags: [iris-admin-dashboard]
+      operationId: getTimeSeries
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: to
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: span
+        in: query
+        required: true
+        schema: {type: string}
+      - name: metric
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [SESSIONS, MESSAGES, NO_RESPONSE_RATE, RESPONSE_TIME, RATINGS, TOKEN_COST,
+            ENGAGEMENT]
+      - name: aiSelection
+        in: query
+        required: false
+        schema:
+          type: string
+          default: ALL
+          enum: [ALL, CLOUD, LOCAL]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisDashboardTimeSeries'}
+  /api/iris/admin/dashboard/overview:
+    get:
+      tags: [iris-admin-dashboard]
+      operationId: getOverview
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: to
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: aiSelection
+        in: query
+        required: false
+        schema:
+          type: string
+          default: ALL
+          enum: [ALL, CLOUD, LOCAL]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisDashboardOverview'}
+  /api/iris/admin/dashboard/config:
+    get:
+      tags: [iris-admin-dashboard]
+      operationId: getConfig
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisDashboardConfig'}
+  /api/iris/admin/dashboard/breakdown:
+    get:
+      tags: [iris-admin-dashboard]
+      operationId: getBreakdown
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: to
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: dimension
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [CHAT_MODE, COURSE, MODEL]
+      - name: aiSelection
+        in: query
+        required: false
+        schema:
+          type: string
+          default: ALL
+          enum: [ALL, CLOUD, LOCAL]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/IrisDashboardBreakdownEntry'}
   /api/hyperion/variant-jobs:
     get:
       tags: [hyperion-exercise-variant]
@@ -3745,6 +3852,34 @@ components:
         selectedFeedbackThreadIds:
           type: array
           items: {type: integer, format: int64}
+    IrisDashboardOverview:
+      type: object
+      properties:
+        totalSessions: {type: integer, format: int64}
+        activeSessions: {type: integer, format: int64}
+        engagementRate: {type: number, format: double}
+        totalMessages: {type: integer, format: int64}
+        uniqueUsers: {type: integer, format: int64}
+        noResponseRate: {type: number, format: double}
+        noResponseMessageCount: {type: integer, format: int64}
+        noResponseSessionCount: {type: integer, format: int64}
+        thumbsUpRatio: {type: number, format: double}
+        thumbsDownRatio: {type: number, format: double}
+        thumbsUpAbsoluteRate: {type: number, format: double}
+        thumbsDownAbsoluteRate: {type: number, format: double}
+        sessionsWithThumbsUp: {type: integer, format: int64}
+        sessionsWithThumbsDown: {type: integer, format: int64}
+        thumbsUpCount: {type: integer, format: int64}
+        thumbsDownCount: {type: integer, format: int64}
+        avgResponseTimeSeconds: {type: number, format: double}
+        p50ResponseTimeSeconds: {type: number, format: double}
+        p95ResponseTimeSeconds: {type: number, format: double}
+        totalTokenCostEur: {type: number, format: double}
+      required: [activeSessions, avgResponseTimeSeconds, engagementRate, noResponseMessageCount,
+        noResponseRate, noResponseSessionCount, p50ResponseTimeSeconds, p95ResponseTimeSeconds,
+        sessionsWithThumbsDown, sessionsWithThumbsUp, thumbsDownAbsoluteRate, thumbsDownCount,
+        thumbsDownRatio, thumbsUpAbsoluteRate, thumbsUpCount, thumbsUpRatio, totalMessages,
+        totalSessions, totalTokenCostEur, uniqueUsers]
     InferredCompetency:
       type: object
       properties:
@@ -3793,6 +3928,17 @@ components:
         busy: {type: boolean}
         capacityAvailable: {type: boolean}
         restriction: {type: string}
+    IrisDashboardTimeSeries:
+      type: object
+      properties:
+        metric:
+          type: string
+          enum: [SESSIONS, MESSAGES, NO_RESPONSE_RATE, RESPONSE_TIME, RATINGS, TOKEN_COST,
+            ENGAGEMENT]
+        entries:
+          type: array
+          items: {$ref: '#/components/schemas/IrisDashboardTimeSeriesEntry'}
+      required: [entries, metric]
     CalendarEvent:
       type: object
       properties:
@@ -4024,6 +4170,23 @@ components:
           items: {$ref: '#/components/schemas/SubmittedAnswerFromStudent'}
           uniqueItems: true
       required: [submittedAnswers]
+    IrisDashboardConfig:
+      type: object
+      properties:
+        maxQueryWindowDays: {type: integer, format: int32}
+        staleThresholdMinutes: {type: integer, format: int32}
+        digestEnabled: {type: boolean}
+        digestCron: {type: string}
+        alertEnabled: {type: boolean}
+        alertNoResponseRateThreshold: {type: number, format: double}
+        alertCheckIntervalMinutes: {type: integer, format: int32}
+        alertCooldownMinutes: {type: integer, format: int32}
+        alertLookbackMinutes: {type: integer, format: int32}
+        alertMinimumEligibleSessions: {type: integer, format: int32}
+        alertMinimumUserMessages: {type: integer, format: int32}
+      required: [alertCheckIntervalMinutes, alertCooldownMinutes, alertEnabled, alertLookbackMinutes,
+        alertMinimumEligibleSessions, alertMinimumUserMessages, alertNoResponseRateThreshold,
+        digestEnabled, maxQueryWindowDays, staleThresholdMinutes]
     WorkloadCapability:
       type: object
       properties:
@@ -5094,6 +5257,14 @@ components:
         instruction: {type: string, description: Instruction describing what should
             change, maxLength: 500, minLength: 1}
       required: [endLine, instruction, problemStatementText, startLine]
+    IrisDashboardBreakdownEntry:
+      type: object
+      properties:
+        label: {type: string}
+        values:
+          type: object
+          additionalProperties: {type: number, format: double}
+      required: [values]
     TutorialGroupExportData:
       type: object
       properties:
@@ -5318,6 +5489,14 @@ components:
             in EUR, example: 0.016513}
         totalEur: {type: number, format: double, description: Total costs in EUR,
           example: 0.027738}
+    IrisDashboardTimeSeriesEntry:
+      type: object
+      properties:
+        bucketStart: {type: string, format: date-time}
+        series:
+          type: object
+          additionalProperties: {type: number, format: double}
+      required: [bucketStart, series]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object

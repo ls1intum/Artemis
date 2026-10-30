@@ -15,6 +15,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
+import { Signal } from '@angular/core';
 import { ExerciseGenerationRequest } from '../model/exercise-generation-request';
 import { ExerciseGenerationJobStart } from '../model/exercise-generation-job-start';
 import { ExerciseGenerationStatus } from '../model/exercise-generation-status';
@@ -124,4 +126,76 @@ export class HyperionExerciseGenerationApi {
         return this.http.post<ExerciseGenerationMetadataSuggestionResponse>(url, exerciseGenerationMetadataSuggestionRequest);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param exerciseId
+ */
+export function getExerciseGenerationStatusResource(exerciseId: Signal<number | undefined> | number): HttpResourceRef<ExerciseGenerationStatus | undefined> {
+    return httpResource<ExerciseGenerationStatus>(() => {
+        const exerciseIdValue = typeof exerciseId === 'function' ? exerciseId() : exerciseId;
+        if (exerciseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/hyperion/programming-exercises/${exerciseIdValue}/generate-exercise/status`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param exerciseId
+ */
+export function getGenerationCapabilitiesResource(exerciseId: Signal<number | undefined> | number): HttpResourceRef<ExerciseGenerationCapabilities | undefined> {
+    return httpResource<ExerciseGenerationCapabilities>(() => {
+        const exerciseIdValue = typeof exerciseId === 'function' ? exerciseId() : exerciseId;
+        if (exerciseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/hyperion/programming-exercises/${exerciseIdValue}/generation/capabilities`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ */
+export function getGenerationEffortProfilesResource(): HttpResourceRef<Array<ExerciseGenerationEffortProfile> | undefined> {
+    return httpResource<Array<ExerciseGenerationEffortProfile>>(() => {
+        return `${BASE_PATH}/api/hyperion/programming-exercises/generation/effort-profiles`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param exerciseId
+ */
+export function getRetainedGenerationArtifactsResource(exerciseId: Signal<number | undefined> | number): HttpResourceRef<ExerciseGenerationRetainedArtifacts | undefined> {
+    return httpResource<ExerciseGenerationRetainedArtifacts>(() => {
+        const exerciseIdValue = typeof exerciseId === 'function' ? exerciseId() : exerciseId;
+        if (exerciseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/hyperion/programming-exercises/${exerciseIdValue}/generate-exercise/artifacts`;
+    });
+}
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ */
+export function getSupportedGenerationLanguagesResource(): HttpResourceRef<Array<string> | undefined> {
+    return httpResource<Array<string>>(() => {
+        return `${BASE_PATH}/api/hyperion/programming-exercises/generation/supported-languages`;
+    });
 }

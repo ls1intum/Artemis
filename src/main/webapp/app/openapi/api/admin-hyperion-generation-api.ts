@@ -15,6 +15,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { httpResource, HttpResourceRef } from '@angular/common/http';
+import { Signal } from '@angular/core';
 import { ExerciseGenerationWedgedSlot } from '../model/exercise-generation-wedged-slot';
 import { appendQueryParam } from './query-params';
 
@@ -49,4 +51,22 @@ export class AdminHyperionGenerationApi {
         return this.http.delete<void>(url);
     }
 
+}
+
+const BASE_PATH = '';
+
+/**
+ *
+ *
+ * Creates a reactive HTTP resource that automatically refetches when signals change.
+ * @param exerciseId
+ */
+export function getWedgedSlotResource(exerciseId: Signal<number | undefined> | number): HttpResourceRef<ExerciseGenerationWedgedSlot | undefined> {
+    return httpResource<ExerciseGenerationWedgedSlot>(() => {
+        const exerciseIdValue = typeof exerciseId === 'function' ? exerciseId() : exerciseId;
+        if (exerciseIdValue === undefined) {
+            return undefined;
+        }
+        return `${BASE_PATH}/api/hyperion/admin/exercises/${exerciseIdValue}/wedged-slot`;
+    });
 }
