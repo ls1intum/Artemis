@@ -63,7 +63,7 @@ describe('Grading presentation controls with the course grading editor', () => {
 
     async function setup(scale = new GradingScale(), presentationScore?: number) {
         const courseResponse = new Subject<HttpResponse<Course>>();
-        vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(courseResponse);
+        vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockReturnValue(courseResponse);
         const service = TestBed.inject(GradingService);
         scale.id = 1;
         scale.gradeSteps = [
