@@ -7,11 +7,11 @@ plugins {
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '6.5.13'
+    id 'com.github.spotbugs' version '6.5.12'
     // %static-code-analysis-stop%
     id 'com.teamscale' version '39.0.0'
     id 'java'
-    id 'io.freefair.aspectj.post-compile-weaving' version '9.8.2'
+    id 'io.freefair.aspectj.post-compile-weaving' version '9.8.0'
 }
 
 java {

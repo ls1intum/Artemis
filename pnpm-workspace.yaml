@@ -18,13 +18,13 @@ catalog:
   '@angular/build': 22.2.5
   '@angular/cdk': 22.2.5
   '@angular/cli': 22.2.5
-  '@angular/common': 22.2.3
-  '@angular/compiler': 22.2.3
-  '@angular/compiler-cli': 22.2.3
-  '@angular/core': 22.2.3
-  '@angular/forms': 22.2.3
-  '@angular/localize': 22.2.3
-  '@angular/platform-browser': 22.2.3
+  '@angular/common': 22.2.4
+  '@angular/compiler': 22.2.4
+  '@angular/compiler-cli': 22.2.4
+  '@angular/core': 22.2.4
+  '@angular/forms': 22.2.4
+  '@angular/localize': 22.2.4
+  '@angular/platform-browser': 22.2.4
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -133,13 +133,13 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': 22.2.3
+  '@angular/localize': 22.2.4
   # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
   # animations of its own version and animations asks for core of its own version - so without this pin
   # an Angular patch bump leaves animations behind on the old patch against the new core. Keep it equal
   # to @angular/core.
-  '@angular/animations': 22.2.3
+  '@angular/animations': 22.2.4
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.10'
@@ -263,3 +263,16 @@ allowBuilds:
 auditConfig:
   ignoreGhsas:
     - 'GHSA-8988-4f7v-96qf'
+
+minimumReleaseAgeExclude:
+  - '@angular/animations@22.2.4'
+  - '@angular/common@22.2.4'
+  - '@angular/compiler-cli@22.2.4'
+  - '@angular/compiler@22.2.4'
+  - '@angular/core@22.2.4'
+  - '@angular/forms@22.2.4'
+  - '@angular/language-service@22.2.4'
+  - '@angular/localize@22.2.4'
+  - '@angular/platform-browser@22.2.4'
+  - '@angular/router@22.2.4'
+  - '@angular/service-worker@22.2.4'
