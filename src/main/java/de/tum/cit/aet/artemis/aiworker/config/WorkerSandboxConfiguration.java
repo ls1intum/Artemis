@@ -28,7 +28,7 @@ public class WorkerSandboxConfiguration {
      */
     @Bean
     public SandboxPolicyDTO sandboxPolicy(WorkerSettings settings, DockerClient dockerClient) {
-        String image = WorkerSandboxImage.resolve(dockerClient, settings.image());
+        String image = WorkerSandboxImageResolver.resolve(dockerClient, settings.image());
         return new SandboxPolicyDTO(settings.id(), image, settings.runtime(), settings.memoryBytes(), settings.cpuQuota(), settings.pids(), "artemis.aiworker", "aiworker-",
                 Map.of("/workspace", "rw,exec,nosuid,nodev,uid=1000,gid=1000,mode=0700,size=512m", "/tmp", "rw,exec,nosuid,nodev,uid=1000,gid=1000,mode=0700,size=512m",
                         "/opt/aiworker", "rw,exec,nosuid,nodev,uid=1000,gid=1000,mode=0700,size=256m", "/opt/aiworker-readiness-fixture",

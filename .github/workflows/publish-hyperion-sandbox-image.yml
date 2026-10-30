@@ -51,5 +51,5 @@ jobs:
     with:
       ref: ${{ github.sha }}
       image-name: ls1intum/artemis-hyperion-sandbox
-      docker-file: ./deployment/docker/hyperion/sandbox.Dockerfile
+      docker-file: ./deployment/docker/hyperion/Dockerfile
       tags: type=raw,value=${{ needs.version.outputs.tag }}

@@ -16,15 +16,15 @@ import com.github.dockerjava.api.exception.NotFoundException;
  * Prepares the configured sandbox image using the build agents' local-cache-first pull policy.
  * Resolves tags to a local image ID before worker admission, so running jobs cannot switch images.
  */
-final class WorkerSandboxImage {
+final class WorkerSandboxImageResolver {
 
-    private static final Logger log = LoggerFactory.getLogger(WorkerSandboxImage.class);
+    private static final Logger log = LoggerFactory.getLogger(WorkerSandboxImageResolver.class);
 
-    private static final Pattern IMAGE_ID = Pattern.compile("sha256:[0-9a-f]{64}");
+    private static final Pattern IMAGE_ID_PATTERN = Pattern.compile("sha256:[0-9a-f]{64}");
 
     private static final long PULL_TIMEOUT_MINUTES = 30;
 
-    private WorkerSandboxImage() {
+    private WorkerSandboxImageResolver() {
     }
 
     /**
@@ -36,10 +36,10 @@ final class WorkerSandboxImage {
      */
     static String resolve(DockerClient dockerClient, String reference) {
         try {
-            return imageId(dockerClient, reference);
+            return inspectImageId(dockerClient, reference);
         }
         catch (NotFoundException e) {
-            if (IMAGE_ID.matcher(reference).matches()) {
+            if (IMAGE_ID_PATTERN.matcher(reference).matches()) {
                 throw new IllegalStateException("Local sandbox image " + reference + " is not available. Load it on this Docker daemon or configure AI_WORKER_SANDBOX_IMAGE.", e);
             }
             log.info("Pulling sandbox image {}", reference);
@@ -57,13 +57,13 @@ final class WorkerSandboxImage {
             throw new IllegalStateException(
                     "Could not pull the sandbox image " + reference + ". Check registry access or configure artemis.aiworker.image (AI_WORKER_SANDBOX_IMAGE).", e);
         }
-        return imageId(dockerClient, reference);
+        return inspectImageId(dockerClient, reference);
     }
 
-    private static String imageId(DockerClient dockerClient, String reference) {
+    private static String inspectImageId(DockerClient dockerClient, String reference) {
         try (var inspect = dockerClient.inspectImageCmd(reference)) {
             String id = inspect.exec().getId();
-            if (id == null || !IMAGE_ID.matcher(id).matches()) {
+            if (id == null || !IMAGE_ID_PATTERN.matcher(id).matches()) {
                 throw new IllegalStateException("Sandbox image " + reference + " has no valid immutable image ID");
             }
             return id;

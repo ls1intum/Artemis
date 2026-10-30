@@ -280,7 +280,7 @@ Maven black-box (`MAVEN_BLACKBOX`) exercises are not supported. The worker runs
 the exercise's own build tool: one offline sandbox image contains the canonical
 Java 25 / Ares 2 Gradle and Maven harnesses and their dependencies. Ares 1 harnesses are not supported by generation or adaptation. Migrate an older
 exercise to the current Artemis harness separately; Hyperion does not rewrite its build files.
-Rebuild and qualify `deployment/docker/hyperion/sandbox.Dockerfile` when its
+Rebuild and qualify `deployment/docker/hyperion/Dockerfile` when its
 canonical toolchain or dependencies change; an older Java 17 sandbox cannot grade
 this harness. Keep `SecurityPolicy.yaml` explicit. Generation may update only its
 instructor-test class list, not its supervised package or resource permissions.

@@ -34,12 +34,21 @@ The worker's shipped default is `ghcr.io/ls1intum/artemis-hyperion-sandbox:java2
 It reuses a cached image or pulls it when missing, then uses the immutable local image ID.
 Normal Artemis upgrades and PR builds use the same default; no per-commit image is required.
 
-Maintainers publish a new toolchain version through the **Publish Hyperion Sandbox Image**
-workflow (`hyperion-sandbox-image.yml`) on a reviewed source revision. The workflow reads the tag
-from that revision's default in `application-aiworker.yml`; there is no version input. For a new
-toolchain, change the default to a new version such as `java25-2` in the reviewed branch. The workflow builds both amd64 and arm64 using the same shared publisher
-as Artemis. Always use a new version; published tags must not be overwritten. Publish and qualify the branch's new version before merging its default change. The first `java25-1` publication must complete before
-using the default in a deployment. Check that the GHCR package is publicly readable.
+Maintainers publish toolchain versions through **Publish Hyperion Sandbox Image**
+(`publish-hyperion-sandbox-image.yml`). The workflow reads the tag from the selected revision's
+`application-aiworker.yml`; there is no version input. It builds amd64 and arm64 images with the
+same shared publisher as Artemis. Always use a new version; do not overwrite published tags.
+For later versions, change the default in a reviewed branch, publish and qualify that version,
+then merge the default change.
+
+The first `java25-1` publication needs a bootstrap step because GitHub only permits manual
+dispatch after the workflow exists on the default branch:
+
+1. Merge the workflow and default configuration. Keep existing workers on their explicit image
+   configuration; do not deploy workers that rely on the new default yet.
+2. Dispatch **Publish Hyperion Sandbox Image** from that merged revision.
+3. Confirm the GHCR package is publicly readable and qualify the published image on staging.
+4. Deploy workers without an image override.
 
 The sandbox has a separate release lifecycle: ordinary Artemis releases do not publish it.
 When the canonical harness, JDK or dependencies change, build and test a new sandbox version and
@@ -48,7 +57,7 @@ update the shipped default in the same change. Retain previous versions for roll
 For a custom sandbox, build from the repository root:
 
 ```sh
-docker build -f deployment/docker/hyperion/sandbox.Dockerfile -t hyperion-sandbox:local .
+docker build -f deployment/docker/hyperion/Dockerfile -t hyperion-sandbox:local .
 docker image inspect hyperion-sandbox:local --format '{{.Id}}'
 ```
 

@@ -22,7 +22,7 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
 
-class WorkerSandboxImageTest {
+class WorkerSandboxImageResolverTest {
 
     private static final String REFERENCE = "ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-1";
 
@@ -42,7 +42,7 @@ class WorkerSandboxImageTest {
         InspectImageResponse response = image(IMAGE_ID);
         when(inspect.exec()).thenReturn(response);
 
-        assertThat(WorkerSandboxImage.resolve(docker, reference)).isEqualTo(IMAGE_ID);
+        assertThat(WorkerSandboxImageResolver.resolve(docker, reference)).isEqualTo(IMAGE_ID);
         verify(docker, never()).pullImageCmd(any());
     }
 
@@ -58,7 +58,7 @@ class WorkerSandboxImageTest {
             return callback;
         });
 
-        assertThat(WorkerSandboxImage.resolve(docker, REFERENCE)).isEqualTo(IMAGE_ID);
+        assertThat(WorkerSandboxImageResolver.resolve(docker, REFERENCE)).isEqualTo(IMAGE_ID);
         verify(docker).pullImageCmd(REFERENCE);
     }
 
@@ -67,7 +67,7 @@ class WorkerSandboxImageTest {
         when(docker.inspectImageCmd(IMAGE_ID)).thenReturn(inspect);
         when(inspect.exec()).thenThrow(new NotFoundException("missing"));
 
-        assertThatThrownBy(() -> WorkerSandboxImage.resolve(docker, IMAGE_ID)).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> WorkerSandboxImageResolver.resolve(docker, IMAGE_ID)).isInstanceOf(IllegalStateException.class)
                 .hasMessageContainingAll("Local sandbox image", IMAGE_ID, "AI_WORKER_SANDBOX_IMAGE").hasCauseInstanceOf(NotFoundException.class);
         verify(docker, never()).pullImageCmd(any());
     }
@@ -77,7 +77,7 @@ class WorkerSandboxImageTest {
         missingImage();
         when(pull.exec(any())).thenThrow(new NotFoundException("manifest unknown"));
 
-        assertThatThrownBy(() -> WorkerSandboxImage.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> WorkerSandboxImageResolver.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class)
                 .hasMessageContainingAll(REFERENCE, "AI_WORKER_SANDBOX_IMAGE").hasCauseInstanceOf(NotFoundException.class);
     }
 
@@ -89,7 +89,7 @@ class WorkerSandboxImageTest {
         InspectImageResponse response = image(id);
         when(inspect.exec()).thenReturn(response);
 
-        assertThatThrownBy(() -> WorkerSandboxImage.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class).hasMessageContaining("immutable image ID");
+        assertThatThrownBy(() -> WorkerSandboxImageResolver.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class).hasMessageContaining("immutable image ID");
         verify(docker, never()).pullImageCmd(any());
     }
 
@@ -100,7 +100,8 @@ class WorkerSandboxImageTest {
         when(pull.exec(any())).thenReturn(callback);
         when(callback.awaitCompletion(30, TimeUnit.MINUTES)).thenReturn(false);
 
-        assertThatThrownBy(() -> WorkerSandboxImage.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class).hasMessageContaining("did not finish within 30 minutes");
+        assertThatThrownBy(() -> WorkerSandboxImageResolver.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("did not finish within 30 minutes");
         verify(pull).close();
     }
 
@@ -113,8 +114,8 @@ class WorkerSandboxImageTest {
         when(callback.awaitCompletion(30, TimeUnit.MINUTES)).thenThrow(interrupted);
 
         try {
-            assertThatThrownBy(() -> WorkerSandboxImage.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class).hasMessageContaining("Interrupted while pulling")
-                    .hasCause(interrupted);
+            assertThatThrownBy(() -> WorkerSandboxImageResolver.resolve(docker, REFERENCE)).isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Interrupted while pulling").hasCause(interrupted);
             assertThat(Thread.currentThread().isInterrupted()).isTrue();
         }
         finally {
