@@ -275,6 +275,42 @@
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
                 "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
             },
+            "security": {
+                "title": "Sicherheit",
+                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren wird die Sicherheitsrichtlinie aus dem Test-Repository entfernt.",
+                "activateLabel": "Security Framework aktivieren",
+                "subtitle": "Sicherheitsframework für Programmieraufgaben",
+                "frameworkVersion": "Framework-Version",
+                "frameworkVersionHelp": "Die Ares-Version, die in der Build-Datei des Test-Repositorys festgelegt ist. Wähle eine ältere Version nur, wenn die Aufgabe ein älteres Sandbox-Verhalten reproduzieren muss.",
+                "status": {
+                    "inactive": "Inaktiv",
+                    "generating": "Wird erstellt",
+                    "active": "Aktiv",
+                    "deleting": "Wird entfernt",
+                    "error": "Fehler"
+                },
+                "desc": {
+                    "inactive": "Für diese Aufgabe nicht aktiviert. Der Code der Studierenden läuft ohne Sandbox.",
+                    "generating": "Die Sicherheitsrichtlinie wird in das Test-Repository committet.",
+                    "activeEdit": "Sandbox aktiviert. Das Test-Repository enthält die Sicherheitsrichtlinie (SecurityPolicy.yaml) und die Tests setzen sie durch.",
+                    "activeCreate": "Die Sicherheitsrichtlinie der Vorlage ist Teil des Test-Repositorys, mit dem die Aufgabe erstellt wird.",
+                    "deleting": "Das Security Framework wird aus dieser Aufgabe entfernt.",
+                    "error": "Der letzte Vorgang des Security Frameworks ist fehlgeschlagen. Wiederhole ihn, um die Sicherheitsrichtlinie zu synchronisieren."
+                },
+                "sync": {
+                    "inactive": "Keine Sicherheitsrichtlinie im Test-Repository. Beim Aktivieren wird die vorherige Richtlinie wiederhergestellt oder eine Standardrichtlinie erzeugt.",
+                    "generating": "Richtlinie wird in das exercise-tests-Repository committet …",
+                    "active": "Richtlinie ist im Test-Repository committet.",
+                    "activeCreate": "Wird zusammen mit der Aufgabe erstellt.",
+                    "deleting": "Die Sicherheitsrichtlinie wird aus dem Test-Repository entfernt …",
+                    "error": "Synchronisierung fehlgeschlagen · versuche es erneut."
+                },
+                "retry": "Erneut versuchen",
+                "activationFailedOnCreate": "Die Aufgabe wurde erstellt, aber die Einstellung des Security Frameworks konnte nicht angewendet werden. Du kannst sie auf der Bearbeitungsseite der Aufgabe ändern.",
+                "loadError": "Sicherheitsstatus konnte nicht geladen werden.",
+                "latestSuffix": "(neueste)",
+                "deactivateWarning": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der SecurityPolicy.yaml löscht und die @Policy-Annotationen der Tests auf activated = false setzt."
+            },
             "onlineIdeExperienceLevel": {
                 "title": "Anfängliche Erfahrungsstufe in der Online IDE",
                 "notSet": "Nicht festgelegt (Artemis fügt keine Konfiguration hinzu)",

@@ -275,6 +275,42 @@
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
                 "alert": "A valid configuration for the Online IDE must be selected."
             },
+            "security": {
+                "title": "Security",
+                "description": "Ares 2 sandboxes the student code while the tests run. Java exercises start with it activated; deactivating it removes the security policy from the tests repository.",
+                "activateLabel": "Activate Security Framework",
+                "subtitle": "Programming Exercise Security Framework",
+                "frameworkVersion": "Framework version",
+                "frameworkVersionHelp": "The Ares version pinned in the build file of the tests repository. Pin an older version only if the exercise must reproduce an older sandbox behavior.",
+                "status": {
+                    "inactive": "Inactive",
+                    "generating": "Generating",
+                    "active": "Active",
+                    "deleting": "Deleting",
+                    "error": "Error"
+                },
+                "desc": {
+                    "inactive": "Not activated for this exercise. Student code runs without a sandbox.",
+                    "generating": "Committing the security policy to the tests repository.",
+                    "activeEdit": "Sandbox activated. The tests repository contains the security policy (SecurityPolicy.yaml) and the tests enforce it.",
+                    "activeCreate": "The template's security policy is part of the tests repository the exercise is created with.",
+                    "deleting": "Removing the Security Framework from this exercise.",
+                    "error": "The last Security Framework operation failed. Retry it to sync the security policy."
+                },
+                "sync": {
+                    "inactive": "No security policy in the tests repository. Activating restores the previous policy or generates a default one.",
+                    "generating": "Committing policy to the exercise-tests repository…",
+                    "active": "Policy committed to the tests repository.",
+                    "activeCreate": "Created together with the exercise.",
+                    "deleting": "Removing the security policy from the tests repository…",
+                    "error": "Sync failed · retry the operation."
+                },
+                "retry": "Retry",
+                "activationFailedOnCreate": "The exercise was created, but applying the Security Framework setting failed. You can change it on the exercise's edit page.",
+                "loadError": "Couldn't load the security status.",
+                "latestSuffix": "(latest)",
+                "deactivateWarning": "Deactivating creates a commit in the tests repository that deletes SecurityPolicy.yaml and sets the @Policy annotations of the tests to activated = false."
+            },
             "onlineIdeExperienceLevel": {
                 "title": "Starting experience level in the Online IDE",
                 "notSet": "Not set (Artemis adds no configuration)",

@@ -20,6 +20,8 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
+import { SecurityActivationStatus } from 'app/programming/shared/entities/security-framework-config.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -575,6 +577,80 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
+        describe('applies the Security Framework choice made while creating', () => {
+            let securityFrameworkService: SecurityFrameworkService;
+
+            const saveNewJavaExercise = () => {
+                const entity = new ProgrammingExercise(undefined, undefined);
+                entity.releaseDate = dayjs();
+                entity.programmingLanguage = ProgrammingLanguage.JAVA;
+                vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
+                comp.programmingExercise = entity;
+                comp.backupExercise = {} as ProgrammingExercise;
+                comp.programmingExercise.course = course;
+                comp.save();
+            };
+
+            beforeEach(() => {
+                securityFrameworkService = TestBed.inject(SecurityFrameworkService);
+                vi.spyOn(securityFrameworkService, 'activate').mockReturnValue(of({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: '2.2.1' }));
+                vi.spyOn(securityFrameworkService, 'deactivate').mockReturnValue(of({ status: SecurityActivationStatus.INACTIVE }));
+            });
+
+            it('keeps the template setting when nothing was changed', () => {
+                saveNewJavaExercise();
+
+                expect(securityFrameworkService.activate).not.toHaveBeenCalled();
+                expect(securityFrameworkService.deactivate).not.toHaveBeenCalled();
+                expect(comp.isSaving()).toBe(false);
+            });
+
+            it('deactivates the Security Framework after creation when it was turned off', () => {
+                comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+
+                saveNewJavaExercise();
+
+                expect(securityFrameworkService.deactivate).toHaveBeenCalledWith(2);
+                expect(securityFrameworkService.activate).not.toHaveBeenCalled();
+                expect(comp.isSaving()).toBe(false);
+            });
+
+            it('does not apply a choice to a black-box exercise', () => {
+                comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+                const entity = new ProgrammingExercise(undefined, undefined);
+                entity.releaseDate = dayjs();
+                entity.programmingLanguage = ProgrammingLanguage.JAVA;
+                entity.projectType = ProjectType.MAVEN_BLACKBOX;
+                vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
+                comp.programmingExercise = entity;
+                comp.backupExercise = {} as ProgrammingExercise;
+                comp.programmingExercise.course = course;
+
+                comp.save();
+
+                expect(securityFrameworkService.deactivate).not.toHaveBeenCalled();
+            });
+
+            it('pins the chosen version after creation when it stays on', () => {
+                comp.stagedSecurityChoice.set({ active: true, frameworkVersion: '2.3.0' });
+
+                saveNewJavaExercise();
+
+                expect(securityFrameworkService.activate).toHaveBeenCalledWith(2, '2.3.0');
+            });
+
+            it('warns but still finishes saving when applying the choice fails', () => {
+                vi.spyOn(securityFrameworkService, 'deactivate').mockReturnValue(throwError(() => new Error('PUSH_FAILED')));
+                const alertSpy = vi.spyOn(alertService, 'addAlert');
+                comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+
+                saveNewJavaExercise();
+
+                expect(alertSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'artemisApp.programmingExercise.security.activationFailedOnCreate' }));
+                expect(comp.isSaving()).toBe(false);
+            });
+        });
+
         it('creates normal repositories when whole-exercise generation is off', () => {
             vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
             const entity = new ProgrammingExercise(course, undefined);
@@ -818,6 +894,26 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+        });
+
+        it('should drop a staged Security Framework choice when switching to the black-box project type', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+
+            comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
+
+            expect(comp.stagedSecurityChoice()).toBeUndefined();
+        });
+
+        it('should drop a staged Security Framework choice when the language changes away from Java', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.stagedSecurityChoice.set({ active: false, frameworkVersion: '2.2.1' });
+
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
+
+            expect(comp.stagedSecurityChoice()).toBeUndefined();
         });
 
         it('should reset sca settings if new programming language does not support sca', () => {

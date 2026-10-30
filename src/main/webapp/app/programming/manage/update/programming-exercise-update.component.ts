@@ -20,6 +20,7 @@ import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators'
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -52,6 +53,9 @@ import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
+import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
+import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
+import { SecurityFrameworkConfig, SecurityStagedChoice } from 'app/programming/shared/entities/security-framework-config.model';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
@@ -109,6 +113,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseModeComponent,
         ProgrammingExerciseLanguageComponent,
+        ProgrammingExerciseSecurityComponent,
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
         ProgrammingExerciseGradingComponent,
@@ -125,11 +130,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly courseService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
+    private readonly securityFrameworkService = inject(SecurityFrameworkService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly fileService = inject(FileService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -159,6 +166,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
+    /** Create-mode Security Framework choice, owned here so it is applied after the exercise has been created. Undefined keeps the template's setting. */
+    readonly stagedSecurityChoice = signal<SecurityStagedChoice | undefined>(undefined);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
@@ -331,6 +340,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public theiaEnabled = false;
+    readonly securityFrameworkInstructor = computed(() => this.accountService.isAtLeastInstructorInCourseWithId(this.courseId()));
     readonly plagiarismEnabled = signal(false);
 
     // Additional options for import
@@ -508,6 +518,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     set selectedProjectType(type: ProjectType) {
         // update the (selected) project type
         this.updateProjectTypeSettings(type);
+        // The black-box template has no Ares setup, so a staged Security Framework choice cannot be applied to it.
+        if (type === ProjectType.MAVEN_BLACKBOX) {
+            this.stagedSecurityChoice.set(undefined);
+        }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
@@ -624,6 +638,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     }),
                     switchMap(() => this.activatedRoute.params),
                     tap((params) => {
+                        // Normalize the course id to a number so instructor-role checks (numeric course-role ids) match on every route (course, exam, import).
+                        if (params['courseId'] !== undefined) {
+                            this.courseId.set(Number(params['courseId']));
+                        }
                         if (this.isImportFromFile) {
                             this.createProgrammingExerciseForImportFromFile();
                         }
@@ -648,11 +666,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 });
                                 // we need the course id  to make the request to the server if it's an import from file
                                 if (this.isImportFromFile || this.isImportFromSharing) {
-                                    this.courseId.set(params['courseId']);
+                                    this.courseId.set(Number(params['courseId']));
                                     this.loadCourseExerciseCategories(params['courseId']);
                                 }
                             } else if (params['courseId']) {
-                                this.courseId.set(params['courseId']);
+                                this.courseId.set(Number(params['courseId']));
                                 this.isExamMode.set(false);
                                 this.courseService.find(this.courseId()).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;
@@ -1081,16 +1099,51 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private onSaveSuccess(exercise: ProgrammingExercise) {
-        this.isSaving.set(false);
+        this.commitStagedSecurityThenNavigate(exercise, () => this.navigateAfterSave(exercise));
+    }
 
+    private navigateAfterSave(exercise: ProgrammingExercise) {
         if (this.goBackAfterSaving) {
             this.navigationUtilService.navigateBack();
-
             return;
         }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
         this.calendarService.reloadEvents();
+    }
+
+    /**
+     * Applies the Security Framework choice made during create mode (no-op in edit mode or when the
+     * instructor kept the template's setting), then runs {@link navigate}. The form stays locked
+     * (isSaving) until the change settles, and the instructor is warned if it failed instead of
+     * navigating away as if it had been applied.
+     */
+    private commitStagedSecurityThenNavigate(exercise: ProgrammingExercise, navigate: () => void) {
+        const staged = this.stagedSecurityChoice();
+        let apply: Observable<SecurityFrameworkConfig> | undefined;
+        if (staged && exercise.id !== undefined && exercise.programmingLanguage === ProgrammingLanguage.JAVA && exercise.projectType !== ProjectType.MAVEN_BLACKBOX) {
+            if (!staged.active) {
+                apply = this.securityFrameworkService.deactivate(exercise.id);
+            } else if (staged.frameworkVersion) {
+                apply = this.securityFrameworkService.activate(exercise.id, staged.frameworkVersion);
+            }
+        }
+        const commitStagedSecurity = apply
+            ? apply.pipe(
+                  map(() => true),
+                  catchError(() => of(false)),
+              )
+            : of(true);
+        commitStagedSecurity.subscribe((activated) => {
+            this.isSaving.set(false);
+            if (!activated) {
+                this.alertService.addAlert({
+                    type: AlertType.WARNING,
+                    message: 'artemisApp.programmingExercise.security.activationFailedOnCreate',
+                });
+            }
+            navigate();
+        });
     }
 
     private onSaveError(error: HttpErrorResponse) {
@@ -1131,6 +1184,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         // Select the correct pattern
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
+        // The Security Framework only supports Java, so discard any staged choice when switching to another
+        // language. Otherwise it would survive the (hidden) security card and trigger a doomed request on save.
+        if (language !== ProgrammingLanguage.JAVA) {
+            this.stagedSecurityChoice.set(undefined);
+        }
         return language;
     }
 
