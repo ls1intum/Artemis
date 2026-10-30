@@ -328,7 +328,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
-        void updateSession_asTutorOfGroupWithoutOverlappingFreePeriod_shouldReturnOk() throws Exception {
+        void updateSession_withManualCancellation_shouldKeepItCancelled() throws Exception {
+            // The first session is manually cancelled in the setup (CANCELLED without a free period). Editing it to a slot without an
+            // overlapping free period must keep the manual cancellation rather than silently reactivating it.
             var session = firstCourseTutorialGroup1Sessions.getFirst();
             CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
@@ -340,11 +342,31 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             assertThat(sessionDTO.start()).isEqualTo(ZonedDateTime.of(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00, ZoneId.of(exampleTimeZone)));
             assertThat(sessionDTO.end()).isEqualTo(ZonedDateTime.of(FIRST_SEPTEMBER_MONDAY, SESSION_END_12_00, ZoneId.of(exampleTimeZone)));
             assertThat(sessionDTO.location()).isEqualTo(SESSION_LOCATION);
-            assertThat(sessionDTO.isCancelled()).isFalse();
-            assertThat(sessionDTO.locationChanged()).isTrue();
-            assertThat(sessionDTO.timeChanged()).isTrue();
-            assertThat(sessionDTO.dateChanged()).isFalse();
+            assertThat(sessionDTO.isCancelled()).isTrue();
             assertThat(sessionDTO.attendanceCount()).isNull();
+            TutorialGroupSession updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+            assertThat(updatedSession.getStatus()).isEqualTo(TutorialGroupSessionStatus.CANCELLED);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void updateSession_withFreePeriodCancellation_whenMovedOutOfFreePeriod_shouldReactivate() throws Exception {
+            var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_AUGUST_MONDAY_13_00, FIRST_AUGUST_MONDAY_14_00, "Holiday");
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            session.setStatus(TutorialGroupSessionStatus.CANCELLED);
+            session.setTutorialGroupFreePeriod(freePeriod);
+            tutorialGroupSessionRepository.save(session);
+
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+                    SESSION_END_12_00, SESSION_LOCATION, null);
+            TutorialGroupSessionDTO sessionDTO = request.putWithResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    tutorialGroupSessionDTO, TutorialGroupSessionDTO.class, HttpStatus.OK);
+
+            assertThat(sessionDTO.isCancelled()).isFalse();
+            TutorialGroupSession updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+            assertThat(updatedSession.getStatus()).isEqualTo(TutorialGroupSessionStatus.ACTIVE);
+            assertThat(updatedSession.getTutorialGroupFreePeriod()).isNull();
         }
 
         @Test

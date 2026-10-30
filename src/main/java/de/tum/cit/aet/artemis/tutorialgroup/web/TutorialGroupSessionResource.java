@@ -219,7 +219,7 @@ public class TutorialGroupSessionResource {
      * @param tutorialGroupId the id of the tutorial group to which the session belongs to
      * @param sessionId       the id of the session to cancel
      * @param explanation     the explanation for the cancellation
-     * @return ResponseEntity with status 200 (OK) and in the body the cancelled tutorial group session
+     * @return ResponseEntity with status 204 (NO_CONTENT)
      */
     @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
@@ -254,7 +254,7 @@ public class TutorialGroupSessionResource {
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the session belongs to
      * @param sessionId       the id of the session to activate
-     * @return ResponseEntity with status 200 (OK) and in the body the activated tutorial group session
+     * @return ResponseEntity with status 204 (NO_CONTENT)
      */
     @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
