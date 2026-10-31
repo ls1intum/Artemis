@@ -14,6 +14,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.exc.MismatchedInputException;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -82,8 +86,33 @@ public record GeneratedTestPlan(List<Entry> tests) {
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record RawEntry(@Nullable Object name, @Nullable Object seam, @Nullable Object purpose, @Nullable Object seamWeightTier, @Nullable Object weight,
-            @Nullable Object visibility, @Nullable Object riskPartitions) {
+    private record RawEntry(@Nullable Object name, @Nullable Object seam, @Nullable @JsonDeserialize(using = PresentValueDeserializer.class) Object purpose,
+            @Nullable @JsonDeserialize(using = PresentValueDeserializer.class) Object seamWeightTier, @Nullable Object weight, @Nullable Object visibility,
+            @Nullable @JsonDeserialize(using = PresentValueDeserializer.class) Object riskPartitions) {
+    }
+
+    private enum ExplicitNull {
+        VALUE
+    }
+
+    /** Keeps an explicitly unusable value distinct from an omitted optional field until entry validation can name it. */
+    static final class PresentValueDeserializer extends ValueDeserializer<Object> {
+
+        @Override
+        public Object deserialize(JsonParser parser, DeserializationContext context) {
+            return context.readValue(parser, Object.class);
+        }
+
+        @Override
+        public Object getNullValue(DeserializationContext context) {
+            return ExplicitNull.VALUE;
+        }
+
+        @Override
+        @Nullable
+        public Object getAbsentValue(DeserializationContext context) {
+            return null;
+        }
     }
 
     /**
