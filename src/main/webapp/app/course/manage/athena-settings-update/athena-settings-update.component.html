@@ -1,0 +1,34 @@
+<div *titleBarTitle class="flex items-center">
+    <jhi-course-title-bar-title title="artemisApp.course.athenaConfig.settingsPage.title" />
+</div>
+
+<!-- Width, spacing and row surface follow Iris's settings page, so the two AI-feedback settings pages look alike. -->
+<div class="mx-auto flex max-w-[800px] flex-col gap-4! pt-4!">
+    @if (loadFailed()) {
+        <!-- Without the stored configuration the switches would show a state the course may not have, so none are shown. -->
+        <tumaet-ui-message severity="error" data-testid="athena-settings-load-failed">
+            <span jhiTranslate="artemisApp.course.athenaConfig.loadFailed"></span>
+        </tumaet-ui-message>
+    } @else {
+        @for (feature of features; track feature.key) {
+            @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
+            <div class="flex items-start gap-3! rounded-lg border border-solid border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-6 py-5!">
+                <tumaet-ui-toggle-switch
+                    class="shrink-0"
+                    [inputId]="feature.testId + '-toggle'"
+                    [ngModel]="feature.enabled()"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="!loaded()"
+                    (changed)="setEnabled(feature.key, $event)"
+                    [ariaLabel]="featureKey + '.label' | artemisTranslate"
+                    [attr.data-testid]="feature.testId"
+                />
+                <!-- The title and hint describe the current state; the switch itself keeps the constant feature name. -->
+                <label [class.cursor-pointer]="loaded()" [for]="feature.testId + '-toggle'">
+                    <span [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledLabel' : '.disabledLabel')"></span>
+                    <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"></small>
+                </label>
+            </div>
+        }
+    }
+</div>

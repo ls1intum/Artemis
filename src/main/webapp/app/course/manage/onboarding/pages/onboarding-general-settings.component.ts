@@ -25,6 +25,7 @@ import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/abou
 import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
 import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',
@@ -42,6 +43,7 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
         IrisLogoComponent,
         EnabledToggleComponent,
         AthenaLogoComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
@@ -71,6 +73,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly athenaConfig = computed(() => this.athenaState()?.config());
     readonly isAthenaFormativeEnabled = computed(() => this.athenaState()?.formativeFeedbackEnabled() ?? false);
     readonly isAthenaGradingEnabled = computed(() => this.athenaState()?.gradingFeedbackEnabled() ?? false);
+    /** Until the configuration has loaded, "Disabled" is only a fallback, so the Athena toggles cannot be switched yet. */
+    readonly isAthenaLoaded = computed(() => this.athenaState()?.loaded() ?? false);
+    readonly isAthenaLoadFailed = computed(() => this.athenaState()?.loadFailed() ?? false);
 
     /** The two Athena toggle rows, rendered by one @for so the markup stays in a single place. */
     protected readonly athenaFeatures = [
