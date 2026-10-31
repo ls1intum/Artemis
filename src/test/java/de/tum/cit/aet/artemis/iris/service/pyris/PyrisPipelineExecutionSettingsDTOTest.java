@@ -16,14 +16,14 @@ class PyrisPipelineExecutionSettingsDTOTest {
 
     @Test
     void carriesSupportLevel() {
-        var dto = new PyrisPipelineExecutionSettingsDTO("token", null, "https://artemis.example", "default", "high");
+        var dto = new PyrisPipelineExecutionSettingsDTO("run-1", "token", null, "https://artemis.example", "default", "high");
 
         assertThat(dto.supportLevel()).isEqualTo("high");
     }
 
     @Test
     void serializesSupportLevel() throws JacksonException {
-        var dto = new PyrisPipelineExecutionSettingsDTO("token", null, "https://artemis.example", "default", "low");
+        var dto = new PyrisPipelineExecutionSettingsDTO("run-1", "token", null, "https://artemis.example", "default", "low");
 
         String serialized = objectMapper.writeValueAsString(dto);
 
@@ -32,7 +32,7 @@ class PyrisPipelineExecutionSettingsDTOTest {
 
     @Test
     void serializesStreamResponseWhenEnabled() throws JacksonException {
-        var dto = new PyrisPipelineExecutionSettingsDTO("token", null, "https://artemis.example", "default", "low", true);
+        var dto = new PyrisPipelineExecutionSettingsDTO("run-1", "token", null, "https://artemis.example", "default", "low", true);
 
         String serialized = objectMapper.writeValueAsString(dto);
 
@@ -41,10 +41,26 @@ class PyrisPipelineExecutionSettingsDTOTest {
 
     @Test
     void omitsStreamResponseWhenUnset() throws JacksonException {
-        var dto = new PyrisPipelineExecutionSettingsDTO("token", null, "https://artemis.example", "default", "low");
+        var dto = new PyrisPipelineExecutionSettingsDTO("run-1", "token", null, "https://artemis.example", "default", "low");
 
         String serialized = objectMapper.writeValueAsString(dto);
 
         assertThat(serialized).doesNotContain("streamResponse");
+    }
+
+    @Test
+    void serializesRunIdAndTokenAsSeparateFields() throws JacksonException {
+        var dto = new PyrisPipelineExecutionSettingsDTO("run-1", "secret-token", null, "https://artemis.example", "default", "low");
+
+        String serialized = objectMapper.writeValueAsString(dto);
+
+        assertThat(serialized).contains("\"runId\":\"run-1\"").contains("\"authenticationToken\":\"secret-token\"");
+    }
+
+    @Test
+    void toStringHidesTheToken() {
+        var dto = new PyrisPipelineExecutionSettingsDTO("run-1", "secret-token", null, "https://artemis.example", "default", "low");
+
+        assertThat(dto.toString()).contains("run-1").doesNotContain("secret-token");
     }
 }

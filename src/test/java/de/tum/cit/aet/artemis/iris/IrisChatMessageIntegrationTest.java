@@ -28,6 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -66,6 +67,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
@@ -82,6 +84,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
@@ -181,6 +184,59 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING), messageDTO("Hello World"));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_sendsThePlainRunIdButNeverTheCallbackTokenToTheClient() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        var sentSettings = new AtomicReference<PyrisPipelineExecutionSettingsDTO>();
+
+        mockChatResponse(dto -> {
+            sentSettings.set(dto.settings());
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var settings = sentSettings.get();
+        assertThat(settings.runId()).isNotBlank();
+        assertThat(settings.authenticationToken()).isNotBlank().isNotEqualTo(settings.runId());
+        User user = userTestRepository.findByIdElseThrow(session.getUserId());
+        verifyMessageWasSentOverWebsocket(user.getLogin(), String.valueOf(session.getId()),
+                payload -> payload instanceof IrisChatWebsocketDTO dto && dto.message() == null && settings.runId().equals(dto.runId()) && dto.runState() == RUNNING);
+        assertNoWebsocketPayloadContains(settings.authenticationToken());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void statusCallback_withThePlainRunIdAsCredential_isRejected() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String runId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        var headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + runId);
+
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + runId + "/status", new PyrisChatStatusUpdateDTO("Injected", FINISHED, null, null, null, null),
+                HttpStatus.FORBIDDEN, headers);
+
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        assertThat(pyrisJobService.getJob(runId)).as("a rejected callback leaves the run alone").isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void statusCallback_withAnotherRunsToken_isRejected() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String runA = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        String runB = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + runB + "/status", new PyrisChatStatusUpdateDTO("Injected", FINISHED, null, null, null, null),
+                HttpStatus.CONFLICT, pyrisCallbackCredentials(runA).headers());
+
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+    }
+
     @ParameterizedTest
     @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -212,13 +268,12 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
         mockChatResponse(dto -> {
-            String jobId = dto.settings().authenticationToken();
+            var callback = pyrisCallbackCredentials(dto.settings().authenticationToken());
             ObjectNode body = JsonObjectMapper.get().valueToTree(new PyrisChatStatusUpdateDTO("Hello World", FINISHED, null, null, null, null));
             body.putArray("accessedMemories").addObject().put("id", "m1").put("title", "Memory").put("content", "Content");
             body.putArray("createdMemories").addObject().put("id", "m2").put("title", "Memory").put("content", "Content");
-            var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-            assertThatNoException()
-                    .isThrownBy(() -> request.postStringWithoutLocation("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status", body.toString(), HttpStatus.OK, headers));
+            assertThatNoException().isThrownBy(() -> request.postStringWithoutLocation("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status", body.toString(),
+                    HttpStatus.OK, callback.headers()));
             pipelineDone.set(true);
         });
 
@@ -758,9 +813,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
         irisChatSessionRepository.deleteById(session.getId());
 
-        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, headers);
+        var callback = pyrisCallbackCredentials(jobId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
+                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, callback.headers());
 
         assertThat(pyrisJobService.getJob(jobId)).isNull();
     }
@@ -1684,9 +1739,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     }
 
     private void sendStatus(String jobId, String result, PyrisRunState runState, String sessionTitle, List<String> suggestions) throws Exception {
-        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, runState, null, sessionTitle, suggestions, null), HttpStatus.OK, headers);
+        var callback = pyrisCallbackCredentials(jobId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
+                new PyrisChatStatusUpdateDTO(result, runState, null, sessionTitle, suggestions, null), HttpStatus.OK, callback.headers());
     }
 
     private static String messagesUrl(IrisChatSession session) {

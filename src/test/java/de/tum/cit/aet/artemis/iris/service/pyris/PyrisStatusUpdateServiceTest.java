@@ -158,7 +158,7 @@ class PyrisStatusUpdateServiceTest {
 
     @Test
     void globalSearchEntitySourcesAreForwardedOnTheTerminalUpdate() {
-        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var job = new GlobalSearchAnswerJob("global-run", "student1", "invocation-1");
         var entitySource = new PyrisEntitySourceDTO("exercise", 42L, new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), "W03E03 Flyweight Pattern",
                 "Programming exercise: 'W03E03 Flyweight Pattern'", "/courses/9/exercises/42", "programming");
         var terminalUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "answer.[1]", null, null, null, List.of(entitySource));
@@ -172,7 +172,7 @@ class PyrisStatusUpdateServiceTest {
 
     @Test
     void globalSearchCitationSourceTypesAreForwardedOnTheTerminalUpdate() {
-        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var job = new GlobalSearchAnswerJob("global-run", "student1", "invocation-1");
         var entitySource = new PyrisEntitySourceDTO("exercise", 42L, new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), "W03E03 Flyweight Pattern",
                 "Programming exercise: 'W03E03 Flyweight Pattern'", "/courses/9/exercises/42", "programming");
         var terminalUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "About the course.[1] About the slide.[2]", null, null, null,
@@ -187,7 +187,7 @@ class PyrisStatusUpdateServiceTest {
 
     @Test
     void globalSearchKeepsTheCitedMaterialVersionsOnlyForAnAnswer() {
-        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var job = new GlobalSearchAnswerJob("global-run", "student1", "invocation-1");
         var source = new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), new PyrisLectureSearchResultDTO.LectureDTO(3L, "W03"),
                 new PyrisLectureSearchResultDTO.LectureUnitDTO(42L, "Slides", "/courses/9/lectures/3", 4, "slide", Map.of("unit", 42, "page", 4), null), "snippet");
 
@@ -200,7 +200,7 @@ class PyrisStatusUpdateServiceTest {
 
     @Test
     void globalSearchPartialResultIsForwardedAsStreamedDraft() {
-        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var job = new GlobalSearchAnswerJob("global-run", "student1", "invocation-1");
         var partialUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, "Signals are reactive.[1]", 3);
 
         service.handleStatusUpdate(job, partialUpdate);
@@ -216,7 +216,7 @@ class PyrisStatusUpdateServiceTest {
         // partialResult; it must be translated to clearDraft=true with partialResult omitted, since an
         // empty string would not survive IrisGlobalSearchAnswerWebsocketDTO's NON_EMPTY serialization
         // and would reach the client indistinguishable from "no partial result in this message".
-        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var job = new GlobalSearchAnswerJob("global-run", "student1", "invocation-1");
         var clearUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, "", 4);
 
         service.handleStatusUpdate(job, clearUpdate);
@@ -228,7 +228,7 @@ class PyrisStatusUpdateServiceTest {
 
     @Test
     void globalSearchStageIsForwardedOnAThinkingUpdateWithNoPartialResultYet() {
-        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var job = new GlobalSearchAnswerJob("global-run", "student1", "invocation-1");
         var stagedUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, null, null, null, "searching", null);
 
         service.handleStatusUpdate(job, stagedUpdate);
@@ -240,7 +240,7 @@ class PyrisStatusUpdateServiceTest {
 
     @Test
     void globalSearchStageSourcesAreForwardedAlongsideTheFoundStage() {
-        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var job = new GlobalSearchAnswerJob("global-run", "student1", "invocation-1");
         var stagedUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, null, null, null, "found",
                 List.of("Advanced Algorithms", "Software Engineering"));
 
@@ -253,7 +253,7 @@ class PyrisStatusUpdateServiceTest {
 
     @Test
     void globalSearchThinkingIsDerivedFromRunState() {
-        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var job = new GlobalSearchAnswerJob("global-run", "student1", "invocation-1");
         var runningUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null);
 
         service.handleStatusUpdate(job, runningUpdate);
@@ -270,7 +270,7 @@ class PyrisStatusUpdateServiceTest {
                 eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer", null)));
         verify(pyrisJobService).finishGlobalSearchAnswerJob(job, null, true);
 
-        var failedJob = new GlobalSearchAnswerJob("global-failed-run", "student1");
+        var failedJob = new GlobalSearchAnswerJob("global-failed-run", "student1", "invocation-1");
         var failedUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FAILED, null, null, null);
 
         service.handleStatusUpdate(failedJob, failedUpdate);
@@ -333,7 +333,7 @@ class PyrisStatusUpdateServiceTest {
         verify(competencyGenerationService).handleStatusUpdate(competencyJob, normalizedCompetencyUpdate);
         verify(pyrisJobService).removeJob(competencyJob);
 
-        var globalJob = new GlobalSearchAnswerJob("global-null", "student1");
+        var globalJob = new GlobalSearchAnswerJob("global-null", "student1", "invocation-1");
 
         service.handleStatusUpdate(globalJob, new PyrisGlobalSearchAnswerStatusUpdateDTO(null, null, null, null));
 
