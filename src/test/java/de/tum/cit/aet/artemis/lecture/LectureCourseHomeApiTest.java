@@ -7,11 +7,14 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.api.LectureCourseHomeApi;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -29,6 +32,9 @@ class LectureCourseHomeApiTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private LectureUnitRepository units;
+
+    @Autowired
+    private AttachmentRepository attachments;
 
     private Course course;
 
@@ -60,6 +66,35 @@ class LectureCourseHomeApiTest extends AbstractSpringIntegrationIndependentTest 
         lectures.createLecture(course, base.plusHours(1), base.plusHours(2));
         var result = home.load(course.getId(), userUtilService.getUserByLogin(PREFIX + "student1"), Instant.now(), base.minusDays(7).toInstant());
         assertThat(result.items()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void materialIsNewAfterTheLaterUnitOrAttachmentRelease(boolean unitReleasesLast) {
+        var lecture = lectures.createLecture(course);
+        var unit = lectures.createAttachmentVideoUnit(lecture, false);
+        var earlier = base.plusDays(1);
+        var later = base.plusDays(3);
+        var previousVisit = base.plusDays(2).toInstant();
+        unit.setCreatedDate(base.minusDays(5));
+        unit.setReleaseDate(unitReleasesLast ? later : earlier);
+        units.saveAndFlush(unit);
+        var attachment = unit.getAttachment();
+        attachment.setReleaseDate(unitReleasesLast ? earlier : later);
+        attachment.setUploadDate(base.minusDays(5));
+        attachments.saveAndFlush(attachment);
+        var user = userUtilService.getUserByLogin(PREFIX + "student1");
+
+        var beforeRelease = home.load(course.getId(), user, previousVisit, base.minusDays(7).toInstant());
+        assertThat(beforeRelease.items()).isEmpty();
+        assertThat(beforeRelease.nextRefreshAt()).isEqualTo(later.toInstant());
+
+        var afterRelease = home.load(course.getId(), user, later.toInstant(), previousVisit);
+        assertThat(afterRelease.items()).singleElement().satisfies(item -> {
+            assertThat(item.target().id()).isEqualTo(lecture.getId());
+            assertThat(item.reason()).isEqualTo("NEW_LECTURE");
+            assertThat(item.updatedAt()).isEqualTo(later.toInstant());
+        });
     }
 
     @Test
