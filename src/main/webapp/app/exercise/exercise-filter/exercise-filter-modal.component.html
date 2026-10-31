@@ -25,6 +25,7 @@
                     name="category-filter-selection"
                     [(ngModel)]="model"
                     [ngbTypeahead]="search"
+                    jhiTypeaheadScrollActiveOption
                     [placeholder]="
                         (!selectableCategoryOptions().length ? 'artemisApp.courseOverview.exerciseFilter.noMoreOptions' : 'artemisApp.exercise.selectCategories') | artemisTranslate
                     "
