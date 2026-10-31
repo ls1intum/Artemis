@@ -170,26 +170,6 @@
                 "connectedCompetencies": "Linked Competencies",
                 "explanation": "This lecture content helps you to achieve the following competencies: ",
                 "noCompetencies": "No competencies are linked with this lecture content! "
-            },
-            "relation": {
-                "competencyRelations": "Competency Relations",
-                "tailCompetency": "Tail Competency",
-                "relationType": "Relation Type",
-                "headCompetency": "Head Competency",
-                "createRelation": "Create Relation",
-                "createsCircularRelation": "You can not create circular relations between competencies.",
-                "selfRelation": "You can not create a relation between a competency and itself.",
-                "relationAlreadyExists": "This relation already exists.",
-                "type": {
-                    "ASSUMES": "Requires",
-                    "EXTENDS": "Extends",
-                    "MATCHES": "Matches"
-                },
-                "typeExplanation": {
-                    "ASSUMES": "The head competency requires the student to master the tail competency and teaches new knowledge that builds upon the tail competency.",
-                    "EXTENDS": "The head competency requires the student to master the tail competency and deepens that knowledge further.",
-                    "MATCHES": "The head and tail competency match and cover the same knowledge."
-                }
             }
         },
         "courseCompetency": {
