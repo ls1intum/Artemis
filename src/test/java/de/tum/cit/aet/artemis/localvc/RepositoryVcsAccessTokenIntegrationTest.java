@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -20,6 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.UserActivity;
+import de.tum.cit.aet.artemis.account.repository.UserActivityRepository;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -74,6 +77,13 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     @Autowired
     private UserActivityService userActivityService;
 
+    @Autowired
+    private UserActivityRepository userActivityRepository;
+
+    private Optional<UserActivity> tutorActivityBeforeTest = Optional.empty();
+
+    private boolean restoreTutorActivity;
+
     private ProgrammingExercise exercise;
 
     private Course course;
@@ -83,6 +93,8 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        restoreTutorActivity = false;
+        tutorActivityBeforeTest = userActivityRepository.findByUserId(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId());
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         long exerciseId = programmingExerciseRepository.findAllWithCategoriesByCourseId(course.getId()).getFirst().getId();
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId).orElseThrow();
@@ -104,6 +116,12 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         // The base repository URIs are reused across test methods, but tokens are unique per (user, repository URI). Remove this test's tokens (scoped to its exercise) so they do
         // not leak into the next method and make an otherwise-empty lookup return a stale token.
         repositoryVcsAccessTokenService.deleteByExerciseId(exercise.getId());
+        // The tutor is reused across methods. Restore its activity, including absence of a row,
+        // so stale-session checks cannot backdate credentials for later tests.
+        if (restoreTutorActivity) {
+            tutorActivityBeforeTest.ifPresentOrElse(userActivityRepository::save,
+                    () -> userActivityRepository.deleteById(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId()));
+        }
     }
 
     @Test
@@ -242,8 +260,10 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createRepositoryVcsAccessToken_isRefusedForASessionThatPredatesTheCredentialsChange() throws Exception {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        userActivityService.recordCredentialsChanged(tutor.getId(), Instant.now());
-        SessionTestUtil.actAsSessionStartedAt(tutor.getLogin(), Instant.now().minus(Duration.ofHours(1)));
+        Instant credentialsChangedAt = Instant.parse("2026-01-01T12:00:00Z");
+        restoreTutorActivity = true;
+        userActivityService.recordCredentialsChanged(tutor.getId(), credentialsChangedAt);
+        SessionTestUtil.actAsSessionStartedAt(tutor.getLogin(), credentialsChangedAt.minus(Duration.ofHours(1)));
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
 
         request.put(url, null, HttpStatus.UNAUTHORIZED);
@@ -261,6 +281,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
         Instant credentialsChangedAt = Instant.parse("2026-01-01T12:00:00Z");
+        restoreTutorActivity = true;
         userActivityService.recordCredentialsChanged(tutor.getId(), credentialsChangedAt);
         SessionTestUtil.actAsSessionStartedAt(tutor.getLogin(), credentialsChangedAt.minus(Duration.ofHours(1)));
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
