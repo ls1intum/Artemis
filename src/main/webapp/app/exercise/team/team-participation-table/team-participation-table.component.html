@@ -52,26 +52,26 @@
 </ng-template>
 
 <ng-template #assessmentTemplate let-cell>
-    <div class="d-flex justify-content-start align-items-center gap-2">
+    <div class="flex justify-start items-center gap-2">
         <button
+            tumAetUiButton
             type="button"
-            pButton
             severity="warn"
             size="small"
             [disabled]="isAssessmentButtonDisabled(cell.data, cell.data.submission)"
-            [pTooltip]="
+            [tumAetUiTooltip]="
                 isAssessmentButtonDisabled(cell.data, cell.data.submission)
                     ? ('artemisApp.team.detail.participationsTable.columns.assessment.tooltip' | artemisTranslate)
                     : undefined
             "
-            tooltipPosition="left"
+            tumAetUiTooltipPosition="left"
             (click)="openAssessmentEditor(cell.data, cell.data.participation!, cell.data.submission ?? 'new')"
         >
-            <i class="pi pi-folder-open me-1"></i>
+            <fa-icon [icon]="faFolderOpen" class="me-1" />
             {{ 'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(cell.data.submission) + 'Assessment' | artemisTranslate }}
         </button>
         @if (cell.data.submission?.result?.hasComplaint) {
-            <i class="pi pi-flag" [pTooltip]="'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | artemisTranslate"></i>
+            <fa-icon [icon]="faFlag" [tumAetUiTooltip]="'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | artemisTranslate" />
         }
     </div>
 </ng-template>
