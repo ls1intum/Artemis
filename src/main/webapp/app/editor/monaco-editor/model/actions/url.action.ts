@@ -1,8 +1,42 @@
 import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
-import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
+import { isHttpUrl, sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
+import { TranslateService } from '@ngx-translate/core';
+
+interface CodeFence {
+    marker: string;
+    length: number;
+    info: string;
+}
+
+/**
+ * Reads a Markdown code fence line: at most three spaces, then at least three backticks or tildes, then an optional info string,
+ * which may not contain a backtick after a backtick fence.
+ * @param line The line to read.
+ * @return the fence's character, length and the text after it, or undefined if the line is no code fence.
+ */
+function readCodeFence(line: string): CodeFence | undefined {
+    let indent = 0;
+    while (line[indent] === ' ') {
+        indent++;
+    }
+    const marker = line[indent];
+    if (indent > 3 || (marker !== '`' && marker !== '~')) {
+        return undefined;
+    }
+    let end = indent;
+    while (line[end] === marker) {
+        end++;
+    }
+    const info = line.slice(end);
+    if (end - indent < 3 || (marker === '`' && info.includes('`'))) {
+        return undefined;
+    }
+    return { marker, length: end - indent, info };
+}
 
 interface UrlArguments {
     text: string;
@@ -18,12 +52,33 @@ export class UrlAction extends TextStyleTextEditorAction {
     static readonly DEFAULT_LINK_PLACEHOLDER = 'https://';
     static readonly DEFAULT_INSERT_TEXT = `[🔗 ${this.DEFAULT_LINK_TEXT}](${this.DEFAULT_LINK_PLACEHOLDER})`;
 
+    private disposablePasteInterceptor?: Disposable;
+
     constructor(private canExecute: () => boolean = () => true) {
         super(UrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined);
     }
 
     setExecutionGuard(canExecute: () => boolean): void {
         this.canExecute = canExecute;
+    }
+
+    /**
+     * Registers the action with the given editor and adds a paste interceptor that turns the selected text into a link when a URL is pasted over it.
+     * @param editor The editor to register the action in.
+     * @param translateService The translation service to use for translating the action label.
+     */
+    override register(editor: TextEditor, translateService: TranslateService) {
+        super.register(editor, translateService);
+        this.disposablePasteInterceptor = editor.addPasteInterceptor((pastedText) => this.wrapSelectionWithPastedUrl(editor, pastedText));
+    }
+
+    /**
+     * Disposes the action and removes the paste interceptor from the editor it was registered in.
+     */
+    override dispose() {
+        super.dispose();
+        this.disposablePasteInterceptor?.dispose();
+        this.disposablePasteInterceptor = undefined;
     }
 
     /**
@@ -55,6 +110,63 @@ export class UrlAction extends TextStyleTextEditorAction {
             this.replaceTextAtCurrentSelection(editor, `[${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }
         editor.focus();
+    }
+
+    /**
+     * If the pasted text is a single http(s) URL and text on one line is selected, replaces the selection with "[selectedText](url)"
+     * and places the cursor after the link. The selected text is kept as it is, only its backslashes and square brackets are escaped.
+     * The paste is left to the editor if the action may not run, or if the selection is blank, is itself a URL, or lies inside an
+     * existing link or in code.
+     * @param editor The editor in which the text was pasted.
+     * @param pastedText The text the user pasted.
+     * @return true if the selection was replaced by a link, false if the editor should paste the text as usual.
+     */
+    private wrapSelectionWithPastedUrl(editor: TextEditor, pastedText: string): boolean {
+        const selection = editor.getSelection();
+        const start = selection.getStartPosition();
+        const end = selection.getEndPosition();
+        if (!this.canExecute() || !isHttpUrl(pastedText) || start.getLineNumber() !== end.getLineNumber() || start.getColumn() === end.getColumn()) {
+            return false;
+        }
+        const selectedText = this.getTextAtRange(editor, selection) ?? '';
+        if (!selectedText.trim() || isHttpUrl(selectedText) || this.isInLinkOrCode(editor, selection)) {
+            return false;
+        }
+        const label = selectedText.replace(/[\\[\]]/g, '\\$&');
+        // Keep the URL as copied; only encode the parentheses that would end the markdown link early.
+        const url = pastedText.trim().replaceAll('(', '%28').replaceAll(')', '%29');
+        const link = `[${label}](${url})`;
+        this.replaceTextAtRange(editor, selection, link);
+        editor.setPosition(start.withColumn(start.getColumn() + link.length));
+        return true;
+    }
+
+    /**
+     * Checks whether a selection on one line lies where a pasted link would not work: inside an existing link, i.e. its label or its
+     * destination (such as the placeholder the link button selects), inside an inline code span, or inside a fenced code block.
+     * @param editor The editor that contains the selection.
+     * @param selection The selection, which starts and ends on the same line.
+     */
+    private isInLinkOrCode(editor: TextEditor, selection: TextEditorRange): boolean {
+        const lineNumber = selection.getStartPosition().getLineNumber();
+        const line = this.getLineText(editor, lineNumber) ?? '';
+        const startIndex = selection.getStartPosition().getColumn() - 1;
+        const endIndex = selection.getEndPosition().getColumn() - 1;
+        const overlapsSelection = (pattern: RegExp) => [...line.matchAll(pattern)].some((match) => match.index < endIndex && startIndex < match.index + match[0].length);
+        if (overlapsSelection(/\[[^\]]*\]\([^)]*\)/g) || overlapsSelection(/`[^`]*`/g)) {
+            return true;
+        }
+        // A code block is closed only by a fence of the same character, at least as long as the opening one and with no info string.
+        let openFence: CodeFence | undefined;
+        for (let previousLine = 1; previousLine < lineNumber; previousLine++) {
+            const fence = readCodeFence(this.getLineText(editor, previousLine) ?? '');
+            if (!openFence) {
+                openFence = fence;
+            } else if (fence && fence.marker === openFence.marker && fence.length >= openFence.length && !fence.info.trim()) {
+                openFence = undefined;
+            }
+        }
+        return openFence !== undefined || readCodeFence(line) !== undefined;
     }
 
     /**

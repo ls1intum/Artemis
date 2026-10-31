@@ -557,6 +557,73 @@ describe('Message editor editing transactions', () => {
         expect(changed).toHaveBeenLastCalledWith('Read the manual');
     });
 
+    it('links the selected text when one URL is pasted over it, as one undo step with the caret after the link', () => {
+        editor.load('Visit our university today');
+        select(root.querySelector('p')!.firstChild!, 10, 20);
+        editor.insertClipboard('', ' https://www.tum.de/en ');
+        expect(changed).toHaveBeenLastCalledWith('Visit our [university](https://www.tum.de/en) today');
+        expect(window.getSelection()!.getRangeAt(0).collapsed).toBe(true);
+        editor.insertText('!');
+        expect(changed).toHaveBeenLastCalledWith('Visit our [university](https://www.tum.de/en)! today');
+        editor.undo();
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith('Visit our university today');
+    });
+
+    it('keeps inline formatting of the selected text and URLs with parentheses when pasting a URL over it', () => {
+        editor.load('Written in **Java**');
+        const bold = root.querySelector('strong')!;
+        const range = document.createRange();
+        range.selectNode(bold);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        editor.insertClipboard('<a href="https://en.wikipedia.org/wiki/Java_(programming_language)">link</a>', 'https://en.wikipedia.org/wiki/Java_(programming_language)');
+        const link = root.querySelector('a')!;
+        expect(link.getAttribute('href')).toBe('https://en.wikipedia.org/wiki/Java_(programming_language)');
+        expect(link.querySelector('strong')?.textContent).toBe('Java');
+        expect(root.textContent).toBe('Written in Java');
+    });
+
+    it.each([
+        { case: 'nothing is selected', message: 'Visit our university', start: 20, end: 20, text: 'https://www.tum.de', expected: 'Visit our universityhttps://www.tum.de' },
+        { case: 'the pasted text is no URL', message: 'Visit our university', start: 10, end: 20, text: 'campus', expected: 'Visit our campus' },
+        {
+            case: 'the pasted text holds several URLs',
+            message: 'Visit our university',
+            start: 10,
+            end: 20,
+            text: 'https://a.org https://b.org',
+            expected: 'Visit our https://a.org https://b.org',
+        },
+        { case: 'the pasted URL is not http(s)', message: 'Visit our university', start: 10, end: 20, text: 'ftp://files.tum.de', expected: 'Visit our ftp://files.tum.de' },
+    ])('pastes the text as usual if $case', ({ message, start, end, text, expected }) => {
+        editor.load(message);
+        select(root.querySelector('p')!.firstChild!, start, end);
+        editor.insertClipboard('', text);
+        expect(root.querySelector('a')).toBeNull();
+        expect(changed).toHaveBeenLastCalledWith(expected);
+    });
+
+    it('replaces a typed URL with the pasted URL instead of linking it', () => {
+        editor.load('See old now');
+        const text = root.querySelector('p')!.firstChild!;
+        text.textContent = 'See https://old.org now';
+        select(text, 4, 19);
+        editor.insertClipboard('', 'https://new.org');
+        expect(root.querySelector('a')).toBeNull();
+        expect(changed).toHaveBeenLastCalledWith('See https://new.org now');
+    });
+
+    it('pastes a URL literally inside code and keeps an existing link when pasting a URL over part of its label', () => {
+        editor.load('Run `npm install` or read [the guide](https://old.example)');
+        select(root.querySelector('code')!.firstChild!, 0, 3);
+        editor.insertClipboard('', 'https://www.npmjs.com');
+        expect(root.querySelector('code')!.textContent).toBe('https://www.npmjs.com install');
+        select(root.querySelector('a')!.firstChild!, 4, 9);
+        editor.insertClipboard('', 'https://new.example');
+        expect(Array.from(root.querySelectorAll('a'), (anchor) => anchor.getAttribute('href'))).not.toContain('https://new.example');
+    });
+
     it('keeps code and native text input in the same undo history', () => {
         editor.load('text');
         select(root.querySelector('p')!.firstChild!, 4);

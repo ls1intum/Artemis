@@ -1,4 +1,4 @@
-import { generateExerciseHintExplanation, parseExerciseHintExplanation, sanitizeStringForMarkdownEditor } from './markdown.util';
+import { generateExerciseHintExplanation, isHttpUrl, parseExerciseHintExplanation, sanitizeStringForMarkdownEditor } from './markdown.util';
 import { ExerciseHintExplanationInterface } from 'app/quiz/shared/entities/quiz-question.model';
 
 describe('markdown.util', () => {
@@ -61,6 +61,27 @@ describe('markdown.util', () => {
 
         it('should preserve tabs', () => {
             expect(sanitizeStringForMarkdownEditor('col1\tcol2')).toBe('col1\tcol2');
+        });
+    });
+
+    describe('isHttpUrl', () => {
+        it.each(['https://www.tum.de', 'http://example.org/path?q=1#top', '  https://example.org  ', 'HTTPS://EXAMPLE.ORG'])('should accept %s', (text) => {
+            expect(isHttpUrl(text)).toBe(true);
+        });
+
+        it.each([
+            '',
+            '   ',
+            'example.org',
+            'ftp://example.org',
+            'mailto:a@b.org',
+            'https://a.org https://b.org',
+            'see https://a.org',
+            'https:example.org',
+            'http:/example.org',
+            'https://',
+        ])('should reject "%s"', (text) => {
+            expect(isHttpUrl(text)).toBe(false);
         });
     });
 
