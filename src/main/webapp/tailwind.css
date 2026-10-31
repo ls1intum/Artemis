@@ -132,6 +132,7 @@
 @source './app/assessment/overview';
 @source './app/assessment/manage/complaints-for-tutor';
 @source './app/assessment/manage/complaint-response';
+@source './app/assessment/manage/list-of-complaints';
 @source './app/text/overview/text-editor';
 @source './app/fileupload/overview/file-upload-submission';
 @source './app/exercise/dashboards/tutor-leaderboard';
