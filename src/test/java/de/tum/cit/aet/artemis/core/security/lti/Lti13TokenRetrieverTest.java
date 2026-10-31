@@ -162,7 +162,8 @@ class Lti13TokenRetrieverTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "{}", "{\"access_token\": null}", "{\"access_token\": {\"nested\": 1}}", "[]", "\"access_token\"", "null", "", "not json" })
+    @ValueSource(strings = { "{}", "{\"access_token\": null}", "{\"access_token\": \"\"}", "{\"access_token\": \"  \"}", "{\"access_token\": {\"nested\": 1}}", "[]",
+            "\"access_token\"", "null", "", "not json" })
     void getTokenWithoutUsableAccessToken(String body) throws NoSuchAlgorithmException {
         JWK jwk = generateKey();
         when(oAuth2JWKSService.getJWK(any())).thenReturn(jwk);

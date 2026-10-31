@@ -294,7 +294,7 @@ export class CommunicationAPIRequests {
      * @returns Promise with the created conversation.
      */
     async createOneToOneChat(course: Course, partnerUsername: string) {
-        const response = await this.page.request.post(`api/communication/courses/${course.id}/one-to-one-chats`, { data: [partnerUsername] });
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/one-to-one-chats`, { data: { login: partnerUsername } });
         if (!response.ok()) {
             throw new Error(`createOneToOneChat failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
         }
