@@ -330,6 +330,7 @@ export async function executePlan(
     const preparedProjects = [];
     const relatedSources = new Set();
     let fallbackReason;
+    let selectionError;
     let status = 0;
     const executionErrors = [];
     const closeErrors = [];
@@ -338,6 +339,7 @@ export async function executePlan(
             const project = await prepare({ root, configFile, sources: plan.sources, log });
             preparedProjects.push(project);
             if (project.selectionError) {
+                selectionError = project.selectionError;
                 fallbackReason = `Vitest graph selection failed: ${project.selectionError.message}`;
                 break;
             }
@@ -367,7 +369,7 @@ export async function executePlan(
             }
         }
     }
-    if (closeErrors.length) throw new AggregateError([...executionErrors, ...closeErrors], 'Cannot close prepared Vitest projects');
+    if (closeErrors.length) throw new AggregateError([...executionErrors, ...(selectionError ? [selectionError] : []), ...closeErrors], 'Cannot close prepared Vitest projects');
     if (executionErrors.length) throw executionErrors[0];
     return fallbackReason ? runFull(fallbackReason) : status;
 }

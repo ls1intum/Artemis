@@ -716,3 +716,31 @@ for (const failure of ['preparation', 'execution']) {
         assert.deepEqual(context.commands, [['run', 'prebuild']]);
     });
 }
+
+for (const failureProject of ['vitest.config.ts', 'config/testing/vitest.monaco.config.ts']) {
+    test(`preserves returned selectionError from ${failureProject} when cleanup also fails`, async () => {
+        const primary = new Error('graph selection failed');
+        const context = executionContext({
+            selection: async (options) => (options.configFile === failureProject ? { selectionError: primary } : { selected: 1, relatedSources: options.sources, success: true }),
+        });
+        const closeErrors = [new Error('normal close failed'), new Error('Monaco close failed')];
+        const prepare = context.prepareRelatedProject;
+        context.prepareRelatedProject = async (options) => {
+            const project = await prepare(options);
+            const close = project.close;
+            project.close = async () => {
+                await close();
+                throw closeErrors[options.configFile.includes('monaco') ? 1 : 0];
+            };
+            return project;
+        };
+        await assert.rejects(executePlan({ mode: 'affected', sources: [component] }, context), (error) => {
+            assert.ok(error instanceof AggregateError);
+            assert.deepEqual(error.errors, failureProject.includes('monaco') ? [primary, closeErrors[1], closeErrors[0]] : [primary, closeErrors[0]]);
+            return true;
+        });
+        assert.deepEqual(context.closed, failureProject.includes('monaco') ? ['config/testing/vitest.monaco.config.ts', 'vitest.config.ts'] : ['vitest.config.ts']);
+        assert.deepEqual(context.runs, []);
+        assert.deepEqual(context.commands, [['run', 'prebuild']]);
+    });
+}
