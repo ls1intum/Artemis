@@ -20,18 +20,18 @@ revision and committed diff:
 It prints five `OUTPUT:` lines. The ones that matter:
 
 - `RUN_ALL_TESTS=true` requires the full suite. This includes configuration and Playwright
-  infrastructure changes, application source changes, unmapped files, an invalid mapping, or an
+  infrastructure changes, global/shared runtime changes, unmapped files, an invalid mapping, or an
   unavailable base comparison. Say why the selector chose a full
   run. Do not present a subset as sufficient coverage.
 - When `RUN_ALL_TESTS=false`, `RELEVANT_TESTS` is the space-separated set of paths relative to
-  `src/test/playwright`. In ordinary mode, only spec-only changes select changed specs and the always-run smoke
-  specs (`e2e/Login.spec.ts`, `e2e/Logout.spec.ts`, `e2e/SystemHealth.spec.ts`).
-- `REMAINING_TESTS` contains the rest of the suite, including for spec-only changes. Computing this
+  `src/test/playwright`. It includes module tests, declared cross-module consumer workflows, changed specs
+  and the always-run smoke specs (`e2e/Login.spec.ts`, `e2e/Logout.spec.ts`, `e2e/SystemHealth.spec.ts`).
+- `REMAINING_TESTS` contains the disjoint rest of the discovered suite. Computing this
   set does not mean CI ran it. Ordinary eligible internal PRs run Phase 1 only and intentionally
   omit Phase 2. Full PR mode (`run_full_suite=true` on the reusable workflow) runs Phase 2 after
-  Phase 1 passes its gate. Locally, use the selected scope only for spec-only changes. Application source
-  always requires full coverage. Module mappings only prioritize a complete run; the workflow passes
-  `E2E_FULL_SUITE=true` when its remaining phase is mandatory. Do not use that flag to narrow a local run.
+  Phase 1 passes its gate. Locally, use selected scope only when the resolver authorizes it, including
+  eligible application-source changes. Do not reduce the selection to the changed module's folder:
+  the consumer workflows are part of its coverage.
 
 Two things about the input:
 
@@ -43,8 +43,10 @@ Two things about the input:
   correct for a pull request that targets `develop`.
 
 CI sets `run_full_suite=false` for ordinary internal PR runs. The selector can still require all
-E2E tests, which run in one full-suite job for application source, helpers and unknown inputs. Existing
-source consumers span multiple domains; the module mapping does not prove safe partial coverage.
+E2E tests, which run in one full-suite job for global runtime, helpers and unknown inputs. The mapping's
+dependency contract must account for every discovered spec before partial coverage is allowed. Adding
+a new unassigned spec requires updating the contract. Java/client unit tests and documentation alongside
+a mapped source change do not independently force full E2E.
 Fork PRs do not start E2E; draft and test/documentation-only PRs can also skip it through the umbrella
 workflow's change filters.
 

@@ -111,7 +111,7 @@ jobs:
           reporter: java-junit
 
   # Decides how the server suite is cut up. A full run is split into one shard per test bucket; a
-  # module-affected run stays a single shard, because its selection cuts across buckets.
+  # affected-class run stays a single shard, because its selection cuts across buckets.
   server-test-shards:
     name: Plan Server Test Shards
     if: ${{ inputs.run_server_tests }}
@@ -121,6 +121,7 @@ jobs:
     outputs:
       shards: ${{ steps.plan.outputs.shards }}
       modules: ${{ steps.plan.outputs.modules }}
+      tests: ${{ steps.plan.outputs.tests }}
       full_suite: ${{ steps.plan.outputs.full_suite }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -134,36 +135,51 @@ jobs:
         run: |
           set -Eeuo pipefail
           CHANGED_MODULES=""
+          SELECTED_TEST_CLASSES=""
+          PLAN_REASON="Full validation requested"
           if [ "$RUN_ALL_TESTS" != "true" ]; then
+            PLAN_REASON="Cannot safely determine an affected test plan"
             # Resolve the scope before choosing the matrix. A selector fallback must retain all seven
             # full-suite shards, rather than silently putting the full suite on a single machine.
             if git fetch --no-tags origin "+refs/heads/$DEFAULT_BRANCH:refs/remotes/origin/$DEFAULT_BRANCH"; then
-              if ! CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH"); then
-                echo "::warning::Server module selection failed; using the full suite."
-                CHANGED_MODULES=""
+              if PLAN=$(python3 supporting_scripts/select_server_test_modules.py --format json "origin/$DEFAULT_BRANCH"); then
+                PLAN_REASON=$(jq -r 'if (.reason | type) == "string" then .reason else "Invalid selector plan; full fallback" end' <<< "$PLAN" 2>/dev/null) || PLAN_REASON="Invalid selector plan; full fallback"
+                # Treat malformed/empty plans as full. Only exact class names may reach Gradle or outputs.
+                if jq -e '
+                  .mode == "selected" and (.modules | type == "array") and (.tests | type == "array" and length > 0) and
+                  all(.modules[]; type == "string" and test("^[a-z][a-z0-9]*\\z")) and
+                  all(.tests[]; type == "string" and startswith("de.tum.cit.aet.artemis.") and
+                    test("^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)+\\z"))
+                ' <<< "$PLAN" > /dev/null; then
+                  CHANGED_MODULES=$(jq -r '.modules | unique | join(",")' <<< "$PLAN")
+                  SELECTED_TEST_CLASSES=$(jq -r '.tests | unique | join(",")' <<< "$PLAN")
+                fi
+              else
+                echo "::warning::Server class selection failed; using the full suite."
               fi
             else
               echo "::warning::Cannot fetch the comparison branch; using the full suite."
             fi
           fi
-          if [ -n "$CHANGED_MODULES" ] && ! [[ "$CHANGED_MODULES" =~ ^[a-z][a-z0-9]*(,[a-z][a-z0-9]*)*$ ]]; then
-            echo "::warning::Invalid module selection; using the full suite."
-            CHANGED_MODULES=""
-          fi
-          if [ -n "$CHANGED_MODULES" ]; then
+          if [ -n "$SELECTED_TEST_CLASSES" ]; then
             {
               echo "modules=$CHANGED_MODULES"
+              echo "tests=$SELECTED_TEST_CLASSES"
               echo 'full_suite=false'
               echo 'shards=[{"name":"PostgreSQL","bucket":""}]'
             } >> "$GITHUB_OUTPUT"
-            echo "Server tests: affected modules ($CHANGED_MODULES), one shard; no full-suite coverage." >> "$GITHUB_STEP_SUMMARY"
+            TEST_COUNT=$(jq '.tests | unique | length' <<< "$PLAN")
+            echo "Server tests: $TEST_COUNT affected/guard classes ($CHANGED_MODULES), one shard; no full-suite coverage." >> "$GITHUB_STEP_SUMMARY"
+            printf '\nReason: %s\n' "$PLAN_REASON" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           {
             echo 'modules='
+            echo 'tests='
             echo 'full_suite=true'
           } >> "$GITHUB_OUTPUT"
           echo 'Server tests: full suite, seven shards with combined coverage.' >> "$GITHUB_STEP_SUMMARY"
+          printf '\nReason: %s\n' "$PLAN_REASON" >> "$GITHUB_STEP_SUMMARY"
           # One shard per bucket. Each bucket owns one Spring context and holds an exclusive @ResourceLock, so its
           # classes run one at a time whatever else is going on; giving each its own machine removes the contention
           # between buckets without changing how many contexts the run starts in total. The two smallest buckets share
@@ -222,16 +238,16 @@ jobs:
         # built once from every shard's execution data by the reporting job below.
         env:
           SHARD_BUCKET: ${{ matrix.shard.bucket }}
-          SELECTED_MODULES: ${{ needs.server-test-shards.outputs.modules }}
+          SELECTED_TEST_CLASSES: ${{ needs.server-test-shards.outputs.tests }}
           FULL_SUITE: ${{ needs.server-test-shards.outputs.full_suite }}
         run: |
           set -Eeuo pipefail
-          if [ "$FULL_SUITE" = "false" ] && [ -n "$SELECTED_MODULES" ] && [ -z "$SHARD_BUCKET" ]; then
-            echo "Executing tests for planned modules: $SELECTED_MODULES"
-            ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp -DincludeModules="$SELECTED_MODULES"
+          if [ "$FULL_SUITE" = "false" ] && [ -n "$SELECTED_TEST_CLASSES" ] && [ -z "$SHARD_BUCKET" ]; then
+            echo "Executing planned test classes: $SELECTED_TEST_CLASSES"
+            ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp -Dartemis.test.classes="$SELECTED_TEST_CLASSES"
             exit 0
           fi
-          if [ "$FULL_SUITE" = "true" ] && [ -n "$SHARD_BUCKET" ] && [ -z "$SELECTED_MODULES" ]; then
+          if [ "$FULL_SUITE" = "true" ] && [ -n "$SHARD_BUCKET" ] && [ -z "$SELECTED_TEST_CLASSES" ]; then
             echo "Executing the tests of bucket(s): $SHARD_BUCKET"
             ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp -Dartemis.test.bucket="$SHARD_BUCKET"
             exit 0
@@ -473,13 +489,14 @@ jobs:
           DEFAULT_BRANCH: ${{ inputs.base_branch }}
         run: |
           set -Eeuo pipefail
+          # compile:tests already prepared assets and UI sources; reuse them in every mode.
           if [ "$RUN_ALL_TESTS" = "true" ]; then
-            pnpm run test:ci:affected --full
+            pnpm run test:ci:affected --full --prebuilt
           elif git fetch --no-tags origin "+refs/heads/$DEFAULT_BRANCH:refs/remotes/origin/$DEFAULT_BRANCH"; then
-            pnpm run test:ci:affected --base-ref "origin/$DEFAULT_BRANCH"
+            pnpm run test:ci:affected --base-ref "origin/$DEFAULT_BRANCH" --prebuilt
           else
             echo "::warning::Cannot fetch the comparison branch; using the full client suite."
-            pnpm run test:ci:affected --full
+            pnpm run test:ci:affected --full --prebuilt
           fi
       - name: Custom ESLint Rule Tests
         # Runs the RuleTester specs (config/eslint/rules/*.spec.mjs) for our guardrail ESLint rules. Uses a

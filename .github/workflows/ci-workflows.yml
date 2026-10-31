@@ -97,8 +97,10 @@ jobs:
         run: python3 -m unittest discover -s supporting_scripts/tests -p 'test_*.py'
       - name: Lint selection scripts
         run: |
-          shellcheck supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh
-          bash -n supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh
+          shellcheck supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh supporting_scripts/ci/E2E-tests/verify-test-determination.sh
+          for script in supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh supporting_scripts/ci/E2E-tests/verify-test-determination.sh; do
+            bash -n "$script"
+          done
 
   actionlint:
     name: actionlint

@@ -9,7 +9,10 @@ const integrationSpec = /^src\/test\/javascript\/spec\/integration\/(?:code-edit
 const resourceExtension = /\.(?:html|scss|css)$/;
 const infrastructure =
     /^(?:package\.json$|pnpm-(?:lock|workspace)\.yaml$|\.npmrc$|angular\.json$|tsconfig[^/]*\.json$|vite(?:st)?[^/]*\.[cm]?[jt]s$|config\/|packages\/|supporting_scripts\/|\.github\/)/;
-const sharedSource = /^(?:shared\/|foundation\/|shared-ui\/|openapi\/|core\/(?:config|environments|util|global)\/|[^/]+$)/;
+// Shared components, services and utilities have the same import edges as feature code. Keep
+// generated clients, bootstrap and runtime configuration global; do not use module names as
+// a substitute for the dependency graph.
+const globalSource = /^(?:openapi\/|core\/(?:config|environments|util|global)\/|[^/]+$)/;
 // Match ci.yml's client_tests exclusions. Every other path is relevant by default: prebuild and
 // custom rule tests also consume global inputs such as .nvmrc, build.gradle and gradle/.
 const nonClientPrefixes = ['documentation/', 'src/main/java/', 'src/test/java/', 'src/main/resources/', 'src/test/resources/'];
@@ -17,7 +20,7 @@ const configs = ['vitest.config.ts', 'config/testing/vitest.monaco.config.ts'];
 const fullPlan = (reason) => ({ mode: 'full', reason });
 
 function clientRelevant(file) {
-    return !file.endsWith('.md') && file !== 'LICENSE' && !nonClientPrefixes.some((prefix) => file.startsWith(prefix));
+    return !file.endsWith('.md') && file !== 'LICENSE' && !/^src\/test\/playwright\/e2e\/.*\.spec\.ts$/.test(file) && !nonClientPrefixes.some((prefix) => file.startsWith(prefix));
 }
 
 function git(root, args) {
@@ -170,7 +173,7 @@ export async function planTests({ root, changes, files }) {
         if (!paths.some(clientRelevant)) continue;
         if (!['M', 'A'].includes(status)) return fullPlan(`Conservative fallback for ${status}: ${paths.join(' -> ')}`);
         const file = paths[0];
-        if (infrastructure.test(file) || (file.startsWith(appRoot) && sharedSource.test(file.slice(appRoot.length)))) {
+        if (infrastructure.test(file) || (file.startsWith(appRoot) && globalSource.test(file.slice(appRoot.length)))) {
             return fullPlan(`Shared client infrastructure changed: ${file}`);
         }
         if (integrationSpec.test(file) || (file.startsWith(appRoot) && file.endsWith('.ts'))) sources.add(file);
@@ -195,18 +198,36 @@ function runCommand(args, root) {
     if (child.status !== 0) throw new Error(`pnpm ${args.join(' ')} failed (${child.signal ?? child.status})`);
 }
 
-/** Use the same Vite graph for selection and execution, avoiding a second compilation of every spec. */
-export async function runRelatedProject({ root, configFile, sources, log = console.log }) {
+async function withTestEnvironment(operation) {
     const previousEnvironment = Object.fromEntries(['TEST', 'VITEST', 'NODE_ENV'].map((key) => [key, process.env[key]]));
     process.env.TEST = 'true';
     process.env.VITEST = 'true';
     process.env.NODE_ENV ??= 'test';
-    root = fs.realpathSync(root);
-    let context;
-    let specifications;
-    let relatedSelected;
     try {
-        try {
+        return await operation();
+    } finally {
+        for (const [key, value] of Object.entries(previousEnvironment)) {
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+        }
+    }
+}
+
+/** Keep the discovered Vite graph open until both projects prove every changed input has tests. */
+export async function prepareRelatedProject({ root, configFile, sources, log = console.log }) {
+    let context;
+    let closed = false;
+    const close = async () => {
+        if (closed) return;
+        closed = true;
+        await withTestEnvironment(() => context?.close());
+    };
+    try {
+        return await withTestEnvironment(async () => {
+            root = fs.realpathSync(root);
+            let specifications;
+            const relatedSources = [];
+            let relatedSelected;
             const { createVitest } = await import('vitest/node');
             context = await createVitest('test', {
                 root,
@@ -219,7 +240,16 @@ export async function runRelatedProject({ root, configFile, sources, log = conso
                 reporters: ['default', 'junit'],
                 outputFile: path.resolve(root, `build/test-results/vitest/${configFile.includes('monaco') ? 'monaco-' : ''}junit.xml`),
             });
-            specifications = await context.getRelevantTestSpecifications();
+            const selected = new Map();
+            // Resolve each input independently: a tested component must not hide an untested
+            // service in the same PR. Vite reuses transformed modules across these graph walks.
+            for (const source of sources) {
+                context.config.related = [path.resolve(root, source)];
+                const related = await context.getRelevantTestSpecifications();
+                if (related.length) relatedSources.push(source);
+                for (const specification of related) selected.set(specification.taskId, specification);
+            }
+            specifications = [...selected.values()];
             relatedSelected = specifications.length;
             // Filesystem reads do not create Vite import edges to the source being checked.
             // Include these guardrails on every affected run, even when ordinary related specs exist.
@@ -227,36 +257,55 @@ export async function runRelatedProject({ root, configFile, sources, log = conso
             const guards = (await context.globTestSpecifications()).filter((specification) =>
                 ts.preProcessFile(fs.readFileSync(specification.moduleId, 'utf8'), true, true).importedFiles.some(({ fileName }) => /^(?:node:)?fs(?:\/promises)?$/.test(fileName)),
             );
-            context.config.related.push(...guards.map((specification) => specification.moduleId));
-            specifications = await context.getRelevantTestSpecifications();
-        } catch (error) {
-            return { selectionError: error };
-        }
-        log(`${configFile}: ${specifications.length} affected spec(s)`);
-        for (const specification of specifications) log(`  ${path.relative(root, specification.moduleId)}`);
-        if (!specifications.length) return { selected: 0, relatedSelected, success: true };
-        const result = await context.start();
-        return {
-            selected: specifications.length,
-            relatedSelected,
-            success: context.state.getCountOfFailedTests() === 0 && result.unhandledErrors.length === 0 && !process.exitCode,
-        };
+            // Guard specs are already discovered. Adding them directly avoids a second complete
+            // graph walk and keeps their presence separate from proof of a related test per input.
+            for (const specification of guards) selected.set(specification.taskId, specification);
+            specifications = [...selected.values()];
+
+            log(`${configFile}: ${specifications.length} affected spec(s)`);
+            for (const specification of specifications) log(`  ${path.relative(root, specification.moduleId)}`);
+            const selection = { selected: specifications.length, relatedSelected, relatedSources };
+            return {
+                ...selection,
+                close,
+                run: async () =>
+                    withTestEnvironment(async () => {
+                        if (closed) throw new Error(`Cannot run closed Vitest project: ${configFile}`);
+                        if (!specifications.length) return { ...selection, success: true };
+                        // The default reporter's related summary describes only the final per-input
+                        // query. Our explicit list describes the union including guardrails.
+                        context.config.related = undefined;
+                        await context.standalone();
+                        // start() rediscovers the same graph; execute the exact prepared specs.
+                        const result = await context.runTestSpecifications(specifications);
+                        return {
+                            ...selection,
+                            success: context.state.getCountOfFailedTests() === 0 && result.unhandledErrors.length === 0 && !process.exitCode,
+                        };
+                    }),
+            };
+        });
+    } catch (error) {
+        return { selectionError: error, close };
+    }
+}
+
+/** Standalone execution and selection-only inspection share the same preparation lifecycle. */
+export async function runRelatedProject({ execute = true, ...options }) {
+    const project = await prepareRelatedProject(options);
+    try {
+        if (project.selectionError) return { selectionError: project.selectionError };
+        if (execute) return await project.run();
+        return { selected: project.selected, relatedSelected: project.relatedSelected, relatedSources: project.relatedSources, success: true };
     } finally {
-        try {
-            await context?.close();
-        } finally {
-            for (const [key, value] of Object.entries(previousEnvironment)) {
-                if (value === undefined) delete process.env[key];
-                else process.env[key] = value;
-            }
-        }
+        await project.close();
     }
 }
 
 /** GITHUB_OUTPUT makes coverage-producing full runs distinguishable from selected PR tests. */
 export async function executePlan(
     plan,
-    { root, outputFile = process.env.GITHUB_OUTPUT, log = console.log, runCommand: command = runCommand, runRelatedProject: project = runRelatedProject },
+    { root, outputFile = process.env.GITHUB_OUTPUT, log = console.log, runCommand: command = runCommand, prepareRelatedProject: prepare = prepareRelatedProject, prebuilt = false },
 ) {
     const report = (current) => {
         log(`Client test mode: ${current.mode}; coverage: ${current.mode === 'full'}; ${current.reason ?? ''}`);
@@ -264,7 +313,10 @@ export async function executePlan(
     };
     const runFull = async (reason) => {
         report(fullPlan(reason));
-        await command(['run', 'test:ci'], root);
+        if (prebuilt) {
+            await command(['run', 'vitest:ci'], root);
+            await command(['run', 'vitest:monaco'], root);
+        } else await command(['run', 'test:ci'], root);
         return 0;
     };
     if (plan.mode === 'full') return runFull(plan.reason);
@@ -273,20 +325,54 @@ export async function executePlan(
     fs.rmSync(path.join(root, 'build/test-results/vitest/coverage'), { recursive: true, force: true });
     if (plan.mode === 'none') return 0;
     log(`Graph seeds:\n${plan.sources.map((file) => `  ${file}`).join('\n')}`);
-    await command(['run', 'prebuild'], root);
-    let selected = 0;
-    for (const configFile of configs) {
-        const result = await project({ root, configFile, sources: plan.sources, log });
-        if (result.selectionError) return runFull(`Vitest graph selection failed: ${result.selectionError.message}`);
-        // Guardrails must not mask the existing full-suite fallback for untested changed code.
-        selected += result.relatedSelected ?? result.selected;
-        if (!result.success) return 1;
+    if (!prebuilt) await command(['run', 'prebuild'], root);
+    prebuilt = true;
+    const preparedProjects = [];
+    const relatedSources = new Set();
+    let fallbackReason;
+    let status = 0;
+    try {
+        for (const configFile of configs) {
+            const project = await prepare({ root, configFile, sources: plan.sources, log });
+            preparedProjects.push(project);
+            if (project.selectionError) {
+                fallbackReason = `Vitest graph selection failed: ${project.selectionError.message}`;
+                break;
+            }
+            for (const source of project.relatedSources ?? []) relatedSources.add(source);
+        }
+        const untested = plan.sources.filter((source) => !relatedSources.has(source));
+        if (!fallbackReason && untested.length) fallbackReason = `No related specs were found for client changes: ${untested.join(', ')}`;
+        if (!fallbackReason) {
+            for (const project of preparedProjects) {
+                const result = await project.run();
+                if (!result.success) {
+                    status = 1;
+                    break;
+                }
+            }
+        }
+    } finally {
+        // Release every graph before a full fallback starts. Each operation restores its own
+        // environment, so opening two contexts cannot leave TEST/VITEST set for prebuild.
+        const errors = [];
+        for (const project of preparedProjects.reverse()) {
+            try {
+                await project.close();
+            } catch (error) {
+                errors.push(error);
+            }
+        }
+        if (errors.length) throw new AggregateError(errors, 'Cannot close prepared Vitest projects');
     }
-    return selected ? 0 : runFull('No related specs were found for client changes');
+    return fallbackReason ? runFull(fallbackReason) : status;
 }
 
 async function main() {
-    const { values } = parseArgs({ options: { 'base-ref': { type: 'string' }, full: { type: 'boolean', default: false } }, strict: true });
+    const { values } = parseArgs({
+        options: { 'base-ref': { type: 'string' }, full: { type: 'boolean', default: false }, prebuilt: { type: 'boolean', default: false } },
+        strict: true,
+    });
     if (!values.full && !values['base-ref']) throw new Error('Provide --base-ref <fetched ref> or --full');
     const root = fileURLToPath(new URL('../..', import.meta.url));
     let plan = fullPlan('Full client validation requested');
@@ -299,7 +385,7 @@ async function main() {
             plan = fullPlan(`Cannot safely determine changed client inputs: ${error.message}`);
         }
     }
-    process.exitCode = await executePlan(plan, { root });
+    process.exitCode = await executePlan(plan, { root, prebuilt: values.prebuilt });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -15,14 +15,14 @@ import e2eCiPipelineSsd from './assets/playwright_ci_pipeline_ssd.png';
 
 The Playwright test suite contains system tests verifying the most important features of Artemis.
 System tests test the whole system and therefore require a complete deployment of Artemis first.
-CI can select changed E2E specs for eligible spec-only internal pull requests. Application source changes,
-integration-branch pushes and other full-run events retain complete E2E coverage.
+CI selects affected modules, their declared consumer workflows and smoke tests for eligible internal pull
+requests. Integration-branch pushes and other full-run events retain complete E2E coverage.
 
 Artemis uses GitHub Actions as its CI platform. E2E tests run on self-hosted runners because they require
 substantial compute resources, access to a PostgreSQL database, and a locally deployed Artemis instance.
-Spec-only PR runs execute changed specs plus authentication and health smoke specs. Application source,
-shared helpers and unclassified changes require the full suite. Module mappings can order full PR
-coverage through two-phase execution; they cannot establish a safe partial source suite.
+Selections include cross-module consumers: lecture changes also exercise competency progress and course
+tabs, while programming changes also exercise exams. Shared runtime, helpers and unclassified changes
+require the full suite. Each spec's runtime module dependencies are recorded in the selection contract.
 See the [CI Pipeline](#ci-pipeline) section for details.
 
 <Callout variant={CalloutVariant.info}>
@@ -666,35 +666,30 @@ misread the application state.
 ### Overview: PR selection and full-suite runs {/* #overview-two-phase-execution */}
 
 For eligible internal pull requests, CI sets the reusable E2E workflow's `run_full_suite` input to `false`.
-For spec-only changes, Phase 1 runs changed specs plus `Login`, `Logout`, and `SystemHealth` smoke specs.
+Phase 1 runs the affected modules' consumer specs, changed specs and `Login`, `Logout`, and `SystemHealth` smoke specs.
 Phase 2 is intentionally omitted, including when Phase 1 passes. A green result establishes coverage of
 that selected scope; it does not establish full-suite coverage.
 
-Application source, configuration, shared infrastructure and unclassified changes require the full
+Configuration, shared runtime infrastructure and unclassified changes require the full
 suite in a single PR job. Fork PRs do not start E2E because they cannot publish the required container image.
 The umbrella's change filters also skip E2E for drafts and changes limited to server/client unit tests or documentation.
 
 Full PR mode remains available to callers of the reusable workflow with `run_full_suite=true`, its default.
 For mapped changes, Phase 1 runs first, then Phase 2 covers the remaining tests after Phase 1 passes its gate.
 A blocking Phase 1 verdict skips Phase 2; positively classified known-flaky failures can pass the gate.
-The workflow passes `E2E_FULL_SUITE=true` to the selector only in this complete mode. That allows module
-mappings to prioritize likely relevant tests because Phase 2 remains mandatory. The diagram below describes
-this full PR mode; ordinary application-source changes use one full-suite job.
+The selector returns the same affected set and disjoint complement in both modes; the workflow decides
+whether the complement is required. The diagram below describes this full PR mode.
 
 <Image
     src={e2eCiPipelineSsd}
     alt="Two-phase full PR mode with Developer, CI Pipeline, Helios, and Reports Dashboard swimlanes"
     size={ImageSize.large}
-    caption="Full PR mode only: Phase 1 runs change-relevant tests first, then Phase 2 runs remaining tests after Phase 1 passes its gate. Spec-only selective runs omit Phase 2. Ordinary application-source changes, other full-suite fallbacks and non-PR runs use one full-suite job."
+    caption="Full PR mode only: Phase 1 runs affected workflows first, then Phase 2 runs the remaining tests after Phase 1 passes its gate. Eligible selective PRs omit Phase 2. Global-input fallbacks and non-PR runs use one full-suite job."
 />
 
-**Observed full PR mode performance** (across 89 measured runs):
-
-| Metric          | Phase 1 |                       Phase 2 | Full suite (single-phase baseline) |
-| --------------- | ------: | ----------------------------: | ---------------------------------: |
-| Median duration | 4.3 min |                      23.8 min |                           27.7 min |
-| P90 duration    | 8.3 min |                      29.4 min |                           32.2 min |
-| Pass rate       |     82% | 64.4% (of runs that reach it) |                                  — |
+Selected spec counts describe scope, not a proportional runtime saving. Stack startup and fixtures remain,
+and programming/build tests can dominate execution. Compare physical runner job durations when evaluating
+capacity; omitting Phase 2 removes its additional stack setup as well as its test execution.
 
 **Non-PR runs use the full suite:** pushes to `develop`, `main`, and release branches, published releases,
 merge-group events when a merge queue is configured, and manual CI runs. These runs use one full-suite job.
@@ -715,69 +710,52 @@ cleanup stops every container on its host. Locally, `run-e2e-tests-local-multino
 ### Selective test execution and `e2e-test-mapping.json`
 
 The `determine-tests` CI job reads `supporting_scripts/ci/E2E-tests/e2e-test-mapping.json` to decide which tests to include in Phase 1.
-Module mappings identify tests to prioritize in explicit full PR mode. They do not enumerate every
-cross-module consumer and do not enable partial coverage for application source changes.
-All `testPaths` and `allTestPaths` entries are resolved relative to `src/test/playwright/` (the Playwright test root).
+Module mappings identify changed production inputs. The `specModules` contract records every discovered
+spec's runtime consumers, including setup, browser actions, HTTP calls and cleanup. For each changed module,
+the selector includes all specs declaring that dependency, even outside the module's own folder.
+All spec paths are relative to `src/test/playwright/` (the Playwright test root).
 
-This excerpt shows two module mappings; the checked-in file contains the complete list.
+The mapping has five selection inputs:
 
-```json
-{
-    "allTestPaths": [
-        "e2e/atlas/",
-        "e2e/course/",
-        "e2e/exam/",
-        "e2e/exercise/",
-        "e2e/lecture/",
-        "e2e/Login.spec.ts",
-        "e2e/Logout.spec.ts",
-        "e2e/Passkey.spec.ts",
-        "e2e/PasskeyReminderPersistence.spec.ts",
-        "e2e/SystemHealth.spec.ts"
-    ],
-    "mappings": {
-        "atlas": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/atlas/", "src/main/webapp/app/atlas/"],
-            "testPaths": ["e2e/atlas/"]
-        },
-        "exam": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/exam/", "src/main/webapp/app/exam/"],
-            "testPaths": ["e2e/exam/"]
-        }
-    },
-    "alwaysRunTests": ["e2e/Login.spec.ts", "e2e/Logout.spec.ts", "e2e/SystemHealth.spec.ts"],
-    "runAllTestsPatterns": [
-        "src/main/resources/config/",
-        "deployment/docker/",
-        "build.gradle",
-        "angular.json",
-        "config/client/",
-        "config/pnpm/",
-        "supporting_scripts/client/",
-        "supporting_scripts/e2e/",
-        "supporting_scripts/ci/E2E-tests/"
-    ]
-}
-```
+| Field | Purpose |
+| --- | --- |
+| `mappings.<module>.sourcePaths` | Production paths owned by an eligible module. |
+| `specModules` | Runtime module dependencies for every spec; a new unassigned spec forces a full run. |
+| `catalogModules` | Explicit module ownership for translation catalog filenames; global or unknown catalogs require full validation. |
+| `alwaysRunTests` | Authentication and health smoke specs included in every selection. |
+| `runAllTestsPatterns` / `ignoredPaths` | Global runtime inputs that require all tests, and known non-runtime inputs that do not expand the selection. |
+
+Do not infer runtime ownership only from TypeScript type imports or a spec's folder. For example,
+`StudentCompetencyProgressView.spec.ts` consumes lecture and quiz behavior in addition to atlas behavior.
+The contract audit also checks observable API and helper usage to detect missing dependency declarations.
+
+An audited client surface can declare `replacesModule` for exact source files. Its recorded consumer set
+then replaces the broader module only for those files. For example, exam-management UI files include
+exam-management and quiz-editor workflows, while shared exam participation code also includes the student
+course container's child routes. Other files keep the broader module selection, and a mixed PR unions
+both sets. These exceptions require explicit audit notes and non-empty consumer contracts; they are not
+directory-wide exclusions.
 
 The `determine-tests` job compares the complete committed PR diff from its merge base against the actual base
 branch. Renames classify both the old and new paths; deleted specs are not passed as Playwright arguments.
-For spec-only changes, changed specs and `alwaysRunTests` form Phase 1. Explicit full PR mode may also
-use module mappings to prioritize tests. The selector computes the rest of
-the suite from `allTestPaths` plus discovered test paths even for spec-only changes. The workflow's
+Module consumers, changed specs and `alwaysRunTests` form Phase 1. Accompanying documentation, Java tests
+and client unit specs do not expand E2E scope. The selector expands every selection to exact spec paths
+and computes the remaining discovered specs without overlaps. The workflow's
 `run_full_suite` input determines whether that remaining set runs as Phase 2.
 
-Selection fails closed to one full-suite job when a file has no mapping, a mapped module has no tests, the
-mapping is invalid, a required mapped test is missing, or the base comparison cannot be computed. An empty
+Selection fails closed to one full-suite job when a runtime file has no mapping, a mapped module has no consumers, the
+mapping is invalid, a discovered spec has no contract, a required smoke spec is missing, or the base comparison cannot be computed. An empty
 committed diff also selects the full suite. Shared Playwright helpers and infrastructure require all tests,
 including helpers placed inside `e2e/`; only changed spec files can select themselves.
 
-Application source changes require the full suite in ordinary mode, even when a module has mapped tests.
-Existing consumers span exercise imports, competency progress, course tabs, exam assessment, user deletion
-and Iris workflows. Source mappings are therefore ordering hints for complete runs. Entries in
-`runAllTestsPatterns` also require the full suite; unknown paths never degrade to smoke-only coverage.
+Shared runtime changes such as authentication, configuration, base components and editor infrastructure
+require the full suite. A module-local bugfix uses its declared consumers. Explicit module translation
+catalogs use the same consumer selection; unknown or global catalogs retain full coverage. Entries in
+`runAllTestsPatterns` require the full suite; unknown runtime paths never degrade to smoke-only coverage.
 
-**Adding tests for a new module:** add an entry to `mappings` in `e2e-test-mapping.json` and add the test path(s) to `allTestPaths`.
+**Adding tests:** record each new spec's runtime modules in `specModules`, including setup and cleanup
+dependencies. For a new production module, add its `sourcePaths` to `mappings`. Run the selection contract
+tests; an unassigned spec or module without consumers must retain full fallback.
 
 ### PR comment reporting
 
@@ -874,11 +852,21 @@ This step does not apply to CI, where Playwright runs directly on the host (not 
 When a new Artemis module is created or an existing module is significantly reorganized, update
 `supporting_scripts/ci/E2E-tests/e2e-test-mapping.json`:
 
-1. Add a new entry to `mappings` with the module's `sourcePaths` and `testPaths`.
-2. Add all new test paths to `allTestPaths` so full PR mode includes them in its remaining-test set.
+1. Add a new entry to `mappings` with the module's `sourcePaths`.
+2. Audit affected specs, page objects and HTTP helpers, then update their runtime dependencies in `specModules`.
+3. Add module-owned translation catalogs to `catalogModules` where their scope is known.
+4. Run the selection tests and review both selected and remaining exact spec sets.
 
-A module without mapped tests keeps the full-suite fallback. Review mappings to improve full-run test
-ordering; application source changes retain complete coverage regardless of these hints.
+The verifier imports the production selector and checks that selected and remaining specs form an exact,
+disjoint partition:
+
+```bash
+./supporting_scripts/ci/E2E-tests/verify-test-determination.sh tutorialgroup exam-management-client
+./supporting_scripts/ci/E2E-tests/verify-test-determination.sh --all
+```
+
+A module without audited consumers keeps the full-suite fallback. The contract needs maintenance when
+an existing spec starts exercising another module, as well as when a new spec is added.
 
 ## Functionalities Covered
 

@@ -252,28 +252,42 @@ artifact. Coverage reporters show the validation scope and only publish tables f
 Ready PRs use affected selection after the area filters decide a suite is relevant. Selection is
 relative to the merge base with the actual PR target; missing history falls back to complete tests.
 
-- **Server:** `get_changed_modules.sh` delegates to the Python source dependency selector. It follows
-  consumers of changed types through imports, same-package references and inheritance, then runs tests
-  for the resulting modules plus core/shared, architecture packages and the Gocast handler guard.
-  These global checks discover consumers without static import edges. Their classes count toward the
-  full-suite fallback threshold. It considers both the base and current tree, including deleted sources.
-  Shared contracts, core/configuration, dynamic dependencies, unknown inputs and broad selections run
-  the full seven-shard suite. Planning happens on a public runner before allocating the test runners.
+- **Server:** the Python source dependency selector emits an explicit class plan on a public runner.
+  It follows imports, same-package references and injectable inheritance through both source revisions.
+  Type arguments and empty marker interfaces do not connect unrelated implementations. Production
+  changes include tests of affected modules and their typed and HTTP endpoint consumers; isolated test edits can select
+  individual classes. Mandatory architecture and source-scanning guards remain included and count
+  toward the breadth limit. The plan's exact classes reach Gradle through `artemis.test.classes`;
+  execution jobs need only a shallow checkout. Shared contracts, core/configuration, ambiguous wiring,
+  unknown inputs and broad selections retain the seven-shard suite. `get_changed_modules.sh` retains
+  its conservative CSV interface for other callers.
 - **Client:** `pnpm run test:ci:affected --base-ref <fetched-pr-target-ref>` expands changed Angular templates
   and styles to their TypeScript owners, including Sass imports, then uses Vitest's transitive dependency
   graph for both ordinary and Monaco specs. Specs importing Node's filesystem APIs always run because
   source reads do not create graph edges. These guards do not suppress the full-suite fallback when the
-  changed source has no related specs. The job prints the selected specs. Shared inputs, unsupported
-  resources, deletions/renames, graph failures or changes with no related specs use `test:ci` instead.
+  changed source has no related specs: every changed source or resource owner must have a graph
+  relationship in at least one project. Shared leaf components, services and utilities use that same
+  graph instead of forcing full tests by directory name. The job prints the selected specs. Bootstrap,
+  generated inputs, configuration, unsupported resources, deletions/renames and graph failures retain
+  full validation. Strict test compilation prepares assets once; `--prebuilt` reuses them for test
+  execution, including full fallbacks. Standalone callers still prepare assets by default.
   Ready PRs retain strict test TypeScript compilation and custom ESLint-rule tests in the client suite.
   Drafts compile test TypeScript in **Quality / Client Compilation**. A selected test failure fails;
   it does not retry as a full suite.
-- **E2E:** application source changes retain the complete suite: existing consumers cross exercise,
-  course, exam, atlas, admin and Iris workflows, so module mappings cannot establish safe partial coverage.
-  Spec-only changes can run changed specs plus login, logout and system-health smoke specs, intentionally
-  omitting Phase 2. Helpers, configuration and unclassified inputs still require full coverage. A caller
-  with `run_full_suite=true` can use module mappings to order Phase 1 before its mandatory remaining phase;
-  the workflow alone passes that commitment to the selector as `E2E_FULL_SUITE`. Missing expected results fail.
+- **E2E:** mapped application changes run their module tests, declared cross-module consumer workflows,
+  changed E2E specs and login/logout/system-health smoke specs. The checked-in dependency contract must
+  account for every discovered spec; additions or unsupported inputs fall back to complete validation.
+  An audited exact-file client surface can replace its broad module for that file only; for example,
+  exam-management UI fixes do not inherit the shared student-course container's exam dependency.
+  A mixed change still unions the broader files' consumers.
+  Java/client unit tests and documentation accompanying a bugfix do not force full E2E. Shared runtime,
+  configuration, Playwright helpers and unknown dependencies do. The selector resolves exact spec paths
+  and computes a disjoint remaining set. Ordinary eligible PRs intentionally omit Phase 2; full callers
+  retain it. Missing expected results fail, and non-PR events keep complete validation.
+
+Use `supporting_scripts/ci/E2E-tests/verify-test-determination.sh --all` to verify every mapping against
+the production selector. It rejects overlapping phase assignments and missing specs; it does not
+maintain a second selection algorithm.
 
 Affected tests keep JUnit results and diagnostics but omit whole-project coverage generation,
 thresholds and uploads. Both internal and fork PR reporters remove stale coverage tables when a

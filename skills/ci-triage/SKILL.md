@@ -40,19 +40,21 @@ nodes with Redis (Valkey) as distributed data provider. Compare their definition
 
 ## Check the validation scope
 
-Ready pull requests run affected server modules and related client specs. The server planner's
-summary lists its module selection; global core/shared and architecture checks remain included, as does
-the Gocast handler guard. The client job prints every selected spec, including filesystem-reading
-guardrails whose source reads have no import edges. Shared contracts,
+Ready pull requests run explicit affected server class plans and related client specs. The server planner's
+summary lists its class count and modules; mandatory architecture and source-scanning guards remain included,
+as does the Gocast handler guard. The client job prints every selected spec, including filesystem-reading
+guardrails whose source reads have no import edges. Every changed client graph seed must have related tests;
+guardrails cannot hide an untested seed. Shared leaf utilities use the import graph. Shared contracts,
 configuration, missing history and ambiguous dependencies fall back to the full suite. Check the
 actual planner/helper output rather than assuming a PR always ran a subset.
 
 Affected runs keep test results but omit whole-project coverage gates and artifacts. The PR coverage
 section states the scope and result; a selected green run does not prove full-suite coverage. E2E
-retains full coverage for application source changes. Only spec-only changes can select changed specs
-plus login, logout and health smoke tests and intentionally skip Phase 2. Module mappings only order
-complete runs whose remaining phase is mandatory. Helpers and unknown inputs require the full suite;
-missing expected results still fail.
+selects mapped modules plus declared cross-module consumers, changed specs, and login/logout/health smoke
+tests. Its dependency contract must account for all discovered specs. Ordinary eligible PRs intentionally
+skip Phase 2; full callers retain the disjoint complement. Documentation and unit tests accompanying source
+changes do not force full E2E. Shared runtime, configuration, helpers and unknown inputs require the full
+suite; missing expected results still fail.
 
 Pushes to develop/main/release branches, merge-group events, releases and manual CI runs use full
 suites. To validate the complete PR branch before merging, dispatch **CI** with that branch and

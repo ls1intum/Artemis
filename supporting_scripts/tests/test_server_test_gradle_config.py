@@ -71,6 +71,9 @@ class ServerTestGradleConfigTest(unittest.TestCase):
             (root / "settings.gradle").write_text("rootProject.name = 'server-selection-check'\n")
             (root / "gradle").mkdir()
             (root / "gradle/jacoco.gradle").write_text("")
+            source = root / "src/test/java/de/tum/cit/aet/artemis/alpha/ChosenTest.java"
+            source.parent.mkdir(parents=True)
+            source.write_text("class ChosenTest {}")
             production_config = str(REPOSITORY / "gradle/test.gradle").replace("'", "\\'")
             # Guard future globally tagged tests as well as today's explicit scanner examples.
             architecture_classes = architecture_test_classes(REPOSITORY / "src/test/java")
@@ -92,6 +95,26 @@ tasks.register('verifySelection') {
             assert selected.options.excludeTags.contains('nightly-lti')
             assert selected.excludes.contains('**/*IT*')
             assert selected.excludes.contains('**/*IntTest*')
+        }
+        if (System.getProperty('artemis.test.classes')) {
+            assert !runAllTests
+            assert includedModules.size() == 0 : 'Class selection must not pretend module coverage is complete'
+            def matcher = new org.gradle.api.internal.tasks.testing.filter.TestSelectionMatcher(
+                new org.gradle.api.internal.tasks.testing.filter.TestFilterSpec(
+                    selected.filter.includePatterns, selected.filter.excludePatterns, [] as Set))
+            assert matcher.matchesTest('de.tum.cit.aet.artemis.alpha.ChosenTest', 'method')
+            assert matcher.matchesTest('de.tum.cit.aet.artemis.alpha.ChosenTest$Nested', 'method')
+            assert !matcher.matchesTest('de.tum.cit.aet.artemis.alpha.UnrelatedTest', 'method')
+            assert !matcher.matchesTest('de.tum.cit.aet.artemis.core.service.UnrelatedTest', 'method')
+            [ARCHITECTURE_INVENTORY].each { name ->
+                assert matcher.matchesTest(name, 'method') : "Missing tagged architecture check: $name"
+            }
+            for (name in ['core.authorization.AuthorizationGeneralAndIndependentEndpointTest',
+                          'core.service.featureusage.FeatureUsageAnnotationTest',
+                          'core.service.distributed.DistributedDataSurfaceTest',
+                          'videosource.service.GocastLoggingSafetyTest']) {
+                assert matcher.matchesTest("de.tum.cit.aet.artemis.$name", 'method') : "Missing global check: $name"
+            }
         }
         if (System.getProperty('includeModules')) {
             assert includedModules.toList() == ['alpha'] : 'Global test filters must not expand the requested coverage modules'
@@ -124,7 +147,8 @@ tasks.register('verifySelection') {
     }
 }
 """.replace("PRODUCTION_CONFIG", production_config).replace("ARCHITECTURE_INVENTORY", inventory))
-            for arguments in ([], ["-DincludeModules=alpha"], ["-DincludeTags=nightly-lti"]):
+            for arguments in ([], ["-DincludeModules=alpha"], ["-DincludeTags=nightly-lti"],
+                              ["-Dartemis.test.classes=de.tum.cit.aet.artemis.alpha.ChosenTest"]):
                 with self.subTest(arguments=arguments):
                     result = subprocess.run(
                         [str(self.gradle), "--offline", "--no-daemon", "--console=plain",
@@ -133,6 +157,26 @@ tasks.register('verifySelection') {
                     )
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                     self.assertIn("Verified server test filters", result.stdout)
+            invalid = (
+                "", "*", "de.tum.cit.aet.artemis.alpha.*", "de.tum.cit.aet.artemis.alpha.MissingTest",
+                "de.tum.cit.aet.artemis.alpha.ChosenTest,", "de.tum.cit.aet.artemis.alpha.ChosenTest.method",
+            )
+            conflicting = (["-DincludeModules=alpha"], ["-DincludeTags=ArchitectureTest"], ["-Dartemis.test.bucket=BucketIndependent"])
+            for arguments in ([f"-Dartemis.test.classes={value}"] for value in invalid):
+                with self.subTest(invalid=arguments):
+                    result = subprocess.run([str(self.gradle), "--offline", "--no-daemon", "--console=plain",
+                                             "-p", str(root), "verifySelection", *arguments],
+                                            capture_output=True, text=True, check=False, timeout=90)
+                    self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertIn("artemis.test.classes", result.stdout + result.stderr)
+            for extra in conflicting:
+                with self.subTest(conflicting=extra):
+                    result = subprocess.run([str(self.gradle), "--offline", "--no-daemon", "--console=plain",
+                                             "-p", str(root), "verifySelection",
+                                             "-Dartemis.test.classes=de.tum.cit.aet.artemis.alpha.ChosenTest", *extra],
+                                            capture_output=True, text=True, check=False, timeout=90)
+                    self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertIn("artemis.test.classes", result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

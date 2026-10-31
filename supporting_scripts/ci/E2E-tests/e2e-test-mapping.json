@@ -1,127 +1,86 @@
 {
-    "description": "Mapping between source code modules and e2e test folders. Used to determine which e2e tests to run based on changed files.",
-    "allTestPaths": [
-        "e2e/atlas/",
-        "e2e/course/",
-        "e2e/exam/",
-        "e2e/exercise/",
-        "e2e/lecture/",
-        "e2e/Login.spec.ts",
-        "e2e/Logout.spec.ts",
-        "e2e/Passkey.spec.ts",
-        "e2e/PasskeyReminderPersistence.spec.ts",
-        "e2e/SystemHealth.spec.ts"
-    ],
+    "description": "Explicit E2E runtime consumer contract. For source changes select the module and every listed consumer workflow, plus smoke. Consumers include browser routes, HTTP setup/cleanup, and used pageobjects/request helpers; production model imports alone do not establish a runtime dependency. New specs require an audit before partial selection. Global inputs and unsupported modules fail closed.",
     "mappings": {
         "account": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/account/", "src/main/webapp/app/account/"],
-            "testPaths": ["e2e/Passkey.spec.ts", "e2e/PasskeyReminderPersistence.spec.ts"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/account/", "src/main/webapp/app/account/"]
         },
         "atlas": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/atlas/", "src/main/webapp/app/atlas/"],
-            "testPaths": ["e2e/atlas/"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/atlas/", "src/main/webapp/app/atlas/"]
         },
         "exam": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/exam/", "src/main/webapp/app/exam/"],
-            "testPaths": ["e2e/exam/"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/exam/", "src/main/webapp/app/exam/"]
         },
         "lecture": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/lecture/", "src/main/webapp/app/lecture/"],
-            "testPaths": [
-                "e2e/lecture/",
-                "e2e/atlas/",
-                "e2e/course/CourseChannelMessages.spec.ts",
-                "e2e/course/CourseTabs.spec.ts",
-                "e2e/course/CourseManagement.spec.ts",
-                "e2e/course/FormattedMessageEditor.spec.ts"
-            ]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/lecture/", "src/main/webapp/app/lecture/"]
         },
         "quiz": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/quiz/", "src/main/webapp/app/quiz/"],
-            "testPaths": ["e2e/exercise/quiz-exercise/"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/quiz/", "src/main/webapp/app/quiz/"]
         },
         "programming": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/programming/", "src/main/webapp/app/programming/"],
-            "testPaths": ["e2e/exercise/programming/"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/programming/", "src/main/webapp/app/programming/"]
         },
         "modeling": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/modeling/", "src/main/webapp/app/modeling/"],
-            "testPaths": ["e2e/exercise/modeling/"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/modeling/", "src/main/webapp/app/modeling/"]
         },
         "fileupload": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/fileupload/", "src/main/webapp/app/fileupload/"],
-            "testPaths": ["e2e/exercise/file-upload/"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/fileupload/", "src/main/webapp/app/fileupload/"]
         },
         "text": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/text/", "src/main/webapp/app/text/"],
-            "testPaths": ["e2e/exercise/text/"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/text/", "src/main/webapp/app/text/"]
         },
         "communication": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/communication/", "src/main/webapp/app/communication/"],
-            "testPaths": [
-                "e2e/course/CourseChannelMessages.spec.ts",
-                "e2e/course/CourseDirectMessages.spec.ts",
-                "e2e/course/CourseGroupChatMessages.spec.ts",
-                "e2e/course/CourseMessageInteractions.spec.ts",
-                "e2e/course/FormattedMessageEditor.spec.ts",
-                "e2e/course/CourseUnreadMessages.spec.ts"
-            ]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/communication/", "src/main/webapp/app/communication/"]
         },
         "exercise": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/exercise/", "src/main/webapp/app/exercise/"],
-            "testPaths": ["e2e/exercise/ExerciseImport.spec.ts", "e2e/course/CourseExercise.spec.ts"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/exercise/", "src/main/webapp/app/exercise/"]
         },
         "assessment": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/assessment/", "src/main/webapp/app/assessment/", "src/main/webapp/app/presentation/"],
-            "testPaths": [
-                "e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts",
-                "e2e/exercise/modeling/ModelingExerciseAssessment.spec.ts",
-                "e2e/exercise/programming/ProgrammingExerciseAssessment.spec.ts",
-                "e2e/exercise/quiz-exercise/QuizExerciseAssessment.spec.ts",
-                "e2e/exercise/text/TextExerciseAssessment.spec.ts",
-                "e2e/exam/ExamAssessment.spec.ts",
-                "e2e/course/PresentationAssessments.spec.ts"
-            ]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/assessment/", "src/main/webapp/app/assessment/", "src/main/webapp/app/presentation/"]
         },
         "core": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/core/", "src/main/webapp/app/core/"],
-            "testPaths": ["e2e/Login.spec.ts", "e2e/Logout.spec.ts", "e2e/SystemHealth.spec.ts", "e2e/course/CourseManagement.spec.ts"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/core/", "src/main/webapp/app/core/"]
         },
         "buildagent": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/buildagent/", "src/main/webapp/app/localci/"],
-            "testPaths": ["e2e/exercise/programming/"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/buildagent/", "src/main/webapp/app/localci/"]
         },
         "localci": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/localci/"],
-            "testPaths": ["e2e/exercise/programming/"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/localci/"]
         },
         "localvc": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/localvc/", "src/main/webapp/app/localvc/"],
-            "testPaths": ["e2e/exercise/programming/", "e2e/exam/ExamParticipation.spec.ts"]
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/localvc/", "src/main/webapp/app/localvc/"]
         },
         "plagiarism": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/plagiarism/", "src/main/webapp/app/plagiarism/"],
-            "testPaths": []
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/plagiarism/", "src/main/webapp/app/plagiarism/"]
         },
         "tutorialgroup": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/tutorialgroup/", "src/main/webapp/app/tutorialgroup/"],
-            "testPaths": []
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/tutorialgroup/", "src/main/webapp/app/tutorialgroup/"]
         },
         "lti": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/lti/", "src/main/webapp/app/lti/"],
-            "testPaths": []
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/lti/", "src/main/webapp/app/lti/"]
         },
         "iris": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/iris/", "src/main/webapp/app/iris/"],
-            "testPaths": []
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/iris/", "src/main/webapp/app/iris/"]
         },
         "athena": {
-            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/athena/"],
-            "testPaths": []
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/athena/"]
         },
         "shared": {
-            "sourcePaths": ["src/main/webapp/app/shared/"],
-            "testPaths": []
+            "sourcePaths": ["src/main/webapp/app/shared/"]
+        },
+        "course": {
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/course/", "src/main/webapp/app/course/"]
+        },
+        "hyperion": {
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/hyperion/", "src/main/webapp/app/hyperion/"]
+        },
+        "exam-management-client": {
+            "sourcePaths": [
+                "src/main/webapp/app/exam/manage/exams/update/exam-update.component.ts",
+                "src/main/webapp/app/exam/manage/exams/update/exam-update.component.html",
+                "src/main/webapp/app/exam/manage/services/exam-management.service.ts"
+            ],
+            "replacesModule": "exam",
+            "audit": "Exact client files only. ExamUpdateComponent is routed solely by exam-management.route.ts. ExamManagementService active consumers are exam workflows, exam-context assessment/grading/user-import/archive branches, and the course quiz import-existing dialog (findAllExamsAccessibleToUser). Retain all exam workflows, explicit course/admin exam consumers and the full quiz spec group. CourseOverviewComponent uses ExamParticipationService, not this service. New/renamed client files and all other exam inputs retain the broad exam mapping; re-audit importers and routed consumers when extending this scope."
         }
     },
     "alwaysRunTests": ["e2e/Login.spec.ts", "e2e/Logout.spec.ts", "e2e/SystemHealth.spec.ts"],
@@ -134,6 +93,1145 @@
         "config/pnpm/",
         "supporting_scripts/client/",
         "supporting_scripts/e2e/",
-        "supporting_scripts/ci/E2E-tests/"
+        "supporting_scripts/ci/E2E-tests/",
+        "src/main/java/de/tum/cit/aet/artemis/core/",
+        "src/main/java/de/tum/cit/aet/artemis/account/",
+        "src/main/java/de/tum/cit/aet/artemis/config/",
+        "src/main/java/de/tum/cit/aet/artemis/localci/",
+        "src/main/java/de/tum/cit/aet/artemis/localvc/",
+        "src/main/java/de/tum/cit/aet/artemis/buildagent/",
+        "src/main/webapp/app/core/",
+        "src/main/webapp/app/account/",
+        "src/main/webapp/app/shared/",
+        "src/main/webapp/app/foundation/",
+        "src/main/webapp/app/shared-ui/",
+        "src/main/webapp/app/editor/",
+        "src/main/webapp/app/openapi/",
+        "packages/tum-aet-ui/",
+        "src/main/webapp/content/",
+        "package.json",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "gradle/",
+        "gradle.properties",
+        "src/main/java/de/tum/cit/aet/artemis/plagiarism/",
+        "src/main/webapp/app/plagiarism/",
+        "src/main/java/de/tum/cit/aet/artemis/athena/",
+        "src/main/java/de/tum/cit/aet/artemis/lti/",
+        "src/main/webapp/app/lti/",
+        "src/main/webapp/app/localci/",
+        "src/main/webapp/app/localvc/",
+        "src/main/java/de/tum/cit/aet/artemis/hyperion/",
+        "src/main/webapp/app/hyperion/"
+    ],
+    "consumerAuditNotes": [
+        "Exam workflows use ExamExerciseGroupCreationPage.addGroupWithExercise (dynamic ExerciseType dispatch) and ExamParticipationPage. Conservatively cover all exercise types and assessment for the entire exam group, including nested test-exam specs.",
+        "Exercise creation/management/participation uses shared exercise services, result/assessment handling and automatic communication channels. Communication includes all such workflows plus lecture/exam and course messaging workflows.",
+        "Lecture consumers include atlas competency progress/lecture links, course tabs/management/rich message editor, Iris chat/context/activity feeds, and account deletion cleanup.",
+        "Quiz/programming/modeling/text/fileupload cover exam group dispatch, exercise imports and course management/tabs/context selection. Iris context selectors consume course exercise collections even when a spec only seeds one type.",
+        "Atlas includes competency selectors in exercise forms, lecture unit linking and course tab/date picker workflows. Assessment includes exam/test-exam results and presentation assessments.",
+        "Core/account/security/bootstrap/shared/runtime changes remain full suite. Global module names in specModules document owners but do not authorize selective changes to global source paths.",
+        "Course setup/cleanup and overview endpoints are used across domains; the course contract deliberately includes all application workflows. Pure helper contracts retain their own owners.",
+        "Review direct request paths, named runtime operations and dynamic workflow helpers when maintaining this contract. fixtures.ts exposes many lazy fixtures; importing that bag does not consume every module.",
+        "Routed client dependencies matter even without direct test API calls: tutorialgroup detail/overview inject LectureService; atlas details/edit/create and course-competency service consume LectureUnitService/LectureService; communication message-editor resources/suggestions load lectures. Their owner workflows are lecture consumers.",
+        "IrisSettingsService/IrisChatService are injected by lecture views, programming participation/editor, atlas learning-path views and communication tutor-suggestion/redirect components. Conservatively select these owner workflows for Iris changes, even when the current CI profile hides chat UI.",
+        "CourseOverviewComponent (course/overview/course-overview/course-overview.component.ts) unconditionally subscribes to ExamParticipationService.examIsStarted$; its template uses the emitted state for sidebar visibility and layout. courses.route.ts mounts this parent for all student /courses/:courseId children. Specs visiting those routes directly or through audited course/programming/competency pageobjects are exam consumers; management-only routes do not inherit this parent.",
+        "The opt-in exam-management-client exact-file mapping replaces only the broad exam mapping for its three audited files. Its consumers include the entire quiz UI group because quiz-question-list-edit-existing.component.ts actively loads accessible exams when shown. Passive service injection in course-only assessment/grading/user-import/archive branches does not subscribe to exam state or execute exam HTTP calls; their exam-context paths are covered by the exam group. Mixed scoped and broader exam inputs union both scopes. This is a maintained runtime contract, not a general guarantee for exam/manage/."
+    ],
+    "specModules": {
+        "e2e/Login.spec.ts": ["core"],
+        "e2e/Logout.spec.ts": ["assessment", "communication", "core", "course", "exam", "exercise", "text"],
+        "e2e/Passkey.spec.ts": ["account", "core"],
+        "e2e/PasskeyReminderPersistence.spec.ts": ["account", "core"],
+        "e2e/SystemHealth.spec.ts": ["core"],
+        "e2e/admin/ClusterFormation.spec.ts": ["account", "core"],
+        "e2e/admin/DataExport.spec.ts": ["account", "assessment", "communication", "core", "course", "exercise", "programming"],
+        "e2e/admin/DistributedStateCoherence.spec.ts": ["account", "assessment", "communication", "core", "course", "exercise", "fileupload", "lti", "plagiarism", "text"],
+        "e2e/admin/FeatureUsage.spec.ts": ["account", "core"],
+        "e2e/admin/FeatureUsageGit.spec.ts": ["account", "assessment", "communication", "core", "course", "exam", "exercise", "programming"],
+        "e2e/admin/UserCreation.spec.ts": ["account", "core"],
+        "e2e/admin/UserDeletion.spec.ts": [
+            "account",
+            "assessment",
+            "communication",
+            "core",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "lecture",
+            "programming",
+            "text",
+            "tutorialgroup"
+        ],
+        "e2e/atlas/CompetencyExerciseInteractions.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "lecture", "text"],
+        "e2e/atlas/CompetencyImport.spec.ts": ["atlas", "course", "iris", "lecture"],
+        "e2e/atlas/CompetencyLectureUnitInteraction.spec.ts": ["atlas", "communication", "course", "exam", "iris", "lecture"],
+        "e2e/atlas/CompetencyManagement.spec.ts": ["atlas", "course", "iris", "lecture"],
+        "e2e/atlas/CompetencyRelationGraph.spec.ts": ["atlas", "course", "exam", "iris", "lecture"],
+        "e2e/atlas/LearningPathManagement.spec.ts": ["atlas", "course", "iris", "lecture"],
+        "e2e/atlas/StudentCompetencyProgressView.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "lecture", "quiz"],
+        "e2e/course/AnnouncementDialogLayout.spec.ts": ["communication", "course", "exam", "iris", "lecture"],
+        "e2e/course/CourseArchive.spec.ts": ["assessment", "communication", "course", "exercise", "iris", "lecture", "programming"],
+        "e2e/course/CourseChannelMessages.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/course/CourseCodeOfConductLayout.spec.ts": ["communication", "course", "exam", "iris", "lecture"],
+        "e2e/course/CourseControlCenter.spec.ts": ["athena", "course", "iris"],
+        "e2e/course/CourseDirectMessages.spec.ts": ["communication", "course", "exam", "iris", "lecture"],
+        "e2e/course/CourseExercise.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/course/CourseGroupChatMessages.spec.ts": ["communication", "course", "exam", "iris", "lecture"],
+        "e2e/course/CourseManagement.spec.ts": [
+            "assessment",
+            "atlas",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text",
+            "tutorialgroup"
+        ],
+        "e2e/course/CourseMessageInteractions.spec.ts": ["communication", "course", "exam", "iris", "lecture"],
+        "e2e/course/CourseNotificationLayout.spec.ts": ["communication", "core", "course", "exam", "iris", "lecture"],
+        "e2e/course/CourseOnboarding.spec.ts": ["communication", "course", "iris", "lecture"],
+        "e2e/course/CourseOverviewSingleLoad.spec.ts": ["assessment", "course", "exam", "exercise", "fileupload", "modeling", "programming", "quiz", "text"],
+        "e2e/course/CourseTabs.spec.ts": [
+            "assessment",
+            "atlas",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text",
+            "tutorialgroup"
+        ],
+        "e2e/course/CourseUnreadMessages.spec.ts": ["communication", "course", "exam", "iris", "lecture"],
+        "e2e/course/FormattedMessageEditor.spec.ts": [
+            "assessment",
+            "communication",
+            "core",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/course/PresentationAssessments.spec.ts": ["assessment", "course"],
+        "e2e/exam/ExamAccess.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamArchive.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamArchiveWithStudents.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamAssessment.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamAssessmentLocks.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamAttendanceCheck.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamAuthorization.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamAutomaticResultComplaint.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamBonusManagement.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamChecklists.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamCreationDeletion.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamDateVerification.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamExampleSolution.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamExerciseGroupOrder.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamExercisePreparation.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamFormValidation.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamGracePeriod.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamGradingKey.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamGroupImport.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamImport.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamImportValidation.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamLayoutContract.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamManagement.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamModelingSummary.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamParticipation.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamPlagiarism.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "plagiarism",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamPlantUmlDiagramIsolation.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamProgrammingModes.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamProgrammingRepositoryLock.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamQuizDragAndDrop.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamQuizMultiSelectRetention.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamQuizQuestionTypes.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamRandomization.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamResetAndDeletionSummary.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamResults.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamResultsPublication.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamRoomDistribution.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamStartWindow.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamStatusOverview.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamStudentExamManagement.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamStudentImages.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamStudentImportExport.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamStudentRegistration.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamSubmissionRecovery.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamSummaryExerciseTypes.spec.ts": [
+            "assessment",
+            "communication",
+            "core",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamSummaryPublicationDate.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamSuspiciousBehavior.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamTestRun.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamTestRunAssessment.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamTextEditorScrollStability.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamTextSummaryIsolation.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamTimeline.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamUnsavedChangesIndicator.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamUnsubmittedAssessment.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamUpcomingOverview.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamVerifyAttendance.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/ExamWorkingTime.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/test-exam/TestExamAiFeedback.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/test-exam/TestExamAttempts.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/test-exam/TestExamCreationDeletion.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/test-exam/TestExamManagement.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/test-exam/TestExamParticipation.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/test-exam/TestExamStudentExams.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exam/test-exam/TestExamTestRun.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "fileupload",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/exercise/ExerciseImport.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "fileupload", "modeling", "programming", "quiz", "text"],
+        "e2e/exercise/ExerciseSplitPanelResize.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "text"],
+        "e2e/exercise/ExerciseVariantGeneration.spec.ts": ["assessment", "communication", "course", "exercise", "hyperion", "quiz"],
+        "e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "fileupload"],
+        "e2e/exercise/file-upload/FileUploadExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exercise", "fileupload"],
+        "e2e/exercise/file-upload/FileUploadExerciseParticipation.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "fileupload"],
+        "e2e/exercise/modeling/ModelingAssessmentWorkspace.spec.ts": ["assessment", "communication", "course", "exercise", "modeling"],
+        "e2e/exercise/modeling/ModelingEditorFullscreen.spec.ts": ["assessment", "communication", "course", "exercise", "modeling"],
+        "e2e/exercise/modeling/ModelingEditorPageScroll.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "modeling"],
+        "e2e/exercise/modeling/ModelingEditorResize.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "modeling"],
+        "e2e/exercise/modeling/ModelingExamplePracticeAssessment.spec.ts": ["assessment", "communication", "course", "exercise", "modeling"],
+        "e2e/exercise/modeling/ModelingExerciseAssessment.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "modeling"],
+        "e2e/exercise/modeling/ModelingExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "modeling"],
+        "e2e/exercise/modeling/ModelingExerciseParticipation.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "modeling"],
+        "e2e/exercise/modeling/ModelingTeamCollaboration.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "modeling"],
+        "e2e/exercise/programming/CodeEditorResize.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "iris", "programming"],
+        "e2e/exercise/programming/ProgrammingExerciseAssessment.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "iris", "programming"],
+        "e2e/exercise/programming/ProgrammingExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
+        "e2e/exercise/programming/ProgrammingExerciseParticipation.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "iris", "programming"],
+        "e2e/exercise/programming/ProgrammingExercisePracticeMode.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "iris", "programming"],
+        "e2e/exercise/programming/ProgrammingExerciseRepositoryExport.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "iris", "programming"],
+        "e2e/exercise/programming/ProgrammingExerciseRepositoryToken.spec.ts": ["assessment", "communication", "course", "exercise", "iris", "programming"],
+        "e2e/exercise/programming/ProgrammingExerciseStaticCodeAnalysis.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "iris", "programming"],
+        "e2e/exercise/quiz-exercise/QuizExerciseAIGeneration.spec.ts": [
+            "assessment",
+            "atlas",
+            "communication",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "hyperion",
+            "quiz"
+        ],
+        "e2e/exercise/quiz-exercise/QuizExerciseAIRefinement.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "hyperion", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseAssessment.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseDropLocation.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseLifecycle.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseParticipation.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseStatistics.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseSubmissionPaths.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/text/TextExerciseAssessment.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "text"],
+        "e2e/exercise/text/TextExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "core", "course", "exercise", "text"],
+        "e2e/exercise/text/TextExerciseParticipation.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "text"],
+        "e2e/iris/IrisActivityFeed.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/iris/IrisCourseTab.spec.ts": ["assessment", "communication", "course", "exam", "exercise", "fileupload", "iris", "lecture", "modeling", "programming", "quiz", "text"],
+        "e2e/iris/IrisLectureChat.spec.ts": [
+            "assessment",
+            "communication",
+            "course",
+            "exam",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text"
+        ],
+        "e2e/lecture/LectureManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exercise", "iris", "lecture", "modeling"],
+        "e2e/lecture/LectureUnitContentRenders.spec.ts": ["communication", "course", "exam", "iris", "lecture"],
+        "e2e/localci/KubernetesLocalCI.spec.ts": ["assessment", "buildagent", "communication", "course", "exam", "exercise", "localci", "localvc", "programming"],
+        "e2e/shared/AuthenticatedApiContext.spec.ts": ["assessment", "communication", "core", "exercise", "programming", "shared"],
+        "e2e/shared/DateTimePicker.spec.ts": ["atlas", "course", "shared"],
+        "e2e/shared/LayoutHelpers.spec.ts": ["shared"],
+        "e2e/tutorialgroup/TutorialGroupDetailLayout.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],
+        "e2e/tutorialgroup/TutorialGroupEditing.spec.ts": ["communication", "course", "lecture", "tutorialgroup"]
+    },
+    "ignoredPaths": ["documentation/", "src/test/javascript/", "README.md", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", ".github/PULL_REQUEST_TEMPLATE.md", ".agents/", "skills/"],
+    "catalogModules": [
+        {
+            "module": "lecture",
+            "files": ["lecture.json"]
+        },
+        {
+            "module": "quiz",
+            "files": ["quiz.json", "quizExercise.json"]
+        },
+        {
+            "module": "programming",
+            "files": ["programmingExercise.json"]
+        },
+        {
+            "module": "text",
+            "files": ["textExercise.json"]
+        },
+        {
+            "module": "modeling",
+            "files": ["modelingExercise.json"]
+        },
+        {
+            "module": "fileupload",
+            "files": ["fileUploadExercise.json"]
+        },
+        {
+            "module": "exercise",
+            "files": ["exercise.json"]
+        },
+        {
+            "module": "exam",
+            "files": ["exam.json"]
+        },
+        {
+            "module": "assessment",
+            "files": ["assessment.json", "assessmentInstructions.json"]
+        },
+        {
+            "module": "atlas",
+            "files": ["competency.json", "learningPath.json"]
+        },
+        {
+            "module": "tutorialgroup",
+            "files": ["tutorialGroup.json"]
+        },
+        {
+            "module": "communication",
+            "files": ["communication.json"]
+        },
+        {
+            "module": "course",
+            "files": ["course.json"]
+        }
     ]
 }

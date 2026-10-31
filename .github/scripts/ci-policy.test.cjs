@@ -5,10 +5,10 @@ const path = require('node:path');
 const os = require('node:os');
 const { spawnSync } = require('node:child_process');
 const workflow = fs.readFileSync(path.join(__dirname, '../workflows/ci.yml'), 'utf8');
-function job(name) {
-    const start = workflow.indexOf(`\n  ${name}:\n`);
+function job(name, source = workflow) {
+    const start = source.indexOf(`\n  ${name}:\n`);
     assert.notEqual(start, -1, `Expected job ${name}`);
-    const rest = workflow.slice(start + 1);
+    const rest = source.slice(start + 1);
     const end = rest.slice(1).search(/^  [a-z][a-z-]+:\n/m);
     return end === -1 ? rest : rest.slice(0, end + 1);
 }
@@ -75,6 +75,84 @@ test('drafts keep test TypeScript compilation on the public quality runner', () 
     assert.match(step, /if: inputs.check_test_types/);
     assert.match(step, /run: pnpm exec tsc --project config\/client\/tsconfig.spec.json/);
 });
+test('client execution reuses the assets prepared by strict test compilation on every scope path', () => {
+    const tests = fs.readFileSync(path.join(__dirname, '../workflows/ci-test.yml'), 'utf8');
+    const client = tests.slice(tests.indexOf('\n  client-tests:\n'));
+    const compile = client.indexOf('run: pnpm run compile:tests');
+    const execution = client.indexOf('name: TypeScript Test Without Typechecking');
+    assert.ok(compile !== -1 && execution > compile, 'Strict compilation must prepare assets before execution');
+    const calls = client.split('\n').filter((line) => line.includes('pnpm run test:ci:affected'));
+    assert.equal(calls.length, 3, 'Full, affected and fetch-failure paths all need the prepared assets');
+    for (const call of calls) assert.match(call, /--prebuilt\b/);
+});
+
+function serverPlan(plan, { full = false, exitCode = 0 } = {}) {
+    const tests = fs.readFileSync(path.join(__dirname, '../workflows/ci-test.yml'), 'utf8');
+    const script = job('server-test-shards', tests)
+        .match(/        run: \|\n((?:          [^\n]*\n|\n)+)/)[1]
+        .replace(/^ {10}/gm, '');
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-server-plan-'));
+    const output = path.join(directory, 'output');
+    const summary = path.join(directory, 'summary');
+    try {
+        fs.writeFileSync(path.join(directory, 'git'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+        fs.writeFileSync(path.join(directory, 'python3'), '#!/bin/sh\nprintf "%s\\n" "$SERVER_PLAN"\nexit "$SERVER_PLAN_EXIT"\n', { mode: 0o755 });
+        const result = spawnSync('bash', ['-c', script], {
+            cwd: directory,
+            encoding: 'utf8',
+            env: {
+                ...process.env,
+                PATH: `${directory}${path.delimiter}${process.env.PATH}`,
+                RUN_ALL_TESTS: String(full),
+                DEFAULT_BRANCH: 'develop',
+                SERVER_PLAN: typeof plan === 'string' ? plan : JSON.stringify(plan),
+                SERVER_PLAN_EXIT: String(exitCode),
+                GITHUB_OUTPUT: output,
+                GITHUB_STEP_SUMMARY: summary,
+            },
+        });
+        const outputs = Object.fromEntries(
+            fs
+                .readFileSync(output, 'utf8')
+                .trim()
+                .split('\n')
+                .map((line) => {
+                    const separator = line.indexOf('=');
+                    return [line.slice(0, separator), line.slice(separator + 1)];
+                }),
+        );
+        return { ...result, outputs, summary: fs.readFileSync(summary, 'utf8') };
+    } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+}
+test('the actual server planner carries an exact affected-class plan to one execution shard', () => {
+    const classes = ['de.tum.cit.aet.artemis.quiz.QuizExerciseIntegrationTest', 'de.tum.cit.aet.artemis.core.architecture.ArchitectureTest'];
+    const result = serverPlan({ mode: 'selected', reason: 'Quiz service consumers', modules: ['quiz'], tests: classes });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.outputs.full_suite, 'false');
+    assert.deepEqual(result.outputs.tests.split(',').sort(), [...classes].sort());
+    assert.equal(JSON.parse(result.outputs.shards).length, 1);
+    assert.match(result.summary, /Quiz service consumers/);
+    const tests = fs.readFileSync(path.join(__dirname, '../workflows/ci-test.yml'), 'utf8');
+    assert.match(job('server-tests', tests), /-Dartemis\.test\.classes="\$SELECTED_TEST_CLASSES"/);
+});
+for (const [name, plan, options] of [
+    ['explicit full validation', { mode: 'selected', modules: ['quiz'], tests: ['de.tum.cit.aet.artemis.quiz.QuizTest'] }, { full: true }],
+    ['a selector error', { mode: 'selected', modules: ['quiz'], tests: ['de.tum.cit.aet.artemis.quiz.QuizTest'] }, { exitCode: 1 }],
+    ['malformed JSON', '{broken', {}],
+    ['an empty class selection', { mode: 'selected', modules: ['quiz'], tests: [] }, {}],
+    ['an unsafe class filter', { mode: 'selected', modules: ['quiz'], tests: ['*'] }, {}],
+    ['an output-injection class name', { mode: 'selected', modules: ['quiz'], tests: ['de.tum.cit.aet.artemis.quiz.QuizTest\nfull_suite=true'] }, {}],
+]) {
+    test(`${name} retains all seven server shards`, () => {
+        const result = serverPlan(plan, options);
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal(result.outputs.full_suite, 'true');
+        assert.equal(JSON.parse(result.outputs.shards).length, 7);
+        assert.ok(!result.outputs.tests);
+    });
+}
 
 function runGate(results, deferred) {
     const script = job('all-required-ci-passed')

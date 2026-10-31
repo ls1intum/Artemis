@@ -4,6 +4,7 @@ Run: python3 -m unittest discover -s supporting_scripts/tests -p 'test_changed_m
 """
 
 from pathlib import Path
+import json
 import subprocess
 import tempfile
 import unittest
@@ -48,6 +49,10 @@ class ChangedModulesTest(unittest.TestCase):
         path = Path(relative)
         package = PACKAGE + "." + ".".join(path.parent.parts)
         imported = "".join(f"import {PACKAGE}.{value};\n" for value in imports)
+        # Fixtures model real type uses, rather than unused/Javadoc-only imports.
+        body += " " + " ".join(f"{value.rsplit('.', 1)[1]} reference{index};"
+                                for index, value in enumerate(imports)
+                                if not value.endswith(".*") and value.rsplit('.', 1)[1][0].isupper())
         self.write(
             f"{source_root}/{relative}",
             f"package {package};\n{imported}"
@@ -68,6 +73,380 @@ class ChangedModulesTest(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         return result.stdout.strip()
+
+    def plan(self, base="base"):
+        result = subprocess.run(
+            ["python3", str(SELECTOR.with_name("select_server_test_modules.py")), "--format", "json", base],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_class_plan_selects_changed_test_without_other_tests_in_its_module(self):
+        self.java(TEST, "delta/UnrelatedTest.java")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{TEST}/delta/DeltaTest.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertEqual(plan["tests"], [PACKAGE + ".delta.DeltaTest"])
+        self.assertEqual(plan["selectedTestClasses"], 1)
+        self.assertEqual(plan["totalTestClasses"], 10)
+
+    def test_class_plan_keeps_global_scanners_without_all_core_unit_tests(self):
+        self.java(TEST, "core/authorization/EndpointTest.java", body="RequestMappingHandlerMapping mappings;")
+        self.java(TEST, "core/service/UnrelatedTest.java")
+        self.java(TEST, "shared/architecture/AbstractArchitectureTest.java", declaration="public abstract class AbstractArchitectureTest")
+        self.java(TEST, "epsilon/architecture/EpsilonArchitectureTest.java")
+        self.java(TEST, "videosource/service/GocastLoggingSafetyTest.java")
+        self.java(TEST, "core/service/SourceReaderTest.java", body='String input = "src/main/java";')
+        self.java(MAIN, "delta/web/DeltaResource.java")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/DeltaResource.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        for name in ("delta.DeltaTest", "core.authorization.EndpointTest", "epsilon.architecture.EpsilonArchitectureTest",
+                     "videosource.service.GocastLoggingSafetyTest", "core.service.SourceReaderTest"):
+            self.assertIn(PACKAGE + "." + name, plan["tests"])
+        self.assertNotIn(PACKAGE + ".core.service.UnrelatedTest", plan["tests"])
+
+    def test_class_plan_unchanged_conditional_does_not_require_full_suite(self):
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="@Conditional(DeltaEnabled.class) public class DeltaService")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertEqual(self.plan()["mode"], "selected")
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="@Conditional(OtherEnabled.class) public class DeltaService")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_conditional_does_not_hide_dynamic_behavior_on_same_line(self):
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="@Conditional(DeltaEnabled.class) public class DeltaService",
+                  body="void send() { publisher.publishEvent(event); }")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_event_listener_parameter_changes_are_wiring_changes(self):
+        self.java(MAIN, "delta/service/DeltaService.java", body="@EventListener void handle(OldEvent event) {}")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.java(MAIN, "delta/service/DeltaService.java", body="@EventListener void handle(NewEvent event) {}")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_transitive_conditional_consumer_keeps_its_tests(self):
+        self.java(MAIN, "beta/service/BetaService.java", imports=["alpha.service.AlphaService"],
+                  declaration="@Conditional(BetaEnabled.class) public class BetaService")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/alpha/service/AlphaService.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertIn(PACKAGE + ".beta.BetaTest", plan["tests"])
+        self.assertIn(PACKAGE + ".gamma.GammaTest", plan["tests"])
+
+    def test_class_plan_generic_argument_does_not_become_changed_parent(self):
+        self.java(MAIN, "delta/service/Parent.java", declaration="public class Parent<T>")
+        self.java(MAIN, "delta/service/DeltaService.java", imports=["alpha.service.AlphaService"],
+                  declaration="public class DeltaService extends Parent<AlphaService>")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertNotIn(PACKAGE + ".alpha.AlphaTest", plan["tests"])
+
+    def test_class_plan_marker_inheritance_does_not_change_sibling_implementations(self):
+        self.java(MAIN, "delta/service/Marker.java", declaration="public interface Marker")
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="public class DeltaService implements Marker")
+        self.java(MAIN, "alpha/service/AlphaService.java", imports=["delta.service.Marker"],
+                  declaration="public class AlphaService implements Marker")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertEqual(self.plan()["modules"], ["delta"])
+
+    def test_class_plan_empty_intermediate_superclass_keeps_inherited_behavior_consumers(self):
+        self.java(MAIN, "delta/service/Behavior.java", declaration="public interface Behavior", body="void execute();")
+        self.java(MAIN, "delta/service/Intermediate.java", declaration="public abstract class Intermediate implements Behavior")
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="public class DeltaService extends Intermediate")
+        self.java(MAIN, "beta/service/BetaService.java", imports=["delta.service.Intermediate"])
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertIn("beta", self.plan()["modules"])
+
+    def test_class_plan_inherited_dynamic_behavior_requires_full_suite(self):
+        self.java(MAIN, "delta/service/Parent.java", body="void emit() { publisher.publishEvent(event); }")
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="public class DeltaService extends Parent")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_inherited_external_spi_requires_full_suite(self):
+        self.write(f"{MAIN}/delta/service/Parent.java", f"package {PACKAGE}.delta.service;\n"
+                   "import java.util.function.Supplier;\npublic abstract class Parent implements Supplier<String> {}")
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="public class DeltaService extends Parent")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_retains_interface_dispatch_and_transitive_consumers(self):
+        self.java(MAIN, "alpha/api/Feature.java", declaration="public interface Feature", body="void execute();")
+        self.java(MAIN, "alpha/service/AlphaService.java", imports=["alpha.api.Feature"],
+                  declaration="public class AlphaService implements Feature")
+        self.java(MAIN, "beta/service/BetaService.java", imports=["alpha.api.Feature"])
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/alpha/service/AlphaService.java")
+        self.assertEqual(self.plan()["modules"], ["alpha", "beta", "gamma"])
+
+    def test_class_plan_unchanged_static_constant_does_not_propagate_method_body_change(self):
+        self.java(MAIN, "delta/web/DeltaResource.java", body='public static final String ENTITY_NAME = "delta";')
+        self.write(f"{MAIN}/alpha/service/AlphaService.java",
+                   f"package {PACKAGE}.alpha.service;\nimport {PACKAGE}.delta.web.DeltaResource;\n"
+                   'public class AlphaService { String entity = DeltaResource.ENTITY_NAME; }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/DeltaResource.java")
+        self.assertEqual(self.plan()["modules"], ["delta"])
+        path = self.root / f"{MAIN}/delta/web/DeltaResource.java"
+        path.write_text(path.read_text().replace('"delta"', '"changed"'))
+        self.assertIn("alpha", self.plan()["modules"])
+
+    def test_class_plan_mutable_static_final_field_keeps_consumers(self):
+        self.java(MAIN, "delta/web/DeltaResource.java", body="public static final DeltaResource INSTANCE = new DeltaResource();")
+        self.write(f"{MAIN}/alpha/service/AlphaService.java",
+                   f"package {PACKAGE}.alpha.service;\nimport {PACKAGE}.delta.web.DeltaResource;\n"
+                   'public class AlphaService { Object resource = DeltaResource.INSTANCE; }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/DeltaResource.java")
+        self.assertIn("alpha", self.plan()["modules"])
+
+    def test_class_plan_bean_annotation_changes_require_full_suite(self):
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="@Service public class DeltaService")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="@Component public class DeltaService")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_marker_membership_changes_require_full_suite(self):
+        self.java(MAIN, "delta/service/Marker.java", declaration="public interface Marker")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="public class DeltaService implements Marker")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_unused_javadoc_import_does_not_propagate_behavior(self):
+        self.write(f"{MAIN}/alpha/service/AlphaService.java",
+                   f"package {PACKAGE}.alpha.service;\nimport {PACKAGE}.delta.service.DeltaService;\n"
+                   '/** See {@link DeltaService}. */ public class AlphaService {}')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertEqual(self.plan()["modules"], ["delta"])
+
+    def test_class_plan_unchanged_dynamic_test_consumer_is_executed(self):
+        self.java(TEST, "delta/DeltaTest.java", imports=["alpha.service.AlphaService"],
+                  body="@TestConfiguration static class Config {}")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/alpha/service/AlphaService.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertIn(PACKAGE + ".delta.DeltaTest", plan["tests"])
+
+    def test_class_plan_nested_interface_implementations_keep_runtime_consumers(self):
+        self.java(MAIN, "delta/service/DeltaService.java", imports=["alpha/api/Feature".replace("/", ".")],
+                  body="public class Nested implements Feature {}")
+        self.java(MAIN, "alpha/api/Feature.java", declaration="public interface Feature", body="void execute();")
+        self.java(MAIN, "beta/service/BetaService.java", imports=["alpha.api.Feature"])
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertIn("beta", self.plan()["modules"])
+
+    def test_class_plan_dispatch_keeps_consumers_without_changing_sibling_implementations(self):
+        self.java(MAIN, "delta/service/Feature.java", declaration="public interface Feature", body="void execute();")
+        self.java(MAIN, "delta/service/DeltaService.java", declaration="public class DeltaService implements Feature")
+        # Do not insert an ordinary field use: inheritance alone does not make a sibling use this implementation.
+        self.write(f"{MAIN}/alpha/service/AlphaService.java",
+                   f"package {PACKAGE}.alpha.service;\nimport {PACKAGE}.delta.service.Feature;\n"
+                   'public class AlphaService implements Feature {}')
+        self.java(MAIN, "epsilon/service/EpsilonService.java", imports=["delta.service.Feature"])
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        plan = self.plan()
+        self.assertNotIn("alpha", plan["modules"])
+        self.assertIn("epsilon", plan["modules"])
+
+    def test_class_plan_selects_generic_http_consumers_of_affected_production_module(self):
+        self.java(MAIN, "delta/web/DeltaResource.java", declaration='@RestController @RequestMapping("api/delta/") public class DeltaResource')
+        self.java(TEST, "alpha/AlphaTest.java", body='void get() { request.get("/api/delta/items/" + id, Map.class); }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/DeltaResource.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertIn(PACKAGE + ".alpha.AlphaTest", plan["tests"])
+
+    def test_class_plan_http_consumers_retain_both_revisions_and_helper_subclasses(self):
+        self.java(MAIN, "delta/web/DeltaResource.java", declaration='@RestController @RequestMapping("api/delta/") public class DeltaResource')
+        self.java(TEST, "shared/base/AbstractHttpTest.java", declaration="public abstract class AbstractHttpTest",
+                  body='String getUrl() { return "/api/delta/items/%d"; }')
+        self.java(TEST, "alpha/AlphaTest.java", imports=["shared.base.AbstractHttpTest"], declaration="public class AlphaTest extends AbstractHttpTest")
+        self.java(TEST, "epsilon/EpsilonTest.java", body='String BASE_URL = "/api/delta/items/";')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        # Removed callers still matter at base; the changed current test also executes.
+        self.java(TEST, "epsilon/EpsilonTest.java")
+        self.change(f"{MAIN}/delta/web/DeltaResource.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertIn(PACKAGE + ".alpha.AlphaTest", plan["tests"])
+        self.assertIn(PACKAGE + ".epsilon.EpsilonTest", plan["tests"])
+
+    def test_class_plan_http_constant_helpers_keep_consumers_and_subclasses(self):
+        self.java(TEST, "shared/util/Routes.java", body='public static final String API_PREFIX = "/api/delta/items/";')
+        self.write(f"{TEST}/alpha/AlphaTest.java",
+                   f"package {PACKAGE}.alpha;\nimport {PACKAGE}.shared.util.Routes;\n"
+                   'public class AlphaTest { String url = Routes.API_PREFIX; }')
+        self.java(TEST, "epsilon/EpsilonTest.java", imports=["alpha.AlphaTest"], declaration="public class EpsilonTest extends AlphaTest")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertIn(PACKAGE + ".alpha.AlphaTest", plan["tests"])
+        self.assertIn(PACKAGE + ".epsilon.EpsilonTest", plan["tests"])
+
+    def test_class_plan_unknown_http_target_is_not_hidden_by_other_known_calls(self):
+        self.java(TEST, "alpha/AlphaTest.java", body='void call(String target) { request.get("/api/alpha/items", Map.class); request.delete(target, String.class); }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertIn(PACKAGE + ".alpha.AlphaTest", self.plan()["tests"])
+
+    def test_class_plan_servlet_support_import_is_not_an_http_caller(self):
+        self.write(f"{TEST}/shared/util/RequestProcessor.java",
+                   f"package {PACKAGE}.shared.util;\n"
+                   "import org.springframework.test.web.servlet.request.RequestPostProcessor;\n"
+                   "public class RequestProcessor implements RequestPostProcessor {}")
+        self.java(TEST, "alpha/AlphaTest.java", imports=["shared.util.RequestProcessor"])
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertNotIn(PACKAGE + ".alpha.AlphaTest", self.plan()["tests"])
+
+    def test_class_plan_external_mock_url_does_not_become_global_http_consumer(self):
+        self.java(TEST, "shared/util/ExternalMockProvider.java", body='String endpoint = "/api/v1/convert";')
+        self.java(TEST, "alpha/AlphaTest.java", imports=["shared.util.ExternalMockProvider"])
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertNotIn(PACKAGE + ".alpha.AlphaTest", self.plan()["tests"])
+
+    def test_class_plan_fixed_class_namespace_bounds_computed_method_path(self):
+        self.java(MAIN, "delta/web/DeltaResource.java",
+                  declaration='@RestController @RequestMapping("api/delta/") public class DeltaResource',
+                  body='@DeleteMapping("items/{login:" + Constants.LOGIN_REGEX + "}") void delete() {}')
+        self.java(TEST, "alpha/AlphaTest.java", body='void call() { request.delete("/api/delta/items/user", String.class); }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/DeltaResource.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertIn(PACKAGE + ".alpha.AlphaTest", plan["tests"])
+
+    def test_class_plan_runtime_class_path_placeholder_is_unclassified(self):
+        self.java(MAIN, "delta/web/DeltaResource.java",
+                  declaration='@RestController @RequestMapping("${controller.base}") public class DeltaResource')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/DeltaResource.java")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_mapping_metadata_does_not_prove_an_unknown_route(self):
+        self.java(MAIN, "delta/web/PublicResource.java",
+                  declaration='@RestController @RequestMapping(value = UNKNOWN_PATH, produces = "application/json") public class PublicResource')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/PublicResource.java")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_literal_mapping_does_not_hide_an_unknown_route_alias(self):
+        self.java(MAIN, "delta/web/DeltaResource.java",
+                  declaration='@RestController @RequestMapping({"api/delta/", LEGACY_ALIAS}) public class DeltaResource')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/DeltaResource.java")
+        self.assertEqual(self.plan()["mode"], "full")
+
+    def test_class_plan_unrelated_unknown_controller_does_not_invalidate_module(self):
+        self.java(MAIN, "delta/web/UnrelatedResource.java",
+                  declaration='@RestController @RequestMapping(UNKNOWN_PATH) public class UnrelatedResource')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertEqual(self.plan()["mode"], "selected")
+
+    def test_class_plan_literal_public_routes_do_not_invalidate_whole_module(self):
+        self.java(MAIN, "delta/web/PublicResource.java",
+                  declaration='@RestController @RequestMapping("/.well-known/association") public class PublicResource')
+        self.java(TEST, "alpha/AlphaTest.java", body='void call() { request.get("/.well-known/association", Map.class); }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/PublicResource.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertIn(PACKAGE + ".alpha.AlphaTest", plan["tests"])
+
+    def test_class_plan_static_builder_unknown_call_is_not_hidden_by_known_call(self):
+        self.write(f"{TEST}/alpha/AlphaTest.java", f"package {PACKAGE}.alpha;\n"
+                   "import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;\n"
+                   'public class AlphaTest { void call(String target) { get("/api/alpha/items"); get(target); } }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertIn(PACKAGE + ".alpha.AlphaTest", self.plan()["tests"])
+
+    def test_class_plan_transformed_http_prefix_remains_unclassified(self):
+        self.java(TEST, "alpha/AlphaTest.java", body='void call() { request.get("/api/alpha/items".replace("alpha", "delta"), Map.class); }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertIn(PACKAGE + ".alpha.AlphaTest", self.plan()["tests"])
+
+    def test_class_plan_known_local_url_constants_do_not_add_unrelated_http_tests(self):
+        self.java(TEST, "alpha/AlphaTest.java", body='String BASE_URL = "/api/alpha/items/"; void call() { request.get(BASE_URL + id, Map.class); }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertNotIn(PACKAGE + ".alpha.AlphaTest", self.plan()["tests"])
+
+    def test_class_plan_unclassified_dynamic_http_consumers_are_included(self):
+        self.java(TEST, "alpha/AlphaTest.java", body='void get() { request.get("/api/" + module + "/items", Map.class); }')
+        self.java(TEST, "epsilon/EpsilonTest.java", body='void get(String target) { request.get(target, String.class); }')
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        plan = self.plan()
+        self.assertEqual(plan["mode"], "selected", plan)
+        self.assertIn(PACKAGE + ".alpha.AlphaTest", plan["tests"])
+        self.assertIn(PACKAGE + ".epsilon.EpsilonTest", plan["tests"])
+
+    def test_class_plan_dynamic_publisher_consumer_still_requires_full_suite(self):
+        self.java(MAIN, "beta/service/BetaService.java", imports=["alpha.service.AlphaService"],
+                  body="void send() { publisher.publishEvent(event); }")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/alpha/service/AlphaService.java")
+        self.assertEqual(self.plan()["mode"], "full")
 
     def test_leaf_service_selects_own_module(self):
         self.change(f"{MAIN}/delta/service/DeltaService.java")
