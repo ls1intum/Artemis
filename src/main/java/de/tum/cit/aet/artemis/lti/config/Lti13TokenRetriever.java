@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -69,8 +70,10 @@ public class Lti13TokenRetriever {
      *
      * @param clientRegistration to query a token for
      * @param scopes             to ask access for
-     * @return the access token to be used to authenticate requests to the client's LTI 1.3 platform.
+     * @return the access token to be used to authenticate requests to the client's LTI 1.3 platform, or {@code null} if no token could be obtained: the JWT could not be
+     *         signed, the platform rejected the request or answered without a body or an {@code access_token}, or its answer was not a valid token response
      */
+    @Nullable
     public String getToken(@NonNull ClientRegistration clientRegistration, String... scopes) {
         log.info("Trying to retrieve access token for client");
 
@@ -109,7 +112,7 @@ public class Lti13TokenRetriever {
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record TokenResponse(@JsonProperty("access_token") String accessToken) {
+    private record TokenResponse(@Nullable @JsonProperty("access_token") String accessToken) {
     }
 
     /**
