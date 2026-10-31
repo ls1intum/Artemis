@@ -434,7 +434,7 @@ public class ProgrammingExerciseParticipationResource {
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri);
 
         // like a push, the reset is kept in the repository but not built outside the build time window, otherwise the reset commit would be graded
-        if (isBuildOutsideTimeWindow(participation, exercise)) {
+        if (isBuildOutsideTimeWindow(participation, ZonedDateTime.now())) {
             return ResponseEntity.ok().build();
         }
 
@@ -446,12 +446,8 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok().build();
     }
 
-    private boolean isBuildOutsideTimeWindow(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise) {
-        if (participation.isPracticeMode() || authCheckService.isAtLeastEditorForExercise(exercise)) {
-            return false;
-        }
-        var window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(exercise.getId());
-        return window != null && !window.extendedByDueDateExtension(exercise.getDueDate(), participation.getIndividualDueDate()).isBuildAllowedAt(ZonedDateTime.now());
+    private boolean isBuildOutsideTimeWindow(ProgrammingExerciseStudentParticipation participation, ZonedDateTime instant) {
+        return submissionService.findBuildTimeWindowExcluding(participation, instant).isPresent();
     }
 
     /**

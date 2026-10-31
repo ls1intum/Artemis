@@ -157,6 +157,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
+     * Evaluates the shared build-window policy for an operation requested by the currently authenticated user.
+     *
+     * @param participation the participation whose repository is affected
+     * @param instant       the instant at which the operation is evaluated
+     * @return the window blocking the build, or empty if the build is allowed
+     */
+    public Optional<BuildTimeWindow> findBuildTimeWindowExcluding(ProgrammingExerciseParticipation participation, ZonedDateTime instant) {
+        return findBuildTimeWindowExcluding(participation, userRepository.getUser(), instant);
+    }
+
+    /**
      * This method gets called if a new commit was pushed to the VCS
      *
      * @param participation     The Participation, where the push happened
