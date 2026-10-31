@@ -98,8 +98,9 @@ public class ProgrammingExerciseTestCaseResource {
             cannot be read with a personal access token.""")
     public ResponseEntity<Set<ProgrammingExerciseTestCaseResponseDTO>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        AgentDraftRules.rejectExamExercise(programmingExercise.isExamExercise());
+        if (AgentDraftRules.isTokenRequest()) {
+            AgentDraftRules.rejectExamExercise(programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exerciseId));
+        }
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
         Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
         return ResponseEntity.ok(testCaseDTOs);
