@@ -9,7 +9,7 @@
         "${studentParentWorkingDirectoryName}"
     ],
     "devDependencies": {
-        "vite": "^6.4.5",
-        "vitest": "^4.1.12"
+        "vite": "^8.3.5",
+        "vitest": "^5.0.5"
     }
 }

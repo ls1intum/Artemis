@@ -15,7 +15,7 @@
         "@microsoft/eslint-formatter-sarif": "^3.1.0",
         "eslint": "^9.20.1",
         "globals": "^15.15.0",
-        "vite": "^6.4.5",
-        "vitest": "^4.1.12"
+        "vite": "^8.3.5",
+        "vitest": "^5.0.5"
     }
 }
