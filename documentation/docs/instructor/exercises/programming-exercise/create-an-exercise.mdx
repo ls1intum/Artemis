@@ -145,7 +145,7 @@ Shown in advanced mode only.
 
 ## Build Time Window
 
-Shown in advanced mode only, below **Version Control**. It is not available for exam exercises.
+Configure the window in advanced mode, below **Version Control**. When editing an exercise that already has a window, the fields remain visible in simple mode for the editing session, so you can correct a window invalidated by a date change. It is not available for exam exercises.
 
 By default every push of a student is built. With a build time window you restrict the period in which pushes are built. This is useful if students should work with the repository first and only get test feedback later, for example from a start date a week after the release.
 
@@ -158,7 +158,7 @@ Both fields are optional and both bounds are inclusive. With only a start, build
 
 A push outside the window is accepted into the student's repository and appears in the commit history, but Artemis neither builds it nor creates a submission for it. It therefore does not count towards a [submission policy](/instructor/exercises/programming-exercise/grade-and-verify#submission-policy-configuration) with a limit. The student sees a message in the output of `git push`, and Artemis shows a notice about the window on the exercise page and in the online editor. The online editor and the **Trigger build** button follow the same rule, so students cannot get around the window.
 
-The window must start and end between the **Start Date** (or, without one, the **Release Date**) and the **Due Date** of the exercise. Artemis rejects a window that ends before it starts or lies outside these dates.
+The window must start and end between the **Start Date** (or, without one, the **Release Date**) and the **Due Date** of the exercise. Artemis rejects a window that ends before it starts or lies outside these dates. Changing the start, release or due date also prevents saving if the existing window falls outside the new dates; adjust or remove the window before saving.
 
 The end of the window moves with an individual due date extension. If the due date of a student is extended by two days, builds for this student stop two days later than the end of the window. The start does not move.
 
