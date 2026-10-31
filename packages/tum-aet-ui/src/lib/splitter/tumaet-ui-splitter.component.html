@@ -1,0 +1,23 @@
+<div class="tumaet-ui-splitter-panel" data-testid="splitter-panel" [style.flex]="collapsedSecondSize() ? '1 1 0' : '0 0 auto'" [style.flex-basis]="firstBasis()">
+    <ng-container [ngTemplateOutlet]="panels()[0]?.template ?? null" />
+</div>
+<div
+    role="separator"
+    tabindex="0"
+    data-testid="splitter-gutter"
+    class="tumaet-ui-splitter-separator"
+    [hidden]="!!collapsedSecondSize()"
+    [attr.aria-label]="separatorLabel()"
+    [attr.aria-orientation]="orientation() === 'horizontal' ? 'vertical' : 'horizontal'"
+    [attr.aria-valuemin]="minimums()[0]"
+    [attr.aria-valuemax]="maximum()"
+    [attr.aria-valuenow]="current()"
+    [style.flex-basis.px]="safeGutterSize()"
+    (keydown)="onKeydown($event)"
+    (pointerdown)="onPointerdown($event)"
+>
+    <span aria-hidden="true" class="tumaet-ui-splitter-grip"></span>
+</div>
+<div class="tumaet-ui-splitter-panel" data-testid="splitter-panel" [style.flex]="collapsedSecondSize() ? '0 0 ' + collapsedSecondSize() : '1 1 0'">
+    <ng-container [ngTemplateOutlet]="panels()[1]?.template ?? null" />
+</div>

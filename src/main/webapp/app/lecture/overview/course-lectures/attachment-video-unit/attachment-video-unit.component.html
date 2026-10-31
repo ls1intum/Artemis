@@ -27,19 +27,19 @@
         }
         @if (lectureUnit().attachment?.uploadDate) {
             <div>
-                <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
+                <span class="font-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
                 {{ lectureUnit().attachment?.uploadDate | artemisDate }}
             </div>
         }
         @if (lectureUnit().attachment?.version) {
             <div>
-                <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
+                <span class="font-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
                 {{ lectureUnit().attachment?.version }}
             </div>
         }
         @if (lectureUnit().attachment?.link) {
             <div>
-                <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
+                <span class="font-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
                 {{ getFileName() }}
             </div>
         }
@@ -55,10 +55,8 @@
                 <hr />
             }
             @if (isLoading()) {
-                <div class="d-flex justify-content-center p-3">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.loading">Loading...</span>
-                    </div>
+                <div class="flex justify-center p-4!">
+                    <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.attachmentVideoUnit.videoPlayer.loading' | artemisTranslate" />
                 </div>
             } @else if (playlistUrl() && !playerFailed()) {
                 <div class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
@@ -82,9 +80,9 @@
                 </div>
             } @else {
                 <div class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
-                    <div [class]="isFullscreen() ? 'video-iframe-wrapper video-iframe-wrapper--fullscreen' : 'ratio ratio-16x9'">
+                    <div [class]="isFullscreen() ? 'video-iframe-wrapper video-iframe-wrapper--fullscreen' : 'relative [&>iframe]:absolute [&>iframe]:inset-0 aspect-video'">
                         <iframe
-                            [class]="isFullscreen() ? 'video-iframe' : 'rounded w-100 h-100 border-0'"
+                            [class]="isFullscreen() ? 'video-iframe' : 'rounded w-full h-full border-0'"
                             [src]="iframeFallbackUrl() | safeResourceUrl"
                             allow="fullscreen"
                             [title]="lectureUnit().name || ('artemisApp.attachmentVideoUnit.videoPlayer.iframeTitle' | artemisTranslate)"
@@ -102,16 +100,14 @@
                 <hr />
             }
             @if (pdfLoadError()) {
-                <p-message severity="error" class="m-3">
-                    <span class="text-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
-                </p-message>
+                <tumaet-ui-message severity="error" class="m-4!">
+                    <span class="text-state-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
+                </tumaet-ui-message>
             } @else if (pdfUrl()) {
                 <div class="pdf-viewer-spacing">
                     @if (showPdfSpinner()) {
-                        <div class="d-flex justify-content-center p-3 pdf-loading-spinner">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
-                            </div>
+                        <div class="flex justify-center p-4! pdf-loading-spinner">
+                            <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf' | artemisTranslate" />
                         </div>
                     }
                     <jhi-pdf-viewer
@@ -173,7 +169,11 @@
                         <div class="lecture-sync">
                             <label class="lecture-sync-toggle" for="lecture-sync-toggle">
                                 <span class="lecture-sync-toggle__label" jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.toggle">Synchronize slides and video</span>
-                                <p-toggleswitch inputId="lecture-sync-toggle" [ngModel]="synchronizeVideoAndSlides()" (ngModelChange)="onSynchronizationToggleChange($event)" />
+                                <tumaet-ui-toggle-switch
+                                    inputId="lecture-sync-toggle"
+                                    [ngModel]="synchronizeVideoAndSlides()"
+                                    (ngModelChange)="onSynchronizationToggleChange($event)"
+                                />
                             </label>
                             @if (syncDisabledByPointOut(); as notice) {
                                 <span
@@ -185,7 +185,16 @@
                             }
                         </div>
                     }
-                    <button class="iris-sidebar__close-button" type="button" [attr.aria-label]="closeFullscreenAriaLabel()" (click)="closeFullscreen()">
+                    <button
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        class="iris-sidebar__close-button"
+                        type="button"
+                        [attr.aria-label]="closeFullscreenAriaLabel()"
+                        (click)="closeFullscreen()"
+                    >
                         <fa-icon [icon]="faXmark" />
                     </button>
                 </div>

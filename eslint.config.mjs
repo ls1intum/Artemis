@@ -702,7 +702,7 @@ export default tseslint.config(
         },
     },
     {
-        // Regression lock: these modules are fully migrated to Tailwind + PrimeNG, so Bootstrap CSS classes are
+        // Regression lock: these modules are fully migrated to Tailwind + TUM AET UI, so Bootstrap CSS classes are
         // forbidden in their templates. Add each module here once it is fully Bootstrap-free. See client-development.mdx
         // (### Styling).
         files: [
@@ -745,13 +745,20 @@ export default tseslint.config(
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
             'src/main/webapp/app/course/manage/update/**/*.html',
             'src/main/webapp/app/account/**/*.html',
-            // The lecture editor with its content, the pages that create, edit and split content, and the PDF drop zone and dialog.
-            'src/main/webapp/app/lecture/manage/lecture-update/**/*.html',
-            'src/main/webapp/app/lecture/manage/lecture-period/**/*.html',
-            'src/main/webapp/app/lecture/manage/lecture-title-channel-name/**/*.html',
-            'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
-            'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
-            'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
+            // Lecture and tutorial-group management, reading views, and their shared UI compositions.
+            'src/main/webapp/app/lecture/**/*.html',
+            'src/main/webapp/app/tutorialgroup/**/*.html',
+            'src/main/webapp/app/shared-ui/components/resizable-panels/**/*.html',
+            'src/main/webapp/app/shared-ui/components/buttons/confirm-autofocus-button/**/*.html',
+            'src/main/webapp/app/shared-ui/loading-indicator-overlay/**/*.html',
+            'src/main/webapp/app/shared-ui/loading-indicator-container/**/*.html',
+            'src/main/webapp/app/shared-ui/components/checklist-check/**/*.html',
+            'src/main/webapp/app/shared-ui/information-box/**/*.html',
+            'src/main/webapp/app/shared-ui/detail-overview-list/detail-overview-list.component.html',
+            'src/main/webapp/app/course/shared/course-sidebar-toggle-button/**/*.html',
+            'src/main/webapp/app/atlas/shared/competency-contribution/**/*.html',
+            'src/main/webapp/app/atlas/manage/orchestration-trigger/**/*.html',
+            'src/main/webapp/app/atlas/shared/orchestration-result-dialog/**/*.html',
             'src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.html',
             'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
             'src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.html',

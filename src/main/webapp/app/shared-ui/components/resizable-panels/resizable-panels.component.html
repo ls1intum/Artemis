@@ -1,48 +1,45 @@
 @if (!isNarrow() && rightPanels().length > 0) {
-    <!-- ── Wide mode: one splitter kept mounted across collapse ────────────────────────────────────
-         Collapse only toggles the right pane's content and width (via the right-collapsed class); the splitter and
-         its first panel are never destroyed, so the left panel's projected content (e.g. the modeling editor) keeps
-         its in-memory state instead of being recreated and reset on collapse. -->
-    <p-splitter
-        [pt]="{ gutter: { 'data-testid': 'splitter-gutter' }, panel: { 'data-testid': 'splitter-panel' } }"
-        class="resizable-panels-splitter w-100 h-100"
+    <tumaet-ui-splitter
+        class="resizable-panels-splitter w-full h-full"
         [class.right-collapsed]="isRightPanelCollapsed()"
-        layout="horizontal"
-        [panelSizes]="panelSizesForSplitter()"
+        [sizes]="panelSizesForSplitter()"
         [minSizes]="[0, 0]"
         [gutterSize]="gutterSize"
-        [stateKey]="storageKey() ?? null"
-        stateStorage="local"
-        (onResizeEnd)="onResizeEnd($event.sizes)"
+        [collapsedSecondSize]="isRightPanelCollapsed() ? '3rem' : undefined"
+        [separatorLabel]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: rightPanels()[activeRightIndex()].label() | artemisTranslate }"
+        (resizeEnd)="onResizeEnd($event)"
     >
-        <ng-template #panel>
+        <ng-template tumAetUiSplitterPanel>
             @if (leftPanel()) {
-                <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3 module-bg">
-                    <!-- cdkScrollable registers the panel with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
-                    <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel()" cdkScrollable>
+                <div class="panel-surface flex flex-col w-full h-full overflow-hidden rounded-lg">
+                    <div class="grow min-h-0 overflow-y-auto" [class.p-2]="!flushLeftPanel()" cdkScrollable>
                         <ng-container [ngTemplateOutlet]="leftPanel()!.templateRef" />
                     </div>
                 </div>
             }
         </ng-template>
-        <ng-template #panel>
-            @if (!isRightPanelCollapsed()) {
-                <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3 module-bg">
-                    <div class="right-panel-header d-flex align-items-center">
-                        <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="right-panel-tabs flex-grow-1">
-                            <p-tablist>
-                                @for (panel of rightPanels(); track panel; let i = $index) {
-                                    <p-tab [value]="i" data-testid="resizable-panel-tab">
-                                        @if (panel.iconTemplate()) {
-                                            <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
-                                        } @else if (panel.icon()) {
-                                            <fa-icon [icon]="panel.icon()!" />
-                                        }
-                                        <span [jhiTranslate]="panel.label()"></span>
-                                    </p-tab>
-                                }
-                            </p-tablist>
-                        </p-tabs>
+        <ng-template tumAetUiSplitterPanel>
+            <!-- Hiding keeps editor and embedded chat state intact across collapse/expand. -->
+            <div
+                data-testid="right-panel-content"
+                class="panel-surface flex flex-col w-full h-full overflow-hidden rounded-lg"
+                [hidden]="isRightPanelCollapsed()"
+                [attr.inert]="isRightPanelCollapsed() ? '' : null"
+            >
+                <tumaet-ui-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="flex flex-col min-h-0 grow">
+                    <div class="right-panel-header flex items-center">
+                        <tumaet-ui-tab-list class="min-w-0 grow">
+                            @for (panel of rightPanels(); track panel; let i = $index) {
+                                <tumaet-ui-tab [value]="i" data-testid="resizable-panel-tab">
+                                    @if (panel.iconTemplate()) {
+                                        <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                                    } @else if (panel.icon()) {
+                                        <fa-icon [icon]="panel.icon()!" />
+                                    }
+                                    <span [jhiTranslate]="panel.label()"></span>
+                                </tumaet-ui-tab>
+                            }
+                        </tumaet-ui-tab-list>
                         <button
                             type="button"
                             class="right-panel-collapse-button"
@@ -52,14 +49,17 @@
                             <fa-icon [icon]="faChevronRight" />
                         </button>
                     </div>
-                    <div class="flex-grow-1 overflow-y-auto p-2" cdkScrollable>
-                        @if (rightPanels()[activeRightIndex()]) {
-                            <ng-container [ngTemplateOutlet]="rightPanels()[activeRightIndex()].templateRef" />
+                    <tumaet-ui-tab-panels data-testid="resizable-panel-container" class="min-h-0 grow overflow-y-auto" style="padding: 0.5rem" cdkScrollable>
+                        @for (panel of rightPanels(); track panel; let i = $index) {
+                            <tumaet-ui-tab-panel data-testid="resizable-panel-content" [value]="i" preserveContent fill>
+                                <ng-container [ngTemplateOutlet]="panel.templateRef" />
+                            </tumaet-ui-tab-panel>
                         }
-                    </div>
-                </div>
-            } @else {
-                <div class="collapsed-right-panel d-flex flex-column align-items-center overflow-hidden rounded-3 module-bg">
+                    </tumaet-ui-tab-panels>
+                </tumaet-ui-tabs>
+            </div>
+            @if (isRightPanelCollapsed()) {
+                <div class="collapsed-right-panel panel-surface flex flex-col items-center h-full overflow-hidden rounded-lg">
                     @for (panel of rightPanels(); track panel; let i = $index) {
                         <button
                             type="button"
@@ -79,30 +79,34 @@
                 </div>
             }
         </ng-template>
-    </p-splitter>
+    </tumaet-ui-splitter>
 } @else {
-    <!-- ── Narrow mode: single tabbed panel, no resize ────────────────── -->
-    <div class="d-flex flex-column h-100 w-100 overflow-hidden rounded-3 module-bg">
+    <tumaet-ui-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="panel-surface flex flex-col h-full w-full overflow-hidden rounded-lg">
         @if (showCombinedTabHeader()) {
-            <p-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="flex-shrink-0">
-                <p-tablist>
-                    @for (panel of panels(); track panel; let i = $index) {
-                        <p-tab [value]="i" data-testid="resizable-panel-tab">
-                            @if (panel.iconTemplate()) {
-                                <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
-                            } @else if (panel.icon()) {
-                                <fa-icon [icon]="panel.icon()!" />
-                            }
-                            <span [jhiTranslate]="panel.label()"></span>
-                        </p-tab>
-                    }
-                </p-tablist>
-            </p-tabs>
+            <tumaet-ui-tab-list class="shrink-0">
+                @for (panel of panels(); track panel; let i = $index) {
+                    <tumaet-ui-tab [value]="i" data-testid="resizable-panel-tab">
+                        @if (panel.iconTemplate()) {
+                            <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                        } @else if (panel.icon()) {
+                            <fa-icon [icon]="panel.icon()!" />
+                        }
+                        <span [jhiTranslate]="panel.label()"></span>
+                    </tumaet-ui-tab>
+                }
+            </tumaet-ui-tab-list>
         }
-        <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel() || activeSingleIndex() !== 0" cdkScrollable>
-            @if (panels()[activeSingleIndex()]) {
-                <ng-container [ngTemplateOutlet]="panels()[activeSingleIndex()].templateRef" />
+        <tumaet-ui-tab-panels
+            data-testid="resizable-panel-container"
+            class="grow min-h-0 overflow-y-auto"
+            [style.padding]="flushLeftPanel() && activeSingleIndex() === 0 ? '0' : '0.5rem'"
+            cdkScrollable
+        >
+            @for (panel of panels(); track panel; let i = $index) {
+                <tumaet-ui-tab-panel data-testid="resizable-panel-content" [value]="i" preserveContent fill>
+                    <ng-container [ngTemplateOutlet]="panel.templateRef" />
+                </tumaet-ui-tab-panel>
             }
-        </div>
-    </div>
+        </tumaet-ui-tab-panels>
+    </tumaet-ui-tabs>
 }

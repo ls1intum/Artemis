@@ -145,6 +145,30 @@ Contributors working in the Artemis repository should follow the
 [TUM AET UI package guide](https://docs.artemis.tum.de/developer/guidelines/tum-aet-ui-kit). It covers
 contribution, testing, and publishing.
 
+Consumer checks install minimum and latest compatible library peers with strict npm peer
+validation. Both modes use the workspace catalog version of `@angular/build`, keeping the
+build tool and its transitive dependencies separate from the library peer matrix.
+
 ## License
 
 [MIT](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-aet-ui/LICENSE).
+
+### Splitter
+
+`TumAetUiSplitterComponent` arranges two persistent template panels. Import it and
+`TumAetUiSplitterPanelDirective` from `@tumaet/ui-angular`:
+
+```html
+<tumaet-ui-splitter [sizes]="[65, 35]" [minSizes]="[20, 15]" separatorLabel="Resize document and notes" (resizeEnd)="saveSizes($event)">
+    <ng-template tumAetUiSplitterPanel>Document</ng-template>
+    <ng-template tumAetUiSplitterPanel>Notes</ng-template>
+</tumaet-ui-splitter>
+```
+
+The separator supports pointer dragging over embedded frames, axis arrow keys (Shift
+for larger steps), Home, and End. `orientation="vertical"` stacks the panels.
+`sizesChange` emits percentage pairs during dragging; `resizeEnd` commits keyboard
+or pointer changes. Cancellation restores the previous sizes without committing.
+Consumers own persistence and must hide or make their own content inert when using
+`collapsedSecondSize` to replace the second panel with a fixed-size collapsed rail.
+Panel templates stay mounted during resizing and collapse.
