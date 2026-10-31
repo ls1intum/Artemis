@@ -165,6 +165,8 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             this.toTextField('artemisApp.programmingExercise.checkoutSolutionRepository.title', booleanLabel(this.translateService, buildConfig.checkoutSolutionRepository)),
             this.toTextField('artemisApp.programmingExercise.allowBranching.title', booleanLabel(this.translateService, buildConfig.allowBranching)),
             this.toTextField('artemisApp.programmingExercise.branchRegex.title', buildConfig.branchRegex),
+            this.toTextField('artemisApp.programmingExercise.buildTimeWindow.start', this.formatDate(buildConfig.advancedSettings?.buildTimeWindow?.start)),
+            this.toTextField('artemisApp.programmingExercise.buildTimeWindow.end', this.formatDate(buildConfig.advancedSettings?.buildTimeWindow?.end)),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.dockerFlags', buildConfig.dockerFlags),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.theiaImage', buildConfig.theiaImage),
             this.toTextField(
@@ -207,6 +209,11 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
     };
 
     // ── View-model factory methods (called only inside computed() signals) ──
+
+    /** Formats a snapshot date string for display, or returns undefined when the date is missing. */
+    private formatDate(value?: string): string | undefined {
+        return value ? dayjs(value).format('MMM D, YYYY HH:mm') : undefined;
+    }
 
     /** Creates a plain text metadata field with pre-computed display values. */
     private toTextField(label: string, value?: string | number): MetadataField {

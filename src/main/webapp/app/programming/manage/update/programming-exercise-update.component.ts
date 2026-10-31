@@ -61,6 +61,8 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ProgrammingExerciseBuildTimeWindowComponent } from 'app/programming/manage/update/update-components/build-time-window/programming-exercise-build-time-window.component';
+import { BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS, BuildTimeWindowError, getBuildTimeWindowError } from 'app/programming/shared/utils/build-time-window.utils';
 import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
@@ -111,6 +113,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
+        ProgrammingExerciseBuildTimeWindowComponent,
         ProgrammingExerciseGradingComponent,
         ExerciseGroupTimelineLockComponent,
         ExerciseUpdatePlagiarismComponent,
@@ -160,9 +163,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
+    buildTimeWindowComponent = viewChild(ProgrammingExerciseBuildTimeWindowComponent);
 
     packageNamePattern = '';
     isSimpleMode = signal<boolean>(true);
+    private buildTimeWindowKeptVisible = false;
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
 
     isEditFieldDisplayedRecord = computed(() => {
@@ -1293,6 +1298,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
+        this.validateBuildTimeWindow(validationErrorReasons);
         // Must stay after the points, bonus-point, penalty and submission-limit checks: it defers to them.
         this.validateGradingSection(validationErrorReasons);
 
@@ -1322,6 +1328,45 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
             translateValues: {},
         });
+    }
+
+    /**
+     * Whether the build time window is edited in the form. It is a setting of the advanced mode, but a window that exists is also shown in the simple mode,
+     * as a date change there can invalidate it, which blocks saving. Once shown for an existing window, it stays visible for the rest of the editing session,
+     * so that clearing the last date to replace it does not remove the fields.
+     */
+    isBuildTimeWindowDisplayed(): boolean {
+        if (this.isExamMode()) {
+            return false;
+        }
+        if (this.programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow) {
+            this.buildTimeWindowKeptVisible = true;
+        }
+        return this.isEditFieldDisplayedRecord().buildTimeWindow || this.buildTimeWindowKeptVisible;
+    }
+
+    /**
+     * The problem with the build time window, which depends on the dates of the exercise. Exam exercises have no window.
+     * The form passes this to the build time window component, which cannot observe the dates edited elsewhere in the form.
+     */
+    getBuildTimeWindowError(): BuildTimeWindowError | undefined {
+        return this.isExamMode() ? undefined : getBuildTimeWindowError(this.programmingExercise);
+    }
+
+    private validateBuildTimeWindow(validationErrorReasons: ValidationReason[]): void {
+        const error = this.getBuildTimeWindowError();
+        if (error) {
+            validationErrorReasons.push({
+                translateKey: BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS[error],
+                translateValues: {},
+            });
+        }
+        if (this.buildTimeWindowComponent()?.isInputValid() === false) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildTimeWindow.invalidInput',
+                translateValues: {},
+            });
+        }
     }
 
     private validateExercisePlagiarism(validationErrorReasons: ValidationReason[]) {

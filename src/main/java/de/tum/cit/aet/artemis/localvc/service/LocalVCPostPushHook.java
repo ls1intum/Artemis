@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 
 /**
@@ -93,6 +94,10 @@ public class LocalVCPostPushHook implements PostReceiveHook {
             // Return an error message to the user.
             receivePack.sendError(
                     "Something went wrong while processing your push. Your changes were saved, but we could not test your submission. Please try again and if this issue persists, contact the course administrators.");
+        }
+        catch (BuildOutsideTimeWindowException e) {
+            // The push is valid and kept, it is just not built, so this is a message and no error.
+            receivePack.sendMessage(e.getUserMessage());
         }
         catch (VersionControlException e) {
             boolean isBranchingAllowed = localVCServletService.isBranchingAllowedForRepository(repository);

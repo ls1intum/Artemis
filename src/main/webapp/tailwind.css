@@ -140,6 +140,8 @@
 @source './app/exercise/structured-grading-criterion/grading-instructions-details';
 @source './app/exercise/unreferenced-feedback';
 @source './app/programming/shared/programming-exercise-update-timeline';
+@source './app/programming/shared/build-window-notice';
+@source './app/programming/manage/update/update-components/build-time-window';
 @source './app/course/manage/user-management-dropdown';
 @source './app/videosource/gocast';
 

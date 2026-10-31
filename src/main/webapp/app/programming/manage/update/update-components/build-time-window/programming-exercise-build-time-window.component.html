@@ -1,0 +1,32 @@
+<section class="flex flex-col gap-3" data-testid="build-time-window">
+    <div class="flex items-center gap-2">
+        <h3 class="m-0" id="artemisApp.programmingExercise.buildTimeWindow.title" jhiTranslate="artemisApp.programmingExercise.buildTimeWindow.title"></h3>
+        <jhi-help-icon text="artemisApp.programmingExercise.buildTimeWindow.description" />
+    </div>
+    <p class="m-0" jhiTranslate="artemisApp.programmingExercise.buildTimeWindow.message"></p>
+    <div class="grid gap-6 sm:grid-cols-2">
+        <tumaet-ui-date-picker
+            data-testid="build-time-window-start"
+            inputId="build-time-window-start"
+            labelName="artemisApp.programmingExercise.buildTimeWindow.start"
+            [value]="start()"
+            [invalid]="!!error()"
+            [ariaDescribedBy]="error() ? 'build-time-window-error' : undefined"
+            (valueChange)="onStartChange($event)"
+            (inputValidityChange)="isStartTextValid.set($event)"
+        />
+        <tumaet-ui-date-picker
+            data-testid="build-time-window-end"
+            inputId="build-time-window-end"
+            labelName="artemisApp.programmingExercise.buildTimeWindow.end"
+            [value]="end()"
+            [invalid]="!!error()"
+            [ariaDescribedBy]="error() ? 'build-time-window-error' : undefined"
+            (valueChange)="onEndChange($event)"
+            (inputValidityChange)="isEndTextValid.set($event)"
+        />
+    </div>
+    @if (error(); as windowError) {
+        <tumaet-ui-message id="build-time-window-error" severity="error" data-testid="build-time-window-error" [text]="errorTranslationKeys[windowError] | artemisTranslate" />
+    }
+</section>

@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { convertBuildConfigDatesFromServer } from 'app/programming/shared/utils/build-time-window.utils';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -80,6 +81,8 @@ export class ExerciseImportFromFileComponent implements OnInit {
                     hydrate(buildConfig, raw);
                     progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
+                // The window dates of an export are ISO strings
+                convertBuildConfigDatesFromServer(progEx.buildConfig);
                 if (progEx.auxiliaryRepositories) {
                     progEx.auxiliaryRepositories.forEach((repo, index) => {
                         progEx.auxiliaryRepositories![index].id = undefined;

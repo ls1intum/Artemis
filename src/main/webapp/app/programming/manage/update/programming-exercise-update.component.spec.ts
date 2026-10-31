@@ -17,6 +17,8 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, map, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
+import { ProgrammingExerciseBuildTimeWindowComponent } from 'app/programming/manage/update/update-components/build-time-window/programming-exercise-build-time-window.component';
+import { BuildTimeWindowError } from 'app/programming/shared/utils/build-time-window.utils';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -57,7 +59,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
-import { Signal, signal } from '@angular/core';
+import { ChangeDetectorRef, Signal, signal } from '@angular/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -1075,6 +1077,126 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             saveButton().click();
 
             expect(saveSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('build time window', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+        const windowComponent = () => fixture.debugElement.query(By.directive(ProgrammingExerciseBuildTimeWindowComponent));
+        const reasonKeys = () => comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.JAVA } as Course })));
+            vi.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
+            comp.ngOnInit();
+            fixture.detectChanges();
+            // a new exercise gets default dates, which the tests below set explicitly
+            comp.programmingExercise.releaseDate = undefined;
+            comp.programmingExercise.startDate = undefined;
+            comp.programmingExercise.dueDate = undefined;
+        });
+
+        it('is displayed in the advanced mode, but in the simple mode only if the exercise has a window', () => {
+            comp.isSimpleMode.set(true);
+            fixture.detectChanges();
+            expect(windowComponent()).toBeNull();
+
+            comp.isSimpleMode.set(false);
+            fixture.detectChanges();
+            expect(windowComponent()).not.toBeNull();
+        });
+
+        it('is displayed in the simple mode if the exercise has a window, so that a window invalidated by a date change can be fixed', () => {
+            comp.isSimpleMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            fixture.detectChanges();
+
+            expect(windowComponent()).not.toBeNull();
+        });
+
+        it('stays displayed in the simple mode after the last date of the window was cleared, so that it can be replaced', () => {
+            comp.isSimpleMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart } };
+            fixture.detectChanges();
+            expect(windowComponent()).not.toBeNull();
+
+            // the change comes from an event of the picker, which marks the form as changed
+            comp.programmingExercise.buildConfig!.advancedSettings = undefined;
+            fixture.componentRef.changeDetectorRef.markForCheck();
+            fixture.detectChanges();
+
+            expect(windowComponent()).not.toBeNull();
+        });
+
+        it('is not displayed for exam exercises', () => {
+            comp.isSimpleMode.set(false);
+            comp.isExamMode.set(true);
+            fixture.detectChanges();
+
+            expect(windowComponent()).toBeNull();
+        });
+
+        it('passes the problem with the window, which depends on the dates edited elsewhere, to the component', () => {
+            comp.isSimpleMode.set(false);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.dueDate = windowEnd.subtract(1, 'hour');
+            fixture.detectChanges();
+
+            expect((windowComponent().componentInstance as ProgrammingExerciseBuildTimeWindowComponent).error()).toBe(BuildTimeWindowError.OUTSIDE_EXERCISE_DATES);
+
+            comp.programmingExercise.dueDate = windowEnd;
+            // the user edits the date in another section, whose event marks the form dirty
+            fixture.debugElement.injector.get(ChangeDetectorRef).markForCheck();
+            fixture.detectChanges();
+
+            expect((windowComponent().componentInstance as ProgrammingExerciseBuildTimeWindowComponent).error()).toBeUndefined();
+        });
+
+        it('adds no reason without a window or with a valid window', () => {
+            expect(reasonKeys().filter((key) => key.includes('buildTimeWindow'))).toEqual([]);
+
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.dueDate = windowEnd;
+
+            expect(reasonKeys().filter((key) => key.includes('buildTimeWindow'))).toEqual([]);
+        });
+
+        it('adds a reason when the end is not after the start', () => {
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowEnd, end: windowStart } };
+
+            expect(comp.getInvalidReasons()).toContainEqual({ translateKey: 'artemisApp.programmingExercise.buildTimeWindow.endNotAfterStart', translateValues: {} });
+        });
+
+        it('adds a reason when the window lies outside the exercise dates', () => {
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.releaseDate = windowStart.add(1, 'minute');
+
+            expect(comp.getInvalidReasons()).toContainEqual({ translateKey: 'artemisApp.programmingExercise.buildTimeWindow.outsideExerciseDates', translateValues: {} });
+        });
+
+        it('adds a reason when a picker holds text that is not a date', () => {
+            comp.isSimpleMode.set(false);
+            fixture.detectChanges();
+            const startField = windowComponent().nativeElement.querySelector('#build-time-window-start') as HTMLInputElement;
+
+            startField.value = '01.10.';
+            startField.dispatchEvent(new Event('input'));
+            startField.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+
+            expect(reasonKeys()).toContain('artemisApp.programmingExercise.buildTimeWindow.invalidInput');
+        });
+
+        it('does not validate the window of an exam exercise', () => {
+            comp.isExamMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowEnd, end: windowStart } };
+
+            expect(reasonKeys().filter((key) => key.includes('buildTimeWindow'))).toEqual([]);
         });
     });
 
