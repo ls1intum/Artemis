@@ -75,6 +75,62 @@ test('drafts keep test TypeScript compilation on the public quality runner', () 
     assert.match(step, /if: inputs.check_test_types/);
     assert.match(step, /run: pnpm exec tsc --project config\/client\/tsconfig.spec.json/);
 });
+function changeOutputs({ draft, files, event = 'pull_request', force = false }) {
+    const script = job('detect-changes')
+        .match(/      - id: decide[\s\S]*?        run: \|\n((?:          [^\n]*\n|\n)+)/)[1]
+        .replace(/^ {10}/gm, '');
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-change-policy-'));
+    const output = path.join(directory, 'output');
+    try {
+        const result = spawnSync('bash', ['-c', script], {
+            encoding: 'utf8',
+            env: { ...process.env, FORCE: String(force), EVENT_NAME: event, IS_DRAFT: String(draft), CHANGED_FILES: String(files), GITHUB_OUTPUT: output },
+        });
+        assert.equal(result.status, 0, result.stderr);
+        return Object.fromEntries(
+            fs
+                .readFileSync(output, 'utf8')
+                .trim()
+                .split('\n')
+                .map((line) => line.split('=')),
+        );
+    } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+}
+test('the 3000-file fallback still defers E2E for drafts and preserves their test-server image', () => {
+    const outputs = changeOutputs({ draft: true, files: 3000 });
+    assert.equal(outputs.run_e2e, 'false');
+    assert.equal(outputs.build_pr_image, 'true');
+    assert.equal(outputs.run_server_tests, 'true');
+    assert.equal(outputs.run_client_tests, 'true');
+});
+test('promoting a 3000-file PR retains complete suite eligibility despite truncated path filters', () => {
+    const outputs = changeOutputs({ draft: false, files: 3000 });
+    for (const key of ['run_e2e', 'build_pr_image', 'run_server_tests', 'run_client_tests']) assert.equal(outputs[key], 'true');
+});
+test('manual area filtering can skip Test unless the full-CI override is enabled', () => {
+    const filtered = changeOutputs({ draft: false, files: 0, event: 'workflow_dispatch' });
+    const forced = changeOutputs({ draft: false, files: 0, event: 'workflow_dispatch', force: true });
+    assert.equal(filtered.build_relevant, 'false');
+    assert.equal(filtered.server_test_inputs, 'false');
+    assert.equal(forced.build_relevant, 'true');
+    assert.equal(forced.run_server_tests, 'true');
+    assert.equal(forced.run_client_tests, 'true');
+    assert.equal(forced.run_e2e, 'true');
+});
+test('the existing summary records intentional test scope without allocating another job', () => {
+    const match = job('ci-summary').match(/      - name: "Test validation scope: (.+)"\n/);
+    assert.ok(match, 'Expected run-attempt scope marker in the existing summary');
+    const scope = expression(match[1]);
+    const values = (deferred, result, affected = '') => ({ ...needs({ deferred }), test: { result, outputs: { affected_tests: affected } } });
+    assert.equal(scope({}, values('true', 'skipped')), 'deferred');
+    assert.equal(scope({}, values('false', 'success', 'true')), 'affected');
+    assert.equal(scope({}, values('false', 'failure', 'true')), 'affected');
+    assert.equal(scope({}, values('false', 'success', 'false')), 'full');
+    assert.equal(scope({}, values('false', 'skipped')), 'unavailable');
+    assert.equal(scope({}, values('false', 'failure')), 'unavailable');
+});
 test('client execution reuses the assets prepared by strict test compilation on every scope path', () => {
     const tests = fs.readFileSync(path.join(__dirname, '../workflows/ci-test.yml'), 'utf8');
     const client = tests.slice(tests.indexOf('\n  client-tests:\n'));

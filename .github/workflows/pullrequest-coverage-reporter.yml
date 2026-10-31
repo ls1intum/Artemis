@@ -100,33 +100,18 @@ jobs:
         with:
           script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
 
-      - name: Determine coverage availability from run artifacts
+      - name: Determine coverage scope from upstream run metadata
         id: coverage-scope
         if: steps.find-pr.outputs.result != '' && steps.changes.outcome == 'success'
-        # Read names/expiration from GitHub's run metadata; never trust or execute a scope file
-        # supplied by a fork. Missing metadata fails closed to the updater's unavailable scope.
+        # Read the exact run attempt's CI Summary marker and artifact names/expiration from
+        # GitHub metadata; never trust or execute a scope file supplied by a fork.
         continue-on-error: true
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
           HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
         with:
-          script: |
-            const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.payload.workflow_run.id,
-              per_page: 100,
-            });
-            const names = new Set(artifacts.filter(artifact => !artifact.expired).map(artifact => artifact.name));
-            const required = [];
-            if (process.env.HAS_CLIENT === 'true') required.push('Client Coverage Summaries');
-            if (process.env.HAS_SERVER === 'true') required.push('Server JaCoCo XML');
-            // Full-mode jobs alone publish these artifacts after successful test execution.
-            // Treat missing artifacts as unavailable/possibly partial, never as no code changes.
-            const complete = context.payload.workflow_run.conclusion === 'success' && required.every(name => names.has(name));
-            core.setOutput('test_scope', complete ? 'full' : 'unavailable');
-            if (!complete) core.info('Full-suite coverage is unavailable or incomplete; omit the coverage table.');
+          script: await require('./.github/scripts/pr-coverage-scope.js')({ github, context, core })
 
       - name: Overlay PR source for accurate line/expect counts (data only)
         if: steps.coverage-scope.outputs.test_scope == 'full' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')

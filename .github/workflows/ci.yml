@@ -366,8 +366,8 @@ jobs:
                 echo "codeql_relevant=false"
               fi
               echo "server_test_inputs=${F_SERVER_TEST_INPUTS:-false}"
-              # Only a pull request may skip a suite or E2E. A push to develop, a merge group and a manual run
-              # still run both: the coverage badge and Sonar read both suites' coverage on develop, and
+              # Only a pull request may select individual suites. When Test is relevant, a push to develop,
+              # a merge group and a manual run still run both: the coverage badge and Sonar read both suites' coverage on develop, and
               # develop is where a change that slipped past the pull request's own run would show up.
               # A pull request that large is also never trusted with a skip: for a pull request the
               # changed files come from the pulls API, which stops at 3000 files, so the filters may
@@ -375,7 +375,12 @@ jobs:
               if [ "$EVENT_NAME" != "pull_request" ] || [ "${CHANGED_FILES:-0}" -ge 3000 ]; then
                 echo "run_server_tests=true"
                 echo "run_client_tests=true"
-                echo "run_e2e=true"
+                # The API cap expands relevant scope; draft deferral still applies.
+                if [ "$EVENT_NAME" != "pull_request" ] || [ "$IS_DRAFT" != "true" ]; then
+                  echo "run_e2e=true"
+                else
+                  echo "run_e2e=false"
+                fi
                 echo "build_pr_image=true"
               else
                 # E2E is the slowest stage, so a draft does not start it; `ready_for_review` starts a
@@ -878,6 +883,7 @@ jobs:
     if: >-
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository) &&
+      needs.detect-changes.outputs.tests_deferred != 'true' &&
       needs.detect-changes.outputs.run_e2e != 'false'
     uses: ./.github/workflows/ci-e2e.yml
     permissions:
@@ -1048,6 +1054,10 @@ jobs:
       actions: read  # actions-timeline reads the run's jobs API
     timeout-minutes: 5
     steps:
+      # workflow_run reporters read this enum from this exact run attempt's GitHub job metadata.
+      # No fork-provided file is executed, and no extra reporting job or artifact is needed.
+      - name: "Test validation scope: ${{ needs.detect-changes.outputs.tests_deferred == 'true' && 'deferred' || needs.test.outputs.affected_tests == 'true' && 'affected' || needs.test.result == 'success' && 'full' || 'unavailable' }}"
+        run: echo 'Test validation scope is recorded in the step name.'
       - name: Render run timeline
         uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf  # v3.2.1
         with:

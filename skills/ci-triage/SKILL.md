@@ -57,9 +57,9 @@ changes do not force full E2E. Shared runtime, configuration, helpers and unknow
 suite; missing expected results still fail.
 
 Pushes to develop/main/release branches, merge-group events, releases and manual CI runs use full
-suites. To validate the complete PR branch before merging, dispatch **CI** with that branch and
-**Bypass change detection and run every job** enabled. Manual runs use full validation even when the
-branch belongs to a draft PR. Re-running a ready PR event preserves its affected scope; re-running
+suites when the Test stage is selected. To validate the complete PR branch before merging, dispatch **CI** with that branch and
+**Bypass change detection and run every job** enabled. Without that override, area filtering can skip
+an irrelevant Test stage, including on a draft branch. Re-running a ready PR event preserves its affected scope; re-running
 a draft PR event keeps tests deferred. A merge group only provides pre-merge full validation when
 the repository uses it.
 

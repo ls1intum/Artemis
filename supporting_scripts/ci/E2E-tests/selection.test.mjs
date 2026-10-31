@@ -160,6 +160,57 @@ describe('E2E selector against real commit diffs', () => {
             for (const spec of consumers) assert.ok(paths(result).includes(`e2e/${spec}`), `Missing ${spec}`);
         });
     }
+    // Audited browser routes: non-quiz CourseExerciseDetailsComponent renders the contribution
+    // panel; expanded LectureUnitComponent renders it for lecture units. Include indirect
+    // ProgrammingExerciseOverviewPage.startParticipation callers, not just literal route URLs.
+    const atlasContributionConsumers = [
+        'e2e/Logout.spec.ts',
+        'e2e/admin/FeatureUsageGit.spec.ts',
+        'e2e/atlas/StudentCompetencyProgressView.spec.ts',
+        'e2e/course/CourseChannelMessages.spec.ts',
+        'e2e/course/CourseExercise.spec.ts',
+        'e2e/exercise/ExerciseImport.spec.ts',
+        'e2e/exercise/ExerciseSplitPanelResize.spec.ts',
+        'e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts',
+        'e2e/exercise/file-upload/FileUploadExerciseParticipation.spec.ts',
+        'e2e/exercise/modeling/ModelingEditorPageScroll.spec.ts',
+        'e2e/exercise/modeling/ModelingEditorResize.spec.ts',
+        'e2e/exercise/modeling/ModelingExerciseAssessment.spec.ts',
+        'e2e/exercise/modeling/ModelingExerciseManagement.spec.ts',
+        'e2e/exercise/modeling/ModelingExerciseParticipation.spec.ts',
+        'e2e/exercise/modeling/ModelingTeamCollaboration.spec.ts',
+        'e2e/exercise/programming/CodeEditorResize.spec.ts',
+        'e2e/exercise/programming/ProgrammingExerciseAssessment.spec.ts',
+        'e2e/exercise/programming/ProgrammingExerciseManagement.spec.ts',
+        'e2e/exercise/programming/ProgrammingExerciseParticipation.spec.ts',
+        'e2e/exercise/programming/ProgrammingExercisePracticeMode.spec.ts',
+        'e2e/exercise/programming/ProgrammingExerciseRepositoryExport.spec.ts',
+        'e2e/exercise/programming/ProgrammingExerciseStaticCodeAnalysis.spec.ts',
+        'e2e/exercise/text/TextExerciseAssessment.spec.ts',
+        'e2e/exercise/text/TextExerciseParticipation.spec.ts',
+        'e2e/lecture/LectureUnitContentRenders.spec.ts',
+        'e2e/localci/KubernetesLocalCI.spec.ts',
+    ];
+    for (const file of [
+        'src/main/webapp/app/atlas/shared/competency-contribution/competency-contribution.component.ts',
+        'src/main/webapp/app/atlas/shared/competency-contribution/competency-contribution.component.html',
+        'src/main/webapp/app/atlas/shared/services/course-competency.service.ts',
+    ]) {
+        it(`retains routed exercise and expanded lecture contribution consumers for ${file}`, () => {
+            const { directory, commit, select } = repository();
+            put(directory, file);
+            commit();
+            const result = select();
+            assertPartition(result, directory);
+            assert.deepEqual(
+                atlasContributionConsumers.filter((spec) => !paths(result).includes(spec)),
+                [],
+                'Atlas contribution consumers must execute in the selected phase',
+            );
+            assert.ok(paths(result, 'REMAINING_TESTS').includes('e2e/tutorialgroup/TutorialGroupDetailLayout.spec.ts'));
+            assert.deepEqual(select('base', true), result, 'Full callers must retain the same consumers and exact complement');
+        });
+    }
     for (const file of [
         'src/main/webapp/app/exam/manage/exams/update/exam-update.component.ts',
         'src/main/webapp/app/exam/manage/exams/update/exam-update.component.html',

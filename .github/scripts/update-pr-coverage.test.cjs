@@ -2,7 +2,9 @@ const { afterEach, describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
+const { createRequire } = require('node:module');
 const updateCoverage = require('./update-pr-coverage.js');
+const workflowRequire = createRequire(join(__dirname, '../../package.json'));
 
 const originalEnvironment = { ...process.env };
 afterEach(() => {
@@ -114,24 +116,49 @@ describe('PR coverage body updates', () => {
 
 function availabilityScript() {
     const workflow = readFileSync(join(__dirname, '../workflows/pullrequest-coverage-reporter.yml'), 'utf8');
-    const step = workflow.split('      - name: Determine coverage availability from run artifacts')[1];
-    assert.ok(step, 'Expected metadata-only availability step');
-    const lines = step.split('\n');
-    const start = lines.findIndex((line) => line === '          script: |');
-    assert.notEqual(start, -1);
-    const script = [];
-    for (const line of lines.slice(start + 1)) {
-        if (line.trim() && !line.startsWith('            ')) break;
-        script.push(line.slice(12));
-    }
-    return script.join('\n');
+    const step = workflow.split('      - name: Determine coverage scope from upstream run metadata')[1];
+    assert.ok(step, 'Expected metadata-only scope step');
+    const script = step.split('\n      - name:')[0].match(/^          script: (.+)$/m);
+    assert.ok(script, 'Expected a trusted helper invocation');
+    return script[1];
 }
-async function availability(artifacts, overrides = {}, conclusion = 'success') {
+function summary(scope) {
+    return {
+        name: 'CI Summary',
+        status: 'completed',
+        steps: scope === undefined ? [] : [{ name: `Test validation scope: ${scope}`, status: 'completed', conclusion: 'success' }],
+    };
+}
+const fullArtifacts = [
+    { name: 'Server JaCoCo XML', expired: false },
+    { name: 'Client Coverage Summaries', expired: false },
+];
+async function availability(artifacts, overrides = {}, conclusion = 'success', metadata = {}) {
     const output = {};
+    const requests = [];
+    const actions = { listWorkflowRunArtifacts() {}, listJobsForWorkflowRunAttempt() {} };
+    const github = {
+        paginate: async (endpoint, request) => {
+            requests.push({ endpoint, ...request });
+            if (endpoint === actions.listJobsForWorkflowRunAttempt) {
+                if (metadata.jobsError) throw new Error('Jobs API unavailable');
+                return Object.hasOwn(metadata, 'jobs') ? metadata.jobs : [summary()];
+            }
+            assert.equal(endpoint, actions.listWorkflowRunArtifacts, 'Only run metadata may be queried');
+            if (metadata.artifactsError) throw new Error('Artifacts API unavailable');
+            return artifacts;
+        },
+        rest: { actions },
+    };
+    process.env = { ...originalEnvironment, HAS_CLIENT: 'true', HAS_SERVER: 'true', ...overrides };
     const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
-    await new AsyncFunction('github', 'context', 'core', 'process', availabilityScript())(
-        { paginate: async () => artifacts, rest: { actions: { listWorkflowRunArtifacts() {} } } },
-        { repo: { owner: 'fixture', repo: 'Artemis' }, payload: { workflow_run: { id: 7, conclusion } } },
+    await new AsyncFunction('require', 'github', 'context', 'core', availabilityScript())(
+        workflowRequire,
+        github,
+        {
+            repo: { owner: 'fixture', repo: 'Artemis' },
+            payload: { workflow_run: { id: metadata.runId ?? 7, run_attempt: metadata.runAttempt ?? 3, head_sha: 'same-sha', conclusion } },
+        },
         {
             setOutput: (key, value) => {
                 output[key] = value;
@@ -139,11 +166,54 @@ async function availability(artifacts, overrides = {}, conclusion = 'success') {
             info() {},
             warning() {},
         },
-        { env: { HAS_CLIENT: 'true', HAS_SERVER: 'true', ...overrides } },
     );
-    return output;
+    return { ...output, requests, actions };
 }
-describe('fork reporter artifact scope', () => {
+describe('fork reporter run scope', () => {
+    it('reports intentionally deferred draft tests without requiring coverage artifacts', async () => {
+        const result = await availability([], {}, 'success', { jobs: [summary('deferred')] });
+        assert.equal(result.test_scope, 'deferred');
+        assert.equal(result.requests.length, 1);
+    });
+    it('reports ready-PR affected tests even when they fail', async () => {
+        const result = await availability([], {}, 'failure', { jobs: [summary('affected')] });
+        assert.equal(result.test_scope, 'affected');
+    });
+    it('distinguishes draft and ready runs on the same SHA using their own metadata', async () => {
+        const deferred = await availability([], {}, 'success', { runId: 7, jobs: [summary('deferred')] });
+        const affected = await availability([], {}, 'success', { runId: 8, jobs: [summary('affected')] });
+        assert.equal(deferred.test_scope, 'deferred');
+        assert.equal(affected.test_scope, 'affected');
+    });
+    it('requests jobs for the exact upstream run attempt', async () => {
+        const result = await availability([], {}, 'success', { runId: 19, runAttempt: 4, jobs: [summary('deferred')] });
+        assert.deepEqual(result.requests, [
+            { endpoint: result.actions.listJobsForWorkflowRunAttempt, owner: 'fixture', repo: 'Artemis', run_id: 19, attempt_number: 4, per_page: 100 },
+        ]);
+    });
+    for (const scope of ['deferred', 'affected', 'unavailable']) {
+        it(`does not upgrade explicit ${scope} scope when stale full-run artifacts exist`, async () => {
+            const result = await availability(fullArtifacts, {}, 'success', { jobs: [summary(scope)] });
+            assert.equal(result.test_scope, scope);
+            assert.equal(result.requests.length, 1);
+        });
+    }
+    it('keeps intentional affected scope when the artifact API is unavailable', async () => {
+        const result = await availability([], {}, 'success', { jobs: [summary('affected')], artifactsError: true });
+        assert.equal(result.test_scope, 'affected');
+    });
+    it('accepts a successful full-suite fallback only with complete artifacts', async () => {
+        const result = await availability(fullArtifacts, {}, 'success', { jobs: [summary('full')] });
+        assert.equal(result.test_scope, 'full');
+    });
+    it('requires full-scope artifacts even with an explicit successful full marker', async () => {
+        const result = await availability([], {}, 'success', { jobs: [summary('full')] });
+        assert.equal(result.test_scope, 'unavailable');
+    });
+    it('does not accept a full marker from a failed workflow', async () => {
+        const result = await availability(fullArtifacts, {}, 'failure', { jobs: [summary('full')] });
+        assert.equal(result.test_scope, 'unavailable');
+    });
     it('treats absent artifacts as unavailable coverage for changed code', async () => {
         const result = await availability([]);
         assert.equal(result.test_scope, 'unavailable');
@@ -173,5 +243,90 @@ describe('fork reporter artifact scope', () => {
             { name: 'Client Coverage Summaries', expired: true },
         ]);
         assert.equal(result.test_scope, 'unavailable');
+    });
+    it('does not treat missing expiration metadata as a valid full artifact', async () => {
+        const result = await availability([{ name: 'Server JaCoCo XML' }, { name: 'Client Coverage Summaries' }]);
+        assert.equal(result.test_scope, 'unavailable');
+    });
+    for (const scope of ['deferred', 'affected', 'full']) {
+        for (const conclusion of ['failure', 'skipped']) {
+            it(`rejects a ${conclusion} ${scope} marker despite full artifacts`, async () => {
+                const job = summary(scope);
+                job.steps[0].conclusion = conclusion;
+                const result = await availability(fullArtifacts, {}, 'success', { jobs: [job] });
+                assert.equal(result.test_scope, 'unavailable');
+            });
+        }
+    }
+    it('rejects a marker step that has not completed', async () => {
+        const job = summary('affected');
+        job.steps[0].status = 'in_progress';
+        const result = await availability(fullArtifacts, {}, 'success', { jobs: [job] });
+        assert.equal(result.test_scope, 'unavailable');
+    });
+    for (const scopes of [
+        ['affected', 'affected'],
+        ['affected', 'full'],
+    ]) {
+        it(`rejects duplicate scope markers (${scopes.join(', ')})`, async () => {
+            const job = summary(scopes[0]);
+            job.steps.push(summary(scopes[1]).steps[0]);
+            const result = await availability(fullArtifacts, {}, 'success', { jobs: [job] });
+            assert.equal(result.test_scope, 'unavailable');
+        });
+    }
+    for (const invalid of ['other', 'full extra', 'full\n']) {
+        it(`rejects invalid scope ${JSON.stringify(invalid)} instead of inferring full coverage`, async () => {
+            const result = await availability(fullArtifacts, {}, 'success', { jobs: [summary(invalid)] });
+            assert.equal(result.test_scope, 'unavailable');
+        });
+    }
+    it('ignores scope-like steps in jobs other than the exact CI Summary job', async () => {
+        const result = await availability(fullArtifacts, {}, 'success', {
+            jobs: [summary(), { ...summary('affected'), name: 'Test / CI Summary' }],
+        });
+        assert.equal(result.test_scope, 'full');
+    });
+    for (const [reason, jobs] of [
+        ['missing summary job', []],
+        ['duplicate summary jobs', [summary('full'), summary('full')]],
+        ['missing summary steps', [{ name: 'CI Summary' }]],
+        ['malformed summary steps', [{ ...summary(), steps: [null] }]],
+        ['incomplete summary job', [{ ...summary('full'), status: 'in_progress' }]],
+        ['missing jobs list', null],
+    ]) {
+        it(`fails closed for ${reason}`, async () => {
+            const result = await availability(fullArtifacts, {}, 'success', { jobs });
+            assert.equal(result.test_scope, 'unavailable');
+        });
+    }
+    it('fails closed when jobs metadata cannot be read', async () => {
+        const result = await availability(fullArtifacts, {}, 'success', { jobsError: true });
+        assert.equal(result.test_scope, 'unavailable');
+    });
+    it('fails closed when artifact metadata cannot be read for a full run', async () => {
+        const result = await availability([], {}, 'success', { jobs: [summary('full')], artifactsError: true });
+        assert.equal(result.test_scope, 'unavailable');
+    });
+    for (const metadata of [{ runId: 0 }, { runAttempt: 0 }, { runAttempt: '4' }]) {
+        it(`requires an unambiguous upstream run attempt: ${JSON.stringify(metadata)}`, async () => {
+            const result = await availability(fullArtifacts, {}, 'success', metadata);
+            assert.equal(result.test_scope, 'unavailable');
+            assert.equal(result.requests.length, 0);
+        });
+    }
+    it('does not read or execute fork artifact payloads as scope metadata', async () => {
+        let payloadRead = false;
+        const artifact = {
+            name: 'test-scope.js',
+            expired: false,
+            get contents() {
+                payloadRead = true;
+                return 'throw new Error("Fork artifact payload must never execute")';
+            },
+        };
+        const result = await availability([artifact]);
+        assert.equal(result.test_scope, 'unavailable');
+        assert.equal(payloadRead, false);
     });
 });

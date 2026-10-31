@@ -175,7 +175,8 @@ required **All required CI Passed** check for an untested revision. Marking the 
 starts normal CI even when the commit has not changed. Ready PRs run the relevant suites with conservative
 affected selection and full-suite fallbacks; wait for the required checks before merging. To request
 full validation while a PR is still in draft, run **CI** manually on its branch with
-**Bypass change detection and run every job** enabled. Manual runs use full validation on draft branches too.
+**Bypass change detection and run every job** enabled. Manual runs use full suites when selected on draft
+branches too; without the bypass, area filtering can skip an irrelevant Test stage.
 
 | Stage | Author's action |
 | --- | --- |

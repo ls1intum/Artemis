@@ -82,7 +82,8 @@ Draft PR runs use the aggregate name **Draft checks passed (tests deferred)**. T
 the required **All required CI Passed** check for an untested revision. Marking a PR **Ready for review**
 triggers a normal CI run even when its head SHA is unchanged; that run must satisfy the required
 check before merge. Non-PR events, including manual runs on a draft branch, retain the canonical
-required-check name and full validation.
+required-check name and use full suites when the Test stage is selected. Enable **Bypass change
+detection and run every job** on a manual run to require all stages.
 
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
 client — Java/TypeScript style, lint, type-check, architecture, plus the Java-only analyses
@@ -197,8 +198,9 @@ integration-test feedback arrives after **Ready for review** or a manual full CI
 The `ready_for_review` event starts normal CI with conservative affected selection and full-suite
 fallbacks. A successful draft run reports **Draft checks passed (tests deferred)** and cannot satisfy
 **All required CI Passed**, including when the promotion keeps the same commit. Manual
-`workflow_dispatch` runs on any branch, including a draft PR branch, run full validation; the
-**Bypass change detection and run every job** override remains available.
+`workflow_dispatch` runs on any branch, including a draft PR branch, use full suites when selected.
+Area filtering can skip the Test stage for documentation-only changes. Enable **Bypass change
+detection and run every job** to request complete validation regardless of the diff.
 
 For ready PRs, the server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
 (seven shards per run), and E2E is the slowest stage, so a **pull request** skips what it cannot
@@ -236,14 +238,15 @@ artifact. Coverage reporters show the validation scope and only publish tables f
   deploys the image of an open pull request, drafts included. A pull request that only changes tests
   gets no image, because neither E2E nor a deploy needs it, and a deploy of such a commit has no
   `sha-<commit>` image to find.
-- Only `pull_request` events skip. A push to `develop`, a merge group, a manual run and a release
-  other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
+- Only `pull_request` events select individual affected suites. When the Test stage is selected,
+  a push to `develop`, a merge group, a manual run and a release other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
   suites' coverage there and `develop` is where anything that slipped past a pull request's own run
   would show up. `@tumaet/*` release tags skip `detect-changes` and with it `test`, like every other
-  Artemis job.
-- A pull request with 3000 changed files or more never skips: the changed files come from the pulls
+  Artemis job. Area filtering can skip an irrelevant Test stage; use the manual bypass to run every job.
+- A pull request with 3000 changed files or more expands every suite's relevance: the changed files come from the pulls
   API, which stops at 3000, so the filters may not have seen all of them. That covers the server
-  suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`).
+  suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`). Draft test/E2E
+  deferral still applies; the image remains available and promotion enables normal test execution.
 - Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
   the server suite uploads none.
 
@@ -293,10 +296,10 @@ Affected tests keep JUnit results and diagnostics but omit whole-project coverag
 thresholds and uploads. Both internal and fork PR reporters remove stale coverage tables when a
 complete result is unavailable and state the scope and actual test result. Only successful full-mode
 jobs publish `Server JaCoCo XML` and `Client Coverage Summaries`; fork reporting infers coverage scope
-from these artifacts without executing PR code.
+from GitHub's exact run-attempt scope marker and artifact metadata without executing PR code.
 
 Pushes to `develop`, `main` and `release/*`, merge groups, published Artemis releases and manual CI
-runs retain full suites and coverage. To request complete validation of a PR branch before merging,
+runs retain full suites and coverage when their Test stage runs. To request complete validation of a PR branch before merging,
 dispatch **CI** on that branch with **Bypass change detection and run every job** enabled. Re-running
 a PR event preserves affected selection. Full validation on a merge group depends on use of the merge
 queue; a normal PR's green required gate certifies its selected scope.
