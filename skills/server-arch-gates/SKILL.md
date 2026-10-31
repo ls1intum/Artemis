@@ -133,9 +133,10 @@ exceptions. Enforced by `JacksonTreeModelArchitectureTest` in
 **Endpoints opted in to access tokens.** Opting an endpoint in with `@AllowedScopes` makes it reachable by a coding agent that
 holds a personal access token, so it needs an `@EnforceAtLeast...` annotation, DTOs only in its request body and response, an
 `@Operation` summary, and an entry in the committed agent specification
-(`./gradlew generateOpenApiDocs -PopenApiGroup=agent pruneOpenApiSpec -x webapp`). An endpoint that creates or changes something students
-see also calls `AgentDraftRules`, so that a token cannot publish; no architecture test checks that call, so add an endpoint
-test that a token cannot publish through it. The other rules are enforced by `AllowedScopesArchitectureTest` in
+(`./gradlew generateOpenApiDocs -PopenApiGroup=agent pruneOpenApiSpec -x webapp`). Exercise and lecture-unit endpoints with the
+draft-date contract also call `AgentDraftRules`; announcements, competencies and lecture metadata are immediately visible.
+No architecture test checks the draft guard, so add an endpoint test that a token cannot publish through a draft-capable endpoint.
+The other rules are enforced by `AllowedScopesArchitectureTest` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/`. See
 [agent access](../../documentation/docs/developer/agent-access.mdx).
 
