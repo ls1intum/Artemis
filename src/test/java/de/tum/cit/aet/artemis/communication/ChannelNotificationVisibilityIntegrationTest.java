@@ -88,7 +88,7 @@ class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationT
 
     @ParameterizedTest
     @CsvSource({ "EXERCISE, register, 19", "EXAM, register, 19", "EXERCISE, deregister, 20", "EXAM, deregister, 20", "EXERCISE, delete, 18", "EXAM, delete, 18" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void hiddenChannelMembershipNotificationsOnlyReachStaff(ChannelSubType type, String action, short notificationType) throws Exception {
         Channel channel = createHiddenChannel(type);
         List<String> recipients = List.of(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -109,7 +109,7 @@ class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationT
 
     @ParameterizedTest
     @EnumSource(value = ChannelSubType.class, names = { "EXERCISE", "EXAM" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void hiddenChannelAnnouncementNotificationsOnlyReachStaff(ChannelSubType type) throws Exception {
         Channel channel = createHiddenChannel(type);
         channel.setIsAnnouncementChannel(true);
@@ -123,7 +123,7 @@ class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationT
 
     @ParameterizedTest
     @EnumSource(value = ChannelSubType.class, names = { "EXERCISE", "EXAM" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void mentionsInHiddenChannelsOnlyNotifyStaffEvenIfStudentIsMember(ChannelSubType type) throws Exception {
         Channel channel = createHiddenChannel(type);
         addMessageParticipants(channel);
@@ -137,7 +137,7 @@ class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationT
 
     @ParameterizedTest
     @EnumSource(value = ChannelSubType.class, names = { "EXERCISE", "EXAM" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void repliesInHiddenChannelsOnlyNotifyStaffParticipants(ChannelSubType type) throws Exception {
         Channel channel = createHiddenChannel(type);
         addMessageParticipants(channel);
@@ -164,7 +164,7 @@ class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationT
 
     @ParameterizedTest
     @EnumSource(value = ChannelSubType.class, names = { "EXERCISE", "EXAM" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void hiddenChannelUpdatesRemoveStudentCacheWithoutRevealingDetails(ChannelSubType type) {
         Channel channel = createHiddenChannel(type);
         var student = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1").getUser();
@@ -188,7 +188,7 @@ class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationT
 
     @ParameterizedTest
     @CsvSource({ "EXERCISE, false", "EXERCISE, true", "EXAM, false", "EXAM, true" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void postponingItemThroughUpdateEndpointRemovesStudentChannelCache(ChannelSubType type, boolean studentHasParticipant) throws Exception {
         Channel channel = createChannel(type, ZonedDateTime.now().minusHours(1));
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -230,7 +230,7 @@ class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationT
 
     @ParameterizedTest
     @EnumSource(value = ChannelSubType.class, names = { "EXERCISE", "EXAM" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void visibleDateChangesOnlyNotifyExistingChannelParticipants(ChannelSubType type) throws Exception {
         Channel channel = createChannel(type, ZonedDateTime.now().minusHours(2));
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");

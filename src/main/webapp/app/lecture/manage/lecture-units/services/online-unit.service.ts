@@ -36,10 +36,11 @@ export class OnlineUnitService {
     /**
      * Get the online resource (meta title and description) of the specified link
      * @param link The link from which to fetch the website's meta information
+     * @param courseId The id of the course in which the online unit is created or edited
      */
-    getOnlineResource(link: string): Observable<HttpResponse<OnlineResourceDTO>> {
+    getOnlineResource(link: string, courseId: number): Observable<HttpResponse<OnlineResourceDTO>> {
         let params = new HttpParams();
-        params = params.set('link', String(link));
+        params = params.set('link', String(link)).set('courseId', String(courseId));
         return this.httpClient.get<OnlineResourceDTO>(`${this.resourceURL}/lectures/online-units/fetch-online-resource`, {
             observe: 'response',
             params,
