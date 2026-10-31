@@ -100,8 +100,21 @@ jobs:
         with:
           script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
 
+      - name: Determine coverage scope from upstream run metadata
+        id: coverage-scope
+        if: steps.find-pr.outputs.result != '' && steps.changes.outcome == 'success'
+        # Read the exact run attempt's CI Summary marker and artifact names/expiration from
+        # GitHub metadata; never trust or execute a scope file supplied by a fork.
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
+          HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
+        with:
+          script: await require('./.github/scripts/pr-coverage-scope.js')({ github, context, core })
+
       - name: Overlay PR source for accurate line/expect counts (data only)
-        if: steps.find-pr.outputs.result != ''
+        if: steps.coverage-scope.outputs.test_scope == 'full' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         env:
           PR_NUMBER: ${{ steps.find-pr.outputs.result }}
         run: |
@@ -118,7 +131,7 @@ jobs:
           fi
 
       - name: Download server JaCoCo XML
-        if: steps.changes.outputs.has_server_changes == 'true'
+        if: steps.coverage-scope.outputs.test_scope == 'full' && steps.changes.outputs.has_server_changes == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         continue-on-error: true
         with:
@@ -128,7 +141,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Download client coverage summaries
-        if: steps.changes.outputs.has_client_changes == 'true'
+        if: steps.coverage-scope.outputs.test_scope == 'full' && steps.changes.outputs.has_client_changes == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         continue-on-error: true
         with:
@@ -140,14 +153,14 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Setup Node.js
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        if: steps.coverage-scope.outputs.test_scope == 'full' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '${{ env.node }}'
 
       - name: Generate coverage table
         id: coverage
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        if: steps.coverage-scope.outputs.test_scope == 'full' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         env:
           CLIENT_MODULES: ${{ steps.changes.outputs.client_modules }}
           SERVER_MODULES: ${{ steps.changes.outputs.server_modules }}
@@ -169,6 +182,7 @@ jobs:
           HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
           COVERAGE_TABLE: ${{ steps.coverage.outputs.coverage_table }}
           COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
+          TEST_SCOPE: ${{ steps.coverage-scope.outputs.test_scope || 'unavailable' }}
           TEST_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           TEST_RUN_URL: ${{ github.event.workflow_run.html_url }}
           POST_AUTHOR_COMMENT: 'true'
