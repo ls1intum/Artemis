@@ -20,7 +20,10 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 @Conditional(LectureEnabled.class)
 public interface LectureHomeRepository extends ArtemisJpaRepository<Lecture, Long> {
 
-    String RELEASE = "COALESCE(e.releaseDate, u.releaseDate, a.releaseDate)";
+    // A unit becomes visible only after every configured release date has passed. Compare nullable dates explicitly so legacy undated material still uses ADDED.
+    String UNIT_AND_ATTACHMENT_RELEASE = "CASE WHEN u.releaseDate IS NULL OR a.releaseDate > u.releaseDate THEN a.releaseDate ELSE u.releaseDate END";
+
+    String RELEASE = "CASE WHEN e.releaseDate IS NULL OR (" + UNIT_AND_ATTACHMENT_RELEASE + ") > e.releaseDate THEN (" + UNIT_AND_ATTACHMENT_RELEASE + ") ELSE e.releaseDate END";
 
     String ADDED = "CASE WHEN u.createdDate IS NULL THEN a.uploadDate WHEN a.uploadDate > u.createdDate THEN a.uploadDate ELSE u.createdDate END";
 
