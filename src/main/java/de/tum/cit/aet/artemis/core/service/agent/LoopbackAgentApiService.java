@@ -68,7 +68,7 @@ public class LoopbackAgentApiService implements AgentApi {
     @Override
     public AgentApiResponse sendText(HttpMethod method, String path, String text) {
         var request = restClient.method(method).uri(contextPath() + path).header(HttpHeaders.AUTHORIZATION, authorization())
-                .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN).contentType(MediaType.TEXT_PLAIN).body(text);
+                .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN).contentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8)).body(text);
         return execute(request);
     }
 
