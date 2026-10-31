@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
 import { stringifyCircular } from 'app/foundation/util/utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 
@@ -45,26 +44,6 @@ export class ModelingSubmissionService {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
-    }
-
-    /**
-     * Get all submissions for an exercise
-     * @param exerciseId - Id of the exercise
-     * @param req - Request option
-     * @param correctionRound correctionRound for which to get the Submissions
-     */
-    getSubmissions(exerciseId: number, req?: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
-        const url = `${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`;
-        let params = createRequestOption(req);
-        if (correctionRound !== 0) {
-            params = params.set('correction-round', correctionRound.toString());
-        }
-        return this.http
-            .get<ModelingSubmission[]>(url, {
-                params,
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<ModelingSubmission[]>) => this.submissionService.convertArrayResponse(res)));
     }
 
     /**

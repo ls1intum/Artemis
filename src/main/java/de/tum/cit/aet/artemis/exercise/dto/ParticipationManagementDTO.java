@@ -33,25 +33,4 @@ public record ParticipationManagementDTO(long participationId, InitializationSta
                 submissionLanguage, olderAssessmentDrafts);
     }
 
-    /** Hides other assessors' grades until this tutor completes the final correction. */
-    public ParticipationManagementDTO forIndependentAssessment(int correctionRounds) {
-        boolean finalCorrectionCompleted = correctionRounds > 1 && correctionRoundResults.stream().anyMatch(
-                result -> result.ownedByCurrentUser() && result.correctionRound() != null && result.correctionRound() == correctionRounds - 1 && result.completionDate() != null);
-        if (finalCorrectionCompleted) {
-            return this;
-        }
-        boolean latestResultOwned = correctionRoundResults.stream().anyMatch(result -> result.ownedByCurrentUser() && Long.valueOf(result.resultId()).equals(resultId));
-        var visibleResults = correctionRoundResults.stream()
-                .map(result -> result.ownedByCurrentUser() ? result
-                        : new CorrectionRoundResultDTO(result.submissionId(), result.resultId(), result.correctionRound(), result.assessmentType(), result.completionDate(),
-                                result.hasComplaint(), null, false))
-                .toList();
-        return new ParticipationManagementDTO(participationId, initializationState, initializationDate, submissionCount, participantName, participantIdentifier, studentId,
-                studentLogin, teamId, teamStudents, testRun, presentationScore, individualDueDate, buildPlanId, repositoryUri, buildFailed, lastResultIsManual, submissionId,
-                submissionDate, latestResultOwned ? resultId : null, latestResultOwned ? score : null, latestResultOwned ? successful : null, completionDate, assessmentType,
-                latestResultOwned ? assessmentNote : null, latestResultOwned ? durationInSeconds : null, latestResultOwned ? testCaseCount : null,
-                latestResultOwned ? passedTestCaseCount : null, latestResultOwned ? codeIssueCount : null, visibleResults, assessableCorrectionRounds, submissionLanguage,
-                olderAssessmentDrafts);
-    }
-
 }

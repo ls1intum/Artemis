@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Submission_;
@@ -37,10 +38,12 @@ import de.tum.cit.aet.artemis.exercise.domain.Team_;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation_;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation_;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission_;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission_;
 
@@ -99,6 +102,48 @@ public class StudentParticipationSpecs {
             return noOp();
         }
         return (root, query, cb) -> cb.equal(root.get(StudentParticipation_.TEAM).get(Team_.OWNER).get(DomainObject_.ID), teamOwnerId);
+    }
+
+    /**
+     * Includes ready submissions and assessments the requester can continue or reopen, before pagination.
+     *
+     * @param exercise   the course exercise
+     * @param userId     the requester
+     * @param instructor whether the requester may manage other tutors' assessments
+     * @return assessable submissions and the requester's existing work
+     */
+    public static Specification<StudentParticipation> forAssessmentQueue(Exercise exercise, long userId, boolean instructor) {
+        if (exercise instanceof QuizExercise || exercise instanceof ProgrammingExercise programming && programming.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            return (_, _, cb) -> cb.disjunction();
+        }
+        ZonedDateTime now = ZonedDateTime.now();
+        return (root, query, cb) -> {
+            Subquery<Long> manualResults = query.subquery(Long.class);
+            Root<Result> result = manualResults.from(Result.class);
+            Predicate manual = result.get(Result_.ASSESSMENT_TYPE).in(AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC);
+            manualResults.select(result.get(DomainObject_.ID)).where(manual,
+                    cb.equal(result.get(Result_.SUBMISSION).get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)));
+
+            Subquery<Long> ownResults = query.subquery(Long.class);
+            Root<Result> ownResult = ownResults.from(Result.class);
+            ownResults.select(ownResult.get(DomainObject_.ID)).where(ownResult.get(Result_.ASSESSMENT_TYPE).in(AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC),
+                    cb.equal(ownResult.get(Result_.SUBMISSION).get(Submission_.PARTICIPATION), root),
+                    instructor ? cb.conjunction() : cb.equal(ownResult.get(Result_.ASSESSOR).get(DomainObject_.ID), userId),
+                    cb.or(cb.equal(ownResult.get(Result_.SUBMISSION).get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)),
+                            cb.and(cb.isNull(ownResult.get(Result_.COMPLETION_DATE)), cb.equal(ownResult.get(Result_.ASSESSOR).get(DomainObject_.ID), userId))));
+
+            Subquery<Long> readySubmission = query.subquery(Long.class);
+            Root<Submission> submission = readySubmission.from(Submission.class);
+            Predicate deadlinePassed = cb.or(cb.lessThanOrEqualTo(root.get(StudentParticipation_.INDIVIDUAL_DUE_DATE), now),
+                    cb.and(cb.isNull(root.get(StudentParticipation_.INDIVIDUAL_DUE_DATE)),
+                            exercise.getDueDate() == null || !exercise.getDueDate().isAfter(now) ? cb.conjunction() : cb.disjunction()));
+            boolean finalTestsPending = exercise instanceof ProgrammingExercise programming && programming.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                    && programming.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now);
+            readySubmission.select(submission.get(DomainObject_.ID)).where(cb.equal(submission.get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)),
+                    cb.isTrue(submission.get(Submission_.SUBMITTED)),
+                    instructor ? cb.conjunction() : cb.and(deadlinePassed, finalTestsPending ? cb.disjunction() : cb.conjunction()), cb.not(cb.exists(manualResults)));
+            return cb.or(cb.exists(readySubmission), cb.exists(ownResults));
+        };
     }
 
     /**

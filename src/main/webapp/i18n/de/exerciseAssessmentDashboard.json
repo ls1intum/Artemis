@@ -68,13 +68,13 @@
             "students": {
                 "title": "Abgaben der Studierenden",
                 "hint": "Abgaben der Studierenden und ihr Bewertungsstatus.",
-                "empty": "Es gibt keine Abgaben von Studierenden in dieser Übung.",
+                "empty": "Derzeit gibt es keine Abgaben in deiner Bewertungswarteschlange.",
                 "participant": "ID"
             },
             "allTeams": {
                 "title": "Alle Teams",
                 "hint": "Abgaben aller Teams dieser Übung. Lehrende können jedes Team bewerten.",
-                "empty": "Es gibt keine Teams in dieser Übung.",
+                "empty": "Derzeit gibt es keine Abgaben zur Bewertung in dieser Aufgabe.",
                 "participant": "Team"
             },
             "queueUnavailable": "Auf dieser Seite sind keine neuen Bewertungen verfügbar. Die Verfügbarkeit hängt vom Abgabestatus, den Fristen und gesperrten Bewertungen ab. Zweitkorrekturen erfordern eine abgeschlossene Erstkorrektur durch eine andere Person.",
@@ -83,7 +83,7 @@
             "myTeams": {
                 "title": "Deine Teams",
                 "hint": "Die Teams, deren Tutor:in du bist. Nur du kannst ihre Abgaben bewerten.",
-                "empty": "Du bist in dieser Übung für kein Team als Tutor:in eingetragen.",
+                "empty": "Derzeit gibt es keine Abgaben in der Bewertungswarteschlange deiner Teams.",
                 "participant": "Team",
                 "status": "Status",
                 "result": "Ergebnis",

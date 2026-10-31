@@ -14,7 +14,6 @@ import {
     FileUploadSubmissionDTO,
     FileUploadSubmissionInputDTO,
 } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -71,28 +70,6 @@ export class FileUploadSubmissionService {
         return this.http
             .get<FileUploadSubmissionDTO>(url, { params, observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadSubmissionDTO>) => this.convertFileSubmissionResponseFromServer(res)));
-    }
-
-    /**
-     * Returns File Upload submissions for exercise from the server
-     * @param exerciseId the id of the exercise
-     * @param req request parameters
-     * @param correctionRound for which to get the Submissions
-     */
-    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<FileUploadSubmission[]>> {
-        const url = `api/fileupload/exercises/${exerciseId}/file-upload-submissions`;
-        let params = createRequestOption(req);
-        if (correctionRound !== 0) {
-            params = params.set('correction-round', correctionRound.toString());
-        }
-        return this.http
-            .get<FileUploadSubmissionDTO[]>(url, {
-                params,
-                observe: 'response',
-            })
-            .pipe(
-                map((res: HttpResponse<FileUploadSubmissionDTO[]>) => res.clone({ body: res.body?.map((submission) => this.convertFileSubmissionFromServer(submission)) ?? null })),
-            );
     }
 
     /**

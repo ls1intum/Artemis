@@ -287,37 +287,6 @@ describe('AssessmentDashboardComponent', () => {
     });
 
     describe('tutor issues', () => {
-        it.each([undefined, null])('excludes hidden scores (%s) and unassessed tutors from score comparisons', (hiddenScore) => {
-            const stats = new StatsForDashboard();
-            stats.tutorLeaderboardEntries = [
-                { ...new TutorLeaderboardElement(), userId: 1, numberOfAssessments: 1, averageScore: 0 },
-                { ...new TutorLeaderboardElement(), userId: 2, numberOfAssessments: 1, averageScore: 80 },
-                { ...new TutorLeaderboardElement(), userId: 3, numberOfAssessments: 1, averageScore: hiddenScore } as TutorLeaderboardElement,
-                { ...new TutorLeaderboardElement(), userId: 4, numberOfAssessments: 0, averageScore: 1000 },
-            ];
-            comp.stats.set(stats);
-
-            comp.computeIssuesWithTutorPerformance();
-
-            const scoreIssues = comp.tutorIssues().filter((issue) => issue.translationKey.endsWith('.score'));
-            expect(scoreIssues.map((issue) => issue.tutorId)).toEqual([1, 2]);
-            for (const issue of scoreIssues) {
-                expect(issue.allowedRange.lowerBound).toBe(32);
-                expect(issue.allowedRange.upperBound).toBe(48);
-            }
-            expect(stats.tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBe(false);
-        });
-
-        it('does not report score issues when all averages are hidden', () => {
-            const stats = new StatsForDashboard();
-            stats.tutorLeaderboardEntries = [{ ...new TutorLeaderboardElement(), numberOfAssessments: 1, averageScore: undefined }];
-            comp.stats.set(stats);
-
-            comp.computeIssuesWithTutorPerformance();
-
-            expect(comp.tutorIssues()).toEqual([]);
-        });
-
         describe('on ngOnInit', () => {
             it('compute issues if not in exam mode', () => {
                 // given

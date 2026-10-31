@@ -53,13 +53,18 @@ export class ManageAssessmentButtonsComponent {
     readonly disabled = input(false);
     readonly disabledTooltip = input('');
     readonly correctionRoundsEnabled = input<number>();
+    readonly correctionRound = input<number>();
     readonly assessableCorrectionRounds = input<number[]>();
     readonly ownedCorrectionRounds = input<number[]>();
     readonly isTestRun = input(false);
     readonly olderAssessmentDrafts = input<AssessmentDraftDTO[]>([]);
     readonly examMode = computed(() => !!this.exercise().exerciseGroup);
     readonly newManualResultAllowed = computed(() => areManualResultsAllowed(this.exercise()) && (!isPracticeMode(this.participation()) || this.examMode()));
-    readonly correctionRoundIndices = computed(() => [...Array(this.correctionRoundsEnabled() ?? this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
+    readonly correctionRoundIndices = computed(() =>
+        this.correctionRound() === undefined
+            ? [...Array(this.correctionRoundsEnabled() ?? this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]
+            : [this.correctionRound()!],
+    );
     readonly assessmentLinks = computed<AssessmentLink[]>(() => [
         ...this.correctionRoundIndices().flatMap((correctionRound) => {
             const result = this.resultForRound(correctionRound);
@@ -68,7 +73,7 @@ export class ManageAssessmentButtonsComponent {
             const canManageDraft = this.exercise().isAtLeastInstructor || this.ownedCorrectionRounds() === undefined || this.ownedCorrectionRounds()!.includes(correctionRound);
             if (
                 !this.participation().submissions?.[0]?.id ||
-                (correctionRound > 0 && !this.resultForRound(correctionRound - 1)?.completionDate) ||
+                (action === 'assess' && correctionRound > 0 && this.assessableCorrectionRounds() === undefined && !this.resultForRound(correctionRound - 1)?.completionDate) ||
                 (!this.newManualResultAllowed() &&
                     (!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC || result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) ||
                 ((action === 'continue' || (this.examMode() && (action === 'open' || action === 'complaint'))) && !canManageDraft) ||

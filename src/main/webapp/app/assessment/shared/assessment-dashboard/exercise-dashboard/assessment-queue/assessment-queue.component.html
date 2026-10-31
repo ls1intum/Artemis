@@ -1,9 +1,16 @@
 <section class="flex flex-col gap-2" data-testid="assessment-queue">
-    <div>
-        <h4 class="mb-0" [jhiTranslate]="isTestRun() ? 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' : translationKey() + '.title'"></h4>
-        <p class="m-0 text-sm text-muted-color" [jhiTranslate]="translationKey() + '.hint'"></p>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+            @if (correctionRound() !== undefined) {
+                <h4 class="mb-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: correctionRound()! + 1 }"></h4>
+            } @else {
+                <h4 class="mb-0" [jhiTranslate]="isTestRun() ? 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' : translationKey() + '.title'"></h4>
+            }
+            <p class="m-0 text-sm text-muted-color" [jhiTranslate]="translationKey() + '.hint'"></p>
+        </div>
+        <ng-content select="[queueHeaderActions]" />
     </div>
-    @if (!isTestRun() && (exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1) > correctionRoundsEnabled()) {
+    @if (correctionRound() !== undefined && correctionRound()! >= correctionRoundsEnabled()) {
         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></p>
     }
     @if (!isTestRun() && !assessmentDisabled() && totalRecords() > 0 && !hasAssessableSubmissions()) {
@@ -44,7 +51,7 @@
 </ng-template>
 
 <ng-template #languageTemplate let-cell>
-    {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (cell.data.submissionLanguage ?? 'UNKNOWN') | artemisTranslate }}
+    <jhi-language-table-cell [submission]="languageSubmission(cell.data)" />
 </ng-template>
 
 <ng-template #statusTemplate let-cell>
@@ -53,14 +60,12 @@
     </tumaet-ui-tag>
     @if (lockedByAnotherTutor(cell.data)) {
         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.lockedByAnotherTutor"></p>
-    } @else if (assessedPreviousRound(cell.data) && !cell.data.assessableCorrectionRounds?.includes(1) && state(cell.data) !== 'assessed') {
-        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself"></p>
     }
 </ng-template>
 
 <ng-template #resultTemplate let-cell>
     @if (examMode() && !isTestRun()) {
-        @for (result of cell.data.correctionRoundResults ?? []; track result.resultId) {
+        @for (result of resultsForRound(cell.data); track result.resultId) {
             <div data-testid="assessment-round-score">
                 {{ 'artemisApp.exerciseAssessmentDashboard.correctionRound' | artemisTranslate }} {{ (result.correctionRound ?? 0) + 1 }}:
                 @if (result.completionDate && result.score !== undefined && result.score !== null) {
@@ -89,6 +94,7 @@
             [disabled]="assessmentDisabled()"
             [disabledTooltip]="assessmentDisabledTooltip()"
             [correctionRoundsEnabled]="correctionRoundsEnabled()"
+            [correctionRound]="correctionRound()"
             [assessableCorrectionRounds]="isTestRun() ? undefined : (dto.assessableCorrectionRounds ?? [])"
             [ownedCorrectionRounds]="isTestRun() ? undefined : ownedCorrectionRounds(dto)"
             [isTestRun]="isTestRun()"

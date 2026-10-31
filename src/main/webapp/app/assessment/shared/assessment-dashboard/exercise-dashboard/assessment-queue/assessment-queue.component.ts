@@ -1,3 +1,6 @@
+import { LanguageTableCellComponent } from '../language-table-cell/language-table-cell.component';
+import { SortService } from 'app/foundation/service/sort.service';
+import { Language } from 'app/course/shared/entities/course.model';
 import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,7 +27,7 @@ import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -48,14 +51,13 @@ const STATE_SEVERITY: Record<AssessmentState, TumAetUiTagSeverity> = {
 /**
  * Derives where an assessment stands from its newest manual result, which belongs to the latest correction round.
  */
-export function getAssessmentState(dto: ParticipationManagementDTO, correctionRoundsEnabled = 1): AssessmentState {
+export function getAssessmentState(dto: ParticipationManagementDTO, correctionRound?: number): AssessmentState {
     if (!dto.submissionId) {
         return 'noSubmission';
     }
-    const manualResult = (dto.correctionRoundResults ?? []).reduce<CorrectionRoundResultDTO | undefined>(
-        (latest, result) => (!latest || (result.correctionRound ?? 0) > (latest.correctionRound ?? 0) ? result : latest),
-        undefined,
-    );
+    const manualResult = (dto.correctionRoundResults ?? [])
+        .filter((result) => correctionRound === undefined || result.correctionRound === correctionRound)
+        .reduce<CorrectionRoundResultDTO | undefined>((latest, result) => (!latest || (result.correctionRound ?? 0) > (latest.correctionRound ?? 0) ? result : latest), undefined);
     if (!manualResult) {
         return 'notAssessed';
     }
@@ -65,13 +67,14 @@ export function getAssessmentState(dto: ParticipationManagementDTO, correctionRo
     if (!manualResult.completionDate) {
         return 'inProgress';
     }
-    return (manualResult.correctionRound ?? 0) + 1 < correctionRoundsEnabled ? 'notAssessed' : 'assessed';
+    return 'assessed';
 }
 
 @Component({
     selector: 'jhi-assessment-queue',
     templateUrl: './assessment-queue.component.html',
     imports: [
+        LanguageTableCellComponent,
         RouterLink,
         FaIconComponent,
         TumAetUiTableComponent,
@@ -89,12 +92,14 @@ export function getAssessmentState(dto: ParticipationManagementDTO, correctionRo
     ],
 })
 export class AssessmentQueueComponent {
+    private readonly sortService = inject(SortService);
     private readonly participationService = inject(ParticipationService);
     private readonly submissionService = inject(SubmissionService);
     private readonly alertService = inject(AlertService);
 
     readonly exercise = input.required<Exercise>();
     readonly isTestRun = input(false);
+    readonly correctionRound = input<number>();
     readonly assessmentDisabled = input(false);
     readonly assessmentDisabledTooltip = input('');
     readonly correctionRoundsEnabled = input(1);
@@ -138,7 +143,7 @@ export class AssessmentQueueComponent {
         {
             field: 'score',
             headerKey: 'artemisApp.exerciseAssessmentDashboard.myTeams.result',
-            sort: !this.examMode() || !!this.exercise().isAtLeastInstructor,
+            sort: true,
             templateRef: this.resultTemplate(),
         },
     ]);
@@ -164,44 +169,19 @@ export class AssessmentQueueComponent {
         this.lastQuery = query;
         this.isLoading.set(true);
         const request = this.isTestRun()
-            ? this.submissionService.getTestRunSubmissionsForExercise(this.exercise().id!).pipe(
-                  map((response) => {
-                      const content = (response.body ?? []).map((submission): ParticipationManagementDTO => {
-                          const result = getLatestSubmissionResult(submission);
-                          return {
-                              participationId: submission.participation!.id!,
-                              submissionCount: 1,
-                              submissionId: submission.id,
-                              submissionDate: submission.submissionDate,
-                              submissionLanguage: (submission as TextSubmission).language,
-                              testRun: true,
-                              resultId: result?.id,
-                              score: result?.score,
-                              assessmentType: result?.assessmentType,
-                              completionDate: result?.completionDate,
-                              correctionRoundResults: (submission.results ?? [])
-                                  .filter((result) => result.id && result.assessmentType !== AssessmentType.AUTOMATIC && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)
-                                  .map((result) => ({
-                                      resultId: result.id!,
-                                      correctionRound: result.correctionRound,
-                                      assessmentType: result.assessmentType,
-                                      completionDate: result.completionDate,
-                                      hasComplaint: result.hasComplaint,
-                                  })),
-                          };
-                      });
-                      return { content, totalElements: content.length };
-                  }),
-              )
-            : this.participationService.searchAssessmentQueue(this.exercise().id!, {
-                  page: query.pageIndex,
-                  pageSize: query.pageSize,
-                  sortingOrder: query.sort?.direction === 'desc' ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
-                  sortedColumn: query.sort?.field ?? this.participantSortField(),
-                  searchTerm: this.teamMode() ? (query.searchTerm ?? '') : '',
-                  ownTeams: this.teamMode() && !this.exercise().isAtLeastInstructor,
-                  filterProp: 'NoPracticeMode',
-              });
+            ? this.submissionService.getTestRunSubmissionsForExercise(this.exercise().id!).pipe(map((response) => this.submissionPage(response.body ?? [], query)))
+            : this.examMode()
+              ? this.submissionService
+                    .getExamAssessmentQueue(this.exercise().type!, this.exercise().id!, this.correctionRound()!, !this.assessmentDisabled())
+                    .pipe(map((submissions) => this.submissionPage(submissions, query)))
+              : this.participationService.searchAssessmentQueue(this.exercise().id!, {
+                    page: query.pageIndex,
+                    pageSize: query.pageSize,
+                    sortingOrder: query.sort?.direction === 'desc' ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
+                    sortedColumn: query.sort?.field ?? this.participantSortField(),
+                    searchTerm: this.teamMode() ? (query.searchTerm ?? '') : '',
+                    filterProp: 'NoPracticeMode',
+                });
         request
             .pipe(
                 finalize(() => {
@@ -225,6 +205,46 @@ export class AssessmentQueueComponent {
             });
     }
 
+    private submissionPage(submissions: Submission[], query: TumAetUiTableQueryEvent) {
+        const round = this.correctionRound();
+        const content = submissions.map((submission): ParticipationManagementDTO => {
+            const result =
+                round === undefined
+                    ? getLatestSubmissionResult(submission)
+                    : submission.results?.find(
+                          (result) =>
+                              result.correctionRound === round && result.assessmentType !== AssessmentType.AUTOMATIC && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA,
+                      );
+            return {
+                participationId: submission.participation!.id!,
+                submissionCount: 1,
+                submissionId: submission.id,
+                submissionDate: submission.submissionDate,
+                submissionLanguage: (submission as TextSubmission).language,
+                testRun: this.isTestRun(),
+                resultId: result?.id,
+                score: result?.score,
+                successful: result?.successful,
+                assessmentType: result?.assessmentType,
+                completionDate: result?.completionDate,
+                assessableCorrectionRounds: round !== undefined && !result && !this.assessmentDisabled() ? [round] : [],
+                correctionRoundResults: (submission.results ?? [])
+                    .filter((result) => result.id && result.assessmentType !== AssessmentType.AUTOMATIC && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)
+                    .map((result) => ({
+                        resultId: result.id!,
+                        correctionRound: result.correctionRound,
+                        assessmentType: result.assessmentType,
+                        completionDate: result.completionDate,
+                        hasComplaint: result.hasComplaint,
+                        score: result.score,
+                        ownedByCurrentUser: result.correctionRound === round,
+                    })),
+            };
+        });
+        this.sortService.sortByProperty(content, query.sort?.field ?? 'participationId', query.sort?.direction !== 'desc');
+        return { content: content.slice(query.pageIndex * query.pageSize, (query.pageIndex + 1) * query.pageSize), totalElements: content.length };
+    }
+
     /** Reloads the current page, e.g. after an assessment was cancelled. */
     refresh() {
         if (this.lastQuery) {
@@ -232,8 +252,12 @@ export class AssessmentQueueComponent {
         }
     }
 
+    resultsForRound(dto: ParticipationManagementDTO): CorrectionRoundResultDTO[] {
+        return (dto.correctionRoundResults ?? []).filter((result) => result.correctionRound === this.correctionRound());
+    }
+
     state(dto: ParticipationManagementDTO): AssessmentState {
-        return getAssessmentState(dto, this.correctionRoundsEnabled());
+        return getAssessmentState(dto, this.correctionRound());
     }
 
     stateSeverity(dto: ParticipationManagementDTO): TumAetUiTagSeverity {
@@ -244,10 +268,10 @@ export class AssessmentQueueComponent {
         return !this.isTestRun() && !this.exercise().isAtLeastInstructor && !!dto.correctionRoundResults?.some((result) => !result.completionDate && !result.ownedByCurrentUser);
     }
 
-    assessedPreviousRound(dto: ParticipationManagementDTO): boolean {
-        return (
-            this.correctionRoundsEnabled() > 1 && !!dto.correctionRoundResults?.some((result) => result.correctionRound === 0 && result.ownedByCurrentUser && result.completionDate)
-        );
+    languageSubmission(dto: ParticipationManagementDTO): TextSubmission {
+        const submission = new TextSubmission();
+        submission.language = dto.submissionLanguage as Language;
+        return submission;
     }
 
     teamMembers(dto: ParticipationManagementDTO): string {

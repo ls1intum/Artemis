@@ -720,7 +720,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     void getSubmissionByID_asTA_withResult() throws Exception {
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(finishedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToSubmission(fileUploadSubmission.getParticipation(), fileUploadSubmission);
+        Participation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedFileUploadExercise, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(studentParticipation, fileUploadSubmission);
 
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmissionDTO receivedSubmission = request.get("/api/fileupload/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmissionDTO.class);

@@ -52,7 +52,7 @@ class ParticipationLiveSaveCoordinationTest {
         var uriService = mock(UriService.class);
         var participations = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
         var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, null, null,
-                Optional.of(api), null);
+                Optional.of(api), null, null);
         var exercise = new ProgrammingExercise();
         exercise.setId(exerciseId);
         var course = new Course();
@@ -126,7 +126,7 @@ class ParticipationLiveSaveCoordinationTest {
         var uriService = mock(UriService.class);
         var participations = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
         var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, null, null,
-                Optional.of(new HyperionExerciseMutationApi(liveSave)), null);
+                Optional.of(new HyperionExerciseMutationApi(liveSave)), null, null);
         var exercise = new ProgrammingExercise();
         exercise.setId(exerciseId);
         var course = new Course();
@@ -180,7 +180,7 @@ class ParticipationLiveSaveCoordinationTest {
         var uriService = mock(UriService.class);
         var participations = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
         var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, null, null,
-                Optional.of(new HyperionExerciseMutationApi(liveSave)), null);
+                Optional.of(new HyperionExerciseMutationApi(liveSave)), null, null);
         var course = new Course();
         course.setShortName("te");
         var exam = new de.tum.cit.aet.artemis.exam.domain.Exam();

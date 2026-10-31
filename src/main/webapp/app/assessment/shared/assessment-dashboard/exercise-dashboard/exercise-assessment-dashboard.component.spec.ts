@@ -238,13 +238,27 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(setupGraphSpy).toHaveBeenCalledTimes(1);
     });
 
-    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD])('uses only the assessment queue for %s exercises', (type) => {
-        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: { ...modelingExercise, type } })));
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD])(
+        'uses separate redesigned correction queues for %s exam exercises',
+        (type) => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: { ...modelingExercise, type } })));
+            fixture.detectChanges();
+            const queues = fixture.debugElement.queryAll(By.directive(AssessmentQueueComponent));
+            expect(queues).toHaveLength(2);
+            expect(queues.map((queue) => queue.componentInstance.correctionRound())).toEqual([0, 1]);
+            expect(fixture.nativeElement.querySelector('[data-testid="start-new-assessment"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#continue-assessment')).toBeNull();
+        },
+    );
+
+    it('keeps one redesigned queue for course exercises', () => {
+        fixture.detectChanges();
+        comp.isExamMode.set(false);
+        comp.exercise.set({ ...comp.exercise(), exerciseGroup: undefined, course: { id: 1 } });
         fixture.detectChanges();
         const queues = fixture.debugElement.queryAll(By.directive(AssessmentQueueComponent));
         expect(queues).toHaveLength(1);
-        expect(fixture.nativeElement.querySelector('[data-testid="start-new-assessment"]')).toBeNull();
-        expect(fixture.nativeElement.querySelector('#continue-assessment')).toBeNull();
+        expect(queues[0].componentInstance.correctionRound()).toBeUndefined();
     });
 
     it('should hide the complaints shortcut when the course has complaints disabled', () => {
@@ -550,7 +564,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const secondCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-1"]');
         const secondCorrectionToggles = fixture.nativeElement.querySelectorAll('[data-testid="toggle-second-correction"]');
 
-        expect(firstCorrectionRound).toBeNull();
+        expect(firstCorrectionRound).not.toBeNull();
+        expect(firstCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBeNull();
         expect(secondCorrectionToggles).toHaveLength(1);
         expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBe(secondCorrectionToggles[0]);
     });

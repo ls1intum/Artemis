@@ -1,10 +1,11 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { filter, map, tap } from 'rxjs/operators';
+import { catchError, filter, map, tap } from 'rxjs/operators';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
@@ -176,6 +177,29 @@ export class SubmissionService {
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res)));
+    }
+
+    /** Own assessments and one new candidate, using the existing exam assignment endpoints. */
+    getExamAssessmentQueue(type: ExerciseType, exerciseId: number, correctionRound: number, proposeAssessment: boolean): Observable<Submission[]> {
+        if (type === ExerciseType.QUIZ) {
+            return of([]);
+        }
+        const url = `api/${type.replace('-', '')}/exercises/${exerciseId}/${type}`;
+        const params = createRequestOption({ 'correction-round': correctionRound });
+        const proposed = proposeAssessment
+            ? this.http
+                  .get<Submission | undefined>(`${url}-submission-without-assessment`, { params: type === ExerciseType.TEXT ? params.set('head', 'true') : params })
+                  .pipe(catchError((error) => (error.error?.errorKey === 'lockedSubmissionsLimitReached' ? of(undefined) : throwError(() => error))))
+            : of(undefined);
+        return forkJoin([this.http.get<Submission[]>(`${url}-submissions`, { params: params.set('assessedByTutor', 'true') }), proposed]).pipe(
+            map(([assessed, candidate]) =>
+                [...assessed, ...(candidate && !assessed.some((submission) => submission.id === candidate.id) ? [candidate] : [])].map((submission) => {
+                    SubmissionService.convertSubmissionDateFromServer(submission);
+                    this.convertResultArrayDatesFromServer(submission.results);
+                    return submission;
+                }),
+            ),
+        );
     }
 
     public convertResponse(res: EntityResponseType): EntityResponseType {

@@ -32,7 +32,7 @@ describe('AssessmentQueueComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ParticipationService),
                 MockProvider(AlertService),
-                MockProvider(SubmissionService),
+                MockProvider(SubmissionService, { getExamAssessmentQueue: vi.fn(() => of([])) }),
                 provideRouter([]),
             ],
         });
@@ -54,7 +54,6 @@ describe('AssessmentQueueComponent', () => {
             sortingOrder: SortingOrder.DESCENDING,
             sortedColumn: 'score',
             searchTerm: 'alpha',
-            ownTeams: !isAtLeastInstructor,
             filterProp: 'NoPracticeMode',
         });
         expect(comp.rows()).toEqual([teamRow]);
@@ -79,7 +78,6 @@ describe('AssessmentQueueComponent', () => {
         };
         comp.rows.set([row]);
         expect(comp.hasAssessableSubmissions()).toBe(false);
-        expect(comp.assessedPreviousRound(row)).toBe(true);
         expect(comp.lockedByAnotherTutor(row)).toBe(false);
         expect(comp.lockedByAnotherTutor({ ...row, correctionRoundResults: [{ resultId: 2, correctionRound: 1, ownedByCurrentUser: false }] })).toBe(true);
     });
@@ -202,7 +200,7 @@ describe('AssessmentQueueComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
-        expect(searchSpy).toHaveBeenCalledWith(7, expect.objectContaining({ sortedColumn: 'participationId', searchTerm: '', ownTeams: false }));
+        expect(searchSpy).toHaveBeenCalledWith(7, expect.objectContaining({ sortedColumn: 'participationId', searchTerm: '' }));
         expect(fixture.nativeElement.querySelector('input[type="search"]')).toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="assessment-student-id"]').textContent.trim()).toBe('11');
         expect(fixture.nativeElement.textContent).not.toContain('Ada Lovelace');
@@ -263,36 +261,57 @@ describe('AssessmentQueueComponent', () => {
         ]);
     });
 
-    it.each([false, true])('reloads the last page when exam assessment opens, with an existing submission: %s', async (hasSubmission) => {
-        fixture.componentRef.setInput('exercise', {
-            ...exercise,
-            exerciseGroup: { id: 5, exam: { id: 4, course: { id: 3 } } },
-        });
-        fixture.componentRef.setInput('assessmentDisabled', true);
-        const searchSpy = vi
-            .spyOn(participationService, 'searchAssessmentQueue')
-            .mockReturnValue(of({ content: [{ ...teamRow, submissionId: hasSubmission ? 12 : undefined, assessableCorrectionRounds: [] }], totalElements: 40 }));
-        fixture.detectChanges();
-        await fixture.whenStable();
-        const query = { pageIndex: 1, pageSize: 20, sort: { field: 'score', direction: 'desc' as const }, searchTerm: 'alpha' };
-        comp.loadPage(query);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-assessment-action="assess"]')).toBeNull();
-        searchSpy.mockClear().mockReturnValue(of({ content: [teamRow], totalElements: 40 }));
+    it('loads the next proposed submission when the exam queue is refreshed after starting one', () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, teamMode: false, exerciseGroup: { exam: { course: { id: 3 } } } });
+        fixture.componentRef.setInput('correctionRound', 1);
+        fixture.componentRef.setInput('correctionRoundsEnabled', 2);
+        const first = {
+            id: 12,
+            participation: { id: 11 },
+            results: [{ id: 21, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs(), score: 75 }],
+        } as Submission;
+        const next = { id: 14, participation: { id: 13 }, results: [] } as Submission;
+        const examSpy = vi
+            .spyOn(TestBed.inject(SubmissionService), 'getExamAssessmentQueue')
+            .mockReturnValueOnce(of([first]))
+            .mockReturnValueOnce(of([first, next]));
+        const searchSpy = vi.spyOn(participationService, 'searchAssessmentQueue');
+        comp.loadPage({ pageIndex: 0, pageSize: 20 });
+        expect(comp.rows()[0].assessableCorrectionRounds).toEqual([1]);
+        expect(comp.rows()[0].score).toBeUndefined();
+        expect(comp.state(comp.rows()[0])).toBe('notAssessed');
+        first.results!.push({ id: 22, correctionRound: 1, assessmentType: AssessmentType.MANUAL });
+        comp.refresh();
+        expect(examSpy).toHaveBeenLastCalledWith(ExerciseType.PROGRAMMING, 7, 1, true);
+        expect(comp.rows()).toHaveLength(2);
+        expect(comp.state(comp.rows()[0])).toBe('inProgress');
+        expect(searchSpy).not.toHaveBeenCalled();
+    });
 
-        fixture.componentRef.setInput('assessmentDisabled', false);
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        expect(searchSpy).toHaveBeenCalledExactlyOnceWith(
-            7,
-            expect.objectContaining({ page: 1, pageSize: 20, sortedColumn: 'score', sortingOrder: SortingOrder.DESCENDING, searchTerm: 'alpha' }),
+    it.each([false, true])('renders the selected correction and its actions, with first-round details: %s', async (hasFirstRound) => {
+        fixture.componentRef.setInput('exercise', { ...exercise, teamMode: false, exerciseGroup: { exam: { course: { id: 3 }, numberOfCorrectionRoundsInExam: 2 } } });
+        fixture.componentRef.setInput('correctionRound', 1);
+        fixture.componentRef.setInput('correctionRoundsEnabled', 2);
+        vi.spyOn(TestBed.inject(SubmissionService), 'getExamAssessmentQueue').mockReturnValue(
+            of([
+                {
+                    id: 12,
+                    participation: { id: 11 },
+                    results: [
+                        ...(hasFirstRound ? [{ id: 21, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs(), score: 75 }] : []),
+                        { id: 22, correctionRound: 1, assessmentType: AssessmentType.MANUAL, completionDate: dayjs(), score: 80 },
+                    ],
+                } as Submission,
+            ]),
         );
-        expect(comp.rows()).toEqual([teamRow]);
-        expect(fixture.nativeElement.querySelector('[data-assessment-action="assess"]')).not.toBeNull();
         fixture.detectChanges();
-        expect(searchSpy).toHaveBeenCalledOnce();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const scores = fixture.nativeElement.querySelectorAll('[data-testid="assessment-round-score"]');
+        expect(scores).toHaveLength(1);
+        expect(scores[0].textContent).toContain('80%');
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]').getAttribute('href')).toContain('correction-round=1');
     });
 
     it('reloads the last requested page on refresh', () => {
@@ -320,7 +339,8 @@ describe('AssessmentQueueComponent', () => {
 
     it('uses exam routes for repository and assessment links', async () => {
         fixture.componentRef.setInput('exercise', { ...exercise, exerciseGroup: { id: 5, exam: { id: 4, course: { id: 3 }, numberOfCorrectionRoundsInExam: 2 } } });
-        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(of({ content: [teamRow], totalElements: 1 }));
+        fixture.componentRef.setInput('correctionRound', 0);
+        vi.spyOn(TestBed.inject(SubmissionService), 'getExamAssessmentQueue').mockReturnValue(of([{ id: 12, participation: { id: 11 }, results: [] } as Submission]));
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -336,16 +356,6 @@ describe('AssessmentQueueComponent', () => {
 
     describe('getAssessmentState', () => {
         const manual = (overrides: object) => ({ resultId: 1, correctionRound: 0, assessmentType: AssessmentType.SEMI_AUTOMATIC, ...overrides });
-
-        it('requires all enabled rounds to be complete, preserving complaints and drafts', () => {
-            const row = { ...teamRow, correctionRoundResults: [manual({ completionDate: dayjs() })] };
-            expect(getAssessmentState(row, 1)).toBe('assessed');
-            expect(getAssessmentState(row, 2)).toBe('notAssessed');
-            fixture.componentRef.setInput('correctionRoundsEnabled', 2);
-            expect(comp.state(row)).toBe('notAssessed');
-            expect(getAssessmentState({ ...teamRow, correctionRoundResults: [manual({ hasComplaint: true, completionDate: dayjs() })] }, 2)).toBe('complaint');
-            expect(getAssessmentState({ ...teamRow, correctionRoundResults: [manual({})] }, 2)).toBe('inProgress');
-        });
 
         it.each([
             ['noSubmission', { submissionId: undefined }],

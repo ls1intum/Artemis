@@ -210,7 +210,7 @@ public class SubmissionService {
         // TODO: it really does not make sense to fetch these submissions with all related data from the database just to select one submission afterwards
         // it would be better to fetch them with minimal related data (so we can select one) and then afterwards fetch the selected one with all related data
 
-        List<StudentParticipation> participations;
+        final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
@@ -227,7 +227,7 @@ public class SubmissionService {
             return List.of();
         }
         var user = userRepository.getUserWithAuthorities();
-        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).flatMap(Optional::stream)
+        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                 .filter(submission -> assessmentEligibilityService.canStartAssessment(submission, exercise, correctionRound, user)).toList();
 
         if (!examMode && exercise.getDueDate() != null) {

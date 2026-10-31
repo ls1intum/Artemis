@@ -3,7 +3,6 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
 import { stringifyCircular } from 'app/foundation/util/utils';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -40,18 +39,6 @@ export class TextSubmissionService {
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
-    }
-
-    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
-        const url = `api/text/exercises/${exerciseId}/text-submissions`;
-        let params = createRequestOption(req);
-        if (correctionRound !== 0) {
-            params = params.set('correction-round', correctionRound.toString());
-        }
-
-        return this.http
-            .get<TextSubmission[]>(url, { observe: 'response', params })
-            .pipe(map((res: HttpResponse<TextSubmission[]>) => this.submissionService.convertArrayResponse(res)));
     }
 
     /**

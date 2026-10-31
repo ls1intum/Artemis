@@ -369,7 +369,8 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
         await exerciseAssessment.clickHaveReadInstructionsButton();
 
-        await expect(page.getByTestId('assessment-queue-table')).toBeVisible();
+        await expect(page.getByTestId('assessment-queue-table')).toHaveCount(2);
+        await expect(page.getByTestId('assessment-queue-table').first()).toBeVisible();
         await expect(page.locator('[data-testid="manage-assessment-link"][data-correction-round="1"]')).toHaveCount(0);
         await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(1);
         // Nothing is assessed yet, so the first round has a submission on offer and no assessed row.
@@ -401,7 +402,7 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(1);
     });
 
-    test('Second round is assessed independently and both rounds keep their own result', async ({
+    test('Each corrector sees their own round and the student receives the second result', async ({
         page,
         login,
         examAssessment,
@@ -428,14 +429,14 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         const response = await examAssessment.submitTextAssessment();
         expect(response.status()).toBe(200);
 
-        // Instructors can open both corrections and see that each retained its own score.
+        // The instructor sees the second correction they completed in its own queue.
         await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
         await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
         await expect(page.locator('[data-testid="manage-assessment-link"][data-correction-round="1"]')).toBeVisible();
-        await expect(page.locator('[data-testid="manage-assessment-link"][data-assessment-action="open"]')).toHaveCount(2);
+        await expect(page.locator('[data-testid="manage-assessment-link"][data-assessment-action="open"]')).toHaveCount(1);
         await expect(page.getByText('90%').first()).toBeVisible();
 
-        await expect(page.getByTestId('assessment-round-score')).toHaveText([/Correction round 1:\s*60%/, /Correction round 2:\s*90%/]);
+        await expect(page.getByTestId('assessment-round-score')).toHaveText([/Correction round 2:\s*90%/]);
 
         // Tutors can open their own first correction, while the other assessor's second correction stays hidden.
         await login(tutor);
@@ -444,7 +445,7 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         const tutorOpenLink = page.locator('[data-testid="manage-assessment-link"][data-assessment-action="open"]');
         await expect(tutorOpenLink).toHaveCount(1);
         await expect(tutorOpenLink).toHaveAttribute('data-correction-round', '0');
-        await expect(page.getByTestId('assessment-round-score')).toHaveText([/Correction round 1:\s*60%/, /Correction round 2:\s*–/]);
+        await expect(page.getByTestId('assessment-round-score')).toHaveText([/Correction round 1:\s*60%/]);
         // The student is shown the second corrector's result, not the first one.
         await login(studentOne, `/courses/${dashboardCourse.id}/exams/${exam.id}`);
         await examParticipation.checkResultScore('90%');

@@ -66,23 +66,6 @@ describe('TextSubmission Service', () => {
         req.flush(returnedFromService);
     });
 
-    it('should get textSubmission for exercise', () => {
-        const exerciseId = 1;
-        elemDefault = new TextSubmission();
-        elemDefault.latestResult = undefined;
-        elemDefault.participation = undefined;
-        const returnedFromService = [elemDefault];
-        const expected = returnedFromService;
-        let response: any;
-        service
-            .getSubmissions(exerciseId, {})
-            .pipe(take(1))
-            .subscribe((resp) => (response = resp));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        expect(response.body).toEqual(expected);
-    });
-
     it('should get textSubmission', () => {
         const exerciseId = 1;
         elemDefault = new TextSubmission();

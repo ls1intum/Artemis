@@ -107,9 +107,6 @@ export class ParticipationService {
             sortedColumn: search.sortedColumn,
             searchTerm: search.searchTerm,
         };
-        if (resource === 'assessment-queue' && search.ownTeams) {
-            params['ownTeams'] = 'true';
-        }
         if (search.filterProp) {
             params['filterProp'] = search.filterProp;
         }

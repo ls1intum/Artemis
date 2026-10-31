@@ -89,19 +89,6 @@ describe('TutorLeaderboardComponent', () => {
         });
     });
 
-    it('renders a hidden average without exposing a percentage and preserves visible averages', () => {
-        sortByPropertySpy.mockRestore();
-        fixture.componentRef.setInput('tutorsData', [
-            { userId: 1, name: 'Other tutor', points: 2, numberOfAssessments: 1, averageScore: undefined, numberOfTutorRatings: 0 },
-            { userId: 2, name: 'Current tutor', points: 1, numberOfAssessments: 1, averageScore: 80, numberOfTutorRatings: 0 },
-        ]);
-        fixture.detectChanges();
-        const rows: NodeListOf<HTMLTableRowElement> = fixture.nativeElement.querySelectorAll('tbody tr');
-        expect(rows[0].textContent).toContain('–');
-        expect(rows[0].textContent).not.toContain('%');
-        expect(rows[1].textContent).toContain('80.0%');
-    });
-
     describe('sorting re-renders the table', () => {
         function renderedNames(): string[] {
             const cells = fixture.debugElement.nativeElement.querySelectorAll('tbody tr td:nth-child(2)');

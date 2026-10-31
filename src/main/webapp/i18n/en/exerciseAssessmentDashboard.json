@@ -68,13 +68,13 @@
             "students": {
                 "title": "Students’ submissions",
                 "hint": "Student submissions and their assessment status.",
-                "empty": "There are no student participations in this exercise.",
+                "empty": "There are currently no submissions in your assessment queue.",
                 "participant": "ID"
             },
             "allTeams": {
                 "title": "All teams",
                 "hint": "Submissions from all teams in this exercise. Instructors can assess any team.",
-                "empty": "There are no teams in this exercise.",
+                "empty": "There are currently no submissions available for assessment in this exercise.",
                 "participant": "Team"
             },
             "queueUnavailable": "No new assessments are available on this page. Availability depends on submitted work, deadline rules and assessment locks. Second corrections require a completed first correction by another tutor.",
@@ -83,7 +83,7 @@
             "myTeams": {
                 "title": "Your teams",
                 "hint": "The teams you are the tutor of. Only you can assess their submissions.",
-                "empty": "You are not the tutor of any team in this exercise.",
+                "empty": "There are currently no submissions in your teams' assessment queue.",
                 "participant": "Team",
                 "status": "Status",
                 "result": "Result",

@@ -519,9 +519,13 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsManualResultBySubmissionIdAndCorrectionRound(@Param("submissionId") long submissionId, @Param("correctionRound") int correctionRound);
 
     /**
-     * Returns manual results per correction round for participation actions and exam score statistics.
-     * Excludes automatic and Athena results but retains results with no assessment type, matching
-     * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()}.
+     * Returns the manual results of the given submissions together with the correction round each belongs to.
+     * <p>
+     * Two callers need this. The participation page renders assessment actions per correction round, so it needs one entry
+     * per round rather than only the newest result, and the exam score statistics report what the first round scored.
+     * Automatic and Athena results are left out because they are not correction rounds, which matches
+     * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment
+     * type is not set yet.
      *
      * @param submissionIds    the submissions whose manual results should be read
      * @param currentUserLogin the user whose correction-round ownership should be included

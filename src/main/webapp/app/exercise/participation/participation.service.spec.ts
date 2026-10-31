@@ -229,10 +229,9 @@ describe('Participation Service', () => {
         const date = '2026-10-15T10:00:00Z';
         let roundCompletionDate: dayjs.Dayjs | undefined;
         service
-            .searchAssessmentQueue(42, { page: 0, pageSize: 20, sortingOrder: SortingOrder.ASCENDING, sortedColumn: 'participantName', searchTerm: 'alpha', ownTeams: true })
+            .searchAssessmentQueue(42, { page: 0, pageSize: 20, sortingOrder: SortingOrder.ASCENDING, sortedColumn: 'participantName', searchTerm: 'alpha' })
             .subscribe((page) => (roundCompletionDate = page.content[0].correctionRoundResults?.[0].completionDate));
         const req = httpMock.expectOne((request) => request.url === 'api/exercise/exercises/42/assessment-queue');
-        expect(req.request.params.get('ownTeams')).toBe('true');
         req.flush([{ participationId: 1, submissionId: 2, correctionRoundResults: [{ resultId: 3, correctionRound: 0, completionDate: date }] }], {
             headers: { 'X-Total-Count': '1' },
         });

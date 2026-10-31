@@ -252,22 +252,26 @@
             </div>
         }
 
-        @if (exercise().isAtLeastInstructor && exam()?.numberOfCorrectionRoundsInExam && exam()?.numberOfCorrectionRoundsInExam! > 1 && isExamMode() && !isTestRun()) {
-            <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-1">
-                <div class="flex items-center gap-1">
-                    <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
-                    <fa-icon
-                        class="text-muted-color"
-                        [icon]="faQuestionCircle"
-                        ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
-                    />
-                </div>
+        <ng-template #secondCorrectionToggle>
+            <div class="flex items-center gap-2">
+                <fa-icon
+                    class="text-muted-color"
+                    [icon]="faQuestionCircle"
+                    ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                />
                 <jhi-second-correction-enable-button
                     data-testid="toggle-second-correction"
                     (ngModelChange)="toggleSecondCorrection()"
                     [secondCorrectionEnabled]="secondCorrectionEnabled()"
                     [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
                 />
+            </div>
+        </ng-template>
+        @if (
+            tutorParticipationStatus() === NOT_PARTICIPATED && exercise().isAtLeastInstructor && (exam()?.numberOfCorrectionRoundsInExam ?? 0) > 1 && isExamMode() && !isTestRun()
+        ) {
+            <div class="mb-3 flex justify-end" data-testid="correction-round-1">
+                <ng-container [ngTemplateOutlet]="secondCorrectionToggle" />
             </div>
         }
 
@@ -387,15 +391,25 @@
                                 <span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></span>
                             </p-message>
                         }
-                        <jhi-assessment-queue
-                            class="mb-4 block"
-                            [exercise]="exercise()"
-                            [isTestRun]="isTestRun()"
-                            [assessmentDisabled]="!!assessmentNotPossibleYetReason()"
-                            [assessmentDisabledTooltip]="assessmentNotPossibleYetTooltip()"
-                            [correctionRoundsEnabled]="isTestRun() ? 1 : numberOfCorrectionRoundsEnabled()"
-                            (assessmentChanged)="loadAll()"
-                        />
+                        @for (round of queueRounds(); track round) {
+                            <jhi-assessment-queue
+                                class="mb-4 block"
+                                [attr.data-testid]="round !== undefined ? 'correction-round-' + round : undefined"
+                                [exercise]="exercise()"
+                                [isTestRun]="isTestRun()"
+                                [correctionRound]="round"
+                                [assessmentDisabled]="!!assessmentNotPossibleYetReason() || (round !== undefined && round >= numberOfCorrectionRoundsEnabled())"
+                                [assessmentDisabledTooltip]="assessmentNotPossibleYetTooltip()"
+                                [correctionRoundsEnabled]="isTestRun() ? 1 : numberOfCorrectionRoundsEnabled()"
+                                (assessmentChanged)="loadAll()"
+                            >
+                                <div queueHeaderActions>
+                                    @if (round === 1 && exercise().isAtLeastInstructor) {
+                                        <ng-container [ngTemplateOutlet]="secondCorrectionToggle" />
+                                    }
+                                </div>
+                            </jhi-assessment-queue>
+                        }
                     }
                     <!-- Complaints -->
                     @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {

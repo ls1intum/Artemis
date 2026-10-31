@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -59,6 +60,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationSpecs;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -125,6 +127,8 @@ public class ParticipationService {
 
     private final UserRepository userRepository;
 
+    private final AuthorizationCheckService authCheckService;
+
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final Optional<HyperionExerciseMutationApi> liveSaveApi;
@@ -135,8 +139,9 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SubmissionAssessmentEligibilityService assessmentEligibilityService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
-            Optional<HyperionExerciseMutationApi> liveSaveApi, UserRepository userRepository) {
+            Optional<HyperionExerciseMutationApi> liveSaveApi, UserRepository userRepository, AuthorizationCheckService authCheckService) {
         this.userRepository = userRepository;
+        this.authCheckService = authCheckService;
         this.assessmentEligibilityService = assessmentEligibilityService;
         this.liveSaveApi = liveSaveApi;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -1249,7 +1254,10 @@ public class ParticipationService {
         }
 
         Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(), stuckBuildCutoff,
-                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn(), teamOwnerId, assessmentQueue);
+                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn(), teamOwnerId,
+                assessmentQueue
+                        ? StudentParticipationSpecs.forAssessmentQueue(exercise, userRepository.getUser().getId(), authCheckService.isAtLeastInstructorForExercise(exercise))
+                        : null);
 
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {

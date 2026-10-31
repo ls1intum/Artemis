@@ -212,66 +212,6 @@ describe('FileUploadSubmissionService', () => {
         });
     });
 
-    describe('getSubmissions', () => {
-        it('should get submissions for exercise', async () => {
-            const submissions = [createSubmission(1), createSubmission(2)];
-
-            const resultPromise = new Promise<HttpResponse<FileUploadSubmission[]>>((resolve) => {
-                service.getSubmissions(123, {}).subscribe((resp) => resolve(resp));
-            });
-
-            const req = httpMock.expectOne({
-                method: 'GET',
-                url: 'api/fileupload/exercises/123/file-upload-submissions',
-            });
-
-            req.flush(submissions);
-
-            const response = await resultPromise;
-            expect(response.body?.length).toBe(2);
-        });
-
-        it('should pass submittedOnly filter', async () => {
-            service.getSubmissions(123, { submittedOnly: true }).subscribe();
-
-            const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/exercises/123/file-upload-submissions' && r.params.get('submittedOnly') === 'true';
-            });
-
-            req.flush([]);
-        });
-
-        it('should pass assessedByTutor filter', async () => {
-            service.getSubmissions(123, { assessedByTutor: true }).subscribe();
-
-            const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/exercises/123/file-upload-submissions' && r.params.get('assessedByTutor') === 'true';
-            });
-
-            req.flush([]);
-        });
-
-        it('should pass correction round when not zero', async () => {
-            service.getSubmissions(123, {}, 2).subscribe();
-
-            const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/exercises/123/file-upload-submissions' && r.params.get('correction-round') === '2';
-            });
-
-            req.flush([]);
-        });
-
-        it('should not pass correction round when zero', async () => {
-            service.getSubmissions(123, {}, 0).subscribe();
-
-            const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/exercises/123/file-upload-submissions' && !r.params.has('correction-round');
-            });
-
-            req.flush([]);
-        });
-    });
-
     describe('getSubmissionWithoutAssessment', () => {
         it('should get submission without assessment', async () => {
             const submission = createSubmission();
