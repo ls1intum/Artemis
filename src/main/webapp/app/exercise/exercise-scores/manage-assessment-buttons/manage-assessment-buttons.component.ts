@@ -58,75 +58,85 @@ export class ManageAssessmentButtonsComponent {
     readonly ownedCorrectionRounds = input<number[]>();
     readonly isTestRun = input(false);
     readonly olderAssessmentDrafts = input<AssessmentDraftDTO[]>([]);
-    readonly examMode = computed(() => !!this.exercise().exerciseGroup);
-    readonly newManualResultAllowed = computed(() => areManualResultsAllowed(this.exercise()) && (!isPracticeMode(this.participation()) || this.examMode()));
-    readonly correctionRoundIndices = computed(() =>
-        this.correctionRound() === undefined
-            ? [...Array(this.correctionRoundsEnabled() ?? this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]
-            : [this.correctionRound()!],
-    );
-    readonly assessmentLinks = computed<AssessmentLink[]>(() => [
-        ...this.correctionRoundIndices().flatMap((correctionRound) => {
-            const result = this.resultForRound(correctionRound);
-            const action = this.assessmentAction(correctionRound);
-            const targetRound = this.getCorrectionRoundForAssessmentLink(correctionRound);
-            const canManageDraft = this.exercise().isAtLeastInstructor || this.ownedCorrectionRounds() === undefined || this.ownedCorrectionRounds()!.includes(correctionRound);
-            if (
-                !this.participation().submissions?.[0]?.id ||
-                (action === 'assess' && correctionRound > 0 && this.assessableCorrectionRounds() === undefined && !this.resultForRound(correctionRound - 1)?.completionDate) ||
-                (!this.newManualResultAllowed() &&
-                    (!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC || result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) ||
-                ((action === 'continue' || (this.examMode() && (action === 'open' || action === 'complaint'))) && !canManageDraft) ||
-                (action === 'assess' && this.assessableCorrectionRounds() !== undefined && !this.assessableCorrectionRounds()!.includes(correctionRound))
-            ) {
-                return [];
-            }
-            return [
-                {
-                    correctionRound,
-                    result,
-                    action,
-                    severity: action === 'assess' ? 'success' : action === 'continue' ? 'warn' : 'primary',
-                    labelKey:
-                        action === 'complaint'
-                            ? 'artemisApp.exerciseAssessmentDashboard.showComplaint'
-                            : 'artemisApp.assessment.dashboard.actions.' + (this.examMode() ? 'examCorrectionRound.' : '') + action,
-                    link: this.getAssessmentLink(targetRound),
-                    targetRound,
-                    submissionId: this.participation().submissions?.[0]?.id,
-                    canCancel:
-                        canManageDraft && this.newManualResultAllowed() && !!result?.assessmentType && !result.completionDate && result.assessmentType !== AssessmentType.AUTOMATIC,
-                } satisfies AssessmentLink,
-            ];
-        }),
-        ...this.olderAssessmentDrafts().map((draft): AssessmentLink => {
-            const result = new Result();
-            result.id = draft.resultId;
-            result.assessmentType = AssessmentType.MANUAL;
-            const correctionRound = draft.correctionRound ?? 0;
-            return {
-                correctionRound,
-                result,
-                action: 'continue',
-                severity: 'warn',
-                labelKey: 'artemisApp.assessment.dashboard.actions.' + (this.examMode() ? 'examCorrectionRound.' : '') + 'continue',
-                link: this.getAssessmentLink(correctionRound, draft.submissionId, draft.resultId),
-                targetRound: correctionRound,
-                submissionId: draft.submissionId,
-                canCancel: this.newManualResultAllowed(),
-            };
-        }),
-    ]);
-    cancelConfirmationText!: string;
+    protected readonly examMode = computed(() => !!this.exercise().exerciseGroup);
+    private readonly newManualResultAllowed = computed(() => areManualResultsAllowed(this.exercise()) && (!isPracticeMode(this.participation()) || this.examMode()));
+    private readonly correctionRoundIndices = computed(() => {
+        const round = this.correctionRound();
+        return round === undefined
+            ? Array.from({ length: this.correctionRoundsEnabled() ?? this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1 }, (_, index) => index)
+            : [round];
+    });
+    protected readonly assessmentLinks = computed(() => this.buildAssessmentLinks());
+    private cancelConfirmationText!: string;
 
-    readonly faBan = faBan;
-    readonly faClipboardList = faClipboardList;
-    readonly AssessmentType = AssessmentType;
+    protected readonly faBan = faBan;
+    protected readonly faClipboardList = faClipboardList;
 
     constructor() {
         const translateService = inject(TranslateService);
 
         translateService.get('artemisApp.programmingAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+    }
+
+    private buildAssessmentLinks(): AssessmentLink[] {
+        const ownedRounds = this.ownedCorrectionRounds();
+        const assessableRounds = this.assessableCorrectionRounds();
+        return [
+            ...this.correctionRoundIndices().flatMap((correctionRound) => {
+                const result = this.resultForRound(correctionRound);
+                const action = this.assessmentAction(correctionRound);
+                const targetRound = this.getCorrectionRoundForAssessmentLink(correctionRound);
+                const canManageDraft = this.exercise().isAtLeastInstructor || ownedRounds === undefined || ownedRounds.includes(correctionRound);
+                if (
+                    !this.participation().submissions?.[0]?.id ||
+                    (action === 'assess' && correctionRound > 0 && assessableRounds === undefined && !this.resultForRound(correctionRound - 1)?.completionDate) ||
+                    (!this.newManualResultAllowed() &&
+                        (!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC || result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) ||
+                    ((action === 'continue' || (this.examMode() && (action === 'open' || action === 'complaint'))) && !canManageDraft) ||
+                    (action === 'assess' && assessableRounds !== undefined && !assessableRounds.includes(correctionRound))
+                ) {
+                    return [];
+                }
+                return [
+                    {
+                        correctionRound,
+                        result,
+                        action,
+                        severity: action === 'assess' ? 'primary' : 'secondary',
+                        labelKey:
+                            action === 'complaint'
+                                ? 'artemisApp.exerciseAssessmentDashboard.showComplaint'
+                                : 'artemisApp.assessment.dashboard.actions.' + (this.examMode() ? 'examCorrectionRound.' : '') + action,
+                        link: this.getAssessmentLink(targetRound),
+                        targetRound,
+                        submissionId: this.participation().submissions?.[0]?.id,
+                        canCancel:
+                            canManageDraft &&
+                            this.newManualResultAllowed() &&
+                            !!result?.assessmentType &&
+                            !result.completionDate &&
+                            result.assessmentType !== AssessmentType.AUTOMATIC,
+                    } satisfies AssessmentLink,
+                ];
+            }),
+            ...this.olderAssessmentDrafts().map((draft): AssessmentLink => {
+                const result = new Result();
+                result.id = draft.resultId;
+                result.assessmentType = AssessmentType.MANUAL;
+                const correctionRound = draft.correctionRound ?? 0;
+                return {
+                    correctionRound,
+                    result,
+                    action: 'continue',
+                    severity: 'secondary',
+                    labelKey: 'artemisApp.assessment.dashboard.actions.' + (this.examMode() ? 'examCorrectionRound.' : '') + 'continue',
+                    link: this.getAssessmentLink(correctionRound, draft.submissionId, draft.resultId),
+                    targetRound: correctionRound,
+                    submissionId: draft.submissionId,
+                    canCancel: this.newManualResultAllowed(),
+                };
+            }),
+        ];
     }
 
     /**
@@ -136,12 +146,12 @@ export class ManageAssessmentButtonsComponent {
      * the round. They are a set now and the round lives on the result, so it is matched instead. The participation page is fed
      * one entry per round for exactly this lookup.
      */
-    resultForRound(correctionRound: number): Result | undefined {
+    private resultForRound(correctionRound: number): Result | undefined {
         const submission = this.participation().submissions?.[0];
         return submission ? getSubmissionResultByCorrectionRound(submission, correctionRound) : undefined;
     }
 
-    assessmentAction(correctionRound: number): 'assess' | 'open' | 'continue' | 'complaint' {
+    private assessmentAction(correctionRound: number): 'assess' | 'open' | 'continue' | 'complaint' {
         const result = this.resultForRound(correctionRound);
         if (result?.hasComplaint) {
             return 'complaint';
@@ -149,7 +159,7 @@ export class ManageAssessmentButtonsComponent {
         return !result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC ? 'assess' : result.completionDate ? 'open' : 'continue';
     }
 
-    getAssessmentLink(correctionRound = 0, submissionId?: number, resultId?: number) {
+    private getAssessmentLink(correctionRound = 0, submissionId?: number, resultId?: number) {
         const exercise = this.exercise();
         const course = this.course();
         const participation = this.participation();
@@ -171,7 +181,7 @@ export class ManageAssessmentButtonsComponent {
         );
     }
 
-    getCorrectionRoundForAssessmentLink(correctionRound = 0): number {
+    private getCorrectionRoundForAssessmentLink(correctionRound = 0): number {
         // TODO do we need to handle this differently for programming exercises?
         const result = this.resultForRound(correctionRound);
         if (!result) {
@@ -190,7 +200,7 @@ export class ManageAssessmentButtonsComponent {
      * result per correction round, and without it the server released the newest round, so cancelling correction round 1
      * released round 2 and round 1 stayed locked (#13396).
      */
-    cancelAssessment(result: Result, participation: Participation, submissionId?: number) {
+    protected cancelAssessment(result: Result, participation: Participation, submissionId?: number) {
         // Take the submission from the participation, not from the result. The participation page builds its rows from
         // ParticipationManagementDTO (ParticipationComponent#toParticipation), and those results carry no back reference to
         // their submission, so `result.submission?.id` was always undefined here and the guard below silently swallowed

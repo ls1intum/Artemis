@@ -1,8 +1,8 @@
 import { LanguageTableCellComponent } from '../language-table-cell/language-table-cell.component';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Language } from 'app/course/shared/entities/course.model';
-import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCodeCommit, faEllipsisVertical, faFolderOpen, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -19,13 +19,14 @@ import {
     TumAetUiTagSeverity,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { finalize, map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { CorrectionRoundResultDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { AssessmentQueueRowDTO } from 'app/exercise/participation/assessment-queue-dto.model';
 import { scoreDtoToParticipation } from 'app/exercise/exercise-scores/participation-score.util';
-import { SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -41,7 +42,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
-export type AssessmentState = 'noSubmission' | 'notAssessed' | 'inProgress' | 'complaint' | 'assessed';
+type AssessmentState = 'noSubmission' | 'notAssessed' | 'inProgress' | 'complaint' | 'assessed';
 
 interface AssessmentQueueRow {
     dto: AssessmentQueueRowDTO;
@@ -67,28 +68,6 @@ const STATE_SEVERITY: Record<AssessmentState, TumAetUiTagSeverity> = {
     assessed: 'success',
 };
 
-/**
- * Derives where an assessment stands from its newest manual result, which belongs to the latest correction round.
- */
-export function getAssessmentState(dto: AssessmentQueueRowDTO, correctionRound?: number): AssessmentState {
-    if (!dto.submissionId) {
-        return 'noSubmission';
-    }
-    const manualResult = (dto.correctionRoundResults ?? [])
-        .filter((result) => correctionRound === undefined || result.correctionRound === correctionRound)
-        .reduce<CorrectionRoundResultDTO | undefined>((latest, result) => (!latest || (result.correctionRound ?? 0) > (latest.correctionRound ?? 0) ? result : latest), undefined);
-    if (!manualResult) {
-        return 'notAssessed';
-    }
-    if (manualResult.hasComplaint) {
-        return 'complaint';
-    }
-    if (!manualResult.completionDate) {
-        return 'inProgress';
-    }
-    return 'assessed';
-}
-
 @Component({
     selector: 'jhi-assessment-queue',
     templateUrl: './assessment-queue.component.html',
@@ -111,7 +90,6 @@ export function getAssessmentState(dto: AssessmentQueueRowDTO, correctionRound?:
     ],
 })
 export class AssessmentQueueComponent {
-    private readonly destroyRef = inject(DestroyRef);
     private readonly sortService = inject(SortService);
     private readonly participationService = inject(ParticipationService);
     private readonly submissionService = inject(SubmissionService);
@@ -138,12 +116,20 @@ export class AssessmentQueueComponent {
         ),
     );
 
-    private readonly participationRows = signal<AssessmentQueueRowDTO[]>([]);
+    private readonly query = signal<TumAetUiTableQueryEvent | undefined>(undefined);
+    private readonly pageResource = rxResource({
+        params: () => {
+            const query = this.query();
+            return query
+                ? { query, exercise: this.exercise(), correctionRound: this.correctionRound(), isTestRun: this.isTestRun(), assessmentDisabled: this.assessmentDisabled() }
+                : undefined;
+        },
+        stream: ({ params }) => this.createPageRequest(params.query).pipe(tap({ error: (error) => onError(this.alertService, error) })),
+    });
+    private readonly participationRows = computed(() => (this.pageResource.hasValue() ? this.pageResource.value().content : []));
     readonly rows = computed<AssessmentQueueRow[]>(() => this.participationRows().map((dto) => this.prepareRow(dto)));
-    readonly totalRecords = signal(0);
-    readonly isLoading = signal(false);
-    private lastQuery?: TumAetUiTableQueryEvent;
-    private currentLoadRequestId = 0;
+    readonly totalRecords = computed(() => (this.pageResource.hasValue() ? this.pageResource.value().totalElements : 0));
+    readonly isLoading = this.pageResource.isLoading;
 
     readonly course = computed(() => getCourseFromExercise(this.exercise())!);
     readonly isProgrammingExercise = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
@@ -174,65 +160,30 @@ export class AssessmentQueueComponent {
     protected readonly faCodeCommit = faCodeCommit;
     protected readonly faUsers = faUsers;
 
-    constructor() {
-        let wasDisabled = false;
-        effect(() => {
-            const disabled = this.assessmentDisabled();
-            if (wasDisabled && !disabled) {
-                untracked(() => this.refresh());
-            }
-            wasDisabled = disabled;
-        });
+    loadPage(query: TumAetUiTableQueryEvent) {
+        this.query.set(query);
     }
 
-    loadPage(query: TumAetUiTableQueryEvent) {
-        const requestId = ++this.currentLoadRequestId;
-        const correctionRound = this.correctionRound();
-        const isTestRun = this.isTestRun();
-        const isExamMode = this.examMode();
-        this.lastQuery = query;
-        this.isLoading.set(true);
-        if (!isTestRun && isExamMode && correctionRound === undefined) {
-            this.participationRows.set([]);
-            this.totalRecords.set(0);
-            this.isLoading.set(false);
-            return;
-        }
-        const request = isTestRun
-            ? this.submissionService.getTestRunSubmissionsForExercise(this.exercise().id!).pipe(map((response) => this.submissionPage(response.body ?? [], query)))
-            : isExamMode && correctionRound !== undefined
-              ? this.submissionService
-                    .getExamAssessmentQueue(this.exercise().type!, this.exercise().id!, correctionRound, !this.assessmentDisabled(), !!this.exercise().isAtLeastInstructor)
-                    .pipe(map((submissions) => this.submissionPage(submissions, query)))
-              : this.participationService.searchAssessmentQueue(this.exercise().id!, {
-                    page: query.pageIndex,
-                    pageSize: query.pageSize,
-                    sortingOrder: query.sort?.direction === 'desc' ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
-                    sortedColumn: query.sort?.field ?? this.participantSortField(),
-                    searchTerm: this.teamMode() ? (query.searchTerm ?? '') : '',
-                });
-        request
-            .pipe(
-                takeUntilDestroyed(this.destroyRef),
-                finalize(() => {
-                    if (requestId === this.currentLoadRequestId) {
-                        this.isLoading.set(false);
-                    }
-                }),
-            )
-            .subscribe({
-                next: (page) => {
-                    if (requestId === this.currentLoadRequestId) {
-                        this.participationRows.set(page.content);
-                        this.totalRecords.set(page.totalElements);
-                    }
-                },
-                error: (error) => {
-                    if (requestId === this.currentLoadRequestId) {
-                        onError(this.alertService, error);
-                    }
-                },
+    private createPageRequest(query: TumAetUiTableQueryEvent): Observable<PageableResult<AssessmentQueueRowDTO>> {
+        if (this.isTestRun()) {
+            return this.submissionService.getTestRunSubmissionsForExercise(this.exercise().id!).pipe(map((response) => this.submissionPage(response.body ?? [], query)));
+        } else if (this.examMode()) {
+            const round = this.correctionRound();
+            if (round === undefined) {
+                return of({ content: [], totalElements: 0 });
+            }
+            return this.submissionService
+                .getExamAssessmentQueue(this.exercise().type!, this.exercise().id!, round, !this.assessmentDisabled(), !!this.exercise().isAtLeastInstructor)
+                .pipe(map((submissions) => this.submissionPage(submissions, query)));
+        } else {
+            return this.participationService.searchAssessmentQueue(this.exercise().id!, {
+                page: query.pageIndex,
+                pageSize: query.pageSize,
+                sortingOrder: query.sort?.direction === 'desc' ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
+                sortedColumn: query.sort?.field ?? this.participantSortField(),
+                searchTerm: this.teamMode() ? (query.searchTerm ?? '') : '',
             });
+        }
     }
 
     private submissionPage(submissions: Submission[], query: TumAetUiTableQueryEvent) {
@@ -277,7 +228,7 @@ export class AssessmentQueueComponent {
     }
 
     private prepareRow(dto: AssessmentQueueRowDTO): AssessmentQueueRow {
-        const state = getAssessmentState(dto, this.correctionRound());
+        const state = this.getAssessmentState(dto);
         const participation = scoreDtoToParticipation(dto, this.exercise());
         const repositoryLink = this.repositoryLink(dto);
         return {
@@ -299,9 +250,33 @@ export class AssessmentQueueComponent {
 
     /** Reloads the current page, e.g. after an assessment was cancelled. */
     refresh() {
-        if (this.lastQuery) {
-            this.loadPage(this.lastQuery);
+        this.pageResource.reload();
+    }
+
+    /**
+     * Derives where an assessment stands from its newest manual result, which belongs to the latest correction round.
+     */
+    private getAssessmentState(dto: AssessmentQueueRowDTO): AssessmentState {
+        const correctionRound = this.correctionRound();
+        if (!dto.submissionId) {
+            return 'noSubmission';
         }
+        const manualResult = (dto.correctionRoundResults ?? [])
+            .filter((result) => correctionRound === undefined || result.correctionRound === correctionRound)
+            .reduce<CorrectionRoundResultDTO | undefined>(
+                (latest, result) => (!latest || (result.correctionRound ?? 0) > (latest.correctionRound ?? 0) ? result : latest),
+                undefined,
+            );
+        if (!manualResult) {
+            return 'notAssessed';
+        }
+        if (manualResult.hasComplaint) {
+            return 'complaint';
+        }
+        if (!manualResult.completionDate) {
+            return 'inProgress';
+        }
+        return 'assessed';
     }
 
     resultsForRound(dto: AssessmentQueueRowDTO): CorrectionRoundResultDTO[] {

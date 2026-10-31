@@ -12,6 +12,7 @@ const meta = {
         variant: 'solid',
     },
     argTypes: {
+        disabled: { control: 'boolean' },
         severity: {
             control: 'select',
             options: ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast'],
@@ -44,5 +45,13 @@ export const Link: Story = {
     render: (args) => ({
         props: args,
         template: `<a href="#button-directive" tumAetUiButton ${argsToTemplate(args)}>Course details</a>`,
+    }),
+};
+
+export const DisabledLink: Story = {
+    args: { disabled: true },
+    render: (args) => ({
+        props: args,
+        template: `<a href="#button-directive" tumAetUiButton ${argsToTemplate(args)}>Unavailable action</a>`,
     }),
 };

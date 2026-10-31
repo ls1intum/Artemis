@@ -139,12 +139,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      */
     default List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(long exerciseId) {
         List<Long> ids = findLatestAutomaticResultsForExercise(exerciseId).stream().map(DomainObject::getId).toList();
-
-        if (ids.isEmpty()) {
-            return List.of();
-        }
-
-        return findResultsWithFeedbacksByIdIn(ids);
+        return ids.isEmpty() ? List.of() : findResultsWithFeedbacksByIdIn(ids);
     }
 
     Optional<Result> findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);

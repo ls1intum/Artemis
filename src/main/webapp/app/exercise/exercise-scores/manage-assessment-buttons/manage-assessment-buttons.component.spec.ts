@@ -102,14 +102,14 @@ describe('ManageAssessmentButtonsComponent', () => {
             } as Participation);
 
         it.each([
-            ['success', undefined],
-            ['success', { assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs() }],
-            ['warn', { assessmentType: AssessmentType.SEMI_AUTOMATIC }],
-            ['primary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs() }],
-            ['primary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, hasComplaint: true }],
+            ['primary', undefined],
+            ['primary', { assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs() }],
+            ['secondary', { assessmentType: AssessmentType.SEMI_AUTOMATIC }],
+            ['secondary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs() }],
+            ['secondary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, hasComplaint: true }],
         ])('is %s', (severity, result) => {
             withResult(result as Partial<Result> | undefined);
-            expect(comp.assessmentLinks()[0]?.severity).toBe(severity);
+            expect(comp['assessmentLinks']()[0]?.severity).toBe(severity);
         });
     });
 
@@ -118,8 +118,8 @@ describe('ManageAssessmentButtonsComponent', () => {
         fixture.componentRef.setInput('participation', { id: 10, submissions: [{ id: 21, results: [] }] } as Participation);
         fixture.componentRef.setInput('olderAssessmentDrafts', [{ submissionId: 20, resultId: 30, correctionRound: 0 }]);
 
-        const draftLink = comp.assessmentLinks().find((link) => link.result?.id === 30);
-        expect(draftLink).toMatchObject({ action: 'continue', submissionId: 20, canCancel: true });
+        const draftLink = comp['assessmentLinks']().find((link) => link.result?.id === 30);
+        expect(draftLink).toMatchObject({ action: 'continue', severity: 'secondary', submissionId: 20, canCancel: true });
         expect(draftLink?.link).toBeDefined();
     });
 
@@ -127,8 +127,8 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should set newManualResultAllowed for non-exam exercise', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, assessmentType: 'SEMI_AUTOMATIC' } as any);
 
-            expect(comp.examMode()).toBe(false);
-            expect(comp.correctionRoundIndices()).toEqual([0]);
+            expect(comp['examMode']()).toBe(false);
+            expect(comp['correctionRoundIndices']()).toEqual([0]);
         });
 
         it('should set examMode to true for exam exercise', () => {
@@ -140,8 +140,8 @@ describe('ManageAssessmentButtonsComponent', () => {
             } as Exercise;
             fixture.componentRef.setInput('exercise', examExercise);
 
-            expect(comp.examMode()).toBe(true);
-            expect(comp.correctionRoundIndices()).toEqual([0, 1]);
+            expect(comp['examMode']()).toBe(true);
+            expect(comp['correctionRoundIndices']()).toEqual([0, 1]);
         });
 
         it('should disable manual results for practice mode (testRun)', () => {
@@ -158,7 +158,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             } as any);
 
             // Practice mode (testRun) should disable manual results for non-exam mode
-            expect(comp.newManualResultAllowed()).toBe(false);
+            expect(comp['newManualResultAllowed']()).toBe(false);
         });
     });
 
@@ -172,7 +172,9 @@ describe('ManageAssessmentButtonsComponent', () => {
         expect(link.getAttribute('href')).toBe('/course-management/1/programming-exercises/1/submissions/21/assessment?correction-round=0');
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
-        expect(link.getAttribute('href')).toBeNull();
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        link.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(true);
         expect(link.getAttribute('aria-disabled')).toBe('true');
         expect(link.getAttribute('tabindex')).toBe('-1');
     });
@@ -237,7 +239,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should return undefined when exercise type is missing', () => {
             fixture.componentRef.setInput('exercise', { id: 1 } as Exercise);
 
-            const result = comp.getAssessmentLink();
+            const result = comp['assessmentLinks']()[0]?.link;
 
             expect(result).toBeUndefined();
         });
@@ -245,7 +247,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should return undefined when submission id is missing', () => {
             fixture.componentRef.setInput('participation', { id: 1, submissions: [] } as Participation);
 
-            const result = comp.getAssessmentLink();
+            const result = comp['assessmentLinks']()[0]?.link;
 
             expect(result).toBeUndefined();
         });
@@ -257,7 +259,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                 submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0 }] } as Submission],
             } as Participation);
 
-            const result = comp.getAssessmentLink();
+            const result = comp['assessmentLinks']()[0]?.link;
 
             expect(result).toBeDefined();
         });
@@ -267,7 +269,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should return correctionRound when no result exists', () => {
             fixture.componentRef.setInput('participation', { id: 1, submissions: [{ id: 1, results: [] } as Submission] } as Participation);
 
-            const result = comp.getCorrectionRoundForAssessmentLink(0);
+            const result = comp['assessmentLinks']()[0]?.targetRound;
 
             expect(result).toBe(0);
         });
@@ -283,7 +285,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                 ],
             } as Participation);
 
-            const result = comp.getCorrectionRoundForAssessmentLink(0);
+            const result = comp['assessmentLinks']()[0]?.targetRound;
 
             expect(result).toBe(1);
         });
@@ -294,7 +296,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                 submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0, hasComplaint: false } as Result] } as Submission],
             } as Participation);
 
-            const result = comp.getCorrectionRoundForAssessmentLink(0);
+            const result = comp['assessmentLinks']()[0]?.targetRound;
 
             expect(result).toBe(0);
         });
@@ -321,7 +323,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             });
             fixture.componentRef.setInput('ownedCorrectionRounds', []);
             fixture.componentRef.setInput('assessableCorrectionRounds', [0]);
-            expect(comp.assessmentLinks().map((link) => link.action)).toEqual(expectedAction ? [expectedAction] : []);
+            expect(comp['assessmentLinks']().map((link) => link.action)).toEqual(expectedAction ? [expectedAction] : []);
         });
 
         it('should cancel programming assessment', () => {
@@ -330,7 +332,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.PROGRAMMING } as Exercise);
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
@@ -342,7 +344,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.MODELING } as Exercise);
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
@@ -354,7 +356,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
             expect(refreshSpy).toHaveBeenCalled();
@@ -366,7 +368,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.FILE_UPLOAD } as Exercise);
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
@@ -383,7 +385,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             // Exactly the shape ParticipationComponent#toParticipation produces: no `submission` on the result.
             const dtoShapedResult = { id: 30 } as Result;
 
-            comp.cancelAssessment(dtoShapedResult, comp.participation());
+            comp['cancelAssessment'](dtoShapedResult, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
         });
@@ -393,7 +395,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).not.toHaveBeenCalled();
         });
@@ -405,7 +407,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('participation', { id: 10, submissions: [] } as Participation);
             const result = { id: 30 } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).not.toHaveBeenCalled();
         });

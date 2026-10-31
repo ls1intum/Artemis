@@ -9,12 +9,9 @@
             [attr.data-correction-round]="link.correctionRound"
             [severity]="link.severity"
             [attr.aria-label]="link.labelKey | artemisTranslate: { correctionRound: link.correctionRound + 1 }"
-            [routerLink]="disabled() ? null : link.link"
+            [routerLink]="link.link"
+            [disabled]="disabled()"
             [tumAetUiTooltip]="disabledTooltip()"
-            [attr.aria-disabled]="disabled() || null"
-            [class.opacity-60]="disabled()"
-            [class.cursor-not-allowed]="disabled()"
-            [attr.tabindex]="disabled() ? -1 : null"
             [queryParams]="{ 'correction-round': link.targetRound, testRun: isTestRun() || undefined }"
         >
             <fa-icon [icon]="faClipboardList" [fixedWidth]="true" />
