@@ -177,6 +177,15 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.5: Email Changes Need Confirmation
+
+No data has to be migrated. The upgrade adds nullable columns to `user_recovery_key`, so the previous version keeps working after a rollback. Two behaviors change for users:
+
+- A user with an internal account changes the email address only after the owners of the current and of the new address have both followed a link in a mail. Without a configured mail server (`jhipster.mail.from` left at its default), nothing could be confirmed, so the field in the settings is disabled and only an administrator can change the address. Configure the mail server before you upgrade if users should keep changing their address themselves. The links point to `/account/confirm-email-change` on `server.url`, so that path has to reach the client.
+- A session that started before the credentials last changed, for example before a password reset, can no longer add a passkey, an SSH key or an access token. The client signs the user out and asks them to sign in again.
+
+See [Changing the email address](/admin/user-registration#changing-the-email-address) and [Sessions and new credentials](/admin/user-registration#sessions-and-new-credentials).
+
 ### 10.1: Installation Metadata in Production
 
 Every production core node refuses to start until three settings describe who runs the installation, whether or not telemetry is enabled:

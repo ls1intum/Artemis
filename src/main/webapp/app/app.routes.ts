@@ -146,6 +146,14 @@ const routes: Routes = [
                 },
             },
             {
+                path: 'confirm-email-change',
+                pathMatch: 'full',
+                loadComponent: () => import('app/account/confirm-email-change/confirm-email-change.component').then((m) => m.ConfirmEmailChangeComponent),
+                data: {
+                    pageTitle: 'confirmEmailChange.title',
+                },
+            },
+            {
                 path: 'password',
                 pathMatch: 'full',
                 loadComponent: () => import('app/account/password/password.component').then((m) => m.PasswordComponent),

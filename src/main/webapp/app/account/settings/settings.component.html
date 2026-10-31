@@ -8,13 +8,89 @@
                     </h2>
                 }
                 @if (success()) {
-                    <tumaet-ui-message severity="success">
-                        <span jhiTranslate="settings.messages.success"><strong>Settings saved!</strong></span>
+                    <tumaet-ui-message severity="success" data-testid="settings-success-message">
+                        @if (emailChangeRequested()) {
+                            <span jhiTranslate="settings.messages.successEmailChangeRequested"></span>
+                        } @else {
+                            <span jhiTranslate="settings.messages.success"><strong>Settings saved!</strong></span>
+                        }
+                    </tumaet-ui-message>
+                }
+                @if (confirmationMailsResent()) {
+                    <tumaet-ui-message severity="success" data-testid="settings-resent-message">
+                        <span jhiTranslate="settings.messages.confirmationMailsResent"></span>
+                    </tumaet-ui-message>
+                }
+                @if (emailChangeCancelled()) {
+                    <tumaet-ui-message severity="info" data-testid="settings-cancelled-message">
+                        <span jhiTranslate="settings.messages.emailChangeCancelled"></span>
                     </tumaet-ui-message>
                 }
                 @if (isSaml2Active()) {
                     <tumaet-ui-message severity="info">
                         <span jhiTranslate="settings.saml2SyncedInfo"> Your name and email address are managed by your institution via SAML2 and cannot be changed here. </span>
+                    </tumaet-ui-message>
+                }
+                @if (isInternalUser() && !isSaml2Active() && !mailConfigured()) {
+                    <tumaet-ui-message severity="info" data-testid="settings-mail-not-configured-hint">
+                        <span jhiTranslate="settings.messages.emailChangeUnavailableHint"></span>
+                    </tumaet-ui-message>
+                }
+                @if (errorMessageKey(); as messageKey) {
+                    <tumaet-ui-message severity="error" data-testid="settings-error-message">
+                        <span [jhiTranslate]="messageKey"></span>
+                    </tumaet-ui-message>
+                }
+                @if (pendingEmailChange(); as pending) {
+                    <tumaet-ui-message severity="warn" data-testid="pending-email-change">
+                        <div class="flex flex-col gap-2">
+                            <strong jhiTranslate="settings.pendingEmailChange.title"></strong>
+                            <span jhiTranslate="settings.pendingEmailChange.description"></span>
+                            <ul class="list-disc pl-5">
+                                <li data-testid="pending-email-change-current">
+                                    <span jhiTranslate="settings.pendingEmailChange.currentAddress"></span>
+                                    <span class="font-semibold">{{ currentUser()?.email }}</span
+                                    >:
+                                    <span
+                                        [jhiTranslate]="pending.currentAddressConfirmed ? 'settings.pendingEmailChange.confirmed' : 'settings.pendingEmailChange.notConfirmed'"
+                                    ></span>
+                                </li>
+                                <li data-testid="pending-email-change-new">
+                                    <span jhiTranslate="settings.pendingEmailChange.newAddress"></span>
+                                    <span class="font-semibold" data-testid="pending-email-change-new-email">{{ pending.newEmail }}</span
+                                    >:
+                                    <span
+                                        [jhiTranslate]="pending.newAddressConfirmed ? 'settings.pendingEmailChange.confirmed' : 'settings.pendingEmailChange.notConfirmed'"
+                                    ></span>
+                                </li>
+                            </ul>
+                            <span>
+                                <span jhiTranslate="settings.pendingEmailChange.expires"></span>
+                                <span data-testid="pending-email-change-expires">{{ pending.expiresAt | artemisDate }}</span>
+                            </span>
+                            <div class="flex flex-wrap gap-2">
+                                <tumaet-ui-button
+                                    size="small"
+                                    severity="secondary"
+                                    data-testid="resend-email-change-button"
+                                    [disabled]="!mailConfigured()"
+                                    [loading]="pendingChangeRequestRunning()"
+                                    (clicked)="resendConfirmationMails()"
+                                >
+                                    <span jhiTranslate="settings.pendingEmailChange.resend"></span>
+                                </tumaet-ui-button>
+                                <tumaet-ui-button
+                                    size="small"
+                                    severity="secondary"
+                                    variant="outlined"
+                                    data-testid="cancel-email-change-button"
+                                    [loading]="pendingChangeRequestRunning()"
+                                    (clicked)="cancelEmailChange()"
+                                >
+                                    <span jhiTranslate="settings.pendingEmailChange.cancel"></span>
+                                </tumaet-ui-button>
+                            </div>
+                        </div>
                     </tumaet-ui-message>
                 }
                 @if (errorEmailExists()) {
@@ -108,7 +184,8 @@
                                 name="email"
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                                 formControlName="email"
-                                [disabled]="!isInternalUser() || isSaml2Active()"
+                                data-testid="email-input"
+                                [disabled]="!isInternalUser() || isSaml2Active() || !mailConfigured()"
                                 required
                             />
                             <ng-container tumAetUiFormFieldError>

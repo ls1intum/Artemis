@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'getting-started/general',
                 'getting-started/courses',
+                'getting-started/account',
                 'getting-started/user-experience',
                 'getting-started/mobile-applications',
             ],
