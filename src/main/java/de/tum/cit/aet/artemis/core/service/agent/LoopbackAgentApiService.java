@@ -18,6 +18,8 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -55,7 +57,8 @@ public class LoopbackAgentApiService implements AgentApi {
 
     @Override
     public AgentApiResponse send(HttpMethod method, String path, @Nullable Object body) {
-        var request = restClient.method(method).uri(path).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN);
+        var request = restClient.method(method).uri(contextPath() + path).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON,
+                MediaType.TEXT_PLAIN);
         if (body != null) {
             request.contentType(MediaType.APPLICATION_JSON).body(jsonMapper.writeValueAsString(body));
         }
@@ -64,8 +67,8 @@ public class LoopbackAgentApiService implements AgentApi {
 
     @Override
     public AgentApiResponse sendText(HttpMethod method, String path, String text) {
-        var request = restClient.method(method).uri(path).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN)
-                .contentType(MediaType.TEXT_PLAIN).body(text);
+        var request = restClient.method(method).uri(contextPath() + path).header(HttpHeaders.AUTHORIZATION, authorization())
+                .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN).contentType(MediaType.TEXT_PLAIN).body(text);
         return execute(request);
     }
 
@@ -74,5 +77,14 @@ public class LoopbackAgentApiService implements AgentApi {
             String text = StreamUtils.copyToString(response.getBody(), StandardCharsets.UTF_8);
             return AgentApiResponse.of(jsonMapper, response.getStatusCode().value(), text);
         });
+    }
+
+    /** Keeps internal calls in the same servlet context as the MCP request, including deployments below a path prefix. */
+    private String contextPath() {
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes) {
+            String path = attributes.getRequest().getContextPath();
+            return "/".equals(path) ? "" : path;
+        }
+        return "";
     }
 }
