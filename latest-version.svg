@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="150" height="20" role="img" aria-label="latest version: 10.4">
-  <title>latest version: 10.4</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="20" role="img" aria-label="latest version: 10.5">
+  <title>latest version: 10.5</title>
   <clipPath id="badge"><rect width="150" height="20" rx="3"/></clipPath>
   <g clip-path="url(#badge)"><path fill="#555" d="M0 0h110v20H0z"/><path fill="#007ec6" d="M110 0h40v20H110z"/></g>
   <g fill="#fff" text-anchor="middle" font-family="monospace" font-size="11">
     <text x="55" y="14">latest version</text>
-    <text x="130" y="14">10.4</text>
+    <text x="130" y="14">10.5</text>
   </g>
 </svg>
