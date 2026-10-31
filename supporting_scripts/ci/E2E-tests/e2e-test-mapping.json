@@ -125,6 +125,7 @@
         "src/main/webapp/app/hyperion/"
     ],
     "consumerAuditNotes": [
+        "TutorialGroupImportExport creates/deletes a course, configures groups, looks up a tutor and exercises registration import and CSV/JSON export. Include account/core, automatic group communication and the lecture service used by tutorial management; retain conservative exam coverage for the shared course lifecycle. ExerciseSplitPanelResize also creates and participates in a modeling exercise for the narrow flush-panel contract.",
         "Exam workflows use ExamExerciseGroupCreationPage.addGroupWithExercise (dynamic ExerciseType dispatch) and ExamParticipationPage. Conservatively cover all exercise types and assessment for the entire exam group, including nested test-exam specs.",
         "Exercise creation/management/participation uses shared exercise services, result/assessment handling and automatic communication channels. Communication includes all such workflows plus lecture/exam and course messaging workflows.",
         "Lecture consumers include atlas competency progress/lecture links, course tabs/management/rich message editor, Iris chat/context/activity feeds, and account deletion cleanup.",
@@ -1117,7 +1118,7 @@
             "tutorialgroup"
         ],
         "e2e/exercise/ExerciseImport.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "fileupload", "modeling", "programming", "quiz", "text"],
-        "e2e/exercise/ExerciseSplitPanelResize.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "text"],
+        "e2e/exercise/ExerciseSplitPanelResize.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "modeling", "text"],
         "e2e/exercise/ExerciseVariantGeneration.spec.ts": ["assessment", "communication", "course", "exercise", "hyperion", "quiz"],
         "e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "fileupload"],
         "e2e/exercise/file-upload/FileUploadExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exercise", "fileupload"],
@@ -1198,7 +1199,8 @@
         "e2e/shared/LayoutHelpers.spec.ts": ["shared"],
         "e2e/tutorialgroup/TutorialGroupDetailLayout.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],
         "e2e/tutorialgroup/TutorialGroupEditing.spec.ts": ["communication", "course", "lecture", "tutorialgroup"],
-        "e2e/tutorialgroup/TutorialGroupSidebarAttendance.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"]
+        "e2e/tutorialgroup/TutorialGroupSidebarAttendance.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],
+        "e2e/tutorialgroup/TutorialGroupImportExport.spec.ts": ["account", "communication", "core", "course", "exam", "lecture", "tutorialgroup"]
     },
     "ignoredPaths": ["documentation/", "src/test/javascript/", "README.md", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", ".github/PULL_REQUEST_TEMPLATE.md", ".agents/", "skills/"],
     "catalogModules": [
