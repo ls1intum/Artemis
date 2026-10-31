@@ -233,6 +233,9 @@ public class CourseUpdateResource {
         courseConfigurationRepository.updateEditableSettings(courseId, requestedConfiguration.isGradeRelevant(), requestedConfiguration.isPresentationAssessmentsEnabled(),
                 requestedConfiguration.isAutoOrchestratorEnabled(), requestedConfiguration.getDebounceWindowSecondsOverride(),
                 requestedConfiguration.getMaxDailyOrchestrationOverride());
+        if (courseUpdateDTO.studentWelcomeContext() != null) {
+            courseConfigurationRepository.updateStudentWelcomeContext(courseId, requestedConfiguration.getStudentWelcomeContext());
+        }
         if (courseUpdateDTO.dataRetentionHold() != null) {
             courseConfigurationRepository.updateDataRetentionHold(courseId, courseUpdateDTO.dataRetentionHold());
         }

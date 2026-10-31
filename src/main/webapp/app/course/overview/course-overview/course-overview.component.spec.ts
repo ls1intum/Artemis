@@ -382,8 +382,8 @@ describe('CourseOverviewComponent', () => {
         component.availableTabs.set(availableTabs({ lectures: true }));
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Exercises');
-        expect(sidebarItems[1].title).toContain('Lectures');
+        expect(sidebarItems[1].title).toContain('Exercises');
+        expect(sidebarItems[2].title).toContain('Lectures');
     });
 
     it('should create sidebar items for student if questions are available for practice', () => {
@@ -391,23 +391,23 @@ describe('CourseOverviewComponent', () => {
         component.availableTabs.set(availableTabs({ lectures: true, training: true }));
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Exercises');
-        expect(sidebarItems[1].title).toContain('Training');
-        expect(sidebarItems[2].title).toContain('Lectures');
+        expect(sidebarItems[1].title).toContain('Exercises');
+        expect(sidebarItems[2].title).toContain('Training');
+        expect(sidebarItems[3].title).toContain('Lectures');
     });
 
     it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
         component.availableTabs.set(availableTabs({ competencies: true, learningPaths: true }));
         component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[3].title).toContain('Competencies');
-        expect(sidebarItems[4].title).toContain('Learning Path');
+        expect(sidebarItems[4].title).toContain('Competencies');
+        expect(sidebarItems[5].title).toContain('Learning Path');
     });
 
     it('should create faq item when accepted faqs exist', () => {
         component.availableTabs.set(availableTabs({ faq: true }));
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[3].title).toContain('FAQs');
+        expect(sidebarItems[4].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -639,7 +639,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should show the exams item when the exams tab is available', () => {
         component.availableTabs.set(availableTabs({ exams: true }));
-        expect(component.getSidebarItems()[0].title).toContain('Exams');
+        expect(component.getSidebarItems()[1].title).toContain('Exams');
     });
 
     it('should not show the exams item when the exams tab is unavailable', () => {
@@ -655,6 +655,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(items).toContainEqual(courseSidebarItemService.getCommunicationsItem());
         expect(items).toContainEqual(courseSidebarItemService.getTutorialGroupsItem());
+        expect(items[0].routerLink).toBe('home');
         expect(items).toContainEqual(courseSidebarItemService.getIrisItem());
     });
 

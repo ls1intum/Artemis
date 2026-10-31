@@ -101,6 +101,10 @@ describe('CourseSidebarItemService', () => {
         });
     });
 
+    it('provides the always-available student Home destination', () => {
+        expect(service.getHomeItem()).toMatchObject({ routerLink: 'home', testId: 'home-tab', hidden: false });
+    });
+
     describe('getStudentDefaultItems', () => {
         it('should return default items without training when questionsAvailableForTraining is false', () => {
             const items = service.getStudentDefaultItems(false);

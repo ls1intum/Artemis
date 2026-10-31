@@ -34,6 +34,7 @@ public enum UserDeletionReferencePolicy {
     AUTHORITY("jhi_user_authority", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.REMOVE_MEMBERSHIP, false),
     LEARNER_PROFILE("learner_profile", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     LEARNING_PATH("learning_path", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
+    COURSE_HOME_VISIT("course_home_visit", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, false),
     LECTURE_PROGRESS("lecture_unit_user", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
     LLM_USAGE_ACTOR("llm_token_usage_trace", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DETACH_ACTOR, true),
     LTI_LAUNCH("lti_resource_launch", "user_id", UserDeletionDataCategory.LTI, UserDeletionAction.DELETE, true),

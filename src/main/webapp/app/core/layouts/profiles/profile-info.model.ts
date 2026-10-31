@@ -170,6 +170,8 @@ export class ProfileInfo {
     public useExternal!: boolean;
     public versionControlName!: string;
     public versionControlUrl!: string;
+    public courseHomeAiAvailable?: boolean;
+    public courseHomeAiLocation?: 'LOCAL' | 'CLOUD';
     public localLLMDeploymentEnabled!: boolean;
     public allowedCustomDockerNetworks!: string[];
 }

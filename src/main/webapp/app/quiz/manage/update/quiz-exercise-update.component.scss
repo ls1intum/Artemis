@@ -329,7 +329,7 @@ button.global-refinement-fab-close-button.p-button {
     gap: 1rem 1.5rem;
     max-width: 66.6667%;
 
-    @media (width < 992px) {
+    @media not all and (min-width: 992px) {
         grid-template-columns: 1fr;
         max-width: 100%;
     }

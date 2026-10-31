@@ -558,6 +558,11 @@
                     }
                 },
                 "replayWizard": "Einrichtungsassistent wiederholen"
+            },
+            "studentWelcomeContext": {
+                "label": "Startseite für Studierende: Lernansatz",
+                "hint": "Optional: Beschreiben Sie, wie Studierende in diesem Kurs lernen sollen (bis zu 2.000 Zeichen). Der Text erscheint beim ersten Besuch der Startseite und wird für optionale KI-Begrüßungen verwendet.",
+                "tooLong": "Verwenden Sie höchstens 2.000 Zeichen."
             }
         },
         "courseStatistics": {

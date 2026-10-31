@@ -243,3 +243,6 @@
         border-color: var(--p-content-border-color);
     }
 }
+
+@source './app/course/manage/update/course-home-welcome-context-form.component.html';
+@source './app/course/overview/course-home';

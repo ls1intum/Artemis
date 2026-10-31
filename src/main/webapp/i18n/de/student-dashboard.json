@@ -121,7 +121,8 @@
                 "gradingSystem": "Notenschlüssel",
                 "faq": "FAQ",
                 "settings": "Einstellungen",
-                "calendar": "Kalender"
+                "calendar": "Kalender",
+                "home": "Startseite"
             },
             "exerciseFilter": {
                 "modalTitle": "Aufgaben Filtern",

@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -57,7 +59,8 @@ class ProgrammingExerciseImportSettingsTest {
             Map.entry("competencyLinks", "They point at competencies of the source course, so a caller supplies links to competencies of the target"),
             Map.entry("submissionPolicy",
                     "A separate entity that no import fetch loads: the course material import copies it itself, and the import service only saves the one a skeleton carries"),
-            Map.entry("channelNameTransient", "The name of the channel the import creates, which the caller chooses"), Map.entry("releaseDate", DATE_RESET),
+            Map.entry("channelNameTransient", "The name of the channel the import creates, which the caller chooses"),
+            Map.entry("createdDate", "Assigned by the server when the imported exercise is first persisted, never inherited from the source"), Map.entry("releaseDate", DATE_RESET),
             Map.entry("startDate", DATE_RESET), Map.entry("dueDate", DATE_RESET), Map.entry("assessmentDueDate", DATE_RESET),
             Map.entry("exampleSolutionPublicationDate", DATE_RESET), Map.entry("averageRatingTransient", TRANSIENT_STATE),
             Map.entry("isGradingInstructionFeedbackUsedTransient", TRANSIENT_STATE), Map.entry("numberOfComplaintsTransient", TRANSIENT_STATE),
@@ -104,6 +107,16 @@ class ProgrammingExerciseImportSettingsTest {
             }
         }
         assertThat(problems).as("fields that an import loses").isEmpty();
+    }
+
+    @Test
+    void importSkeletonNeverInheritsTheSourcePublicationAge() {
+        var source = new ProgrammingExercise();
+        source.setCreatedDate(ZonedDateTime.now(ZoneOffset.UTC).minusYears(1));
+        var imported = new ProgrammingExercise();
+        imported.copyImportSettingsFrom(source);
+        assertThat(imported.getCreatedDate()).isNull();
+        assertThat(source.getCreatedDate()).isNotNull();
     }
 
     /**

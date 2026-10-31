@@ -22,7 +22,8 @@
             "expandMenu": "Menü aufklappen (Strg + M)",
             "collapseMenu": "Menü einklappen (Strg + M)",
             "enabled": "Aktiviert",
-            "disabled": "Deaktiviert"
+            "disabled": "Deaktiviert",
+            "unknownPerson": "Unbekannte Person"
         },
         "weekdays": {
             "monday": "Montag",

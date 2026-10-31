@@ -15,7 +15,9 @@ export class ExamTestRunPage {
     }
 
     async confirmTestRun() {
-        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-runs`);
+        const responsePromise = this.page.waitForResponse(
+            (response) => response.request().method() === 'POST' && /\/api\/exam\/courses\/\d+\/exams\/\d+\/test-runs$/.test(response.url()),
+        );
         await this.page.getByRole('dialog').first().locator('#createTestRunButton').click();
         return await responsePromise;
     }

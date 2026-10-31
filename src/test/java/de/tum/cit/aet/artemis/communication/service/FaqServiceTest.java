@@ -23,7 +23,7 @@ import org.springframework.scheduling.annotation.AsyncAnnotationBeanPostProcesso
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 class FaqServiceTest {
 
-    private final FaqRepository repository = mock(FaqRepository.class);
+    private final FaqTestRepository repository = mock(FaqTestRepository.class);
 
     private final PyrisConnectorService connector = mock(PyrisConnectorService.class);
 

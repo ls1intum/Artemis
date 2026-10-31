@@ -108,6 +108,7 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.QUIZ_QUESTION_PROGRESS, bind(learning::countQuizQuestionProgress, learning::deleteQuizQuestionProgress));
         bindings.put(UserDeletionReferencePolicy.QUIZ_TRAINING_LEADERBOARD, bind(learning::countQuizLeaderboardEntries, learning::deleteQuizLeaderboardEntries));
         bindings.put(UserDeletionReferencePolicy.COMPETENCY_PROGRESS, bind(learning::countCompetencyProgress, learning::deleteCompetencyProgress));
+        bindings.put(UserDeletionReferencePolicy.COURSE_HOME_VISIT, bind(learning::countHomeVisits, learning::deleteHomeVisits));
         bindings.put(UserDeletionReferencePolicy.LECTURE_PROGRESS, bind(learning::countLectureUnitCompletions, learning::deleteLectureUnitCompletions));
         bindings.put(UserDeletionReferencePolicy.LEARNER_PROFILE, bind(learning::countLearnerProfiles, learning::deleteLearnerProfile));
         bindings.put(UserDeletionReferencePolicy.LEARNING_PATH, bind(learning::countLearningPaths, learning::deleteLearningPaths));

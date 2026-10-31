@@ -22,7 +22,8 @@
             "expandMenu": "Expand menu (Ctrl + M)",
             "collapseMenu": "Collapse menu (Ctrl + M)",
             "enabled": "Enabled",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "unknownPerson": "Unknown person"
         },
         "weekdays": {
             "monday": "Monday",

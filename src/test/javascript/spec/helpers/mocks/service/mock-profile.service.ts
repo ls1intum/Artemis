@@ -19,6 +19,8 @@ export class MockProfileService {
             },
         }) as unknown as ProfileInfo;
 
+    public isCourseHomeAiAvailable = (): boolean => this.getProfileInfo().courseHomeAiAvailable === true;
+
     public isLLMDeploymentEnabled = (): boolean => false;
 
     public isGocastEnabled = (): boolean => this.getProfileInfo().gocastEnabled ?? false;

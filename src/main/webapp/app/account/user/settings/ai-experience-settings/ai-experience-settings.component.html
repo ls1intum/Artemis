@@ -32,11 +32,11 @@
 
     <div class="mt-3 flex items-center gap-3">
         @if (currentSelection()) {
-            <tumaet-ui-button (clicked)="openSelectionModal()">
+            <tumaet-ui-button [disabled]="selectionPending()" (clicked)="openSelectionModal()">
                 <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.changeSelection"></span>
             </tumaet-ui-button>
         } @else {
-            <tumaet-ui-button (clicked)="openSelectionModal()">
+            <tumaet-ui-button [disabled]="selectionPending()" (clicked)="openSelectionModal()">
                 <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.chooseNow"></span>
             </tumaet-ui-button>
         }
@@ -44,34 +44,36 @@
     </div>
 </tumaet-ui-card>
 
-<hr />
+@if (irisEnabled) {
+    <hr />
 
-<h5 jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagement"></h5>
-<p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagementInfo"></p>
+    <h5 jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagement"></h5>
+    <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagementInfo"></p>
 
-@if (hasData) {
-    <p class="mt-2">
-        <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataStats" [translateValues]="{ sessions: sessionCount(), messages: messageCount() }"></span>
-    </p>
-    <div class="mt-2">
-        <button
-            type="button"
-            tumAetUiButton
-            severity="danger"
-            size="small"
-            jhiDeleteButton
-            [renderButtonStyle]="false"
-            [actionType]="ActionType.Cleanup"
-            [renderButtonText]="false"
-            [deleteQuestion]="'artemisApp.userSettings.aiExperienceSettingsPage.deleteQuestion'"
-            [entityTitle]="'delete all'"
-            [deleteConfirmationText]="'artemisApp.userSettings.aiExperienceSettingsPage.typeDeleteAllToConfirm'"
-            (delete)="deleteAllIrisInteractions()"
-            [dialogError]="dialogError$"
-        >
-            <span jhiTranslate="entity.action.cleanup"></span>
-        </button>
-    </div>
-} @else {
-    <p class="mt-2 text-muted-color" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noData"></p>
+    @if (hasData) {
+        <p class="mt-2">
+            <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataStats" [translateValues]="{ sessions: sessionCount(), messages: messageCount() }"></span>
+        </p>
+        <div class="mt-2">
+            <button
+                type="button"
+                tumAetUiButton
+                severity="danger"
+                size="small"
+                jhiDeleteButton
+                [renderButtonStyle]="false"
+                [actionType]="ActionType.Cleanup"
+                [renderButtonText]="false"
+                [deleteQuestion]="'artemisApp.userSettings.aiExperienceSettingsPage.deleteQuestion'"
+                [entityTitle]="'delete all'"
+                [deleteConfirmationText]="'artemisApp.userSettings.aiExperienceSettingsPage.typeDeleteAllToConfirm'"
+                (delete)="deleteAllIrisInteractions()"
+                [dialogError]="dialogError$"
+            >
+                <span jhiTranslate="entity.action.cleanup"></span>
+            </button>
+        </div>
+    } @else {
+        <p class="mt-2 text-muted-color" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noData"></p>
+    }
 }
