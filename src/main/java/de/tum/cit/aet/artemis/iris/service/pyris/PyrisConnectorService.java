@@ -308,7 +308,7 @@ public class PyrisConnectorService {
         // The caller turns the status into an IrisException, so a warning is enough.
         try {
             var error = objectMapper.readValue(ex.getResponseBodyAsString(), PyrisErrorResponseDTO.class);
-            if (error.detail() != null && error.detail().errorMessage() != null) {
+            if (error != null && error.detail() != null && error.detail().errorMessage() != null) {
                 return error.detail().errorMessage();
             }
             log.warn("Pyris answered with status {} and a body that is not the expected error JSON: detail.errorMessage is missing", ex.getStatusCode());
