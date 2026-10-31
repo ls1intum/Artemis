@@ -164,9 +164,11 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
         var saved = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.COMPETENCIES_READ), Duration.ofDays(1));
         performWithToken("/api/core/test/testScopedRead", saved.secret()).andExpect(status().isOk());
 
-        userActivityService.recordCredentialsChanged(saved.token().getUserId(), Instant.now().plusSeconds(1));
+        userActivityService.recordCredentialsChanged(saved.token().getUserId(), Instant.now());
 
         performWithToken("/api/core/test/testScopedRead", saved.secret()).andExpect(status().isUnauthorized());
+        var replacement = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.COMPETENCIES_READ), Duration.ofDays(1));
+        performWithToken("/api/core/test/testScopedRead", replacement.secret()).andExpect(status().isOk());
     }
 
     @Test
@@ -174,6 +176,17 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
         var saved = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.COMPETENCIES_READ), Duration.ofDays(1));
 
         request.performMvcRequest(get("/api/core/test/testScopedRead").header(HttpHeaders.AUTHORIZATION, "bearer " + saved.secret())).andExpect(status().isOk());
+    }
+
+    @Test
+    void tokensAuthenticateWhenArtemisHasAServletContextPath() throws Exception {
+        var saved = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.COMPETENCIES_READ), Duration.ofDays(1));
+        SecurityContextHolder.clearContext();
+        TestSecurityContextHolder.clearContext();
+
+        request.performMvcRequest(get("/artemis/api/core/test/testScopedRead").contextPath("/artemis").header(HttpHeaders.AUTHORIZATION, saved.bearer()))
+                .andExpect(status().isOk());
+        assertThat(personalAccessTokenRepository.findById(saved.token().getId()).orElseThrow().getLastUsedDate()).isNotNull();
     }
 
     @Test

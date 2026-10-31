@@ -54,7 +54,9 @@ public class PersonalAccessTokenFilter extends GenericFilterBean {
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
         String secret = extractSecret(request.getHeader(HttpHeaders.AUTHORIZATION));
-        if (secret == null || !request.getRequestURI().startsWith(API_PREFIX) || isOpenOrInternalPath(request.getRequestURI())) {
+        String contextPath = request.getContextPath();
+        String path = "/".equals(contextPath) ? request.getRequestURI() : request.getRequestURI().substring(contextPath.length());
+        if (secret == null || !path.startsWith(API_PREFIX) || isOpenOrInternalPath(path)) {
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
