@@ -64,6 +64,62 @@
                 </tumaet-ui-message>
             }
         </div>
+        @if (hasResultPoints(editForm.controls.resultPoints.value)) {
+            <div class="flex flex-col gap-2">
+                <label for="presentation-instance-assessor">
+                    <span jhiTranslate="artemisApp.presentationAssessment.assessor"></span>
+                    <span aria-hidden="true">*</span>
+                </label>
+                <div class="flex items-center gap-2">
+                    @if (selectedAssessorOption(); as assessorOption) {
+                        <jhi-profile-picture
+                            imageSizeInRem="2"
+                            fontSizeInRem="0.8"
+                            imageId="presentation-instance-assessor-profile-picture"
+                            defaultPictureId="presentation-instance-assessor-default-picture"
+                            [authorName]="assessorOption.assessor.name || assessorOption.assessor.login"
+                        />
+                    }
+                    @if (canChooseAssessor()) {
+                        <tumaet-ui-autocomplete
+                            inputId="presentation-instance-assessor"
+                            data-testid="presentation-instance-assessor-search"
+                            class="min-w-0 flex-1"
+                            optionLabel="label"
+                            formControlName="assessorOption"
+                            [required]="true"
+                            [suggestions]="assessorOptions()"
+                            [minLength]="0"
+                            [debounceMs]="0"
+                            [placeholder]="'artemisApp.presentationAssessment.searchAssessor' | artemisTranslate"
+                            (searchRequested)="searchAssessorsByQuery($event.query)"
+                        />
+                    } @else {
+                        <input
+                            id="presentation-instance-assessor"
+                            tumAetUiInput
+                            class="min-w-0 flex-1"
+                            disabled
+                            data-testid="presentation-instance-assessor"
+                            [value]="selectedAssessorOption()?.label ?? ''"
+                        />
+                    }
+                </div>
+                @if (instance()?.gradeEditedBy; as gradeEditedBy) {
+                    <small
+                        class="text-muted-color italic"
+                        data-testid="presentation-instance-grade-edited-by"
+                        jhiTranslate="artemisApp.presentationAssessment.gradeEditedBy"
+                        [translateValues]="{ name: gradeEditedBy.name || gradeEditedBy.login }"
+                    ></small>
+                }
+                @if (canChooseAssessor() && (editForm.hasError('assessorRequired') || editForm.hasError('assessorNotSelected')) && editForm.controls.assessorOption.touched) {
+                    <tumaet-ui-message severity="error" data-testid="presentation-instance-assessor-missing">
+                        <span jhiTranslate="artemisApp.presentationAssessment.validation.assessorRequired"></span>
+                    </tumaet-ui-message>
+                }
+            </div>
+        }
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-language" jhiTranslate="artemisApp.presentationAssessment.language"></label>
             <tumaet-ui-select inputId="presentation-instance-language" [options]="languageOptions()" optionLabel="label" optionValue="value" formControlName="language" />

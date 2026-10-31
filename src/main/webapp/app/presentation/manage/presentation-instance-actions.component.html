@@ -1,12 +1,14 @@
 <div class="flex justify-end gap-2">
-    <tumaet-ui-button
-        size="small"
-        variant="text"
-        [icon]="faPencilAlt"
-        [ariaLabel]="'entity.action.edit' | artemisTranslate"
-        (clicked)="editRequested.emit()"
-        data-testid="edit-instance-button"
-    />
+    @if (canEdit()) {
+        <tumaet-ui-button
+            size="small"
+            variant="text"
+            [icon]="faPencilAlt"
+            [ariaLabel]="'entity.action.edit' | artemisTranslate"
+            (clicked)="editRequested.emit()"
+            data-testid="edit-instance-button"
+        />
+    }
     @if (canDelete()) {
         <tumaet-ui-button
             size="small"

@@ -124,6 +124,40 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
                 .as("the deleted individual grade no longer prevents lowering the maximum points").isEqualTo(4.0);
     }
 
+    @Test
+    void presentationAssessorCleanupDetachesTheAssessorAndKeepsTheGrade() {
+        Long instanceId = transactionTemplate.execute(status -> {
+            long assessmentId = insert("presentation_assessment", values("title", "Presentation assessor cleanup", "max_points", 10, "course_id", course.getId()));
+            Timestamp presentationDate = Timestamp.from(Instant.parse("2026-01-15T12:00:00Z"));
+            return insert("presentation_assessment_instance", values("presentation_assessment_id", assessmentId, "student_id", bystander.getId(), "assessor_id", target.getId(),
+                    "presentation_date", presentationDate, "language", "en", "presentation_mode", "IN_PERSON", "result_points", 7));
+        });
+
+        userReferenceCleanupService.resolve(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_ASSESSOR, target.getId());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT assessor_id FROM presentation_assessment_instance WHERE id = ?", Long.class, instanceId)).isNull();
+        assertThat(jdbcTemplate.queryForObject("SELECT result_points FROM presentation_assessment_instance WHERE id = ?", Double.class, instanceId)).isEqualTo(7.0);
+        assertThat(jdbcTemplate.queryForObject("SELECT student_id FROM presentation_assessment_instance WHERE id = ?", Long.class, instanceId)).isEqualTo(bystander.getId());
+        assertThat(userReferenceCleanupService.count(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_ASSESSOR, List.of(target.getId()))).isEmpty();
+    }
+
+    @Test
+    void presentationGraderCleanupDetachesTheGraderAndKeepsTheGrade() {
+        Long instanceId = transactionTemplate.execute(status -> {
+            long assessmentId = insert("presentation_assessment", values("title", "Presentation grader cleanup", "max_points", 10, "course_id", course.getId()));
+            Timestamp presentationDate = Timestamp.from(Instant.parse("2026-01-15T12:00:00Z"));
+            return insert("presentation_assessment_instance", values("presentation_assessment_id", assessmentId, "student_id", bystander.getId(), "graded_by_id", target.getId(),
+                    "presentation_date", presentationDate, "language", "en", "presentation_mode", "IN_PERSON", "result_points", 7));
+        });
+
+        userReferenceCleanupService.resolve(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_GRADER, target.getId());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT graded_by_id FROM presentation_assessment_instance WHERE id = ?", Long.class, instanceId)).isNull();
+        assertThat(jdbcTemplate.queryForObject("SELECT result_points FROM presentation_assessment_instance WHERE id = ?", Double.class, instanceId)).isEqualTo(7.0);
+        assertThat(jdbcTemplate.queryForObject("SELECT student_id FROM presentation_assessment_instance WHERE id = ?", Long.class, instanceId)).isEqualTo(bystander.getId());
+        assertThat(userReferenceCleanupService.count(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_GRADER, List.of(target.getId()))).isEmpty();
+    }
+
     private Map<UserDeletionReferencePolicy, Long> counts(User user) {
         Map<UserDeletionReferencePolicy, Long> counts = new LinkedHashMap<>();
         for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
@@ -162,6 +196,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         long courseNotificationId = insert("course_notification", values("course_id", courseId, "type", 1, "creation_date", now, "deletion_date", now));
         long threadId = insert("review_comment_thread", values("exercise_id", exerciseId, "initial_line_number", 1, "target_type", "FILE"));
         long presentationAssessmentId = insert("presentation_assessment", values("title", "Presentation", "max_points", 10, "course_id", courseId));
+        long gradedPresentationAssessmentId = insert("presentation_assessment", values("title", "Graded presentation", "max_points", 10, "course_id", courseId));
         insertInto("presentation_assessment_instance",
                 values("presentation_assessment_id", presentationAssessmentId, "student_id", userId, "presentation_date", now, "language", "en", "presentation_mode", "IN_PERSON"));
 
@@ -214,6 +249,10 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.COMPLAINT_STUDENT, userId, values("result_id", resultId, "complaint_type", "COMPLAINT", "exercise_id", exerciseId));
         seed(UserDeletionReferencePolicy.COMPLAINT_REVIEWER, userId, values("complaint_id", complaintId));
         seed(UserDeletionReferencePolicy.TUTOR_PARTICIPATION, userId, values("assessed_exercise_id", exerciseId));
+        seed(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_ASSESSOR, userId, values("presentation_assessment_id", presentationAssessmentId, "student_id", bystander.getId(),
+                "presentation_date", now, "language", "en", "presentation_mode", "IN_PERSON"));
+        seed(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_GRADER, userId, values("presentation_assessment_id", gradedPresentationAssessmentId, "student_id",
+                bystander.getId(), "presentation_date", now, "language", "en", "presentation_mode", "IN_PERSON"));
         seed(UserDeletionReferencePolicy.SUBMISSION_VERSION_AUTHOR, userId, values("submission_id", submissionId));
         seed(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR, userId,
                 values("exercise_id", exerciseId, "exercise_snapshot", new Json("{}"), "created_by", "test", "created_date", now));

@@ -27,6 +27,7 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
             rowKey: '10:student1',
             displayName: 'Student One',
             assessed: true,
+            editable: true,
             ...overrides,
         };
     }
@@ -56,7 +57,19 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         expect(element().querySelectorAll('tbody tr')).toHaveLength(2);
 
         render([]);
-        expect(query('tbody td[colspan="6"]')?.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.noMatchingStudents');
+        expect(query('tbody td[colspan="7"]')?.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.noMatchingStudents');
+    });
+
+    it('should show the assessor name and login and a dash without one', () => {
+        render([
+            createRow({ instance: { id: 10, resultPoints: 12, assessor: { login: 'tutor1', name: 'Tutor One' } } }),
+            createRow({ studentLogin: 'student2', rowKey: '11:student2', instance: { id: 11 } }),
+        ]);
+
+        const [assessed, unassessed] = Array.from(element().querySelectorAll<HTMLElement>('[data-testid="instance-assessor"]'));
+        expect(assessed.querySelector('span')?.textContent?.trim()).toBe('Tutor One');
+        expect(assessed.querySelector('small')?.textContent?.trim()).toBe('tutor1');
+        expect(unassessed.textContent?.trim()).toBe('-');
     });
 
     it('should show the result points against the maximum only for assessed rows', () => {
@@ -73,6 +86,12 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
 
         render([createRow()], true);
         expect(query('[data-testid="delete-instance-button"]')).not.toBeNull();
+    });
+
+    it('should hide the edit button of rows that may not be edited', () => {
+        render([createRow({ editable: false })]);
+
+        expect(query('[data-testid="edit-instance-button"]')).toBeNull();
     });
 
     it('should emit the instance when edit is clicked', () => {

@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceReque
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.assessment.service.PresentationAssessmentService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -118,6 +119,19 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<PresentationAssessmentStatisticsDTO> getPresentationAssessmentStatistics(@PathVariable long courseId) {
         return ResponseEntity.ok(presentationAssessmentService.getStatistics(courseId));
+    }
+
+    /**
+     * Searches the course staff that can be chosen as the assessor of a presentation by login or full name.
+     *
+     * @param courseId   the course id
+     * @param searchTerm the search term, at least three characters long
+     * @return the name and login of the matching tutors, editors and instructors, at most 25
+     */
+    @GetMapping("courses/{courseId}/presentation-assessments/assessors")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<UserNameAndLoginDTO>> searchPresentationAssessors(@PathVariable long courseId, @RequestParam String searchTerm) {
+        return ResponseEntity.ok(presentationAssessmentService.searchAssessorOptions(courseId, searchTerm));
     }
 
     /**

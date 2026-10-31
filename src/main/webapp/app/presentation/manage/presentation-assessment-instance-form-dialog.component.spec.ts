@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { MockComponent } from 'ng-mocks';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
@@ -11,26 +13,38 @@ import {
     PresentationAssessmentInstanceFormResult,
 } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import { User } from 'app/account/user/user.model';
+import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
+import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
     let component: PresentationAssessmentInstanceFormDialogComponent;
     let saved: Mock<(value: PresentationAssessmentInstanceFormResult) => void>;
     let translateService: MockTranslateService;
+    let searchAssessors: ReturnType<typeof vi.fn>;
 
     const presentationDate = dayjs('2026-07-31T13:26:00');
 
     beforeEach(async () => {
         saved = vi.fn();
         translateService = new MockTranslateService();
+        searchAssessors = vi.fn().mockReturnValue(of(new HttpResponse<UserNameAndLoginDTO[]>({ body: [] })));
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentInstanceFormDialogComponent],
-            providers: [{ provide: TranslateService, useValue: translateService }],
+            providers: [
+                { provide: TranslateService, useValue: translateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: PresentationAssessmentService, useValue: { searchAssessors } },
+                { provide: AlertService, useValue: { error: vi.fn() } },
+            ],
         })
             // The presenter selector searches students on the server and is tested on its own.
             .overrideComponent(PresentationAssessmentInstanceFormDialogComponent, {
@@ -39,6 +53,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
             })
             .compileComponents();
 
+        TestBed.inject(AccountService).userIdentity.set(Object.assign(new User(), { login: 'tutor1', name: 'Tutor One' }));
         fixture = TestBed.createComponent(PresentationAssessmentInstanceFormDialogComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', 1);
@@ -51,6 +66,12 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
     function query(selector: string): HTMLElement | null {
         return fixture.nativeElement.querySelector(selector);
+    }
+
+    /** The assessor field only exists once result points are entered. */
+    function grade(): void {
+        component.editForm.controls.resultPoints.setValue(10);
+        fixture.detectChanges();
     }
 
     it('should split an existing presentation timestamp into date and time controls', () => {
@@ -184,6 +205,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
             kind: 'create',
             request: expect.objectContaining({
                 studentLogins: ['student1', 'student2'],
+                assessorLogin: 'tutor1',
                 resultPoints: 8,
                 language: 'en',
                 mode: PresentationAssessmentMode.IN_PERSON,
@@ -203,8 +225,201 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
                 id: 11,
                 studentLogin: 'student1',
                 resultPoints: 9,
+                assessorLogin: 'tutor1',
             }),
         });
+    });
+
+    it('should prefill the current user as assessor and show it disabled for tutors', () => {
+        grade();
+        const assessorField = query('[data-testid="presentation-instance-assessor"]') as HTMLInputElement;
+
+        expect(assessorField.disabled).toBe(true);
+        expect(assessorField.value).toBe('Tutor One (tutor1)');
+        expect(query('[data-testid="presentation-instance-assessor-search"]')).toBeNull();
+    });
+
+    it('should show the initials of the assessor only while one is set', () => {
+        grade();
+        expect(query('#presentation-instance-assessor-default-picture')?.textContent?.trim()).toBe('TO');
+
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        component.editForm.controls.assessorOption.setValue(undefined);
+        fixture.detectChanges();
+
+        expect(query('#presentation-instance-assessor-default-picture')).toBeNull();
+    });
+
+    it('should name who edited the grade of the opened presentation', () => {
+        const instance = { id: 11, presentationDate, resultPoints: 10, student: { login: 'student1' }, assessor: { login: 'tutor1', name: 'Tutor One' } };
+        fixture.componentRef.setInput('instance', instance);
+        fixture.detectChanges();
+        expect(query('[data-testid="presentation-instance-grade-edited-by"]')).toBeNull();
+
+        fixture.componentRef.setInput('instance', { ...instance, gradeEditedBy: { login: 'instructor1', name: 'Instructor One' } });
+        fixture.detectChanges();
+
+        const note = fixture.debugElement.query(By.css('[data-testid="presentation-instance-grade-edited-by"]'));
+        expect(note.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.gradeEditedBy');
+        expect(note.injector.get(TranslateDirective).translateValues()).toEqual({ name: 'Instructor One' });
+    });
+
+    it('should keep the existing assessor of an instance', () => {
+        fixture.componentRef.setInput('instance', {
+            id: 11,
+            presentationDate,
+            resultPoints: 10,
+            student: { login: 'student1' },
+            assessor: { login: 'editor1', name: 'Editor One' },
+        });
+        fixture.detectChanges();
+
+        expect((query('[data-testid="presentation-instance-assessor"]') as HTMLInputElement).value).toBe('Editor One (editor1)');
+
+        component.save();
+
+        expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: 'editor1' }) });
+    });
+
+    it('should offer the assessor search to editors and instructors', () => {
+        grade();
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+
+        expect(query('[data-testid="presentation-instance-assessor-search"]')).not.toBeNull();
+        expect(query('[data-testid="presentation-instance-assessor"]')).toBeNull();
+    });
+
+    it('should not search for assessors with terms shorter than three characters', async () => {
+        const result = await firstValueFrom(component.searchAssessors(of('  ab  ')));
+
+        expect(result).toEqual([]);
+        expect(searchAssessors).not.toHaveBeenCalled();
+    });
+
+    it('should report a failed assessor search instead of showing no assessors', async () => {
+        searchAssessors.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        const result = await firstValueFrom(component.searchAssessors(of('grace')));
+
+        expect(result).toEqual([]);
+        expect(TestBed.inject(AlertService).error).toHaveBeenCalledExactlyOnceWith('artemisApp.presentationAssessment.assessorSearchFailed');
+    });
+
+    it('should provide assessor suggestions with name and login', async () => {
+        grade();
+        const assessor: UserNameAndLoginDTO = { login: 'ghopper', name: 'Grace Hopper' };
+        searchAssessors.mockReturnValue(of(new HttpResponse<UserNameAndLoginDTO[]>({ body: [assessor] })));
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+
+        const autocomplete = fixture.debugElement.query(By.directive(TumAetUiAutoCompleteComponent)).componentInstance as TumAetUiAutoCompleteComponent;
+
+        autocomplete.searchRequested.emit({ query: 'grace' });
+
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(autocomplete.suggestions()).toEqual([{ assessor, label: 'Grace Hopper (ghopper)' }]);
+        });
+
+        expect(searchAssessors).toHaveBeenCalledWith(1, 'grace');
+    });
+
+    it('should send the chosen assessor', () => {
+        grade();
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+        component.editForm.controls.assessorOption.setValue({ assessor: { login: 'editor1', name: 'Editor One' }, label: 'Editor One (editor1)' });
+
+        component.save();
+
+        expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: 'editor1' }) });
+    });
+
+    it('should not save while typed assessor text has not been selected from the list', () => {
+        grade();
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+        const input = query('#presentation-instance-assessor') as HTMLInputElement;
+
+        input.value = 'gra';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.editForm.hasError('assessorNotSelected')).toBe(true);
+        expect(query('#presentation-instance-assessor-default-picture')).toBeNull();
+
+        component.save();
+        fixture.detectChanges();
+
+        expect(saved).not.toHaveBeenCalled();
+        expect(query('[data-testid="presentation-instance-assessor-missing"]')).not.toBeNull();
+    });
+
+    it('should save once an assessor is selected after typing', () => {
+        grade();
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+        const input = query('#presentation-instance-assessor') as HTMLInputElement;
+        input.value = 'edi';
+        input.dispatchEvent(new Event('input'));
+
+        component.editForm.controls.assessorOption.setValue({ assessor: { login: 'editor1', name: 'Editor One' }, label: 'Editor One (editor1)' });
+        component.save();
+
+        expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: 'editor1' }) });
+    });
+
+    it('should save without an assessor once the result points of typed assessor text are removed', () => {
+        grade();
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+        const input = query('#presentation-instance-assessor') as HTMLInputElement;
+        input.value = 'gra';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        component.editForm.controls.resultPoints.setValue(undefined);
+        fixture.detectChanges();
+
+        expect(component.editForm.valid).toBe(true);
+        component.save();
+        expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: undefined }) });
+    });
+
+    it('should hide the assessor and send none while no result points are entered', () => {
+        expect(query('#presentation-instance-assessor')).toBeNull();
+
+        component.save();
+
+        expect(saved).toHaveBeenCalledExactlyOnceWith({ kind: 'update', instance: expect.objectContaining({ assessorLogin: undefined }) });
+    });
+
+    it('should require an assessor once result points are entered', () => {
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        component.editForm.controls.assessorOption.setValue(undefined);
+        grade();
+
+        expect(component.editForm.hasError('assessorRequired')).toBe(true);
+
+        component.save();
+        fixture.detectChanges();
+
+        expect(saved).not.toHaveBeenCalled();
+        expect(query('[data-testid="presentation-instance-assessor-missing"]')).not.toBeNull();
+    });
+
+    it('should not save without an assessor and ask for one', () => {
+        grade();
+        fixture.componentRef.setInput('canChooseAssessor', true);
+        fixture.detectChanges();
+        component.editForm.controls.assessorOption.setValue(undefined);
+
+        component.save();
+        fixture.detectChanges();
+
+        expect(saved).not.toHaveBeenCalled();
+        expect(query('[data-testid="presentation-instance-assessor-missing"]')).not.toBeNull();
     });
 
     it('should retain a valid meeting link when switching away from online mode', () => {

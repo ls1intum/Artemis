@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        The assessor is the course staff member responsible for grading the presentation. Instances graded before this change have no known assessor, and
+        deleting the assessor's account detaches them, so the column stays nullable.
+    -->
+    <changeSet id="20261027133812-01-add-presentation-instance-assessor" author="suckart">
+        <addColumn tableName="presentation_assessment_instance">
+            <column name="assessor_id" type="bigint"/>
+        </addColumn>
+
+        <addForeignKeyConstraint baseColumnNames="assessor_id"
+                                 baseTableName="presentation_assessment_instance"
+                                 constraintName="fk_presentation_instance_assessor_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+
+        <createIndex indexName="idx_presentation_instance_assessor_id"
+                     tableName="presentation_assessment_instance">
+            <column name="assessor_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!--
+        The person who last changed the result points. It differs from the assessor when an instructor edits the grade of a tutor or assigns another assessor,
+        and the client then shows who edited the grade. Instances graded before this change and accounts deleted later leave it empty.
+    -->
+    <changeSet id="20261027133812-02-add-presentation-instance-graded-by" author="suckart">
+        <addColumn tableName="presentation_assessment_instance">
+            <column name="graded_by_id" type="bigint"/>
+        </addColumn>
+
+        <addForeignKeyConstraint baseColumnNames="graded_by_id"
+                                 baseTableName="presentation_assessment_instance"
+                                 constraintName="fk_presentation_instance_graded_by_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+
+        <createIndex indexName="idx_presentation_instance_graded_by_id"
+                     tableName="presentation_assessment_instance">
+            <column name="graded_by_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

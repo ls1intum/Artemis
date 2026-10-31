@@ -35,6 +35,7 @@ import {
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -76,7 +77,12 @@ function studentDisplayName(row: PresentationStudentRow): string {
     return row.student.name || fullName || row.studentLogin;
 }
 
-function decorateStudentRow(row: PresentationStudentRow): PresentationStudentTableRow {
+/** Mirrors the server: instructors edit every row, tutors and editors only rows they assess or that nobody assessed yet. */
+function canEditStudentRow(row: PresentationStudentRow, isAtLeastInstructor: boolean, currentUserLogin: string | undefined): boolean {
+    return isAtLeastInstructor || !row.instance.assessor || row.instance.assessor.login === currentUserLogin;
+}
+
+function decorateStudentRow(row: PresentationStudentRow, isAtLeastInstructor: boolean, currentUserLogin: string | undefined): PresentationStudentTableRow {
     return {
         studentLogin: row.studentLogin,
         student: row.student,
@@ -85,6 +91,7 @@ function decorateStudentRow(row: PresentationStudentRow): PresentationStudentTab
         rowKey: studentRowKey(row),
         displayName: studentDisplayName(row),
         assessed: hasResultPoints(row.instance.resultPoints),
+        editable: canEditStudentRow(row, isAtLeastInstructor, currentUserLogin),
     };
 }
 
@@ -128,6 +135,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly exerciseService = inject(ExerciseService);
     private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly accountService = inject(AccountService);
     private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
     private readonly routeSelection = toSignal(
         this.route.paramMap.pipe(
@@ -259,7 +267,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             ];
         }),
     );
-    readonly studentRows = computed(() => this.currentPageStudentRows().map(decorateStudentRow));
+    readonly studentRows = computed(() => {
+        const isAtLeastInstructor = this.isAtLeastInstructor();
+        const currentUserLogin = this.accountService.userIdentity()?.login;
+        return this.currentPageStudentRows().map((row) => decorateStudentRow(row, isAtLeastInstructor, currentUserLogin));
+    });
     readonly assessedStudentCount = computed(() => this.statistics()?.assessedCount);
     readonly pendingStudentCount = computed(() => {
         const statistics = this.statistics();

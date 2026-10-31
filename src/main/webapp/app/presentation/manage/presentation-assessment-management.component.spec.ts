@@ -36,6 +36,9 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateService } from '@ngx-translate/core';
+import { User } from 'app/account/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('PresentationAssessmentManagementComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentManagementComponent>;
@@ -120,6 +123,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 provideArtemisTumAetUiTranslator(),
                 { provide: TranslateService, useValue: translateService },
                 { provide: DialogService, useValue: dialogService },
+                { provide: AccountService, useClass: MockAccountService },
                 {
                     provide: ExerciseService,
                     useValue: { getTitlesForCourseForStaff: vi.fn().mockReturnValue(of([])) },
@@ -150,6 +154,7 @@ describe('PresentationAssessmentManagementComponent', () => {
             })
             .compileComponents();
 
+        TestBed.inject(AccountService).userIdentity.set(Object.assign(new User(), { login: 'tutor1' }));
         navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
         fixture = TestBed.createComponent(PresentationAssessmentManagementComponent);
         component = fixture.componentInstance;
@@ -352,6 +357,32 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ searchTerm: 'STUDENT2', page: 0 }));
         expect(component.currentPageStudentRows().map((row) => row.studentLogin)).toEqual(['student2']);
         expect(component.totalStudentRows()).toBe(1);
+    });
+
+    it.each([
+        { role: 'tutor', login: 'tutor1', isAtLeastEditor: false, isAtLeastInstructor: false, editable: [true, true, false] },
+        { role: 'editor', login: 'editor1', isAtLeastEditor: true, isAtLeastInstructor: false, editable: [true, false, true] },
+        { role: 'instructor', login: 'instructor1', isAtLeastEditor: true, isAtLeastInstructor: true, editable: [true, true, true] },
+    ])('should let a $role edit the matching rows', async ({ login, isAtLeastEditor, isAtLeastInstructor, editable }) => {
+        TestBed.inject(AccountService).userIdentity.set(Object.assign(new User(), { login }));
+        presentationAssessmentService.findStudentRows.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [
+                        { presentationAssessment, instance: { id: 11, presentationDate, student: { login: 'student1' } } },
+                        { presentationAssessment, instance: { id: 12, presentationDate, student: { login: 'student2' }, assessor: { login: 'tutor1', name: 'Tutor One' } } },
+                        { presentationAssessment, instance: { id: 13, presentationDate, student: { login: 'student3' }, assessor: { login: 'editor1', name: 'Editor One' } } },
+                    ],
+                    headers: new HttpHeaders({ 'X-Total-Count': '3' }),
+                }),
+            ),
+        );
+        component.course.set({ ...course, isAtLeastEditor, isAtLeastInstructor } as Course);
+        component.retryLoading();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.studentRows().map((row) => row.editable)).toEqual(editable);
     });
 
     it('should only consider an assigned numeric score as assessed', async () => {
@@ -684,6 +715,7 @@ describe('PresentationAssessmentManagementComponent', () => {
             studentLogins: ['student1', 'student2'],
             language: 'en',
             mode: PresentationAssessmentMode.IN_PERSON,
+            assessorLogin: 'tutor1',
         };
         component.handleInstanceDialogSave({ kind: 'create', request });
 
@@ -702,6 +734,7 @@ describe('PresentationAssessmentManagementComponent', () => {
             studentLogin: 'student1',
             language: 'en',
             mode: PresentationAssessmentMode.IN_PERSON,
+            assessorLogin: 'tutor1',
         };
         presentationAssessmentService.updateInstance.mockReturnValue(of(new HttpResponse({ body: updatedInstance })));
         component.startEditInstance(presentationAssessment, instance);
@@ -934,7 +967,7 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         component.handleInstanceDialogSave({
             kind: 'create',
-            request: { presentationDate, resultPoints: 10, studentLogins: ['student1'], language: 'en', mode: PresentationAssessmentMode.IN_PERSON },
+            request: { presentationDate, resultPoints: 10, studentLogins: ['student1'], language: 'en', mode: PresentationAssessmentMode.IN_PERSON, assessorLogin: 'tutor1' },
         });
 
         expect(alertService.addAlert).toHaveBeenCalledTimes(expectedAlerts);
@@ -966,6 +999,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 studentLogins: ['student1'],
                 language: 'en',
                 mode: PresentationAssessmentMode.IN_PERSON,
+                assessorLogin: 'tutor1',
             },
         });
 
@@ -996,6 +1030,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                           studentLogins: ['student1'],
                           language: 'en',
                           mode: PresentationAssessmentMode.IN_PERSON,
+                          assessorLogin: 'tutor1',
                       },
                   }
                 : {
@@ -1007,6 +1042,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                           studentLogin: 'student1',
                           language: 'en',
                           mode: PresentationAssessmentMode.IN_PERSON,
+                          assessorLogin: 'tutor1',
                       },
                   };
 
@@ -1065,6 +1101,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 studentLogins: ['student1'],
                 language: 'en',
                 mode: PresentationAssessmentMode.IN_PERSON,
+                assessorLogin: 'tutor1',
             },
         });
 

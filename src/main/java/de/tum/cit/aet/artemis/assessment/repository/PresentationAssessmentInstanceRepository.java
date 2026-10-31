@@ -37,14 +37,14 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
 
     /**
      * Finds an instance within the given presentation assessment and course.
-     * Fetches the student so its identity information remains available for DTO mapping.
+     * Fetches the student, the assessor and the person who last changed the grade so their identity information remains available for DTO mapping.
      *
      * @param id           the instance id
      * @param assessmentId the presentation assessment id
      * @param courseId     the owning course id
      * @return the matching instance, or empty if it does not belong to the specified presentation and course
      */
-    @EntityGraph(attributePaths = { "student" })
+    @EntityGraph(attributePaths = { "student", "assessor", "gradedBy" })
     Optional<PresentationAssessmentInstance> findByIdAndPresentationAssessmentIdAndPresentationAssessmentCourseId(long id, long assessmentId, long courseId);
 
     /**
@@ -80,7 +80,7 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
     }
 
     /**
-     * Loads presentation, instance, and student data for the given instance IDs.
+     * Loads presentation, instance, student, assessor and grader data for the given instance IDs.
      * The returned rows have no guaranteed order.
      *
      * @param instanceIds the instance IDs to load
@@ -92,10 +92,14 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
                 assessment.course.id, exercise.id, exercise.title,
                 instance.id, instance.presentationDate, instance.resultPoints,
                 instance.language, instance.mode, instance.location, instance.meetingLink, instance.remark,
-                student.login, student.firstName, student.lastName, student.email)
+                student.login, student.firstName, student.lastName, student.email,
+                assessor.login, assessor.firstName, assessor.lastName,
+                grader.login, grader.firstName, grader.lastName)
             FROM PresentationAssessmentInstance instance
             JOIN instance.presentationAssessment assessment
             JOIN instance.student student
+            LEFT JOIN instance.assessor assessor
+            LEFT JOIN instance.gradedBy grader
             LEFT JOIN assessment.exercise exercise
             WHERE instance.id IN :instanceIds
             """)
