@@ -114,7 +114,7 @@ public class ModelingSubmission extends Submission {
                     return true;
                 }
                 Boolean elementsEmpty = null;
-                Boolean nodesEmpty = null;
+                boolean nodesEmpty = true;
                 while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
                     String property = parser.currentName();
                     JsonToken valueToken = parser.nextToken();
@@ -130,13 +130,8 @@ public class ModelingSubmission extends Submission {
                     }
                 }
 
-                // Check for v3 (elements)
-                if (elementsEmpty != null) {
-                    return elementsEmpty;
-                }
-
-                // Check for v4 (nodes)
-                return nodesEmpty == null || nodesEmpty;
+                // Check for v3 (elements), then for v4 (nodes)
+                return elementsEmpty != null ? elementsEmpty : nodesEmpty;
             }
         }
         catch (JacksonException ex) {
@@ -158,23 +153,14 @@ public class ModelingSubmission extends Submission {
             return true;
         }
         JsonToken token = parser.nextToken();
-        if (token.isStructEnd()) {
-            return true;
-        }
-        // The value has members; read on to the end of the value, which is the closing token that brings the nesting depth back to zero.
-        int depth = 1;
-        while (token != null) {
+        boolean empty = token.isStructEnd();
+        // Read on to the closing token of the value: a nested value is skipped as a whole, so the first closing token that is seen at this level is the one of the value.
+        while (!token.isStructEnd()) {
             if (token.isStructStart()) {
-                depth++;
-            }
-            else if (token.isStructEnd()) {
-                depth--;
-                if (depth == 0) {
-                    break;
-                }
+                parser.skipChildren();
             }
             token = parser.nextToken();
         }
-        return false;
+        return empty;
     }
 }
