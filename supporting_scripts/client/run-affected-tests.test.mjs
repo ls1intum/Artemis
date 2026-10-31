@@ -1,0 +1,689 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, test } from 'node:test';
+import { executePlan, planTests, prepareRelatedProject, readChanges, runRelatedProject } from './run-affected-tests.mjs';
+
+const directories = [];
+const app = 'src/main/webapp/app';
+const component = `${app}/lecture/widget/widget.component.ts`;
+const template = `${app}/lecture/widget/widget.component.html`;
+const stylesheet = `${app}/lecture/widget/widget.component.scss`;
+const change = (file, status = 'M') => ({ status, paths: [file] });
+
+function fixture(files = {}) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'artemis-affected-client-'));
+    directories.push(root);
+    for (const [file, contents] of Object.entries(files)) {
+        fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+        fs.writeFileSync(path.join(root, file), contents);
+    }
+    return { root, files: Object.keys(files) };
+}
+
+afterEach(() => {
+    for (const directory of directories.splice(0)) fs.rmSync(directory, { recursive: true, force: true });
+});
+
+test('selects changed application TypeScript as graph seeds rather than just nearby specs', async () => {
+    const context = fixture({ [component]: 'export const answer = 42;' });
+    const plan = await planTests({ ...context, changes: [change(component)] });
+    assert.equal(plan.mode, 'affected');
+    assert.deepEqual(plan.sources, [component]);
+});
+
+for (const file of [
+    `${app}/shared/components/widget/widget.component.ts`,
+    `${app}/shared-ui/widget/widget.component.ts`,
+    `${app}/foundation/service/locale-conversion.service.ts`,
+    `${app}/foundation/util/base64.util.ts`,
+]) {
+    test(`uses the import graph for shared leaf changes: ${file}`, async () => {
+        const plan = await planTests({ ...fixture({ [file]: 'export const answer = 42;' }), changes: [change(file)] });
+        assert.equal(plan.mode, 'affected');
+        assert.deepEqual(plan.sources, [file]);
+    });
+}
+
+test('expands shared component templates and styles to the source rather than the entire shared module', async () => {
+    const source = `${app}/shared-ui/widget/widget.component.ts`;
+    const html = `${app}/shared-ui/widget/widget.component.html`;
+    const css = `${app}/shared-ui/widget/widget.component.scss`;
+    const context = fixture({
+        [source]: "@Component({ templateUrl: './widget.component.html', styleUrl: './widget.component.scss' }) class Widget {}",
+        [html]: '<span>changed</span>',
+        [css]: ':host { display: block; }',
+    });
+    const plan = await planTests({ ...context, changes: [change(html), change(css)] });
+    assert.equal(plan.mode, 'affected');
+    assert.deepEqual(plan.sources, [source]);
+});
+
+test('a global change still forces full validation alongside an otherwise narrow shared fix', async () => {
+    const source = `${app}/foundation/util/base64.util.ts`;
+    const context = fixture({ [source]: 'export const answer = 42;' });
+    for (const global of [`${app}/app.config.ts`, `${app}/core/config/dayjs.ts`, 'config/client/tsconfig.spec.json']) {
+        const plan = await planTests({ ...context, changes: [change(source), change(global)] });
+        assert.equal(plan.mode, 'full');
+    }
+});
+
+test('adds every template owner so Vitest can find indirect consumers and shared templates', async () => {
+    const another = `${app}/lecture/another.component.ts`;
+    const context = fixture({
+        [component]: "@Component({ templateUrl: './widget.component.html' }) class Widget {}",
+        [another]: "@Component({ templateUrl: './widget/widget.component.html' }) class Another {}",
+        [template]: '<span>changed</span>',
+    });
+    const plan = await planTests({ ...context, changes: [change(template)] });
+    assert.equal(plan.mode, 'affected');
+    assert.deepEqual(plan.sources, [another, component].sort());
+});
+
+test('follows Sass partials, forwards, root load paths and cycles to every component owner', async () => {
+    const partial = `${app}/lecture/styles/_colors.scss`;
+    const barrel = `${app}/lecture/styles/_index.scss`;
+    const context = fixture({
+        [component]: "@Component({ styleUrls: ['./widget.component.scss'] }) class Widget {}",
+        [stylesheet]: "@use '../styles';",
+        [partial]: "@use 'index'; $color: red;",
+        [barrel]: "@forward 'src/main/webapp/app/lecture/styles/colors';",
+    });
+    const plan = await planTests({ ...context, changes: [change(partial)] });
+    assert.equal(plan.mode, 'affected');
+    assert.deepEqual(plan.sources, [component]);
+});
+
+test('includes CSS imports and resources in test components', async () => {
+    const spec = `${app}/lecture/widget/widget.component.spec.ts`;
+    const css = `${app}/lecture/widget/widget.css`;
+    const context = fixture({
+        [spec]: "@Component({ styleUrl: './widget.css', templateUrl: './widget.component.html' }) class Host {}",
+        [component]: "import './widget.css?inline';",
+        [css]: '.widget { color: red; }',
+        [template]: '<span>host</span>',
+    });
+    const plan = await planTests({ ...context, changes: [change(css), change(template)] });
+    assert.equal(plan.mode, 'affected');
+    assert.deepEqual(plan.sources, [spec, component].sort());
+});
+
+test('recognizes aliased Angular Component imports when expanding template owners', async () => {
+    const context = fixture({
+        [component]: "import { Component as NgComponent } from '@angular/core'; @NgComponent({ templateUrl: './widget.component.html' }) class Widget {}",
+        [template]: '<span>changed</span>',
+    });
+    const plan = await planTests({ ...context, changes: [change(template)] });
+    assert.equal(plan.mode, 'affected');
+    assert.deepEqual(plan.sources, [component]);
+});
+
+test('includes resource consumers using the same root aliases as the Vitest configuration', async () => {
+    const aliasConsumer = `${app}/lecture/alias-consumer.ts`;
+    const context = fixture({
+        [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}",
+        [aliasConsumer]: "import '/src/main/webapp/app/lecture/widget/widget.component.scss?inline';",
+        [stylesheet]: ':host { display: block; }',
+    });
+    const plan = await planTests({ ...context, changes: [change(stylesheet)] });
+    assert.equal(plan.mode, 'affected');
+    assert.deepEqual(plan.sources, [aliasConsumer, component].sort());
+});
+
+for (const files of [
+    { [template]: '<p>orphan</p>' },
+    { [template]: '<p>dynamic</p>', [component]: '@Component({ templateUrl: getTemplate() }) class Widget {}' },
+    { [stylesheet]: '@use "#{theme}";', [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
+    { [stylesheet]: '@import $theme;', [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
+    { [stylesheet]: '@import url(other.css);', [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
+    { [stylesheet]: "@import './other.scss'", [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
+    { [stylesheet]: '@include meta.load-css($theme);', [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
+    { [template]: '<p>spread</p>', [component]: "@Component({ ...metadata, templateUrl: './widget.component.html' }) class Widget {}" },
+]) {
+    test(`falls back to the full suite when resource ownership is uncertain: ${Object.values(files)[0]}`, async () => {
+        const context = fixture(files);
+        const plan = await planTests({ ...context, changes: [change(Object.keys(files)[0])] });
+        assert.equal(plan.mode, 'full');
+        assert.match(plan.reason, /resource|Sass|metadata/i);
+    });
+}
+
+for (const file of [
+    'package.json',
+    'pnpm-lock.yaml',
+    'pnpm-workspace.yaml',
+    'tsconfig.json',
+    'angular.json',
+    '.npmrc',
+    'config/testing/vitest.monaco.config.ts',
+    'config/client/tsconfig.spec.json',
+    'config/pnpm/patches/dependency.patch',
+    'vitest.config.ts',
+    'vite.config.ts',
+    'packages/tum-aet-ui/src/button.ts',
+    'src/test/javascript/spec/vitest-test-setup.ts',
+    'src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts',
+    'src/test/vitest/test-utils.ts',
+    `${app}/core/config/dayjs.ts`,
+    `${app}/core/environments/environment.ts`,
+    `${app}/openapi/model.ts`,
+    `${app}/app.config.ts`,
+    'src/main/webapp/content/scss/_variables.scss',
+    'src/main/webapp/i18n/en/global.json',
+    `${app}/lecture/widget/unknown.wasm`,
+    'supporting_scripts/client/prebuild.mjs',
+]) {
+    test(`uses full validation for shared infrastructure or unsupported client input: ${file}`, async () => {
+        const plan = await planTests({ ...fixture(), changes: [change(file)] });
+        assert.equal(plan.mode, 'full');
+    });
+}
+
+for (const file of [
+    '.nvmrc',
+    '.node-version',
+    '.java-version',
+    '.tool-versions',
+    '.env',
+    'build.gradle',
+    'build.gradle.kts',
+    'gradle.properties',
+    'gradle/profile_dev.gradle',
+    'gradle/profile_prod.gradle',
+    'gradle/wrapper/gradle-wrapper.properties',
+    'settings.gradle',
+    'settings.gradle.kts',
+    'gradlew',
+    'gradlew.bat',
+    'buildSrc/src/main/kotlin/ClientConvention.kt',
+    'new-global-input.toml',
+    'new-tooling/client-transform.js',
+    'src/main/new-generated-input.json',
+    'src/test/playwright/new-test.spec.ts',
+    'src/main/java-client/future.ts',
+    'documentation-tools/transform.js',
+]) {
+    test(`global or unclassified inputs require the full client suite: ${file}`, async () => {
+        const plan = await planTests({ ...fixture(), changes: [change(file)] });
+        assert.equal(plan.mode, 'full');
+    });
+}
+
+for (const file of [
+    'README.md',
+    'LICENSE',
+    '.github/README.md',
+    'skills/new-procedure/SKILL.md',
+    'supporting_scripts/client/README.md',
+    'documentation/docs/example.mdx',
+    'src/main/java/Service.java',
+    'src/test/java/ServiceTest.java',
+    'src/main/resources/config/application.yml',
+    'src/test/resources/example.json',
+    'src/test/playwright/e2e/exercise/quiz-exercise/QuizExerciseParticipation.spec.ts',
+]) {
+    test(`explicit server or documentation inputs can skip client tests: ${file}`, async () => {
+        for (const status of ['M', 'D']) {
+            const plan = await planTests({ ...fixture(), changes: [change(file, status)] });
+            assert.equal(plan.mode, 'none');
+        }
+    });
+}
+
+test('deletions and renames use full validation, including renames across the client boundary', async () => {
+    for (const changes of [
+        [change(component, 'D')],
+        [{ status: 'R100', paths: [component, 'documentation/old-example.ts'] }],
+        [{ status: 'R100', paths: ['documentation/old-example.mdx', 'new-global-input.toml'] }],
+    ]) {
+        const plan = await planTests({ ...fixture(), changes });
+        assert.equal(plan.mode, 'full');
+    }
+});
+
+test('server and documentation changes need no client test process', async () => {
+    const plan = await planTests({
+        ...fixture(),
+        changes: [change('src/main/java/Service.java'), change('documentation/docs/example.mdx', 'D')],
+    });
+    assert.equal(plan.mode, 'none');
+});
+
+test('safe server and documentation changes preserve affected client selection in a mixed pull request', async () => {
+    const plan = await planTests({
+        ...fixture({ [component]: 'export const answer = 42;' }),
+        changes: [
+            change('src/main/java/Service.java'),
+            change('documentation/docs/example.mdx'),
+            change('README.md'),
+            change('src/test/playwright/e2e/course/Course.spec.ts'),
+            change(component),
+        ],
+    });
+    assert.equal(plan.mode, 'affected');
+    assert.deepEqual(plan.sources, [component]);
+});
+
+test('both ordinary and real Monaco integration specs can be selected directly', async () => {
+    const normal = 'src/test/javascript/spec/integration/code-editor/editor.spec.ts';
+    const monaco = 'src/test/javascript/spec/integration/monaco-editor/editor.spec.ts';
+    const plan = await planTests({ ...fixture(), changes: [change(normal, 'A'), change(monaco)] });
+    assert.equal(plan.mode, 'affected');
+    assert.deepEqual(plan.sources, [normal, monaco]);
+});
+
+function git(root, args) {
+    return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe' }).trim();
+}
+
+test('uses the merge base of the fetched ref and handles spaces and rename records without splitting paths', () => {
+    const file = `${app}/lecture/with space.ts`;
+    const renamed = `${app}/lecture/renamed file.ts`;
+    const context = fixture({ [file]: 'export const answer = 42;\n' });
+    git(context.root, ['init', '--initial-branch=develop']);
+    git(context.root, ['config', 'user.name', 'Affected Tests']);
+    git(context.root, ['config', 'user.email', 'test@example.com']);
+    git(context.root, ['add', '.']);
+    git(context.root, ['commit', '-m', 'Base']);
+    git(context.root, ['checkout', '-b', 'pr']);
+    git(context.root, ['mv', file, renamed]);
+    git(context.root, ['commit', '-m', 'Move component']);
+    git(context.root, ['checkout', 'develop']);
+    fs.writeFileSync(path.join(context.root, 'README.md'), 'Unrelated base advance');
+    git(context.root, ['add', '.']);
+    git(context.root, ['commit', '-m', 'Advance base']);
+    git(context.root, ['checkout', 'pr']);
+
+    assert.deepEqual(readChanges(context.root, 'develop'), [{ status: 'R100', paths: [file, renamed] }]);
+    assert.throws(() => readChanges(context.root, 'not-fetched'), /not-fetched|revision|commit/i);
+});
+
+test('does not silently omit uncommitted or untracked client changes in local use', () => {
+    const context = fixture({ [component]: 'export const answer = 42;\n' });
+    git(context.root, ['init', '--initial-branch=develop']);
+    git(context.root, ['config', 'user.name', 'Affected Tests']);
+    git(context.root, ['config', 'user.email', 'test@example.com']);
+    git(context.root, ['add', '.']);
+    git(context.root, ['commit', '-m', 'Base']);
+    fs.writeFileSync(path.join(context.root, component), 'export const answer = 43;\n');
+    fs.writeFileSync(path.join(context.root, template), '<p>new</p>');
+    assert.deepEqual(readChanges(context.root, 'develop'), [change(component), change(template, 'A')]);
+});
+
+function executionContext(overrides = {}) {
+    const { root } = fixture();
+    const context = {
+        root,
+        commands: [],
+        projects: [],
+        runs: [],
+        closed: [],
+        messages: [],
+        outputFile: path.join(root, 'github-output'),
+        runCommand: async (args) => context.commands.push(args),
+        selection: async (options) => ({ selected: 1, relatedSources: options.sources, success: true }),
+        prepareRelatedProject: async (options) => {
+            context.projects.push(options);
+            const selection = await context.selection(options);
+            return {
+                ...selection,
+                run: async () => {
+                    context.runs.push(options.configFile);
+                    return { ...selection, success: selection.success ?? true };
+                },
+                close: async () => context.closed.push(options.configFile),
+            };
+        },
+        log: (message) => context.messages.push(message),
+        ...overrides,
+    };
+    return context;
+}
+
+test('full mode preserves the established suite and coverage contract without running selection', async () => {
+    const context = executionContext();
+    await executePlan({ mode: 'full', reason: 'forced' }, context);
+    assert.deepEqual(context.commands, [['run', 'test:ci']]);
+    assert.deepEqual(context.projects, []);
+    assert.equal(fs.readFileSync(context.outputFile, 'utf8'), 'mode=full\ncoverage=true\n');
+});
+
+test('affected mode prebuilds once, selects both projects, and produces no coverage', async () => {
+    const context = executionContext();
+    const sources = [component];
+    const result = await executePlan({ mode: 'affected', sources, reason: 'source change' }, context);
+    assert.equal(result, 0);
+    assert.deepEqual(context.commands, [['run', 'prebuild']]);
+    assert.deepEqual(
+        context.projects.map(({ configFile, sources: selectedSources }) => ({ configFile, sources: selectedSources })),
+        [
+            { configFile: 'vitest.config.ts', sources },
+            { configFile: 'config/testing/vitest.monaco.config.ts', sources },
+        ],
+    );
+    assert.equal(fs.readFileSync(context.outputFile, 'utf8'), 'mode=affected\ncoverage=false\n');
+});
+
+test('an explicitly prebuilt CI invocation reuses compile:tests setup in affected and full modes', async () => {
+    const affected = executionContext({ prebuilt: true });
+    assert.equal(await executePlan({ mode: 'affected', sources: [component] }, affected), 0);
+    assert.deepEqual(affected.commands, []);
+    const full = executionContext({ prebuilt: true });
+    assert.equal(await executePlan({ mode: 'full' }, full), 0);
+    assert.deepEqual(full.commands, [
+        ['run', 'vitest:ci'],
+        ['run', 'vitest:monaco'],
+    ]);
+    assert.equal(fs.readFileSync(full.outputFile, 'utf8'), 'mode=full\ncoverage=true\n');
+});
+
+test('one tested change must not hide another input without related specs', async () => {
+    const untested = `${app}/lecture/untested.service.ts`;
+    const context = executionContext({
+        selection: async () => ({ selected: 4, relatedSelected: 1, relatedSources: [component], success: true }),
+    });
+    assert.equal(await executePlan({ mode: 'affected', sources: [component, untested] }, context), 0);
+    assert.deepEqual(context.commands, [
+        ['run', 'prebuild'],
+        ['run', 'vitest:ci'],
+        ['run', 'vitest:monaco'],
+    ]);
+    assert.deepEqual(context.runs, [], 'full fallback must not first execute the selected subset');
+    assert.equal(context.closed.length, 2);
+    assert.match(context.messages.join('\n'), /No related specs.*untested\.service\.ts/);
+    assert.match(fs.readFileSync(context.outputFile, 'utf8'), /mode=full\ncoverage=true\n$/);
+});
+
+test('normal and Monaco projects can cover different changed inputs', async () => {
+    const monaco = 'src/test/javascript/spec/integration/monaco-editor/editor.spec.ts';
+    const context = executionContext({
+        selection: async ({ configFile }) => ({
+            selected: 1,
+            relatedSelected: 1,
+            relatedSources: [configFile.includes('monaco') ? monaco : component],
+            success: true,
+        }),
+    });
+    assert.equal(await executePlan({ mode: 'affected', sources: [component, monaco] }, context), 0);
+    assert.deepEqual(context.commands, [['run', 'prebuild']]);
+});
+
+test('no related specs and selection errors fall back to full validation with coverage outputs updated', async () => {
+    for (const selection of [async () => ({ selected: 0, success: true }), async () => ({ selectionError: new Error('graph could not resolve import') })]) {
+        const context = executionContext({ selection });
+        assert.equal(await executePlan({ mode: 'affected', sources: [component] }, context), 0);
+        assert.deepEqual(context.commands, [
+            ['run', 'prebuild'],
+            ['run', 'vitest:ci'],
+            ['run', 'vitest:monaco'],
+        ]);
+        assert.match(fs.readFileSync(context.outputFile, 'utf8'), /mode=full\ncoverage=true\n$/);
+    }
+});
+
+test('a second-project graph error runs only full validation and closes both prepared graphs first', async () => {
+    const context = executionContext({
+        selection: async ({ configFile, sources }) =>
+            configFile.includes('monaco') ? { selectionError: new Error('Monaco graph could not resolve import') } : { selected: 1, relatedSources: sources },
+    });
+    context.runCommand = async (args) => {
+        if (args[1] !== 'prebuild') assert.equal(context.closed.length, 2, 'close graph contexts before the full suite');
+        context.commands.push(args);
+    };
+    assert.equal(await executePlan({ mode: 'affected', sources: [component] }, context), 0);
+    assert.deepEqual(context.runs, [], 'normal selected tests must wait for Monaco discovery');
+    assert.deepEqual(context.commands, [
+        ['run', 'prebuild'],
+        ['run', 'vitest:ci'],
+        ['run', 'vitest:monaco'],
+    ]);
+    assert.match(context.messages.join('\n'), /Vitest graph selection failed: Monaco graph/);
+});
+
+test('a failed selected test fails the job without hiding the failure behind a full-suite retry', async () => {
+    const context = executionContext({ selection: async (options) => ({ selected: 1, relatedSources: options.sources, success: false }) });
+    assert.equal(await executePlan({ mode: 'affected', sources: [component] }, context), 1);
+    assert.deepEqual(context.commands, [['run', 'prebuild']]);
+    assert.doesNotMatch(fs.readFileSync(context.outputFile, 'utf8'), /coverage=true/);
+    assert.deepEqual(context.runs, ['vitest.config.ts']);
+    assert.deepEqual(context.closed, ['config/testing/vitest.monaco.config.ts', 'vitest.config.ts']);
+});
+
+test('an unaffected diff runs no prebuild and explicitly reports absent coverage', async () => {
+    const context = executionContext();
+    assert.equal(await executePlan({ mode: 'none', reason: 'no client changes' }, context), 0);
+    assert.deepEqual(context.commands, []);
+    assert.deepEqual(context.projects, []);
+    assert.equal(fs.readFileSync(context.outputFile, 'utf8'), 'mode=none\ncoverage=false\n');
+});
+
+test('selected mode removes stale full-suite coverage instead of leaving a misleading report', async () => {
+    const context = executionContext();
+    const coverage = path.join(context.root, 'build/test-results/vitest/coverage');
+    fs.mkdirSync(coverage, { recursive: true });
+    fs.writeFileSync(path.join(coverage, 'coverage-summary.json'), '{"total":{"lines":{"pct":100}}}');
+    await executePlan({ mode: 'affected', sources: [component] }, context);
+    assert.equal(fs.existsSync(coverage), false);
+});
+
+test('Vitest graph selection executes indirect consumers and disables inherited all-files coverage', async () => {
+    const { root } = fixture({
+        'vitest.fixture.config.mjs': `export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'], coverage: { enabled: true, provider: 'istanbul', include: ['**/*.ts'], thresholds: { lines: 100 } } } };`,
+        'source.ts': 'export const answer = 42;',
+        'consumer.ts': "export { answer } from './source';",
+        'consumer.spec.ts': "import { answer } from './consumer'; test('indirect consumer', () => expect(answer).toBe(42));",
+        'unrelated.spec.ts': "throw new Error('Unrelated spec was executed');",
+        'uncovered.ts': 'export const uncovered = () => 123;',
+    });
+    const messages = [];
+    const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: ['source.ts'], log: (message) => messages.push(message) });
+    assert.deepEqual(result, { selected: 1, relatedSelected: 1, relatedSources: ['source.ts'], success: true });
+    assert.ok(messages.includes('  consumer.spec.ts'));
+    assert.ok(!messages.includes('  unrelated.spec.ts'));
+    assert.equal(fs.existsSync(path.join(root, 'coverage')), false);
+    assert.match(fs.readFileSync(path.join(root, 'build/test-results/vitest/junit.xml'), 'utf8'), /indirect consumer/);
+});
+
+test('graph discovery restores the environment before any full-suite fallback prebuild', async () => {
+    const { root } = fixture({ 'vitest.fixture.config.mjs': "export default { test: { include: ['**/*.spec.ts'] } };" });
+    const before = [process.env.VITEST, process.env.TEST, process.env.NODE_ENV];
+    const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: ['source.ts'], log: () => {} });
+    assert.deepEqual(result, { selected: 0, relatedSelected: 0, relatedSources: [], success: true });
+    assert.deepEqual([process.env.VITEST, process.env.TEST, process.env.NODE_ENV], before);
+});
+
+test('course-tab source guardrails run alongside graph-related lecture specs', async () => {
+    const source = 'lecture/shared/course-lectures/course-lectures.component.ts';
+    const guard = 'course/overview/services/course-tab-refresh-coverage.spec.ts';
+    const { root } = fixture({
+        'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] } };",
+        [source]: 'export const refresh = true;',
+        'lecture/course-lectures.spec.ts': "import { refresh } from './shared/course-lectures/course-lectures.component'; test('refresh', () => expect(refresh).toBe(true));",
+        [guard]:
+            "import { readFileSync as readSource } from 'node:fs'; test('course tab wiring', () => expect(readSource(new URL('../../../lecture/shared/course-lectures/course-lectures.component.ts', import.meta.url), 'utf8')).toContain('refresh'));",
+        'unrelated.spec.ts': "throw new Error('Unrelated spec was executed');",
+    });
+    const messages = [];
+    const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: [source], log: (message) => messages.push(message) });
+    assert.equal(result.success, true);
+    assert.equal(result.selected, 2);
+    assert.ok(messages.includes(`  ${guard}`));
+    assert.doesNotMatch(messages.join('\n'), /  unrelated.spec.ts/);
+    assert.match(fs.readFileSync(path.join(root, 'build/test-results/vitest/junit.xml'), 'utf8'), /course tab wiring/);
+});
+
+test('filesystem guardrails do not mask an absent import graph', async () => {
+    const context = executionContext({ selection: async () => ({ selected: 3, relatedSelected: 0, success: true }) });
+    assert.equal(await executePlan({ mode: 'affected', sources: [component] }, context), 0);
+    assert.deepEqual(context.commands, [
+        ['run', 'prebuild'],
+        ['run', 'vitest:ci'],
+        ['run', 'vitest:monaco'],
+    ]);
+});
+
+for (const moduleName of ['node:fs/promises', 'fs']) {
+    test(`includes guardrails importing ${moduleName} without an ordinary related spec`, async () => {
+        const { root } = fixture({
+            'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] } };",
+            'guard.spec.ts': `import * as filesystem from '${moduleName}'; test('guardrail', () => expect(filesystem.readFile).toBeTypeOf('function'));`,
+        });
+        const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: ['uncovered.ts'], log: () => {} });
+        assert.deepEqual(result, { selected: 1, relatedSelected: 0, relatedSources: [], success: true });
+    });
+}
+
+test('shared leaf selection includes indirect cross-module consumers and reports untested inputs separately', async () => {
+    const leaf = `${app}/foundation/util/base64.util.ts`;
+    const untested = `${app}/lecture/untested.service.ts`;
+    const ownSpec = `${app}/foundation/util/base64.util.spec.ts`;
+    const consumerSpec = `${app}/lecture/consumer.spec.ts`;
+    const context = fixture({
+        'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] } };",
+        [leaf]: 'export const answer = 42;',
+        [untested]: 'export const untested = true;',
+        [ownSpec]: "import { answer } from './base64.util'; test('leaf', () => expect(answer).toBe(42));",
+        [`${app}/lecture/consumer.ts`]: "export { answer } from '../foundation/util/base64.util';",
+        [consumerSpec]: "import { answer } from './consumer'; test('dependent module', () => expect(answer).toBe(42));",
+        'unrelated.spec.ts': "throw new Error('Unrelated spec was executed');",
+    });
+    const plan = await planTests({ ...context, changes: [change(leaf), change(untested)] });
+    assert.equal(plan.mode, 'affected');
+    const messages = [];
+    const result = await runRelatedProject({ root: context.root, configFile: 'vitest.fixture.config.mjs', sources: plan.sources, log: (message) => messages.push(message) });
+    assert.deepEqual(result, { selected: 2, relatedSelected: 2, relatedSources: [leaf], success: true });
+    assert.ok(messages.includes(`  ${ownSpec}`));
+    assert.ok(messages.includes(`  ${consumerSpec}`));
+});
+
+test('selection-only inspection reuses the same graph without executing discovered specs', async () => {
+    const { root } = fixture({
+        'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] } };",
+        'source.ts': 'export const answer = 42;',
+        'source.spec.ts': "import { answer } from './source'; test('inspection', () => { throw new Error('Inspection must not execute this spec: ' + answer); });",
+    });
+    const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: ['source.ts'], execute: false, log: () => {} });
+    assert.deepEqual(result, { selected: 1, relatedSelected: 1, relatedSources: ['source.ts'], success: true });
+});
+
+test('deduplicates specs reached from several changed inputs and the filesystem guard list', async () => {
+    const { root } = fixture({
+        'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] } };",
+        'source.ts': 'export const answer = 42;',
+        'consumer.ts': "export { answer } from './source';",
+        'consumer.spec.ts':
+            "import { answer } from './consumer'; import { existsSync } from 'node:fs'; test('both inputs and guard', () => { expect(answer).toBe(42); expect(existsSync).toBeTypeOf('function'); });",
+    });
+    const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: ['source.ts', 'consumer.ts'], log: () => {} });
+    assert.deepEqual(result, { selected: 1, relatedSelected: 1, relatedSources: ['source.ts', 'consumer.ts'], success: true });
+});
+
+test('real graph preparation leaves selected specs unexecuted and restores the environment before a full fallback', async () => {
+    const context = fixture({
+        'source.ts': 'export const answer = 42;',
+        'untested.ts': 'export const untested = true;',
+        'source.spec.ts':
+            "import { answer } from './source'; import { writeFileSync } from 'node:fs'; test('deferred', () => { writeFileSync(new URL('./executed', import.meta.url), 'ran'); expect(answer).toBe(42); });",
+    });
+    const closed = path.join(context.root, 'closed');
+    for (const [configFile, name] of [
+        ['vitest.config.ts', 'normal'],
+        ['config/testing/vitest.monaco.config.ts', 'monaco'],
+    ]) {
+        const config = `import fs from 'node:fs'; export default {
+            plugins: [{ name: 'close-marker', closeBundle() { fs.appendFileSync(${JSON.stringify(closed)}, '${name}\\n'); } }],
+            test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] }
+        };`;
+        fs.mkdirSync(path.dirname(path.join(context.root, configFile)), { recursive: true });
+        fs.writeFileSync(path.join(context.root, configFile), config);
+    }
+    const before = [process.env.VITEST, process.env.TEST, process.env.NODE_ENV];
+    const commands = [];
+    assert.equal(
+        await executePlan(
+            { mode: 'affected', sources: ['source.ts', 'untested.ts'] },
+            {
+                root: context.root,
+                prebuilt: true,
+                log: () => {},
+                runCommand: async (args) => {
+                    commands.push(args);
+                    assert.deepEqual([process.env.VITEST, process.env.TEST, process.env.NODE_ENV], before);
+                    assert.match(fs.readFileSync(closed, 'utf8'), /normal/);
+                    assert.match(fs.readFileSync(closed, 'utf8'), /monaco/);
+                    assert.equal(fs.existsSync(path.join(context.root, 'executed')), false);
+                },
+            },
+        ),
+        0,
+    );
+    assert.deepEqual(commands, [
+        ['run', 'vitest:ci'],
+        ['run', 'vitest:monaco'],
+    ]);
+    assert.deepEqual([process.env.VITEST, process.env.TEST, process.env.NODE_ENV], before);
+});
+
+test('prepared graph execution preserves its context and restores each operation environment', async () => {
+    const { root } = fixture({
+        'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] } };",
+        'source.ts': 'export const answer = 42;',
+        'source.spec.ts': "import { answer } from './source'; test('prepared consumer', () => expect(answer).toBe(42));",
+    });
+    const before = [process.env.VITEST, process.env.TEST, process.env.NODE_ENV];
+    const projects = [];
+    try {
+        for (let index = 0; index < 2; index++) {
+            const project = await prepareRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: ['source.ts'], log: () => {} });
+            assert.ifError(project.selectionError);
+            projects.push(project);
+            assert.deepEqual(project.relatedSources, ['source.ts']);
+            assert.deepEqual([process.env.VITEST, process.env.TEST, process.env.NODE_ENV], before);
+        }
+        const result = await projects[0].run();
+        assert.deepEqual(result, { selected: 1, relatedSelected: 1, relatedSources: ['source.ts'], success: true });
+        assert.deepEqual([process.env.VITEST, process.env.TEST, process.env.NODE_ENV], before);
+    } finally {
+        for (const project of projects.reverse()) {
+            await project.close();
+            assert.deepEqual([process.env.VITEST, process.env.TEST, process.env.NODE_ENV], before);
+        }
+    }
+});
+
+test('all prepared contexts close when selected execution throws', async () => {
+    const context = executionContext();
+    const prepare = context.prepareRelatedProject;
+    context.prepareRelatedProject = async (options) => {
+        const project = await prepare(options);
+        project.run = async () => {
+            throw new Error('selected execution failed');
+        };
+        return project;
+    };
+    await assert.rejects(executePlan({ mode: 'affected', sources: [component] }, context), /selected execution failed/);
+    assert.deepEqual(context.closed, ['config/testing/vitest.monaco.config.ts', 'vitest.config.ts']);
+    assert.deepEqual(context.commands, [['run', 'prebuild']]);
+});
+
+test('a failed close cannot prevent the other prepared context from closing', async () => {
+    const context = executionContext();
+    const prepare = context.prepareRelatedProject;
+    context.prepareRelatedProject = async (options) => {
+        const project = await prepare(options);
+        const close = project.close;
+        project.close = async () => {
+            await close();
+            if (options.configFile.includes('monaco')) throw new Error('Monaco close failed');
+        };
+        return project;
+    };
+    await assert.rejects(executePlan({ mode: 'affected', sources: [component] }, context), (error) => {
+        assert.ok(error instanceof AggregateError);
+        assert.match(error.errors[0].message, /Monaco close failed/);
+        return true;
+    });
+    assert.deepEqual(context.closed, ['config/testing/vitest.monaco.config.ts', 'vitest.config.ts']);
+});
