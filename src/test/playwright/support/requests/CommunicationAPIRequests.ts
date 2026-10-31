@@ -138,7 +138,7 @@ export class CommunicationAPIRequests {
      * @returns Promise<GroupChat> representing the group chat created.
      */
     async createCourseMessageGroupChat(course: Course, users: Array<string>): Promise<GroupChat> {
-        const response = await this.page.request.post(`api/communication/courses/${course.id}/group-chats`, { data: users });
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/group-chats`, { data: { memberLogins: users } });
         if (!response.ok()) {
             throw new Error(`createCourseMessageGroupChat failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
         }
