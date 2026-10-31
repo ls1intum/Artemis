@@ -58,9 +58,13 @@ unchecked, so a `catch (IOException)` no longer catches a parse failure.
 Course and exercise settings use permanent default rows. Create courses with
 `CourseRepository.saveWithDefaultConfigurations`; this initializes settings even when an optional module is disabled.
 Every path that stores a new exercise (creation, every kind of import, copies) calls
-`ExerciseConfigurationService.initialize` right after the first save; it inserts the team and plagiarism rows with a plain
-INSERT after an unlocked existence read, and applies the request's settings in place, and nothing creates a missing row later. Programming
-creation/import also persists build settings.
+`ExerciseConfigurationService.initialize` right after the first save (the programming import makes the same repository calls
+itself); it inserts the team and plagiarism rows, and for a
+programming exercise the Metis configuration row, with a plain INSERT after an unlocked existence read, and applies the request's settings in place. Later, only the
+update of a programming, text, modeling or file upload exercise adds a row that a failed creation left out. Programming
+creation/import also persists build settings. A row of an optional module is written by its owner without any class of the
+module (`CourseDefaultConfigurationsRepository`, `ExerciseDefaultConfigurationsRepository`), because the module's own
+repositories do not exist while it is disabled.
 Use modifying queries for feature switches and settings endpoints, preserving configuration ids. Do not recreate or
 remove settings when disabling a feature. Backfill existing owners with the Liquibase migration skill. See
 [database](../../documentation/docs/developer/guidelines/database.mdx#permanent-configuration-rows).

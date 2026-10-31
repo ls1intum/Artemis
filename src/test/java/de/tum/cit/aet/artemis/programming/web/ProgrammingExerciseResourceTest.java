@@ -52,6 +52,8 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
+import de.tum.cit.aet.artemis.metis.domain.MetisExerciseConfig;
+import de.tum.cit.aet.artemis.metis.repository.MetisExerciseConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -175,6 +177,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private CompetencyExerciseLinkTestRepository competencyExerciseLinkTestRepository;
+
+    @Autowired
+    private MetisExerciseConfigRepository metisExerciseConfigRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -578,6 +583,36 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(fromDb.getPlagiarismDetectionConfig().getMinimumScore()).isEqualTo(9);
         assertThat(fromDb.getPlagiarismDetectionConfig().getMinimumSize()).isEqualTo(10);
         assertThat(fromDb.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(10);
+    }
+
+    /**
+     * Every programming exercise owns a permanent Metis configuration row. A creation that fails after storing the exercise can leave it out, and the next update
+     * adds it with the column defaults, as it does for the team and plagiarism rows; an update that finds the row keeps the settings in it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_missingMetisConfiguration_isAddedAndAnExistingOneKept() throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        setValidBuildPlanConfiguration();
+        long exerciseId = programmingExercise.getId();
+        metisExerciseConfigRepository.deleteById(exerciseId);
+        assertThat(metisExerciseConfigRepository.existsById(exerciseId)).isFalse();
+
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
+
+        MetisExerciseConfig added = metisExerciseConfigRepository.findById(exerciseId).orElseThrow();
+        assertThat(added.isEnabled()).as("the defaults leave Metis switched off").isFalse();
+
+        added.setEnabled(true);
+        metisExerciseConfigRepository.save(added);
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
+
+        assertThat(metisExerciseConfigRepository.findById(exerciseId)).map(MetisExerciseConfig::isEnabled).contains(true);
     }
 
     @Test
@@ -1324,6 +1359,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     /**
      * The DTO mapper must not pull additional sub-graphs (test cases, tasks, plagiarism cases) into the update path.
+     * One of the statements is the existence read of the exercise's Metis configuration, which the update adds when a
+     * creation left it out.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
@@ -1334,7 +1371,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
 
         assertThatDb(() -> request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK))
-                .hasBeenCalledAtMostTimes(49);
+                .hasBeenCalledAtMostTimes(50);
     }
 
     /**

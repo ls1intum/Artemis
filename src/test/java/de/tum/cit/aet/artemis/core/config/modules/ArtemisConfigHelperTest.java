@@ -120,6 +120,11 @@ class ArtemisConfigHelperTest {
     }
 
     @Test
+    void testMetisProperty() {
+        testProperty(artemisConfigHelper::isMetisEnabled, Constants.METIS_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
     void testHyperionExerciseGenerationRequiresHyperionPropertyAndProfiles() {
         mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, true);
         when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
@@ -170,8 +175,8 @@ class ArtemisConfigHelperTest {
         assertThat(artemisConfigHelper.getEnabledFeatures(environment)).isEmpty();
         for (String property : List.of(Constants.ATLAS_ENABLED_PROPERTY_NAME, Constants.ATLASML_ENABLED_PROPERTY_NAME, Constants.ATLASLLM_ENABLED_PROPERTY_NAME,
                 Constants.HYPERION_ENABLED_PROPERTY_NAME, Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Constants.DEIMOS_ENABLED_PROPERTY_NAME,
-                Constants.IRIS_ENABLED_PROPERTY_NAME, Constants.EXAM_ENABLED_PROPERTY_NAME, Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, Constants.TEXT_ENABLED_PROPERTY_NAME,
-                Constants.MODELING_ENABLED_PROPERTY_NAME, Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, Constants.LECTURE_ENABLED_PROPERTY_NAME,
+                Constants.METIS_ENABLED_PROPERTY_NAME, Constants.IRIS_ENABLED_PROPERTY_NAME, Constants.EXAM_ENABLED_PROPERTY_NAME, Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
+                Constants.TEXT_ENABLED_PROPERTY_NAME, Constants.MODELING_ENABLED_PROPERTY_NAME, Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, Constants.LECTURE_ENABLED_PROPERTY_NAME,
                 Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME, Constants.SHARING_ENABLED_PROPERTY_NAME,
                 Constants.LTI_ENABLED_PROPERTY_NAME, Constants.ATHENA_ENABLED_PROPERTY_NAME, Constants.APOLLON_ENABLED_PROPERTY_NAME, Constants.LDAP_ENABLED_PROPERTY_NAME,
                 Constants.SAML2_ENABLED_PROPERTY_NAME, Constants.OIDC_ENABLED_PROPERTY_NAME, Constants.THEIA_ENABLED_PROPERTY_NAME, Constants.WEAVIATE_ENABLED_PROPERTY_NAME)) {

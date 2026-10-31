@@ -76,4 +76,5 @@
     <include file="classpath:config/liquibase/changelog/20261024132235_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20261024201101_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20261025200844_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20261028153908_changelog.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>
