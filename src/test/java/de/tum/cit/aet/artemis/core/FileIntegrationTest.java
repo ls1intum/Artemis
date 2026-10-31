@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -335,6 +336,72 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userTestRepository.save(user);
 
         request.get("/api/core/files/users/" + user.getId() + "/profile-pictures/ProfilePicture_removed.jpeg", HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    private static final String SCRIPTED_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(document.domain)</script></svg>";
+
+    private static final byte[] PNG_IMAGE = { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n', 0, 0, 0, 13 };
+
+    private int uploadProfilePicture(MockMultipartFile file) throws Exception {
+        return mockMvc.perform(multipart(HttpMethod.PUT, "/api/account/profile-picture").file(file)).andReturn().getResponse().getStatus();
+    }
+
+    /**
+     * The declared content type and the filename both come from the client, so neither may turn a document with scripts into a stored profile picture.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "picture.png", "picture.svg", "picture.html" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUploadProfilePictureRejectsScriptedDocumentDeclaredAsImage(String filename) throws Exception {
+        var file = new MockMultipartFile("file", filename, "image/png", SCRIPTED_SVG.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(uploadProfilePicture(file)).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getImageUrl()).isNull();
+    }
+
+    /**
+     * The stored extension decides the content type the picture is served with, so it follows from the content and not from the uploaded filename.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUploadProfilePictureTakesExtensionFromContent() throws Exception {
+        var file = new MockMultipartFile("file", "picture.svg", "image/png", PNG_IMAGE);
+
+        assertThat(uploadProfilePicture(file)).isEqualTo(HttpStatus.OK.value());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getImageUrl()).endsWith(".png");
+    }
+
+    /**
+     * A file stored with an active content type, such as an SVG profile picture uploaded before uploads were checked, must render without scripts when opened directly. That
+     * holds for the REST endpoint and for the static handler that still serves the upload directory.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStoredScriptedSvgIsServedInSandbox() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        String filename = "ProfilePicture_" + TEST_PREFIX + ".svg";
+        FileUtils.writeByteArrayToFile(FilePathConverter.getProfilePictureFilePath().resolve(filename).toFile(), SCRIPTED_SVG.getBytes(StandardCharsets.UTF_8));
+        user.setImageUrl(filename);
+        userTestRepository.save(user);
+
+        for (String url : List.of("/api/core/files/users/" + user.getId() + "/profile-pictures/" + filename, "/user/profile-pictures/" + filename)) {
+            String policy = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("image/svg+xml")).andReturn().getResponse()
+                    .getHeader("Content-Security-Policy");
+            assertThat(policy).as("policy of %s", url).contains("sandbox", "default-src 'none'").doesNotContain("unsafe-inline' 'unsafe-eval'");
+        }
+    }
+
+    /**
+     * Browsers refuse to show a PDF in a sandboxed document, so a PDF keeps the application-wide policy.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testPdfIsNotServedInSandbox() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        String policy = mockMvc.perform(get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf")).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF)).andReturn().getResponse().getHeader("Content-Security-Policy");
+        assertThat(policy).doesNotContain("sandbox");
     }
 
     /**
@@ -700,6 +767,24 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.get("/api/core/files/courses/" + courseId + "/attachment-video-units/" + attachmentVideoUnitId, HttpStatus.OK, byte[].class);
     }
 
+    /**
+     * The path names no file here, so a revalidation has to tell by its content type that it keeps the policy of a PDF: browsers copy the policy of a 304 onto the cached
+     * file, and a sandboxed PDF is not displayed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetAttachmentVideoUnitPdfNotModifiedIsNotSandboxed() throws Exception {
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 0, true);
+        String url = "/api/core/files/courses/" + lecture.getCourse().getId() + "/attachment-video-units/" + attachmentVideoUnit.getId();
+
+        String lastModified = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_PDF)).andReturn().getResponse()
+                .getHeader(HttpHeaders.LAST_MODIFIED);
+        String policy = mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, lastModified)).andExpect(status().isNotModified()).andReturn().getResponse()
+                .getHeader("Content-Security-Policy");
+        assertThat(policy).doesNotContain("sandbox");
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAttachmentVideoUnitStudentVersion() throws Exception {
@@ -905,6 +990,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         MvcResult notModifiedResponse = mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, lastModified)).andExpect(status().isNotModified())
                 .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andReturn();
         assertAuthenticationVaryHeader(notModifiedResponse);
+        // Browsers copy the policy of a 304 onto the cached file, and a sandboxed PDF is not displayed
+        assertThat(notModifiedResponse.getResponse().getHeader("Content-Security-Policy")).doesNotContain("sandbox");
         Mockito.verify(fileService, Mockito.never()).getFileForPath(storedAttachmentVideoUnitFile(attachmentVideoUnit.getId()));
     }
 

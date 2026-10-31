@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -1054,6 +1055,19 @@ public class CourseTestService {
         var updatedCourse = courseRepo.findByIdElseThrow(createdCourse.getId());
         assertThat(updatedCourse.getCourseIcon()).isNotEqualTo(courseIcon).isNotNull();
         assertThat(updatedCourse.getDescription()).isEqualTo("new description");
+    }
+
+    // Test
+    public void testCreateCourseWithRejectedCourseImageCreatesNoCourse() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        CourseCreateDTO dto = toCourseCreateDTO(course);
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
+        var iconPart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, "<svg xmlns=\"http://www.w3.org/2000/svg\"/>".getBytes());
+
+        request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart).file(iconPart)).andExpect(status().isBadRequest());
+
+        // A course left behind would block a retry, since its short name is taken
+        assertThat(courseRepo.findAllByShortName(course.getShortName())).isEmpty();
     }
 
     // Test
@@ -3504,7 +3518,7 @@ public class CourseTestService {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart);
         if (fileContent != null) {
-            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
+            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, pngImage(fileContent));
             builder.file(filePart);
         }
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
@@ -3535,10 +3549,24 @@ public class CourseTestService {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + id).file(coursePart);
         if (fileContent != null) {
-            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
+            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, pngImage(fileContent));
             builder.file(filePart);
         }
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+    }
+
+    /**
+     * The server only stores a course icon whose content starts like a PNG image, so the marker follows a PNG signature.
+     *
+     * @param marker the content that tells icons apart
+     * @return bytes the server accepts as a PNG image
+     */
+    private static byte[] pngImage(String marker) {
+        byte[] signature = { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n' };
+        byte[] content = marker.getBytes(StandardCharsets.UTF_8);
+        byte[] image = Arrays.copyOf(signature, signature.length + content.length);
+        System.arraycopy(content, 0, image, signature.length, content.length);
+        return image;
     }
 
     /**
@@ -3568,7 +3596,7 @@ public class CourseTestService {
      */
     public void testEditCourseRemoveExistingIcon() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
-        byte[] iconBytes = "icon".getBytes();
+        byte[] iconBytes = pngImage("icon");
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         CourseManagementDTO savedCourseWithFile = request.putWithMultipartFile("/api/course/courses/" + course.getId(), course, "course", iconFile, CourseManagementDTO.class,
                 HttpStatus.OK, null);
