@@ -162,10 +162,20 @@ GitHub's draft state and the repository labels serve different purposes. Marking
 changes its state; the **ready for review** label makes it discoverable in the team's review queue.
 
 Use drafts only for unfinished implementations. Open a completed implementation as a non-draft PR, or
-mark it **Ready for review** as soon as the implementation is finished. Full CI and automated review bots
-do not run on drafts, so waiting for them before leaving draft prevents the validation needed for review.
-Pending or failing CI, outstanding reviews and test-server validation do not by themselves require draft
-status. Record that work honestly in the checklist and complete it before merge.
+mark it **Ready for review** as soon as the implementation is finished. Draft PRs keep relevant style,
+lint, architecture and type checks, including test TypeScript compilation in **Quality / Client Compilation**.
+They also keep the WAR and draft test-server image builds. Server, client and AI worker sandbox tests,
+E2E, CodeQL and automated review bots are deferred. Integration-test feedback arrives after leaving draft
+or requesting a manual full CI run, so waiting for those results before leaving draft prevents normal
+validation from starting. Pending or failing CI, outstanding reviews and test-server validation do not
+by themselves require draft status. Record that work honestly in the checklist and complete it before merge.
+
+A successful draft CI run reports **Draft checks passed (tests deferred)**. It does not publish the
+required **All required CI Passed** check for an untested revision. Marking the PR **Ready for review**
+starts normal CI even when the commit has not changed. Ready PRs run the relevant suites with conservative
+affected selection and full-suite fallbacks; wait for the required checks before merging. To request
+full validation while a PR is still in draft, run **CI** manually on its branch with
+**Bypass change detection and run every job** enabled. Manual runs use full validation on draft branches too.
 
 | Stage | Author's action |
 | --- | --- |

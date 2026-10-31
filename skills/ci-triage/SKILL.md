@@ -8,7 +8,11 @@ description: Diagnose failed, stuck, or missing Artemis CI checks and distinguis
 ## Keep completed implementations available for CI and review
 
 Use drafts only while the implementation is unfinished. Once implementation is complete, open the PR
-as non-draft or mark it ready for review immediately: E2E, CodeQL and review bots do not run on drafts.
+as non-draft or mark it ready for review immediately. Draft `pull_request` runs defer the entire
+`ci-test.yml` workflow (server, client and AI worker sandbox tests), E2E, CodeQL and review bots.
+Relevant style, lint, architecture and type checks still run on public runners. Test TypeScript
+compilation runs in **Quality / Client Compilation** for drafts; the WAR and draft test-server image builds
+remain available. Integration-test feedback arrives after ready-for-review or a manual full run.
 Pending or failing CI, reviews and test-server validation do not by themselves require draft status.
 Keep unverified checklist items open and require passing checks and approvals before merge; follow
 [PR readiness](../../documentation/docs/developer/development-process.mdx#pull-request-readiness).
@@ -25,13 +29,18 @@ Trace the failing check through its called workflow; job names are prefixed by t
 (for example, `Quality / Server Code Style`). Check the repository's required-check settings
 before claiming that an advisory failure blocks merging.
 
+Draft runs report **Draft checks passed (tests deferred)** instead of the required
+**All required CI Passed** check. A green draft run therefore does not validate its untested head
+for merge. The `ready_for_review` event starts a normal run, including when the head SHA is unchanged;
+wait for its required checks before marking the PR ready to merge.
+
 PR and non-PR E2E jobs can use different topologies: a pull request runs one node, develop runs three
 nodes with Redis (Valkey) as distributed data provider. Compare their definitions in
 `.github/workflows/ci-e2e.yml` before treating a develop-only failure as flaky.
 
 ## Check the validation scope
 
-Ordinary pull requests run affected server modules and related client specs. The server planner's
+Ready pull requests run affected server modules and related client specs. The server planner's
 summary lists its module selection; global core/shared and architecture checks remain included, as does
 the Gocast handler guard. The client job prints every selected spec, including filesystem-reading
 guardrails whose source reads have no import edges. Shared contracts,
@@ -47,13 +56,15 @@ missing expected results still fail.
 
 Pushes to develop/main/release branches, merge-group events, releases and manual CI runs use full
 suites. To validate the complete PR branch before merging, dispatch **CI** with that branch and
-**Bypass change detection and run every job** enabled. Re-running an existing PR event preserves
-its affected scope. A merge group only provides pre-merge full validation when the repository uses it.
+**Bypass change detection and run every job** enabled. Manual runs use full validation even when the
+branch belongs to a draft PR. Re-running a ready PR event preserves its affected scope; re-running
+a draft PR event keeps tests deferred. A merge group only provides pre-merge full validation when
+the repository uses it.
 
-The **Check Current PR Revision** job waits until a synchronize event has settled for 90 seconds,
-then checks that its head is still current. It runs on a GitHub-hosted runner before expensive
-build/test jobs reserve self-hosted capacity; lint starts immediately. API failures fail the required
-gate closed. Obsolete revisions skip expensive work and are superseded by the new PR run.
+The current-revision check runs immediately as a step inside **Detect Changed Areas**, using
+`.github/scripts/pr-ready.js` and the job's existing checkout. It adds no separate runner or
+checkout. API failures fail the required gate closed. Obsolete revisions skip expensive work
+and are superseded by the new PR run.
 
 ## Classify before changing code
 

@@ -62,6 +62,13 @@ describe('PR coverage body updates', () => {
         assert.doesNotMatch(result.body, /fresh full-suite coverage|stale full-suite coverage/);
         assert.equal(result.comments.length, 0);
     });
+    it('replaces stale coverage with explicit draft test deferral', async () => {
+        const result = await update({ TEST_SCOPE: 'deferred', TEST_CONCLUSION: 'skipped' });
+        assert.match(result.body, /tests.*deferred.*draft/i);
+        assert.match(result.body, /ready for review/i);
+        assert.doesNotMatch(result.body, /fresh full-suite coverage|stale full-suite coverage|tests passed|affected.*selection/i);
+        assert.equal(result.comments.length, 0);
+    });
     it('reports failed affected tests honestly without publishing coverage tables', async () => {
         const result = await update({ TEST_SCOPE: 'affected', TEST_CONCLUSION: 'failure' });
         assert.match(result.body, /affected.*selection/i);

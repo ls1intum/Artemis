@@ -3,7 +3,7 @@
 // pullrequest-coverage-reporter.yml (fork PRs) so the rendering cannot drift.
 //
 // Env: PR_NUMBER, PR_AUTHOR, HAS_CLIENT, HAS_SERVER, COVERAGE_TABLE, COVERAGE_SUCCESS,
-//      TEST_SCOPE (full|affected|unavailable; omitted means full for existing callers),
+//      TEST_SCOPE (full|affected|deferred|unavailable; omitted means full for existing callers),
 //      TEST_CONCLUSION, TEST_RUN_URL, POST_AUTHOR_COMMENT ('true' to also @-mention the author once
 //      — the fork path sets it true; the high-frequency in-run path sets it false to avoid stacking
 //      a fresh comment on every push, since the description update is already idempotent).
@@ -51,6 +51,11 @@ module.exports = async ({ github, context, core }) => {
     const noChanges = !hasClient && !hasServer;
     if (noChanges) {
         lines.push('**No code changes detected** - test coverage not required for this PR.', '');
+    } else if (testScope === 'deferred') {
+        lines.push(
+            `**Tests were deferred for this draft-event run.** Lint, compilation and architecture checks still run. Marking the PR ready for review starts the test suites; full CI can also be dispatched manually. Full-suite coverage was not generated. See [workflow logs](${testRunUrl}).`,
+            '',
+        );
     } else if (testScope === 'affected') {
         lines.push(
             `**Affected test selection:** CI used affected-test selection for changed code. The selected-test workflow concluded with status \`${testConclusion}\`; full-suite coverage was not generated. See [workflow logs](${testRunUrl}).`,

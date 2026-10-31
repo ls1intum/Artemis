@@ -2,17 +2,11 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const check = require('./pr-ready.js');
 
-function fixture(action = 'synchronize') {
+function fixture(action = 'synchronize', draft = false) {
     const outputs = {};
     const calls = [];
-    const notices = [];
-    const context = {
-        eventName: 'pull_request',
-        payload: { action, pull_request: { number: 12, head: { sha: 'expected' } } },
-        repo: { owner: 'example', repo: 'project' },
-        runId: 123,
-    };
-    const state = { pull: { state: 'open', head: { sha: 'expected' } }, created: '2026-10-30T10:00:00Z', now: Date.parse('2026-10-30T10:00:10Z') };
+    const context = { eventName: 'pull_request', payload: { action, pull_request: { number: 12, draft, head: { sha: 'expected' } } }, repo: { owner: 'example', repo: 'project' } };
+    const state = { pull: { state: 'open', head: { sha: 'expected' } } };
     const github = {
         rest: {
             pulls: {
@@ -21,105 +15,70 @@ function fixture(action = 'synchronize') {
                     return { data: state.pull };
                 },
             },
-            actions: {
-                getWorkflowRun: async () => {
-                    calls.push('run');
-                    return { data: { created_at: state.created } };
-                },
-            },
         },
     };
     const core = {
         setOutput: (key, value) => {
             outputs[key] = value;
         },
-        notice: (message) => notices.push(message),
-        info: () => {},
+        notice: () => {},
     };
-    const args = {
-        github,
-        context,
-        core,
-        now: () => state.now,
-        delay: async (ms) => {
-            calls.push(ms);
-            state.now += ms;
-        },
-    };
-    return { outputs, calls, notices, context, state, github, args };
+    return { outputs, calls, context, state, args: { github, context, core } };
 }
-
-test('waits only for the remaining quiet period then checks the current PR head', async () => {
-    const f = fixture();
-    await check(f.args);
-    assert.deepEqual(f.calls, ['pull', 'run', 80_000, 'pull']);
-    assert.equal(f.outputs.current, 'true');
-});
-test('does not wait again after an already queued run has settled', async () => {
-    const f = fixture();
-    f.state.now += 180_000;
-    await check(f.args);
-    assert.deepEqual(f.calls, ['pull', 'run', 'pull']);
-    assert.equal(f.outputs.current, 'true');
-});
-test('superseded revisions never become eligible for expensive jobs', async () => {
-    const f = fixture();
-    f.state.pull = { state: 'open', head: { sha: 'newer' } };
-    await check(f.args);
-    assert.deepEqual(f.calls, ['pull']);
-    assert.equal(f.outputs.current, 'false');
-});
-test('a revision superseded during the quiet period is rejected', async () => {
-    const f = fixture();
-    f.args.delay = async (ms) => {
-        f.calls.push(ms);
-        f.state.pull = { state: 'open', head: { sha: 'newer' } };
-    };
-    await check(f.args);
-    assert.equal(f.outputs.current, 'false');
-});
-test('closed pull requests do not consume a quiet period or expensive runners', async () => {
-    const f = fixture();
-    f.state.pull.state = 'closed';
-    await check(f.args);
-    assert.deepEqual(f.calls, ['pull']);
-    assert.equal(f.outputs.current, 'false');
-});
-for (const action of ['opened', 'reopened', 'ready_for_review']) {
-    test(`${action} validates the current head without delaying initial feedback`, async () => {
+for (const action of ['opened', 'synchronize', 'reopened', 'ready_for_review']) {
+    test(`${action} checks the current head immediately without a timer or workflow-run request`, async () => {
         const f = fixture(action);
         await check(f.args);
-        assert.deepEqual(f.calls, ['pull', 'pull']);
-        assert.equal(f.outputs.current, 'true');
+        assert.deepEqual(f.calls, ['pull']);
+        assert.deepEqual(f.outputs, { current: 'true', tests_deferred: 'false' });
+    });
+}
+test('drafts defer expensive tests while still validating their head', async () => {
+    const f = fixture('synchronize', true);
+    await check(f.args);
+    assert.deepEqual(f.outputs, { current: 'true', tests_deferred: 'true' });
+});
+test('promoting the same commit schedules tests instead of reusing draft scope', async () => {
+    const draft = fixture('synchronize', true);
+    await check(draft.args);
+    const ready = fixture('ready_for_review', false);
+    await check(ready.args);
+    assert.equal(draft.context.payload.pull_request.head.sha, ready.context.payload.pull_request.head.sha);
+    assert.equal(draft.outputs.tests_deferred, 'true');
+    assert.equal(ready.outputs.tests_deferred, 'false');
+});
+for (const state of [
+    { state: 'open', head: { sha: 'newer' } },
+    { state: 'closed', head: { sha: 'expected' } },
+]) {
+    test(`rejects ${state.state === 'closed' ? 'closed' : 'superseded'} revisions`, async () => {
+        const f = fixture();
+        f.state.pull = state;
+        await check(f.args);
+        assert.equal(f.outputs.current, 'false');
+        assert.deepEqual(f.calls, ['pull']);
     });
 }
 for (const event of ['push', 'merge_group', 'workflow_dispatch', 'release']) {
-    test(`${event} remains eligible without a PR request`, async () => {
-        const f = fixture();
+    test(`${event} never defers tests even if its ref belongs to a draft`, async () => {
+        const f = fixture('synchronize', true);
         f.context.eventName = event;
-        f.context.payload = {};
         await check(f.args);
         assert.deepEqual(f.calls, []);
-        assert.equal(f.outputs.current, 'true');
+        assert.deepEqual(f.outputs, { current: 'true', tests_deferred: 'false' });
     });
 }
-test('API failures fail closed instead of approving a revision', async () => {
+test('API errors fail closed', async () => {
     const f = fixture();
-    f.github.rest.pulls.get = async () => {
+    f.args.github.rest.pulls.get = async () => {
         throw new Error('unavailable');
     };
     await assert.rejects(check(f.args), /unavailable/);
     assert.equal(f.outputs.current, undefined);
 });
-test('malformed PR payloads fail closed', async () => {
+test('malformed pull requests fail closed', async () => {
     const f = fixture();
     delete f.context.payload.pull_request.head;
     await assert.rejects(check(f.args), /head/i);
-    assert.equal(f.outputs.current, undefined);
-});
-test('invalid workflow timestamps fail closed', async () => {
-    const f = fixture();
-    f.state.created = 'invalid';
-    await assert.rejects(check(f.args), /timestamp/i);
     assert.equal(f.outputs.current, undefined);
 });
