@@ -10,6 +10,9 @@ import { admin, studentOne } from '../../support/users';
  * re-issuing it. The duplicate-request assertion is kept; what changed is which endpoints a course entry uses.
  */
 test.describe('Course overview navigation', { tag: '@fast' }, () => {
+    // Automatic page recovery would add requests outside this navigation contract.
+    test.use({ recoverNavigation: false });
+
     test('loads the course shell and tabs once each', async ({ page, login, courseManagementAPIRequests }) => {
         await login(admin);
         const course = await courseManagementAPIRequests.createCourse();
