@@ -42,8 +42,14 @@ module starts leaking into instances that did not enable it.
 
 Configuration is validated eagerly. `base-url` and `model` have no default: `application.yml` ships them blank, and
 enabling the module without setting them stops the boot with `DeimosConfigurationException`, rendered by
-`DeimosConfigurationFailureAnalyzer` into an actionable message. `base-url` must be an absolute http(s) URI with a
-host, `completions-path` must be mappable, and `timeout-seconds` and `max-retries` must be sane.
+`DeimosConfigurationFailureAnalyzer` into an actionable message. `base-url` must be an absolute https URI with a host
+and without query or fragment, `completions-path` must start with `/` and end with `/chat/completions`,
+`timeout-seconds` must be greater than `0` and `max-retries` at least `0`. The limits under `artemis.deimos.payload.*`
+and `artemis.deimos.batch.*` are validated in the same pass, see [Evidence construction](#evidence-construction).
+
+The `api-key` is not validated at startup, because an empty key is a valid setup for an unauthenticated endpoint
+(Spring AI then sends no `Authorization` header). A missing or wrong key surfaces at the first request as HTTP `401`
+or `403`, which `DefaultDeimosLlmClient` reports as `LLM_AUTHENTICATION_FAILED`.
 
 <Callout variant={CalloutVariant.warning}>
     Do not reintroduce a default endpoint. A default means every installation that flips the toggle starts sending
@@ -59,11 +65,11 @@ resolvable in integration tests.
 | --- | --- |
 | `web` | `DeimosResource`, the two `POST` endpoints, role annotations and the feature toggle |
 | `api` | `DeimosBatchApi`, the interface the resource implements |
-| `service` | `DeimosBatchService` (validation, scheduling, mail), `DeimosAnalysisService` (evidence and orchestration), `DeimosLlmClient` with `DefaultDeimosLlmClient`, `DeimosPromptTemplateService` |
+| `service` | `DeimosBatchService` (validation, scheduling, mail), `DeimosAnalysisService` (evidence and orchestration), `DeimosLlmClient` with `DefaultDeimosLlmClient`, `DeimosPromptTemplateService`, `DeimosSnapshotReader` (the files of one commit) |
 | `repository` | `DeimosBatchParticipationRepository`, the candidate-selection queries |
 | `dto` | Request, summary, email and failure records |
 | `exception` | `DeimosConfigurationException`, `DeimosLlmException`, `DeimosSnapshotHistoryException`, plus the failure analyzer |
-| `config` | `DeimosEnabled`, `DeimosLlmConfiguration` |
+| `config` | `DeimosEnabled`, `DeimosLlmConfiguration`, `DeimosLimits` (defaults of the configurable limits), `DeimosInfoContributor` |
 
 ## Request path
 
@@ -74,7 +80,10 @@ resolvable in integration tests.
    with the run id immediately.
 3. The background task collects candidate participation ids in pages, then calls `DeimosAnalysisService.analyze`.
 4. Per participation, the service builds the evidence, calls the model, and records either a verdict or a typed
-   failure. A single participation failing never aborts the run.
+   failure. A single participation failing never aborts the run, with one exception: `LLM_AUTHENTICATION_FAILED`
+   stops the loop, because every further request would be rejected as well. The participations not reached are
+   recorded in one batch-level `FailedAnalysis` (participation id
+   `DeimosBatchSummaryDTO.BATCH_LEVEL_FAILURE_PARTICIPATION_ID`) and added to `failed`.
 5. `DeimosBatchService` turns the summary into a `DeimosAnalysisCompleteEmailDTO` and sends the completion mail.
 
 Candidate selection lives entirely in JPQL. Note that the course-scoped query resolves the owning course through
@@ -86,28 +95,56 @@ Candidate selection lives entirely in JPQL. Note that the course-scoped query re
 walking the git graph. Consequences worth knowing:
 
 - Several commits pushed together collapse into one snapshot.
-- Submissions without a commit hash never reach the loop; the repository query filters them out. A blank hash is
-  skipped with a log line. Neither leaves a marker in the payload.
+- Submissions without a commit hash never reach the loop; the repository query filters them out and they leave no
+  trace. A blank hash reaches the loop, is skipped with a log line, and is marked in the payload as a submission that
+  could not be examined. It is recorded as a `MISSING_COMMIT_HASH` omission.
+- Snapshots are read with `DeimosSnapshotReader`, which leaves a file out as binary
+  only when both its extension and the beginning of its content say so, and reads no more than that beginning for such
+  files. Scripts such as `.sh` or `.bat`, whose extensions count as binary for the repository exports, are therefore
+  part of the evidence. Scripts are never classified away by their content, and a file without a binary extension is
+  always read as text, so a NUL byte cannot hide either. The paths of binary files and
+  symbolic links never reach the payload but are scanned for imitated markers.
 - The baseline is the exercise template, resolved from the setup commit. If that commit cannot be found, an empty
   baseline is used and everything counts as added.
 
-Diffs are real unified diffs built with JGit in memory, under three byte budgets:
+Diffs are real unified diffs built with JGit in memory, under four configurable byte budgets. The defaults live in
+`DeimosLimits` and every `@Value` fallback refers to them; `application.yml` repeats them, and `DeimosLimitsTest`
+keeps the two in line.
 
-| Constant | Value | Purpose |
+| Property under `artemis.deimos.payload` | Default | Purpose |
 | --- | --- | --- |
-| `MAX_FILE_INPUT_BYTES` | 256 KiB | Files larger than this are not diffed at all |
-| `MAX_FILE_DIFF_BYTES` | 32 KiB | Per-file diff cap, truncated at a line boundary |
-| `MAX_PAYLOAD_BYTES` | 128 KiB | Overall budget |
-| `FINAL_STATE_RESERVED_BYTES` | 32 KiB | Held back from the incremental loop so the cumulative diff always has room |
+| `max-file-input-bytes` | 256 KiB | Files larger than this are not diffed at all |
+| `max-file-diff-bytes` | 32 KiB | Per-file diff cap, truncated at a line boundary |
+| `max-payload-bytes` | 128 KiB | Hard bound on the untrusted history, notices and headers included; the prompt text around it is not counted |
+| `final-state-reserved-bytes` | 32 KiB | Held back from the incremental loop so the cumulative diff always has room |
+
+`ConfigurationValidator` requires every byte limit to be at least `DeimosLimits.MIN_BYTE_LIMIT` (1 KiB),
+`final-state-reserved-bytes < max-payload-bytes` and `max-file-diff-bytes <= max-payload-bytes`. The floor is what
+keeps the bound hard for small settings: the snapshot-omitted and missing-hash notices, the final-state header and the
+128 bytes each diff keeps for its own omission notice (`DIFF_OMISSION_NOTICE_RESERVED_BYTES`) all have to fit inside
+the reservation. Byte arithmetic uses `long`, so large configured values cannot overflow.
+
+The batch limits `artemis.deimos.batch.max-participations-per-run` (default 5000) and
+`artemis.deimos.batch.max-window-days` (default 31) are injected into `DeimosBatchService` the same way.
+`DeimosInfoContributor` publishes the window as `deimosMaxWindowDays` on `/management/info`, and the date-range dialog
+reads it from `ProfileService`, so the client never validates against a different value than the server.
 
 The reservation exists so that exhausting the budget cannot leave the model judging only a chronological prefix. The
-cumulative section is emitted unless it would be empty or would exactly repeat a single unomitted snapshot. Every
+cumulative section is emitted unless it would be empty or would exactly repeat a single unomitted snapshot; that case is
+decided before the section is built, so a truncated copy of complete evidence cannot mark the participation as
+incompletely checked. Every
 budget-caused omission is written into the payload as an explicit marker.
 
+Every omission is also recorded as a `DeimosOmission` with the limit that actually bound (`FILE_INPUT_LIMIT`,
+`FILE_DIFF_LIMIT`, `PAYLOAD_LIMIT`, `MISSING_COMMIT_HASH`), the file and the snapshot. A truncated diff counts as
+`FILE_DIFF_LIMIT` only when the per-file cap was smaller than what was left of the section budget. When a whole
+snapshot section is dropped, its file-level omissions are replaced by one snapshot-level `PAYLOAD_LIMIT` entry. The
+system prompt tells the model that omitted content is unexamined and a reason for caution.
+
 <Callout variant={CalloutVariant.info}>
-    If you change a budget, change the table on the
-    [exercises page](/instructor/exercises/deimos#size-limits-and-truncation) as well. That page is the single place
-    where these numbers are documented for users.
+    If you change a default, change the table on the
+    [exercises page](/instructor/exercises/deimos#size-limits-and-truncation) and the property table on the
+    [admin page](/admin/deimos) as well. Those are the places where these numbers are documented for users.
 </Callout>
 
 ## Prompt and trust boundary
@@ -124,11 +161,48 @@ File paths and metadata pass through `escapeMetadata`, which escapes newlines an
 rejecting them. Rejecting a hostile filename would let a student suppress the analysis of their own participation,
 which is the opposite of what you want.
 
+### Imitated fence markers
+
+`buildSnapshotHistory` scans the full content of every file that changed against the previous snapshot, and every new
+file path, for lines imitating a fence marker, before any budget applies. Padding a submission therefore cannot push a
+forged marker out of sight of this check, even when it pushes it out of the payload. `FENCE_MARKER_PATTERN` matches
+`---`, `BEGIN` or `END`, `UNTRUSTED` and `DATA`, case-insensitively and with any whitespace in between (Unicode spaces
+included), anywhere in a line and with any identifier. It must stay linear in the input: the fixed `-{3}` prefix and
+the possessive quantifiers mean a long run of hyphens or whitespace is scanned once, and the scan reuses one matcher
+with its region set to each line. Marker lines that the template's version of the same file already contains are not
+attributed to the student, and findings are deduplicated by file and line text.
+
+The findings live in a per-participation `ParticipationEvidence` owned by `analyze`, so they survive a snapshot that
+fails later or a failed model call. If the random sentinel itself shows up in student content, which would mean it
+leaked from Deimos, a server warning is logged; the content is never logged.
+
+### Verdict precedence
+
+Every analysed participation receives one `DeimosVerdict`, highest applicable first:
+
+1. `MANIPULATION_ATTEMPT`: at least one finding. Holds without the model. The model is still called whenever a
+   non-empty history can be built; its answer, or the failure type of the call, of the repository or of an empty
+   history, is kept as additional information.
+2. `MALICIOUS`: the model's classification.
+3. `INCOMPLETELY_CHECKED`: the model found nothing malicious, but at least one omission was recorded. It replaces only
+   `BENIGN`.
+4. `BENIGN`: the model's classification over complete evidence.
+
+Without a finding, a participation without a model verdict is a failure with its `DeimosFailureType`, as before.
+
 ## Verdict parsing
 
 `DefaultDeimosLlmClient.parseVerdict` is deliberately tolerant about packaging and strict about content. It accepts a
 raw object, a fenced block, or an object embedded in a preamble, but it requires both `malicious` and `rationale`.
 A response missing either is rejected as `LLM_UNPARSEABLE` rather than being read as benign.
+
+Candidates are grouped into tiers of decreasing confidence: the whole response, then fenced blocks, then balanced
+objects found in the text. The first tier that yields a verdict decides. Within that tier, identical verdicts are
+collapsed, but two **differing** verdicts are rejected as `LLM_UNPARSEABLE` instead of being resolved by position:
+nothing in a sequence of objects says which one is final, and taking the first could report a malicious participation
+as benign. Verdicts that differ in `malicious` are rejected across tiers as well, because a fence does not mark the
+final answer either: a fenced object may be a quoted example followed by the actual answer. A classification stated
+outside a recoverable object counts too, so prose with an unmatched brace or quote cannot hide a later verdict.
 
 ## Failure taxonomy
 
@@ -138,8 +212,16 @@ was nothing to analyse" and "the model was unreachable" collapse into one counte
 `classifyCallFailure` maps transport exceptions onto the LLM categories after the SDK's own retries. Note that the
 SDK's `max-retries` is the **only** retry layer; do not add another.
 
+`credentialRejectionStatus` runs first and looks for an `OpenAIServiceException` with status 401 or 403 anywhere in a
+bounded, cycle-safe cause chain, so a wrapper whose message mentions a timeout cannot hide it. Such a failure becomes
+`LLM_AUTHENTICATION_FAILED` with a fixed message carrying only the status and **no cause**, because the SDK exception
+can carry the rejected request; the analysis service logs that message without the exception.
+
 `DeimosBatchSummaryDTO.failureCountsByType` reconciles the per-participation details with the total, so a run that
-aborted before reaching individual participations cannot report `Failed: 200` next to a breakdown summing to one.
+aborted before reaching individual participations cannot report `Failed: 200` next to a breakdown summing to one. The
+participations not accounted for are counted under the category of the batch-level entry, which is
+`LLM_AUTHENTICATION_FAILED` for an aborted run and `OTHER` when the run failed as a whole. When the participation limit
+is exceeded while candidates are being collected, the failure count is the number observed so far, not `1`.
 
 ## Testing
 
@@ -153,6 +235,9 @@ it:
 
 Requests use a window with no candidate participations, so an accepted run has nothing to analyse and never reaches
 the model.
+
+`DeimosAnalysisCompleteEmailRenderingTest` renders the real email template with the production messages in English
+and German, so a broken Thymeleaf expression or a missing translation fails a test rather than an email.
 
 Client-side, `DeimosDateRangeModalComponent` compares elapsed milliseconds rather than using dayjs' calendar-aware
 `diff`, so that its validation matches the server's `Duration.between` across a DST transition. The regression test
@@ -168,5 +253,6 @@ These are deliberate omissions, not oversights, and the most likely places to ex
 - **No model cascade.** Each participation is classified by exactly one model. Benchmarking showed a two-stage
   screening-then-escalation arrangement performing better, but that is not implemented.
 - **No input sanitisation beyond fencing.** Adversarial directives in comments and identifiers are fenced and
-  contextualised, not neutralised.
+  contextualised, not neutralised. Only imitated fence markers are detected deterministically; homoglyphs and
+  zero-width characters inside a marker are not.
 - **No confidence signal.** The model returns a boolean, so there is nothing to threshold or route on.

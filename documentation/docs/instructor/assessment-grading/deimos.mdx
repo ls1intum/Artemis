@@ -15,8 +15,9 @@ It exists because student code runs on your continuous integration workers, and 
 workers looks, from the grading perspective, like any other failing submission.
 
 You start a run manually and choose a time window. Artemis then reconstructs the submission history of every selected
-participation and asks a language model to classify it. Participations whose history turns out to be empty, or whose
-history cannot be reconstructed, are reported as failures without ever reaching the model. When the run is done,
+participation, checks it for text that imitates the markers Deimos uses to fence student code in its prompt, and asks a
+language model to classify it. Participations whose history turns out to be empty, or whose history cannot be
+reconstructed, are reported as failures without ever reaching the model. When the run is done,
 Artemis sends you an email with the result. There is no progress view and no result page in the user interface: the
 completion email is the entire output.
 
@@ -104,11 +105,13 @@ to examine more closely.
 
 ### Limits
 
-| Limit | Value | What happens when you exceed it |
+| Limit | Default | What happens when you exceed it |
 | --- | --- | --- |
-| Length of the window | 31 days | **Submit** stays disabled, with an inline message. A request sent anyway is rejected. |
+| Length of the window | 31 days | **Submit** stays disabled, with an inline message naming the limit. A request sent anyway is rejected. |
 | Participations per run | 5000 | The request is rejected before anything is analysed. Narrow the window or use exercise scope. |
 | Start after end | not allowed | **Submit** stays disabled. |
+
+Your administrator can change the first two limits. The dialog always applies the value the server enforces.
 
 If the background queue is saturated because other runs are still executing, the trigger fails and asks you to try
 again shortly. Nothing is queued in that case, so you have to repeat the request yourself.
@@ -118,11 +121,13 @@ again shortly. Nothing is queued in that case, so you have to repeat the request
 The run executes asynchronously on a bounded background executor:
 
 1. Artemis collects the qualifying participation IDs, in pages, for the chosen scope and window.
-2. For each participation, it reconstructs the observed submission snapshot history and builds diffs.
+2. For each participation, it reconstructs the observed submission snapshot history and builds diffs. While doing so,
+   it checks the complete content of every snapshot for imitated fence markers, independently of the size limits.
 3. Each participation whose history could be reconstructed and is not empty is classified individually by the
    language model. The others are counted as failures without a request being sent.
-4. When every participation has been processed, Artemis sends the completion email **to you**, the person who
-   triggered the run.
+4. If the model endpoint rejects the API key, the run stops at that participation, because every further request
+   would be rejected as well.
+5. When the run is over, Artemis sends the completion email **to you**, the person who triggered the run.
 
 Points to be aware of:
 
@@ -136,16 +141,22 @@ Points to be aware of:
 
 ## Reading the completion email
 
-The subject is *Malicious Participation Analysis finished*. The body has up to four blocks.
+The subject is *Malicious Participation Analysis finished*. The body has up to six blocks.
 
 ### Summary
 
 | Field | Meaning |
 | --- | --- |
-| Analyzed participations | Participations that were successfully classified. |
-| Malicious | Of those, how many the model classified as malicious. |
-| Benign | Of those, how many it classified as benign. |
+| Analyzed participations | Participations that received a verdict. Each counts in exactly one of the next four rows. |
+| Manipulation attempts | The submission contains text imitating the markers that separate student code from the instructions to the model. |
+| Malicious | The model classified the participation as malicious. |
+| Incompletely checked | The model found nothing malicious, but part of the evidence was left out to stay within a size limit, or a submission could not be read. |
+| Benign | The model classified the participation as benign and received the complete evidence. |
 | Failed analyses | Participations that produced no verdict at all. |
+
+When several verdicts apply, the first one in this order wins: *Manipulation attempts*, *Malicious*, *Incompletely
+checked*, *Benign*. A manipulation attempt is found without the model, so it is reported even if the model could not
+be asked or did not answer; such a participation counts as analysed, not as failed.
 
 The critical relationship: *Analyzed* plus *Failed* is what the run got through. A run with a large *Failed* count and
 zero *Malicious* is **not** a clean result, it is an incomplete one.
@@ -164,6 +175,7 @@ model was unreachable", and those two lead to opposite conclusions.
 | Repository could not be read | The repository, a snapshot, or the diff could not be produced. The participation was **not** examined. | Re-run for the affected window. If it persists, report it to your administrator. |
 | Analysis model did not respond in time | The model exceeded the configured timeout, after the transport retries. | Re-run, ideally with a narrower scope or at a quieter time. |
 | Analysis model rate limit reached | The endpoint rejected the request with a rate limit, after the transport retries. | Re-run later with a narrower scope. Tell your administrator if it happens routinely. |
+| Analysis model rejected the API key (missing or wrong) | The endpoint answered with HTTP 401 or 403. The run stopped at the first such participation, and the ones it did not reach are counted here too. | Report it to your administrator; the API key is missing, wrong, or not authorised for the model. Re-run once it is fixed. |
 | Analysis model returned an unusable answer | The model did answer, but no valid verdict could be extracted from its response, so the participation has no classification. | Re-run. If it repeats, the model or its configuration is the problem: report it. |
 | Analysis model could not be reached | Any other error while calling the model. | Report it to your administrator; this is usually a configuration or network problem. |
 | Other failure | Anything else, including a run that aborted before it reached individual participations. | Check the failure details block, then report it. |
@@ -176,13 +188,26 @@ model was unreachable", and those two lead to opposite conclusions.
 
 ### Failure details
 
-One entry per failed participation, with its ID and the technical reason. A *batch-level failure* entry means the run
-aborted as a whole rather than on individual participations.
+One entry per failed participation, with its ID, its category and the technical reason. A *batch-level failure* entry
+stands for participations the run never reached rather than for a single one.
 
-Be careful with the failure count in that case. If the run aborted after the candidate participations had been
-collected, the count reflects all of them. If it aborted while they were still being collected, the count is `1`,
-even though nothing at all was analysed. A batch-level failure therefore never tells you how many participations went
-unchecked; assume the entire window did.
+There are two causes. If the model endpoint rejected the API key, the entry says how many participations were left
+out, and the failure count includes them. If the run aborted as a whole, for example because more participations
+qualified while they were being collected than the participation limit allows, the failure count is the number of
+candidates seen up to that point, which for the participation limit is at least one more than the limit. Either way,
+nothing in such a run is clean: repeat it for the affected window.
+
+### Manipulation attempts
+
+For each participation containing an imitated fence marker, the email contains a deep link into its submissions view
+and the places where the marker was found: file, line and the snapshot in which it first appeared, or *File path* when
+the file name itself contains it. Up to ten places are listed, followed by how many more there are. Markers that the
+exercise template already contains are not attributed to the student.
+
+The model is still asked whenever there is a history to show it. Its classification and rationale are shown below the
+places as additional information, or the reason there is no assessment. The finding does not depend on that answer: imitating the markers only makes sense as an
+attempt to steer the automated review, so look at those places first. It is still not proof of an attack on the build
+infrastructure.
 
 ### Flagged participations
 
@@ -191,6 +216,15 @@ participation, plus the model's rationale. This is the part you act on.
 
 A flagged participation without a working link can happen if the participation could not be resolved to an exercise.
 The entry is then omitted from the link list, which is logged on the server.
+
+### Incompletely checked participations
+
+For each participation the model found benign while part of its evidence had been left out, the email lists which
+limit caused the omission, the affected file, and the affected snapshot or the final state compared with the exercise
+template, again up to ten entries. The benign classification only covers what the model received. Review the omitted
+parts yourself, especially when a participation adds large or many files: padding a submission is a way of pushing
+the relevant change out of the model's view. The [exercise page](/instructor/exercises/deimos#size-limits-and-truncation)
+describes the limits.
 
 ## Verifying a flagged participation
 
@@ -307,8 +341,9 @@ process handling produce false positives by their nature.
 **The analysed code is written by the people the analysis is meant to catch.** This is an adversarial setting. The
 prompts fence student content between a random per-request marker and instruct the model to treat that region strictly
 as evidence rather than as instructions, and text that tries to steer the classification is itself weighed as a
-signal. None of that makes prompt injection impossible. A confident-sounding rationale is not proof that the model was
-not manipulated.
+signal. Text imitating the fence markers is reported as a manipulation attempt without relying on the model. None of
+that makes prompt injection impossible. A confident-sounding rationale is not proof that the model was not
+manipulated.
 
 **Coverage is bounded by what Artemis observed.** The history is reconstructed from submission records, not by walking
 the git commit graph, and the payload sent to the model is size-limited. Details are in
@@ -328,11 +363,12 @@ between raters and between institutions, so the rates above should be read as in
 | Symptom | Likely cause |
 | --- | --- |
 | No analysis button on the assessment dashboard | Module not loaded, feature toggle off, you are not an instructor in this course, or you are on the assessment dashboard of an exam rather than of the course. |
-| Submit stays disabled | Both dates not set, start after end, or the window exceeds 31 days. The inline message says which. |
-| The request is rejected with a limit error | The window contains more than 5000 participations. Narrow it, or switch to exercise scope. |
+| Submit stays disabled | Both dates not set, start after end, or the window exceeds the configured maximum (31 days by default). The inline message says which. |
+| The request is rejected with a limit error | The window contains more participations than the configured limit (5000 by default). Narrow it, or switch to exercise scope. |
 | The trigger fails with a queue message | The background executor is saturated. Wait, then trigger again; nothing was queued. |
 | No email arrives | The run may still be executing. If it never arrives, the course or exercise could not be resolved for the email, or mail delivery is broken. Ask your administrator to check the server log for the run. |
 | Everything failed with one category | See the failure table above. Anything other than *Nothing to analyze* means the run must be repeated. |
+| Almost everything failed with *Analysis model rejected the API key* | The API key is missing or wrong. The run stopped early; ask your administrator to fix the key, then repeat it. |
 | An implausible share of participations is flagged | Most likely an over-sensitive model. Report it to your administrator with the numbers from the email; see [How reliable is it](#how-reliable-is-it). |
 | A run takes far longer than expected | Either the window covers many participations, or the configured model is slow. Both are worth raising with your administrator before you repeat the run. |
 

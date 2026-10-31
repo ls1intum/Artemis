@@ -16,7 +16,7 @@
                 "validation": {
                     "required": "Please select both start and end date.",
                     "order": "The start date must be before or equal to the end date.",
-                    "window": "The selected time window exceeds the allowed window of 31 days."
+                    "window": "The selected time window exceeds the allowed window of {{ maxWindowDays }} days."
                 }
             },
             "trigger": {
