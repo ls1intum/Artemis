@@ -771,7 +771,9 @@ including helpers placed inside `e2e/`; only changed spec files can select thems
 Entries in `runAllTestsPatterns` also require the full suite. Cross-cutting server modules (core, account,
 exercise, local CI, local VC, and build agent) and client core/shared code have the same full-suite fallback.
 A mapped Java API change in a domain such as quiz selects that domain's E2E tests plus the smoke specs;
-unknown source paths never degrade to smoke-only coverage.
+unknown source paths never degrade to smoke-only coverage. Mappings must also include cross-module
+consumers: lecture changes select atlas workflows (including lecture-unit completion and mastery)
+and the course channel, tab, management and formatted-editor workflows that consume lectures.
 
 **Adding tests for a new module:** add an entry to `mappings` in `e2e-test-mapping.json` and add the test path(s) to `allTestPaths`.
 

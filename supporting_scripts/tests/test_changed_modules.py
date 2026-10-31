@@ -331,6 +331,16 @@ class ChangedModulesTest(unittest.TestCase):
         self.change(f"{MAIN}/alpha/service/AlphaService.java")
         self.assertEqual(self.selected(), "")
 
+    def test_global_scanners_count_toward_the_selected_test_footprint(self):
+        # A leaf controller has no import edge to runtime/global scanners.
+        self.java(MAIN, "delta/web/PlantUmlResource.java")
+        for number in range(8):
+            self.java(TEST, f"core/GlobalScanner{number}Test.java")
+        self.commit()
+        self.git("branch", "-f", "base", "HEAD")
+        self.change(f"{MAIN}/delta/web/PlantUmlResource.java")
+        self.assertEqual(self.selected(), "")
+
     def test_no_changes_falls_back_to_full(self):
         self.assertEqual(self.selected(), "")
 

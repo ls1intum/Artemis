@@ -295,7 +295,14 @@ def select(base_ref):
         source.path for source in sources
         if source.path.startswith(ROOTS[1]) and re.search(r"(?:Test|Tests|IT)\.java$", source.path)
     }
-    selected_test_classes = {path for path in test_classes if owner(path) in modules | {"shared"}}
+    # Match gradle/test.gradle's mandatory global checks, including dynamic scanners without
+    # import edges. Count their cost before replacing the full seven-shard matrix with one job.
+    selected_test_classes = {
+        path for path in test_classes
+        if owner(path) in modules | {"shared", "core"}
+        or "/architecture/" in path
+        or path.endswith("/videosource/service/GocastLoggingSafetyTest.java")
+    }
     if not test_classes or len(selected_test_classes) * 2 >= len(test_classes):
         raise FullSuite("selected tests cover at least half the server test classes")
     return ",".join(sorted(modules))

@@ -232,19 +232,24 @@ relative to the merge base with the actual PR target; missing history falls back
 
 - **Server:** `get_changed_modules.sh` delegates to the Python source dependency selector. It follows
   consumers of changed types through imports, same-package references and inheritance, then runs tests
-  for the resulting modules. It considers both the base and current tree, including deleted sources.
+  for the resulting modules plus core/shared, architecture packages and the Gocast handler guard.
+  These global checks discover consumers without static import edges. Their classes count toward the
+  full-suite fallback threshold. It considers both the base and current tree, including deleted sources.
   Shared contracts, core/configuration, dynamic dependencies, unknown inputs and broad selections run
   the full seven-shard suite. Planning happens on a public runner before allocating the test runners.
 - **Client:** `pnpm run test:ci:affected --base-ref origin/develop` expands changed Angular templates
   and styles to their TypeScript owners, including Sass imports, then uses Vitest's transitive dependency
-  graph for both ordinary and Monaco specs. The job prints the selected specs. Shared inputs, unsupported
+  graph for both ordinary and Monaco specs. Specs importing Node's filesystem APIs always run because
+  source reads do not create graph edges. These guards do not suppress the full-suite fallback when the
+  changed source has no related specs. The job prints the selected specs. Shared inputs, unsupported
   resources, deletions/renames, graph failures or changes with no related specs use `test:ci` instead.
   Strict TypeScript compilation and custom ESLint-rule tests still run. A selected test failure fails;
   it does not retry as a full suite.
 - **E2E:** ordinary PRs run mapped specs plus login, logout and system-health smoke specs. Phase 2 is
   intentionally omitted in this mode. Shared or unmapped inputs and selector failures require the full
   suite; the reporter still rejects missing expected phases. Full mode retains the Phase 1/Phase 2
-  fail-fast path where applicable, or runs everything in one job.
+  fail-fast path where applicable, or runs everything in one job. Mappings include cross-module workflows;
+  lecture changes also select atlas and course consumers.
 
 Affected tests keep JUnit results and diagnostics but omit whole-project coverage generation,
 thresholds and uploads. Both internal and fork PR reporters remove stale coverage tables when a

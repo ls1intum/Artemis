@@ -29,7 +29,8 @@ It prints five `OUTPUT:` lines. The ones that matter:
 - `REMAINING_TESTS` contains the rest of the suite, including for spec-only changes. Computing this
   set does not mean CI ran it. Ordinary eligible internal PRs run Phase 1 only and intentionally
   omit Phase 2. Full PR mode (`run_full_suite=true` on the reusable workflow) runs Phase 2 after
-  Phase 1 passes its gate. Locally, use the selected scope unless a full run is required.
+  Phase 1 passes its gate. Locally, use the selected scope unless a full run is required. Module mappings include cross-module
+  consumers; for example, lecture changes also select atlas and course workflows.
 
 Two things about the input:
 

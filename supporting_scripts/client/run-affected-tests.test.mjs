@@ -365,7 +365,7 @@ test('Vitest graph selection executes indirect consumers and disables inherited 
     });
     const messages = [];
     const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: ['source.ts'], log: (message) => messages.push(message) });
-    assert.deepEqual(result, { selected: 1, success: true });
+    assert.deepEqual(result, { selected: 1, relatedSelected: 1, success: true });
     assert.ok(messages.includes('  consumer.spec.ts'));
     assert.ok(!messages.includes('  unrelated.spec.ts'));
     assert.equal(fs.existsSync(path.join(root, 'coverage')), false);
@@ -376,6 +376,47 @@ test('graph discovery restores the environment before any full-suite fallback pr
     const { root } = fixture({ 'vitest.fixture.config.mjs': "export default { test: { include: ['**/*.spec.ts'] } };" });
     const before = [process.env.VITEST, process.env.TEST, process.env.NODE_ENV];
     const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: ['source.ts'], log: () => {} });
-    assert.deepEqual(result, { selected: 0, success: true });
+    assert.deepEqual(result, { selected: 0, relatedSelected: 0, success: true });
     assert.deepEqual([process.env.VITEST, process.env.TEST, process.env.NODE_ENV], before);
 });
+
+test('course-tab source guardrails run alongside graph-related lecture specs', async () => {
+    const source = 'lecture/shared/course-lectures/course-lectures.component.ts';
+    const guard = 'course/overview/services/course-tab-refresh-coverage.spec.ts';
+    const { root } = fixture({
+        'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] } };",
+        [source]: 'export const refresh = true;',
+        'lecture/course-lectures.spec.ts': "import { refresh } from './shared/course-lectures/course-lectures.component'; test('refresh', () => expect(refresh).toBe(true));",
+        [guard]: `import { readFileSync as readSource } from 'node:fs'; test('course tab wiring', () => expect(readSource(${JSON.stringify(path.join('PLACEHOLDER', source))}, 'utf8')).toContain('refresh'));`,
+        'unrelated.spec.ts': "throw new Error('Unrelated spec was executed');",
+    });
+    const guardPath = path.join(root, guard);
+    fs.writeFileSync(guardPath, fs.readFileSync(guardPath, 'utf8').replace('PLACEHOLDER', root));
+    const messages = [];
+    const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: [source], log: (message) => messages.push(message) });
+    assert.equal(result.success, true);
+    assert.equal(result.selected, 2);
+    assert.ok(messages.includes(`  ${guard}`));
+    assert.doesNotMatch(messages.join('\n'), /  unrelated.spec.ts/);
+    assert.match(fs.readFileSync(path.join(root, 'build/test-results/vitest/junit.xml'), 'utf8'), /course tab wiring/);
+});
+
+test('filesystem guardrails do not mask an absent import graph', async () => {
+    const context = executionContext({ runRelatedProject: async () => ({ selected: 3, relatedSelected: 0, success: true }) });
+    assert.equal(await executePlan({ mode: 'affected', sources: [component] }, context), 0);
+    assert.deepEqual(context.commands, [
+        ['run', 'prebuild'],
+        ['run', 'test:ci'],
+    ]);
+});
+
+for (const moduleName of ['node:fs/promises', 'fs']) {
+    test(`includes guardrails importing ${moduleName} without an ordinary related spec`, async () => {
+        const { root } = fixture({
+            'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] } };",
+            'guard.spec.ts': `import * as filesystem from '${moduleName}'; test('guardrail', () => expect(filesystem.readFile).toBeTypeOf('function'));`,
+        });
+        const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: ['uncovered.ts'], log: () => {} });
+        assert.deepEqual(result, { selected: 1, relatedSelected: 0, success: true });
+    });
+}

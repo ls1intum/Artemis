@@ -60,6 +60,41 @@ describe('E2E selector against real commit diffs', () => {
         assert.ok(result.REMAINING_TESTS.includes('e2e/exercise/text/'));
     });
     for (const file of [
+        'src/main/java/de/tum/cit/aet/artemis/lecture/service/LectureUnitService.java',
+        'src/main/webapp/app/lecture/shared/course-lectures/course-lectures.component.ts',
+    ]) {
+        it(`includes lecture consumers in atlas and course workflows for ${file}`, () => {
+            const { directory, commit, select } = repository();
+            for (const spec of [
+                'lecture/Lecture.spec.ts',
+                'atlas/StudentCompetencyProgressView.spec.ts',
+                'course/CourseChannelMessages.spec.ts',
+                'course/CourseTabs.spec.ts',
+                'course/CourseManagement.spec.ts',
+                'course/FormattedMessageEditor.spec.ts',
+            ]) {
+                put(directory, `src/test/playwright/e2e/${spec}`);
+            }
+            put(directory, file);
+            commit();
+            const result = select();
+            assert.equal(result.RUN_ALL_TESTS, 'false');
+            for (const testPath of [
+                'e2e/lecture/',
+                'e2e/atlas/',
+                'e2e/course/CourseChannelMessages.spec.ts',
+                'e2e/course/CourseTabs.spec.ts',
+                'e2e/course/CourseManagement.spec.ts',
+                'e2e/course/FormattedMessageEditor.spec.ts',
+            ]) {
+                assert.ok(result.RELEVANT_TESTS.split(' ').includes(testPath), `Missing ${testPath}`);
+                assert.ok(!result.REMAINING_TESTS.split(' ').includes(testPath), `Still deferred: ${testPath}`);
+            }
+            assert.ok(result.RELEVANT_TESTS.includes('e2e/Login.spec.ts'));
+            assert.ok(result.REMAINING_TESTS.split(' ').includes('e2e/exercise/'));
+        });
+    }
+    for (const file of [
         'src/main/java/de/tum/cit/aet/artemis/newmodule/Endpoint.java',
         'src/main/webapp/app/shared/table.ts',
         'src/main/java/de/tum/cit/aet/artemis/core/service/distributed/Provider.java',

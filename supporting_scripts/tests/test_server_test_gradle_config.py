@@ -15,6 +15,45 @@ import unittest
 REPOSITORY = Path(__file__).resolve().parents[2]
 
 
+def architecture_test_classes(test_root):
+    """Follow inherited JUnit architecture tags, including intermediate test bases."""
+    sources = {}
+    for source in test_root.rglob("*.java"):
+        name = str(source.relative_to(test_root).with_suffix("")).replace("/", ".")
+        sources[name] = source.read_text()
+    tagged = {name for name, code in sources.items() if re.search(r'@Tag\(\s*"ArchitectureTest"\s*\)', code)}
+    parents = {}
+    for name, code in sources.items():
+        declaration = re.search(r"\bclass\s+\w+(?:\s*<[^{}]+>)?\s+extends\s+([\w.]+)", code)
+        if not declaration:
+            continue
+        parent = declaration[1]
+        imports = re.findall(r"\bimport\s+([\w.]+)\s*;", code)
+        qualified = next((value for value in imports if value.endswith("." + parent)), name.rpartition(".")[0] + "." + parent)
+        parents[name] = parent if parent in sources else qualified
+    while True:
+        inherited = {name for name, parent in parents.items() if parent in tagged} - tagged
+        if not inherited:
+            return sorted(tagged)
+        tagged.update(inherited)
+
+
+class ArchitectureInventoryTest(unittest.TestCase):
+    def test_inherited_architecture_tags_cross_package_boundaries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name, code in {
+                "core/TaggedBase.java": '@Tag("ArchitectureTest") class TaggedBase {}',
+                "core/Intermediate.java": 'class Intermediate extends TaggedBase {}',
+                "leaf/OutsideConventionTest.java": 'import core.Intermediate; class OutsideConventionTest extends Intermediate {}',
+                "leaf/UnrelatedTest.java": 'class UnrelatedTest {}',
+            }.items():
+                destination = root / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_text(code)
+            self.assertEqual(architecture_test_classes(root), ["core.Intermediate", "core.TaggedBase", "leaf.OutsideConventionTest"])
+
+
 class ServerTestGradleConfigTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -33,6 +72,10 @@ class ServerTestGradleConfigTest(unittest.TestCase):
             (root / "gradle").mkdir()
             (root / "gradle/jacoco.gradle").write_text("")
             production_config = str(REPOSITORY / "gradle/test.gradle").replace("'", "\\'")
+            # Guard future globally tagged tests as well as today's explicit scanner examples.
+            architecture_classes = architecture_test_classes(REPOSITORY / "src/test/java")
+            self.assertGreater(len(architecture_classes), 10)
+            inventory = ",".join(f"'{name}'" for name in sorted(architecture_classes))
             (root / "build.gradle").write_text("""
 plugins { id 'java' }
 configurations { mockitoAgent }
@@ -58,11 +101,28 @@ tasks.register('verifySelection') {
             assert matcher.matchesTest('de.tum.cit.aet.artemis.alpha.service.NestedTest', 'method')
             assert matcher.matchesTest('de.tum.cit.aet.artemis.shared.RootTest', 'method')
             assert !matcher.matchesTest('de.tum.cit.aet.artemis.beta.OtherTest', 'method')
+            [ARCHITECTURE_INVENTORY].each { name ->
+                assert matcher.matchesTest(name, 'method') : "Missing tagged architecture check: $name"
+            }
+            // A leaf controller is discovered by these scanners, without a Java import edge.
+            for (name in [
+                'core.authorization.AuthorizationArchitectureTest',
+                'core.authorization.AuthorizationGeneralAndIndependentEndpointTest',
+                'core.service.featureusage.FeatureUsageAnnotationTest',
+                'core.service.featureusage.FeatureUsageInventoryTest',
+                'core.service.distributed.DistributedDataSurfaceTest',
+                'beta.architecture.BetaArchitectureTest',
+                'localci.architecture.LocalCITestArchitectureTest',
+                'videosource.service.GocastLoggingSafetyTest'
+            ]) {
+                assert matcher.matchesTest("de.tum.cit.aet.artemis.$name", 'method') : "Missing global check: $name"
+            }
+
         }
         println('Verified server test filters')
     }
 }
-""".replace("PRODUCTION_CONFIG", production_config))
+""".replace("PRODUCTION_CONFIG", production_config).replace("ARCHITECTURE_INVENTORY", inventory))
             for arguments in ([], ["-DincludeModules=alpha"], ["-DincludeTags=nightly-lti"]):
                 with self.subTest(arguments=arguments):
                     result = subprocess.run(

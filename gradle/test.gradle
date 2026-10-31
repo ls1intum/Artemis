@@ -169,12 +169,16 @@ test {
         }
     } else {
         useJUnitPlatform()
-        // Always execute "shared"-folder when executing module-specifc tests
-        includedModules += "shared"
+        // Core checks scan controllers, feature usage and cache types across module boundaries.
+        // Architecture checks and Gocast's handler lookup also have no static import edge from a
+        // changed leaf controller. Keep the ordinary nightly/IT exclusions above.
+        includedModules += ["shared", "core"]
         filter { testFilter ->
             includedModules.each { val ->
                 testFilter.includeTestsMatching("de.tum.cit.aet.artemis.$val.*")
             }
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.*.architecture.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.videosource.service.GocastLoggingSafetyTest")
         }
     }
     testClassesDirs = testing.suites.test.sources.output.classesDirs

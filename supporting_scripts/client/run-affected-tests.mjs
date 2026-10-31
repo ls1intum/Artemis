@@ -204,6 +204,7 @@ export async function runRelatedProject({ root, configFile, sources, log = conso
     root = fs.realpathSync(root);
     let context;
     let specifications;
+    let relatedSelected;
     try {
         try {
             const { createVitest } = await import('vitest/node');
@@ -219,14 +220,27 @@ export async function runRelatedProject({ root, configFile, sources, log = conso
                 outputFile: path.resolve(root, `build/test-results/vitest/${configFile.includes('monaco') ? 'monaco-' : ''}junit.xml`),
             });
             specifications = await context.getRelevantTestSpecifications();
+            relatedSelected = specifications.length;
+            // Filesystem reads do not create Vite import edges to the source being checked.
+            // Include these guardrails on every affected run, even when ordinary related specs exist.
+            const ts = await import('typescript');
+            const guards = (await context.globTestSpecifications()).filter((specification) =>
+                ts.preProcessFile(fs.readFileSync(specification.moduleId, 'utf8'), true, true).importedFiles.some(({ fileName }) => /^(?:node:)?fs(?:\/promises)?$/.test(fileName)),
+            );
+            context.config.related.push(...guards.map((specification) => specification.moduleId));
+            specifications = await context.getRelevantTestSpecifications();
         } catch (error) {
             return { selectionError: error };
         }
         log(`${configFile}: ${specifications.length} affected spec(s)`);
         for (const specification of specifications) log(`  ${path.relative(root, specification.moduleId)}`);
-        if (!specifications.length) return { selected: 0, success: true };
+        if (!specifications.length) return { selected: 0, relatedSelected, success: true };
         const result = await context.start();
-        return { selected: specifications.length, success: context.state.getCountOfFailedTests() === 0 && result.unhandledErrors.length === 0 && !process.exitCode };
+        return {
+            selected: specifications.length,
+            relatedSelected,
+            success: context.state.getCountOfFailedTests() === 0 && result.unhandledErrors.length === 0 && !process.exitCode,
+        };
     } finally {
         try {
             await context?.close();
@@ -264,7 +278,8 @@ export async function executePlan(
     for (const configFile of configs) {
         const result = await project({ root, configFile, sources: plan.sources, log });
         if (result.selectionError) return runFull(`Vitest graph selection failed: ${result.selectionError.message}`);
-        selected += result.selected;
+        // Guardrails must not mask the existing full-suite fallback for untested changed code.
+        selected += result.relatedSelected ?? result.selected;
         if (!result.success) return 1;
     }
     return selected ? 0 : runFull('No related specs were found for client changes');

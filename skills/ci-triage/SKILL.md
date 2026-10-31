@@ -32,7 +32,9 @@ nodes with Redis (Valkey) as distributed data provider. Compare their definition
 ## Check the validation scope
 
 Ordinary pull requests run affected server modules and related client specs. The server planner's
-summary lists its module selection; the client job prints every selected spec. Shared contracts,
+summary lists its module selection; global core/shared and architecture checks remain included, as does
+the Gocast handler guard. The client job prints every selected spec, including filesystem-reading
+guardrails whose source reads have no import edges. E2E mappings include known cross-module consumers. Shared contracts,
 configuration, missing history and ambiguous dependencies fall back to the full suite. Check the
 actual planner/helper output rather than assuming a PR always ran a subset.
 
