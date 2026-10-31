@@ -16,6 +16,7 @@ const sidebars: SidebarsConfig = {
                 'course-management/user-management',
                 'course-management/import-from-course',
                 'course-management/exports',
+                'course-management/global-search',
             ],
         },
         {
