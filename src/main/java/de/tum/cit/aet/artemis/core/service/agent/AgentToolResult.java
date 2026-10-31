@@ -44,6 +44,16 @@ public record AgentToolResult(String text, boolean isError) {
     }
 
     /**
+     * Returns complete single-resource JSON so a read/edit/update round trip cannot lose data through truncation.
+     *
+     * @param response the answer of the single-resource read
+     * @return the complete successful body, or the usual error advice
+     */
+    public static AgentToolResult complete(AgentApiResponse response) {
+        return response.isSuccess() && response.body() != null ? new AgentToolResult(response.body(), false) : of(response);
+    }
+
+    /**
      * The explanation in a problem document. Artemis puts the sentence for people in the title and an error key in the message, so
      * both are reported, without the generic name of the status.
      */

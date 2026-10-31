@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,18 +31,19 @@ import tools.jackson.databind.node.ObjectNode;
 import de.tum.cit.aet.artemis.account.repository.PersonalAccessTokenRepository;
 import de.tum.cit.aet.artemis.account.util.PersonalAccessTokenTestUtil;
 import de.tum.cit.aet.artemis.account.util.PersonalAccessTokenTestUtil.SavedToken;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
  * Programming exercises are created and changed with a personal access token only while they are a draft that no student has started.
  */
-class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
+class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "agentprog";
 
@@ -51,7 +54,7 @@ class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingI
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private ProgrammingExerciseRepository exerciseRepository;
+    private ProgrammingExerciseTestRepository exerciseRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -75,7 +78,7 @@ class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingI
     }
 
     private void releaseAt(ZonedDateTime releaseDate) {
-        exercise.setReleaseDate(releaseDate);
+        exercise.setReleaseDate(releaseDate.truncatedTo(ChronoUnit.MILLIS));
         exercise.setStartDate(null);
         // The dates of the fixture lie before a release date in the future, which an update would reject as invalid.
         exercise.setDueDate(null);
@@ -145,11 +148,74 @@ class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingI
 
         JsonNode update = callTool(token, "update_programming_exercise", Map.of("exercise", readExercise));
 
-        // The full update needs the ProgrammingLanguageFeatureService, which only the LocalCI and LocalVC profiles provide, so this class
-        // stops short of it. It is enough that the body was read as the update shape and passed the course and date checks: it did not
-        // fail as an invalid argument and was not rejected with a 400.
+        assertThat(update.at("/result/isError").asBoolean()).isFalse();
         String text = update.at("/result/content/0/text").asString();
         assertThat(text).doesNotContain("Invalid arguments").doesNotContain("courseId").doesNotContain("HTTP 400");
+    }
+
+    @Test
+    void aLargeExerciseIsReturnedAsCompleteJsonAndCanBeUpdated() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.PROGRAMMING_DRAFT);
+        releaseAt(ZonedDateTime.now().plusDays(10));
+        String problem = "A long problem statement. ".repeat(1_000);
+        exercise.setProblemStatement(problem);
+        exercise = exerciseRepository.save(exercise);
+
+        JsonNode read = callTool(token, "get_exercise", Map.of("type", "programming", "exerciseId", exercise.getId()));
+        assertThat(read.at("/result/isError").asBoolean()).isFalse();
+        ObjectNode body = (ObjectNode) JsonObjectMapper.get().readTree(read.at("/result/content/0/text").asString());
+        assertThat(body.path("problemStatement").asString()).isEqualTo(problem);
+        body.put("courseId", body.at("/course/id").asLong());
+        body.put("title", "Updated large exercise");
+
+        JsonNode update = callTool(token, "update_programming_exercise", Map.of("exercise", body));
+        assertThat(update.at("/result/isError").asBoolean()).isFalse();
+        var stored = exerciseRepository.findByIdElseThrow(exercise.getId());
+        assertThat(stored.getTitle()).isEqualTo("Updated large exercise");
+        assertThat(stored.getProblemStatement()).isEqualTo(problem);
+    }
+
+    @Test
+    void changingOneTimelineDatePreservesOmittedDatesAndAssessmentSettings() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.PROGRAMMING_DRAFT);
+        releaseAt(ZonedDateTime.now().plusDays(10));
+        exercise.setDueDate(exercise.getReleaseDate().plusDays(1));
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise.setAssessmentDueDate(exercise.getReleaseDate().plusDays(5));
+        exercise.setExampleSolutionPublicationDate(exercise.getReleaseDate().plusDays(6));
+        exercise = exerciseRepository.save(exercise);
+        ZonedDateTime newDueDate = exercise.getReleaseDate().plusDays(2);
+
+        JsonNode result = callTool(token, "set_programming_timeline",
+                Map.of("timeline", Map.of("id", exercise.getId(), "releaseDate", exercise.getReleaseDate().toString(), "dueDate", newDueDate.toString())));
+
+        assertThat(result.at("/result/isError").asBoolean()).as(result.toString()).isFalse();
+        var stored = exerciseRepository.findByIdElseThrow(exercise.getId());
+        assertThat(stored.getDueDate()).isEqualTo(newDueDate);
+        assertThat(stored.getReleaseDate()).isEqualTo(exercise.getReleaseDate());
+        assertThat(stored.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(stored.getAssessmentDueDate()).isEqualTo(exercise.getAssessmentDueDate());
+        assertThat(stored.getExampleSolutionPublicationDate()).isEqualTo(exercise.getExampleSolutionPublicationDate());
+        // The server derives this date from the automatic-build configuration, which this fixture leaves disabled.
+        assertThat(stored.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+    }
+
+    @Test
+    void anExplicitNullClearsADateWithoutClearingOmittedDates() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.PROGRAMMING_DRAFT);
+        releaseAt(ZonedDateTime.now().plusDays(10));
+        exercise.setExampleSolutionPublicationDate(exercise.getReleaseDate().plusDays(6));
+        exercise = exerciseRepository.save(exercise);
+        Map<String, Object> timeline = new HashMap<>();
+        timeline.put("id", exercise.getId());
+        timeline.put("exampleSolutionPublicationDate", null);
+
+        JsonNode result = callTool(token, "set_programming_timeline", Map.of("timeline", timeline));
+
+        assertThat(result.at("/result/isError").asBoolean()).as(result.toString()).isFalse();
+        var stored = exerciseRepository.findByIdElseThrow(exercise.getId());
+        assertThat(stored.getExampleSolutionPublicationDate()).isNull();
+        assertThat(stored.getReleaseDate()).isEqualTo(exercise.getReleaseDate());
     }
 
     @Test
