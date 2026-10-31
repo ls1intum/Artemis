@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -59,8 +58,6 @@ public class StructuralOracleSeeder {
     private static final String PACKAGE_PLACEHOLDER = "${packageName}";
 
     private static final Pattern PACKAGE_PLACEHOLDER_DECLARATION = Pattern.compile("(?m)^\\s*package\\s+" + Pattern.quote(PACKAGE_PLACEHOLDER) + "\\s*;\\s*\\n");
-
-    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("(?m)^\\s*package\\s+([\\w.]+)\\s*;");
 
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
@@ -636,19 +633,6 @@ public class StructuralOracleSeeder {
 
     private enum StructuralAssetOwnership {
         NONE, HYPERION_MANAGED, UNMANAGED,
-    }
-
-    private static String parsePackage(Map<String, String> solutionFiles) {
-        for (Map.Entry<String, String> entry : solutionFiles.entrySet()) {
-            if (!entry.getKey().endsWith(".java")) {
-                continue;
-            }
-            Matcher matcher = PACKAGE_DECLARATION.matcher(entry.getValue());
-            if (matcher.find()) {
-                return matcher.group(1);
-            }
-        }
-        return "";
     }
 
     /** An oracle with no class diffs serialises to an empty JSON array, which means there is nothing to seed. */
