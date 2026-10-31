@@ -194,6 +194,37 @@ describe('IrisBaseChatbotComponent', () => {
         expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
     });
 
+    describe('initial focus', () => {
+        let focusedFixture: ComponentFixture<IrisBaseChatbotComponent>;
+        let outside: HTMLButtonElement;
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            outside = document.body.appendChild(document.createElement('button'));
+            focusedFixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            focusedFixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            document.body.appendChild(focusedFixture.nativeElement);
+            focusedFixture.detectChanges();
+        });
+
+        afterEach(() => {
+            focusedFixture.nativeElement.remove();
+            outside.remove();
+            vi.useRealTimers();
+        });
+
+        it('focuses the message input when nothing else is focused', () => {
+            vi.advanceTimersByTime(150);
+            expect(document.activeElement).toBe(focusedFixture.nativeElement.querySelector('textarea'));
+        });
+
+        it('keeps the focus on an element outside the chat, e.g. the tab that opened it', () => {
+            outside.focus();
+            vi.advanceTimersByTime(150);
+            expect(document.activeElement).toBe(outside);
+        });
+    });
+
     describe('when user has not accepted LLM usage policy', () => {
         it('should set userAccepted to undefined', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);

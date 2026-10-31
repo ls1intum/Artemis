@@ -4,12 +4,12 @@
          its first panel are never destroyed, so the left panel's projected content (e.g. the modeling editor) keeps
          its in-memory state instead of being recreated and reset on collapse. -->
     <p-splitter
-        [pt]="{ gutter: { 'data-testid': 'splitter-gutter' }, panel: { 'data-testid': 'splitter-panel' } }"
+        [pt]="passThrough"
         class="resizable-panels-splitter w-100 h-100"
         [class.right-collapsed]="isRightPanelCollapsed()"
         layout="horizontal"
         [panelSizes]="panelSizesForSplitter()"
-        [minSizes]="[0, 0]"
+        [minSizes]="[effectiveLeftMinSizePercent(), 0]"
         [gutterSize]="gutterSize"
         [stateKey]="storageKey() ?? null"
         stateStorage="local"
@@ -17,7 +17,8 @@
     >
         <ng-template #panel>
             @if (leftPanel()) {
-                <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3 module-bg">
+                <!-- A flush panel frames its content itself (the editors have rounded panels of their own), so a white card behind it would show in their corners -->
+                <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3" [class.module-bg]="!flushLeftPanel()">
                     <!-- cdkScrollable registers the panel with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
                     <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel()" cdkScrollable>
                         <ng-container [ngTemplateOutlet]="leftPanel()!.templateRef" />
@@ -27,22 +28,30 @@
         </ng-template>
         <ng-template #panel>
             @if (!isRightPanelCollapsed()) {
-                <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3 module-bg">
-                    <div class="right-panel-header d-flex align-items-center">
-                        <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="right-panel-tabs flex-grow-1">
-                            <p-tablist>
+                <div class="right-panel d-flex flex-column w-100 h-100 overflow-hidden rounded-3 module-bg">
+                    <div class="right-panel-header d-flex">
+                        <tumaet-ui-tabs
+                            class="right-panel-tabs flex-grow-1"
+                            size="small"
+                            selectedColor="text"
+                            surface="muted"
+                            [value]="activeRightIndex()"
+                            (valueChange)="setActiveRight($event)"
+                        >
+                            <!-- The panel header draws the line below the tabs, so the tab list's own line would double it. -->
+                            <tumaet-ui-tab-list style="border-bottom: 0">
                                 @for (panel of rightPanels(); track panel; let i = $index) {
-                                    <p-tab [value]="i" data-testid="resizable-panel-tab">
+                                    <tumaet-ui-tab [value]="i" data-testid="resizable-panel-tab">
                                         @if (panel.iconTemplate()) {
                                             <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
                                         } @else if (panel.icon()) {
                                             <fa-icon [icon]="panel.icon()!" />
                                         }
                                         <span [jhiTranslate]="panel.label()"></span>
-                                    </p-tab>
+                                    </tumaet-ui-tab>
                                 }
-                            </p-tablist>
-                        </p-tabs>
+                            </tumaet-ui-tab-list>
+                        </tumaet-ui-tabs>
                         <button
                             type="button"
                             class="right-panel-collapse-button"
@@ -65,7 +74,6 @@
                             type="button"
                             class="collapsed-right-panel-tab"
                             data-testid="collapsed-panel-tab"
-                            [class.active]="activeRightIndex() === i"
                             (click)="expandRightPanel(i)"
                             [attr.aria-label]="panel.label() | artemisTranslate"
                         >
@@ -84,20 +92,20 @@
     <!-- ── Narrow mode: single tabbed panel, no resize ────────────────── -->
     <div class="d-flex flex-column h-100 w-100 overflow-hidden rounded-3 module-bg">
         @if (showCombinedTabHeader()) {
-            <p-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="flex-shrink-0">
-                <p-tablist>
+            <tumaet-ui-tabs class="flex-shrink-0" size="small" selectedColor="text" surface="muted" [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)">
+                <tumaet-ui-tab-list>
                     @for (panel of panels(); track panel; let i = $index) {
-                        <p-tab [value]="i" data-testid="resizable-panel-tab">
+                        <tumaet-ui-tab [value]="i" data-testid="resizable-panel-tab">
                             @if (panel.iconTemplate()) {
                                 <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
                             } @else if (panel.icon()) {
                                 <fa-icon [icon]="panel.icon()!" />
                             }
                             <span [jhiTranslate]="panel.label()"></span>
-                        </p-tab>
+                        </tumaet-ui-tab>
                     }
-                </p-tablist>
-            </p-tabs>
+                </tumaet-ui-tab-list>
+            </tumaet-ui-tabs>
         }
         <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel() || activeSingleIndex() !== 0" cdkScrollable>
             @if (panels()[activeSingleIndex()]) {
