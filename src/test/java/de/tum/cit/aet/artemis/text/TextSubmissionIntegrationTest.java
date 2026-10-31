@@ -46,9 +46,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueRowDTO;
 import de.tum.cit.aet.artemis.exercise.dto.DetailedResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
@@ -733,9 +733,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         var rows = request.getList(
-                "/api/exercise/exercises/" + releasedTextExercise.getId()
-                        + "/assessment-queue?page=0&pageSize=20&sortingOrder=ASCENDING&sortedColumn=participationId&filterProp=All",
-                HttpStatus.OK, ParticipationManagementDTO.class);
+                "/api/exercise/exercises/" + releasedTextExercise.getId() + "/assessment-queue?page=0&pageSize=20&sortingOrder=ASCENDING&sortedColumn=participationId",
+                HttpStatus.OK, AssessmentQueueRowDTO.class);
         assertThat(rows).singleElement().satisfies(row -> assertThat(row.olderAssessmentDrafts()).singleElement()
                 .satisfies(draft -> assertThat(draft).extracting("submissionId", "resultId").containsExactly(original.getId(), draftResultId)));
     }

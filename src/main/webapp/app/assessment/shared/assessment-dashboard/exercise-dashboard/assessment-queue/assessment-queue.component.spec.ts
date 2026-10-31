@@ -11,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
+import { AssessmentQueueRowDTO } from 'app/exercise/participation/assessment-queue-dto.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -23,7 +23,7 @@ describe('AssessmentQueueComponent', () => {
     let participationService: ParticipationService;
 
     const exercise = { id: 7, type: ExerciseType.PROGRAMMING, teamMode: true, course: { id: 3 } } as Exercise;
-    const teamRow = { participationId: 11, submissionCount: 1, submissionId: 12, teamId: 13, testRun: false, assessableCorrectionRounds: [0] } as ParticipationManagementDTO;
+    const teamRow = { participationId: 11, submissionCount: 1, submissionId: 12, teamId: 13, testRun: false, assessableCorrectionRounds: [0] } as AssessmentQueueRowDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -54,9 +54,8 @@ describe('AssessmentQueueComponent', () => {
             sortingOrder: SortingOrder.DESCENDING,
             sortedColumn: 'score',
             searchTerm: 'alpha',
-            filterProp: 'NoPracticeMode',
         });
-        expect(comp.rows()).toEqual([teamRow]);
+        expect(comp.rows()).toEqual([expect.objectContaining({ dto: teamRow })]);
         expect(comp.totalRecords()).toBe(1);
         expect(comp.isLoading()).toBe(false);
     });
@@ -76,16 +75,21 @@ describe('AssessmentQueueComponent', () => {
             assessableCorrectionRounds: [0],
             correctionRoundResults: [{ resultId: 1, correctionRound: 0, completionDate: dayjs(), ownedByCurrentUser: true }],
         };
-        comp.rows.set([row]);
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(of({ content: [row], totalElements: 1 }));
+        comp.loadPage({ pageIndex: 0, pageSize: 20 });
         expect(comp.hasAssessableSubmissions()).toBe(false);
-        expect(comp.lockedByAnotherTutor(row)).toBe(false);
-        expect(comp.lockedByAnotherTutor({ ...row, correctionRoundResults: [{ resultId: 2, correctionRound: 1, ownedByCurrentUser: false }] })).toBe(true);
+        expect(comp.rows()[0].lockedByAnotherTutor).toBe(false);
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(
+            of({ content: [{ ...row, correctionRoundResults: [{ resultId: 2, correctionRound: 1, ownedByCurrentUser: false }] }], totalElements: 1 }),
+        );
+        comp.loadPage({ pageIndex: 0, pageSize: 20 });
+        expect(comp.rows()[0].lockedByAnotherTutor).toBe(true);
     });
 
     it('ignores stale responses, completions and errors while a newer request is loading', () => {
-        const first = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();
-        const second = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();
-        const third = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();
+        const first = new Subject<{ content: AssessmentQueueRowDTO[]; totalElements: number }>();
+        const second = new Subject<{ content: AssessmentQueueRowDTO[]; totalElements: number }>();
+        const third = new Subject<{ content: AssessmentQueueRowDTO[]; totalElements: number }>();
         vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValueOnce(first).mockReturnValueOnce(second).mockReturnValueOnce(third);
         const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
         comp.loadPage({ pageIndex: 0, pageSize: 20 });
@@ -101,13 +105,22 @@ describe('AssessmentQueueComponent', () => {
         expect(comp.isLoading()).toBe(true);
         third.next({ content: [teamRow], totalElements: 1 });
         third.complete();
-        expect(comp.rows()).toEqual([teamRow]);
+        expect(comp.rows()).toEqual([expect.objectContaining({ dto: teamRow })]);
         expect(comp.totalRecords()).toBe(1);
         expect(comp.isLoading()).toBe(false);
     });
 
+    it('unsubscribes from a pending page request when destroyed', () => {
+        const response = new Subject<{ content: AssessmentQueueRowDTO[]; totalElements: number }>();
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(response);
+        comp.loadPage({ pageIndex: 0, pageSize: 20 });
+        expect(response.observed).toBe(true);
+        fixture.destroy();
+        expect(response.observed).toBe(false);
+    });
+
     it('reports errors from the latest request and clears its loading state', () => {
-        const response = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();
+        const response = new Subject<{ content: AssessmentQueueRowDTO[]; totalElements: number }>();
         vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(response);
         const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
         comp.loadPage({ pageIndex: 0, pageSize: 20 });
@@ -120,7 +133,6 @@ describe('AssessmentQueueComponent', () => {
         [false, false, false],
         [true, false, true],
         [false, true, true],
-        [undefined, false, false],
     ])('shows draft actions for owner %s and instructor %s: %s', async (ownedByCurrentUser, isAtLeastInstructor, visible) => {
         fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT, teamMode: false, isAtLeastInstructor });
         vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(
@@ -218,8 +230,8 @@ describe('AssessmentQueueComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]')).toBeNull();
     });
 
-    it('hides new assessment actions when the server omits an empty eligibility list', async () => {
-        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(of({ content: [{ ...teamRow, assessableCorrectionRounds: undefined }], totalElements: 1 }));
+    it('hides new assessment actions when the eligibility list is empty', async () => {
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(of({ content: [{ ...teamRow, assessableCorrectionRounds: [] }], totalElements: 1 }));
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -253,10 +265,7 @@ describe('AssessmentQueueComponent', () => {
         expect(searchSpy).not.toHaveBeenCalled();
         expect(comp.rows()).toEqual([
             expect.objectContaining({
-                submissionId: 12,
-                participationId: 11,
-                testRun: true,
-                correctionRoundResults: [expect.objectContaining({ resultId: 21, correctionRound: 0 })],
+                dto: expect.objectContaining({ submissionId: 12, testRun: true, correctionRoundResults: [expect.objectContaining({ resultId: 21, correctionRound: 0 })] }),
             }),
         ]);
     });
@@ -277,14 +286,14 @@ describe('AssessmentQueueComponent', () => {
             .mockReturnValueOnce(of([first, next]));
         const searchSpy = vi.spyOn(participationService, 'searchAssessmentQueue');
         comp.loadPage({ pageIndex: 0, pageSize: 20 });
-        expect(comp.rows()[0].assessableCorrectionRounds).toEqual([1]);
-        expect(comp.rows()[0].score).toBeUndefined();
-        expect(comp.state(comp.rows()[0])).toBe('notAssessed');
+        expect(comp.rows()[0].dto.assessableCorrectionRounds).toEqual([1]);
+        expect(comp.rows()[0].dto.score).toBeUndefined();
+        expect(comp.rows()[0].state).toBe('notAssessed');
         first.results!.push({ id: 22, correctionRound: 1, assessmentType: AssessmentType.MANUAL });
         comp.refresh();
         expect(examSpy).toHaveBeenLastCalledWith(ExerciseType.PROGRAMMING, 7, 1, true, instructor);
         expect(comp.rows()).toHaveLength(2);
-        expect(comp.state(comp.rows()[0])).toBe('inProgress');
+        expect(comp.rows()[0].state).toBe('inProgress');
         expect(searchSpy).not.toHaveBeenCalled();
     });
 
@@ -328,13 +337,23 @@ describe('AssessmentQueueComponent', () => {
 
     it('links to the repository, the commit history and the team in the management view', () => {
         expect(comp.repositoryLink(teamRow)).toEqual(['/course-management', '3', 'programming-exercises', '7', 'repository', 'USER', '11']);
-        expect(comp.commitHistoryLink(teamRow)).toEqual(['/course-management', '3', 'programming-exercises', '7', 'repository', 'USER', '11', 'commit-history']);
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(of({ content: [teamRow], totalElements: 1 }));
+        comp.loadPage({ pageIndex: 0, pageSize: 20 });
+        expect(comp.rows()[0].commitHistoryLink).toEqual(['/course-management', '3', 'programming-exercises', '7', 'repository', 'USER', '11', 'commit-history']);
         expect(comp.teamLink(teamRow)).toEqual(['/course-management', 3, 'exercises', 7, 'teams', 13]);
     });
 
     it('preserves a complaint on the newest result for the assessment action', () => {
-        const row = { ...teamRow, resultId: 21, assessmentType: AssessmentType.MANUAL, correctionRoundResults: [{ resultId: 21, correctionRound: 0, hasComplaint: true }] };
-        expect(comp.toParticipation(row).submissions?.[0]?.results?.[0]).toEqual(expect.objectContaining({ id: 21, correctionRound: 0, hasComplaint: true }));
+        const row = {
+            ...teamRow,
+            resultId: 21,
+            assessmentType: AssessmentType.MANUAL,
+            correctionRoundResults: [{ resultId: 21, correctionRound: 0, hasComplaint: true, ownedByCurrentUser: true }],
+        };
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(of({ content: [row], totalElements: 1 }));
+        comp.loadPage({ pageIndex: 0, pageSize: 20 });
+        expect(comp.rows()[0].participation.submissions?.[0]?.results?.[0]).toEqual(expect.objectContaining({ id: 21, correctionRound: 0, hasComplaint: true }));
+        expect(comp.rows()[0].result).toBe(comp.rows()[0].participation.submissions?.[0]?.results?.[0]);
     });
 
     it('uses exam routes for repository and assessment links', async () => {
@@ -365,7 +384,7 @@ describe('AssessmentQueueComponent', () => {
             ['complaint', { correctionRoundResults: [manual({ completionDate: dayjs(), hasComplaint: true })] }],
             ['inProgress', { correctionRoundResults: [manual({ completionDate: dayjs(), hasComplaint: true }), manual({ resultId: 2, correctionRound: 1 })] }],
         ])('is %s', (state, overrides) => {
-            expect(getAssessmentState({ ...teamRow, ...overrides } as ParticipationManagementDTO)).toBe(state);
+            expect(getAssessmentState({ ...teamRow, ...overrides } as AssessmentQueueRowDTO)).toBe(state);
         });
     });
 });

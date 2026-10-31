@@ -79,6 +79,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueRowDTO;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
@@ -2337,10 +2339,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 .save(new Team().shortName(TEST_PREFIX + "otherTeam").exercise(exercise).students(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student2"))));
         participationUtilService.addTeamParticipationForProgrammingExercise(exercise, otherTeam);
         participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", "", "All", null, null);
+        var search = new AssessmentQueueSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", "");
         var params = pageableSearchUtilService.searchMapping(search);
 
-        var management = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.OK, ParticipationManagementDTO.class, params);
+        var management = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.OK, AssessmentQueueRowDTO.class, params);
 
         assertThat(management).as("the tutor sees their own team").hasSize(1);
         assertThat(management.getFirst().submissionId()).as("the assessment link targets the latest submission").isEqualTo(submission.getId());
@@ -2355,8 +2357,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void examAssessmentQueueRequiresCorrectionRoundEndpoints() throws Exception {
         Exam exam = examRepository.save(ExamFactory.generateExamWithExerciseGroup(course, false));
         var exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst()));
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All", null, null);
-        request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
+        var search = new AssessmentQueueSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "");
+        request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.FORBIDDEN, AssessmentQueueRowDTO.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 
@@ -2399,18 +2401,19 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         }
         var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue";
         for (int page = 0; page < 2; page++) {
-            var search = new ParticipationSearchDTO(page, 1, SortingOrder.ASCENDING, "participationId", "", "NoPracticeMode", null, null);
+            var search = new AssessmentQueueSearchDTO(page, 1, SortingOrder.ASCENDING, "participationId", "");
             var response = request.performMvcRequest(MockMvcRequestBuilders.get(url).params(pageableSearchUtilService.searchMapping(search))).andExpect(status().isOk())
                     .andReturn();
             assertThat(response.getResponse().getHeader("X-Total-Count")).isEqualTo("2");
-            var rows = request.getObjectMapper().readValue(response.getResponse().getContentAsString(), ParticipationManagementDTO[].class);
-            assertThat(rows).extracting(ParticipationManagementDTO::participationId).containsExactly(included.get(page));
+            var rows = request.getObjectMapper().readValue(response.getResponse().getContentAsString(), AssessmentQueueRowDTO[].class);
+            assertThat(rows).extracting(AssessmentQueueRowDTO::participationId).containsExactly(included.get(page));
+
         }
         own.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         resultRepository.save(own);
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "NoPracticeMode", null, null);
-        var rows = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
-        assertThat(rows).extracting(ParticipationManagementDTO::participationId).containsExactly(included.getFirst());
+        var search = new AssessmentQueueSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "");
+        var rows = request.getList(url, HttpStatus.OK, AssessmentQueueRowDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(rows).extracting(AssessmentQueueRowDTO::participationId).containsExactly(included.getFirst());
     }
 
     @Test
@@ -2419,20 +2422,20 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1),
                 ZonedDateTime.now().plusDays(1));
         var submission = participationUtilService.addSubmission(exercise, new TextSubmission().submitted(false), TEST_PREFIX + "student1");
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All", null, null);
+        var search = new AssessmentQueueSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "");
         var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue";
-        var rows = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+        var rows = request.getList(url, HttpStatus.OK, AssessmentQueueRowDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(rows).isEmpty();
         submission.setSubmitted(true);
         submissionRepository.save(submission);
         var participation = (StudentParticipation) submission.getParticipation();
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
         participationRepo.save(participation);
-        rows = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+        rows = request.getList(url, HttpStatus.OK, AssessmentQueueRowDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(rows).isEmpty();
         participation.setIndividualDueDate(ZonedDateTime.now().minusHours(1));
         participationRepo.save(participation);
-        rows = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+        rows = request.getList(url, HttpStatus.OK, AssessmentQueueRowDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(rows.getFirst().assessableCorrectionRounds()).containsExactly(0);
     }
 
@@ -2449,8 +2452,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + (round == 0 ? "tutor1" : "instructor1")));
             resultRepository.save(result);
         }
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All", null, null);
-        var rows = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.OK, ParticipationManagementDTO.class,
+        var search = new AssessmentQueueSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "");
+        var rows = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.OK, AssessmentQueueRowDTO.class,
                 pageableSearchUtilService.searchMapping(search));
 
         assertThat(rows).hasSize(1);
@@ -2476,9 +2479,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addSubmission(exercise, english, TEST_PREFIX + "student2");
         var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue";
         for (var order : SortingOrder.values()) {
-            var search = new ParticipationSearchDTO(0, 20, order, sortedColumn, "", "NoPracticeMode", null, null);
-            var rows = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
-            assertThat(rows).extracting(ParticipationManagementDTO::submissionId)
+            var search = new AssessmentQueueSearchDTO(0, 20, order, sortedColumn, "");
+            var rows = request.getList(url, HttpStatus.OK, AssessmentQueueRowDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(rows).extracting(AssessmentQueueRowDTO::submissionId)
                     .containsExactlyElementsOf(order == SortingOrder.ASCENDING ? List.of(english.getId(), german.getId()) : List.of(german.getId(), english.getId()));
             assertThat(rows).allSatisfy(row -> {
                 assertThat(row.submissionDate()).isNotNull();

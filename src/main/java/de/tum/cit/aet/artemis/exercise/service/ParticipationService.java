@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -52,6 +53,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentDraftDTO;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueRowDTO;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
@@ -1234,7 +1237,31 @@ public class ParticipationService {
      * @return a page of ParticipationManagementDTO
      */
     public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
-        return findParticipationsForExercise(exercise, search, null, false);
+        return findParticipationRows(exercise, search, null, false).map(ParticipationRowData::participation);
+    }
+
+    /**
+     * Loads eligible submissions and assessments the requester can manage, using the shared paginated participation query.
+     *
+     * @param exercise    the exercise to assess
+     * @param search      queue pagination, sorting and team search
+     * @param teamOwnerId restricts tutors to their own teams, or null for unrestricted access
+     * @return the assessment queue page
+     */
+    public Page<AssessmentQueueRowDTO> findAssessmentQueue(Exercise exercise, AssessmentQueueSearchDTO search, @Nullable Long teamOwnerId) {
+        var participationSearch = new ParticipationSearchDTO(search.page(), search.pageSize(), search.sortingOrder(), search.sortedColumn(), search.searchTerm(), "NoPracticeMode",
+                null, null);
+        return findParticipationRows(exercise, participationSearch, teamOwnerId, true).map(row -> {
+            var dto = row.participation();
+            return new AssessmentQueueRowDTO(dto.participationId(), dto.submissionCount(), dto.participantName(), dto.participantIdentifier(), dto.teamId(), dto.teamStudents(),
+                    dto.testRun(), dto.individualDueDate(), dto.buildFailed(), dto.submissionId(), row.submissionDate(), dto.resultId(), dto.score(), dto.successful(),
+                    dto.completionDate(), dto.assessmentType(), dto.testCaseCount(), dto.passedTestCaseCount(), dto.codeIssueCount(), dto.correctionRoundResults(),
+                    row.assessableCorrectionRounds(), row.submissionLanguage(), row.olderAssessmentDrafts());
+        });
+    }
+
+    private record ParticipationRowData(ParticipationManagementDTO participation, ZonedDateTime submissionDate, List<Integer> assessableCorrectionRounds,
+            Language submissionLanguage, List<AssessmentDraftDTO> olderAssessmentDrafts) {
     }
 
     /**
@@ -1246,7 +1273,7 @@ public class ParticipationService {
      * @param assessmentQueue whether to exclude practice and include assessment eligibility
      * @return the requested participation page
      */
-    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search, @Nullable Long teamOwnerId, boolean assessmentQueue) {
+    private Page<ParticipationRowData> findParticipationRows(Exercise exercise, ParticipationSearchDTO search, @Nullable Long teamOwnerId, boolean assessmentQueue) {
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
@@ -1292,13 +1319,13 @@ public class ParticipationService {
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
         final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
         User assessmentUser = assessmentQueue ? userRepository.getUserWithAuthorities() : null;
-        List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToManagementDTO(p, exercise, submissionCountMap,
+        List<ParticipationRowData> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToManagementDTO(p, exercise, submissionCountMap,
                 finalResultMap, finalCorrectionRoundResults, assessmentUser, olderDraftsByParticipationId.getOrDefault(p.getId(), List.of()))).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, Exercise exercise, Map<Long, Integer> submissionCountMap,
+    private ParticipationRowData mapToManagementDTO(StudentParticipation participation, Exercise exercise, Map<Long, Integer> submissionCountMap,
             Map<Long, Result> resultBySubmissionId, Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId, @Nullable User assessmentUser,
             List<AssessmentDraftDTO> olderAssessmentDrafts) {
         String participantName;
@@ -1361,15 +1388,17 @@ public class ParticipationService {
         int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
         List<CorrectionRoundResultDTO> correctionRoundResults = submissionId != null ? correctionRoundResultsBySubmissionId.getOrDefault(submissionId, List.of()) : List.of();
 
-        return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
-                participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, participation.isTestRun(), participation.getPresentationScore(),
-                participation.getIndividualDueDate(), buildPlanId, repositoryUri, buildFailed, lastResultIsManual, submissionId,
-                latestSubmission != null ? latestSubmission.getSubmissionDate() : null, latestResult != null ? latestResult.getId() : null,
-                latestResult != null ? latestResult.getScore() : null, latestResult != null ? latestResult.isSuccessful() : null, completionDate,
-                latestResult != null ? latestResult.getAssessmentType() : null,
-                latestResult != null && latestResult.getAssessmentNote() != null ? latestResult.getAssessmentNote().getNote() : null, durationInSeconds,
-                latestResult != null ? latestResult.getTestCaseCount() : null, latestResult != null ? latestResult.getPassedTestCaseCount() : null,
-                latestResult != null ? latestResult.getCodeIssueCount() : null, correctionRoundResults,
+        return new ParticipationRowData(
+                new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
+                        participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, participation.isTestRun(), participation.getPresentationScore(),
+                        participation.getIndividualDueDate(), buildPlanId, repositoryUri, buildFailed, lastResultIsManual, submissionId,
+                        latestSubmission != null ? latestSubmission.getSubmissionDate() : null, latestResult != null ? latestResult.getId() : null,
+                        latestResult != null ? latestResult.getScore() : null, latestResult != null ? latestResult.isSuccessful() : null, completionDate,
+                        latestResult != null ? latestResult.getAssessmentType() : null,
+                        latestResult != null && latestResult.getAssessmentNote() != null ? latestResult.getAssessmentNote().getNote() : null, durationInSeconds,
+                        latestResult != null ? latestResult.getTestCaseCount() : null, latestResult != null ? latestResult.getPassedTestCaseCount() : null,
+                        latestResult != null ? latestResult.getCodeIssueCount() : null, correctionRoundResults),
+                latestSubmission != null ? latestSubmission.getSubmissionDate() : null,
                 assessmentUser != null
                         ? IntStream.range(0, exercise.getNumberOfCorrectionRounds())
                                 .filter(round -> latestSubmission != null && assessmentEligibilityService.canStartAssessment(latestSubmission, exercise, round, assessmentUser))

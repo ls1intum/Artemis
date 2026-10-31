@@ -1,3 +1,4 @@
+import { AssessmentQueueRowDTO, AssessmentQueueSearch } from './assessment-queue-dto.model';
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -91,14 +92,35 @@ export class ParticipationService {
         return this.searchParticipationResults(exerciseId, search, kind === 'exam' ? 'participations/page/for-exam' : 'participations/page');
     }
 
-    searchAssessmentQueue(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
-        return this.searchParticipationResults(exerciseId, search, 'assessment-queue');
+    searchAssessmentQueue(exerciseId: number, search: AssessmentQueueSearch): Observable<PageableResult<AssessmentQueueRowDTO>> {
+        return this.http
+            .get<AssessmentQueueRowDTO[]>(`api/exercise/exercises/${exerciseId}/assessment-queue`, {
+                params: { page: search.page, pageSize: search.pageSize, sortingOrder: search.sortingOrder, sortedColumn: search.sortedColumn, searchTerm: search.searchTerm },
+                observe: 'response',
+            })
+            .pipe(
+                map((response) => {
+                    const content = response.body ?? [];
+                    content.forEach((row) => {
+                        row.correctionRoundResults ??= [];
+                        row.assessableCorrectionRounds ??= [];
+                        row.olderAssessmentDrafts ??= [];
+                        row.submissionDate = convertDateFromServer(row.submissionDate);
+                        row.individualDueDate = convertDateFromServer(row.individualDueDate);
+                        row.completionDate = convertDateFromServer(row.completionDate);
+                        row.correctionRoundResults.forEach((result) => {
+                            result.completionDate = convertDateFromServer(result.completionDate);
+                        });
+                    });
+                    return { content, totalElements: Number(response.headers.get('X-Total-Count') ?? 0) };
+                }),
+            );
     }
 
     private searchParticipationResults(
         exerciseId: number,
         search: ParticipationSearch,
-        resource: 'participations/page' | 'participations/page/for-exam' | 'assessment-queue',
+        resource: 'participations/page' | 'participations/page/for-exam',
     ): Observable<PageableResult<ParticipationManagementDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,

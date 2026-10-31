@@ -1,8 +1,9 @@
 <section class="flex flex-col gap-2" data-testid="assessment-queue">
+    @let round = correctionRound();
     <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
-            @if (correctionRound() !== undefined) {
-                <h4 class="mb-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: correctionRound()! + 1 }"></h4>
+            @if (round !== undefined) {
+                <h4 class="mb-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: round + 1 }"></h4>
             } @else {
                 <h4 class="mb-0" [jhiTranslate]="isTestRun() ? 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' : translationKey() + '.title'"></h4>
             }
@@ -10,7 +11,7 @@
         </div>
         <ng-content select="[queueHeaderActions]" />
     </div>
-    @if (correctionRound() !== undefined && correctionRound()! >= correctionRoundsEnabled()) {
+    @if (round !== undefined && round >= correctionRoundsEnabled()) {
         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></p>
     }
     @if (!isTestRun() && !assessmentDisabled() && totalRecords() > 0 && !hasAssessableSubmissions()) {
@@ -35,37 +36,37 @@
 
 <ng-template #participantTemplate let-cell>
     @if (teamMode()) {
-        <span class="inline-flex items-baseline gap-2" [tumAetUiTooltip]="teamMembers(cell.data)">
-            <span class="font-semibold">{{ cell.data.participantName }}</span>
-            @if (cell.data.participantIdentifier) {
-                <code class="text-sm">{{ cell.data.participantIdentifier }}</code>
+        <span class="inline-flex items-baseline gap-2" [tumAetUiTooltip]="cell.data.teamMembers">
+            <span class="font-semibold">{{ cell.data.dto.participantName }}</span>
+            @if (cell.data.dto.participantIdentifier) {
+                <code class="text-sm">{{ cell.data.dto.participantIdentifier }}</code>
             }
         </span>
     } @else {
-        <span class="font-semibold" data-testid="assessment-student-id">{{ cell.data.participationId }}</span>
+        <span class="font-semibold" data-testid="assessment-student-id">{{ cell.data.dto.participationId }}</span>
     }
 </ng-template>
 
 <ng-template #submissionDateTemplate let-cell>
-    {{ cell.data.submissionDate | artemisDate }}
+    {{ cell.data.dto.submissionDate | artemisDate }}
 </ng-template>
 
 <ng-template #languageTemplate let-cell>
-    <jhi-language-table-cell [submission]="languageSubmission(cell.data)" />
+    <jhi-language-table-cell [submission]="cell.data.languageSubmission" />
 </ng-template>
 
 <ng-template #statusTemplate let-cell>
-    <tumaet-ui-tag data-testid="assessment-state" [attr.data-state]="state(cell.data)" [severity]="stateSeverity(cell.data)">
-        {{ 'artemisApp.exerciseAssessmentDashboard.myTeams.state.' + state(cell.data) | artemisTranslate }}
+    <tumaet-ui-tag data-testid="assessment-state" [attr.data-state]="cell.data.state" [severity]="cell.data.severity">
+        {{ 'artemisApp.exerciseAssessmentDashboard.myTeams.state.' + cell.data.state | artemisTranslate }}
     </tumaet-ui-tag>
-    @if (lockedByAnotherTutor(cell.data)) {
+    @if (cell.data.lockedByAnotherTutor) {
         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.lockedByAnotherTutor"></p>
     }
 </ng-template>
 
 <ng-template #resultTemplate let-cell>
     @if (examMode() && !isTestRun()) {
-        @for (result of resultsForRound(cell.data); track result.resultId) {
+        @for (result of cell.data.resultsForRound; track result.resultId) {
             <div data-testid="assessment-round-score">
                 {{ 'artemisApp.exerciseAssessmentDashboard.correctionRound' | artemisTranslate }} {{ (result.correctionRound ?? 0) + 1 }}:
                 @if (result.completionDate && result.score !== undefined && result.score !== null) {
@@ -77,31 +78,31 @@
         } @empty {
             <span>–</span>
         }
-    } @else if (toResult(cell.data); as result) {
-        <jhi-result [exercise]="exercise()" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
+    } @else if (cell.data.result; as result) {
+        <jhi-result [exercise]="exercise()" [result]="result" [participation]="cell.data.participation" [isOwnParticipation]="false" />
     } @else {
         <span>–</span>
     }
 </ng-template>
 
-<ng-template #rowActions let-dto>
+<ng-template #rowActions let-row>
     <div class="flex items-center justify-end gap-1">
         <jhi-manage-assessment-buttons
             [course]="course()"
             [exercise]="exercise()"
-            [participation]="toParticipation(dto)"
+            [participation]="row.participation"
             [isLoading]="isLoading()"
             [disabled]="assessmentDisabled()"
             [disabledTooltip]="assessmentDisabledTooltip()"
             [correctionRoundsEnabled]="correctionRoundsEnabled()"
             [correctionRound]="correctionRound()"
-            [assessableCorrectionRounds]="isTestRun() ? undefined : (dto.assessableCorrectionRounds ?? [])"
-            [ownedCorrectionRounds]="isTestRun() ? undefined : ownedCorrectionRounds(dto)"
+            [assessableCorrectionRounds]="isTestRun() ? undefined : (row.dto.assessableCorrectionRounds ?? [])"
+            [ownedCorrectionRounds]="isTestRun() ? undefined : row.ownedCorrectionRounds"
             [isTestRun]="isTestRun()"
-            [olderAssessmentDrafts]="isTestRun() ? [] : (dto.olderAssessmentDrafts ?? [])"
+            [olderAssessmentDrafts]="isTestRun() ? [] : (row.dto.olderAssessmentDrafts ?? [])"
             (refresh)="refresh(); assessmentChanged.emit()"
         />
-        @if (isProgrammingExercise() || dto.teamId) {
+        @if (isProgrammingExercise() || row.dto.teamId) {
             <button
                 type="button"
                 tumAetUiButton
@@ -117,17 +118,17 @@
             <ng-template #moreActionsMenu>
                 <tumaet-ui-menu [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.myTeams.moreActions' | artemisTranslate">
                     @if (isProgrammingExercise()) {
-                        <a tumAetUiMenuItem data-testid="assessment-repository" [routerLink]="repositoryLink(dto)">
+                        <a tumAetUiMenuItem data-testid="assessment-repository" [routerLink]="row.repositoryLink">
                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                             <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.repository"></span>
                         </a>
-                        <a tumAetUiMenuItem data-testid="assessment-commit-history" [routerLink]="commitHistoryLink(dto)">
+                        <a tumAetUiMenuItem data-testid="assessment-commit-history" [routerLink]="row.commitHistoryLink">
                             <fa-icon [icon]="faCodeCommit" [fixedWidth]="true" />
                             <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.commitHistory"></span>
                         </a>
                     }
-                    @if (dto.teamId) {
-                        <a tumAetUiMenuItem data-testid="assessment-team" [routerLink]="teamLink(dto)">
+                    @if (row.dto.teamId) {
+                        <a tumAetUiMenuItem data-testid="assessment-team" [routerLink]="row.teamLink">
                             <fa-icon [icon]="faUsers" [fixedWidth]="true" />
                             <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.teamDetails"></span>
                         </a>

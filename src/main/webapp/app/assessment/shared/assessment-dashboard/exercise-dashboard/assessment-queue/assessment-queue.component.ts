@@ -1,7 +1,8 @@
 import { LanguageTableCellComponent } from '../language-table-cell/language-table-cell.component';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Language } from 'app/course/shared/entities/course.model';
-import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCodeCommit, faEllipsisVertical, faFolderOpen, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -21,8 +22,9 @@ import {
 import { finalize, map } from 'rxjs/operators';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { CorrectionRoundResultDTO, ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
-import { scoreDtoToParticipation, scoreDtoToResult } from 'app/exercise/exercise-scores/participation-score.util';
+import { CorrectionRoundResultDTO } from 'app/exercise/participation/participation-management-dto.model';
+import { AssessmentQueueRowDTO } from 'app/exercise/participation/assessment-queue-dto.model';
+import { scoreDtoToParticipation } from 'app/exercise/exercise-scores/participation-score.util';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -35,10 +37,27 @@ import { ManageAssessmentButtonsComponent } from 'app/exercise/exercise-scores/m
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type AssessmentState = 'noSubmission' | 'notAssessed' | 'inProgress' | 'complaint' | 'assessed';
+
+interface AssessmentQueueRow {
+    dto: AssessmentQueueRowDTO;
+    state: AssessmentState;
+    severity: TumAetUiTagSeverity;
+    lockedByAnotherTutor: boolean;
+    teamMembers: string;
+    resultsForRound: CorrectionRoundResultDTO[];
+    languageSubmission: TextSubmission;
+    participation: ReturnType<typeof scoreDtoToParticipation>;
+    result: Result | undefined;
+    ownedCorrectionRounds: number[];
+    repositoryLink: (string | number)[];
+    commitHistoryLink: (string | number)[];
+    teamLink: (string | number)[];
+}
 
 const STATE_SEVERITY: Record<AssessmentState, TumAetUiTagSeverity> = {
     noSubmission: 'secondary',
@@ -51,7 +70,7 @@ const STATE_SEVERITY: Record<AssessmentState, TumAetUiTagSeverity> = {
 /**
  * Derives where an assessment stands from its newest manual result, which belongs to the latest correction round.
  */
-export function getAssessmentState(dto: ParticipationManagementDTO, correctionRound?: number): AssessmentState {
+export function getAssessmentState(dto: AssessmentQueueRowDTO, correctionRound?: number): AssessmentState {
     if (!dto.submissionId) {
         return 'noSubmission';
     }
@@ -92,6 +111,7 @@ export function getAssessmentState(dto: ParticipationManagementDTO, correctionRo
     ],
 })
 export class AssessmentQueueComponent {
+    private readonly destroyRef = inject(DestroyRef);
     private readonly sortService = inject(SortService);
     private readonly participationService = inject(ParticipationService);
     private readonly submissionService = inject(SubmissionService);
@@ -111,14 +131,15 @@ export class AssessmentQueueComponent {
     );
     readonly examMode = computed(() => !!this.exercise().exerciseGroup);
     readonly hasAssessableSubmissions = computed(() =>
-        this.rows().some((row) =>
-            row.assessableCorrectionRounds?.some(
-                (round) => round < this.correctionRoundsEnabled() && !row.correctionRoundResults?.some((result) => (result.correctionRound ?? 0) === round),
+        this.participationRows().some((dto) =>
+            dto.assessableCorrectionRounds?.some(
+                (round) => round < this.correctionRoundsEnabled() && !dto.correctionRoundResults?.some((result) => (result.correctionRound ?? 0) === round),
             ),
         ),
     );
 
-    readonly rows = signal<ParticipationManagementDTO[]>([]);
+    private readonly participationRows = signal<AssessmentQueueRowDTO[]>([]);
+    readonly rows = computed<AssessmentQueueRow[]>(() => this.participationRows().map((dto) => this.prepareRow(dto)));
     readonly totalRecords = signal(0);
     readonly isLoading = signal(false);
     private lastQuery?: TumAetUiTableQueryEvent;
@@ -127,13 +148,13 @@ export class AssessmentQueueComponent {
     readonly course = computed(() => getCourseFromExercise(this.exercise())!);
     readonly isProgrammingExercise = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
 
-    readonly participantTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('participantTemplate');
-    readonly statusTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('statusTemplate');
-    readonly submissionDateTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('submissionDateTemplate');
-    readonly languageTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('languageTemplate');
-    readonly resultTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('resultTemplate');
+    readonly participantTemplate = viewChild<CellTemplateRef<AssessmentQueueRow>>('participantTemplate');
+    readonly statusTemplate = viewChild<CellTemplateRef<AssessmentQueueRow>>('statusTemplate');
+    readonly submissionDateTemplate = viewChild<CellTemplateRef<AssessmentQueueRow>>('submissionDateTemplate');
+    readonly languageTemplate = viewChild<CellTemplateRef<AssessmentQueueRow>>('languageTemplate');
+    readonly resultTemplate = viewChild<CellTemplateRef<AssessmentQueueRow>>('resultTemplate');
 
-    readonly columns = computed<ColumnDef<ParticipationManagementDTO>[]>(() => [
+    readonly columns = computed<ColumnDef<AssessmentQueueRow>[]>(() => [
         { field: this.participantSortField(), headerKey: this.translationKey() + '.participant', sort: true, templateRef: this.participantTemplate() },
         { field: 'submissionDate', headerKey: 'artemisApp.exerciseAssessmentDashboard.submissionDate', sort: true, templateRef: this.submissionDateTemplate() },
         ...(this.exercise().type === ExerciseType.TEXT
@@ -166,13 +187,22 @@ export class AssessmentQueueComponent {
 
     loadPage(query: TumAetUiTableQueryEvent) {
         const requestId = ++this.currentLoadRequestId;
+        const correctionRound = this.correctionRound();
+        const isTestRun = this.isTestRun();
+        const isExamMode = this.examMode();
         this.lastQuery = query;
         this.isLoading.set(true);
-        const request = this.isTestRun()
+        if (!isTestRun && isExamMode && correctionRound === undefined) {
+            this.participationRows.set([]);
+            this.totalRecords.set(0);
+            this.isLoading.set(false);
+            return;
+        }
+        const request = isTestRun
             ? this.submissionService.getTestRunSubmissionsForExercise(this.exercise().id!).pipe(map((response) => this.submissionPage(response.body ?? [], query)))
-            : this.examMode()
+            : isExamMode && correctionRound !== undefined
               ? this.submissionService
-                    .getExamAssessmentQueue(this.exercise().type!, this.exercise().id!, this.correctionRound()!, !this.assessmentDisabled(), !!this.exercise().isAtLeastInstructor)
+                    .getExamAssessmentQueue(this.exercise().type!, this.exercise().id!, correctionRound, !this.assessmentDisabled(), !!this.exercise().isAtLeastInstructor)
                     .pipe(map((submissions) => this.submissionPage(submissions, query)))
               : this.participationService.searchAssessmentQueue(this.exercise().id!, {
                     page: query.pageIndex,
@@ -180,10 +210,10 @@ export class AssessmentQueueComponent {
                     sortingOrder: query.sort?.direction === 'desc' ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
                     sortedColumn: query.sort?.field ?? this.participantSortField(),
                     searchTerm: this.teamMode() ? (query.searchTerm ?? '') : '',
-                    filterProp: 'NoPracticeMode',
                 });
         request
             .pipe(
+                takeUntilDestroyed(this.destroyRef),
                 finalize(() => {
                     if (requestId === this.currentLoadRequestId) {
                         this.isLoading.set(false);
@@ -193,7 +223,7 @@ export class AssessmentQueueComponent {
             .subscribe({
                 next: (page) => {
                     if (requestId === this.currentLoadRequestId) {
-                        this.rows.set(page.content);
+                        this.participationRows.set(page.content);
                         this.totalRecords.set(page.totalElements);
                     }
                 },
@@ -207,7 +237,7 @@ export class AssessmentQueueComponent {
 
     private submissionPage(submissions: Submission[], query: TumAetUiTableQueryEvent) {
         const round = this.correctionRound();
-        const content = submissions.map((submission): ParticipationManagementDTO => {
+        const content = submissions.map((submission): AssessmentQueueRowDTO => {
             const result =
                 round === undefined
                     ? getLatestSubmissionResult(submission)
@@ -218,6 +248,7 @@ export class AssessmentQueueComponent {
             return {
                 participationId: submission.participation!.id!,
                 submissionCount: 1,
+                olderAssessmentDrafts: [],
                 submissionId: submission.id,
                 submissionDate: submission.submissionDate,
                 submissionLanguage: (submission as TextSubmission).language,
@@ -245,6 +276,27 @@ export class AssessmentQueueComponent {
         return { content: content.slice(query.pageIndex * query.pageSize, (query.pageIndex + 1) * query.pageSize), totalElements: content.length };
     }
 
+    private prepareRow(dto: AssessmentQueueRowDTO): AssessmentQueueRow {
+        const state = getAssessmentState(dto, this.correctionRound());
+        const participation = scoreDtoToParticipation(dto, this.exercise());
+        const repositoryLink = this.repositoryLink(dto);
+        return {
+            dto,
+            state,
+            severity: STATE_SEVERITY[state],
+            lockedByAnotherTutor: this.lockedByAnotherTutor(dto),
+            teamMembers: this.teamMembers(dto),
+            resultsForRound: this.resultsForRound(dto),
+            languageSubmission: this.languageSubmission(dto),
+            participation,
+            result: dto.resultId ? participation.submissions?.[0]?.results?.find((result) => result.id === dto.resultId) : undefined,
+            ownedCorrectionRounds: this.ownedCorrectionRounds(dto),
+            repositoryLink,
+            commitHistoryLink: [...repositoryLink, 'commit-history'],
+            teamLink: this.teamLink(dto),
+        };
+    }
+
     /** Reloads the current page, e.g. after an assessment was cancelled. */
     refresh() {
         if (this.lastQuery) {
@@ -252,45 +304,29 @@ export class AssessmentQueueComponent {
         }
     }
 
-    resultsForRound(dto: ParticipationManagementDTO): CorrectionRoundResultDTO[] {
+    resultsForRound(dto: AssessmentQueueRowDTO): CorrectionRoundResultDTO[] {
         return (dto.correctionRoundResults ?? []).filter((result) => result.correctionRound === this.correctionRound());
     }
 
-    state(dto: ParticipationManagementDTO): AssessmentState {
-        return getAssessmentState(dto, this.correctionRound());
-    }
-
-    stateSeverity(dto: ParticipationManagementDTO): TumAetUiTagSeverity {
-        return STATE_SEVERITY[this.state(dto)];
-    }
-
-    lockedByAnotherTutor(dto: ParticipationManagementDTO): boolean {
+    lockedByAnotherTutor(dto: AssessmentQueueRowDTO): boolean {
         return !this.isTestRun() && !this.exercise().isAtLeastInstructor && !!dto.correctionRoundResults?.some((result) => !result.completionDate && !result.ownedByCurrentUser);
     }
 
-    languageSubmission(dto: ParticipationManagementDTO): TextSubmission {
+    languageSubmission(dto: AssessmentQueueRowDTO): TextSubmission {
         const submission = new TextSubmission();
         submission.language = dto.submissionLanguage as Language;
         return submission;
     }
 
-    teamMembers(dto: ParticipationManagementDTO): string {
+    teamMembers(dto: AssessmentQueueRowDTO): string {
         return (dto.teamStudents ?? []).map((student) => student.name ?? student.login).join(', ');
     }
 
-    ownedCorrectionRounds(dto: ParticipationManagementDTO): number[] {
+    ownedCorrectionRounds(dto: AssessmentQueueRowDTO): number[] {
         return (dto.correctionRoundResults ?? []).filter((result) => result.ownedByCurrentUser).map((result) => result.correctionRound ?? 0);
     }
 
-    toParticipation(dto: ParticipationManagementDTO) {
-        return scoreDtoToParticipation(dto, this.exercise());
-    }
-
-    toResult(dto: ParticipationManagementDTO) {
-        return scoreDtoToResult(dto);
-    }
-
-    repositoryLink(dto: ParticipationManagementDTO): (string | number)[] {
+    repositoryLink(dto: AssessmentQueueRowDTO): (string | number)[] {
         return getLocalRepositoryLink(
             this.course().id!,
             this.exercise().id!,
@@ -301,11 +337,7 @@ export class AssessmentQueueComponent {
         );
     }
 
-    commitHistoryLink(dto: ParticipationManagementDTO): (string | number)[] {
-        return [...this.repositoryLink(dto), 'commit-history'];
-    }
-
-    teamLink(dto: ParticipationManagementDTO): (string | number)[] {
+    teamLink(dto: AssessmentQueueRowDTO): (string | number)[] {
         return ['/course-management', this.course().id!, 'exercises', this.exercise().id!, 'teams', dto.teamId!];
     }
 }

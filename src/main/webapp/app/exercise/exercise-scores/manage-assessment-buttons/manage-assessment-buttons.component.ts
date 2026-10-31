@@ -5,7 +5,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { AssessmentDraftDTO } from 'app/exercise/participation/participation-management-dto.model';
+import { AssessmentDraftDTO } from 'app/exercise/participation/assessment-queue-dto.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getSubmissionResultByCorrectionRound } from 'app/exercise/shared/entities/submission/submission.model';

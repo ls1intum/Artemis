@@ -1,4 +1,3 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
@@ -40,7 +39,7 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -52,8 +51,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TooltipModule } from 'primeng/tooltip';
-import { Message } from 'primeng/message';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { AssessmentQueueComponent } from './assessment-queue/assessment-queue.component';
@@ -83,7 +80,6 @@ export interface ExampleSubmissionQueryParams {
     styleUrls: ['./exercise-assessment-dashboard.component.scss'],
     providers: [CourseManagementService],
     imports: [
-        NgTemplateOutlet,
         HeaderExercisePageWithDetailsComponent,
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
@@ -99,8 +95,7 @@ export interface ExampleSubmissionQueryParams {
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
         NgbTooltip,
-        TooltipModule,
-        Message,
+        TumAetUiMessageComponent,
         SortDirective,
         SortByDirective,
         AssessmentQueueComponent,
@@ -165,7 +160,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly submissionsWithComplaints = signal<SubmissionWithComplaintDTO[]>([]);
     readonly secondCorrectionEnabled = signal(false);
     readonly queueRounds = computed(() =>
-        this.isExamMode() && !this.isTestRun() ? Array.from({ length: this.exam()?.numberOfCorrectionRoundsInExam ?? 0 }, (_, round) => round) : [undefined],
+        this.isExamMode() && !this.isTestRun() ? Array.from({ length: this.exam()?.numberOfCorrectionRoundsInExam ?? 0 }, (_, round) => round) : undefined,
     );
     readonly numberOfCorrectionRoundsEnabled = computed(() => (this.secondCorrectionEnabled() ? 2 : 1));
 

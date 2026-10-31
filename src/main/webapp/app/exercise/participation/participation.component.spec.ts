@@ -1133,8 +1133,8 @@ describe('ParticipationComponent', () => {
                 submissionId: 20,
                 resultId: 31,
                 correctionRoundResults: [
-                    { resultId: 30, correctionRound: 0, assessmentType: AssessmentType.MANUAL, hasComplaint: false },
-                    { resultId: 31, correctionRound: 1, assessmentType: AssessmentType.MANUAL, hasComplaint: true },
+                    { resultId: 30, correctionRound: 0, assessmentType: AssessmentType.MANUAL, hasComplaint: false, ownedByCurrentUser: false },
+                    { resultId: 31, correctionRound: 1, assessmentType: AssessmentType.MANUAL, hasComplaint: true, ownedByCurrentUser: true },
                 ],
             });
 
