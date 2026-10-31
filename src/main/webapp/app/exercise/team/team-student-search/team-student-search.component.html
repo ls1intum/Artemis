@@ -9,6 +9,7 @@
     [placeholder]="'artemisApp.team.addStudentToTeam' | artemisTranslate"
     (selectItem)="onAutocompleteSelect($event.item)"
     [ngbTypeahead]="onSearch"
+    jhiTypeaheadScrollActiveOption
     [resultFormatter]="searchResultFormatter"
     [inputFormatter]="searchInputFormatter"
     autocomplete="nope"

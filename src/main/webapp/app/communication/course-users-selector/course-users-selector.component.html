@@ -13,6 +13,7 @@
             class="form-control"
             [placeholder]="'artemisApp.userSelector.placeholderText' | artemisTranslate"
             [ngbTypeahead]="search"
+            jhiTypeaheadScrollActiveOption
             [inputFormatter]="usersFormatter"
             [resultTemplate]="resultTemplate"
             [editable]="false"

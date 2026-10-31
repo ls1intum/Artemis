@@ -7,6 +7,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { TypeaheadScrollActiveOptionDirective } from 'app/shared-ui/directives/typeahead-scroll-active-option.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -14,7 +15,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-team-owner-search',
     templateUrl: './team-owner-search.component.html',
-    imports: [FormsModule, NgbTypeahead, ArtemisTranslatePipe],
+    imports: [FormsModule, NgbTypeahead, TypeaheadScrollActiveOptionDirective, ArtemisTranslatePipe],
 })
 export class TeamOwnerSearchComponent implements OnInit {
     private courseService = inject(CourseManagementService);
