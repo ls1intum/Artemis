@@ -35,7 +35,7 @@ const POSSIBLE_CAMPUS_HEADERS = ['campus'];
 const POSSIBLE_CAPACITY_HEADERS = ['capacity'];
 const POSSIBLE_LANGUAGE_HEADERS = ['language', 'sprache'];
 const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additionalinformation'];
-const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'ist Online'];
+const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'istonline'];
 
 type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 
@@ -245,7 +245,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 registration.capacity = csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined;
                 registration.language = csvRow[usedLanguageHeader]?.trim() || '';
                 registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
-                registration.isOnline = csvRow[usedIsOnlineHeader] ? Boolean(csvRow[usedIsOnlineHeader]?.trim().toLowerCase()) : undefined;
+                // Boolean('false') is true, so parse explicit truthy tokens instead; the CSV export writes 'true'/'false'.
+                const isOnlineValue = csvRow[usedIsOnlineHeader]?.trim().toLowerCase();
+                registration.isOnline = isOnlineValue ? ['true', 'yes', '1', 'ja', 'online'].includes(isOnlineValue) : undefined;
 
                 return registration;
             })
