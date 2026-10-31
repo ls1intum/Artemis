@@ -370,6 +370,14 @@ These workflows are intentionally NOT folded into the umbrella:
 
 ## E2E image identity and readiness
 
+Closed-PR image cleanup (`pullrequest-closed.yml`) authenticates with the job's short-lived
+`GITHUB_TOKEN` and grants `packages: write` only to that job. It does not use the project-board
+PAT. GitHub also requires the publishing repository to have **Admin** access under the package's
+**Manage Actions access** settings. If that access is removed, restore it for `ls1intum/Artemis`
+on the `artemis` package rather than adding another personal token. See
+[GitHub's package deletion permissions](https://docs.github.com/en/packages/learn-github-packages/deleting-and-restoring-a-package#packages-api-support).
+The cleanup workflow checks out no PR code and retains its single `pr-<number>` tag selector.
+
 Both build paths upload a `docker-tag` artifact containing `sha-<commit_sha>` for the exact
 revision checked out by the build. E2E setup rejects an artifact for any other revision;
 branch names and PR aliases remain convenient publishing tags but are never E2E inputs.

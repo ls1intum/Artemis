@@ -687,3 +687,32 @@ test('a failed close cannot prevent the other prepared context from closing', as
     });
     assert.deepEqual(context.closed, ['config/testing/vitest.monaco.config.ts', 'vitest.config.ts']);
 });
+
+for (const failure of ['preparation', 'execution']) {
+    test(`preserves the original ${failure} failure alongside every cleanup failure`, async () => {
+        const context = executionContext();
+        const primary = new Error(`${failure} failed`);
+        const closeErrors = [new Error('normal close failed'), new Error('Monaco close failed')];
+        const prepare = context.prepareRelatedProject;
+        context.prepareRelatedProject = async (options) => {
+            if (failure === 'preparation' && options.configFile.includes('monaco')) throw primary;
+            const project = await prepare(options);
+            project.run = async () => {
+                throw primary;
+            };
+            const close = project.close;
+            project.close = async () => {
+                await close();
+                throw closeErrors[options.configFile.includes('monaco') ? 1 : 0];
+            };
+            return project;
+        };
+        await assert.rejects(executePlan({ mode: 'affected', sources: [component] }, context), (error) => {
+            assert.ok(error instanceof AggregateError);
+            assert.deepEqual(error.errors, failure === 'preparation' ? [primary, closeErrors[0]] : [primary, closeErrors[1], closeErrors[0]]);
+            return true;
+        });
+        assert.deepEqual(context.closed, failure === 'preparation' ? ['vitest.config.ts'] : ['config/testing/vitest.monaco.config.ts', 'vitest.config.ts']);
+        assert.deepEqual(context.commands, [['run', 'prebuild']]);
+    });
+}

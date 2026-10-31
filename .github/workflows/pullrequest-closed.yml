@@ -12,6 +12,8 @@ jobs:
   purge-image:
     name: Delete image from ghcr.io
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       # The action takes exactly one selector and aborts with "too many selectors defined, use only
       # one" when it is given more, so `tag` is the only one here. Pairing it with
@@ -23,5 +25,7 @@ jobs:
         with:
           owner: ${{ github.repository_owner }}
           name: artemis
-          token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
+          # The publishing repository requires package admin access. Use the short-lived job token,
+          # rather than the unrelated project-board PAT that failed with "Bad credentials".
+          token: ${{ github.token }}
           tag: pr-${{ github.event.pull_request.number }}
