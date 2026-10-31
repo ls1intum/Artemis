@@ -1,3 +1,5 @@
+import { triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -52,6 +54,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         await TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [
+                { provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } },
                 MockProvider(ChangeDetectorRef),
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -75,6 +78,21 @@ describe('TextBlockFeedbackEditorComponent', () => {
         fixture.detectChanges();
     });
 
+    it('keeps title editing connected to the text-block feedback', async () => {
+        const changes = vi.fn();
+        component.feedbackChange.subscribe(changes);
+        await fixture.whenStable();
+        const title = compiled.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
+
+        title.value = 'Tutor title';
+        title.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
+
+        expect(component.feedback().text).toBe('Tutor title');
+        expect(changes).toHaveBeenCalledWith(component.feedback());
+        expect(compiled.querySelector('jhi-points-input')).not.toBeNull();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
 
@@ -85,40 +103,20 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(input).toBeTruthy();
     });
 
-    it('should show delete button for empty feedback only', () => {
-        let button = compiled.querySelector('#dismiss-icon');
-        let confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeTruthy();
-        expect(confirm).toBeFalsy();
-
-        component.feedback().credits = 1;
-        reapplyFeedback();
-        button = compiled.querySelector('#dismiss-icon');
-        confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeFalsy();
-        expect(confirm).toBeTruthy();
-
-        component.feedback().detailText = 'Lorem Ipsum';
-        reapplyFeedback();
-        button = compiled.querySelector('#dismiss-icon');
-        confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeFalsy();
-        expect(confirm).toBeTruthy();
-
-        component.feedback().credits = 0;
-        reapplyFeedback();
-        button = compiled.querySelector('#dismiss-icon');
-        confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeFalsy();
-        expect(confirm).toBeTruthy();
-
-        component.feedback().detailText = '';
-        reapplyFeedback();
-
-        button = compiled.querySelector('#dismiss-icon');
-        confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeTruthy();
-        expect(confirm).toBeFalsy();
+    it('offers the confirmation-dialog delete action for both empty and populated assessment feedback', () => {
+        for (const [credits, detailText] of [
+            [0, ''],
+            [1, ''],
+            [1, 'Tutor comment'],
+            [0, 'Tutor comment'],
+        ] as const) {
+            component.feedback().credits = credits;
+            component.feedback().detailText = detailText;
+            reapplyFeedback();
+            expect(compiled.querySelector('[data-testid="delete-feedback"]')).not.toBeNull();
+            expect(compiled.querySelector('#dismiss-icon')).toBeNull();
+            expect(compiled.querySelector('#confirm-icon')).toBeNull();
+        }
     });
 
     it('should call escKeyup when keyEvent', () => {
@@ -135,14 +133,17 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(component.escKeyup).toHaveBeenCalledOnce();
     });
 
-    it('should show confirmIcon if feedback dismission needs to be confirmed', () => {
-        // Set feedback credits to non-zero which requires confirmation
+    it('keeps the feedback until the tutor confirms the delete popup', () => {
         component.feedback().credits = 1;
-        fixture.changeDetectorRef.detectChanges();
-
-        // Verify confirm icon is displayed when feedback has credits
-        const confirmIcon = compiled.querySelector('#confirm-icon');
-        expect(confirmIcon).toBeTruthy();
+        reapplyFeedback();
+        const dialog = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog');
+        const close = vi.fn();
+        component.onClose.subscribe(close);
+        (compiled.querySelector('[data-testid="delete-feedback"]') as HTMLButtonElement).click();
+        expect(dialog).toHaveBeenCalledOnce();
+        expect(close).not.toHaveBeenCalled();
+        triggerDeleteDialogDelete(dialog.mock.calls[0][0].delete);
+        expect(close).toHaveBeenCalledOnce();
     });
 
     it('should show link icon when feedback is associated with grading instruction', () => {

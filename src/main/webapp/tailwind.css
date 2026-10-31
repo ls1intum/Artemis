@@ -243,3 +243,6 @@
         border-color: var(--p-content-border-color);
     }
 }
+
+/* Assessment instruction card layout. */
+@source './app/assessment/manage/structured-grading-instructions-assessment-layout';

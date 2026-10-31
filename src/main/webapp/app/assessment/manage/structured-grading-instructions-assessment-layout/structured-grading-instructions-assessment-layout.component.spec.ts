@@ -3,7 +3,6 @@ import { computed, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
-import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -36,7 +35,6 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
                 MockComponent(HelpIconComponent),
                 ExpandableSectionComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(MarkdownDirective),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
         })
@@ -52,23 +50,23 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     it('should initialize', () => {
         fixture.componentRef.setInput('readonly', true);
 
-        comp.ngOnInit();
         expect(comp.allowDrop()).toBe(false);
-        expect(comp.disableDrag()).toBe(false);
     });
 
-    it('should set display elements', () => {
-        const gradingInstruction = { id: 1, feedback: 'feedback', credits: 1 } as GradingInstruction;
+    it('shows the instruction, feedback wording and signed points in each card', async () => {
+        const instruction = { id: 1, feedback: 'Tutor feedback', instructionDescription: 'Assessment instruction', credits: 1 } as GradingInstruction;
+        fixture.componentRef.setInput('criteria', [{ title: 'Criterion', structuredGradingInstructions: [instruction] }]);
+        fixture.componentRef.setInput('readonly', true);
+        fixture.detectChanges();
 
-        expect(comp.setScore(gradingInstruction.credits)).toBe('1P');
-        expect(comp.setTooltip(gradingInstruction)).toBe('Feedback: feedback');
-        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
-        gradingInstruction.credits = 0;
-        fixture.detectChanges();
-        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
-        gradingInstruction.credits = -1;
-        fixture.detectChanges();
-        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
+        await fixture.whenStable();
+        const card: HTMLElement = fixture.nativeElement.querySelector('#criterion-0-instruction-0');
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(card.textContent).toContain('Assessment instruction');
+            expect(card.textContent).toContain('Tutor feedback');
+        });
+        expect(card.querySelector('tumaet-ui-tag')?.textContent).toContain('+1');
     });
 
     it('should expand and collapse all criteria', () => {
@@ -142,12 +140,12 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
                 appliedInstructionCounts: appliedCounts,
                 removableInstructionIds: computed(() => new Set([...appliedIds()].filter((id) => !notRemovableIds().has(id)))),
                 applyInstruction: vi.fn(),
+                unapplyOneInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             };
             TestBed.inject(GradingInstructionSelectionService).register(host);
             fixture.componentRef.setInput('readonly', false);
             fixture.componentRef.setInput('criteria', [criterion]);
-            comp.ngOnInit();
             fixture.detectChanges();
         });
 
@@ -172,6 +170,40 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             checkboxInput().click();
             fixture.detectChanges();
         }
+
+        it('hides unsupported arming while keeping instruction applications and dragging available', () => {
+            fixture.componentRef.setInput('allowArming', false);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="arm-instruction"]')).toBeNull();
+            expect(comp.isDraggable(instruction)).toBe(true);
+            fixture.nativeElement.querySelector('[data-testid="increase-instruction-usage"]').click();
+            expect(host.applyInstruction).toHaveBeenCalledExactlyOnceWith(instruction);
+            comp.armInstruction(new Event('click'), instruction);
+
+            TestBed.inject(GradingInstructionSelectionService).unregister(host);
+            fixture.detectChanges();
+            const card = fixture.nativeElement.querySelector('#criterion-0-instruction-0') as HTMLElement;
+            expect(card.getAttribute('role')).toBeNull();
+            expect(card.getAttribute('tabindex')).toBeNull();
+            card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(TestBed.inject(GradingInstructionSelectionService).hasArmedInstruction()).toBe(false);
+        });
+
+        it('supports arming, unarming and single-application stepper actions', () => {
+            const arm = fixture.nativeElement.querySelector('[data-testid="arm-instruction"]') as HTMLButtonElement;
+            arm.click();
+            fixture.detectChanges();
+            expect(arm.getAttribute('aria-pressed')).toBe('true');
+            arm.click();
+            fixture.detectChanges();
+            expect(arm.getAttribute('aria-pressed')).toBe('false');
+            fixture.nativeElement.querySelector('[data-testid="increase-instruction-usage"]').click();
+            expect(host.applyInstruction).toHaveBeenCalledExactlyOnceWith(instruction);
+            setApplicationCount(2);
+            fixture.detectChanges();
+            fixture.nativeElement.querySelector('[data-testid="decrease-instruction-usage"]').click();
+            expect(host.unapplyOneInstruction).toHaveBeenCalledExactlyOnceWith(instruction);
+        });
 
         it('should render a checkbox instead of the usage count', () => {
             expect(fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent))).not.toBeNull();
@@ -207,7 +239,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(host.unapplyInstruction).not.toHaveBeenCalled();
             expect(openDeleteDialogSpy).toHaveBeenCalledOnce();
             const dialogData: DeleteDialogData = openDeleteDialogSpy.mock.calls[0][0];
-            expect(dialogData.deleteQuestion).toBe('artemisApp.feedback.delete.question');
+            expect(dialogData.deleteQuestion).toBe('artemisApp.feedback.delete.allInstances');
 
             // Simulate the tutor confirming in the dialog.
             triggerDeleteDialogDelete(dialogData.delete, {});
@@ -317,7 +349,6 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
                 structuredGradingInstructions: [{ id: 1, instructionDescription: 'description', credits: 4, usageCount: 2 } as GradingInstruction],
             } as GradingCriterion,
         ]);
-        comp.ngOnInit();
         fixture.detectChanges();
 
         expect(comp.selectable()).toBe(false);

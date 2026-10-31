@@ -30,6 +30,7 @@ describe('Unreferenced Feedback Detail Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
                 comp = fixture.componentInstance;
+                fixture.componentRef.setInput('readOnly', false);
                 feedbackService = TestBed.inject(FeedbackService);
                 sgiService = TestBed.inject(StructuredGradingCriterionService);
             });

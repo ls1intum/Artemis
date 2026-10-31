@@ -211,6 +211,10 @@
     flex-shrink: 0;
 }
 
+.unified-feedback-title-field {
+    display: contents;
+}
+
 .unified-feedback-title-input {
     flex: 1;
     min-width: 0;
@@ -327,4 +331,201 @@
     margin-top: 0.5rem;
     padding-top: 0.5rem;
     border-top: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+}
+
+:host(.unified-feedback-inline-editor) .unified-feedback--assessment .unified-feedback-assessment-points {
+    width: 7rem;
+}
+
+.unified-feedback--assessment {
+    padding: 0.75rem;
+    border-radius: 1rem;
+    border-inline-start: 0.25rem solid var(--secondary);
+    box-shadow: 0 0.125rem 0.25rem color-mix(in srgb, var(--border-color) 50%, transparent);
+
+    &.unified-feedback--success {
+        border-inline-start-color: var(--success);
+    }
+
+    &.unified-feedback--danger {
+        border-inline-start-color: var(--danger);
+    }
+
+    .unified-feedback-header,
+    .unified-feedback-header-left {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .unified-feedback-header-right {
+        order: -1;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .unified-feedback-header-left:empty,
+    .unified-feedback-icon-badge {
+        display: none;
+    }
+
+    .unified-feedback-header-left:not(:has(.unified-feedback-title-input, .unified-feedback-title)) {
+        display: none;
+    }
+
+    .unified-feedback-header:has(.unified-feedback-title-input) {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto;
+        align-items: end;
+
+        .unified-feedback-header-left,
+        .unified-feedback-header-right {
+            display: contents;
+        }
+
+        .unified-feedback-title-label {
+            grid-area: 1 / 1;
+            margin: 0;
+        }
+
+        .unified-feedback-title-input {
+            grid-area: 2 / 1;
+        }
+
+        .unified-feedback-assessment-points {
+            grid-area: 2 / 2;
+            width: 100%;
+        }
+
+        .unified-feedback-toolbar {
+            grid-area: 2 / 3;
+            align-self: center;
+        }
+    }
+
+    .unified-feedback-title-input {
+        width: 100%;
+        min-height: 2.625rem;
+        padding: 0.5rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        font-weight: 400;
+    }
+
+    .unified-feedback-assessment-points {
+        display: grid;
+        grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+        width: 5rem;
+        max-width: 100%;
+        min-width: 0;
+
+        .unified-feedback-points-input {
+            width: 100%;
+            min-width: 0;
+        }
+
+        // Keep the shared points adapter; scope only its native input geometry to assessment cards.
+        ::ng-deep input {
+            min-height: 2.625rem;
+            padding-inline: 0.25rem;
+            border-radius: 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        button {
+            display: grid;
+            place-items: center;
+            padding: 0;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--secondary);
+            font-size: 1.25rem;
+            cursor: pointer;
+
+            &:first-child {
+                border-inline-end: 0;
+                border-radius: 0.375rem 0 0 0.375rem;
+            }
+
+            &:last-child {
+                border-inline-start: 0;
+                border-radius: 0 0.375rem 0.375rem 0;
+            }
+
+            &:disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
+            }
+        }
+    }
+
+    .unified-feedback-points {
+        border-radius: 0.375rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .unified-feedback-points--neutral {
+        color: var(--artemis-alert-neutral-color);
+        background: var(--artemis-alert-neutral-background);
+    }
+
+    .unified-feedback-detail-input {
+        min-height: 5.5rem;
+        font-size: 1rem;
+    }
+
+    .unified-feedback-rubric-label {
+        margin-block: 0.5rem;
+        font-size: 1rem;
+        font-style: normal;
+        line-height: 1.5;
+        min-height: 3em;
+        align-items: flex-start;
+    }
+
+    jhi-confirm-icon,
+    .unified-feedback-icon-btn {
+        color: var(--danger);
+    }
+
+    .unified-feedback-icon-btn {
+        border-radius: 0.375rem;
+        width: 2rem;
+        height: 2rem;
+        background: transparent;
+    }
+
+    jhi-confirm-icon {
+        padding: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+    }
+}
+
+.unified-feedback-section-label {
+    display: block;
+    margin-block-end: 0.375rem;
+    color: var(--body-color);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.unified-feedback-title-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.unified-feedback-assessment-criterion {
+    margin-block-end: 0.75rem;
+    padding-block-end: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+
+    p {
+        margin: 0;
+        min-height: 3em;
+        line-height: 1.5;
+        color: var(--secondary);
+    }
 }

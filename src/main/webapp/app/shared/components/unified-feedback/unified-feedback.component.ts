@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -15,6 +15,7 @@ import {
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
@@ -41,18 +42,22 @@ interface FeedbackTypeConfig {
         TumAetUiTooltipDirective,
         FormsModule,
         ConfirmIconComponent,
+        DeleteButtonDirective,
         GradingInstructionLinkIconComponent,
         FeedbackSuggestionBadgeComponent,
         AssessmentCorrectionRoundBadgeComponent,
         PointsInputComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
     private destroyRef = inject(DestroyRef);
+    private textareaResizeObserver?: ResizeObserver;
 
     constructor() {
+        this.destroyRef.onDestroy(() => this.textareaResizeObserver?.disconnect());
         // afterRenderEffect (not effect): the textarea DOM read/write here must happen after the view -
         // and its viewChild query - is guaranteed to be resolved, which a plain effect() does not promise
         // on its first flush. A brand-new feedback item (e.g. an AI suggestion appended to the list) mounts
@@ -66,12 +71,8 @@ export class UnifiedFeedbackComponent {
             }
         });
 
-        // Re-measuring only on feedbackDetail/feedbackTitle changes misses the case where a textarea's own
-        // available width shrinks later (e.g. a modeling exercise's Apollon diagram finishes laying out after an
-        // AI feedback suggestion already landed) - the text then wraps into more lines than the height that was
-        // computed at mount time, with nothing left to trigger a re-measure. Watch width specifically (not
-        // the observed box as a whole) so our own height writes below don't retrigger this callback.
-        afterNextRender(() => {
+        // Watch each mounted textarea's width; viewChild changes when an assessment card opens or closes.
+        afterRenderEffect((onCleanup) => {
             const detailTextarea = this.detailTextarea()?.nativeElement;
             const titleTextarea = this.titleTextarea()?.nativeElement;
             if (!detailTextarea && !titleTextarea) {
@@ -97,7 +98,13 @@ export class UnifiedFeedbackComponent {
             if (titleTextarea) {
                 resizeObserver.observe(titleTextarea);
             }
-            this.destroyRef.onDestroy(() => resizeObserver.disconnect());
+            this.textareaResizeObserver = resizeObserver;
+            onCleanup(() => {
+                resizeObserver.disconnect();
+                if (this.textareaResizeObserver === resizeObserver) {
+                    this.textareaResizeObserver = undefined;
+                }
+            });
         });
     }
 
@@ -111,6 +118,9 @@ export class UnifiedFeedbackComponent {
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);
 
+    /** Assessment card presentation; other feedback views keep their existing layout. */
+    assessmentLayout = input(false);
+
     editable = input<boolean>(false);
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
@@ -120,16 +130,20 @@ export class UnifiedFeedbackComponent {
      * this to false so the UI never invites editing a value that would be discarded. Defaults to true.
      */
     titleEditable = input<boolean>(true);
+    /** Hides generated file/line titles when an assessment editor supplies its own context. */
+    showTitle = input(true);
 
     feedbackTitle = model<string | undefined>(undefined);
     feedbackDetail = model<string | undefined>(undefined);
     feedbackCredits = model<number | undefined>(0);
 
     readonly onDelete = output<void>();
+    readonly onInstructionUnlinked = output<void>();
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
+    private readonly deleteButton = viewChild(DeleteButtonDirective);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'unified-feedback--success' },
@@ -205,14 +219,14 @@ export class UnifiedFeedbackComponent {
 
     /** Signed, compact points label for the read-only pill, e.g. `+10`, `-5`, `0` (no "Point(s)" word). */
     readonly pointsLabel = computed(() => {
-        const points = this.points();
+        const points = this.effectivePoints();
         const formatted = this.localeConversionService.toLocaleString(points, this.scoreAccuracy());
         return points > 0 ? `+${formatted}` : formatted;
     });
 
     /** Read-only pill color: follows the sign of the points value directly, independent of the inferred/explicit type. */
     readonly pointsSeverity = computed<'positive' | 'negative' | 'neutral'>(() => {
-        const points = this.points();
+        const points = this.effectivePoints();
         if (points > 0) {
             return 'positive';
         }
@@ -349,6 +363,15 @@ export class UnifiedFeedbackComponent {
         this.markAdaptedIfSuggestion();
     }
 
+    /** Steps to the next half-point boundary, using the raw value before the input loses focus. */
+    stepAssessmentCredits(direction: -1 | 1): void {
+        if (this.readOnly() || this.feedback()?.gradingInstruction) {
+            return;
+        }
+        const position = (this.feedbackCredits() ?? 0) / this.CREDITS_STEP;
+        this.onCreditsChange((direction > 0 ? Math.floor(position) + 1 : Math.ceil(position) - 1) * this.CREDITS_STEP);
+    }
+
     /**
      * Snaps the typed credits onto the half-point grid when the field is left or Enter is pressed. The points input
      * shows the snapped value again because {@link feedbackCredits} is bound to it with `[ngModel]`.
@@ -372,7 +395,9 @@ export class UnifiedFeedbackComponent {
     }
 
     toggleDeleteConfirm(): void {
-        if (this.canDismissWithoutConfirm()) {
+        if (this.assessmentLayout()) {
+            this.deleteButton()?.openDeleteDialog();
+        } else if (this.canDismissWithoutConfirm()) {
             this.handleDeleteConfirmed();
         } else {
             this.confirmIcon()?.toggle();
@@ -405,7 +430,16 @@ export class UnifiedFeedbackComponent {
         autogrowTextarea(textarea);
     }
 
+    stopToolbarEnterPropagation(event: Event): void {
+        if (!this.assessmentLayout() || !(event as KeyboardEvent).ctrlKey) {
+            event.stopPropagation();
+        }
+    }
+
     private getReferencedFeedbackTitle(feedback: Feedback): string {
+        if (feedback.gradingInstruction) {
+            return '';
+        }
         if (feedback.text) {
             if (Feedback.isFeedbackSuggestion(feedback)) {
                 return Feedback.stripSuggestionPrefix(feedback.text);

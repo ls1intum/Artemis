@@ -186,6 +186,18 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.appliedInstructionIds()).toEqual(new Set([1]));
         });
 
+        it('removes one application and keeps Add feedback beside the Other feedback group', () => {
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(documentationInstruction);
+            const first = comp.unreferencedFeedback[0];
+            comp.addUnreferencedFeedback();
+            fixture.detectChanges();
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(true);
+            expect(fixture.nativeElement.querySelector('.unreferenced-feedback__group-actions .add-unreferenced-feedback')).not.toBeNull();
+            comp.unapplyOneInstruction(documentationInstruction);
+            expect(comp.unreferencedFeedback.filter((feedback) => feedback.gradingInstruction?.id === documentationInstruction.id)).toEqual([first]);
+        });
+
         it('should remove every feedback of the instruction when it is un-applied', () => {
             comp.applyInstruction(documentationInstruction);
             comp.applyInstruction(documentationInstruction);

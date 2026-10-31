@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, input, model } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -22,7 +23,15 @@ export interface FeedbackGroup {
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: ['./unreferenced-feedback.component.scss'],
-    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiMessageComponent, ArtemisTranslatePipe],
+    imports: [
+        NgTemplateOutlet,
+        TranslateDirective,
+        UnreferencedFeedbackDetailComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -138,6 +147,8 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      * Awarded / deducted / final points for the assessment, using the same structured-grading usage and
      * positive/max-point capping as the assessment save path.
      */
+    readonly placeAddButtonWithOtherGroup = computed(() => this.showGroupHeaders() && this.feedbackGroups().some((group) => group.translateTitle));
+
     readonly pointsSummary = computed(() => {
         const { awarded, deducted, total } = this.assessmentScore();
         return { awarded, deducted, total };
@@ -211,10 +222,20 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     }
 
     applyInstruction(instruction: GradingInstruction): void {
+        if (!this.selectionService.canApplyInstruction(instruction)) {
+            return;
+        }
         const feedback = this.createFeedback();
         feedback.gradingInstruction = instruction;
         feedback.credits = instruction.credits;
         this.appendFeedback(feedback);
+    }
+
+    unapplyOneInstruction(instruction: GradingInstruction): void {
+        const feedback = this.unreferencedFeedback.findLast((item) => item.gradingInstruction?.id === instruction.id);
+        if (feedback) {
+            this.deleteFeedback(feedback);
+        }
     }
 
     unapplyInstruction(instruction: GradingInstruction): void {

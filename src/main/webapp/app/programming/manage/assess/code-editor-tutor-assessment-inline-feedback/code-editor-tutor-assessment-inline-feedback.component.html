@@ -1,52 +1,55 @@
 @let feedback = currentFeedback();
-@if (!viewOnly()) {
-    <jhi-unified-feedback
-        [editable]="true"
-        [readOnly]="readOnly()"
-        [feedback]="feedback"
-        [title]="isNewOrManual() ? derivedTitle() : undefined"
-        [titleEditable]="Feedback.isFeedbackSuggestion(feedback)"
-        [showReference]="false"
-        [highlightDifferences]="highlightDifferences()"
-        [(feedbackTitle)]="feedback.text"
-        [(feedbackDetail)]="feedback.detailText"
-        [(feedbackCredits)]="feedback.credits!"
-        (feedbackTitleChange)="onFieldChanged()"
-        (feedbackDetailChange)="onFieldChanged()"
-        (feedbackCreditsChange)="onFieldChanged()"
-        (onDelete)="removeFeedback()"
-        (drop)="updateFeedbackOnDrop($event)"
-        (dragover)="$event.preventDefault()"
-        (keydown)="handleKeydown($event)"
-    >
-        <!-- The slot is claimed by the container, not by the div: with preserveWhitespaces the @if has whitespace
-             roots besides the div, so content projection could not match the div inside it to the slot. -->
-        <ng-container ngProjectAs="[unifiedFeedbackExtraControls]">
-            @if (!isNewOrManual()) {
-                <div class="inline-feedback-actions">
-                    <button data-testid="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
-                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-                    </button>
-                </div>
-            }
-        </ng-container>
-    </jhi-unified-feedback>
-} @else {
-    <div class="d-flex flex-nowrap align-items-start gap-1 p-1">
-        <div class="flex-grow-1 flex-shrink-1">
-            <jhi-unified-feedback
-                [feedbackContent]="buildFeedbackTextForCodeEditor(feedback)"
-                [points]="feedback.credits || 0"
-                [feedback]="feedback"
-                [showReference]="false"
-                [scoreAccuracy]="course()?.accuracyOfScores"
-            />
-        </div>
-        @if (!readOnly()) {
-            <button type="submit" (click)="editFeedback(codeLine())" class="btn btn-primary btn-sm">
-                <fa-icon [icon]="faPencilAlt" />
-                <span jhiTranslate="entity.action.edit"></span>
+<jhi-unified-feedback
+    class="unified-feedback-inline-editor"
+    [assessmentLayout]="true"
+    [editable]="!viewOnly()"
+    [readOnly]="readOnly()"
+    [feedback]="feedback"
+    [title]="displayTitle()"
+    [showTitle]="Feedback.isFeedbackSuggestion(feedback) || !!displayTitle()"
+    [titleEditable]="Feedback.isFeedbackSuggestion(feedback)"
+    [feedbackContent]="buildFeedbackTextForCodeEditor(feedback)"
+    [points]="feedback.credits ?? 0"
+    [scoreAccuracy]="course()?.accuracyOfScores"
+    [showReference]="false"
+    [highlightDifferences]="highlightDifferences()"
+    [(feedbackTitle)]="feedback.text"
+    [(feedbackDetail)]="feedback.detailText"
+    [(feedbackCredits)]="feedback.credits!"
+    (feedbackTitleChange)="onFieldChanged()"
+    (feedbackDetailChange)="onFieldChanged()"
+    (feedbackCreditsChange)="onFieldChanged()"
+    (onInstructionUnlinked)="onFieldChanged()"
+    (onDelete)="removeFeedback()"
+    (drop)="updateFeedbackOnDrop($event)"
+    (dragover)="$event.preventDefault()"
+    (keydown)="handleKeydown($event)"
+    (input)="inputEdited.set(true)"
+>
+    <ng-container ngProjectAs="[unifiedFeedbackBeforeDetail]">
+        @if (isKeyboardDropTarget()) {
+            <button tumAetUiButton size="small" variant="outlined" severity="secondary" type="button" (click)="applyArmedInstruction()">
+                <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
             </button>
         }
+    </ng-container>
+    <ng-container ngProjectAs="[unifiedFeedbackViewControls]">
+        @if (viewOnly() && !readOnly()) {
+            <button tumAetUiButton size="small" variant="outlined" severity="secondary" type="button" data-testid="feedback-edit" (click)="editFeedback(codeLine())">
+                <fa-icon [icon]="faPencilAlt" /><span jhiTranslate="entity.action.edit"></span>
+            </button>
+        }
+    </ng-container>
+    <div unifiedFeedbackFooter class="inline-feedback-actions">
+        @if (!readOnly()) {
+            @if (!viewOnly()) {
+                <button tumAetUiButton size="small" variant="outlined" severity="secondary" type="button" data-testid="feedback-cancel" (click)="cancelFeedback()">
+                    <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span>
+                </button>
+                <button tumAetUiButton size="small" type="button" data-testid="feedback-save" [disabled]="!saveEnabled()" (click)="updateFeedback()">
+                    <fa-icon [icon]="faSave" /><span jhiTranslate="entity.action.save"></span>
+                </button>
+            }
+        }
     </div>
-}
+</jhi-unified-feedback>

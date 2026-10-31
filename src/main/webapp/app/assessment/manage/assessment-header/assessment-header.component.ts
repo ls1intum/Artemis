@@ -15,6 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentWarningComponent } from '../assessment-warning/assessment-warning.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Message } from 'primeng/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -26,7 +27,7 @@ import { Message } from 'primeng/message';
     selector: 'jhi-assessment-header',
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
-    imports: [TranslateDirective, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe, Message],
+    imports: [TumAetUiTooltipDirective, TranslateDirective, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe, Message],
 })
 export class AssessmentHeaderComponent {
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);

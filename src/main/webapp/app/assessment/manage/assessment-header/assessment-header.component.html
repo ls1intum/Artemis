@@ -121,19 +121,23 @@
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save"></span>
                     </button>
-                    <button
-                        type="button"
-                        id="submit"
-                        class="btn m-1 btn-success"
-                        (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()"
-                        [disabled]="submitDisabled"
-                        [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
+                    <span
+                        class="assessment-submit-control"
+                        data-testid="assessment-submit-control"
+                        [attr.tabindex]="submitDisabled ? 0 : null"
+                        [tumAetUiTooltip]="
+                            !assessmentsAreValid()
+                                ? ('artemisApp.assessment.messages.incompleteFeedback' | artemisTranslate)
+                                : ('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'
+                        "
                     >
-                        @if (submitBusy()) {
-                            <fa-icon [icon]="faSpinner" animation="spin" />
-                        }
-                        <span jhiTranslate="entity.action.submit"></span>
-                    </button>
+                        <button type="button" id="submit" class="btn m-1 btn-success" (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()" [disabled]="submitDisabled">
+                            @if (submitBusy()) {
+                                <fa-icon [icon]="faSpinner" animation="spin" />
+                            }
+                            <span jhiTranslate="entity.action.submit"></span>
+                        </button>
+                    </span>
                     @if (!isTestRun()) {
                         <button
                             type="button"
