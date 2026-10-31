@@ -20,7 +20,7 @@ on:
         required: true
         type: boolean
       run_full_suite:
-        description: 'Run the full suite; false runs relevant and smoke specs unless selection requires all tests.'
+        description: 'Run the full suite; false permits spec-only selection plus smoke tests. Application source still requires all tests.'
         required: false
         type: boolean
         default: true
@@ -97,6 +97,9 @@ jobs:
           git fetch origin "$BASE_BRANCH:base_branch"
       - name: Determine relevant tests
         id: determine
+        env:
+          # Module mappings only order a run whose remaining phase is mandatory.
+          E2E_FULL_SUITE: ${{ inputs.run_full_suite }}
         run: supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh base_branch
 
   run-e2e-relevant:

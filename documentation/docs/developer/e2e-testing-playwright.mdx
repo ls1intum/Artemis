@@ -15,14 +15,14 @@ import e2eCiPipelineSsd from './assets/playwright_ci_pipeline_ssd.png';
 
 The Playwright test suite contains system tests verifying the most important features of Artemis.
 System tests test the whole system and therefore require a complete deployment of Artemis first.
-CI runs selected E2E tests for eligible internal pull requests and the full suite on integration-branch
-pushes and other full-run events.
+CI can select changed E2E specs for eligible spec-only internal pull requests. Application source changes,
+integration-branch pushes and other full-run events retain complete E2E coverage.
 
 Artemis uses GitHub Actions as its CI platform. E2E tests run on self-hosted runners because they require
 substantial compute resources, access to a PostgreSQL database, and a locally deployed Artemis instance.
-Ordinary PR runs execute the tests mapped to changed files plus authentication and health smoke specs.
-Cross-cutting or unclassified changes require the full suite. The reusable workflow also supports full PR
-coverage through two-phase execution.
+Spec-only PR runs execute changed specs plus authentication and health smoke specs. Application source,
+shared helpers and unclassified changes require the full suite. Module mappings can order full PR
+coverage through two-phase execution; they cannot establish a safe partial source suite.
 See the [CI Pipeline](#ci-pipeline) section for details.
 
 <Callout variant={CalloutVariant.info}>
@@ -666,24 +666,26 @@ misread the application state.
 ### Overview: PR selection and full-suite runs {/* #overview-two-phase-execution */}
 
 For eligible internal pull requests, CI sets the reusable E2E workflow's `run_full_suite` input to `false`.
-When the selector establishes a safe mapping, Phase 1 runs the relevant tests plus `Login`, `Logout`, and
-`SystemHealth` smoke specs. Phase 2 is intentionally omitted, including when Phase 1 passes. A green result
-establishes coverage of that selected scope; it does not establish full-suite coverage.
+For spec-only changes, Phase 1 runs changed specs plus `Login`, `Logout`, and `SystemHealth` smoke specs.
+Phase 2 is intentionally omitted, including when Phase 1 passes. A green result establishes coverage of
+that selected scope; it does not establish full-suite coverage.
 
-Configuration, shared infrastructure, cross-cutting source code, and unclassified changes require the full
+Application source, configuration, shared infrastructure and unclassified changes require the full
 suite in a single PR job. Fork PRs do not start E2E because they cannot publish the required container image.
-The umbrella's change filters also skip E2E for drafts and changes limited to tests or documentation.
+The umbrella's change filters also skip E2E for drafts and changes limited to server/client unit tests or documentation.
 
 Full PR mode remains available to callers of the reusable workflow with `run_full_suite=true`, its default.
 For mapped changes, Phase 1 runs first, then Phase 2 covers the remaining tests after Phase 1 passes its gate.
 A blocking Phase 1 verdict skips Phase 2; positively classified known-flaky failures can pass the gate.
-The diagram below describes this full PR mode, not ordinary selective PR runs.
+The workflow passes `E2E_FULL_SUITE=true` to the selector only in this complete mode. That allows module
+mappings to prioritize likely relevant tests because Phase 2 remains mandatory. The diagram below describes
+this full PR mode; ordinary application-source changes use one full-suite job.
 
 <Image
     src={e2eCiPipelineSsd}
     alt="Two-phase full PR mode with Developer, CI Pipeline, Helios, and Reports Dashboard swimlanes"
     size={ImageSize.large}
-    caption="Full PR mode only: Phase 1 runs change-relevant tests first, then Phase 2 runs remaining tests after Phase 1 passes its gate. Ordinary PR runs omit Phase 2. Full-suite fallback and non-PR runs use one full-suite job."
+    caption="Full PR mode only: Phase 1 runs change-relevant tests first, then Phase 2 runs remaining tests after Phase 1 passes its gate. Spec-only selective runs omit Phase 2. Ordinary application-source changes, other full-suite fallbacks and non-PR runs use one full-suite job."
 />
 
 **Observed full PR mode performance** (across 89 measured runs):
@@ -713,7 +715,8 @@ cleanup stops every container on its host. Locally, `run-e2e-tests-local-multino
 ### Selective test execution and `e2e-test-mapping.json`
 
 The `determine-tests` CI job reads `supporting_scripts/ci/E2E-tests/e2e-test-mapping.json` to decide which tests to include in Phase 1.
-The mapping file lists, for each Artemis module, the source paths that belong to it and the test paths that cover it.
+Module mappings identify tests to prioritize in explicit full PR mode. They do not enumerate every
+cross-module consumer and do not enable partial coverage for application source changes.
 All `testPaths` and `allTestPaths` entries are resolved relative to `src/test/playwright/` (the Playwright test root).
 
 This excerpt shows two module mappings; the checked-in file contains the complete list.
@@ -759,7 +762,8 @@ This excerpt shows two module mappings; the checked-in file contains the complet
 
 The `determine-tests` job compares the complete committed PR diff from its merge base against the actual base
 branch. Renames classify both the old and new paths; deleted specs are not passed as Playwright arguments.
-The union of mapped tests, changed specs, and `alwaysRunTests` forms Phase 1. The selector computes the rest of
+For spec-only changes, changed specs and `alwaysRunTests` form Phase 1. Explicit full PR mode may also
+use module mappings to prioritize tests. The selector computes the rest of
 the suite from `allTestPaths` plus discovered test paths even for spec-only changes. The workflow's
 `run_full_suite` input determines whether that remaining set runs as Phase 2.
 
@@ -768,12 +772,10 @@ mapping is invalid, a required mapped test is missing, or the base comparison ca
 committed diff also selects the full suite. Shared Playwright helpers and infrastructure require all tests,
 including helpers placed inside `e2e/`; only changed spec files can select themselves.
 
-Entries in `runAllTestsPatterns` also require the full suite. Cross-cutting server modules (core, account,
-exercise, local CI, local VC, and build agent) and client core/shared code have the same full-suite fallback.
-A mapped Java API change in a domain such as quiz selects that domain's E2E tests plus the smoke specs;
-unknown source paths never degrade to smoke-only coverage. Mappings must also include cross-module
-consumers: lecture changes select atlas workflows (including lecture-unit completion and mastery)
-and the course channel, tab, management and formatted-editor workflows that consume lectures.
+Application source changes require the full suite in ordinary mode, even when a module has mapped tests.
+Existing consumers span exercise imports, competency progress, course tabs, exam assessment, user deletion
+and Iris workflows. Source mappings are therefore ordering hints for complete runs. Entries in
+`runAllTestsPatterns` also require the full suite; unknown paths never degrade to smoke-only coverage.
 
 **Adding tests for a new module:** add an entry to `mappings` in `e2e-test-mapping.json` and add the test path(s) to `allTestPaths`.
 
@@ -875,8 +877,8 @@ When a new Artemis module is created or an existing module is significantly reor
 1. Add a new entry to `mappings` with the module's `sourcePaths` and `testPaths`.
 2. Add all new test paths to `allTestPaths` so full PR mode includes them in its remaining-test set.
 
-A module without mapped tests keeps the full-suite fallback. Review the source-to-test mapping when shared
-behavior changes rather than assuming that every module can safely use selective coverage.
+A module without mapped tests keeps the full-suite fallback. Review mappings to improve full-run test
+ordering; application source changes retain complete coverage regardless of these hints.
 
 ## Functionalities Covered
 

@@ -171,6 +171,11 @@ MODULES=$(get_modules)
 declare -A RELEVANT_TEST_SET
 
 for file in "${CHANGED_FILES[@]}"; do
+    # Source modules have consumers across exercise, course, exam, atlas, admin and Iris workflows.
+    # Mappings may prioritize a complete run, but cannot establish a safe partial source suite.
+    if [[ "$file" == src/main/java/* || "$file" == src/main/webapp/* ]] && [ "${E2E_FULL_SUITE:-false}" != "true" ]; then
+        run_all_tests "Application source changes require complete E2E coverage."
+    fi
     for pattern in $RUN_ALL_PATTERNS "${GLOBAL_SOURCE_PATHS[@]}"; do
         if [[ "$file" == "$pattern"* ]]; then
             run_all_tests "Found cross-cutting or infrastructure changes in '$pattern'."

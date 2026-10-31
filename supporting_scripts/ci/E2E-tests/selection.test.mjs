@@ -28,6 +28,10 @@ function repository() {
     for (const file of ['Login.spec.ts', 'Logout.spec.ts', 'SystemHealth.spec.ts', 'exercise/quiz-exercise/Quiz.spec.ts', 'exercise/text/Text.spec.ts']) {
         put(directory, `src/test/playwright/e2e/${file}`);
     }
+    const mapping = JSON.parse(readFileSync(new URL('supporting_scripts/ci/E2E-tests/e2e-test-mapping.json', root), 'utf8'));
+    for (const testPath of Object.values(mapping.mappings).flatMap((module) => module.testPaths)) {
+        put(directory, `src/test/playwright/${testPath}${testPath.endsWith('/') ? 'SelectionFixture.spec.ts' : ''}`);
+    }
     const git = (...args) => execFileSync('git', args, { cwd: directory, encoding: 'utf8', env: { ...process.env, GIT_CONFIG_NOSYSTEM: '1' } }).trim();
     git('init', '--quiet');
     git('config', 'user.email', 'fixture@example.invalid');
@@ -38,11 +42,12 @@ function repository() {
     };
     commit();
     git('branch', 'base');
-    const select = (base = 'base') => {
+    const select = (base = 'base', fullSuite = false) => {
         const result = execFileSync('bash', ['supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh', base], {
             cwd: directory,
             encoding: 'utf8',
             stdio: ['ignore', 'pipe', 'pipe'],
+            env: { ...process.env, E2E_FULL_SUITE: String(fullSuite) },
         });
         return Object.fromEntries([...result.matchAll(/^OUTPUT: ([^=]+)=(.*)$/gm)].map(([, key, value]) => [key, value]));
     };
@@ -50,11 +55,11 @@ function repository() {
 }
 
 describe('E2E selector against real commit diffs', () => {
-    it('selects a mapped Java API module and all smoke specs without the unrelated module', () => {
+    it('prioritizes mapped Java specs for a caller that commits to the full suite', () => {
         const { directory, commit, select } = repository();
         put(directory, 'src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizResource.java');
         commit();
-        const result = select();
+        const result = select('base', true);
         assert.equal(result.RUN_ALL_TESTS, 'false');
         assert.deepEqual(result.RELEVANT_TESTS.split(' '), ['e2e/Login.spec.ts', 'e2e/Logout.spec.ts', 'e2e/SystemHealth.spec.ts', 'e2e/exercise/quiz-exercise/']);
         assert.ok(result.REMAINING_TESTS.includes('e2e/exercise/text/'));
@@ -63,7 +68,7 @@ describe('E2E selector against real commit diffs', () => {
         'src/main/java/de/tum/cit/aet/artemis/lecture/service/LectureUnitService.java',
         'src/main/webapp/app/lecture/shared/course-lectures/course-lectures.component.ts',
     ]) {
-        it(`includes lecture consumers in atlas and course workflows for ${file}`, () => {
+        it(`prioritizes lecture consumers in a full run for ${file}`, () => {
             const { directory, commit, select } = repository();
             for (const spec of [
                 'lecture/Lecture.spec.ts',
@@ -77,7 +82,7 @@ describe('E2E selector against real commit diffs', () => {
             }
             put(directory, file);
             commit();
-            const result = select();
+            const result = select('base', true);
             assert.equal(result.RUN_ALL_TESTS, 'false');
             for (const testPath of [
                 'e2e/lecture/',
@@ -93,6 +98,19 @@ describe('E2E selector against real commit diffs', () => {
             assert.ok(result.RELEVANT_TESTS.includes('e2e/Login.spec.ts'));
             assert.ok(result.REMAINING_TESTS.split(' ').includes('e2e/exercise/'));
         });
+    }
+    for (const module of ['text', 'quiz', 'modeling', 'programming', 'fileupload', 'assessment', 'atlas', 'exam', 'communication', 'lecture']) {
+        for (const file of [`src/main/java/de/tum/cit/aet/artemis/${module}/service/Service.java`, `src/main/webapp/app/${module}/component.ts`]) {
+            it(`requires the complete E2E suite for production source: ${file}`, () => {
+                const { directory, commit, select } = repository();
+                put(directory, file);
+                commit();
+                const result = select();
+                assert.equal(result.RUN_ALL_TESTS, 'true');
+                assert.equal(result.RELEVANT_TESTS, '');
+                assert.equal(result.REMAINING_TESTS, '');
+            });
+        }
     }
     for (const file of [
         'src/main/java/de/tum/cit/aet/artemis/newmodule/Endpoint.java',
@@ -143,7 +161,7 @@ describe('E2E selector against real commit diffs', () => {
         git('checkout', '--quiet', '-');
         put(directory, 'src/main/webapp/app/quiz/question.ts');
         commit();
-        assert.equal(select().RUN_ALL_TESTS, 'false');
+        assert.equal(select('base', true).RUN_ALL_TESTS, 'false');
     });
     it('selects both source modules when a file is renamed across module boundaries', () => {
         const { directory, git, commit, select } = repository();
@@ -155,7 +173,7 @@ describe('E2E selector against real commit diffs', () => {
         mkdirSync(dirname(join(directory, after)), { recursive: true });
         renameSync(join(directory, before), join(directory, after));
         commit();
-        const result = select();
+        const result = select('base', true);
         assert.ok(result.RELEVANT_TESTS.includes('e2e/exercise/quiz-exercise/'));
         assert.ok(result.RELEVANT_TESTS.includes('e2e/exercise/text/'));
     });
@@ -172,6 +190,8 @@ describe('E2E selector against real commit diffs', () => {
         put(directory, 'src/test/playwright/e2e/exercise/quiz-exercise/Quiz.spec.ts', 'changed\n');
         commit();
         const result = select();
+        assert.equal(result.RUN_ALL_TESTS, 'false');
+        assert.deepEqual(result.RELEVANT_TESTS.split(' '), ['e2e/Login.spec.ts', 'e2e/Logout.spec.ts', 'e2e/SystemHealth.spec.ts', 'e2e/exercise/quiz-exercise/Quiz.spec.ts']);
         assert.ok(result.REMAINING_TESTS.includes('e2e/exercise/text/'));
     });
 });
@@ -241,6 +261,9 @@ function phase2Selected(runFullSuite) {
 }
 
 describe('workflow selection and required report contract', () => {
+    it('permits module ordering only when the caller requests a complete suite', () => {
+        assert.match(job('determine-tests'), /E2E_FULL_SUITE: \$\{\{ inputs\.run_full_suite \}\}/);
+    });
     it('does not schedule Phase 2 in selective PR mode', () => assert.equal(phase2Selected(false), false));
     it('retains Phase 2 for full-suite callers', () => assert.equal(phase2Selected(true), true));
     it('passes an intentional Phase 2 omission with explicit selected coverage', () => {

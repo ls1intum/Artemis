@@ -237,7 +237,7 @@ relative to the merge base with the actual PR target; missing history falls back
   full-suite fallback threshold. It considers both the base and current tree, including deleted sources.
   Shared contracts, core/configuration, dynamic dependencies, unknown inputs and broad selections run
   the full seven-shard suite. Planning happens on a public runner before allocating the test runners.
-- **Client:** `pnpm run test:ci:affected --base-ref origin/develop` expands changed Angular templates
+- **Client:** `pnpm run test:ci:affected --base-ref <fetched-pr-target-ref>` expands changed Angular templates
   and styles to their TypeScript owners, including Sass imports, then uses Vitest's transitive dependency
   graph for both ordinary and Monaco specs. Specs importing Node's filesystem APIs always run because
   source reads do not create graph edges. These guards do not suppress the full-suite fallback when the
@@ -245,11 +245,12 @@ relative to the merge base with the actual PR target; missing history falls back
   resources, deletions/renames, graph failures or changes with no related specs use `test:ci` instead.
   Strict TypeScript compilation and custom ESLint-rule tests still run. A selected test failure fails;
   it does not retry as a full suite.
-- **E2E:** ordinary PRs run mapped specs plus login, logout and system-health smoke specs. Phase 2 is
-  intentionally omitted in this mode. Shared or unmapped inputs and selector failures require the full
-  suite; the reporter still rejects missing expected phases. Full mode retains the Phase 1/Phase 2
-  fail-fast path where applicable, or runs everything in one job. Mappings include cross-module workflows;
-  lecture changes also select atlas and course consumers.
+- **E2E:** application source changes retain the complete suite: existing consumers cross exercise,
+  course, exam, atlas, admin and Iris workflows, so module mappings cannot establish safe partial coverage.
+  Spec-only changes can run changed specs plus login, logout and system-health smoke specs, intentionally
+  omitting Phase 2. Helpers, configuration and unclassified inputs still require full coverage. A caller
+  with `run_full_suite=true` can use module mappings to order Phase 1 before its mandatory remaining phase;
+  the workflow alone passes that commitment to the selector as `E2E_FULL_SUITE`. Missing expected results fail.
 
 Affected tests keep JUnit results and diagnostics but omit whole-project coverage generation,
 thresholds and uploads. Both internal and fork PR reporters remove stale coverage tables when a

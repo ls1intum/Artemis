@@ -94,6 +94,7 @@ tasks.register('verifySelection') {
             assert selected.excludes.contains('**/*IntTest*')
         }
         if (System.getProperty('includeModules')) {
+            assert includedModules.toList() == ['alpha'] : 'Global test filters must not expand the requested coverage modules'
             def matcher = new org.gradle.api.internal.tasks.testing.filter.TestSelectionMatcher(
                 new org.gradle.api.internal.tasks.testing.filter.TestFilterSpec(
                     selected.filter.includePatterns, selected.filter.excludePatterns, [] as Set))

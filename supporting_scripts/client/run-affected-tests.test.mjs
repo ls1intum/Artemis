@@ -387,11 +387,10 @@ test('course-tab source guardrails run alongside graph-related lecture specs', a
         'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'] } };",
         [source]: 'export const refresh = true;',
         'lecture/course-lectures.spec.ts': "import { refresh } from './shared/course-lectures/course-lectures.component'; test('refresh', () => expect(refresh).toBe(true));",
-        [guard]: `import { readFileSync as readSource } from 'node:fs'; test('course tab wiring', () => expect(readSource(${JSON.stringify(path.join('PLACEHOLDER', source))}, 'utf8')).toContain('refresh'));`,
+        [guard]:
+            "import { readFileSync as readSource } from 'node:fs'; test('course tab wiring', () => expect(readSource(new URL('../../../lecture/shared/course-lectures/course-lectures.component.ts', import.meta.url), 'utf8')).toContain('refresh'));",
         'unrelated.spec.ts': "throw new Error('Unrelated spec was executed');",
     });
-    const guardPath = path.join(root, guard);
-    fs.writeFileSync(guardPath, fs.readFileSync(guardPath, 'utf8').replace('PLACEHOLDER', root));
     const messages = [];
     const result = await runRelatedProject({ root, configFile: 'vitest.fixture.config.mjs', sources: [source], log: (message) => messages.push(message) });
     assert.equal(result.success, true);
