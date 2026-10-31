@@ -258,6 +258,7 @@ jobs:
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
+              - '.github/scripts/sonar-workflow.test.cjs'
               - 'deployment/kubernetes/install-localci-kubernetes-ubuntu.sh'
               - 'supporting_scripts/test_verified_installers.py'
               - 'supporting_scripts/check_action_pinning.py'

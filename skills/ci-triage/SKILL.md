@@ -48,6 +48,26 @@ concurrency slot. Follow the cancellation entry in the reference before rerunnin
 - **A workflow file changed in the branch**: classic PATs need the `workflow` scope to push it.
   Check the triggering event and checked-out revision when identifying the workflow version.
 
+## Sonar badges stay unchanged after a merge
+
+Compare `api/project_analyses/search?project=ls1intum_Artemis` with the merged SHA, then inspect the
+actual **Build and analyze** step. A scan that exits before publication leaves the previous analysis
+and badges unchanged. Scanner 6+ has a separate JVM; `SONAR_SCANNER_JAVA_OPTS` sizes its heap,
+while `org.gradle.jvmargs` sizes Gradle. The workflow assigns the scanner 6 GiB.
+
+Manual Sonar runs fail visibly on scanner errors; calls from CI remain advisory. To test a repaired
+workflow and refresh the actual default branch before merging it:
+
+```bash
+gh workflow run ci-sonar.yml --ref <workflow-fix-branch> -f analyze_default_branch=true
+```
+
+Leave that option false to analyze the selected branch itself. Check the job summary's analyzed
+branch/SHA and the completed Sonar analysis revision. Coverage lookup requires that exact SHA,
+both complete artifacts and successful full test jobs; unrelated CI failures do not invalidate it.
+A green GitHub run alone does not establish that the server processed the analysis or that the
+quality gate passed. See [workflow policy](../../.github/workflows/README.md#the-code-quality-analyses).
+
 ## Investigate Scorecard findings
 
 Read the published report at
