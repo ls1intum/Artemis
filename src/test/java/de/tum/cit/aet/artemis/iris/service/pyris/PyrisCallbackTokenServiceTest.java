@@ -91,11 +91,22 @@ class PyrisCallbackTokenServiceTest {
 
     @Test
     void ingestionTokensOutliveTheAbsoluteIngestionTimeoutAndInteractiveTokensDoNot() {
-        assertThat(service.validity(PyrisJobType.LECTURE_INGESTION)).isEqualTo(Duration.ofHours(13));
-        assertThat(service.validity(PyrisJobType.FAQ_INGESTION)).isEqualTo(Duration.ofHours(13));
+        assertThat(service.validity(PyrisJobType.LECTURE_INGESTION)).isEqualTo(Duration.ofHours(25));
+        assertThat(service.validity(PyrisJobType.FAQ_INGESTION)).isEqualTo(Duration.ofHours(25));
         assertThat(service.validity(PyrisJobType.CHAT)).isEqualTo(Duration.ofHours(6));
         assertThat(new PyrisCallbackTokenService(tokenProvider, 2, 5 * 3600).validity(PyrisJobType.LECTURE_INGESTION)).as("the longer of both limits counts")
                 .isEqualTo(Duration.ofHours(6));
+    }
+
+    @Test
+    void lectureIngestionTokensOutliveTranscriptionAndIngestionTogether() {
+        // The transition from transcription to ingestion restarts the absolute timeout but keeps the token, so a healthy run can take
+        // almost the absolute timeout in each phase.
+        int absoluteTimeoutHours = 3;
+        var tokenService = new PyrisCallbackTokenService(tokenProvider, absoluteTimeoutHours, 3600);
+        Duration longestHealthyRun = Duration.ofHours(absoluteTimeoutHours).multipliedBy(2).minusMinutes(1);
+
+        assertThat(tokenService.validity(PyrisJobType.LECTURE_INGESTION)).isGreaterThan(longestHealthyRun).isEqualTo(Duration.ofHours(7));
     }
 
     @Test

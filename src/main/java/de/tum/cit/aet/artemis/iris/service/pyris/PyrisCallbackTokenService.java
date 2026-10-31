@@ -68,17 +68,18 @@ public class PyrisCallbackTokenService {
 
     /**
      * @param tokenProvider                 derives the signing key from the session key
-     * @param ingestionAbsoluteTimeoutHours the longest an ingestion run may take before it is failed
+     * @param ingestionAbsoluteTimeoutHours the longest one phase of an ingestion run (transcription or ingestion) may take before it is failed
      * @param ingestionJobTimeoutSeconds    how long an ingestion job stays in the job map
      */
     public PyrisCallbackTokenService(TokenProvider tokenProvider, @Value("${artemis.iris.ingestion.absolute-timeout-hours:12}") int ingestionAbsoluteTimeoutHours,
             @Value("${artemis.iris.jobs.ingestion.timeout:10800}") int ingestionJobTimeoutSeconds) {
         this.tokenProvider = tokenProvider;
         // A lecture ingestion callback is still accepted from the processing state until the absolute timeout fails the run, which can be long after the
-        // job map entry expired. The token must outlive both, or a legitimate late callback would be rejected.
-        Duration longestRun = Duration.ofHours(ingestionAbsoluteTimeoutHours).compareTo(Duration.ofSeconds(ingestionJobTimeoutSeconds)) >= 0
-                ? Duration.ofHours(ingestionAbsoluteTimeoutHours)
-                : Duration.ofSeconds(ingestionJobTimeoutSeconds);
+        // job map entry expired. The token must outlive both, or a legitimate late callback would be rejected. A run keeps its token from transcription
+        // into ingestion, and that transition restarts the absolute timeout, so one run can take the timeout twice.
+        Duration bothPhases = Duration.ofHours(ingestionAbsoluteTimeoutHours).multipliedBy(2);
+        Duration jobMapTimeout = Duration.ofSeconds(ingestionJobTimeoutSeconds);
+        Duration longestRun = bothPhases.compareTo(jobMapTimeout) >= 0 ? bothPhases : jobMapTimeout;
         this.ingestionValidity = longestRun.plusHours(1);
     }
 
