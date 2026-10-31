@@ -395,7 +395,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * Browsers refuse to show a PDF in a sandboxed document, so a PDF keeps the application-wide policy.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPdfIsNotServedInSandbox() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -772,7 +772,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * file, and a sandboxed PDF is not displayed.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetAttachmentVideoUnitPdfNotModifiedIsNotSandboxed() throws Exception {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 0, true);
