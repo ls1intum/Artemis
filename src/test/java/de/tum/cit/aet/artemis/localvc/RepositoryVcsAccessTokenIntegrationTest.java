@@ -239,7 +239,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
      * an intrusion must not be able to create one after the credentials changed.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createRepositoryVcsAccessToken_isRefusedForASessionThatPredatesTheCredentialsChange() throws Exception {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         userActivityService.recordCredentialsChanged(tutor.getId(), Instant.now());
@@ -256,7 +256,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
      * credential that outlives it.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getRepositoryVcsAccessToken_isRefusedForASessionThatPredatesTheCredentialsChange() throws Exception {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
