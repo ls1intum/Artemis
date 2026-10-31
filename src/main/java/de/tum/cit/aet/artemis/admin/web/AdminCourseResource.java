@@ -178,12 +178,13 @@ public class AdminCourseResource {
             ltiApi.get().createOnlineCourseConfiguration(course);
         }
 
+        // Stored before the course, so a rejected icon leaves no course behind
+        Path iconPath = file != null ? FileUtil.saveImageFile(file, FilePathConverter.getCourseIconFilePath(), FilePathType.COURSE_ICON) : null;
+
         Course createdCourse = courseRepository.save(course);
 
-        if (file != null) {
-            Path basePath = FilePathConverter.getCourseIconFilePath();
-            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
-            createdCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
+        if (iconPath != null) {
+            createdCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(iconPath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 

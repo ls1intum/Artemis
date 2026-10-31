@@ -211,6 +211,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithRejectedCourseImageCreatesNoCourse() throws Exception {
+        courseTestService.testCreateCourseWithRejectedCourseImageCreatesNoCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
         courseTestService.testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate();
     }

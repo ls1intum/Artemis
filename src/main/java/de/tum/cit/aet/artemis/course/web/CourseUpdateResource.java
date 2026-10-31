@@ -174,7 +174,7 @@ public class CourseUpdateResource {
         existingCourse.validateUnenrollmentEndDate();
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
-            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            Path savePath = FileUtil.saveImageFile(file, basePath, FilePathType.COURSE_ICON);
             existingCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, courseId).toString());
             if (existingCourseIcon != null) {
                 // delete old course icon

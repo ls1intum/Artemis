@@ -239,7 +239,7 @@ public class AccountResource {
         log.debug("REST request to update profile picture for logged-in user");
         String contentType = file.getContentType();
 
-        // Check if the content type is either image/png or image/jpeg, else return 400
+        // The declared content type comes from the client and only filters out obvious mistakes; saveImageFile checks the content itself
         if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg"))) {
             throw new BadRequestAlertException("The file format is not supported, please make sure to upload a .png or .jpg file.", ENTITY_NAME,
                     "profilePictureFileFormatNotSupported", true);
@@ -251,12 +251,13 @@ public class AccountResource {
         User user = userRepository.getUser();
         Path basePath = FilePathConverter.getProfilePictureFilePath();
 
-        // Delete existing
+        Path savePath = FileUtil.saveImageFile(file, basePath, FilePathType.PROFILE_PICTURE);
+
+        // Delete the previous picture only once the new one is stored, so a rejected upload keeps it
         if (user.getImageUrl() != null) {
             fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
         }
 
-        Path savePath = FileUtil.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
         String publicPath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
         userRepository.updateUserImageUrl(user.getId(), publicPath);
         user.setImageUrl(publicPath);
