@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.account.config.AgentAccessEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
@@ -42,6 +44,7 @@ import de.tum.cit.aet.artemis.core.service.agent.AgentToolArguments.TextExercise
 import de.tum.cit.aet.artemis.core.service.agent.AgentToolArguments.TimelineArguments;
 import de.tum.cit.aet.artemis.core.service.agent.AgentToolArguments.UpdateCompetencyArguments;
 import de.tum.cit.aet.artemis.core.service.agent.AgentToolArguments.UpdateProgrammingExerciseArguments;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 
 /**
  * The tools of the MCP endpoint.
@@ -75,7 +78,10 @@ public class AgentToolService {
 
     private final List<AgentTool<?>> tools;
 
-    public AgentToolService() {
+    private final JsonMapper jsonMapper;
+
+    public AgentToolService(JsonMapper jsonMapper) {
+        this.jsonMapper = jsonMapper;
         this.tools = List.of(courseTools(), competencyTools(), announcementTools(), exerciseTools(), programmingTools(), lectureTools()).stream().flatMap(List::stream).toList();
     }
 
@@ -185,7 +191,7 @@ public class AgentToolService {
                 tool("get_exercise", "Read all fields of one exercise. Read it before you change it.", true, EXERCISE_SCOPES,
                         schema(List.of("type", "exerciseId"), property("type", EXERCISE_TYPE), property("exerciseId", EXERCISE_ID)), ExerciseArguments.class,
                         (arguments, api) -> AgentToolResult
-                                .of(api.send(HttpMethod.GET, required(arguments.type(), "type").exercisesPath() + "/" + id(arguments.exerciseId(), "exerciseId"), null))),
+                                .complete(api.send(HttpMethod.GET, required(arguments.type(), "type").exercisesPath() + "/" + id(arguments.exerciseId(), "exerciseId"), null))),
                 tool("create_text_exercise", "Create a text exercise as a draft." + EXERCISE_GUIDANCE, false, Set.of(AgentScope.EXERCISES_DRAFT),
                         schema(List.of("exercise"), property("exercise", JsonSchemaDTO.document("UpdateTextExerciseDTO of the API description, with courseId and without id."))),
                         TextExerciseArguments.class,
@@ -240,10 +246,21 @@ public class AgentToolService {
                         (arguments,
                                 api) -> AgentToolResult.of(api.sendText(HttpMethod.PATCH, base + "/" + id(arguments.exerciseId(), "exerciseId") + "/problem-statement",
                                         text(arguments.problemStatement(), "problemStatement")))),
-                tool("set_programming_timeline", "Change the dates of a programming exercise. releaseDate must stay in the future.", false, scopes,
+                tool("set_programming_timeline",
+                        "Change selected dates of a programming exercise. Omitted fields retain the fetched values; explicit null clears a date. Normal server validation and automatic rebuild scheduling apply. releaseDate must stay in the future.",
+                        false, scopes,
                         schema(List.of("timeline"),
                                 property("timeline", JsonSchemaDTO.document("ProgrammingExerciseTimelineUpdateDTO of the API description: id, releaseDate, startDate, dueDate."))),
-                        TimelineArguments.class, (arguments, api) -> AgentToolResult.of(api.send(HttpMethod.PUT, base + "/timeline", required(arguments.timeline(), "timeline")))),
+                        TimelineArguments.class, (arguments, api) -> {
+                            var patch = required(arguments.timeline(), "timeline");
+                            long exerciseId = id(patch.values().id(), "timeline.id");
+                            var current = api.send(HttpMethod.GET, base + "/" + exerciseId, null);
+                            if (!current.isSuccess()) {
+                                return AgentToolResult.of(current);
+                            }
+                            var timeline = jsonMapper.readValue(required(current.body(), "exercise response"), ProgrammingExerciseTimelineUpdateDTO.class);
+                            return AgentToolResult.of(api.send(HttpMethod.PUT, base + "/timeline", patch.merge(timeline)));
+                        }),
                 tool("set_programming_test_case_weights",
                         "Set weight, bonusMultiplier, bonusPoints and visibility of existing test cases of a programming exercise, by test case id.", false, scopes,
                         schema(List.of("exerciseId", "testCases"), property("exerciseId", EXERCISE_ID),

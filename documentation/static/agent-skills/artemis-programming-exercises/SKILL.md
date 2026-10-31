@@ -41,12 +41,17 @@ not be set up and the exercise may be partly created: look at the course before 
 
 ## Change a draft
 
-| Task | Call |
-|------|------|
-| Settings | `PUT /api/programming/programming-exercises` with the whole exercise from `GET`. Omitted flags reset to false. `shortName`, `staticCodeAnalysisEnabled`, the checkout paths and the course cannot change. |
-| Dates | `PUT /api/programming/programming-exercises/timeline` with `id`, `releaseDate`, `startDate`, `dueDate`. `releaseDate` must stay in the future. |
-| Problem statement | `PATCH /api/programming/programming-exercises/{id}/problem-statement` with the Markdown as the plain-text body (`Content-Type: text/plain`). |
-| Test case weights | `PATCH /api/programming/programming-exercises/{id}/update-test-cases` with a JSON list of `{id, weight, bonusMultiplier, bonusPoints, visibility}`. Test cases appear when the build runs the tests; you cannot create them here. |
+| Task              | Call                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Settings          | `PUT /api/programming/programming-exercises` with the whole exercise from `GET`. Omitted flags reset to false. `shortName`, `staticCodeAnalysisEnabled`, the checkout paths and the course cannot change.                                                                                                                                                          |
+| Dates             | `PUT /api/programming/programming-exercises/timeline` replaces the whole timeline. Read the exercise first and preserve `releaseDate`, `startDate`, `dueDate`, `assessmentType`, `assessmentDueDate`, `exampleSolutionPublicationDate` and `buildAndTestStudentSubmissionsAfterDueDate` unless changing them. Include `id`; `releaseDate` must stay in the future. |
+| Problem statement | `PATCH /api/programming/programming-exercises/{id}/problem-statement` with the Markdown as the plain-text body (`Content-Type: text/plain`).                                                                                                                                                                                                                       |
+| Test case weights | `PATCH /api/programming/programming-exercises/{id}/update-test-cases` with a JSON list of `{id, weight, bonusMultiplier, bonusPoints, visibility}`. Test cases appear when the build runs the tests; you cannot create them here.                                                                                                                                  |
+
+The MCP `set_programming_timeline` tool reads the current timeline and merges the supplied fields before sending this replacement.
+Omitted fields keep the values from that read; explicit null clears a date. Normal server validation and automatic rebuild scheduling
+still apply. Coordinate with the instructor to avoid concurrent edits
+between the read and save, which could overwrite a change made in the meantime.
 
 ## Edit the code with git
 
