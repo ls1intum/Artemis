@@ -7,10 +7,13 @@ sidebar_label: Iris
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
 import irisAiChoice from './assets/iris/iris-ai-choice.png';
 import irisChatEmpty from './assets/iris/iris-chat-empty.png';
 import irisConversation from './assets/iris/iris-conversation.png';
+import irisCitation from './assets/iris/iris-citation.png';
+import irisPointOut from './assets/iris/iris-point-out.png';
 
 Iris is a tutor built into Artemis that you can ask questions of while you work. It already has the exercise and
 your latest submission in front of it, so you can ask about *this* task without explaining it first.
@@ -73,6 +76,67 @@ They are worth using for that reason, and they do not reach your instructors as 
   than as the marking scheme.
 
 </Callout>
+
+## Answers That Cite the Lecture
+
+When Iris answers from lecture material, it places source chips beside the claims they support. Iris gives each chip
+a short label and summary; its icon identifies a slide deck, a video transcript, or one of the course's FAQs.
+
+Hovering a chip shows its summary. Lecture sources also show their **Unit:** and **Lecture:**. Where several sources
+back the same sentence, their chips sit together as a group, and the arrows beside the summary step through them.
+
+Clicking a lecture citation opens its unit, with the slides at the cited page or the video at the cited moment. That
+lets you check an answer against the material: the chip shows where Iris found support, not whether its answer is right.
+
+<Image src={irisCitation} alt="A source chip labelled Multithreading with its tooltip open, showing the summary above the unit Concurrency and the lecture Parallel Computing" size={ImageSize.medium} caption="A source chip with its tooltip open" />
+
+### When a Citation Cannot Open the Exact Place
+
+New citations to a lecture page or video moment carry an internal material version. When that version is available,
+Artemis checks that the slides or video still match what Iris used before opening the exact position. A citation whose
+version could not be verified opens the unit without jumping to that position. If a checked position cannot be opened,
+Artemis tells you why:
+
+- *The cited material has changed since this answer was written* — the slides or the video were replaced, so the page
+  or the moment an older answer names may no longer hold the same content.
+- *The cited material no longer exists* — the file or the video has been removed from the unit.
+- *The cited material cannot be checked right now* — for example, while a video's transcript is being regenerated.
+
+In all three cases the lecture still opens and only the exact position is left out. Once updated material has finished
+processing, you can ask again for an answer based on it. If the whole unit has been deleted rather than its material
+replaced, Artemis says that the linked content no longer exists and opens the lecture alone.
+
+## Asking About What You Are Viewing
+
+On a lecture page, Iris can use the slide pages visible in your open units as context for your next question. Once you
+have played a video, it can also use the current video moment. In the combined view / fullscreen, Iris uses the one
+unit open there. This viewing context is sent with your question, so you can ask "what is this right here?" without
+naming the page. It reflects what was visible when you sent the message.
+
+## When Iris Shows You the Place
+
+Instead of describing where something is, Iris can take you there in the lecture unit's
+[combined view / fullscreen](/student/learning-content/lectures#combined-view--fullscreen). It can move the slides to
+a page or the video to a moment, then answer with that material in front of you. With synchronization on, the other
+viewer may follow. The topic selector is hidden in this view; your next message uses the lecture that contains the
+open unit.
+
+When Artemis saves an acknowledged move, a chip appears in the conversation, reading *Navigated to page 5 and
+timestamp 0:56 in lecture unit Concurrency*. The chip stays, so the place is one click away later on, and clicking it
+reopens the view if you have closed it. A point-out that was checked against the material opens at one position only,
+the page or the moment that check covered. Where an older saved point-out still names both a page and a video moment
+that cannot stay synchronized, **Synchronize slides and video** switches off so the next movement does not undo it,
+and Artemis names the page and the moment it is keeping.
+
+<Image src={irisPointOut} alt="A question in the Iris chat, followed by a chip reading Navigated to page 5 and timestamp 0:56 in lecture unit Concurrency" size={ImageSize.medium} caption="The chip Artemis leaves after Iris moved the material" />
+
+Iris can move the material only while that combined view / fullscreen is open. If you click a saved point-out after
+the material has changed, the unit still opens, but the old position is withheld just as it is for a citation.
+
+The screencast below shows both halves together: Iris answering from the unit open in front of you, and moving the
+material to the place its answer is about.
+
+<TumLiveVideo src="80594" title="Iris using the open lecture material as context and pointing out a position" />
 
 ## Where Else Iris Appears
 
