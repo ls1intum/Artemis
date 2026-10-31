@@ -26,11 +26,11 @@ available to refresh repository settings independently of a push.
 
 ```text
 ci.yml                                                            (single entry workflow)
-├── detect-changes               (dorny/paths-filter, emits per-area booleans)
+├── detect-changes               (current-head check + dorny/paths-filter, emits per-area booleans)
 │
 │   REQUIRED — gated by `All required CI Passed` (fast + deterministic, run when relevant):
 ├── build           ── uses ci-build.yml          (the .war + Docker image)
-├── test            ── uses ci-test.yml           (server + client test suites)
+├── test            ── uses ci-test.yml           (server + client + AI worker sandbox tests; deferred on draft PRs)
 ├── quality         ── uses ci-quality.yml        (server + client style/lint/type-check, Java analyses)
 ├── gradle-wrapper  ── uses ci-gradle-wrapper.yml (if has_gradle; wrapper-jar integrity)
 ├── docs            ── uses ci-docs.yml           (if has_docs, or on every develop push)
@@ -68,7 +68,7 @@ Its only permission is `actions: read` (the timeline reads the jobs API).
 
 ### Required vs. advisory
 
-The single required check is `CI / All required CI Passed`. It gates on every job that is
+The single required check is `CI / All required CI Passed`. It includes `detect-changes` and gates on every job that is
 **fast and deterministic** — `build`, `test`, `quality`, `gradle-wrapper`, `translation`,
 `docs`, `workflows`, `version-consistency`, `bean-instantiations`. They run in parallel and finish
 within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
@@ -78,10 +78,20 @@ it is gated too, with a flakiness-aware verdict that exonerates failures known t
 Without history, failures after Playwright retries remain blocking. Path-skipped jobs report `skipped`, which the gate
 accepts — so a job only blocks merge when it is *relevant and red*.
 
+Draft PR runs use the aggregate name **Draft checks passed (tests deferred)**. They do not publish
+the required **All required CI Passed** check for an untested revision. Marking a PR **Ready for review**
+triggers a normal CI run even when its head SHA is unchanged; that run must satisfy the required
+check before merge. Non-PR events, including manual runs on a draft branch, retain the canonical
+required-check name and full validation.
+
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
 client — Java/TypeScript style, lint, type-check, architecture, plus the Java-only analyses
 (class-dependency caps, query over-fetching). `test` (`ci-test.yml`) runs only the server and
-client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-second style
+client test suites and the AI worker sandbox tests. On draft PRs the whole `test` workflow is deferred,
+while `quality` still runs relevant style, lint, architecture and type checks on GitHub-hosted runners.
+On drafts, **Quality / Client Compilation** also compiles the test TypeScript with
+`pnpm exec tsc --project config/client/tsconfig.spec.json` after the existing compilation prebuild,
+so draft test-code type errors remain visible. This split (mirroring Angular/TypeScript/Vite) keeps a 30-second style
 failure from being buried behind the multi-minute test jobs; the Java analyses are the server
 half of a symmetric `quality` stage, alongside the client checks.
 
@@ -142,6 +152,14 @@ The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for
 A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
 new revision can start.
 
+Before reserving build or self-hosted test capacity, a step in the existing `detect-changes` job
+checks that the PR is open and the run's head is current. It calls `.github/scripts/pr-ready.js`
+immediately, reusing that job's runner and checkout. There is no deliberate delay or separate
+readiness job. Non-PR events pass through, and PR concurrency cancels a superseded run when another
+push arrives. API failures fail the required gate closed; an obsolete head skips expensive work.
+Because `detect-changes` is in `all-required-ci-passed.needs`, a failed revision check cannot become
+a green skip.
+
 Jobs that must evaluate failed or skipped dependencies use `!cancelled()` in their job-level `if`,
 including Phase 2, the E2E reporter, coverage reporting, the required gate and the CI summary.
 This overrides the implicit `success()` check while allowing cancellation. Keep the explicit
@@ -169,13 +187,25 @@ gate closed.
 
 ### Skipping tests on a pull request
 
-The server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
+A draft `pull_request` event defers the entire `ci-test.yml` workflow: server tests, client tests and
+AI worker sandbox tests. E2E and CodeQL also defer draft PRs. Relevant public style, lint,
+architecture and type checks continue, including test TypeScript compilation in
+**Quality / Client Compilation**. The WAR build and the PR image needed for a draft test server
+remain available. This saves test-runner time during implementation, with the tradeoff that
+integration-test feedback arrives after **Ready for review** or a manual full CI run.
+
+The `ready_for_review` event starts normal CI with conservative affected selection and full-suite
+fallbacks. A successful draft run reports **Draft checks passed (tests deferred)** and cannot satisfy
+**All required CI Passed**, including when the promotion keeps the same commit. Manual
+`workflow_dispatch` runs on any branch, including a draft PR branch, run full validation; the
+**Bypass change detection and run every job** override remains available.
+
+For ready PRs, the server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
 (seven shards per run), and E2E is the slowest stage, so a **pull request** skips what it cannot
 affect. `detect-changes` emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to
 `ci-test.yml`, and `run_e2e`, which gates the `e2e` job. The skipped jobs report `skipped`; the `test` call as a whole still reports `success` when the other
-suite passes, which is all the gate sees. A skipped suite produces no coverage artifact (the
-coverage reporters only fetch an artifact when the matching `has_*_changes` is true, which implies
-the suite ran).
+suite passes, which is all the gate sees. A skipped or affected suite produces no full-coverage
+artifact. Coverage reporters show the validation scope and only publish tables from complete suites.
 
 - All three outputs are **deny-lists** in the `relevant` step, so a path nobody has classified runs
   the suite. The server suite is skipped only if every changed file is markdown, `LICENSE`,
@@ -198,7 +228,7 @@ the suite ran).
   `packages`. Playwright specs are `*.spec.ts` too, which is why client specs are matched by
   location, and a change under `src/test/playwright` always runs E2E. `build` and the other required
   checks still run.
-- A **draft** pull request does not start E2E either; marking it ready for review starts a CI run,
+- Marking a draft ready for review starts a CI run,
   which runs E2E only if the changes also pass the `e2e_tests` filter above (a pull request that only
   changes tests still skips it). The PR Docker image (`docker-pr` in `ci-build.yml`) is built for
   internal pull requests only, because fork pull requests cannot push to GHCR, and only if the changes
@@ -216,6 +246,74 @@ the suite ran).
   suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`).
 - Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
   the server suite uploads none.
+
+### Selecting tests within a pull request
+
+Ready PRs use affected selection after the area filters decide a suite is relevant. Selection is
+relative to the merge base with the actual PR target; missing history falls back to complete tests.
+
+- **Server:** the Python source dependency selector emits an explicit class plan on a public runner.
+  It follows imports, same-package references and injectable inheritance through both source revisions.
+  Type arguments and empty marker interfaces do not connect unrelated implementations. Production
+  changes include tests of affected modules and their typed and HTTP endpoint consumers; isolated test edits can select
+  individual classes. Mandatory architecture and source-scanning guards remain included and count
+  toward the breadth limit. The plan's exact classes reach Gradle through `artemis.test.classes`;
+  execution jobs need only a shallow checkout. Shared contracts, core/configuration, ambiguous wiring,
+  unknown inputs and broad selections retain the seven-shard suite. `get_changed_modules.sh` retains
+  its conservative CSV interface for other callers.
+- **Client:** `pnpm run test:ci:affected --base-ref <fetched-pr-target-ref>` expands changed Angular templates
+  and styles to their TypeScript owners, including Sass imports, then uses Vitest's transitive dependency
+  graph for both ordinary and Monaco specs. Specs importing Node's filesystem APIs always run because
+  source reads do not create graph edges. These guards do not suppress the full-suite fallback when the
+  changed source has no related specs: every changed source or resource owner must have a graph
+  relationship in at least one project. Shared leaf components, services and utilities use that same
+  graph instead of forcing full tests by directory name. The job prints the selected specs. Bootstrap,
+  generated inputs, configuration, unsupported resources, deletions/renames and graph failures retain
+  full validation. Strict test compilation prepares assets once; `--prebuilt` reuses them for test
+  execution, including full fallbacks. Standalone callers still prepare assets by default.
+  Ready PRs retain strict test TypeScript compilation and custom ESLint-rule tests in the client suite.
+  Drafts compile test TypeScript in **Quality / Client Compilation**. A selected test failure fails;
+  it does not retry as a full suite.
+- **E2E:** mapped application changes run their module tests, declared cross-module consumer workflows,
+  changed E2E specs and login/logout/system-health smoke specs. The checked-in dependency contract must
+  account for every discovered spec; additions or unsupported inputs fall back to complete validation.
+  An audited exact-file client surface can replace its broad module for that file only; for example,
+  exam-management UI fixes do not inherit the shared student-course container's exam dependency.
+  A mixed change still unions the broader files' consumers.
+  Java/client unit tests and documentation accompanying a bugfix do not force full E2E. Shared runtime,
+  configuration, Playwright helpers and unknown dependencies do. The selector resolves exact spec paths
+  and computes a disjoint remaining set. Ordinary eligible PRs intentionally omit Phase 2; full callers
+  retain it. Missing expected results fail, and non-PR events keep complete validation.
+
+Use `supporting_scripts/ci/E2E-tests/verify-test-determination.sh --all` to verify every mapping against
+the production selector. It rejects overlapping phase assignments and missing specs; it does not
+maintain a second selection algorithm.
+
+Affected tests keep JUnit results and diagnostics but omit whole-project coverage generation,
+thresholds and uploads. Both internal and fork PR reporters remove stale coverage tables when a
+complete result is unavailable and state the scope and actual test result. Only successful full-mode
+jobs publish `Server JaCoCo XML` and `Client Coverage Summaries`; fork reporting infers coverage scope
+from these artifacts without executing PR code.
+
+Pushes to `develop`, `main` and `release/*`, merge groups, published Artemis releases and manual CI
+runs retain full suites and coverage. To request complete validation of a PR branch before merging,
+dispatch **CI** on that branch with **Bypass change detection and run every job** enabled. Re-running
+a PR event preserves affected selection. Full validation on a merge group depends on use of the merge
+queue; a normal PR's green required gate certifies its selected scope.
+
+`ci-workflows.yml` runs behavioral tests for selection, current-revision checks and coverage reporting
+when their implementations change. New global inputs or unsupported dependency mechanisms should
+fall back to full validation until their selection is explicitly covered.
+
+### Dependency submission
+
+`dependency-submission.yml` is the sole Gradle dependency snapshot producer. It runs on dependency
+changes on `develop`, weekly and on demand, using GitHub-hosted runners. Keep **Automatic dependency
+submission** disabled under **Settings → Advanced Security**, while leaving **Dependency graph** and
+**Dependabot alerts** enabled. The managed producer also runs on PR updates and branches, duplicating
+work whose non-default-branch snapshots do not update the repository graph. This switch is a repository
+setting, so reviewing or reverting the workflow files does not change it; re-enable the managed producer
+if the dedicated workflow is removed without a replacement.
 
 ## Action pinning policy
 

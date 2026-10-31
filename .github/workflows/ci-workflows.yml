@@ -64,6 +64,44 @@ jobs:
           node-version: '24'
       - run: node --test supporting_scripts/badges/badges.test.mjs .github/scripts/sonar-workflow.test.cjs
 
+  test-selection:
+    name: CI selection and reporting tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          run_install: false
+          cache: true
+      - run: pnpm install --frozen-lockfile
+      - name: Test revision gate, coverage reporting and affected client/E2E selection
+        run: |
+          node --test .github/scripts/pr-ready.test.cjs .github/scripts/ci-policy.test.cjs .github/scripts/update-pr-coverage.test.cjs \
+            supporting_scripts/client/run-affected-tests.test.mjs \
+            supporting_scripts/ci/E2E-tests/selection.test.mjs
+          pnpm exec vitest run --config supporting_scripts/ci/E2E-tests/vitest.config.mjs
+      - name: Setup Java for the Gradle filtering contract
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Cache the pinned Gradle distribution without configuring Artemis
+        run: ./gradlew --version
+      - name: Test affected server selection and Gradle filtering
+        run: python3 -m unittest discover -s supporting_scripts/tests -p 'test_*.py'
+      - name: Lint selection scripts
+        run: |
+          shellcheck supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh supporting_scripts/ci/E2E-tests/verify-test-determination.sh
+          for script in supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh supporting_scripts/ci/E2E-tests/verify-test-determination.sh; do
+            bash -n "$script"
+          done
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest
@@ -139,6 +177,14 @@ jobs:
                   current = None
 
           required = {
+              "has_workflows": {
+                  ".github/scripts/**",
+                  "supporting_scripts/get_changed_modules.sh",
+                  "supporting_scripts/select_server_test_modules.py",
+                  "supporting_scripts/tests/**",
+                  "supporting_scripts/client/run-affected-tests*",
+                  "supporting_scripts/ci/E2E-tests/**",
+              },
               "has_java": {
                   ".github/workflows/ci.yml",
                   ".github/workflows/ci-quality.yml",
