@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-@WithMockUser(username = "hypvariantdraftinstructor1", roles = "INSTRUCTOR")
+@WithMockUser(username = "hypvariantdraftinstructor1", roles = "USER")
 class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private GenerationVariantDraftService drafts;

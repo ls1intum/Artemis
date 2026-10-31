@@ -84,7 +84,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteLecture_removesLectureFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
         searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
@@ -97,7 +97,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteLecture_removesLectureUnitsFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
         TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
@@ -119,7 +119,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateLectureSeries_indexesLecturesWithCorrectedTitlesInWeaviate() throws Exception {
         // Truncate to milliseconds since PostgreSQL JDBC might round microseconds to the nearest millisecond
         ZonedDateTime date1 = ZonedDateTime.now().minusDays(10).truncatedTo(ChronoUnit.MILLIS);
@@ -179,7 +179,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportLecture_indexesLectureUnitsInWeaviate() throws Exception {
         Lecture sourceLecture = lectureUtilService.createLecture(course);
         TextUnit textUnit = lectureUtilService.createTextUnit(sourceLecture);

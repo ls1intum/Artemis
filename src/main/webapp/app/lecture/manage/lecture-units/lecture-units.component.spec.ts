@@ -57,6 +57,7 @@ class TextUnitFormStubComponent {
 @Component({ selector: 'jhi-online-unit-form', standalone: true, template: '' })
 class OnlineUnitFormStubComponent {
     formData = input<OnlineUnitFormData>();
+    courseId = input<number>();
     isEditMode = input<boolean>(false);
     hasCancelButton = input<boolean>(false);
     formSubmitted = output<OnlineUnitFormData>();

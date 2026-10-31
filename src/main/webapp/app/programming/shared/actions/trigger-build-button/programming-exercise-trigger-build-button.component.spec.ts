@@ -10,7 +10,7 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
-import { Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -176,5 +176,23 @@ describe('TriggerBuildButtonSpec', () => {
         fixture.detectChanges();
 
         expect(comp.lastResultIsManual()).toBe(true);
+    });
+    it('replaces result subscriptions when the participation changes and clears them when absent', () => {
+        fixture.componentRef.setInput('exercise', { id: 7 } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 8, initializationState: InitializationState.INITIALIZED });
+        const results = new BehaviorSubject<Result | undefined>(undefined);
+        vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(results);
+        fixture.detectChanges();
+        results.next({ id: 9, assessmentType: AssessmentType.MANUAL });
+        expect(comp.lastResultIsManual()).toBe(true);
+        comp.setupResultSubscription();
+        results.next({ id: 10, assessmentType: AssessmentType.AUTOMATIC });
+        expect(comp.lastResultIsManual()).toBe(false);
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+        expect(results.observed).toBe(false);
+        comp.setupSubmissionSubscription();
+        comp.setupResultSubscription();
+        expect(comp.participationBuildCanBeTriggered()).toBe(false);
     });
 });

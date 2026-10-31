@@ -5,8 +5,8 @@ name: Sonar
 # `gradle/sonar.gradle`; the CI contract is in this directory's README.md, section
 # "The code quality analyses".
 #
-# ADVISORY BY CONSTRUCTION. Never in another job's `needs:` and never gating: the job is
-# `continue-on-error`, so a Sonar outage, an expired token, or a missing project cannot fail the run.
+# ADVISORY WHEN CALLED BY CI. Never in another job's `needs:` and never gating: the job is
+# `continue-on-error` when called by CI. Manual scans fail visibly on scanner errors.
 # It publishes a grade; it does not decide whether code is mergeable — the enforcing gates are
 # `ci-quality.yml` and `ci-test.yml`.
 #
@@ -21,7 +21,7 @@ name: Sonar
 #   workflow_dispatch — standalone, to get a grade on demand without waiting out a full CI run
 #                       (~2 h with the e2e tail). Analyses the ref it is dispatched on. A manual run
 #                       has no `test` job of its own, so it imports the coverage of the latest
-#                       SUCCESSFUL `ci.yml` run for exactly the commit it analyses (a pull request
+#                       fully tested `ci.yml` run for exactly the commit it analyses (a pull request
 #                       build counts) and falls back to no coverage when there is none. Without this
 #                       the quality gate reads 0.0% coverage on new code for a dispatched run, which
 #                       is a measurement artifact and not a property of the code.
@@ -42,13 +42,15 @@ on:
       SONAR_TOKEN:
         description: 'SonarQube Cloud analysis token for the ls1intum organization.'
         required: true
-  # Deliberately without inputs. Choosing the ref to dispatch already chooses the commit, so a
-  # commit_sha input would only restate it, and a dispatched run has no `test` job whose coverage
-  # artifacts it could import. Both `inputs` are therefore undefined on this trigger, which the job
-  # below reads as "the dispatched ref, without coverage". Keeping it input-free also satisfies
-  # Checkov CKV_GHA_7, which flags dispatch inputs because they let a caller influence what a build
-  # produces — do not add one back without a reason that outweighs that.
+  # Bounded recovery switch: select only the repository's own default branch, never an arbitrary
+  # source SHA or build argument. This lets a repaired workflow refresh develop before it is merged.
+  # checkov:skip=CKV_GHA_7:The boolean only selects the trusted repository default branch for analysis.
   workflow_dispatch:
+    inputs:
+      analyze_default_branch:
+        description: 'Analyze the repository default branch using this workflow revision (recovery mode).'
+        type: boolean
+        default: false
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -65,18 +67,28 @@ jobs:
     # Generous on purpose: ~350k lines of Java plus ~260k of TypeScript is a long scan, and
     # Sonar's TypeScript analyzer dominates it. A timeout costs the run's result, not the build.
     timeout-minutes: 90
-    continue-on-error: true
+    continue-on-error: ${{ github.event_name != 'workflow_dispatch' }}
     permissions:
       contents: read
       actions: read  # lists the CI runs of the commit and downloads their coverage artifacts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Undefined on a dispatched run, which declares no inputs; the dispatched ref is what we want.
-          ref: ${{ inputs.commit_sha || github.sha }}
+          # Recovery reads real default-branch sources while running the selected workflow revision.
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.analyze_default_branch && github.event.repository.default_branch || inputs.commit_sha || github.sha }}
           # Sonar attributes issues to authors and separates new code from old via git history, so a
           # shallow clone degrades the analysis rather than failing it. `0` is what Sonar documents.
           fetch-depth: 0
+
+      - name: Record analyzed source revision
+        id: source
+        env:
+          SONAR_BRANCH_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.analyze_default_branch && github.event.repository.default_branch || github.head_ref || github.ref_name }}
+        run: |
+          set -Eeuo pipefail
+          sha=$(git rev-parse HEAD)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Analyzing $SONAR_BRANCH_NAME at $sha" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Java
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
@@ -119,39 +131,45 @@ jobs:
       - name: Build the TUM AET UI package the client imports
         run: pnpm run tum-aet-ui:build
 
-      # Which run holds the coverage. A call from ci.yml imports the artifacts of its own run. A dispatched
-      # run has none, so it looks for the newest `ci.yml` run of the analysed commit that SUCCEEDED, for the
-      # same reason ci.yml gates the call on a green `test`: a partially failed run reports artificially low
-      # coverage, and an analysis is stored as history. The head SHA must match exactly, because JaCoCo and
-      # LCOV report line numbers, which only mean something against the commit that produced them. No such
-      # run is not an error: the analysis then runs without coverage, exactly as before.
+      # Match the checked-out source revision, which can differ from the workflow ref in recovery
+      # mode. Complete tests and artifacts establish coverage; an unrelated CI failure does not
+      # invalidate it. Never import a partial server matrix or coverage from another revision.
       - name: Find the CI run that produced coverage for this commit
         id: coverage-run
-        if: ${{ github.event_name == 'workflow_dispatch' }}
         continue-on-error: true
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-        run: |
-          set -Eeuo pipefail
-          run_id=""
-          while read -r id; do
-            [ -n "${id}" ] || continue
-            found=$(gh api -X GET "repos/${REPO}/actions/runs/${id}/artifacts" -f "name=Server JaCoCo XML" \
-              --jq '[.artifacts[] | select(.expired == false)] | length')
-            if [ "${found:-0}" -gt 0 ]; then
-              run_id="${id}"
-              break
-            fi
-          done < <(gh api -X GET "repos/${REPO}/actions/workflows/ci.yml/runs" -f "head_sha=${SHA}" -f "status=success" -f "per_page=100" \
-            --jq '.workflow_runs[].id')
-          if [ -z "${run_id}" ]; then
-            echo "::notice::No successful CI run with coverage artifacts exists for ${SHA}; analyzing without coverage."
-            exit 0
-          fi
-          echo "Importing the coverage of CI run ${run_id} for ${SHA}"
-          echo "run_id=${run_id}" >> "${GITHUB_OUTPUT}"
+          SHA: ${{ steps.source.outputs.sha }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const options = { ...context.repo, per_page: 100 };
+            const actions = '/repos/{owner}/{repo}/actions';
+            const runs = await github.paginate(`GET ${actions}/workflows/{workflow_id}/runs`, {
+              ...options, workflow_id: 'ci.yml', head_sha: process.env.SHA, status: 'completed',
+            });
+            let coverageRun;
+            for (const run of runs) {
+              if (run.head_sha !== process.env.SHA || run.status !== 'completed') continue;
+              try {
+                const artifacts = await github.paginate(`GET ${actions}/runs/{run_id}/artifacts`, { ...options, run_id: run.id });
+                const names = new Set(artifacts.filter(artifact => !artifact.expired).map(artifact => artifact.name));
+                if (!['Server JaCoCo XML', 'Vitest Coverage Report'].every(name => names.has(name))) continue;
+                const jobs = await github.paginate(`GET ${actions}/runs/{run_id}/jobs`, { ...options, run_id: run.id, filter: 'latest' });
+                const tests = jobs.filter(job => job.name.startsWith('Test / '));
+                const required = ['Test / Client Tests', 'Test / Server Tests Report'];
+                const shards = tests.filter(job => job.name.startsWith('Test / Server Tests ('));
+                if (shards.length !== 7 || !required.every(name => tests.some(job => job.name === name && job.conclusion === 'success'))) continue;
+                if (!shards.every(job => job.conclusion === 'success') || !tests.every(job => ['success', 'skipped'].includes(job.conclusion))) continue;
+                core.info(`Importing complete test coverage from run ${run.id} for ${process.env.SHA}`);
+                coverageRun = String(run.id);
+                core.setOutput('run_id', coverageRun);
+                break;
+              } catch (error) {
+                core.warning(`Cannot verify coverage for run ${run.id}: ${error.message}`);
+              }
+            }
+            if (!coverageRun) core.warning(`No verified complete coverage exists for ${process.env.SHA}; analyzing without coverage.`);
 
       # Coverage is imported from the reports the `test` job already uploaded, so no suite is re-run
       # here. Both downloads are `continue-on-error`: a missing report costs the coverage metric and
@@ -210,6 +228,9 @@ jobs:
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          # Manual dispatches must not publish a feature branch as the main branch.
-          SONAR_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-        run: ./gradlew compileJava sonar -x webapp "-Dsonar.branch.name=${SONAR_BRANCH_NAME}"
+          # Scanner 6+ forks a JVM; org.gradle.jvmargs does not configure its heap.
+          SONAR_SCANNER_JAVA_OPTS: '-Xmx6g'
+          # Keep the published branch and SCM revision aligned with the checked-out source.
+          SONAR_BRANCH_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.analyze_default_branch && github.event.repository.default_branch || github.head_ref || github.ref_name }}
+          SONAR_REVISION: ${{ steps.source.outputs.sha }}
+        run: ./gradlew compileJava sonar -x webapp "-Dsonar.branch.name=${SONAR_BRANCH_NAME}" "-Dsonar.scm.revision=${SONAR_REVISION}"

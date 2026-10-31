@@ -40,6 +40,7 @@
                         }
                         @if (exercise()!.type === ExerciseType.TEXT || exercise()!.type === ExerciseType.MODELING || exercise()!.type === ExerciseType.FILE_UPLOAD) {
                             <jhi-exercise-submission-export
+                                [examExercise]="isExamExercise()"
                                 [inDropdown]="true"
                                 (buttonPressed)="closeExportPopover()"
                                 [exerciseId]="exercise()!.id!"

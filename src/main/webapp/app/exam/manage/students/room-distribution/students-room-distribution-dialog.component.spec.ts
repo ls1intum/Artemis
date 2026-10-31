@@ -91,7 +91,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should request room data from the server on initial opening', () => {
         fixture.detectChanges();
 
-        expect(service.loadRoomData).toHaveBeenCalledOnce();
+        expect(service.loadRoomData).toHaveBeenCalledExactlyOnceWith(course.id, exam.id);
     });
 
     it('should show finish button after selecting a room', () => {

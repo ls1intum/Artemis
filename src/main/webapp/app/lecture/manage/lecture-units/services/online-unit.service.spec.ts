@@ -85,8 +85,9 @@ describe('OnlineUnitService', () => {
     it('should send request to get online resource', async () => {
         const dto = new OnlineResourceDTO();
         dto.url = 'https://www.example.com';
-        service.getOnlineResource(dto.url).subscribe((resp) => expect(resp.body!.url).toBe(dto.url));
+        service.getOnlineResource(dto.url, 42).subscribe((resp) => expect(resp.body!.url).toBe(dto.url));
         const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.params.get('courseId')).toBe('42');
         req.flush(dto);
     });
 });

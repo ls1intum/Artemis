@@ -37,10 +37,10 @@ public final class SecurityUtils {
     private static final Pattern SIMPLE_EMAIL_PATTERN = Pattern.compile(SIMPLE_EMAIL_REGEX);
 
     /**
-     * Roles in descending order of precedence, for reporting which role a request acted with. This is a ranking, not the
-     * role hierarchy: {@code SecurityConfiguration} no longer lets an administrator authority imply a teaching role.
+     * The global roles in descending order of precedence, for reporting which role a request acted with. Teaching roles are
+     * not global, they belong to a course, so they cannot appear here.
      */
-    private static final Role[] ROLES_BY_PRECEDENCE = { Role.SUPER_ADMIN, Role.ADMIN, Role.INSTRUCTOR, Role.EDITOR, Role.TEACHING_ASSISTANT, Role.STUDENT };
+    private static final Role[] ROLES_BY_PRECEDENCE = { Role.SUPER_ADMIN, Role.ADMIN, Role.STUDENT };
 
     private SecurityUtils() {
     }
@@ -312,11 +312,11 @@ public final class SecurityUtils {
     /**
      * Returns the highest global role of the current user.
      * <p>
-     * This is a <i>global</i> authority, not a role within a particular course: a user who instructs any course carries
-     * {@code ROLE_INSTRUCTOR} everywhere. Reads only the security context, so it costs no database access.
+     * Only the global roles count: a super administrator, an administrator or a signed-in user. A role within a course, such as
+     * instructor, is not global and is not reported. Reads only the security context, so it costs no database access.
      * <p>
      * Written as a single pass over the authorities because the feature usage interceptor calls this on every API request.
-     * Asking "does the user hold this role" once per role walked the authority collection up to six times and built a stream
+     * Asking "does the user hold this role" once per role walked the authority collection several times and built a stream
      * for each, which is a lot of garbage to produce per request for a counter.
      *
      * @return the highest role held by the current user, or {@link Role#ANONYMOUS} if there is no authenticated user

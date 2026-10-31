@@ -369,7 +369,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     class CourseExerciseTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_templateRepository() throws Exception {
             // Create exercise via REST API - this creates template, solution, and tests repos
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-template-repo");
@@ -404,7 +404,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_solutionRepository() throws Exception {
             // Create exercise via REST API
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-solution-repo");
@@ -439,7 +439,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_testsRepository() throws Exception {
             // Create exercise via REST API
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-tests-repo");
@@ -474,7 +474,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_auxiliaryRepository() throws Exception {
             // Create exercise with auxiliary repository via REST API
             ProgrammingExercise exercise = createProgrammingExerciseWithAuxRepoViaApi();
@@ -616,7 +616,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_studentRepository_afterDueDate() throws Exception {
             // Create exercise via REST API (due date in the future initially)
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-after-due");
@@ -657,7 +657,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_twoStudentsStartExercise() throws Exception {
             // Create exercise via REST API
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-two-students");
@@ -712,7 +712,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_studentRepository_beforeStartDate() throws Exception {
             // Create exercise with start date in the future
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-before-start");
@@ -750,7 +750,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     class TeamModeTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teamRepository_teamMemberAccess() throws Exception {
             // Create team exercise via REST API
             mockDockerClientForExerciseCreation();
@@ -807,7 +807,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teamRepository_beforeStartDate() throws Exception {
             // Create team exercise with start date in the future
             mockDockerClientForExerciseCreation();
@@ -855,7 +855,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teamRepository_afterDueDate() throws Exception {
             // Create team exercise (due date in the future initially)
             mockDockerClientForExerciseCreation();
@@ -916,7 +916,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     class AssignmentRepositoryTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teachingAssistantAssignmentRepository() throws Exception {
             // Create exercise via REST API
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-ta-assignment");
@@ -951,7 +951,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_instructorAssignmentRepository() throws Exception {
             // Create exercise via REST API
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-instructor-assignment");
@@ -988,7 +988,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     class PracticeRepositoryTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_studentPracticeRepository() throws Exception {
             // Create exercise with due date in the past (practice repos are allowed after due date)
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-student-practice");
@@ -1038,7 +1038,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teamExercisePracticeRepository_belongsToTheStudentNotToTheTeam() throws Exception {
             ProgrammingExercise exercise = createTeamProgrammingExerciseOpenForPractice("test-team-practice", "practiceteam1");
             String projectKey = exercise.getProjectKey();
@@ -1083,7 +1083,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teachingAssistantPracticeRepository() throws Exception {
             // Create exercise with due date in the past
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-ta-practice");
@@ -1126,7 +1126,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_instructorPracticeRepository() throws Exception {
             // Create exercise with due date in the past
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-instructor-practice");
@@ -1197,7 +1197,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @BeforeEach
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void setupExam() throws Exception {
             // Enroll TEST_PREFIX users into the course via UCR (addEmptyCourse enrolls "" prefix users only)
             userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
@@ -1242,7 +1242,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_examTemplateRepository() throws Exception {
             String templateRepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-exercise";
 
@@ -1274,7 +1274,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_examStudentRepository_duringWorkingTime() throws Exception {
             // Participation was created in setup by start-exercises
             String student1RepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
@@ -1311,7 +1311,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_examStudentRepository_twoStudents() throws Exception {
             // Participations were created in setup by start-exercises
             String student1RepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
@@ -1348,7 +1348,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_examStudentRepository_afterExamEnd() throws Exception {
             // Set exam to ended
             exam.setEndDate(ZonedDateTime.now().minusMinutes(10));
@@ -1384,7 +1384,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_examStudentRepository_beforeExamStart() throws Exception {
             // Set exam to not yet started
             ZonedDateTime now = ZonedDateTime.now();
@@ -1421,7 +1421,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_examStudentRepository_duringGracePeriod() throws Exception {
             // Set exam to be in grace period:
             // - Exam started 2 hours ago
@@ -1475,7 +1475,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_examStudentRepository_afterGracePeriodEnds() throws Exception {
             // Set exam and grace period to be ended
             ZonedDateTime now = ZonedDateTime.now();
@@ -1514,7 +1514,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_instructorExamTestRun() throws Exception {
             // Set exam to test exam mode with start date in the future
             ZonedDateTime now = ZonedDateTime.now();
@@ -1568,7 +1568,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     class ParticipationTokenTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teamExercise_withParticipationVcsAccessToken() throws Exception {
             // Create team exercise via REST API
             mockDockerClientForExerciseCreation();
@@ -1626,7 +1626,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teamExercisePracticeRepository_withParticipationVcsAccessToken() throws Exception {
             ProgrammingExercise exercise = createTeamProgrammingExerciseOpenForPractice("test-team-practice-token", "practicetokenteam");
             String projectKey = exercise.getProjectKey();
@@ -1665,7 +1665,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
          * broken setup.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teamExercisePracticeRepository_tokenOfTheTeamParticipationIsRejected() throws Exception {
             ProgrammingExercise exercise = createTeamProgrammingExerciseOpenForPractice("test-team-prac-team-token", "practiceteamtoken");
             String projectKey = exercise.getProjectKey();
@@ -1707,7 +1707,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
          * The reverse direction: the token of the practice participation is scoped to the practice repository and must not authenticate for the repository of the team.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_teamExerciseTeamRepository_tokenOfThePracticeParticipationIsRejected() throws Exception {
             ProgrammingExercise exercise = createTeamProgrammingExerciseOpenForPractice("test-team-token-vs-team", "practiceteamrepo");
             String projectKey = exercise.getProjectKey();
@@ -1745,7 +1745,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testFetchPush_individualExercise_withParticipationVcsAccessToken() throws Exception {
             // Create individual exercise
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-individual-token");
@@ -1791,7 +1791,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     class RepositoryTokenTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCloneFetchPush_templateRepository_withRepositoryVcsAccessToken() throws Exception {
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-template-repo-token");
             String projectKey = exercise.getProjectKey();
@@ -1833,7 +1833,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testRepositoryVcsAccessToken_authenticatesButStillEnforcesAuthorization() throws Exception {
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-tests-repo-token");
             String projectKey = exercise.getProjectKey();
@@ -1865,7 +1865,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testRepositoryVcsAccessToken_forgedTokenIsRejected() throws Exception {
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-forged-token");
             String projectKey = exercise.getProjectKey();
@@ -1885,7 +1885,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testRepositoryVcsAccessToken_isBoundToOwningUser() throws Exception {
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-token-owner-binding");
             String projectKey = exercise.getProjectKey();

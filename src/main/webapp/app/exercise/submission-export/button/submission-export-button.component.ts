@@ -42,6 +42,7 @@ export class SubmissionExportButtonComponent {
 
     readonly exerciseId = input<number>();
     readonly exerciseType = input<ExerciseType>();
+    readonly examExercise = input(false);
 
     readonly buttonPressed = output<void>();
 
@@ -72,6 +73,7 @@ export class SubmissionExportButtonComponent {
             inputValues: {
                 exerciseId,
                 exerciseType,
+                examExercise: this.examExercise(),
             },
         });
     }
