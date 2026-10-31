@@ -428,20 +428,29 @@ Three things about it are worth knowing before changing it:
    Gradle plugin only sets `sonar.java.binaries` if the output directory already exists. Without a
    prior compile the property is silently omitted and the Java half of the analysis degrades with no
    error, so the job runs `./gradlew compileJava sonar -x webapp`.
-3. **It is dispatchable on its own.** A full CI run takes ~2 h because of the e2e tail, so
-   `ci-sonar.yml` also accepts `workflow_dispatch` for an on-demand grade. That trigger declares no
-   inputs — the ref it is dispatched on is the commit analysed. A dispatched run has no `test` job of
-   its own, so it looks up the newest `ci.yml` run for exactly that commit that **succeeded** and
-   imports the coverage artifacts of that run; for a pull request branch that is the pull request
-   build. When no such run exists the analysis runs without coverage, and the quality gate then
-   shows 0.0% coverage on new code, which describes the missing report and not the code. Dispatch
-   after the CI run of the commit has finished to get the real figure. Checkov's `CKV_GHA_7` also
-   flags dispatch inputs, so keep that trigger input-free.
+3. **It is dispatchable on its own.** A dispatched run normally analyzes its selected ref. For
+   recovery, enable **Analyze the repository default branch** (`analyze_default_branch=true`) to
+   run the selected workflow revision against the actual default-branch source. The workflow records
+   the checked-out SHA and explicitly publishes that branch/revision, so a workflow repair can
+   refresh develop without labeling feature-branch application code as develop. This boolean is the
+   only dispatch input; it cannot select an arbitrary source SHA or build argument.
 
-The job is `continue-on-error` and never appears in another job's `needs:`, so a Sonar outage, an
-expired `SONAR_TOKEN`, or a missing project cannot fail the run.
+   Coverage is imported only from a completed `ci.yml` run for that exact source SHA with both
+   non-expired artifacts and successful client, server-report and all seven server-shard jobs.
+   An unrelated style or E2E failure does not invalidate complete test coverage. Partial or failed
+   tests, missing artifacts and another source revision never qualify. When no complete result is
+   available the scanner logs a warning and analyzes without coverage, which can make the quality
+   gate report missing new-code coverage.
+4. **The scanner has its own heap.** Scanner 6+ forks a separate JVM, so `org.gradle.jvmargs` does
+   not size it. The analysis step sets `SONAR_SCANNER_JAVA_OPTS=-Xmx6g` to keep the large Java/client
+   scan within its Java heap limit on a GitHub-hosted runner. A scanner crash publishes no analysis;
+   the README badges keep showing the last successful result. Verify the Sonar analysis revision,
+   not just the GitHub run conclusion.
 
-That covers the workflow, and only the workflow. SonarQube Cloud's GitHub App posts a second check
+CI calls remain advisory and never appear in another job's `needs:`. Standalone manual runs fail
+visibly on scanner errors, so a failed recovery cannot look like a successful badge refresh.
+
+A completed scanner upload and the server-side quality gate are separate results. SonarQube Cloud's GitHub App posts a second check
 of its own, `SonarCloud Code Analysis`, carrying the quality gate verdict. Nothing in this
 repository produces that check and `continue-on-error` cannot reach it, so a failed gate shows as a
 red X on the `develop` commit while the job beside it is green. It still gates nothing — branch
