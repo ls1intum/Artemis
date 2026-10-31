@@ -125,4 +125,11 @@ describe('TextSubmission Service', () => {
         // the participation the editor reads (participation.submissions.last()) must still carry the locked result
         expect(received!.participation!.submissions![0].results).toEqual([lockedResult]);
     });
+
+    it.each(['owner', 'staff-preview'] as const)('selects plagiarism text URL from explicit %s purpose', (purpose) => {
+        service.getTextSubmission(123, purpose).subscribe((data) => expect(data.id).toBe(123));
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe(`api/text/text-submissions/123${purpose === 'staff-preview' ? '/for-staff' : ''}`);
+        req.flush({ id: 123 });
+    });
 });

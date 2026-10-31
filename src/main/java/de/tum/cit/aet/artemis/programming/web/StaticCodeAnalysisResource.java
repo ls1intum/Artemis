@@ -24,8 +24,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -89,13 +89,12 @@ public class StaticCodeAnalysisResource {
      * @return the static code analysis categories
      */
     @GetMapping("programming-exercises/{exerciseId}/static-code-analysis-categories")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<StaticCodeAnalysisCategoryDTO>> getStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkSCAEnabledForExerciseElseThrow(programmingExercise);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
@@ -109,7 +108,7 @@ public class StaticCodeAnalysisResource {
      * @return the updated static code analysis categories
      */
     @PatchMapping("programming-exercises/{exerciseId}/static-code-analysis-categories")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<StaticCodeAnalysisCategoryDTO>> updateStaticCodeAnalysisCategories(@PathVariable Long exerciseId,
             @RequestBody List<StaticCodeAnalysisCategoryUpdateDTO> categories) {
         log.debug("REST request to update static code analysis categories for programming exercise {}", exerciseId);
@@ -117,7 +116,6 @@ public class StaticCodeAnalysisResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         checkSCAEnabledForExerciseElseThrow(programmingExercise);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         validateCategories(categories, exerciseId);
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
@@ -141,13 +139,12 @@ public class StaticCodeAnalysisResource {
      * @return static code analysis categories with the default configuration
      */
     @PatchMapping("programming-exercises/{exerciseId}/static-code-analysis-categories/reset")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<StaticCodeAnalysisCategoryDTO>> resetStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to reset static code analysis categories for programming exercise {}", exerciseId);
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkSCAEnabledForExerciseElseThrow(programmingExercise);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             if (lease.coordinated()) {
@@ -171,13 +168,12 @@ public class StaticCodeAnalysisResource {
      * @see StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
      */
     @PatchMapping("programming-exercises/{exerciseId}" + "/static-code-analysis-categories/import")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<StaticCodeAnalysisCategoryDTO>> importStaticCodeAnalysisCategoriesFromExercise(@PathVariable Long exerciseId, @RequestParam Long sourceExerciseId) {
         log.debug("REST request to import static code analysis categories to programming exercise {} from exercise {}", exerciseId, sourceExerciseId);
 
         ProgrammingExercise targetExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkSCAEnabledForExerciseElseThrow(targetExercise);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, targetExercise, null);
 
         ProgrammingExercise sourceExercise = programmingExerciseRepository.findByIdElseThrow(sourceExerciseId);
         checkSCAEnabledForExerciseElseThrow(sourceExercise);

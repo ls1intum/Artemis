@@ -172,7 +172,7 @@ export class AssessmentQueueComponent {
             ? this.submissionService.getTestRunSubmissionsForExercise(this.exercise().id!).pipe(map((response) => this.submissionPage(response.body ?? [], query)))
             : this.examMode()
               ? this.submissionService
-                    .getExamAssessmentQueue(this.exercise().type!, this.exercise().id!, this.correctionRound()!, !this.assessmentDisabled())
+                    .getExamAssessmentQueue(this.exercise().type!, this.exercise().id!, this.correctionRound()!, !this.assessmentDisabled(), !!this.exercise().isAtLeastInstructor)
                     .pipe(map((submissions) => this.submissionPage(submissions, query)))
               : this.participationService.searchAssessmentQueue(this.exercise().id!, {
                     page: query.pageIndex,

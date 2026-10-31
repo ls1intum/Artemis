@@ -1,3 +1,4 @@
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -33,9 +34,9 @@ export class TextSubmissionService {
             .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
     }
 
-    getTextSubmission(submissionId: number): Observable<TextSubmission> {
+    getTextSubmission(submissionId: number, purpose: EditorViewingPurpose = 'owner'): Observable<TextSubmission> {
         return this.http
-            .get<TextSubmission>(`api/text/text-submissions/${submissionId}`, {
+            .get<TextSubmission>(`api/text/text-submissions/${submissionId}${purpose === 'staff-preview' ? '/for-staff' : ''}`, {
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));

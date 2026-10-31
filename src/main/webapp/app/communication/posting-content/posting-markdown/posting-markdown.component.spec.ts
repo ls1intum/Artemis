@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApplicationRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -12,9 +12,12 @@ import { FileService } from 'app/foundation/service/file.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import * as markdownRenderer from 'app/foundation/util/markdown-render.util';
 
 describe('PostingMarkdownComponent', () => {
     let fixture: ComponentFixture<PostingMarkdownComponent>;
+
+    afterEach(() => vi.restoreAllMocks());
 
     const user = (name: string, login: string): PostingContentPart => ({ referenceType: ReferenceType.USER, referenceStr: name, queryParams: { referenceUserLogin: login } });
     const channel = (name: string, channelId: number): PostingContentPart => ({ referenceType: ReferenceType.CHANNEL, referenceStr: name, queryParams: { channelId } });
@@ -151,6 +154,35 @@ describe('PostingMarkdownComponent', () => {
 
         expect(view().querySelector('img, script')).toBeNull();
         expect((window as unknown as { postingXss?: boolean }).postingXss).toBeUndefined();
+    });
+
+    it('sanitizes renderer output again at the Angular HTML binding', async () => {
+        // Even if the markdown pipeline lets an unsafe attribute through, the binding must not trust it.
+        vi.spyOn(markdownRenderer, 'renderMarkdownToHtml').mockResolvedValue('<p onclick="alert(1)">Rendered text</p>');
+        fixture.componentRef.setInput('markdown', 'Rendered text');
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(view().querySelector('p')?.textContent).toBe('Rendered text');
+        });
+
+        expect(view().querySelector('p')?.hasAttribute('onclick')).toBe(false);
+    });
+
+    it('removes unsafe links while retaining reference placement', async () => {
+        await render(`<a href="javascript:alert(1)">unsafe</a> ${postingReferencePlaceholder(0)}`, [user('Ada Example', 'ada_example')]);
+
+        expect(view().querySelector('a')?.hasAttribute('href')).toBe(false);
+        expect(references()[0].textContent?.trim()).toBe('Ada Example');
+    });
+
+    it('strips user-supplied styling classes while retaining reference markers', async () => {
+        await render(`<a class="fixed-top w-100 h-100 bg-white" href="https://example.org">Link</a> <span class="fixed-top">Text</span> ${postingReferencePlaceholder(0)}`, [
+            user('Ada Example', 'ada_example'),
+        ]);
+
+        expect(view().querySelector('a[href="https://example.org"]')?.hasAttribute('class')).toBe(false);
+        expect(view().querySelector('.fixed-top')).toBeNull();
+        expect(references()[0].textContent?.trim()).toBe('Ada Example');
     });
 
     it('destroys the mounted references with the component', async () => {

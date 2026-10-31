@@ -566,7 +566,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.isLoading.set(true);
-        this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
+        this.complaintService.findBySubmissionIdForAssessment(this.submission.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;

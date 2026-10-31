@@ -48,7 +48,7 @@ describe('ModelingSubmission Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual({ ...elemDefault }));
 
-        const req = httpMock.expectOne({ method: 'GET', url: `api/modeling/modeling-submissions/123?correction-round=7` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/modeling/modeling-submissions/123/for-assessment?correction-round=7` });
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
         req.flush(returnedFromService);
     });
@@ -136,16 +136,24 @@ describe('ModelingSubmission Service', () => {
         expect(results.find((result) => result.id === 24)?.feedbacks?.[0]?.text).toBe('older');
     });
 
-    it('should get submission without lock', () => {
-        const { returnedFromService } = getDefaultValues();
+    it.each(['owner', 'staff-preview'] as const)('selects modeling editor URLs from explicit %s purpose', (purpose) => {
+        const suffix = purpose === 'staff-preview' ? '/for-staff' : '';
+        service.getLatestSubmissionForModelingEditor(123, purpose).subscribe((data) => expect(data.id).toBe(123));
+        const latest = httpMock.expectOne({ method: 'GET' });
+        expect(latest.request.url).toBe(`api/modeling/participations/123/latest-modeling-submission${suffix}`);
+        latest.flush({ id: 123 });
+        service.getSubmissionsWithResultsForParticipation(123, purpose).subscribe((data) => expect(data).toHaveLength(1));
+        const history = httpMock.expectOne({ method: 'GET' });
+        expect(history.request.url).toBe(`api/modeling/participations/123/submissions-with-results${suffix}`);
+        history.flush([{ id: 123 }]);
+    });
 
-        service
-            .getSubmissionWithoutLock(123)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual({ ...elemDefault }));
-
-        const req = httpMock.expectOne((request) => request.method === 'GET' && request.urlWithParams === 'api/modeling/modeling-submissions/123?withoutResults=true');
-        expect(req.request.params.get('withoutResults')).toBe('true');
-        req.flush(returnedFromService);
+    it('uses fixed assessment URL with correction and explicit result selectors', () => {
+        service.getSubmission(123, 1, 456).subscribe();
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe('api/modeling/modeling-submissions/123/for-assessment');
+        expect(req.request.params.get('correction-round')).toBe('1');
+        expect(req.request.params.get('resultId')).toBe('456');
+        req.flush({ id: 123 });
     });
 });

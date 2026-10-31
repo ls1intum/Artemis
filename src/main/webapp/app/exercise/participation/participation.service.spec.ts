@@ -16,6 +16,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
@@ -247,6 +249,17 @@ describe('Participation Service', () => {
             searchTerm: '',
         };
 
+        it('should use the exam page route with the same filters and conversion', () => {
+            let result: PageableResult<ParticipationManagementDTO> | undefined;
+            service.searchParticipations(42, baseSearch, 'exam').subscribe((page) => (result = page));
+            const request = httpMock.expectOne((r) => r.method === 'GET');
+            expect(request.request.params.get('pageSize')).toBe('50');
+            request.flush([{ participationId: 1, completionDate: '2026-01-01T10:00:00Z' }], { headers: { 'X-Total-Count': '7' } });
+            expect(request.request.url).toBe('api/exercise/exercises/42/participations/page/for-exam');
+            expect(result?.totalElements).toBe(7);
+            expect(dayjs.isDayjs(result?.content[0].completionDate)).toBe(true);
+        });
+
         it('should GET paginated participations and convert date fields', () => {
             const isoDate = '2024-06-01T10:00:00Z';
             const serverDto = {
@@ -343,5 +356,22 @@ describe('Participation Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+    it('keeps ordinary and test-run student work separate with participant display identifiers', () => {
+        const original: StudentParticipation = { id: 7, type: ParticipationType.STUDENT, participantName: 'Alice', participantIdentifier: 'alice', submissions: [{ id: 8 }] };
+        const practice: StudentParticipation = {
+            id: 9,
+            type: ParticipationType.STUDENT,
+            testRun: true,
+            participantName: 'Practice',
+            participantIdentifier: 'practice',
+            submissions: [{ id: 10 }],
+        };
+        const merged = service.mergeStudentParticipations([original, practice]);
+        expect(merged).toHaveLength(2);
+        expect(merged[0]).toMatchObject({ id: 7, participantName: 'Alice', participantIdentifier: 'alice', submissions: [{ id: 8 }] });
+        expect(merged[1]).toMatchObject({ id: 9, testRun: true, participantName: 'Practice', participantIdentifier: 'practice', submissions: [{ id: 10 }] });
+        expect(merged[0].submissions?.[0].participation).toBe(merged[0]);
+        expect(merged[1].submissions?.[0].participation).toBe(merged[1]);
     });
 });

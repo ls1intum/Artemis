@@ -1,11 +1,11 @@
 import { Component, OnInit, ViewEncapsulation, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TeamService } from 'app/exercise/team/team.service';
+import { TeamOverviewPurpose, TeamService } from 'app/exercise/team/team.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,7 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
+import { areManualResultsAllowed, getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ButtonDirective } from 'primeng/button';
@@ -52,6 +52,7 @@ export class TeamParticipationTableComponent implements OnInit {
     private router = inject(Router);
     private accountService = inject(AccountService);
 
+    readonly overviewPurpose = input<TeamOverviewPurpose>('student');
     readonly team = input.required<Team>();
     readonly course = input.required<Course>();
     readonly exercise = input.required<Exercise>();
@@ -165,7 +166,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     loadAll() {
         this.isLoading.set(true);
-        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team()).subscribe({
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team(), this.overviewPurpose()).subscribe({
             next: (courseResponse) => {
                 const exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
                     return cloneWith(exercise, {
@@ -244,6 +245,29 @@ export class TeamParticipationTableComponent implements OnInit {
     }
 
     /**
+     * Link to the exercise of a row. The staff overview stays in course management, because the student route would
+     * only open exercises the user may read as a student and shows the student projection.
+     * @param exercise the exercise of the row
+     */
+    exerciseLink(exercise: Exercise): (string | number | undefined)[] {
+        if (this.overviewPurpose() === 'staff') {
+            return ['/course-management', this.course().id, exercise.type + '-exercises', exercise.id];
+        }
+        return ['/courses', this.course().id, 'exercises', exercise.id];
+    }
+
+    /**
+     * Link to the team page of a row. The student route requires membership in the team, so staff stay in course management.
+     * @param exercise the exercise of the row, carrying its team
+     */
+    teamLink(exercise: ExerciseForTeam): (string | number | undefined)[] {
+        if (this.overviewPurpose() === 'staff') {
+            return ['/course-management', this.course().id, 'exercises', exercise.id, 'teams', exercise.team?.id];
+        }
+        return ['/courses', this.course().id, 'exercises', exercise.id, 'teams', exercise.team?.id];
+    }
+
+    /**
      * Returns whether the assessment button should be disabled
      * @param exercise Exercise for which the submission is to be assessed
      * @param submission Submission that is to be assessed
@@ -253,18 +277,10 @@ export class TeamParticipationTableComponent implements OnInit {
         if (!submission || !submission.submitted) {
             return true;
         }
-        // Exercises without due date can be assessed
-        if (!exercise.dueDate) {
-            return false;
-        }
-        // Programming exercises can only be assessed by anyone / all other exercises can be assessed by tutors
-        // if the exercise due date has passed
-        if (exercise.type === ExerciseType.PROGRAMMING || !exercise.isAtLeastInstructor) {
-            return !hasExerciseDueDatePassed(exercise, submission.participation);
-        } else if (exercise.isAtLeastInstructor) {
-            return false;
-        }
-        return true;
+        return (
+            !areManualResultsAllowed(exercise) ||
+            (!exercise.isAtLeastInstructor && !!getExerciseDueDate(exercise, submission.participation) && !hasExerciseDueDatePassed(exercise, submission.participation))
+        );
     }
 
     private onError(error: HttpErrorResponse) {

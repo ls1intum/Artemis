@@ -156,29 +156,6 @@ describe('FileUploadAssessmentService', () => {
         });
     });
 
-    describe('getAssessment', () => {
-        it('should get assessment by submission ID', async () => {
-            const submissionId = 187;
-            const expectedResult = createResultDTO();
-
-            const resultPromise = new Promise<Result>((resolve) => {
-                service.getAssessment(submissionId).subscribe((resp) => {
-                    resolve(resp);
-                });
-            });
-
-            const req = httpMock.expectOne({
-                url: `api/fileupload/file-upload-submissions/${submissionId}/result`,
-                method: 'GET',
-            });
-
-            req.flush(expectedResult);
-
-            const result = await resultPromise;
-            expect(result.id).toBe(expectedResult.id);
-        });
-    });
-
     describe('updateAssessmentAfterComplaint', () => {
         it('should update assessment after complaint', async () => {
             const submissionId = 1;

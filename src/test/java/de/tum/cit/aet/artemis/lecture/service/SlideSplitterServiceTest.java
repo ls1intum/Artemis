@@ -93,7 +93,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_BasicFunction() {
         // Clear existing slides for this attachment video unit
         List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
@@ -121,7 +121,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
      * twice left six slides in the deck, each page present twice, and nothing in the UI to tell them apart.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void repeatedBasicSlideSplitReplacesTheDeckWithUniqueImagePaths() {
         slideRepository.deleteAll(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()));
 
@@ -147,7 +147,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithHiddenPagesAndPageOrder() throws IOException {
         Exercise testExercise = createAndSaveExercise("Test Exercise");
 
@@ -202,7 +202,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithNewSlideInPageOrder() throws IOException {
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
@@ -255,7 +255,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_CleanupRemovedSlides() throws IOException {
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
@@ -314,7 +314,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_UpdateHiddenStatus() throws IOException {
         Exercise testExercise = createAndSaveExercise("Test Exercise");
 
@@ -363,7 +363,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void updateSlideVisibilityDoesNotRebuildSlideContent() {
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide hiddenSlide = slides.getFirst();
@@ -384,7 +384,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void slideSplitRollbackKeepsPreviousImagesAndRemovesReplacementFiles() throws IOException {
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide firstSlide = slides.get(0);
@@ -428,7 +428,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
      * mechanism that replaced a transaction, so it has to be verified against something that can actually persist.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void slideSplitRollbackRemovesSlidesCreatedBeforeTheFailure() throws IOException {
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide brokenSlide = slides.getFirst();
@@ -458,7 +458,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUpdateExistingSlideImage() throws IOException {
         // Arrange
         // Clear existing slides
@@ -550,7 +550,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUpdateExistingSlideImage_NullPath() {
         // This test verifies that a slide with a null image path doesn't cause errors
         // when processed by updateExistingSlideImage
@@ -592,7 +592,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUpdateExistingSlideImage_FileNotFound() {
         // This test verifies the behavior when a slide has a valid path but the file doesn't exist
 
@@ -648,7 +648,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithExistingAndNewSlides() throws IOException {
         Exercise testExercise = createAndSaveExercise("Test Exercise for Mixed Slides");
 
@@ -756,7 +756,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     // For tests that use String parameters instead of DTOs
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStrings() throws IOException, InterruptedException {
         Exercise testExercise = createAndSaveExercise("Test Exercise");
 
@@ -865,7 +865,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithInvalidFilePath() {
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
@@ -893,7 +893,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithEmptyPageOrder() throws IOException {
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
@@ -919,7 +919,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testObsoleteAttachmentRevisionIsIgnoredWhenSplitJobsExecuteInReverseOrder() {
         List<Slide> originalSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(originalSlides).hasSize(3);
@@ -951,7 +951,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStringsJson() throws IOException, InterruptedException {
         Exercise testExercise = createAndSaveExercise("Test Exercise");
 

@@ -91,6 +91,12 @@ public class RateLimitingProperties {
      */
     private Integer buildAgentCloneTokenRequestsPerMinute;
 
+    /**
+     * Requests per minute for the editor-facing online-resource metadata fetch.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#ONLINE_RESOURCE_FETCH}.
+     */
+    private Integer onlineResourceFetchRequestsPerMinute;
+
     public List<String> getExemptAddresses() {
         return exemptAddresses;
     }
@@ -169,5 +175,13 @@ public class RateLimitingProperties {
 
     public void setContentSearchRequestsPerMinute(Integer contentSearchRequestsPerMinute) {
         this.contentSearchRequestsPerMinute = contentSearchRequestsPerMinute;
+    }
+
+    public Integer getOnlineResourceFetchRequestsPerMinute() {
+        return onlineResourceFetchRequestsPerMinute;
+    }
+
+    public void setOnlineResourceFetchRequestsPerMinute(Integer onlineResourceFetchRequestsPerMinute) {
+        this.onlineResourceFetchRequestsPerMinute = onlineResourceFetchRequestsPerMinute;
     }
 }

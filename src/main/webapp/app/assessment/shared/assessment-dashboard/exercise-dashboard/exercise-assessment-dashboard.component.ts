@@ -408,20 +408,24 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
                 this.scheduleAssessmentAvailabilityUpdate();
 
+                if (!this.isTestRun()) {
+                    const complaintQueue = this.accountService.isAtLeastInstructorForExercise(exercise)
+                        ? this.submissionService.getSubmissionsWithComplaintsForInstructor(this.exerciseId())
+                        : this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId());
+                    complaintQueue.subscribe({
+                        next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+                            this.submissionsWithComplaints.set(res.body || []);
+                            this.sortComplaintRows();
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                }
                 this.setupLinks();
             },
             error: (response: string) => this.onError(response),
         });
 
         if (!this.isTestRun()) {
-            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId()).subscribe({
-                next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
-                    this.submissionsWithComplaints.set(res.body || []);
-                    this.sortComplaintRows();
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
-
             this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithMoreFeedbackRequests.set(res.body || []);
@@ -591,7 +595,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         if (!this.exercise()?.type || !submissionId) {
             return;
         }
-        const route = `/course-management/${this.courseId()}/${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
+        const group = this.exercise().exerciseGroup;
+        const sourcePath = group ? `exams/${group.exam!.id}/exercise-groups/${group.id}/` : '';
+        const route = `/course-management/${this.courseId()}/${sourcePath}${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
         const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {

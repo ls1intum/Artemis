@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of, throwError } from 'rxjs';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { User } from 'app/account/user/user.model';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -1089,5 +1092,43 @@ describe('ProgrammingSubmissionService', () => {
 
             expect(inner.submissionSubjects).toEqual({ 1: subject });
         });
+    });
+    it('initializes cached student build state without replacing existing subscribers', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        const latest: ProgrammingSubmission = { id: 9, results: [{ id: 10, submission: { id: 9 } }] };
+        exercise.studentParticipations = [{ id: 8, type: ParticipationType.PROGRAMMING, submissions: [{ id: 3 }, latest] }];
+        const empty = new ProgrammingExercise(undefined, undefined);
+        empty.id = 11;
+        const missingSubmissions = new ProgrammingExercise(undefined, undefined);
+        missingSubmissions.studentParticipations = [{ id: 12 }];
+        submissionService.initializeCacheForStudent(undefined);
+        submissionService.initializeCacheForStudent([new TextExercise(undefined, undefined), empty, missingSubmissions, exercise]);
+        const received: (ProgrammingSubmissionStateObj | undefined)[] = [];
+        const subject = priv(submissionService).submissionSubjects[8];
+        const subscription = subject.subscribe((state) => received.push(state));
+        expect(received.at(-1)).toMatchObject({ participationId: 8, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION });
+        submissionService.initializeCacheForStudent([exercise]);
+        expect(received).toHaveLength(1);
+        submissionService.initializeCacheForStudent([exercise], true);
+        expect(priv(submissionService).submissionSubjects[8]).toBe(subject);
+        expect(received.at(-2)).toBeUndefined();
+        expect(received.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
+        subscription.unsubscribe();
+        submissionService.unsubscribeAllWebsocketTopics(exercise);
+    });
+
+    it('releases websocket listeners and cached exercise state when the page is destroyed', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = exerciseId;
+        httpGetStub.mockReturnValue(of(undefined));
+        const subscription = submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe();
+        expect(wsSubmissionSubject.observed).toBe(true);
+        submissionService.unsubscribeAllWebsocketTopics(exercise);
+        expect(wsSubmissionSubject.observed).toBe(false);
+        expect(wsSubmissionProcessingSubject.observed).toBe(false);
+        expect(priv(submissionService).submissionSubjects).toEqual({});
+        expect(priv(submissionService).exerciseBuildStateSubjects.has(exerciseId)).toBe(false);
+        subscription.unsubscribe();
     });
 });

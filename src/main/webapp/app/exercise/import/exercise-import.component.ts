@@ -206,8 +206,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         }
         this.previewTrigger = event?.currentTarget instanceof HTMLElement ? event.currentTarget : undefined;
         this.previewLoadingId.set(exercise.id);
-        this.quizExerciseService
-            .find(exercise.id)
+        (exercise.exerciseGroup ? this.quizExerciseService.findForExam(exercise.id) : this.quizExerciseService.find(exercise.id))
             .pipe(takeUntilDestroyed(this.previewDestroyRef))
             .subscribe({
                 next: (quiz) => {

@@ -210,6 +210,7 @@ public class SubmissionService {
         // TODO: it really does not make sense to fetch these submissions with all related data from the database just to select one submission afterwards
         // it would be better to fetch them with minimal related data (so we can select one) and then afterwards fetch the selected one with all related data
 
+        var user = userRepository.getUserWithAuthorities();
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
@@ -218,15 +219,13 @@ public class SubmissionService {
         }
         else {
             // Get all participations of submissions that are submitted and do not already have a manual result.
-            // Does not fetch participations for which the due date has not yet passed.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
-                    ZonedDateTime.now());
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsIgnoreTestRuns(exercise.getId(), ZonedDateTime.now(),
+                    authCheckService.isAtLeastInstructorForExercise(exercise, user));
         }
 
         if (participations.isEmpty()) {
             return List.of();
         }
-        var user = userRepository.getUserWithAuthorities();
         var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                 .filter(submission -> assessmentEligibilityService.canStartAssessment(submission, exercise, correctionRound, user)).toList();
 
@@ -751,7 +750,8 @@ public class SubmissionService {
     }
 
     /**
-     * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
+     * Checks if the exercise due date has passed, except for instructors assessing course exercises early.
+     * For exam exercises it checks if the latest possible exam end date has passed.
      *
      * @param exercise course exercise or exam exercise that is checked
      */
@@ -761,7 +761,7 @@ public class SubmissionService {
         if (isExamMode) {
             checkThatAssessmentIsPossibleElseThrow(exercise, null);
         }
-        else {
+        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
             if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
@@ -895,17 +895,17 @@ public class SubmissionService {
     /**
      * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
      *
-     * @param exerciseId          the exerciseId of the exercise of which the complaints are fetched
-     * @param isAtLeastInstructor if the user is an instructor
+     * @param exerciseId      the exerciseId of the exercise of which the complaints are fetched
+     * @param instructorQueue whether the endpoint selects the instructor queue
      * @return a list of DTOs containing a complaint and its submission
      */
-    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean isAtLeastInstructor) {
+    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean instructorQueue) {
         // get all complaints which belong to the exercise
         List<Complaint> complaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
 
-        if (!isAtLeastInstructor) {
-            complaints = complaints.stream().filter(complaint -> !userRepository.getUser().equals(complaint.getResult().getAssessor())).toList();
-        }
+        User caller = userRepository.getUser();
+        complaints = complaints.stream().filter(complaint -> complaint.getStudent() == null || !complaint.getStudent().equals(complaint.getResult().getAssessor()))
+                .filter(complaint -> instructorQueue || !caller.equals(complaint.getResult().getAssessor())).toList();
 
         return getSubmissionsWithComplaintsFromComplaints(complaints);
     }

@@ -77,6 +77,13 @@ export class SubmissionService {
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
+    /** Find all complained-about assessments for the instructor's exercise review queue. */
+    getSubmissionsWithComplaintsForInstructor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
+        return this.http
+            .get<SubmissionWithComplaintResponseDTO[]>(`api/exercise/exercises/${exerciseId}/submissions-with-complaints/for-instructor`, { observe: 'response' })
+            .pipe(map((res) => this.convertDTOsFromServer(res)));
+    }
+
     /**
      * Find more feedback requests for tutor in this exercise.
      * @param exerciseId
@@ -180,7 +187,7 @@ export class SubmissionService {
     }
 
     /** Own assessments and one new candidate, using the existing exam assignment endpoints. */
-    getExamAssessmentQueue(type: ExerciseType, exerciseId: number, correctionRound: number, proposeAssessment: boolean): Observable<Submission[]> {
+    getExamAssessmentQueue(type: ExerciseType, exerciseId: number, correctionRound: number, proposeAssessment: boolean, instructor = false): Observable<Submission[]> {
         if (type === ExerciseType.QUIZ) {
             return of([]);
         }
@@ -191,7 +198,9 @@ export class SubmissionService {
                   .get<Submission | undefined>(`${url}-submission-without-assessment`, { params: type === ExerciseType.TEXT ? params.set('head', 'true') : params })
                   .pipe(catchError((error) => (error.error?.errorKey === 'lockedSubmissionsLimitReached' ? of(undefined) : throwError(() => error))))
             : of(undefined);
-        return forkJoin([this.http.get<Submission[]>(`${url}-submissions`, { params: params.set('assessedByTutor', 'true') }), proposed]).pipe(
+        const assessedUrl = `${url}-submissions${type !== ExerciseType.PROGRAMMING && !instructor ? '/assessed-by-me' : ''}`;
+        const assessedParams = type === ExerciseType.PROGRAMMING ? params.set('assessedByTutor', 'true') : instructor ? params.set('assessedByMe', 'true') : params;
+        return forkJoin([this.http.get<Submission[]>(assessedUrl, { params: assessedParams }), proposed]).pipe(
             map(([assessed, candidate]) =>
                 [...assessed, ...(candidate && !assessed.some((submission) => submission.id === candidate.id) ? [candidate] : [])].map((submission) => {
                     SubmissionService.convertSubmissionDateFromServer(submission);

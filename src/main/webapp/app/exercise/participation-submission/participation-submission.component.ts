@@ -335,10 +335,12 @@ export class ParticipationSubmissionComponent implements OnInit {
                         });
                     } else {
                         // Get exercise for release and due dates
-                        this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                            this.exercise.set(exerciseResponse.body!);
-                            this.updateStatusBadgeColor();
-                        });
+                        (params['examId'] ? this.exerciseService.findForExamManagement(params['exerciseId']) : this.exerciseService.findForStaff(params['exerciseId'])).subscribe(
+                            (exerciseResponse) => {
+                                this.exercise.set(exerciseResponse.body!);
+                                this.updateStatusBadgeColor();
+                            },
+                        );
                         this.fetchParticipationAndSubmissionsForStudent();
                     }
                 });

@@ -10,11 +10,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -86,7 +86,7 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should initialize the form with the course description', async () => {
         const courseDescription = 'Course Description';
-        vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: { description: courseDescription } })));
+        vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockReturnValue(of(new HttpResponse({ body: { description: courseDescription } })));
         fixture.detectChanges();
         await fixture.whenStable();
         expect(comp.courseDescriptionForm().courseDescriptionControl.value).toBe(courseDescription);
@@ -244,7 +244,7 @@ describe('GenerateCompetenciesComponent', () => {
             b = new Subject<GenerationUpdate>();
             const streams: Record<string, Subject<GenerationUpdate>> = { '/user/topic/iris/competencies/1': a, '/user/topic/iris/competencies/2': b };
             vi.spyOn(TestBed.inject(WebsocketService), 'subscribe').mockImplementation((destination) => streams[destination]);
-            vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockImplementation((id) => of(new HttpResponse({ body: { id, description: `Course ${id}` } })));
+            vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockImplementation((id) => of(new HttpResponse({ body: { id, description: `Course ${id}` } })));
             vi.spyOn(TestBed.inject(CourseCompetencyService), 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
             vi.spyOn(TestBed.inject(CourseCompetencyService), 'generateCompetenciesFromCourseDescription').mockReturnValue(of(new HttpResponse<void>()));
         });
@@ -291,7 +291,7 @@ describe('GenerateCompetenciesComponent', () => {
         it('ignores a stale description response after navigation', async () => {
             const oldDescription = new Subject<HttpResponse<Course>>();
             const newDescription = new Subject<HttpResponse<Course>>();
-            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
+            vi.mocked(TestBed.inject(CourseManagementService).findForInstructor).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
             fixture.detectChanges();
             route.setParameters({ courseId: 2 });
             newDescription.next(new HttpResponse({ body: { description: 'B' } }));
@@ -306,7 +306,7 @@ describe('GenerateCompetenciesComponent', () => {
             const descriptionB = 'B'.repeat(150);
             const oldDescription = new Subject<HttpResponse<Course>>();
             const newDescription = new Subject<HttpResponse<Course>>();
-            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
+            vi.mocked(TestBed.inject(CourseManagementService).findForInstructor).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
             const generateButton = () => fixture.debugElement.query(By.css('#generateButton button')).nativeElement as HTMLButtonElement;
             fixture.detectChanges();
             expect(generateButton().disabled).toBe(true);
@@ -330,7 +330,7 @@ describe('GenerateCompetenciesComponent', () => {
 
         it('clears a loaded description as soon as the component is reused for another course', async () => {
             const newDescription = new Subject<HttpResponse<Course>>();
-            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) =>
+            vi.mocked(TestBed.inject(CourseManagementService).findForInstructor).mockImplementation((id) =>
                 id === 1 ? of(new HttpResponse({ body: { description: 'A'.repeat(150) } })) : newDescription,
             );
             const generateButton = () => fixture.debugElement.query(By.css('#generateButton button')).nativeElement as HTMLButtonElement;
@@ -379,4 +379,26 @@ describe('GenerateCompetenciesComponent', () => {
             viewed: new FormControl(viewed, { nonNullable: true }),
         });
     }
+    it('reports a current generation request failure and permits retry without stale recommendations', async () => {
+        vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockReturnValue(of(new HttpResponse({ body: { description: 'Current course' } })));
+        vi.spyOn(TestBed.inject(CourseCompetencyService), 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(TestBed.inject(CourseCompetencyService), 'generateCompetenciesFromCourseDescription').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        comp.getCompetencyRecommendations('Current course');
+        expect(error).toHaveBeenCalledWith('error.http.403');
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.competencies.length).toBe(0);
+    });
+
+    it('removes a recommendation only after the delete dialog is confirmed', () => {
+        comp.competencies.push(createCompetencyFormGroup('First', 'Description', CompetencyTaxonomy.ANALYZE, true));
+        comp.competencies.push(createCompetencyFormGroup('Second', 'Description', CompetencyTaxonomy.ANALYZE, true));
+        comp.onDelete(0);
+        dialogClose.next({ confirmed: false });
+        expect(comp.competencies.length).toBe(2);
+        dialogClose.next({ confirmed: true });
+        expect(comp.competencies.getRawValue().map((entry) => entry.competency.title)).toEqual(['Second']);
+    });
 });

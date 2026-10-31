@@ -16,9 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -43,13 +41,9 @@ public class ProgrammingExerciseTaskResource {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final AuthorizationCheckService authCheckService;
-
-    public ProgrammingExerciseTaskResource(ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService) {
+    public ProgrammingExerciseTaskResource(ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -65,12 +59,11 @@ public class ProgrammingExerciseTaskResource {
      * @return the {@link ResponseEntity} with status {@code 200}.
      */
     @GetMapping("programming-exercises/{exerciseId}/tasks")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<Set<ProgrammingExerciseTaskDTO>> getTasks(@PathVariable Long exerciseId) {
         log.debug("REST request to retrieve ProgrammingExerciseTasks for ProgrammingExercise with id : {}", exerciseId);
         // Reload the exercise from the database as we can't trust data from the client
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithTestCases(exerciseId);
         Set<ProgrammingExerciseTaskDTO> taskDTOs = tasks.stream().map(ProgrammingExerciseTaskDTO::ofWithoutInactiveTestCases).collect(Collectors.toSet());
@@ -87,12 +80,11 @@ public class ProgrammingExerciseTaskResource {
      * @return the {@link ResponseEntity} with status {@code 200}.
      */
     @GetMapping("programming-exercises/{exerciseId}/tasks-with-unassigned-test-cases")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<ProgrammingExerciseTaskDTO>> getTasksWithUnassignedTask(@PathVariable Long exerciseId) {
         log.debug("REST request to retrieve ProgrammingExerciseTasks for ProgrammingExercise with id : {}", exerciseId);
         // Reload the exercise from the database as we can't trust data from the client
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
         List<ProgrammingExerciseTaskDTO> taskDTOs = tasks.stream().map(ProgrammingExerciseTaskDTO::of).toList();

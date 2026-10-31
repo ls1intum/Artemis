@@ -6,7 +6,7 @@
 
 <!-- Cell templates -->
 <ng-template #titleTemplate let-cell>
-    <a [routerLink]="['/courses', course().id, 'exercises', cell.data.id]">
+    <a [routerLink]="exerciseLink(cell.data)">
         {{ cell.data.title }}
     </a>
 </ng-template>
@@ -21,7 +21,7 @@
 
 <ng-template #viewTemplate let-cell>
     @if (exercise().id !== cell.data.id) {
-        <a (click)="onActivate()" [routerLink]="['/courses', course().id, 'exercises', cell.data.id, 'teams', cell.data.team.id]" jhiTranslate="entity.action.view"></a>
+        <a (click)="onActivate()" [routerLink]="teamLink(cell.data)" jhiTranslate="entity.action.view"></a>
     } @else {
         <span class="current-team" jhiTranslate="entity.action.view"></span>
     }

@@ -1082,7 +1082,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :exerciseId
-                AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
+                AND (:instructor = TRUE OR p.individualDueDate IS NULL OR p.individualDueDate <= :now)
                 AND p.testRun = FALSE
                 AND NOT EXISTS (
                     SELECT prs
@@ -1096,8 +1096,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.submitted = TRUE
                 AND s.id = (SELECT MAX(s3.id) FROM p.submissions s3)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId,
-            @Param("now") ZonedDateTime now);
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("now") ZonedDateTime now,
+            @Param("instructor") boolean instructor);
 
     @Query("""
             SELECT p

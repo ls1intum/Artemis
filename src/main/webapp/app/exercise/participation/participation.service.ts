@@ -87,8 +87,8 @@ export class ParticipationService {
             .pipe(map((res) => this.processParticipationDTOResponseType(res)));
     }
 
-    searchParticipations(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
-        return this.searchParticipationResults(exerciseId, search, 'participations/page');
+    searchParticipations(exerciseId: number, search: ParticipationSearch, kind: 'course' | 'exam' = 'course'): Observable<PageableResult<ParticipationManagementDTO>> {
+        return this.searchParticipationResults(exerciseId, search, kind === 'exam' ? 'participations/page/for-exam' : 'participations/page');
     }
 
     searchAssessmentQueue(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
@@ -98,7 +98,7 @@ export class ParticipationService {
     private searchParticipationResults(
         exerciseId: number,
         search: ParticipationSearch,
-        resource: 'participations/page' | 'assessment-queue',
+        resource: 'participations/page' | 'participations/page/for-exam' | 'assessment-queue',
     ): Observable<PageableResult<ParticipationManagementDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,

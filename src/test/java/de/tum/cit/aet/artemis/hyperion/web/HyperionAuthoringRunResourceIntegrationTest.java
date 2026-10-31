@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -32,6 +33,8 @@ class HyperionAuthoringRunResourceIntegrationTest extends AbstractSpringIntegrat
     @Autowired
     private ProgrammingExerciseUtilService programmingExercises;
 
+    private Course course;
+
     private long exerciseId;
 
     private String jobId;
@@ -39,7 +42,7 @@ class HyperionAuthoringRunResourceIntegrationTest extends AbstractSpringIntegrat
     @BeforeEach
     void setup() {
         userUtilService.addUsers(PREFIX, 1, 0, 2, 1);
-        var course = programmingExercises.addCourseWithOneProgrammingExercise();
+        course = programmingExercises.addCourseWithOneProgrammingExercise();
         userUtilService.addStudentToCourse(PREFIX + "student1", course);
         userUtilService.addEditorToCourse(PREFIX + "editor1", course);
         userUtilService.addEditorToCourse(PREFIX + "editor2", course);
@@ -58,7 +61,7 @@ class HyperionAuthoringRunResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = PREFIX + "editor1", roles = "USER")
     void ownerDiscoversRetainedHistoryWithoutBrowserStorageOrReplay() throws Exception {
         request.performMvcRequest(get("/api/hyperion/authoring-runs")).andExpect(status().isOk()).andExpect(jsonPath("$.runs[0].jobId").value(jobId))
                 .andExpect(jsonPath("$.runs[0].exerciseId").value(exerciseId)).andExpect(jsonPath("$.runs[0].status").value("CANCELLED"))
@@ -69,15 +72,15 @@ class HyperionAuthoringRunResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = PREFIX + "editor2", roles = "EDITOR")
+    @WithMockUser(username = PREFIX + "editor2", roles = "USER")
     void anotherEditorOfTheSameCourseCannotReadTheOwnersRun() throws Exception {
         request.performMvcRequest(get("/api/hyperion/programming-exercises/" + exerciseId + "/generation/runs/" + jobId)).andExpect(status().isNotFound());
     }
 
     @Test
     @WithMockUser(username = PREFIX + "student1", roles = "USER")
-    void studentCannotDiscoverOrInspectAuthoringJobs() throws Exception {
-        request.performMvcRequest(get("/api/hyperion/authoring-runs")).andExpect(status().isForbidden());
+    void studentReceivesNoHistoryAndCannotInspectAuthoringJobs() throws Exception {
+        request.performMvcRequest(get("/api/hyperion/authoring-runs")).andExpect(status().isOk()).andExpect(jsonPath("$.runs").isEmpty());
         request.performMvcRequest(get("/api/hyperion/programming-exercises/" + exerciseId + "/generation/runs/" + jobId)).andExpect(status().isForbidden());
     }
 
@@ -88,30 +91,38 @@ class HyperionAuthoringRunResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = PREFIX + "editor1", roles = "USER")
     void invalidCursorIsRejectedInsteadOfStartingAnUnboundedQuery() throws Exception {
         request.performMvcRequest(get("/api/hyperion/authoring-runs").param("beforeId", "-1")).andExpect(status().isBadRequest());
     }
 
     @Test
-    @WithMockUser(username = PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = PREFIX + "editor1", roles = "USER")
     void bulkAccessUsesCurrentCourseRolesAndDoesNotRevealUnknownRuns() throws Exception {
         var ids = List.of(jobId, UUID.randomUUID().toString());
         assertThat(request.postListWithResponseBody("/api/hyperion/authoring-runs/access", ids, String.class, HttpStatus.OK, null, null)).containsExactly(jobId);
+        request.performMvcRequest(get("/api/hyperion/authoring-runs")).andExpect(status().isOk()).andExpect(jsonPath("$.runs[0].jobId").value(jobId));
         userUtilService.removeUserFromAllCourses(userTestRepository.findOneByLogin(PREFIX + "editor1").orElseThrow());
         assertThat(request.postListWithResponseBody("/api/hyperion/authoring-runs/access", ids, String.class, HttpStatus.OK, null, null)).isEmpty();
+        request.performMvcRequest(get("/api/hyperion/authoring-runs")).andExpect(status().isOk()).andExpect(jsonPath("$.runs").isEmpty());
+        request.performMvcRequest(get("/api/hyperion/programming-exercises/" + exerciseId + "/generation/runs/" + jobId)).andExpect(status().isForbidden());
+        userUtilService.addEditorToCourse(PREFIX + "editor1", course);
+        assertThat(request.postListWithResponseBody("/api/hyperion/authoring-runs/access", ids, String.class, HttpStatus.OK, null, null)).containsExactly(jobId);
+        request.performMvcRequest(get("/api/hyperion/authoring-runs")).andExpect(status().isOk()).andExpect(jsonPath("$.runs[0].jobId").value(jobId));
+        request.performMvcRequest(get("/api/hyperion/programming-exercises/" + exerciseId + "/generation/runs/" + jobId)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.jobId").value(jobId));
     }
 
     @Test
-    @WithMockUser(username = PREFIX + "editor2", roles = "EDITOR")
+    @WithMockUser(username = PREFIX + "editor2", roles = "USER")
     void bulkAccessDoesNotRevealAnotherEditorsRun() throws Exception {
         assertThat(request.postListWithResponseBody("/api/hyperion/authoring-runs/access", List.of(jobId), String.class, HttpStatus.OK, null, null)).isEmpty();
     }
 
     @Test
     @WithMockUser(username = PREFIX + "student1", roles = "USER")
-    void studentCannotUseBulkAccess() throws Exception {
-        request.postWithoutResponseBody("/api/hyperion/authoring-runs/access", List.of(jobId), HttpStatus.FORBIDDEN);
+    void studentReceivesNoBulkAccess() throws Exception {
+        assertThat(request.postListWithResponseBody("/api/hyperion/authoring-runs/access", List.of(jobId), String.class, HttpStatus.OK, null, null)).isEmpty();
     }
 
     @Test
@@ -121,7 +132,7 @@ class HyperionAuthoringRunResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = PREFIX + "editor1", roles = "USER")
     void bulkAccessRejectsEmptyOversizedAndMalformedBatches() throws Exception {
         for (var invalid : List.of(List.<String>of(), Collections.nCopies(501, jobId), List.of(" "), List.of("x".repeat(129)), Collections.<String>singletonList(null))) {
             request.postWithoutResponseBody("/api/hyperion/authoring-runs/access", invalid, HttpStatus.BAD_REQUEST);

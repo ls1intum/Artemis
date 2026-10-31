@@ -11,12 +11,11 @@ import { Participation, ParticipationType, getExercise } from 'app/exercise/shar
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
-import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { omit } from 'lodash-es';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { EditorViewingPurpose, ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { FileUploadParticipation, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -64,12 +63,12 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
     private alertService = inject(AlertService);
     private fileService = inject(FileService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
-    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
     private accountService = inject(AccountService);
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
+    readonly viewingPurpose = input<EditorViewingPurpose>('owner');
     readonly participationId = input<number>();
     readonly expandProblemStatement = input(true);
     readonly showProblemStatement = input(true);
@@ -160,7 +159,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
                 // Check direct input ID (signal) or route ID (signal)
                 const pId = this.participationId() ?? this.routeParticipationId();
                 if (pId && !Number.isNaN(pId)) {
-                    const sub = this.fileUploadSubmissionService.getDataForFileUploadEditor(pId).subscribe({
+                    const sub = this.fileUploadSubmissionService.getDataForFileUploadEditor(pId, this.viewingPurpose()).subscribe({
                         next: (submission: FileUploadSubmission) => {
                             this.handleDataLoad(submission);
                         },
@@ -198,14 +197,6 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
 
         if (this.submission()?.submitted) {
             this.setSubmittedFile();
-        }
-        if (this.submission()?.submitted && this.result()?.completionDate) {
-            const submissionId = this.submission()?.id;
-            if (submissionId) {
-                void firstValueFrom(this.fileUploadAssessmentService.getAssessment(submissionId)).then((assessmentResult: Result) => {
-                    this.result.set(assessmentResult);
-                });
-            }
         }
         this.isOwnerOfParticipation.set(this.isOwnerOfFileUploadParticipation(participation));
     }

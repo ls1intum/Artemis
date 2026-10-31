@@ -75,34 +75,34 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testIsAllowedAsInstructorDuringTestRun() {
-            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result, true);
             assertThat(isUserAllowedToGetResult).isTrue();
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsNotAllowedAsStudentDuringTestRun() {
-            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result, true);
             assertThat(isUserAllowedToGetResult).isFalse();
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testIsNotAllowedAsInstructorForNonTestRunExerciseBeforeDeadline() {
             participation.setTestRun(false);
 
-            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result, true);
             assertThat(isUserAllowedToGetResult).isFalse();
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsNotAllowedAsStudentForNonTestRunExerciseBeforeDeadline() {
             participation.setTestRun(false);
 
-            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result, true);
             assertThat(isUserAllowedToGetResult).isFalse();
         }
     }
@@ -411,7 +411,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student2", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
         void testIsAtLeastTeachingAssistantInCourse_tutor_shouldReturnTrue() {
             boolean isAtLeastTA = authCheckService.isAtLeastTeachingAssistantInCourse(course, tutor);
             assertThat(isAtLeastTA).as("Tutor should have TA-level access in course").isTrue();
@@ -432,14 +432,14 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor", roles = "USER")
         void testIsAtLeastEditorInCourse_editor_shouldReturnTrue() {
             boolean isAtLeastEditor = authCheckService.isAtLeastEditorInCourse(course, editor);
             assertThat(isAtLeastEditor).as("Editor should have editor-level access in course").isTrue();
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student2", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
         void testIsAtLeastEditorInCourse_tutor_shouldReturnFalse() {
             boolean isAtLeastEditor = authCheckService.isAtLeastEditorInCourse(course, tutor);
             assertThat(isAtLeastEditor).as("Tutor should not have editor-level access in course").isFalse();
@@ -453,14 +453,14 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testIsAtLeastInstructorInCourse_instructor_shouldReturnTrue() {
             boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, instructor);
             assertThat(isAtLeastInstructor).as("Instructor should have instructor-level access in course").isTrue();
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor", roles = "USER")
         void testIsAtLeastInstructorInCourse_editor_shouldReturnFalse() {
             boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, editor);
             assertThat(isAtLeastInstructor).as("Editor should not have instructor-level access in course").isFalse();
@@ -506,7 +506,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student2", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
         void testCheckIsAtLeastEditorInCourse_tutor_shouldThrow() {
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, tutor))
                     .as("Tutor should fail editor-level access check");
@@ -520,7 +520,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor", roles = "USER")
         void testCheckIsAtLeastInstructorInCourse_editor_shouldThrow() {
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, editor))
                     .as("Editor should fail instructor-level access check");

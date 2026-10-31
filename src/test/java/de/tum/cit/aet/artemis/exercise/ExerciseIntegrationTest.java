@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -62,6 +64,7 @@ import de.tum.cit.aet.artemis.exercise.dto.DetailedResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpcomingExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -156,7 +159,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetStatsForExerciseAssessmentDashboardWithSubmissions() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course = courses.getFirst();
@@ -191,7 +194,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetStatsForExamExerciseAssessmentDashboard() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
@@ -213,7 +216,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetStudentParticipationCountByIdFiltersNonStudentParticipants() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), null);
@@ -231,7 +234,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetStudentParticipationCountByIdFiltersNonStudentParticipantsForExamExercise() throws Exception {
         TextExercise textExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
 
@@ -329,13 +332,148 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void genericStudentReadsKeepStudentProjectionForInstructor() throws Exception {
+        var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        exercise.setGradingInstructions("private grading");
+        exercise.setExampleSolution("private solution");
+        exerciseRepository.save(exercise);
+        var tutorParticipationCount = tutorParticipationRepo.count();
+        var participationCount = participationRepository.count();
+        var response = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, ExerciseResponseDTO.class);
+        assertThat(response.gradingInstructions()).isNull();
+        assertThat(response.exampleSolution()).isNull();
+        var details = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+        assertThat(details.exercise().exercise().gradingInstructions()).isNull();
+        assertThat(details.exercise().exercise().exampleSolution()).isNull();
+        assertThat(tutorParticipationRepo.count()).isEqualTo(tutorParticipationCount);
+        assertThat(participationRepository.count()).isEqualTo(participationCount);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void studentExerciseAndTitleReadsRequireReleaseEvenForInstructor() throws Exception {
+        var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        // the course overview lists unreleased exercises for staff and links to the details page, so that read stays open for them
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+        var titles = request.getList("/api/exercise/courses/" + course.getId() + "/exercise-titles", HttpStatus.OK, ExerciseTitleDTO.class);
+        assertThat(titles).isEmpty();
+        var staffTitles = request.getList("/api/exercise/courses/" + course.getId() + "/exercise-titles/for-staff", HttpStatus.OK, ExerciseTitleDTO.class);
+        assertThat(staffTitles).extracting(ExerciseTitleDTO::id).containsExactly(exercise.getId());
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/for-staff", HttpStatus.OK, ExerciseResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void exerciseDetailsOfUnreleasedExerciseAreForbiddenForStudents() throws Exception {
+        var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, ExerciseDetailsDTO.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(CourseRole.class)
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void genericReadAudienceMatrixUsesCurrentCourseRoles(CourseRole role) throws Exception {
+        var courseExercise = ExerciseUtilService.getFirstExerciseWithType(textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX),
+                TextExercise.class);
+        var examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        var exam = examExercise.getExam();
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        for (var course : List.of(courseExercise.getCourseViaExerciseGroupOrCourseMember(), exam.getCourse())) {
+            userUtilService.unenrollUserFromCourseByRole(user, course, CourseRole.STUDENT);
+            userUtilService.enrollUserInCourse(user, course, role);
+        }
+        String courseUrl = "/api/exercise/exercises/" + courseExercise.getId();
+        String examUrl = "/api/exercise/exercises/" + examExercise.getId();
+        HttpStatus tutorStatus = role.isAtLeast(CourseRole.TEACHING_ASSISTANT) ? HttpStatus.OK : HttpStatus.FORBIDDEN;
+        HttpStatus editorStatus = role.isAtLeast(CourseRole.EDITOR) ? HttpStatus.OK : HttpStatus.FORBIDDEN;
+        request.get(courseUrl, HttpStatus.OK, ExerciseResponseDTO.class);
+        request.get(courseUrl + "/for-staff", tutorStatus, ExerciseResponseDTO.class);
+        request.get(courseUrl + "/for-exam-assessment", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(courseUrl + "/for-exam-management", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(examUrl, HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(examUrl + "/for-staff", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam-assessment", tutorStatus, ExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam-management", editorStatus, ExerciseResponseDTO.class);
+        var titlesUrl = "/api/exercise/courses/" + courseExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/exercise-titles/for-staff";
+        request.getList(titlesUrl, tutorStatus, ExerciseTitleDTO.class);
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam);
+        request.get(examUrl + "/for-exam-assessment", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam-management", editorStatus, ExerciseResponseDTO.class);
+        userUtilService.unenrollUserFromCourseByRole(user, exam.getCourse(), role);
+        request.get(examUrl + "/for-exam-assessment", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam-management", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(courseUrl + "/for-staff", tutorStatus, ExerciseResponseDTO.class);
+        userUtilService.unenrollUserFromCourseByRole(user, courseExercise.getCourseViaExerciseGroupOrCourseMember(), role);
+        request.get(courseUrl, HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(courseUrl + "/details", HttpStatus.FORBIDDEN, ExerciseDetailsDTO.class);
+        request.getList(titlesUrl, HttpStatus.FORBIDDEN, ExerciseTitleDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void examTrainingWaitsForTheLatestIndividualWorkingPeriod() throws Exception {
+        var exercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        var exam = exercise.getExam();
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+        examUtilService.addStudentExamWithUserAndWorkingTime(exam, TEST_PREFIX + "student1", 3 * 60 * 60);
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/for-exam-assessment", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void genericCourseAndExamRoutesBindPersistedKindAndCourseRole() throws Exception {
+        var courseExercise = ExerciseUtilService.getFirstExerciseWithType(textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX),
+                TextExercise.class);
+        var examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        var exam = examExercise.getExam();
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+        String courseUrl = "/api/exercise/exercises/" + courseExercise.getId();
+        String examUrl = "/api/exercise/exercises/" + examExercise.getId();
+        request.get(courseUrl + "/for-staff", HttpStatus.OK, ExerciseResponseDTO.class);
+        request.get(courseUrl + "/for-exam-assessment", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(courseUrl + "/for-exam-management", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(examUrl, HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(examUrl + "/for-staff", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam-assessment", HttpStatus.OK, ExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam-management", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam);
+        request.get(examUrl + "/for-exam-assessment", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        userUtilService.unenrollUserFromCourseByRole(tutor, exam.getCourse(), CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(tutor, exam.getCourse(), CourseRole.EDITOR);
+        request.get(examUrl + "/for-exam-management", HttpStatus.OK, ExerciseResponseDTO.class);
+        request.get(examUrl + "/for-exam-assessment", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        userUtilService.unenrollUserFromCourseByRole(tutor, exam.getCourse(), CourseRole.EDITOR);
+        request.get(examUrl + "/for-exam-management", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
+        request.get(courseUrl + "/for-staff", HttpStatus.OK, ExerciseResponseDTO.class);
+    }
+
     /**
      * The management header reads {@code categories}, the example assessment editors read {@code gradingCriteria} with
      * their structured instructions, and the team dialog reads {@code teamAssignmentConfig}. All three reach the DTO
      * through initialization guards over a fetch-joined query, so pin them for a tutor here.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExercise_asTutorCarriesCategoriesGradingCriteriaAndTeamAssignmentConfig() throws Exception {
         var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
@@ -348,7 +486,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
         gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
 
-        ExerciseResponseDTO response = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, ExerciseResponseDTO.class);
+        ExerciseResponseDTO response = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-staff", HttpStatus.OK, ExerciseResponseDTO.class);
 
         assertThat(response.categories()).as("Categories the management header renders").containsExactlyInAnyOrder("homework", "bonus");
         assertThat(response.teamAssignmentConfig()).as("Team assignment config the team dialog reads").isNotNull();
@@ -409,7 +547,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
      * against the entities for the same reason.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamExerciseCarriesTheExamKeySetTheEntityUsedToSerialize() throws Exception {
         TextExercise exercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Exam exam = exercise.getExerciseGroup().getExam();
@@ -434,7 +572,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exam.setExampleSolutionPublicationDate(ZonedDateTime.parse("2023-10-05T15:22:00Z"));
         exam = examRepository.save(exam);
 
-        Map<String, Object> groupNode = mapOf(getJsonMap("/api/exercise/exercises/" + exercise.getId()), "exerciseGroup");
+        Map<String, Object> groupNode = mapOf(getJsonMap("/api/exercise/exercises/" + exercise.getId() + "/for-exam-management"), "exerciseGroup");
 
         assertThat(groupNode.keySet()).containsExactlyInAnyOrder("id", "title", "isMandatory", "exam");
         Map<String, Object> examNode = mapOf(groupNode, "exam");
@@ -459,7 +597,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
      * reads.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingExerciseCarriesTheProgrammingScalarsTheEntityUsedToSerialize() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -501,7 +639,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
         gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
 
-        Map<String, Object> response = getJsonMap("/api/exercise/exercises/" + exercise.getId());
+        Map<String, Object> response = getJsonMap("/api/exercise/exercises/" + exercise.getId() + "/for-staff");
         // The entity side has to be loaded and filtered exactly as the endpoint did, otherwise a collection the query
         // never fetched shows up as a difference that says nothing about the migration.
         Exercise reloaded = exerciseRepository.findByIdWithCategoriesElseThrow(exercise.getId());
@@ -664,13 +802,13 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void testGetUpcomingExercisesAsInstructorForbidden() throws Exception {
         request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.FORBIDDEN, UpcomingExerciseDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "USER")
     void testGetUpcomingExercisesAsTutorForbidden() throws Exception {
         request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.FORBIDDEN, UpcomingExerciseDTO.class);
     }
@@ -750,7 +888,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamExerciseForExampleSolution() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
@@ -924,7 +1062,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExerciseForAssessmentDashboard() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
@@ -966,7 +1104,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
      * query, so both have to reach the client.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExerciseForAssessmentDashboard_programmingExerciseCarriesTemplateAndSolutionParticipation() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = (ProgrammingExercise) course.getExercises().iterator().next();
@@ -988,7 +1126,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
      * zero assessable rounds with a 200 and no error.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamExerciseForAssessmentDashboardCarriesExamContext() throws Exception {
         TextExercise exercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Exam exam = exercise.getExerciseGroup().getExam();
@@ -1011,7 +1149,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
         var validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         var course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
@@ -1023,7 +1161,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "USER")
     void testGetExerciseForAssessmentDashboard_forbidden() throws Exception {
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6");
         // Use a course without TEST_PREFIX enrollment so tutor6 is not enrolled (it should be FORBIDDEN)
@@ -1032,14 +1170,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExerciseForAssessmentDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
         var exercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX).getExercises().iterator().next();
         request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, ExerciseResponseDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExerciseForAssessmentDashboard_exerciseWithTutorParticipation() throws Exception {
         var exercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX).getExercises().iterator().next();
         var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1")).assessedExercise(exercise)
@@ -1054,7 +1192,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
      * {@code tutorParticipations[0].trainedExampleSubmissions}. Pins those paths on the wire.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     @SuppressWarnings("unchecked")
     void testGetExerciseForAssessmentDashboard_carriesExampleSubmissionsAndTrainedExampleSubmissions() throws Exception {
         var exercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX).getExercises().iterator().next();
@@ -1084,7 +1222,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetStatsForExerciseAssessmentDashboard() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
@@ -1123,7 +1261,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "USER")
     void testGetStatsForExerciseAssessmentDashboard_forbidden() throws Exception {
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6");
         // Use a course without TEST_PREFIX enrollment so tutor6 is not enrolled (it should be FORBIDDEN)
@@ -1132,7 +1270,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetExercise() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
@@ -1146,7 +1284,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void testResetExercise_forbidden() throws Exception {
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
         // Use a course without TEST_PREFIX enrollment so instructor2 is not enrolled (it should be FORBIDDEN)
@@ -1155,7 +1293,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSetSecondCorrectionEnabledFlagEnable() throws Exception {
         Course courseWithOneReleasedTextExercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
@@ -1166,7 +1304,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSetSecondCorrectionEnabledFlagDisable() throws Exception {
         Course courseWithOneReleasedTextExercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
@@ -1178,7 +1316,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "USER")
     void testSetSecondCorrectionEnabledFlagForbidden() throws Exception {
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6");
         // Use a course without TEST_PREFIX enrollment so tutor6 is not enrolled (it should be FORBIDDEN)
@@ -1188,7 +1326,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseTitleAsInstructor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
@@ -1196,7 +1334,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExerciseTitleAsTeachingAssistant() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();

@@ -392,7 +392,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             const course = new Course();
             course.id = Number(params['courseId']);
             this.course.set(course);
-            this.loadExercise(+params['exerciseId']);
+            this.loadExercise(+params['exerciseId'], !!params['examId']);
         });
         this.isAdmin.set(this.accountService.isAdmin());
         this.isLocalCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
@@ -409,9 +409,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.websocketSubscriptions.forEach((sub) => sub.unsubscribe());
     }
 
-    private loadExercise(exerciseId: number) {
+    private loadExercise(exerciseId: number, exam: boolean) {
         this.isLoading.set(true);
-        this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
+        (exam ? this.exerciseService.findForExamManagement(exerciseId) : this.exerciseService.findForStaff(exerciseId)).subscribe((exerciseResponse) => {
             const ex = exerciseResponse.body!;
             this.exercise.set(ex);
             this.newManualResultAllowed.set(areManualResultsAllowed(ex));
@@ -472,7 +472,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             scoreRangeUpper: this.rangeFilter()?.upperBound,
         });
 
-        this.participationService.searchParticipations(ex.id, search).subscribe({
+        this.participationService.searchParticipations(ex.id, search, ex.exerciseGroup ? 'exam' : 'course').subscribe({
             next: (result) => {
                 if (requestId === this.currentLoadRequestId) {
                     this.participations.set(result.content);

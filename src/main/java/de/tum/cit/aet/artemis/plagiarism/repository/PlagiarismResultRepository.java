@@ -92,4 +92,13 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
     @Modifying
     @Transactional // ok because of delete
     void deletePlagiarismResultsByIdNotAndExerciseId(Long plagiarismResultId, Long exerciseId);
+
+    /**
+     * Checks whether the plagiarism result with the given id belongs to the given exercise.
+     *
+     * @param plagiarismResultId ID of the plagiarism result
+     * @param exerciseId         ID of the exercise the result should belong to
+     * @return true if the plagiarism result exists and belongs to the exercise
+     */
+    boolean existsByIdAndExerciseId(long plagiarismResultId, long exerciseId);
 }

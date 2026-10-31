@@ -1,3 +1,7 @@
+import { convertFeedbackFromServer } from 'app/assessment/shared/entities/feedback.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -102,9 +106,11 @@ export class FileUploadSubmissionService {
      * Returns data for File Upload editor from the server
      * @param participationId the id of the participation
      */
-    getDataForFileUploadEditor(participationId: number): Observable<FileUploadSubmission> {
+    getDataForFileUploadEditor(participationId: number, purpose: EditorViewingPurpose = 'owner'): Observable<FileUploadSubmission> {
         return this.http
-            .get<FileUploadSubmissionDTO>(`api/fileupload/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
+            .get<FileUploadSubmissionDTO>(`api/fileupload/participations/${participationId}/file-upload-editor${purpose === 'staff-preview' ? '/for-staff' : ''}`, {
+                responseType: 'json',
+            })
             .pipe(map((res: FileUploadSubmissionDTO) => this.convertFileSubmissionFromServer(res)));
     }
 
@@ -136,6 +142,13 @@ export class FileUploadSubmissionService {
 
     private mapSubmissionDtoToModel(dto: FileUploadSubmissionDTO): FileUploadSubmission {
         const submission = hydrate(new FileUploadSubmission(), dto);
+        submission.submissionDate = convertDateFromServer(dto.submissionDate);
+        submission.results = dto.results?.map((result) => {
+            const converted: Result = hydrate(new Result(), result);
+            converted.completionDate = convertDateFromServer(result.completionDate);
+            converted.feedbacks = result.feedbacks?.map(convertFeedbackFromServer);
+            return converted;
+        });
         submission.participation = this.mapParticipationDtoToModel(dto.participation);
         return submission;
     }

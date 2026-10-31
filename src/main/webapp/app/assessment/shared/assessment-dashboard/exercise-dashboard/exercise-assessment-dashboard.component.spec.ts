@@ -51,7 +51,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AssessmentQueueComponent } from './assessment-queue/assessment-queue.component';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
@@ -205,6 +205,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.exerciseId.set(modelingExercise.id!);
         comp.submissionsWithComplaints.set([submissionWithComplaintDTO]);
         accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(false);
         translateService = TestBed.inject(TranslateService);
     });
 
@@ -219,6 +220,20 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), stats, { numberOfAssessmentLocks: 10 }));
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"]')).not.toBeNull();
+    });
+
+    it.each([false, true])('chooses the complaint queue from known exercise roles, instructor=%s', (isInstructor) => {
+        accountService.userIdentity.set({ id: 10, login: isInstructor ? 'instructor1' : 'tutor1' } as User);
+        vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(isInstructor);
+        comp.ngOnInit();
+        if (isInstructor) {
+            const req = TestBed.inject(HttpTestingController).expectOne(`api/exercise/exercises/${modelingExercise.id}/submissions-with-complaints/for-instructor`);
+            expect(req.request.method).toBe('GET');
+            req.flush([]);
+            expect(submissionService.getSubmissionsWithComplaintsForTutor).not.toHaveBeenCalled();
+        } else {
+            expect(submissionService.getSubmissionsWithComplaintsForTutor).toHaveBeenCalledExactlyOnceWith(modelingExercise.id);
+        }
     });
 
     it('should initialize', () => {
@@ -512,6 +527,22 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(navigateSpy).not.toHaveBeenCalled();
         });
 
+        it('should carry the known exam source into the training route', () => {
+            comp.exercise.set({ ...exercise, type: ExerciseType.TEXT, exerciseGroup: { id: 8, exam: { id: 9, course: { id: courseId } } } });
+            comp.courseId.set(courseId);
+            comp.openExampleSubmission(12, false, true);
+            expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/exams/9/exercise-groups/8/text-exercises/${exercise.id}/example-submissions/12`], {
+                queryParams: { toComplete: true },
+            });
+        });
+
+        it('should preserve the course source for course training', () => {
+            comp.exercise.set({ ...exercise, type: ExerciseType.TEXT, exerciseGroup: undefined });
+            comp.courseId.set(courseId);
+            comp.openExampleSubmission(12, true, false);
+            expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/text-exercises/${exercise.id}/example-submissions/12`], { queryParams: { readOnly: true } });
+        });
+
         it('should openExampleSubmission', () => {
             comp.exercise.set(exercise);
             comp.exercise().type = ExerciseType.PROGRAMMING;
@@ -519,9 +550,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.exercise.set(exercise);
             const submission = { id: 8 };
             comp.openExampleSubmission(submission!.id, true, true);
-            expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`], {
-                queryParams: { readOnly: true, toComplete: true },
-            });
+            expect(navigateSpy).toHaveBeenCalledWith(
+                [
+                    `/course-management/${courseId}/exams/${exerciseGroup.exam!.id}/exercise-groups/${exerciseGroup.id}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`,
+                ],
+                {
+                    queryParams: { readOnly: true, toComplete: true },
+                },
+            );
         });
     });
 
@@ -758,5 +794,25 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
             expect(comp.assessmentNotPossibleYetTooltip()).toBe('');
         });
+    });
+    it.each([false, true])('reports a failed complaint queue without changing audience, instructor=%s', (isInstructor) => {
+        accountService.userIdentity.set({ id: 10, login: 'assessor' } as User);
+        vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(isInstructor);
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.submissionsWithComplaints.set([]);
+        if (!isInstructor) {
+            vi.mocked(submissionService.getSubmissionsWithComplaintsForTutor).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        }
+
+        comp.ngOnInit();
+        if (isInstructor) {
+            const http = TestBed.inject(HttpTestingController);
+            http.expectOne(`api/exercise/exercises/${modelingExercise.id}/submissions-with-complaints/for-instructor`).flush({}, { status: 403, statusText: 'Forbidden' });
+            expect(submissionService.getSubmissionsWithComplaintsForTutor).not.toHaveBeenCalled();
+        } else {
+            TestBed.inject(HttpTestingController).expectNone(`api/exercise/exercises/${modelingExercise.id}/submissions-with-complaints/for-instructor`);
+        }
+        expect(alert).toHaveBeenCalledExactlyOnceWith('error.http.403');
+        expect(comp.submissionsWithComplaints()).toEqual([]);
     });
 });

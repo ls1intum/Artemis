@@ -37,6 +37,16 @@ on:
         description: 'PR author login. Used to skip noisy annotations for bots. Empty when not a PR.'
         required: true
         type: string
+    outputs:
+      affected_tests:
+        description: 'True when either test suite used affected selection instead of producing full-suite coverage.'
+        value: ${{ jobs.server-test-shards.outputs.full_suite == 'false' || jobs.client-tests.outputs.mode == 'affected' || jobs.client-tests.outputs.mode == 'none' }}
+      server_full_suite:
+        description: 'Whether the server planner selected the complete seven-shard suite. Empty when server tests were skipped.'
+        value: ${{ jobs.server-test-shards.outputs.full_suite }}
+      client_mode:
+        description: 'Client test scope: full, affected, or none. Empty when the client job was skipped.'
+        value: ${{ jobs.client-tests.outputs.mode }}
     secrets:
       CODACY_PROJECT_TOKEN:
         description: 'Coverage upload token. Optional — coverage is uploaded only on internal PRs by non-bot authors.'
@@ -101,25 +111,75 @@ jobs:
           reporter: java-junit
 
   # Decides how the server suite is cut up. A full run is split into one shard per test bucket; a
-  # module-affected run stays a single shard, because its selection cuts across buckets.
+  # affected-class run stays a single shard, because its selection cuts across buckets.
   server-test-shards:
     name: Plan Server Test Shards
     if: ${{ inputs.run_server_tests }}
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       shards: ${{ steps.plan.outputs.shards }}
+      modules: ${{ steps.plan.outputs.modules }}
+      tests: ${{ steps.plan.outputs.tests }}
+      full_suite: ${{ steps.plan.outputs.full_suite }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 0
       - id: plan
         env:
           RUN_ALL_TESTS: ${{ inputs.run_all_tests }}
+          DEFAULT_BRANCH: ${{ inputs.base_branch }}
         run: |
           set -Eeuo pipefail
+          CHANGED_MODULES=""
+          SELECTED_TEST_CLASSES=""
+          PLAN_REASON="Full validation requested"
           if [ "$RUN_ALL_TESTS" != "true" ]; then
-            # An empty bucket means "whatever the module-affected selection picks", i.e. today's single job.
-            echo 'shards=[{"name":"PostgreSQL","bucket":""}]' >> "$GITHUB_OUTPUT"
+            PLAN_REASON="Cannot safely determine an affected test plan"
+            # Resolve the scope before choosing the matrix. A selector fallback must retain all seven
+            # full-suite shards, rather than silently putting the full suite on a single machine.
+            if git fetch --no-tags origin "+refs/heads/$DEFAULT_BRANCH:refs/remotes/origin/$DEFAULT_BRANCH"; then
+              if PLAN=$(python3 supporting_scripts/select_server_test_modules.py --format json "origin/$DEFAULT_BRANCH"); then
+                PLAN_REASON=$(jq -r 'if (.reason | type) == "string" then .reason else "Invalid selector plan; full fallback" end' <<< "$PLAN" 2>/dev/null) || PLAN_REASON="Invalid selector plan; full fallback"
+                # Treat malformed/empty plans as full. Only exact class names may reach Gradle or outputs.
+                if jq -e '
+                  .mode == "selected" and (.modules | type == "array") and (.tests | type == "array" and length > 0) and
+                  all(.modules[]; type == "string" and test("^[a-z][a-z0-9]*\\z")) and
+                  all(.tests[]; type == "string" and startswith("de.tum.cit.aet.artemis.") and
+                    test("^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)+\\z"))
+                ' <<< "$PLAN" > /dev/null; then
+                  CHANGED_MODULES=$(jq -r '.modules | unique | join(",")' <<< "$PLAN")
+                  SELECTED_TEST_CLASSES=$(jq -r '.tests | unique | join(",")' <<< "$PLAN")
+                fi
+              else
+                echo "::warning::Server class selection failed; using the full suite."
+              fi
+            else
+              echo "::warning::Cannot fetch the comparison branch; using the full suite."
+            fi
+          fi
+          if [ -n "$SELECTED_TEST_CLASSES" ]; then
+            {
+              echo "modules=$CHANGED_MODULES"
+              echo "tests=$SELECTED_TEST_CLASSES"
+              echo 'full_suite=false'
+              echo 'shards=[{"name":"PostgreSQL","bucket":""}]'
+            } >> "$GITHUB_OUTPUT"
+            TEST_COUNT=$(jq '.tests | unique | length' <<< "$PLAN")
+            echo "Server tests: $TEST_COUNT affected/guard classes ($CHANGED_MODULES), one shard; no full-suite coverage." >> "$GITHUB_STEP_SUMMARY"
+            printf '\nReason: %s\n' "$PLAN_REASON" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
+          {
+            echo 'modules='
+            echo 'tests='
+            echo 'full_suite=true'
+          } >> "$GITHUB_OUTPUT"
+          echo 'Server tests: full suite, seven shards with combined coverage.' >> "$GITHUB_STEP_SUMMARY"
+          printf '\nReason: %s\n' "$PLAN_REASON" >> "$GITHUB_STEP_SUMMARY"
           # One shard per bucket. Each bucket owns one Spring context and holds an exclusive @ResourceLock, so its
           # classes run one at a time whatever else is going on; giving each its own machine removes the contention
           # between buckets without changing how many contexts the run starts in total. The two smallest buckets share
@@ -161,10 +221,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
-          # Module-affected diff (`git diff "origin/$DEFAULT_BRANCH"`) needs the full
-          # history; a shallow clone silently returns empty and falls back to running
-          # every test, defeating the optimisation.
-          fetch-depth: 0
+          # The planner owns diff selection; execution shards need only the tested tree.
+          fetch-depth: 1
       - name: Setup Java
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
@@ -179,30 +237,23 @@ jobs:
         # `jacocoTestReport` is deliberately not run here: a shard only ever sees part of the suite, so the report is
         # built once from every shard's execution data by the reporting job below.
         env:
-          DEFAULT_BRANCH: ${{ inputs.base_branch }}
           SHARD_BUCKET: ${{ matrix.shard.bucket }}
+          SELECTED_TEST_CLASSES: ${{ needs.server-test-shards.outputs.tests }}
+          FULL_SUITE: ${{ needs.server-test-shards.outputs.full_suite }}
         run: |
           set -Eeuo pipefail
-
-          if [ -n "$SHARD_BUCKET" ]; then
+          if [ "$FULL_SUITE" = "false" ] && [ -n "$SELECTED_TEST_CLASSES" ] && [ -z "$SHARD_BUCKET" ]; then
+            echo "Executing planned test classes: $SELECTED_TEST_CLASSES"
+            ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp -Dartemis.test.classes="$SELECTED_TEST_CLASSES"
+            exit 0
+          fi
+          if [ "$FULL_SUITE" = "true" ] && [ -n "$SHARD_BUCKET" ] && [ -z "$SELECTED_TEST_CLASSES" ]; then
             echo "Executing the tests of bucket(s): $SHARD_BUCKET"
             ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp -Dartemis.test.bucket="$SHARD_BUCKET"
             exit 0
           fi
-
-          # Explicitly fetch — the checkout action only clones the current branch.
-          git fetch origin "$DEFAULT_BRANCH"
-
-          CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
-
-          if [ -n "${CHANGED_MODULES}" ]; then
-            echo "Executing tests for modules: $CHANGED_MODULES"
-            ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp -DincludeModules="${CHANGED_MODULES}"
-            exit 0
-          fi
-
-          echo "No module-specific changes detected — executing all tests."
-          ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp
+          echo "::error::Inconsistent server test plan; refusing an unplanned full-suite run."
+          exit 1
       - name: Upload Thread Dumps (on hang)
         # `always()`, not `!cancelled()`: if a wedge defeats the Gradle timeout and the job hits its
         # own 80-min cap, the run is `cancelled` — and that is exactly when the watchdog's dump is the
@@ -225,7 +276,7 @@ jobs:
       - name: Upload Coverage Execution Data
         # Each shard covers only part of the suite. The reporting job below collects every shard's
         # execution data and builds one report from all of it.
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && needs.server-test-shards.outputs.full_suite == 'true' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Server Coverage Execution Data (${{ matrix.shard.name }})
@@ -264,11 +315,12 @@ jobs:
   # thresholds, the test-result check-run, and the bound on how many Spring contexts a run starts.
   server-tests-report:
     name: Server Tests Report
-    needs: server-tests
+    needs: [server-test-shards, server-tests]
     # Without `run_server_tests` there are no shards to report, and `!cancelled()` alone would run this
     # job anyway (it is true for a skipped dependency) and fail on the missing coverage data.
     if: ${{ !cancelled() && inputs.run_server_tests }}
-    runs-on: aet-large-ubuntu
+    # Affected reports only combine JUnit and server-start counts; save the large runner for coverage builds.
+    runs-on: ${{ needs.server-test-shards.outputs.full_suite == 'false' && 'ubuntu-latest' || 'aet-large-ubuntu' }}
     timeout-minutes: 20
     permissions:
       contents: read
@@ -278,13 +330,16 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup Java
+        if: ${{ needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' }}
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'temurin'
           java-version: ${{ env.java }}
       - name: Setup Gradle
+        if: ${{ needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' }}
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - name: Download Coverage Execution Data
+        if: ${{ needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: Server Coverage Execution Data (*)
@@ -292,6 +347,7 @@ jobs:
           # then given distinct names; `jacocoTestReport` reads every *.exec under build/jacoco.
           path: downloaded-exec
       - name: Collect Coverage Execution Data
+        if: ${{ needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' }}
         run: |
           set -Eeuo pipefail
           mkdir -p build/jacoco
@@ -302,18 +358,20 @@ jobs:
           done
           ls -la build/jacoco
       - name: Download JUnit Test Results
+        if: ${{ !cancelled() }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: Server JUnit Test Results (*)
           merge-multiple: true
           path: build/test-results/test
       - name: Build Coverage Report
+        if: ${{ needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' }}
         run: |
           set -Eeuo pipefail
           ./gradlew --console=plain jacocoTestReport -x test -x webapp
       - name: JaCoCo Coverage Verification (advisory)
         id: jacoco-verification
-        if: ${{ inputs.run_all_tests }}
+        if: ${{ needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' }}
         # Advisory: violations surface via ::error:: annotations from the next step but do
         # not fail the job. Tightening this to gating requires removing continue-on-error
         # AND dropping the `|| true` in the violation-print step.
@@ -344,7 +402,7 @@ jobs:
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
-        if: ${{ !cancelled() && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
+        if: ${{ success() && needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
       - name: Test Report
         # Renders JUnit results as a check-run with diff annotations.
         uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a  # v3.2.0
@@ -369,29 +427,32 @@ jobs:
           TOTAL=$(cat server-starts/*.txt | awk '{ sum += $1 } END { print sum + 0 }')
           bash supporting_scripts/extract_number_of_server_starts.sh "$TOTAL"
       - name: Upload Server Test Coverage Report
-        if: ${{ !cancelled() }}
+        if: ${{ success() && needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Coverage Report Server Tests
           path: build/reports/jacoco/aggregated/html
-      - name: Upload JaCoCo XML Reports
-        # Consumed by pullrequest-coverage-reporter.yml; the name is part of that contract.
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: Server JaCoCo XML
-          path: build/reports/jacoco/**/jacocoTestReport.xml
-          if-no-files-found: ignore
       - name: Append Per-Module Coverage to Job Summary
-        if: ${{ !cancelled() }}
+        if: ${{ success() && needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' }}
         run: |
           set -Eeuo pipefail
           AGGREGATED_REPORT_FILE=./module_coverage_report.md
           python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco "$AGGREGATED_REPORT_FILE"
           cat "$AGGREGATED_REPORT_FILE" > "$GITHUB_STEP_SUMMARY"
+      - name: Upload JaCoCo XML Reports
+        # Consumed by pullrequest-coverage-reporter.yml; only successful complete suites publish this artifact.
+        if: ${{ success() && needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Server JaCoCo XML
+          path: build/reports/jacoco/**/jacocoTestReport.xml
+          if-no-files-found: error
 
   client-tests:
     name: Client Tests
+    outputs:
+      mode: ${{ steps.client-tests.outputs.mode }}
+      coverage: ${{ steps.client-tests.outputs.coverage }}
     if: ${{ inputs.run_client_tests }}
     runs-on: aet-large-ubuntu
     # 45 minutes proved too tight on slower runners: the suite finished green but the job was
@@ -403,10 +464,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
-      # Some client tests OOM under the project-wide --max-old-space-size in .npmrc; drop only that line.
-      - name: Remove project-wide node options set in .npmrc just for this test
-        # `sed` with no match exits 0; missing .npmrc would fail loudly (intended).
-        run: sed -i '/^node-options=/d' .npmrc
+          fetch-depth: 0
+      # test:ci:affected sets explicit Node limits. Keep tracked .npmrc intact so it cannot
+      # contaminate the affected-change diff and force a full run on every pull request.
       # The self-hosted runners have no usable npm on PATH; install Node first so
       # pnpm/action-setup's npm-based self-installer (v6) finds a working npm.
       - name: Setup Node.js
@@ -423,7 +483,21 @@ jobs:
       - name: Compile TypeScript Test Files With Typechecking
         run: pnpm run compile:tests
       - name: TypeScript Test Without Typechecking
-        run: pnpm run test:ci
+        id: client-tests
+        env:
+          RUN_ALL_TESTS: ${{ inputs.run_all_tests }}
+          DEFAULT_BRANCH: ${{ inputs.base_branch }}
+        run: |
+          set -Eeuo pipefail
+          # compile:tests already prepared assets and UI sources; reuse them in every mode.
+          if [ "$RUN_ALL_TESTS" = "true" ]; then
+            pnpm run test:ci:affected --full --prebuilt
+          elif git fetch --no-tags origin "+refs/heads/$DEFAULT_BRANCH:refs/remotes/origin/$DEFAULT_BRANCH"; then
+            pnpm run test:ci:affected --base-ref "origin/$DEFAULT_BRANCH" --prebuilt
+          else
+            echo "::warning::Cannot fetch the comparison branch; using the full client suite."
+            pnpm run test:ci:affected --full --prebuilt
+          fi
       - name: Custom ESLint Rule Tests
         # Runs the RuleTester specs (config/eslint/rules/*.spec.mjs) for our guardrail ESLint rules. Uses a
         # separate Vitest config (config/eslint/rules/vitest.config.mjs, plain-Node env) so these .spec.mjs do
@@ -433,26 +507,27 @@ jobs:
         # Enforces the per-module client coverage thresholds (admin, etc.) defined in
         # supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs.
         # The global Vitest threshold alone would let an individual module silently regress.
-        # Runs even if the previous step failed so the gate is reported; uploads below still run (!cancelled).
-        if: ${{ !cancelled() }}
+        # A selected PR run has no meaningful global/module coverage denominator.
+        if: ${{ !cancelled() && steps.client-tests.outputs.coverage == 'true' }}
         run: pnpm run coverage:check-module
-      - name: Upload Vitest Coverage Report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: Vitest Coverage Report
-          path: build/test-results/vitest/coverage/
-      - name: Upload Client Coverage Summaries
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: Client Coverage Summaries
-          path: |
-            build/test-results/vitest/coverage/coverage-summary.json
-          if-no-files-found: ignore
       - name: Upload Vitest JUnit Test Results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Vitest JUnit Test Results
-          path: build/test-results/vitest/junit.xml
+          path: build/test-results/vitest/*junit.xml
+          if-no-files-found: ignore
+      - name: Upload Vitest Coverage Report
+        if: ${{ success() && steps.client-tests.outputs.coverage == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Vitest Coverage Report
+          path: build/test-results/vitest/coverage/
+      - name: Upload Client Coverage Summaries
+        if: ${{ success() && steps.client-tests.outputs.coverage == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Client Coverage Summaries
+          path: |
+            build/test-results/vitest/coverage/coverage-summary.json
+          if-no-files-found: error

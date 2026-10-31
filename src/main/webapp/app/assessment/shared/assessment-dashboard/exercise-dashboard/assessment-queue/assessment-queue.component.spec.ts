@@ -261,8 +261,8 @@ describe('AssessmentQueueComponent', () => {
         ]);
     });
 
-    it('loads the next proposed submission when the exam queue is refreshed after starting one', () => {
-        fixture.componentRef.setInput('exercise', { ...exercise, teamMode: false, exerciseGroup: { exam: { course: { id: 3 } } } });
+    it.each([false, true])('loads the next proposed submission after starting one, instructor=%s', (instructor) => {
+        fixture.componentRef.setInput('exercise', { ...exercise, isAtLeastInstructor: instructor, teamMode: false, exerciseGroup: { exam: { course: { id: 3 } } } });
         fixture.componentRef.setInput('correctionRound', 1);
         fixture.componentRef.setInput('correctionRoundsEnabled', 2);
         const first = {
@@ -282,7 +282,7 @@ describe('AssessmentQueueComponent', () => {
         expect(comp.state(comp.rows()[0])).toBe('notAssessed');
         first.results!.push({ id: 22, correctionRound: 1, assessmentType: AssessmentType.MANUAL });
         comp.refresh();
-        expect(examSpy).toHaveBeenLastCalledWith(ExerciseType.PROGRAMMING, 7, 1, true);
+        expect(examSpy).toHaveBeenLastCalledWith(ExerciseType.PROGRAMMING, 7, 1, true, instructor);
         expect(comp.rows()).toHaveLength(2);
         expect(comp.state(comp.rows()[0])).toBe('inProgress');
         expect(searchSpy).not.toHaveBeenCalled();

@@ -172,6 +172,32 @@ describe('TeamParticipationTableComponent', () => {
         router = TestBed.inject(Router);
     });
 
+    it('should request the explicit staff overview rather than infer it from instructor flags', () => {
+        fixture.componentRef.setInput('overviewPurpose', 'staff');
+        const find = vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } })));
+        comp.loadAll();
+        expect(find).toHaveBeenCalledWith(comp.course(), comp.team(), 'staff');
+    });
+
+    it('should keep the student overview for an instructor using the default student view', () => {
+        const find = vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } })));
+        comp.loadAll();
+        expect(find).toHaveBeenCalledWith(comp.course(), comp.team(), 'student');
+    });
+
+    it('should link to the student routes in the student overview', () => {
+        const row = { id: 7, type: ExerciseType.TEXT, team: { id: 3 } } as unknown as Parameters<typeof comp.teamLink>[0];
+        expect(comp.exerciseLink(row)).toEqual(['/courses', comp.course().id, 'exercises', 7]);
+        expect(comp.teamLink(row)).toEqual(['/courses', comp.course().id, 'exercises', 7, 'teams', 3]);
+    });
+
+    it('should keep staff in course management, because the student team route requires team membership', () => {
+        fixture.componentRef.setInput('overviewPurpose', 'staff');
+        const row = { id: 7, type: ExerciseType.TEXT, team: { id: 3 } } as unknown as Parameters<typeof comp.teamLink>[0];
+        expect(comp.exerciseLink(row)).toEqual(['/course-management', comp.course().id, 'text-exercises', 7]);
+        expect(comp.teamLink(row)).toEqual(['/course-management', comp.course().id, 'exercises', 7, 'teams', 3]);
+    });
+
     afterEach(() => {
         vi.restoreAllMocks();
     });
@@ -264,7 +290,7 @@ describe('TeamParticipationTableComponent', () => {
         expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
-    it('Check disabled assessment button for programming exercises before due date as instructor', () => {
+    it('Check enabled assessment button for programming exercises before due date as instructor', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
             {
                 ...exercise4,
@@ -272,7 +298,16 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
+
+    it('keeps automatic programming exercises disabled for instructors', () => {
+        expect(comp.isAssessmentButtonDisabled({ ...exercise4, isAtLeastInstructor: true, assessmentType: AssessmentType.AUTOMATIC }, submission4)).toBe(true);
+    });
+
+    it('keeps a future individual deadline disabled for tutors', () => {
+        const submission = { ...submission3, participation: { individualDueDate: dayjs().add(1, 'day') } };
+        expect(comp.isAssessmentButtonDisabled({ ...exercise3, isAtLeastInstructor: false }, submission)).toBe(true);
     });
 
     it('Check enabled assessment button for exercises before due date as instructor', () => {

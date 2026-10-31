@@ -1,3 +1,5 @@
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 /**
  * Vitest tests for FileUploadSubmissionService.
  */
@@ -365,5 +367,57 @@ describe('FileUploadSubmissionService', () => {
             // The conversion should set filePathUrl
             expect(submissionService.convertSubmissionResponseFromServer).toHaveBeenCalled();
         });
+    });
+
+    it.each(['owner', 'staff-preview'] as const)('selects file editor URL from explicit %s purpose', (purpose) => {
+        service.getDataForFileUploadEditor(123, purpose).subscribe((data) => expect(data.id).toBe(123));
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe(`api/fileupload/participations/123/file-upload-editor${purpose === 'staff-preview' ? '/for-staff' : ''}`);
+        req.flush({ id: 123 });
+    });
+    it.each(['owner', 'staff-preview'] as const)('normalizes nested editor results and feedback for %s without changing projection', async (purpose) => {
+        const resultPromise = new Promise<FileUploadSubmission>((resolve) => service.getDataForFileUploadEditor(42, purpose).subscribe(resolve));
+        const request = httpMock.expectOne({ method: 'GET' });
+        request.flush({
+            id: 789,
+            submitted: true,
+            submissionDate: '2026-10-25T10:00:00Z',
+            results: [
+                {
+                    id: 999,
+                    completionDate: '2026-10-25T12:00:00Z',
+                    rated: true,
+                    score: 80,
+                    hasComplaint: true,
+                    assessor: purpose === 'staff-preview' ? { id: 22, login: 'assessor' } : undefined,
+                    feedbacks: [
+                        {
+                            id: 81,
+                            reference: 'element:7',
+                            credits: 3,
+                            type: FeedbackType.MANUAL,
+                            hasLongFeedbackText: true,
+                            gradingInstruction: { id: 51, credits: 3, instructionDescription: 'Explain the solution' },
+                        },
+                    ],
+                },
+            ],
+        });
+        const submission = await resultPromise;
+        const result = submission.latestResult!;
+        expect(dayjs.isDayjs(result.completionDate)).toBe(true);
+        expect(result).toBeInstanceOf(Result);
+        expect(result.completionDate?.toISOString()).toBe('2026-10-25T12:00:00.000Z');
+        expect(dayjs.isDayjs(submission.submissionDate)).toBe(true);
+        expect(result.submission).toBe(submission);
+        expect(result.feedbacks?.[0]).toBeInstanceOf(Feedback);
+        expect(result.feedbacks?.[0].referenceType).toBe('element');
+        expect(result.feedbacks?.[0].referenceId).toBe('7');
+        expect(result.feedbacks?.[0].hasLongFeedbackText).toBe(true);
+        expect(result.feedbacks?.[0].gradingInstruction?.id).toBe(51);
+        expect(result.assessor?.login).toBe(purpose === 'staff-preview' ? 'assessor' : undefined);
+        expect(result.rated).toBe(true);
+        expect(result.score).toBe(80);
+        expect(result.hasComplaint).toBe(true);
     });
 });

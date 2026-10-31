@@ -227,7 +227,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         }
 
         @Test
-        @WithMockUser(username = NOT_TUTOR_LOGIN, roles = "TUTOR")
+        @WithMockUser(username = NOT_TUTOR_LOGIN, roles = "USER")
         void shouldReturnForbiddenForTutorNotPartOfCourse() throws Exception {
             userUtilService.addStudent(NOT_TUTOR_LOGIN);
             Long courseId = course.getId();
@@ -237,7 +237,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         }
 
         @Test
-        @WithMockUser(username = NOT_EDITOR_LOGIN, roles = "TA")
+        @WithMockUser(username = NOT_EDITOR_LOGIN, roles = "USER")
         void shouldReturnForbiddenForEditorNotPartOfCourse() throws Exception {
             userUtilService.addStudent(NOT_EDITOR_LOGIN);
             Long courseId = course.getId();
@@ -247,7 +247,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         }
 
         @Test
-        @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "USER")
         void shouldReturnForbiddenForInstructorNotPartOfCourse() throws Exception {
             userUtilService.addStudent(NOT_INSTRUCTOR_LOGIN);
             Long courseId = course.getId();
@@ -280,7 +280,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForTutorialGroupSessionAsCourseStaffMember() throws Exception {
                 TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching",
                         Language.ENGLISH.name(), tutor, new HashSet<>(Set.of(student)));
@@ -377,7 +377,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForVisibleLectureWithStartButNoEndAsCourseStaffMember() throws Exception {
                 Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE.plusDays(1), null);
                 Long courseId = course.getId();
@@ -394,7 +394,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForVisibleLectureWithEndButNoStartAsCourseStaffMember() throws Exception {
                 Lecture lecture = lectureUtilService.createLecture(course, null, PAST_DATE);
                 Long courseId = course.getId();
@@ -411,7 +411,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForVisibleLectureWithStartAndEndAsCourseStaffMember() throws Exception {
                 Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusHours(2), PAST_DATE);
                 Long courseId = course.getId();
@@ -428,7 +428,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForInvisibleLectureWithStartAndEventEventAsCourseStaffMember() throws Exception {
                 Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
                 Long courseId = course.getId();
@@ -511,7 +511,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForVisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
                 Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
                         PAST_DATE.plusDays(3), "Test-Examiner");
@@ -535,7 +535,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForVisibleExamWithStartAndEndButNoPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
                 Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), null, null, null, "Test-Examiner");
                 Long courseId = course.getId();
@@ -552,7 +552,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
             void shouldReturnNoEventsForInvisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
                 Exam exam = examUtilService.addExam(course, FUTURE_DATE, FUTURE_DATE.plusHours(2), FUTURE_DATE.plusHours(3), FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2),
                         FUTURE_DATE.plusDays(3), "Test-Examiner");
@@ -629,7 +629,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+            @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForReleasedSynchronizedQuizWithStartTimeAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, PAST_DATE.plusDays(1), 600);
                 Long courseId = course.getId();
@@ -646,7 +646,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+            @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForUnreleasedSynchronizedQuizWithStartTimeAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, FUTURE_DATE, FUTURE_DATE.plusHours(1), 600);
                 Long courseId = course.getId();
@@ -663,7 +663,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+            @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
             void shouldReturnNoEventForReleasedSynchronizedQuizWithoutStartTimeAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, null, 600);
                 Long courseId = course.getId();
@@ -758,7 +758,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForReleasedIndividualQuizWithNoDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.INDIVIDUAL);
                 Long courseId = course.getId();
@@ -775,7 +775,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForIndividualQuizWithDueDateButNoReleaseDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.INDIVIDUAL);
                 Long courseId = course.getId();
@@ -792,7 +792,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForReleasedIndividualQuizWithDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
                 Long courseId = course.getId();
@@ -811,7 +811,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnNoEventForIndividualQuizWithNoReleaseDateAndNoDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.INDIVIDUAL);
                 Long courseId = course.getId();
@@ -825,7 +825,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForUnreleasedIndividualQuizWithDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
                 Long courseId = course.getId();
@@ -925,7 +925,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForReleasedBatchedQuizWithNoDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.BATCHED);
                 Long courseId = course.getId();
@@ -942,7 +942,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForBatchedQuizWithDueDateButNoReleaseDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.BATCHED);
                 Long courseId = course.getId();
@@ -959,7 +959,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForReleasedBatchedQuizWithDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.BATCHED);
                 Long courseId = course.getId();
@@ -978,7 +978,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnNoEventForBatchedQuizWithNoReleaseDateAndNoDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.BATCHED);
                 Long courseId = course.getId();
@@ -992,7 +992,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             @Test
-            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForUnreleasedBatchedQuizWithDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.BATCHED);
                 Long courseId = course.getId();
@@ -1140,7 +1140,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
             @ParameterizedTest
             @EnumSource(NonQuizExercise.class)
-            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForReleasedExerciseWithStartDateAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
                 Exercise exercise = switch (nonQuizExercise) {
                     case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
@@ -1169,7 +1169,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
             @ParameterizedTest
             @EnumSource(NonQuizExercise.class)
-            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForReleasedExerciseWithDueDateAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
                 Exercise exercise = switch (nonQuizExercise) {
                     case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
@@ -1198,7 +1198,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
             @ParameterizedTest
             @EnumSource(NonQuizExercise.class)
-            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForReleasedExerciseWithAssessmentDueDateAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
                 Exercise exercise = switch (nonQuizExercise) {
                     case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
@@ -1228,7 +1228,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
             @ParameterizedTest
             @EnumSource(NonQuizExercise.class)
-            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForUnreleasedExerciseAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
                 Exercise exercise = switch (nonQuizExercise) {
                     case TEXT ->
@@ -1293,7 +1293,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         }
 
         @Test
-        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+        @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
         void shouldSplitEventAcrossDaysWhenEventSpansMultipleDays() throws Exception {
             TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
                     tutor, new HashSet<>(Set.of(student)));
