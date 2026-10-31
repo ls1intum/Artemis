@@ -45,10 +45,6 @@ public record GroupChatCreationDTO(List<String> memberLogins) {
                     }
                     else {
                         parser.skipChildren();
-                        if (MEMBER_LOGINS_PROPERTY.equals(property)) {
-                            // a repeated property keeps its last value, and that value is not an array
-                            memberLogins = new ArrayList<>();
-                        }
                     }
                 }
             }

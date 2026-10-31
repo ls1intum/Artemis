@@ -34,24 +34,17 @@ public record OneToOneChatCreationDTO(@Nullable Long userId, @Nullable String lo
                 return readLegacyArray(parser, context);
             }
             Long userId = null;
-            // the text of a userId that is not an integer id; a repeated property keeps its last value, so a later valid one clears it
-            String invalidUserId = null;
             String login = null;
             if (parser.currentToken() == JsonToken.START_OBJECT) {
                 while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
                     String property = parser.currentName();
                     parser.nextToken();
                     if ("userId".equals(property)) {
-                        userId = null;
-                        invalidUserId = null;
-                        if (parser.currentToken() != JsonToken.VALUE_NULL) {
-                            // Require an integral JSON number in long range. A fractional number (e.g. 1.9) would be silently truncated to a different id, and a textual value
-                            // would be coerced to 0L, so both are reported as an input mismatch below, which Spring maps to 400 Bad Request.
-                            userId = readLongId(parser);
-                            if (userId == null) {
-                                invalidUserId = parser.getValueAsString("");
-                                parser.skipChildren();
-                            }
+                        // Require an integral JSON number in long range. A fractional number (e.g. 1.9) would be silently truncated to a different id, and a textual value
+                        // would be coerced to 0L, so both are reported as an input mismatch, which Spring maps to 400 Bad Request.
+                        userId = parser.currentToken() == JsonToken.VALUE_NULL ? null : readLongId(parser);
+                        if (userId == null && parser.currentToken() != JsonToken.VALUE_NULL) {
+                            return context.reportInputMismatch(OneToOneChatCreationDTO.class, "userId must be an integer id, but got: %s", parser.getValueAsString(""));
                         }
                     }
                     else if ("login".equals(property)) {
@@ -62,9 +55,6 @@ public record OneToOneChatCreationDTO(@Nullable Long userId, @Nullable String lo
                         parser.skipChildren();
                     }
                 }
-            }
-            if (invalidUserId != null) {
-                return context.reportInputMismatch(OneToOneChatCreationDTO.class, "userId must be an integer id, but got: %s", invalidUserId);
             }
             return new OneToOneChatCreationDTO(userId, login);
         }
