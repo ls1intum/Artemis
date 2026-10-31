@@ -44,7 +44,9 @@ The response contains the new `id`. A modeling exercise is created the same way 
 and also needs a `diagramType`, which cannot be changed later. See `/agent/openapi.yaml` for the values.
 
 `includedInOverallScore` is `INCLUDED_COMPLETELY`, `INCLUDED_AS_BONUS` or `NOT_INCLUDED`. Dates must be in order:
-`releaseDate`, then `dueDate`, then `assessmentDueDate`.
+`releaseDate`, `startDate` (if supplied), `dueDate`, `assessmentDueDate`, then `exampleSolutionPublicationDate`.
+Each configured date must follow earlier configured dates, even when an intermediate date is omitted. Setting `assessmentDueDate`
+also requires `dueDate`.
 
 ## Change a draft
 

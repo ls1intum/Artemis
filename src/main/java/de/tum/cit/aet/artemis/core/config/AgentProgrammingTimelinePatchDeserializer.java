@@ -43,7 +43,7 @@ public class AgentProgrammingTimelinePatchDeserializer extends ValueDeserializer
                 case "assessmentDueDate" -> assessmentDueDate = read(parser, context, ZonedDateTime.class);
                 case "exampleSolutionPublicationDate" -> solutionDate = read(parser, context, ZonedDateTime.class);
                 case "buildAndTestStudentSubmissionsAfterDueDate" -> buildDate = read(parser, context, ZonedDateTime.class);
-                default -> parser.skipChildren();
+                default -> context.reportInputMismatch(AgentProgrammingTimelinePatchDTO.class, "Unknown timeline field: %s", field);
             }
         }
         return new AgentProgrammingTimelinePatchDTO(

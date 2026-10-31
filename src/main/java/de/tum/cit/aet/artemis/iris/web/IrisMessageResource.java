@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqQuestionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqStoredResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
@@ -368,9 +369,9 @@ public class IrisMessageResource {
             if (responseDTO.selectedIndex() < 0 || responseDTO.selectedIndex() >= optionCount) {
                 throw new BadRequestException("Selected index is out of bounds");
             }
-            var response = new IrisMcqResponseDTO(responseDTO.selectedIndex(), responseDTO.submitted(), null);
-            updatedContent = new IrisMcqContentDTO(content.type(), content.question(), content.options(), content.explanation(), response, content.questions(),
-                    content.responses());
+            var response = new IrisMcqStoredResponseDTO(responseDTO.selectedIndex(), responseDTO.submitted(), null, null);
+            updatedContent = new IrisMcqContentDTO(content.type(), content.question(), content.options(), content.explanation(), response, content.questions(), content.responses(),
+                    content.additionalProperties());
         }
         else {
             List<IrisMcqQuestionDTO> questions = content.questions() != null ? content.questions() : List.of();
@@ -384,12 +385,12 @@ public class IrisMessageResource {
                 throw new BadRequestException("Selected index is out of bounds");
             }
 
-            List<IrisMcqResponseDTO> responses = new ArrayList<>(content.responses() != null ? content.responses() : List.of());
-            var newResponse = new IrisMcqResponseDTO(responseDTO.selectedIndex(), responseDTO.submitted(), questionIndex);
+            List<IrisMcqStoredResponseDTO> responses = new ArrayList<>(content.responses() != null ? content.responses() : List.of());
+            var newResponse = new IrisMcqStoredResponseDTO(responseDTO.selectedIndex(), responseDTO.submitted(), questionIndex, null);
             boolean updated = false;
             for (int i = 0; i < responses.size(); i++) {
                 if (responses.get(i) != null && questionIndex.equals(responses.get(i).questionIndex())) {
-                    responses.set(i, newResponse);
+                    responses.set(i, new IrisMcqStoredResponseDTO(responseDTO.selectedIndex(), responseDTO.submitted(), questionIndex, responses.get(i).additionalProperties()));
                     updated = true;
                     break;
                 }
@@ -397,7 +398,8 @@ public class IrisMessageResource {
             if (!updated) {
                 responses.add(newResponse);
             }
-            updatedContent = new IrisMcqContentDTO(content.type(), content.question(), content.options(), content.explanation(), content.response(), questions, responses);
+            updatedContent = new IrisMcqContentDTO(content.type(), content.question(), content.options(), content.explanation(), content.response(), questions, responses,
+                    content.additionalProperties());
         }
 
         jsonContent.replaceContent(updatedContent);
