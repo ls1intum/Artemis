@@ -129,6 +129,7 @@ public class ProgrammingExerciseTestCaseResource {
         programmingExerciseDraftGuard.requireDraftForTokenRequest(authorizationExercise);
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId) : authorizationExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExercise);
             Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
             // A test case is now marked as AFTER_DUE_DATE: a scheduled score update might be needed.
             if (updatedTests.stream().anyMatch(ProgrammingExerciseTestCase::isAfterDueDate)) {

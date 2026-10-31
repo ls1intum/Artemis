@@ -7,10 +7,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.core.dto.agent.AgentProgrammingTimelinePatchDTO;
 import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 
@@ -196,7 +196,7 @@ public final class AgentToolArguments {
      * @param timeline the exercise and its new dates
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record TimelineArguments(ProgrammingExerciseTimelineUpdateDTO timeline) {
+    public record TimelineArguments(AgentProgrammingTimelinePatchDTO timeline) {
     }
 
     /**
