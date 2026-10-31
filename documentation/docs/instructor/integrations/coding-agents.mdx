@@ -4,8 +4,8 @@ title: Working with Coding Agents
 sidebar_label: Coding Agents
 ---
 
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 A coding agent such as Claude Code, Codex or Antigravity can do routine course work for you through the Artemis REST
 API: draft competencies and their graph, announcements, exercises and lecture units, and keep them in sync with your
@@ -14,9 +14,9 @@ access safe.
 
 <Callout variant={CalloutVariant.info}>
 
-  Agent access is off by default. If you do not see **Agent Access** in your user settings, your Artemis
-  administrator has not enabled it on this instance. See
-  [Agent Access](/admin/agent-access) for what they need to do.
+Agent access is off by default. If you do not see **Agent Access** in your user settings, your Artemis
+administrator has not enabled it on this instance. See
+[Agent Access](/admin/agent-access) for what they need to do.
 
 </Callout>
 
@@ -46,8 +46,8 @@ your password, sign in again before you create a token.
 
 <Callout variant={CalloutVariant.warning}>
 
-  Artemis shows the secret only once and stores just a fingerprint of it, so nobody can read it back later. Treat it
-  like a password. Anyone who has it can act as you, within the token's scopes, until it expires or you revoke it.
+Artemis shows the secret only once and stores just a fingerprint of it, so nobody can read it back later. Treat it
+like a password. Anyone who has it can act as you, within the token's scopes, until it expires or you revoke it.
 
 </Callout>
 
@@ -56,15 +56,15 @@ when it was last used. Click **Revoke** to stop a token immediately.
 
 ## Scopes
 
-| Scope in the interface | What the agent can do | Role it still needs in the course |
-|------------------------|-----------------------|-----------------------------------|
-| Read your courses | List your courses | any |
-| Read competencies | Read competencies, prerequisites and the relations between them | student, editor for the relations |
-| Create and edit competencies | Create, bulk create, import standardized, update competencies; create and retype relations | editor |
-| Post announcements | Post an announcement to the course | instructor |
-| Create and edit unpublished exercises | Create and update text and modeling exercises | editor |
-| Create and edit unpublished programming exercises | Create programming exercises; update their settings, dates, problem statement and test case weights | editor |
-| Create and edit lectures and slides | Create lectures, add units with slides, read the processing status | editor |
+| Scope in the interface                            | What the agent can do                                                                               | Role it still needs in the course |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Read your courses                                 | List your courses                                                                                   | any                               |
+| Read competencies                                 | Read competencies, prerequisites and the relations between them                                     | student, editor for the relations |
+| Create and edit competencies                      | Create, bulk create, import standardized, update competencies; create and retype relations          | editor                            |
+| Post announcements                                | Post an announcement to the course                                                                  | instructor                        |
+| Create and edit unpublished exercises             | Create and update text and modeling exercises                                                       | editor                            |
+| Create and edit unpublished programming exercises | Create programming exercises; update their settings, dates, problem statement and test case weights | editor                            |
+| Create and edit lectures and slides               | Create lectures, add units with slides, read the processing status                                  | editor                            |
 
 ## What stays in your hands
 
@@ -93,9 +93,9 @@ errors. It is published with this documentation at `/agent/openapi.yaml`, and `/
 Agent skills teach an agent the common workflows, for example how to maintain a competency graph. Copy the skill
 folders you need from `/agent-skills/` into the skills folder of your agent:
 
-| Agent | Skills folder |
-|-------|---------------|
-| Claude Code | `.claude/skills/` in your project, or `~/.claude/skills/` for all projects |
+| Agent                 | Skills folder                                                              |
+| --------------------- | -------------------------------------------------------------------------- |
+| Claude Code           | `.claude/skills/` in your project, or `~/.claude/skills/` for all projects |
 | Codex and Antigravity | `.agents/skills/` in your project, or `~/.agents/skills/` for all projects |
 
 Then give the agent the address and the token, for example by exporting `ARTEMIS_URL` and `ARTEMIS_TOKEN` in the

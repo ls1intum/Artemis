@@ -4,8 +4,8 @@ title: Agent Access
 sidebar_label: Agent Access
 ---
 
-import Callout from "../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Callout from '../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 Agent access lets instructors give a coding agent, such as Claude Code or Codex, limited access to Artemis through
 personal access tokens. This page explains how to enable it, what it permits, and what to tell your instructors. The
@@ -17,9 +17,9 @@ The feature is off by default. Enable it in the server configuration:
 
 ```yaml
 artemis:
-  agent-access:
-    enabled: true
-    max-lifetime-in-days: 90
+    agent-access:
+        enabled: true
+        max-lifetime-in-days: 90
 ```
 
 - `artemis.agent-access.enabled` switches the feature on. While it is `false`, the **Agent Access** page does not
@@ -102,8 +102,8 @@ students out of this path by design.
 
 <Callout variant={CalloutVariant.info}>
 
-  Course content that students wrote, such as forum posts, can contain text that tries to steer an agent. No scope
-  gives access to posts at the moment, but advise instructors not to feed such text to an agent that holds a token
-  with write scopes.
+Course content that students wrote, such as forum posts, can contain text that tries to steer an agent. No scope
+gives access to posts at the moment, but advise instructors not to feed such text to an agent that holds a token
+with write scopes.
 
 </Callout>
