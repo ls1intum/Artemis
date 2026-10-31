@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisErrorResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
@@ -303,15 +304,19 @@ public class PyrisConnectorService {
     }
 
     private String tryExtractErrorMessage(HttpStatusCodeException ex) {
+        // Pyris or a proxy in front of it can answer 400 or 500 with a body that is not the error JSON, e.g. a plain-text "Internal Server Error".
+        // The caller turns the status into an IrisException, so a warning is enough.
         try {
-            return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asString();
+            var error = objectMapper.readValue(ex.getResponseBodyAsString(), PyrisErrorResponseDTO.class);
+            if (error.detail() != null && error.detail().errorMessage() != null) {
+                return error.detail().errorMessage();
+            }
+            log.warn("Pyris answered with status {} and a body that is not the expected error JSON: detail.errorMessage is missing", ex.getStatusCode());
         }
-        catch (JacksonException | IllegalArgumentException e) {
-            // Pyris or a proxy in front of it can answer 400 or 500 with a body that is not the error JSON, e.g. a plain-text "Internal Server Error".
-            // The caller turns the status into an IrisException, so a warning is enough.
+        catch (JacksonException e) {
             log.warn("Pyris answered with status {} and a body that is not the expected error JSON: {}", ex.getStatusCode(), e.getMessage());
-            return "";
         }
+        return "";
     }
 
     /**

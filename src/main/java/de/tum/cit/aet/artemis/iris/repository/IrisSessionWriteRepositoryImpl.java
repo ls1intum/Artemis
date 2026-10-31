@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisContextSwitchMarker;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -79,7 +78,7 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
 
         var marker = IrisContextSwitchMarker.forSwitch(context.chatMode(), newMode, newEntityId, entityName);
         IrisMessage markerMessage = new IrisMessage();
-        markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
+        markerMessage.addContent(IrisJsonMessageContent.of(marker));
         IrisMessage saved = appendInCurrentTransaction(sessionId, markerMessage, IrisMessageSender.CTXSWAP);
 
         int updated = sessions.updateContext(sessionId, newMode, newEntityId);

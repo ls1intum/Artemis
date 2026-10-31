@@ -1,0 +1,99 @@
+---
+id: agent-access
+title: Agent Access
+sidebar_label: Agent Access
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+Agent access lets instructors give a coding agent, such as Claude Code or Codex, limited access to Artemis through
+personal access tokens. This page explains how to enable it, what it permits, and what to tell your instructors. The
+instructor side is described in [Working with Coding Agents](/instructor/integrations/coding-agents).
+
+## Enable agent access
+
+The feature is off by default. Enable it in the server configuration:
+
+```yaml
+artemis:
+  agent-access:
+    enabled: true
+    max-lifetime-in-days: 90
+```
+
+- `artemis.agent-access.enabled` switches the feature on. While it is `false`, the **Agent Access** page does not
+  appear in the user settings, the token endpoints do not exist, and a request that carries a token is rejected with
+  status 401.
+- `artemis.agent-access.max-lifetime-in-days` is the longest lifetime an instructor can give a token. The default is
+  90 days.
+
+Restart the server after changing either value. The change needs no setup beyond the database migration that
+Artemis applies on startup. In a multi-node setup, set the same values on every node.
+
+To turn the feature off again, set `enabled` to `false` and restart. Every token stops working at once. The token
+records stay in the database, and the feature picks them up again if you re-enable it.
+
+## What a token can do
+
+A token authenticates as its owner. For each request Artemis applies two checks, and the token needs to pass both:
+
+- **The owner's role.** A token can do only what its owner can do in the course. A token does not turn a student
+  into an editor.
+- **The scopes of the token.** An endpoint is reachable with a token only if the endpoint opts in and the token
+  holds the scope it asks for. Every other endpoint answers with status 403, so a new endpoint is closed to tokens
+  until a developer opts it in on purpose.
+
+Three rules hold whatever the configuration:
+
+- **Administrators cannot use tokens.** An account with an administrator role can neither create a token nor
+  authenticate with one.
+- **Exercises and lecture units stay unpublished.** A token can create them only with a release date in the future,
+  and can change only content that students cannot see yet. A release date schedules publication, so content that nobody
+  reviews becomes visible on that date, as it does when an instructor sets the date. Changing a date to now and deleting
+  are done in the web interface.
+- **No grades, exams or student data.** None of the scopes covers them.
+
+The scopes are `courses:read`, `competencies:read`, `competencies:write`, `announcements:post`,
+`exercises:draft`, `programming:draft` and `lectures:write`. Posting an announcement, creating a lecture and creating or
+changing competencies are the actions whose result students see at once: a lecture is listed with its title and
+description as soon as it exists, because a lecture has no release date of its own, and competencies have no draft state.
+A token also stops working when its owner's credentials change, for example after a password reset.
+
+## The MCP endpoint
+
+With agent access enabled, Artemis also serves the Model Context Protocol at `/api/core/agent/mcp`. It answers every request with
+one JSON document and keeps no session, so it needs nothing beyond the setting above and works behind a load balancer without
+sticky sessions. It accepts only personal access tokens.
+
+Each tool of the endpoint calls the REST API of the same server over the loopback interface, with the token of the request. It
+therefore needs the server to be reachable on its own port from itself, which is the normal case, and its calls appear in the audit
+log like any other request. In a setup where requests to `localhost` leave the machine through a proxy, exclude `localhost` from the
+proxy.
+
+## What Artemis records
+
+Artemis stores a token's name, the first characters of its secret, its scopes, its expiry date and when it was last
+used. It never stores the secret itself, only a one-way hash, so a database dump does not reveal working tokens.
+Deleting a user deletes their tokens.
+
+Every request that a token authenticates is written to a logger named `de.tum.cit.aet.artemis.agentaccess.audit`, with
+the token id, the user, the HTTP method, the path and the response status. The log never contains the query string or
+the token. A request with an unknown, expired or revoked token is answered with 401 before that point and is not
+written there. You can route that logger to its own file or to your log aggregation to see which token did what.
+
+## Data protection
+
+An agent is a program that runs on the instructor's computer and usually sends what it reads to a language model
+provider. With a token, that includes the course structure, competencies, exercise and lecture content that the
+instructor can read. Decide with your data protection officer whether and under what conditions instructors may do this,
+and tell them. Tokens cannot read grades, student submissions or lists of students, which keeps the personal data of
+students out of this path by design.
+
+<Callout variant={CalloutVariant.info}>
+
+  Course content that students wrote, such as forum posts, can contain text that tries to steer an agent. No scope
+  gives access to posts at the moment, but advise instructors not to feed such text to an agent that holds a token
+  with write scopes.
+
+</Callout>

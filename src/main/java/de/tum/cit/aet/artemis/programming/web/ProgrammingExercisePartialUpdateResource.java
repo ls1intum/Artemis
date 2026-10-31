@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
@@ -38,8 +40,12 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateD
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDraftGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST controller for updating partial information of a programming exercise such as the timeline or the problem statement.
@@ -80,11 +86,15 @@ public class ProgrammingExercisePartialUpdateResource {
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
+    private final ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard;
+
     public ProgrammingExercisePartialUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, ExerciseService exerciseService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseVersionService exerciseVersionService,
             ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard, ExerciseVariantGroupService exerciseVariantGroupService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard) {
+        this.programmingExerciseDraftGuard = programmingExerciseDraftGuard;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -109,13 +119,21 @@ public class ProgrammingExercisePartialUpdateResource {
     @PutMapping("programming-exercises/timeline")
     @EnforceAtLeastStudent
     @ManualConfig
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
     @FeatureToggle(Feature.ProgrammingExercises)
+    @Operation(summary = "Change the dates of a programming exercise", description = """
+            Replaces the timeline of a programming exercise: releaseDate, startDate, dueDate, assessmentType, assessmentDueDate, \
+            exampleSolutionPublicationDate and buildAndTestStudentSubmissionsAfterDueDate. A field that is missing from the request is cleared, \
+            so read the exercise first and send the current value of every field that must stay. A request with a personal access token can change only an \
+            exercise that students cannot see yet and that has no student participations, and releaseDate must stay in the future: \
+            publishing happens only in the Artemis web interface.""")
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update the timeline of ProgrammingExercise : {}", timelineUpdateDTO.id());
         var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
         var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, existingProgrammingExercise, user);
+        programmingExerciseDraftGuard.requireDraftForTokenRequest(existingProgrammingExercise, timelineUpdateDTO.releaseDate(), timelineUpdateDTO.startDate());
         // The whole point of this endpoint is changing dates, and a variant group owns its members' timeline. Silently
         // discarding the request would return 200 while doing nothing, so reject it and point the caller at the group.
         // The guard lives here rather than in updateTimeline(), because ExerciseVariantGroupService calls that service
@@ -126,6 +144,7 @@ public class ProgrammingExercisePartialUpdateResource {
         }
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(timelineUpdateDTO.id())) {
             var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id()) : existingProgrammingExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExercise, timelineUpdateDTO.releaseDate(), timelineUpdateDTO.startDate());
             var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(programmingExercise, timelineUpdateDTO, notificationText);
             exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
             if (lease.coordinated()) {
@@ -152,15 +171,23 @@ public class ProgrammingExercisePartialUpdateResource {
      */
     @PatchMapping("programming-exercises/{exerciseId}/problem-statement")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "Replace the problem statement of a programming exercise", description = """
+            The request body is the new problem statement as plain Markdown text, not JSON. Test cases are referenced in tasks as \
+            [task][Task name](testName1,testName2). A request with a personal access token can change only an exercise that students \
+            cannot see yet and that has no student participations.""")
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProblemStatement(@PathVariable long exerciseId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = "text/plain", schema = @Schema(type = "string"))) @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
         var authorizationExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
         var user = userRepository.getUserWithAuthorities();
+        programmingExerciseDraftGuard.requireDraftForTokenRequest(authorizationExercise);
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
                     .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId)) : authorizationExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExercise);
             var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
             exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
             if (lease.coordinated()) {
