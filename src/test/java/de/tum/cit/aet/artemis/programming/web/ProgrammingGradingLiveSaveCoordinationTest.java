@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -17,10 +18,14 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.PersonalAccessTokenAuthentication;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -36,6 +41,37 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class ProgrammingGradingLiveSaveCoordinationTest {
+
+    @Test
+    void tokenCannotEditTestCasesIfTheExerciseWasPublishedBeforeTheLeaseWasClaimed() {
+        long exerciseId = 42L;
+        var draft = new ProgrammingExercise();
+        draft.setId(exerciseId);
+        draft.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        var published = new ProgrammingExercise();
+        published.setId(exerciseId);
+        published.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        var exercises = mock(ProgrammingExerciseTestRepository.class);
+        when(exercises.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId)).thenReturn(draft, published);
+        var guard = mock(ProgrammingExerciseMutationGuardService.class);
+        when(guard.claimExternalMutation(exerciseId)).thenReturn(new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
+        }));
+        var users = mock(UserTestRepository.class);
+        when(users.getUserWithAuthorities()).thenReturn(new User());
+        var testCases = mock(ProgrammingExerciseTestCaseService.class);
+        when(testCases.update(exerciseId, Set.of())).thenReturn(Set.of());
+        var versions = mock(ExerciseVersionService.class);
+        var resource = new ProgrammingExerciseTestCaseResource(mock(ProgrammingExerciseTestCaseTestRepository.class), testCases,
+                mock(ProgrammingExerciseCreationScheduleService.class), exercises, users, versions, guard, new ProgrammingExerciseDraftGuardService(exercises));
+        SecurityContextHolder.getContext().setAuthentication(new PersonalAccessTokenAuthentication("editor", Set.of(), 1L, Set.of(AgentScope.PROGRAMMING_DRAFT)));
+        try {
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.updateTestCases(exerciseId, Set.of()));
+            verifyNoInteractions(testCases, versions);
+        }
+        finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
 
     @Test
     void gradingEditCannotEnterWhileGeneratedTestsAreSynchronizing() throws Exception {

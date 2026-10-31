@@ -142,6 +142,7 @@ public class ProgrammingExercisePartialUpdateResource {
         }
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(timelineUpdateDTO.id())) {
             var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id()) : existingProgrammingExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExercise, timelineUpdateDTO.releaseDate(), timelineUpdateDTO.startDate());
             var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(programmingExercise, timelineUpdateDTO, notificationText);
             exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
             if (lease.coordinated()) {
@@ -184,6 +185,7 @@ public class ProgrammingExercisePartialUpdateResource {
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
                     .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId)) : authorizationExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExercise);
             var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
             exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
             if (lease.coordinated()) {

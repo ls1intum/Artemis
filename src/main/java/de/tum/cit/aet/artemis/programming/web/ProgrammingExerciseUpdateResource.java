@@ -195,6 +195,7 @@ public class ProgrammingExerciseUpdateResource {
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(updateDTO.id())) {
             var programmingExerciseBeforeUpdate = lease.coordinated() ? programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id()) : authorizationExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExerciseBeforeUpdate, updateDTO.releaseDate(), updateDTO.startDate());
             var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updateDTO.id());
             validateCourseAndExerciseGroupUnchanged(updateDTO, programmingExerciseBeforeUpdate);
 
