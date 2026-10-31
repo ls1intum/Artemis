@@ -1240,6 +1240,48 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_preservesSingleQuestionAndOptionExtensions() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            String content = """
+                    {"type":"mcq","question":"Q?","options":[
+                      {"text":"A","correct":false,"extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0},
+                      {"text":"B","correct":true,"metadata":{"nested":[null,"",[],{},false,0]}}],
+                     "explanation":"E.","metadata":{"nested":[null,"",[],{},false,0]},
+                     "extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0}
+                    """;
+            IrisMessage message = saveLlmMessageWithMcqContent(session, content);
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, null), HttpStatus.OK);
+
+            ObjectNode expected = (ObjectNode) JsonObjectMapper.get().readTree(content);
+            expected.set("response", JsonObjectMapper.get().readTree("{\"selectedIndex\":1,\"submitted\":true}"));
+            assertThat(readJsonContent(session, message)).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_preservesSetQuestionOptionAndStoredResponseExtensions() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            String content = """
+                    {"type":"mcq-set","metadata":{"nested":[null,"",[],{},false,0]},"questions":[
+                      {"question":"Q1?","options":[{"text":"A","correct":false,"extension":null},{"text":"B","correct":true}],
+                       "explanation":"E1.","extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0},
+                      {"question":"Q2?","options":[{"text":"C","correct":true},{"text":"D","correct":false}],"explanation":"E2."}],
+                     "responses":[
+                       {"questionIndex":0,"selectedIndex":0,"submitted":false,"extension":null,"metadata":{"nested":[null,"",[],{},false,0]}},
+                       {"questionIndex":1,"selectedIndex":1,"submitted":true,"extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0}]}
+                    """;
+            IrisMessage message = saveLlmMessageWithMcqContent(session, content);
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, 0), HttpStatus.OK);
+
+            ObjectNode expected = (ObjectNode) JsonObjectMapper.get().readTree(content);
+            ((ObjectNode) expected.path("responses").get(0)).put("selectedIndex", 1).put("submitted", true);
+            assertThat(readJsonContent(session, message)).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void saveMcqResponse_persistsResponseForMcqSet() throws Exception {
             IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
             IrisMessage message = saveLlmMessageWithMcqContent(session,
