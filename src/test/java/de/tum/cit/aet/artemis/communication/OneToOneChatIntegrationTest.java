@@ -195,10 +195,19 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCreateOneToOneChatFromLegacyLoginArray() throws Exception {
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(chat).isNotNull();
+        assertParticipants(chat.getId(), 2, "student1", "student2");
+        verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestWhenTheBodyDoesNotNameExactlyOnePartner() throws Exception {
         String url = "/api/communication/courses/" + exampleCourseId + "/one-to-one-chats";
-        // the former list of logins is not a request body anymore
-        request.postWithResponseBody(url, List.of(testPrefix + "student2"), OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
         request.postWithResponseBody(url, List.of(testPrefix + "student2", testPrefix + "student3"), OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
         request.postWithResponseBody(url, List.of(), OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
         request.postWithResponseBody(url, new OneToOneChatCreationDTO(null, null), OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);

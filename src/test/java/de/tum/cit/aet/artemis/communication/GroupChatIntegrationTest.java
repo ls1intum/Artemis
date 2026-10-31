@@ -99,10 +99,20 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void startGroupChat_legacyLoginArray_shouldCreateGroupChat() throws Exception {
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
+                GroupChatDTO.class, HttpStatus.CREATED);
+
+        assertThat(chat).isNotNull();
+        assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.CREATE, chat.getId(), "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.CREATE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void startGroupChat_bodyWithoutMemberLogins_shouldReturnBadRequest() throws Exception {
         String url = "/api/communication/courses/" + exampleCourseId + "/group-chats";
-        // the former bare list of logins is not a request body anymore
-        request.postWithResponseBody(url, List.of(testPrefix + "student2", testPrefix + "student3"), GroupChatDTO.class, HttpStatus.BAD_REQUEST);
         request.postWithResponseBody(url, Map.of(), GroupChatDTO.class, HttpStatus.BAD_REQUEST);
         request.postWithResponseBody(url, Map.of("memberLogins", testPrefix + "student2"), GroupChatDTO.class, HttpStatus.BAD_REQUEST);
         verifyNoParticipantTopicWebsocketSent();
