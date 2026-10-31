@@ -5,8 +5,11 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import tools.jackson.databind.annotation.JsonDeserialize;
+
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.core.config.StrictLongDeserializer;
 import de.tum.cit.aet.artemis.core.dto.agent.AgentProgrammingTimelinePatchDTO;
 import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
@@ -36,7 +39,7 @@ public final class AgentToolArguments {
      * @param courseId the course
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record CourseArguments(Long courseId) {
+    public record CourseArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId) {
     }
 
     /**
@@ -46,7 +49,8 @@ public final class AgentToolArguments {
      * @param competencyId the competency
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record CompetencyArguments(Long courseId, Long competencyId) {
+    public record CompetencyArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId,
+            @JsonDeserialize(using = StrictLongDeserializer.class) Long competencyId) {
     }
 
     /**
@@ -56,7 +60,7 @@ public final class AgentToolArguments {
      * @param competencies the competencies to create
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record CreateCompetenciesArguments(Long courseId, List<CourseCompetencyRequestDTO> competencies) {
+    public record CreateCompetenciesArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId, List<CourseCompetencyRequestDTO> competencies) {
     }
 
     /**
@@ -66,7 +70,7 @@ public final class AgentToolArguments {
      * @param competency the whole competency, with its id
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record UpdateCompetencyArguments(Long courseId, CourseCompetencyRequestDTO competency) {
+    public record UpdateCompetencyArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId, CourseCompetencyRequestDTO competency) {
     }
 
     /**
@@ -76,7 +80,8 @@ public final class AgentToolArguments {
      * @param catalogueIds the entries of the catalogue
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ImportCompetenciesArguments(Long courseId, List<Long> catalogueIds) {
+    public record ImportCompetenciesArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId,
+            @JsonDeserialize(contentUsing = StrictLongDeserializer.class) List<Long> catalogueIds) {
     }
 
     /**
@@ -88,7 +93,9 @@ public final class AgentToolArguments {
      * @param relationType     how the two relate
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record CreateRelationArguments(Long courseId, Long tailCompetencyId, Long headCompetencyId, RelationType relationType) {
+    public record CreateRelationArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId,
+            @JsonDeserialize(using = StrictLongDeserializer.class) Long tailCompetencyId, @JsonDeserialize(using = StrictLongDeserializer.class) Long headCompetencyId,
+            RelationType relationType) {
     }
 
     /**
@@ -99,7 +106,8 @@ public final class AgentToolArguments {
      * @param relationType the new type
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ChangeRelationArguments(Long courseId, Long relationId, RelationType relationType) {
+    public record ChangeRelationArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId,
+            @JsonDeserialize(using = StrictLongDeserializer.class) Long relationId, RelationType relationType) {
     }
 
     /**
@@ -112,7 +120,8 @@ public final class AgentToolArguments {
      * @param confirm   whether the instructor approved this exact text
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record PostAnnouncementArguments(Long courseId, String title, String content, Long channelId, Boolean confirm) {
+    public record PostAnnouncementArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId, String title, String content,
+            @JsonDeserialize(using = StrictLongDeserializer.class) Long channelId, Boolean confirm) {
     }
 
     /**
@@ -122,7 +131,7 @@ public final class AgentToolArguments {
      * @param type     the kind of exercise
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ListExercisesArguments(Long courseId, AgentExerciseType type) {
+    public record ListExercisesArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId, AgentExerciseType type) {
     }
 
     /**
@@ -132,7 +141,7 @@ public final class AgentToolArguments {
      * @param exerciseId the exercise
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ExerciseArguments(AgentExerciseType type, Long exerciseId) {
+    public record ExerciseArguments(AgentExerciseType type, @JsonDeserialize(using = StrictLongDeserializer.class) Long exerciseId) {
     }
 
     /**
@@ -177,7 +186,7 @@ public final class AgentToolArguments {
      * @param exerciseId the exercise
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ProgrammingExerciseArguments(Long exerciseId) {
+    public record ProgrammingExerciseArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long exerciseId) {
     }
 
     /**
@@ -187,7 +196,7 @@ public final class AgentToolArguments {
      * @param problemStatement the new problem statement, in Markdown
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ProblemStatementArguments(Long exerciseId, String problemStatement) {
+    public record ProblemStatementArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long exerciseId, String problemStatement) {
     }
 
     /**
@@ -206,7 +215,7 @@ public final class AgentToolArguments {
      * @param testCases  the test cases, by id
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record TestCaseWeightsArguments(Long exerciseId, List<ProgrammingExerciseTestCaseDTO> testCases) {
+    public record TestCaseWeightsArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long exerciseId, List<ProgrammingExerciseTestCaseDTO> testCases) {
     }
 
     /**
@@ -220,7 +229,8 @@ public final class AgentToolArguments {
      * @param confirm     whether the instructor approved this title and description
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record CreateLectureArguments(Long courseId, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate, Boolean confirm) {
+    public record CreateLectureArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long courseId, String title, String description, ZonedDateTime startDate,
+            ZonedDateTime endDate, Boolean confirm) {
     }
 
     /**
@@ -229,6 +239,6 @@ public final class AgentToolArguments {
      * @param lectureId the lecture
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record LectureArguments(Long lectureId) {
+    public record LectureArguments(@JsonDeserialize(using = StrictLongDeserializer.class) Long lectureId) {
     }
 }

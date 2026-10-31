@@ -7,14 +7,8 @@ import java.util.Map;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.json.JsonMapper;
-
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
  * Represents the LTI 1.3 Deep Linking Response.
@@ -45,18 +39,6 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
         @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) List<Map<String, Object>> contentItems, String clientRegistrationId,
         String returnUrl) {
 
-    private static final JsonMapper objectMapper = JsonObjectMapper.get();
-
-    /**
-     * The part of the deep linking settings claim of an LTI 1.3 deep linking request that Artemis reads.
-     *
-     * @param deepLinkReturnUrl the URL of the platform that the deep linking response is returned to
-     */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private record DeepLinkingSettingsDTO(@JsonProperty(Claims.DEEPLINK_RETURN_URL_CLAIM) String deepLinkReturnUrl) {
-    }
-
     /**
      * Constructs an Lti13DeepLinkingResponse from an OIDC ID token and client registration ID.
      * The 'aud' and 'iss' fields are reversed in the response compared to the request. This is a specific requirement in LTI 1.3 Deep Linking:
@@ -69,19 +51,16 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
      */
     public static Lti13DeepLinkingResponse from(OidcIdToken ltiIdToken, String clientRegistrationId) {
         validateClaims(ltiIdToken);
-        DeepLinkingSettingsDTO deepLinkingSettings;
-        try {
-            deepLinkingSettings = objectMapper.convertValue(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS), DeepLinkingSettingsDTO.class);
+        // The claim comes from a third-party LMS: a return URL of an unexpected shape is rejected later like a missing one.
+        if (!(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS) instanceof Map<?, ?> deepLinkingSettings)) {
+            throw new IllegalArgumentException("Missing or invalid deep linking settings in ID token.");
         }
-        catch (JacksonException | IllegalArgumentException ex) {
-            // the claim comes from a third-party LMS, so a malformed claim is rejected like a missing one
-            throw new IllegalArgumentException("Missing or invalid deep linking settings in ID token.", ex);
-        }
+        String returnUrl = deepLinkingSettings.get(Claims.DEEPLINK_RETURN_URL_CLAIM) instanceof String url ? url : null;
 
         return new Lti13DeepLinkingResponse(ltiIdToken.getIssuer().toString(), ltiIdToken.getAudience().getFirst(), String.valueOf(ltiIdToken.getExpiresAt()),
                 String.valueOf(ltiIdToken.getIssuedAt()), ltiIdToken.getClaimAsString(IdTokenClaimNames.NONCE), "Content successfully linked",
                 ltiIdToken.getClaimAsString(Claims.LTI_DEPLOYMENT_ID), "LtiDeepLinkingResponse", "1.3.0", null,  // ContentItems needs to be set separately
-                clientRegistrationId, deepLinkingSettings.deepLinkReturnUrl());
+                clientRegistrationId, returnUrl);
     }
 
     private static void validateClaims(OidcIdToken ltiIdToken) {

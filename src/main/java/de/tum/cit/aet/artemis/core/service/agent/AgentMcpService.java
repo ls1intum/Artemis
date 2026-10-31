@@ -126,8 +126,16 @@ public class AgentMcpService {
 
     private ListToolsResultDTO listTools(Set<AgentScope> tokenScopes) {
         List<ToolDescriptionDTO> described = visibleTools(tokenScopes).stream()
-                .map(tool -> new ToolDescriptionDTO(tool.name(), tool.description(), tool.inputSchema(), new ToolAnnotationsDTO(tool.readOnly(), false))).toList();
+                .map(tool -> new ToolDescriptionDTO(tool.name(), tool.description(), tool.inputSchema(), new ToolAnnotationsDTO(tool.readOnly(), overwritesContent(tool))))
+                .toList();
         return new ListToolsResultDTO(described);
+    }
+
+    /**
+     * Whether a tool replaces content that is already stored, which a client may want to confirm with the instructor. No tool deletes anything.
+     */
+    private static boolean overwritesContent(AgentTool<?> tool) {
+        return !tool.readOnly() && (tool.name().startsWith("update_") || tool.name().startsWith("set_") || tool.name().startsWith("change_"));
     }
 
     private JsonRpcResponseDTO<?> callTool(JsonRpcIdDTO id, String message, @Nullable JsonRpcParamsDTO params, Set<AgentScope> tokenScopes) {

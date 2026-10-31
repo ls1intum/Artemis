@@ -10,4 +10,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CreatedPersonalAccessTokenDTO(PersonalAccessTokenDTO token, String secret) {
+
+    /**
+     * Leaves the secret out, so that logging the response does not write a credential.
+     */
+    @Override
+    public String toString() {
+        return "CreatedPersonalAccessTokenDTO[token=" + token + ", secret=<redacted>]";
+    }
 }
