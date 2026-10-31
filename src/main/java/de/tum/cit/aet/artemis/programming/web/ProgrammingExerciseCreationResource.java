@@ -129,8 +129,9 @@ public class ProgrammingExerciseCreationResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     @Operation(summary = "Create a programming exercise", description = """
             Creates a programming exercise with its template, solution and test repositories and its build plan. This takes a while. \
-            A request with a personal access token must set releaseDate to a time in the future, so the exercise stays a draft until a \
-            person publishes it in the Artemis web interface. Required: title, shortName (unique in the course), course (with its id), \
+            A request with a personal access token must set releaseDate to a time in the future. The exercise becomes visible automatically \
+            at releaseDate, so the instructor must review it before that date and can move the date in the Artemis web interface. \
+            Required: title, shortName (unique in the course), course (with its id), \
             programmingLanguage, buildConfig, staticCodeAnalysisEnabled, maxPoints and at least one of allowOnlineEditor, \
             allowOfflineIde and allowOnlineIde. A language with project types also needs projectType, and Java and Kotlin need packageName. \
             To edit the code, clone the repositories with git, using your VCS access token from the user settings.""")

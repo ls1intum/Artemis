@@ -220,8 +220,9 @@ public class ModelingExerciseResource {
     @AllowedScopes(AgentScope.EXERCISES_DRAFT)
     @Operation(summary = "Create a modeling exercise", description = """
             Creates a modeling exercise in a course (set courseId; exercise groups of exams are not available to tokens). A request with a \
-            personal access token must set releaseDate to a time in the future, so the exercise stays a draft until a person publishes \
-            it in the Artemis web interface. title, diagramType, maxPoints, includedInOverallScore and courseId are required, and the \
+            personal access token must set releaseDate to a time in the future. The exercise becomes visible automatically at releaseDate, \
+            so the instructor must review it before that date and can move the date in the Artemis web interface. \
+            title, diagramType, maxPoints, includedInOverallScore and courseId are required, and the \
             diagram type cannot be changed later.""")
     @ApiResponse(responseCode = "201", description = "The exercise was created as a draft.")
     public ResponseEntity<ModelingExerciseResponseDTO> createModelingExercise(@RequestBody UpdateModelingExerciseDTO createModelingExerciseDTO) throws URISyntaxException {

@@ -276,8 +276,8 @@ public class AttachmentVideoUnitResource {
             Adds an attachment video unit to a lecture. Send multipart/form-data with the part attachmentVideoUnit (JSON: name, \
             releaseDate, description, videoSource), and for slides the part attachment (JSON: name, attachmentType FILE, \
             releaseDate) together with the part file (the PDF). A request with a personal access token must set releaseDate to a \
-            time in the future, on the unit and on the attachment, so the unit stays a draft until a person publishes it in the \
-            Artemis web interface. The unit is \
+            time in the future, on the unit and on the attachment. The material becomes visible automatically when its release dates \
+            have passed, so the instructor must review it before those dates and can move them in the Artemis web interface. The unit is \
             returned at once; splitting the PDF into slides and indexing it for Iris continue in the background, and their progress \
             is reported by the lecture unit status endpoint.""")
     @ApiResponse(responseCode = "201", description = "The unit was created as a draft.")

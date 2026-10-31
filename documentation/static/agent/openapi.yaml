@@ -52,8 +52,9 @@ paths:
       summary: Create a text exercise
       description: Creates a text exercise in a course (set courseId; exercise groups
         of exams are not available to tokens). A request with a personal access token
-        must set releaseDate to a time in the future, so the exercise stays a draft
-        until a person publishes it in the Artemis web interface. title, maxPoints,
+        must set releaseDate to a time in the future. The exercise becomes visible
+        automatically at releaseDate, so the instructor must review it before that
+        date and can move the date in the Artemis web interface. title, maxPoints,
         includedInOverallScore and courseId are required.
       operationId: createTextExercise
       requestBody:
@@ -123,14 +124,15 @@ paths:
     put:
       tags: [programming-exercise-partial-update-resource]
       summary: Change the dates of a programming exercise
-      description: 'Replaces the timeline of a programming exercise: releaseDate, startDate,
-        dueDate, assessmentType, assessmentDueDate, exampleSolutionPublicationDate and
-        buildAndTestStudentSubmissionsAfterDueDate. A field that is missing from the
-        request is cleared, so read the exercise first and send the current value of
-        every field that must stay. A request with a personal access token can change
-        only an exercise that students cannot see yet and that has no student participations,
-        and releaseDate must stay in the future: publishing happens only in the Artemis
-        web interface.'
+      description: 'Replaces the timeline of a programming exercise: releaseDate,
+        startDate, dueDate, assessmentType, assessmentDueDate, exampleSolutionPublicationDate
+        and buildAndTestStudentSubmissionsAfterDueDate. A field that is missing from
+        the request is cleared, so read the exercise first and send the current value
+        of every field that must stay. A request with a personal access token can
+        change only an exercise that students cannot see yet and that has no student
+        participations, and releaseDate must stay in the future. The exercise becomes
+        visible automatically at releaseDate, so the instructor must review it before
+        that date and can move the date in the Artemis web interface.'
       operationId: updateProgrammingExerciseTimeline
       parameters:
       - name: notificationText
@@ -195,8 +197,9 @@ paths:
       summary: Create a modeling exercise
       description: Creates a modeling exercise in a course (set courseId; exercise
         groups of exams are not available to tokens). A request with a personal access
-        token must set releaseDate to a time in the future, so the exercise stays
-        a draft until a person publishes it in the Artemis web interface. title, diagramType,
+        token must set releaseDate to a time in the future. The exercise becomes visible
+        automatically at releaseDate, so the instructor must review it before that
+        date and can move the date in the Artemis web interface. title, diagramType,
         maxPoints, includedInOverallScore and courseId are required, and the diagram
         type cannot be changed later.
       operationId: createModelingExercise
@@ -318,9 +321,10 @@ paths:
       summary: Create a programming exercise
       description: 'Creates a programming exercise with its template, solution and
         test repositories and its build plan. This takes a while. A request with a
-        personal access token must set releaseDate to a time in the future, so the
-        exercise stays a draft until a person publishes it in the Artemis web interface.
-        Required: title, shortName (unique in the course), course (with its id), programmingLanguage,
+        personal access token must set releaseDate to a time in the future. The exercise
+        becomes visible automatically at releaseDate, so the instructor must review
+        it before that date and can move the date in the Artemis web interface. Required:
+        title, shortName (unique in the course), course (with its id), programmingLanguage,
         buildConfig, staticCodeAnalysisEnabled, maxPoints and at least one of allowOnlineEditor,
         allowOfflineIde and allowOnlineIde. A language with project types also needs
         projectType, and Java and Kotlin need packageName. To edit the code, clone
@@ -402,11 +406,12 @@ paths:
         with the part attachmentVideoUnit (JSON: name, releaseDate, description, videoSource),
         and for slides the part attachment (JSON: name, attachmentType FILE, releaseDate)
         together with the part file (the PDF). A request with a personal access token
-        must set releaseDate to a time in the future, on the unit and on the attachment,
-        so the unit stays a draft until a person publishes it in the Artemis web interface.
-        The unit is returned at once; splitting the PDF into slides and indexing it
-        for Iris continue in the background, and their progress is reported by the
-        lecture unit status endpoint.'
+        must set releaseDate to a time in the future, on the unit and on the attachment.
+        The material becomes visible automatically when its release dates have passed,
+        so the instructor must review it before those dates and can move them in the
+        Artemis web interface. The unit is returned at once; splitting the PDF into
+        slides and indexing it for Iris continue in the background, and their progress
+        is reported by the lecture unit status endpoint.'
       operationId: createAttachmentVideoUnit
       parameters:
       - name: lectureId

@@ -159,8 +159,9 @@ public class TextExerciseCreationUpdateResource {
     @AllowedScopes(AgentScope.EXERCISES_DRAFT)
     @Operation(summary = "Create a text exercise", description = """
             Creates a text exercise in a course (set courseId; exercise groups of exams are not available to tokens). A request with a \
-            personal access token must set releaseDate to a time in the future, so the exercise stays a draft until a person publishes \
-            it in the Artemis web interface. title, maxPoints, includedInOverallScore and courseId are required.""")
+            personal access token must set releaseDate to a time in the future. The exercise becomes visible automatically at releaseDate, \
+            so the instructor must review it before that date and can move the date in the Artemis web interface. \
+            title, maxPoints, includedInOverallScore and courseId are required.""")
     @ApiResponse(responseCode = "201", description = "The exercise was created as a draft.")
     public ResponseEntity<TextExerciseResponseDTO> createTextExercise(@RequestBody UpdateTextExerciseDTO createTextExerciseDTO) throws URISyntaxException {
         log.debug("REST request to save TextExercise : {}", createTextExerciseDTO);

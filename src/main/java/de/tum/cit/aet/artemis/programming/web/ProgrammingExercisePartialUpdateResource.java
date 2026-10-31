@@ -125,8 +125,9 @@ public class ProgrammingExercisePartialUpdateResource {
             Replaces the timeline of a programming exercise: releaseDate, startDate, dueDate, assessmentType, assessmentDueDate, \
             exampleSolutionPublicationDate and buildAndTestStudentSubmissionsAfterDueDate. A field that is missing from the request is cleared, \
             so read the exercise first and send the current value of every field that must stay. A request with a personal access token can change only an \
-            exercise that students cannot see yet and that has no student participations, and releaseDate must stay in the future: \
-            publishing happens only in the Artemis web interface.""")
+            exercise that students cannot see yet and that has no student participations, and releaseDate must stay in the future. \
+            The exercise becomes visible automatically at releaseDate, so the instructor must review it before that date \
+            and can move the date in the Artemis web interface.""")
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update the timeline of ProgrammingExercise : {}", timelineUpdateDTO.id());
