@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.JWT_COOKIE_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PERSONAL_ACCESS_TOKEN_PREFIX;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import jakarta.servlet.FilterChain;
@@ -90,7 +92,19 @@ public class PersonalAccessTokenFilter extends GenericFilterBean {
      * request into a session. Such a request is left to the other filters, which do not know the token.
      */
     private static boolean isOpenOrInternalPath(String requestUri) {
-        return requestUri.contains("/public/") || requestUri.contains("/internal/");
+        // The other filters match the decoded path, so a percent-encoded letter ("/%70ublic/") has to be seen as the letter it stands for.
+        String decodedUri = decode(requestUri);
+        return decodedUri.contains("/public/") || decodedUri.contains("/internal/");
+    }
+
+    private static String decode(String requestUri) {
+        try {
+            return URLDecoder.decode(requestUri.replace("+", "%2B"), StandardCharsets.UTF_8);
+        }
+        catch (IllegalArgumentException e) {
+            // an invalid escape sequence is refused by the firewall; treated as internal here so that no token is accepted for it
+            return "/internal/";
+        }
     }
 
     private static String extractSecret(String authorizationHeader) {

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -197,6 +198,16 @@ class PersonalAccessTokenIntegrationTest extends AbstractSpringIntegrationIndepe
         int status = request.performMvcRequest(get("/api/core/public/privacy-statement?language=en").header(HttpHeaders.AUTHORIZATION, saved.bearer())).andReturn().getResponse()
                 .getStatus();
         assertThat(status).as("a public endpoint is not answered as an unauthorized token request").isNotEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(personalAccessTokenRepository.findById(saved.token().getId()).orElseThrow().getLastUsedDate()).isNull();
+    }
+
+    @Test
+    void aTokenIsNotAuthenticatedOnAPublicEndpointWrittenWithAnEscape() throws Exception {
+        var saved = saveToken(TEST_PREFIX + "student1", Set.of(AgentScope.values()), Duration.ofDays(1));
+
+        // The filters that match the decoded path see the same public endpoint, so the escape must not get a token past the gate.
+        request.performMvcRequest(get(URI.create("/api/core/%70ublic/privacy-statement?language=en")).header(HttpHeaders.AUTHORIZATION, saved.bearer()));
+        request.performMvcRequest(get(URI.create("/api/core/%69nternal/anything")).header(HttpHeaders.AUTHORIZATION, saved.bearer()));
         assertThat(personalAccessTokenRepository.findById(saved.token().getId()).orElseThrow().getLastUsedDate()).isNull();
     }
 

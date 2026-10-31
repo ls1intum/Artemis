@@ -122,7 +122,9 @@ public class ProgrammingExercisePartialUpdateResource {
     @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
     @FeatureToggle(Feature.ProgrammingExercises)
     @Operation(summary = "Change the dates of a programming exercise", description = """
-            Changes the release, start and due dates of a programming exercise. A request with a personal access token can change only an \
+            Replaces the timeline of a programming exercise: releaseDate, startDate, dueDate, assessmentType, assessmentDueDate, \
+            exampleSolutionPublicationDate and buildAndTestStudentSubmissionsAfterDueDate. A field that is missing from the request is cleared, \
+            so read the exercise first and send the current value of every field that must stay. A request with a personal access token can change only an \
             exercise that students cannot see yet and that has no student participations, and releaseDate must stay in the future: \
             publishing happens only in the Artemis web interface.""")
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO,

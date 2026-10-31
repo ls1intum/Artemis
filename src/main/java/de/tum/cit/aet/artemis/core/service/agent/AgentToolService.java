@@ -74,7 +74,7 @@ public class AgentToolService {
     private static final Set<AgentScope> EXERCISE_SCOPES = Set.of(AgentScope.EXERCISES_DRAFT, AgentScope.PROGRAMMING_DRAFT);
 
     private static final String EXERCISE_GUIDANCE = " The exercise must have a releaseDate in the future: that date publishes it on its own, so the instructor must review it before. "
-            + "See the API description at /agent/openapi.yaml for the fields.";
+            + "See the API description at https://docs.artemis.tum.de/agent/openapi.yaml for the fields.";
 
     private final List<AgentTool<?>> tools;
 

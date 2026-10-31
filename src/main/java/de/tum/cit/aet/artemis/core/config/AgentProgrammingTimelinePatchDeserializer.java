@@ -35,7 +35,7 @@ public class AgentProgrammingTimelinePatchDeserializer extends ValueDeserializer
             parser.nextToken();
             fields.add(field);
             switch (field) {
-                case "id" -> id = read(parser, context, Long.class);
+                case "id" -> id = parser.currentToken() == JsonToken.VALUE_NULL ? null : STRICT_LONG.deserialize(parser, context);
                 case "releaseDate" -> releaseDate = read(parser, context, ZonedDateTime.class);
                 case "startDate" -> startDate = read(parser, context, ZonedDateTime.class);
                 case "dueDate" -> dueDate = read(parser, context, ZonedDateTime.class);
@@ -49,6 +49,8 @@ public class AgentProgrammingTimelinePatchDeserializer extends ValueDeserializer
         return new AgentProgrammingTimelinePatchDTO(
                 new ProgrammingExerciseTimelineUpdateDTO(id, releaseDate, startDate, dueDate, assessmentType, assessmentDueDate, solutionDate, buildDate), Set.copyOf(fields));
     }
+
+    private static final StrictLongDeserializer STRICT_LONG = new StrictLongDeserializer();
 
     private static <T> T read(JsonParser parser, DeserializationContext context, Class<T> type) {
         return parser.currentToken() == JsonToken.VALUE_NULL ? null : context.readValue(parser, type);

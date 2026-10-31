@@ -46,7 +46,8 @@ public class ProgrammingExerciseDraftGuardService {
         }
         AgentDraftRules.requireStillDraft(exercise.getReleaseDate(), exercise.getStartDate(), newReleaseDate, newStartDate);
         if (programmingExerciseRepository.countStudentParticipationsByExerciseId(exercise.getId()) > 0) {
-            throw new AccessForbiddenException("Students have already started this exercise. It can be changed only in the Artemis web interface.");
+            throw new AccessForbiddenException(
+                    "This exercise already has participations, of students or of staff who tried it. It can be changed only in the Artemis web interface.");
         }
     }
 

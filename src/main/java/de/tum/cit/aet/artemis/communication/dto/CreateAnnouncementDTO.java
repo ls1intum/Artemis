@@ -8,6 +8,9 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import tools.jackson.databind.annotation.JsonDeserialize;
+
+import de.tum.cit.aet.artemis.core.config.StrictLongDeserializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -21,5 +24,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record CreateAnnouncementDTO(@Schema(description = "The text of the announcement, in Markdown.") @NotBlank String content,
         @Schema(description = "An optional headline.") @Nullable @Size(max = 200) String title,
-        @Schema(description = "The announcement channel to post to. The course's default announcement channel if omitted.") @Nullable Long channelId) {
+        @Schema(description = "The announcement channel to post to. The course's default announcement channel if omitted.") @Nullable @JsonDeserialize(using = StrictLongDeserializer.class) Long channelId) {
 }
