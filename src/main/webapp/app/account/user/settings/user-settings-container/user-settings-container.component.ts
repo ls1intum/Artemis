@@ -37,6 +37,8 @@ export class UserSettingsContainerComponent implements OnInit {
 
     readonly isPasskeyEnabled = signal(false);
     readonly isAgentAccessEnabled = signal(false);
+    // Tokens can be created only by editors and instructors, so the tab is hidden for everybody else, as the server rejects them.
+    readonly showAgentAccess = computed(() => this.isAgentAccessEnabled() && this.accountService.mayCreateAgentTokens());
     // Derived for the same reason: isAtLeastTutor reads userIdentity, so the computed re-evaluates
     // whenever the identity changes.
     readonly isAtLeastTutor = computed(() => this.accountService.isAtLeastTutor());

@@ -30,7 +30,9 @@ token is treated as a request from you, with two limits:
 - **The token can do only what its scopes allow.** You choose the scopes when you create it, and a token that holds
   `competencies:read` cannot post an announcement.
 
-Administrators cannot use tokens at all. An agent that works for an administrator account is rejected.
+Only instructors and editors can create tokens: you need the instructor or editor role in at least one course.
+Administrators cannot use tokens at all, and an agent that works for an administrator account is rejected. If you reset
+your password, sign in again before you create a token.
 
 ## Create a token
 

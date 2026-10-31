@@ -44,10 +44,13 @@ A token authenticates as its owner. For each request Artemis applies two checks,
   holds the scope it asks for. Every other endpoint answers with status 403, so a new endpoint is closed to tokens
   until a developer opts it in on purpose.
 
-Three rules hold whatever the configuration:
+Four rules hold whatever the configuration:
 
 - **Administrators cannot use tokens.** An account with an administrator role can neither create a token nor
   authenticate with one.
+- **Only instructors and editors create tokens.** A user needs the instructor or editor role in at least one course.
+  A token request with a session that was established before the owner's credentials last changed is refused, so that a
+  session stolen before a password reset cannot create a token that outlives the reset.
 - **Exercises and lecture units stay unpublished.** A token can create them only with a release date in the future,
   and can change only content that students cannot see yet. A release date schedules publication, so content that nobody
   reviews becomes visible on that date, as it does when an instructor sets the date. Changing a date to now and deleting
@@ -59,6 +62,13 @@ The scopes are `courses:read`, `competencies:read`, `competencies:write`, `annou
 changing competencies are the actions whose result students see at once: a lecture is listed with its title and
 description as soon as it exists, because a lecture has no release date of its own, and competencies have no draft state.
 A token also stops working when its owner's credentials change, for example after a password reset.
+
+### Inspect and revoke the tokens of a user
+
+An administrator can list the active tokens of a user, without their secrets, with
+`GET /api/account/admin/users/{login}/personal-access-tokens` and revoke all of them with
+`DELETE /api/account/admin/users/{login}/personal-access-tokens`. Revoke the tokens when an account is deprovisioned in
+an external system such as LDAP or SAML, because Artemis does not see that change and a token stays valid until it expires.
 
 ## The MCP endpoint
 

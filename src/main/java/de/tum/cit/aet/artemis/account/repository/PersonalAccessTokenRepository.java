@@ -56,6 +56,23 @@ public interface PersonalAccessTokenRepository extends ArtemisJpaRepository<Pers
     int revoke(@Param("id") long id, @Param("userId") long userId, @Param("now") Instant now);
 
     /**
+     * Revokes every token of a user that is still active.
+     *
+     * @param userId the owner
+     * @param now    the revocation time
+     * @return the number of tokens revoked
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE PersonalAccessToken token
+            SET token.revokedDate = :now
+            WHERE token.userId = :userId
+                AND token.revokedDate IS NULL
+            """)
+    int revokeAllOfUser(@Param("userId") long userId, @Param("now") Instant now);
+
+    /**
      * Records that a token was used, at most once per interval, so that the list of tokens can show when each was last
      * used without a database write on every request.
      *

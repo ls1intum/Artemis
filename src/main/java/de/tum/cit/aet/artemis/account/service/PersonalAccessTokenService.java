@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -35,9 +36,11 @@ import de.tum.cit.aet.artemis.account.dto.CreatedPersonalAccessTokenDTO;
 import de.tum.cit.aet.artemis.account.dto.PersonalAccessTokenDTO;
 import de.tum.cit.aet.artemis.account.repository.PersonalAccessTokenRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.PersonalAccessTokenAuthentication;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -73,25 +76,37 @@ public class PersonalAccessTokenService {
 
     private final UserActivityService userActivityService;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final int maxLifetimeInDays;
 
     public PersonalAccessTokenService(PersonalAccessTokenRepository personalAccessTokenRepository, UserRepository userRepository, UserActivityService userActivityService,
-            @Value("${artemis.agent-access.max-lifetime-in-days:90}") int maxLifetimeInDays) {
+            UserCourseRoleRepository userCourseRoleRepository, @Value("${artemis.agent-access.max-lifetime-in-days:90}") int maxLifetimeInDays) {
         this.personalAccessTokenRepository = personalAccessTokenRepository;
         this.userRepository = userRepository;
         this.userActivityService = userActivityService;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.maxLifetimeInDays = maxLifetimeInDays;
     }
 
     /**
      * Creates a token for a user.
      *
-     * @param user    the owner
-     * @param request the requested name, scopes and lifetime
+     * @param user             the owner
+     * @param request          the requested name, scopes and lifetime
+     * @param sessionStartedAt when the session that asks for the token was established, or {@code null} if it is not known
      * @return the stored token together with its secret, which is not retrievable later
+     * @throws AccessForbiddenException if the user is an administrator or neither an instructor nor an editor, or the session started before the credentials of the user last
+     *                                      changed
      */
-    public CreatedPersonalAccessTokenDTO create(User user, CreatePersonalAccessTokenDTO request) {
-        requireNotAdmin(user.getId());
+    public CreatedPersonalAccessTokenDTO create(User user, CreatePersonalAccessTokenDTO request, @Nullable Instant sessionStartedAt) {
+        requireMayCreateTokens(user.getId());
+        // A password reset ends the tokens created before it, and it has to end the sessions that could still create one as well: otherwise a stolen session
+        // outlives the reset by creating a token that does not.
+        Instant credentialsChangedDate = userActivityService.findCredentialsChangedDate(user.getId());
+        if (sessionStartedAt != null && credentialsChangedDate != null && sessionStartedAt.isBefore(credentialsChangedDate)) {
+            throw new AccessForbiddenException("Your session started before your credentials last changed. Sign in again to create a token.");
+        }
 
         Set<AgentScope> scopes = request.scopes().stream().map(this::parseScope).collect(Collectors.toCollection(LinkedHashSet::new));
         int lifetimeInDays = request.expiresInDays() != null ? request.expiresInDays() : maxLifetimeInDays;
@@ -168,12 +183,38 @@ public class PersonalAccessTokenService {
         return Optional.of(new PersonalAccessTokenAuthentication(owner.get().getLogin(), authorities, token.get().getId(), parseScopes(token.get().getScopes())));
     }
 
-    private void requireNotAdmin(long userId) {
+    private void requireMayCreateTokens(long userId) {
         Set<String> authorityNames = userRepository.findOneWithAuthoritiesById(userId).map(User::getAuthorities).orElseThrow(() -> new EntityNotFoundException("User", userId))
                 .stream().map(Authority::getName).collect(Collectors.toSet());
         if (AuthorizationCheckService.isAdminByAuthorityName(authorityNames)) {
             throw new AccessForbiddenException("Administrators cannot use personal access tokens");
         }
+        if (!userCourseRoleRepository.existsByUser_IdAndRoleIn(userId, List.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR))) {
+            throw new AccessForbiddenException("Only instructors and editors can create personal access tokens");
+        }
+    }
+
+    /**
+     * Lists the tokens of a user that have not been revoked, for an administrator.
+     *
+     * @param login the login of the owner
+     * @return the tokens, without secrets
+     * @throws EntityNotFoundException if there is no user with the login
+     */
+    public List<PersonalAccessTokenDTO> listForLogin(String login) {
+        return list(userRepository.findOneByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login)));
+    }
+
+    /**
+     * Revokes every token of a user that is still active, for example when the account of the user has been deprovisioned in an external system.
+     *
+     * @param login the login of the owner
+     * @return the number of tokens revoked
+     * @throws EntityNotFoundException if there is no user with the login
+     */
+    public int revokeAllForLogin(String login) {
+        User owner = userRepository.findOneByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        return personalAccessTokenRepository.revokeAllOfUser(owner.getId(), Instant.now());
     }
 
     private AgentScope parseScope(String value) {

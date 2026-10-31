@@ -277,6 +277,14 @@ export class AccountService implements IAccountService {
     }
 
     /**
+     * Whether the user may create personal access tokens for agent access, as the server decides: an editor or instructor of at least one course who is not
+     * an administrator.
+     */
+    mayCreateAgentTokens(): boolean {
+        return !this.isAdmin() && this.hasAnyAuthorityDirect([Authority.INSTRUCTOR, Authority.EDITOR]);
+    }
+
+    /**
      * Whether administrators have to sign in with a passkey that a super administrator approved before they may use
      * administrator features.
      */

@@ -4,11 +4,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -30,6 +33,9 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.PersonalAccessTokenService;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
@@ -50,9 +56,12 @@ public class PersonalAccessTokenResource {
 
     private final UserRepository userRepository;
 
-    public PersonalAccessTokenResource(PersonalAccessTokenService personalAccessTokenService, UserRepository userRepository) {
+    private final TokenProvider tokenProvider;
+
+    public PersonalAccessTokenResource(PersonalAccessTokenService personalAccessTokenService, UserRepository userRepository, TokenProvider tokenProvider) {
         this.personalAccessTokenService = personalAccessTokenService;
         this.userRepository = userRepository;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -81,16 +90,27 @@ public class PersonalAccessTokenResource {
     /**
      * POST /personal-access-tokens : creates a token for the current user.
      *
-     * @param request the name, scopes and lifetime
+     * @param request     the name, scopes and lifetime
+     * @param httpRequest the request, which tells when the session that asks for the token was established
      * @return the token with its secret, which is shown only in this response
      * @throws URISyntaxException if the location header cannot be built
      */
     @PostMapping("personal-access-tokens")
     @EnforceAtLeastStudent
-    public ResponseEntity<CreatedPersonalAccessTokenDTO> createPersonalAccessToken(@Valid @RequestBody CreatePersonalAccessTokenDTO request) throws URISyntaxException {
+    public ResponseEntity<CreatedPersonalAccessTokenDTO> createPersonalAccessToken(@Valid @RequestBody CreatePersonalAccessTokenDTO request, HttpServletRequest httpRequest)
+            throws URISyntaxException {
         User user = userRepository.getUser();
-        CreatedPersonalAccessTokenDTO created = personalAccessTokenService.create(user, request);
+        CreatedPersonalAccessTokenDTO created = personalAccessTokenService.create(user, request, sessionStartedAt(httpRequest));
         return ResponseEntity.created(new URI("/api/account/personal-access-tokens/" + created.token().id())).body(created);
+    }
+
+    /**
+     * When the session of a request was originally established, which a token rotation keeps, or {@code null} if the request carries no session token.
+     */
+    @Nullable
+    private Instant sessionStartedAt(HttpServletRequest httpRequest) {
+        JwtWithSource jwt = JWTFilter.extractValidJwt(httpRequest, tokenProvider);
+        return jwt == null ? null : tokenProvider.getIssuedAtDate(jwt.jwt()).toInstant();
     }
 
     /**
