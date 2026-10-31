@@ -4,8 +4,8 @@ title: Agent Access for Developers
 sidebar_label: Agent Access
 ---
 
-import Callout from "../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Callout from '../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 Agent access lets a user give a coding agent a personal access token that calls a limited part of the REST API on their behalf.
 This page is for developers who add or change what a token can reach. The setup for administrators is in
@@ -38,17 +38,18 @@ not add one without a separate threat review.
 
 ## Keep content a draft
 
-An endpoint that creates or changes something students can see must not let a token publish it. `AgentDraftRules` holds the rules, and
-they apply only to token requests:
+Exercise and lecture-unit endpoints with the draft-date contract must keep token requests within that contract. `AgentDraftRules`
+holds these rules, which apply only to token requests:
 
-- `requireDraftDatesForCreate` requires a release date in the future, and a start date after it if one is set.
+- `requireDraftDatesForCreate` requires a release date in the future and, if configured, a future start date. Exercise validation
+  separately requires the start date to follow the release date.
 - `requireStillDraft` lets a token change only content that is not visible yet, and only in a way that keeps it so.
 - `rejectExamExercise` keeps exam exercises out of reach.
 
 A programming exercise additionally has no student participations, which `ProgrammingExerciseDraftGuardService` checks. Call the rule
-before the request is applied to the stored object, and add a test that a token cannot publish through the endpoint. Announcements are
-the one deliberate exception, because their point is to reach students at once; they sit behind their own scope and a confirmation in
-the MCP tool.
+before the request is applied to the stored object, and add a test that a token cannot publish through the endpoint. Announcements,
+competencies and lecture metadata are immediately visible. The MCP announcement and lecture-creation tools therefore require
+confirmation that the instructor approved the exact text; `AgentDraftRules` does not hide a newly created lecture.
 
 ## Regenerate the agent specification
 
@@ -75,8 +76,8 @@ as, and a `JsonSchemaDTO` that describes them to the agent. A body that the tool
 
 <Callout variant={CalloutVariant.info}>
 
-  Test a tool with the in-process `MockMvcAgentApiService`, as `AgentMcpIntegrationTest` does. The production client calls over a real
-  connection, which only `AgentAccessLoopbackIntegrationTest` exercises. That is where an error of the container, such as a status
-  swallowed by an error page, shows up.
+Test a tool with the in-process `MockMvcAgentApiService`, as `AgentMcpIntegrationTest` does. The production client calls over a real
+connection, which only `AgentAccessLoopbackIntegrationTest` exercises. That is where an error of the container, such as a status
+swallowed by an error page, shows up.
 
 </Callout>
