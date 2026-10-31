@@ -41,9 +41,11 @@ import org.springframework.boot.ssl.DefaultSslBundleRegistry;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundleKey;
 import org.springframework.boot.ssl.SslBundles;
+import org.springframework.boot.ssl.SslOptions;
 import org.springframework.boot.ssl.SslStoreBundle;
 import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.Ssl;
+import org.springframework.boot.web.server.WebServer;
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
@@ -51,6 +53,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -156,6 +159,127 @@ class LoopbackAgentApiServiceTest {
             RequestContextHolder.resetRequestAttributes();
             server.stop(0);
         }
+    }
+
+    @Test
+    void reloadsNamedBundlePinsWhenTheServerCertificateRotates() throws Exception {
+        Instant now = Instant.now();
+        var original = sslBundle(serverKeyStore(now.minusSeconds(60), now.plusSeconds(3600)));
+        var replacement = sslBundle(serverKeyStore(now.minusSeconds(60), now.plusSeconds(3600)));
+        var unrelated = sslBundle(serverKeyStore(now.minusSeconds(60), now.plusSeconds(3600)));
+        var serverBundles = new DefaultSslBundleRegistry("server", original);
+        var clientBundles = new DefaultSslBundleRegistry("server", original);
+        var received = new AtomicInteger();
+        var server = rotatingTlsServer(serverBundles, received);
+        var properties = new ServerProperties();
+        properties.setSsl(Ssl.forBundle("server"));
+        try (var context = clientContext(server.getPort(), properties, clientBundles)) {
+            bindRequest("");
+            var api = context.getBean(LoopbackAgentApiService.class);
+            assertThat(api.send(HttpMethod.GET, "/api/core/context-test", null).status()).isEqualTo(204);
+            assertThat(received).hasValue(1);
+
+            serverBundles.updateBundle("server", replacement);
+            clientBundles.updateBundle("server", replacement);
+
+            assertThat(api.send(HttpMethod.GET, "/api/core/context-test", null).status()).isEqualTo(204);
+            assertThat(received).hasValue(2);
+
+            // Only the connector rolls back: the client must keep trusting exclusively the replacement certificate.
+            serverBundles.updateBundle("server", original);
+            assertThatThrownBy(() -> api.send(HttpMethod.GET, "/api/core/context-test", null)).hasCauseInstanceOf(SSLHandshakeException.class);
+            assertThat(received).hasValue(2);
+
+            serverBundles.updateBundle("server", unrelated);
+            assertThatThrownBy(() -> api.send(HttpMethod.GET, "/api/core/context-test", null)).hasCauseInstanceOf(SSLHandshakeException.class);
+            assertThat(received).hasValue(2);
+        }
+        finally {
+            RequestContextHolder.resetRequestAttributes();
+            server.stop();
+            server.destroy();
+        }
+    }
+
+    @Test
+    void doesNotResumeASessionAuthenticatedByTheRetiredCertificate() throws Exception {
+        Instant now = Instant.now();
+        var originalStore = serverKeyStore(now.minusSeconds(60), now.plusSeconds(3600));
+        var original = SslBundle.of(SslStoreBundle.of(originalStore, "password", null), SslBundleKey.of("password", "server"), SslOptions.of(null, new String[] { "TLSv1.2" }));
+        var replacement = sslBundle(serverKeyStore(now.minusSeconds(60), now.plusSeconds(3600)));
+        var serverBundles = new DefaultSslBundleRegistry("server", original);
+        var clientBundles = new DefaultSslBundleRegistry("server", original);
+        var received = new AtomicInteger();
+        var server = rotatingTlsServer(serverBundles, received);
+        var properties = new ServerProperties();
+        properties.setSsl(Ssl.forBundle("server"));
+        try (var context = clientContext(server.getPort(), properties, clientBundles)) {
+            bindRequest("");
+            var api = context.getBean(LoopbackAgentApiService.class);
+            assertThat(api.send(HttpMethod.GET, "/api/core/context-test", null).status()).isEqualTo(204);
+            assertThat(received).hasValue(1);
+
+            // Keep the original server SSLContext and its cached sessions. Rotating only the client's trust must retire them.
+            clientBundles.updateBundle("server", replacement);
+
+            assertThatThrownBy(() -> api.send(HttpMethod.GET, "/api/core/context-test", null)).hasCauseInstanceOf(SSLHandshakeException.class);
+            assertThat(received).hasValue(1);
+        }
+        finally {
+            RequestContextHolder.resetRequestAttributes();
+            server.stop();
+            server.destroy();
+        }
+    }
+
+    @Test
+    void bundleUpdatesDoNotRestartTheClientAfterContextShutdown() throws Exception {
+        Instant now = Instant.now();
+        var original = sslBundle(serverKeyStore(now.minusSeconds(60), now.plusSeconds(3600)));
+        var replacement = sslBundle(serverKeyStore(now.minusSeconds(60), now.plusSeconds(3600)));
+        var serverBundles = new DefaultSslBundleRegistry("server", original);
+        var clientBundles = new DefaultSslBundleRegistry("server", original);
+        var received = new AtomicInteger();
+        var server = rotatingTlsServer(serverBundles, received);
+        var properties = new ServerProperties();
+        properties.setSsl(Ssl.forBundle("server"));
+        var context = clientContext(server.getPort(), properties, clientBundles);
+        try {
+            bindRequest("");
+            var api = context.getBean(LoopbackAgentApiService.class);
+            assertThat(api.send(HttpMethod.GET, "/api/core/context-test", null).status()).isEqualTo(204);
+            context.close();
+            assertThatThrownBy(() -> api.send(HttpMethod.GET, "/api/core/context-test", null)).isInstanceOf(ResourceAccessException.class);
+            serverBundles.updateBundle("server", replacement);
+            clientBundles.updateBundle("server", replacement);
+
+            assertThatThrownBy(() -> api.send(HttpMethod.GET, "/api/core/context-test", null)).isInstanceOf(ResourceAccessException.class);
+            assertThat(received).hasValue(1);
+        }
+        finally {
+            context.close();
+            RequestContextHolder.resetRequestAttributes();
+            server.stop();
+            server.destroy();
+        }
+    }
+
+    private WebServer rotatingTlsServer(SslBundles bundles, AtomicInteger received) {
+        var factory = new TomcatServletWebServerFactory(0);
+        factory.setAddress(InetAddress.ofLiteral("127.0.0.1"));
+        factory.setSsl(Ssl.forBundle("server"));
+        factory.setSslBundles(bundles);
+        var server = factory.getWebServer(servletContext -> servletContext.addServlet("api", new HttpServlet() {
+
+            @Override
+            protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+                received.incrementAndGet();
+                response.setHeader(HttpHeaders.CONNECTION, "close");
+                response.setStatus(TOKEN.equals(request.getHeader(HttpHeaders.AUTHORIZATION)) ? 204 : 401);
+            }
+        }).addMapping("/*"));
+        server.start();
+        return server;
     }
 
     @Test

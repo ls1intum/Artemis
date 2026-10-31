@@ -16,6 +16,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.annotation.PreDestroy;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
@@ -37,6 +39,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -62,7 +65,9 @@ public class LoopbackAgentApiService implements AgentApi {
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
 
-    private final RestClient restClient;
+    private volatile Transport transport;
+
+    private boolean transportStopped;
 
     private final JsonMapper jsonMapper;
 
@@ -75,21 +80,53 @@ public class LoopbackAgentApiService implements AgentApi {
         boolean tls = Ssl.isEnabled(ssl);
         String host = serverProperties.getAddress() instanceof Inet6Address ? "[::1]" : "127.0.0.1";
         this.origin = URI.create((tls ? "https" : "http") + "://" + host + ":" + port);
-        // The JDK client, because the one behind SimpleClientHttpRequestFactory cannot send PATCH. HTTP/1.1, because the server does not
-        // speak cleartext HTTP/2 and the upgrade the JDK client attempts by default would only add a round trip.
-        var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(CONNECT_TIMEOUT).proxy(HttpClient.Builder.NO_PROXY)
-                .followRedirects(HttpClient.Redirect.NEVER);
-        if (tls) {
-            client.sslContext(loopbackSslContext(WebServerSslBundle.get(ssl, sslBundles)));
+        this.transport = createTransport(tls ? WebServerSslBundle.get(ssl, sslBundles) : null);
+        if (tls && sslBundles != null && StringUtils.hasText(ssl.getBundle())) {
+            String name = ssl.getBundle();
+            sslBundles.addBundleUpdateHandler(name, updated -> reloadSslBundle(sslBundles, name));
+            // Pick up a reload that happened between the initial lookup and registering the handler.
+            reloadSslBundle(sslBundles, name);
         }
-        var requestFactory = new JdkClientHttpRequestFactory(client.build());
+    }
+
+    private Transport createTransport(@Nullable SslBundle bundle) {
+        // HTTP/1.1 supports PATCH and avoids a cleartext HTTP/2 upgrade. Each reload gets a fresh connection pool and TLS session cache.
+        var builder = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(CONNECT_TIMEOUT).proxy(HttpClient.Builder.NO_PROXY)
+                .followRedirects(HttpClient.Redirect.NEVER);
+        if (bundle != null) {
+            builder.sslContext(loopbackSslContext(bundle));
+        }
+        var client = builder.build();
+        var requestFactory = new JdkClientHttpRequestFactory(client);
         requestFactory.setReadTimeout(READ_TIMEOUT);
-        this.restClient = RestClient.builder().requestFactory(requestFactory).build();
+        return new Transport(client, RestClient.builder().requestFactory(requestFactory).build());
+    }
+
+    private synchronized void reloadSslBundle(SslBundles bundles, String name) {
+        if (transportStopped) {
+            return;
+        }
+        // Read the latest bundle under the lock so overlapping reload callbacks cannot restore an older certificate.
+        Transport replacement = createTransport(bundles.getBundle(name));
+        Transport previous = transport;
+        transport = replacement;
+        // Do not block a reload on long programming-exercise requests already in flight.
+        previous.client().shutdown();
+    }
+
+    @PreDestroy
+    private synchronized void shutdownTransport() {
+        transportStopped = true;
+        transport.client().shutdown();
+    }
+
+    private record Transport(HttpClient client, RestClient restClient) {
     }
 
     @Override
     public AgentApiResponse send(HttpMethod method, String path, @Nullable Object body) {
-        var request = restClient.method(method).uri(loopbackUri(path)).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN);
+        var request = transport.restClient().method(method).uri(loopbackUri(path)).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON,
+                MediaType.TEXT_PLAIN);
         if (body != null) {
             request.contentType(MediaType.APPLICATION_JSON).body(jsonMapper.writeValueAsString(body));
         }
@@ -98,8 +135,8 @@ public class LoopbackAgentApiService implements AgentApi {
 
     @Override
     public AgentApiResponse sendText(HttpMethod method, String path, String text) {
-        var request = restClient.method(method).uri(loopbackUri(path)).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN)
-                .contentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8)).body(text);
+        var request = transport.restClient().method(method).uri(loopbackUri(path)).header(HttpHeaders.AUTHORIZATION, authorization())
+                .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN).contentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8)).body(text);
         return execute(request);
     }
 
