@@ -2,8 +2,8 @@
     "name": "artemis-test",
     "private": true,
     "scripts": {
-        "test": "jest",
-        "test:ci": "jest --ci --reporters=default --reporters=jest-junit",
+        "test": "vitest run",
+        "test:ci": "vitest run --reporter=default --reporter=./artemis-junit-reporter.mjs",
         "lint": "eslint ${studentParentWorkingDirectoryName}",
         "lint:ci": "eslint --format @microsoft/eslint-formatter-sarif --output-file eslint.sarif ${studentParentWorkingDirectoryName}"
     },
@@ -11,26 +11,11 @@
         "${studentParentWorkingDirectoryName}"
     ],
     "devDependencies": {
-        "@babel/core": "^7.29.7",
-        "@babel/preset-env": "^7.24.7",
         "@eslint/js": "^9.20.0",
         "@microsoft/eslint-formatter-sarif": "^3.1.0",
-        "@types/jest": "^29.5.12",
-        "babel-jest": "^29.7.0",
         "eslint": "^9.20.1",
         "globals": "^15.15.0",
-        "jest": "^29.7.0",
-        "jest-junit": "^16.0.0"
-    },
-    "jest-junit": {
-        "classNameTemplate": "{classname}_{title}",
-        "titleTemplate": "{classname}_{title}",
-        "ancestorSeparator": "_"
-    },
-    "overrides": {
-        "brace-expansion": "5.0.12",
-        "js-yaml": "4.3.2",
-        "@babel/plugin-transform-modules-systemjs": "7.29.4",
-        "uuid": "11.1.1"
+        "vite": "^6.4.5",
+        "vitest": "^4.1.12"
     }
 }
