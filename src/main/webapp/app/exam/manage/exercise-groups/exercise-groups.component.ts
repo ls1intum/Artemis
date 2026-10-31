@@ -244,7 +244,7 @@ export class ExerciseGroupsComponent implements OnInit {
         const importBaseRoute = ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
         if (result.id) {
             importBaseRoute.push('import', result.id);
-            void this.router.navigate(importBaseRoute);
+            void this.router.navigate(importBaseRoute, { queryParams: { sourceIsExamExercise: !!result.exerciseGroup } });
         } else {
             // we know it must be a programming exercise, because only programming exercises can be imported from a file
             importBaseRoute.push('import-from-file');

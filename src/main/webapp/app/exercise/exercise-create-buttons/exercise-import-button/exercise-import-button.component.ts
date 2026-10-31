@@ -48,7 +48,9 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
                 if (this.exerciseType() === ExerciseType.PROGRAMMING) {
                     this.handleProgrammingImport(result);
                 } else {
-                    void this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', result.id, 'import']);
+                    void this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', result.id, 'import'], {
+                        queryParams: { sourceIsExamExercise: !!result.exerciseGroup },
+                    });
                 }
             }
         });
@@ -63,7 +65,9 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
                 },
             });
         } else {
-            void this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id]);
+            void this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id], {
+                queryParams: { sourceIsExamExercise: !!result.exerciseGroup },
+            });
         }
     }
 }

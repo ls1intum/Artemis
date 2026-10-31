@@ -50,7 +50,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void shouldFailAsTutor() throws Exception {
             this.testAllPreAuthorizeEditor();
         }
@@ -84,7 +84,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void shouldReturnForbiddenForUserNotInCourse() throws Exception {
         super.shouldReturnForbiddenForUserNotInCourse();
     }
@@ -122,19 +122,19 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldDeleteCompetencyWhenEditor() throws Exception {
         super.shouldDeleteCompetencyWhenEditor();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldDeleteCompetencyAndRelations() throws Exception {
         super.shouldDeleteCompetencyAndRelations(prerequisiteUtilService.createPrerequisite(course));
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void shouldReturnForbiddenForInstructorOfOtherCourseForDelete() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForDelete();
     }
@@ -146,13 +146,13 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteLectureShouldUpdateCompetency() throws Exception {
         super.deleteLectureShouldUpdateCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteLectureUnitShouldUpdateCompetency() throws Exception {
         super.deleteLectureUnitShouldUpdateCompetency();
     }
@@ -162,20 +162,20 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldUpdateCompetency() throws Exception {
         super.shouldUpdateCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForCompetencyWithoutId() throws Exception {
         super.shouldReturnBadRequestForCompetencyWithoutId();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IncludedInOverallScore.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateCompetencyToOptionalWhenSettingOptional(IncludedInOverallScore includedInOverallScore) throws Exception {
         super.shouldUpdateCompetencyToOptionalWhenSettingOptional(new Prerequisite(), includedInOverallScore);
     }
@@ -185,31 +185,31 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldCreateValidCompetency() throws Exception {
         super.shouldCreateValidCompetency(new Prerequisite());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void forCompetencyWithNoTitleForCreate() throws Exception {
         super.forCompetencyWithNoTitleForCreate(new Prerequisite());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void forCompetencyWithEmptyTitleForCreate() throws Exception {
         super.forCompetencyWithEmptyTitleForCreate(new Prerequisite());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void forCompetencyWithIdForCreate() throws Exception {
         super.forCompetencyWithIdForCreate(new Prerequisite());
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreate() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreate(new Prerequisite());
     }
@@ -219,19 +219,19 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportCompetency() throws Exception {
         super.shouldImportCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportExerciseAndLectureWithCompetency() throws Exception {
         super.shouldImportExerciseAndLectureWithCompetency();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void shouldReturnForbiddenForInstructorOfOtherCourseForImport() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForImport();
     }
@@ -241,31 +241,31 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldCreateCompetencies() throws Exception {
         super.shouldCreateCompetencies(new Prerequisite(), new Prerequisite());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void forCompetencyWithNoTitle() throws Exception {
         super.forCompetencyWithNoTitle(new Prerequisite());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void forCompetencyWithEmptyTitle() throws Exception {
         super.forCompetencyWithEmptyTitle(new Prerequisite());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void forCompetencyWithId() throws Exception {
         super.forCompetencyWithId(new Prerequisite());
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk();
     }
@@ -275,37 +275,37 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportAllCompetencies() throws Exception {
         super.shouldImportAllCompetencies(prerequisiteUtilService::createPrerequisite);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportAllCompetenciesWithSomeExisting() throws Exception {
         shouldImportAllCompetenciesWithSomeExisting(Prerequisite::new, 3);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
         super.shouldImportAllExerciseAndLectureWithCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
         super.shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void shouldReturnForbiddenForInstructorNotInCourse() throws Exception {
         super.shouldReturnForbiddenForInstructorNotInCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForImportFromSameCourse() throws Exception {
         super.shouldReturnBadRequestForImportFromSameCourse();
     }
@@ -315,13 +315,13 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportStandardizedCompetencies() throws Exception {
         super.shouldImportStandardizedCompetencies();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldReturnNotFoundForNotExistingIds() throws Exception {
         super.shouldReturnNotFoundForNotExistingIds();
     }
@@ -332,25 +332,25 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportCompetencies() throws Exception {
         super.shouldImportCompetencies(prerequisiteUtilService::createPrerequisite);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportCompetenciesExerciseAndLectureWithCompetency() throws Exception {
         super.shouldImportCompetenciesExerciseAndLectureWithCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
         super.shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates();
     }

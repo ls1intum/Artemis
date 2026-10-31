@@ -688,7 +688,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private addExerciseCrumb(exerciseId: number, currentPath: string): void {
         // Add dummy breadcrumb
         const crumb = this.addBreadcrumb('', '', false);
-        this.exerciseService.find(exerciseId).subscribe({
+        const exerciseSource = currentPath.startsWith('/course-management/')
+            ? currentPath.includes('/exams/')
+                ? this.exerciseService.findForExamManagement(exerciseId)
+                : this.exerciseService.findForStaff(exerciseId)
+            : this.exerciseService.find(exerciseId);
+        exerciseSource.subscribe({
             next: (response: HttpResponse<Exercise>) => {
                 // If the response doesn't contain the needed data, remove the breadcrumb as we can not successfully link to it
                 if (!response?.body?.title || !response?.body?.type) {

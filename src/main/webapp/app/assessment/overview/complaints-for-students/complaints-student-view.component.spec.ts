@@ -174,6 +174,38 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(userMock).toHaveBeenCalledTimes(1);
         });
 
+        it('should read the complaint through the assessment endpoint when staff look at the exam of a student', async () => {
+            fixture.componentRef.setInput('exercise', examExercise);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('exam', defaultExam);
+            fixture.componentRef.setInput('forStaff', true);
+            const ownerLookup = vi.spyOn(complaintService, 'findBySubmissionId');
+            const staffLookup = vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: complaint } as EntityResponseType));
+            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(staffLookup).toHaveBeenCalledOnce();
+            expect(ownerLookup).not.toHaveBeenCalled();
+            expect(component.complaint()).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
+        });
+
+        it('should read the complaint through the owner endpoint by default', async () => {
+            fixture.componentRef.setInput('exercise', examExercise);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('exam', defaultExam);
+            const ownerLookup = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
+            const staffLookup = vi.spyOn(complaintService, 'findBySubmissionIdForAssessment');
+            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(ownerLookup).toHaveBeenCalledOnce();
+            expect(staffLookup).not.toHaveBeenCalled();
+        });
+
         it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', async () => {
             fixture.componentRef.setInput('exercise', examExercise);
             fixture.componentRef.setInput('result', result);

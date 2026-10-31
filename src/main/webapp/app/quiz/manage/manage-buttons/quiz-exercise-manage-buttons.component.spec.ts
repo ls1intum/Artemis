@@ -239,6 +239,19 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         expect(comp.baseUrl()).toBe('/course-management/123/exams/789/exercise-groups/111');
     });
 
+    it('exports an exam quiz through the exam details endpoint', () => {
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        comp.ngOnInit();
+        const service = TestBed.inject(QuizExerciseService);
+        const examFind = vi.spyOn(service, 'findForExam').mockReturnValue(of(quizExercise));
+        const courseFind = vi.spyOn(service, 'find');
+        const exportSpy = vi.spyOn(service, 'exportQuiz').mockImplementation(() => {});
+        comp.exportQuizExercise(true);
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
+        expect(courseFind).not.toHaveBeenCalled();
+        expect(exportSpy).toHaveBeenCalledExactlyOnceWith([], true, quizExercise.title);
+    });
+
     it('should navigate after delete in detail page', () => {
         const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
         const router = TestBed.inject(Router);

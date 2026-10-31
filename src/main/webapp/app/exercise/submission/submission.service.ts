@@ -76,6 +76,13 @@ export class SubmissionService {
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
+    /** Find all complained-about assessments for the instructor's exercise review queue. */
+    getSubmissionsWithComplaintsForInstructor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
+        return this.http
+            .get<SubmissionWithComplaintResponseDTO[]>(`api/exercise/exercises/${exerciseId}/submissions-with-complaints/for-instructor`, { observe: 'response' })
+            .pipe(map((res) => this.convertDTOsFromServer(res)));
+    }
+
     /**
      * Find more feedback requests for tutor in this exercise.
      * @param exerciseId

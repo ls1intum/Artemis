@@ -839,7 +839,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!submission) {
             return;
         }
-        this.complaintService.findBySubmissionId(submission.id!).subscribe({
+        this.complaintService.findBySubmissionIdForAssessment(submission.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;

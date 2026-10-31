@@ -1,7 +1,7 @@
 import { Directive, effect, inject, input, output, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
-import { renderMarkdownToHtml, renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
+import { renderMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
 
 /**
  * Renders markdown into the host element's `innerHTML`, lazily loading the markdown pipeline
@@ -13,7 +13,6 @@ import { renderMarkdownToHtml, renderPostingMarkdownToHtml } from 'app/foundatio
  * HTML so Angular does not strip it again (matching the former `safeHtmlForMarkdown` behavior).
  *
  * @example `<div class="markdown-preview" [jhiMarkdown]="exercise.problemStatement"></div>`
- * @example posting content: `<span [jhiMarkdown]="post.content" [markdownPosting]="true"></span>`
  */
 @Directive({
     selector: '[jhiMarkdown]',
@@ -32,10 +31,6 @@ export class MarkdownDirective {
     readonly markdownAllowedAttributes = input<string[]>();
     /** Renders single line breaks as `<br>`. */
     readonly markdownLineBreaks = input<boolean>(false);
-    /** Uses the posting-content rendering (adds the `inline-paragraph` class around a reference). */
-    readonly markdownPosting = input<boolean>(false);
-    /** For posting content: whether this part is before (true) or after (false) a reference. */
-    readonly markdownContentBeforeReference = input<boolean>(true);
     /** Emits after the current markdown input has been converted, allowing layout-dependent consumers to react to the lazy render. */
     readonly markdownRendered = output<void>();
 
@@ -49,8 +44,6 @@ export class MarkdownDirective {
             const allowedTags = this.markdownAllowedTags();
             const allowedAttributes = this.markdownAllowedAttributes();
             const lineBreaks = this.markdownLineBreaks();
-            const posting = this.markdownPosting();
-            const contentBeforeReference = this.markdownContentBeforeReference();
 
             // Bump the generation counter first so that an in-flight render from a previous value is discarded even when
             // the content is cleared while that render is still pending.
@@ -61,9 +54,7 @@ export class MarkdownDirective {
                 return;
             }
 
-            const htmlPromise = posting
-                ? renderPostingMarkdownToHtml(text, contentBeforeReference, allowedTags, allowedAttributes)
-                : renderMarkdownToHtml(text, extensions, allowedTags, allowedAttributes, lineBreaks);
+            const htmlPromise = renderMarkdownToHtml(text, extensions, allowedTags, allowedAttributes, lineBreaks);
             htmlPromise
                 .then((html) => {
                     // Ignore a render whose inputs were superseded before the lazy chunk/conversion resolved.

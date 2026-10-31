@@ -33,14 +33,14 @@ class RoleHierarchyIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void tutorReachesAStudentLevelEndpoint() throws Exception {
         List<ScienceSettingDTO> settings = request.getList("/api/atlas/science-settings", HttpStatus.OK, ScienceSettingDTO.class);
         assertThat(settings).isNotNull();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void instructorReachesAStudentLevelEndpoint() throws Exception {
         List<ScienceSettingDTO> settings = request.getList("/api/atlas/science-settings", HttpStatus.OK, ScienceSettingDTO.class);
         assertThat(settings).isNotNull();

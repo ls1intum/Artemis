@@ -49,6 +49,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
     readonly exam = input<Exam>();
     readonly isCurrentUserSubmissionAuthor = input<boolean>();
     readonly testRun = input(false);
+    // Staff looking at the submission of a student read its complaint through the assessment endpoint, the default one serves only the owner
+    readonly forStaff = input(false);
 
     submission!: Submission; // set in ngOnInit() from the participation's submissions before loadPotentialComplaint() reads it
     readonly complaint = signal<Complaint | undefined>(undefined);
@@ -103,8 +105,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     loadPotentialComplaint(): void {
-        this.complaintService
-            .findBySubmissionId(this.submission.id!)
+        const submissionId = this.submission.id!;
+        (this.forStaff() ? this.complaintService.findBySubmissionIdForAssessment(submissionId) : this.complaintService.findBySubmissionId(submissionId))
             .pipe(filter((res) => !!res.body))
             .subscribe((res: HttpResponse<ComplaintDTO>) => {
                 this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()));

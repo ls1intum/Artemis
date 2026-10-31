@@ -60,7 +60,7 @@ import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -217,6 +217,13 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('loads complaint detail through the assessment audience', () => {
+        const httpMock = TestBed.inject(HttpTestingController);
+        const req = httpMock.expectOne(`api/assessment/complaints/for-assessment?submissionId=${submission.id}`);
+        expect(req.request.method).toBe('GET');
+        req.flush(null);
     });
 
     it('should create and set parameters correctly', async () => {

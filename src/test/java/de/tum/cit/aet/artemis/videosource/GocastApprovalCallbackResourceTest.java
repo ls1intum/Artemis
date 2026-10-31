@@ -64,7 +64,7 @@ class GocastApprovalCallbackResourceTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void authenticatedCourseInstructorReturnsToManagement() throws Exception {
         when(gocastBindingService.completeApproval("state", "code")).thenReturn(new GocastApprovalResultDTO(true, course.getId()));
 
