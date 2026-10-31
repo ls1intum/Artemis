@@ -41,7 +41,7 @@ class CourseOnlineConfigurationUpdateIntegrationTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourseAddsTheSettingsAnIncompleteCreationLeftOut() throws Exception {
         var jdbc = new JdbcTemplate(dataSource);
         for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
@@ -61,7 +61,7 @@ class CourseOnlineConfigurationUpdateIntegrationTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourseTogglesConfigurationAndPreservesExistingSettings() throws Exception {
         CourseManagementDTO enabled = updateCourse(true);
         assertThat(enabled.onlineCourse()).isTrue();

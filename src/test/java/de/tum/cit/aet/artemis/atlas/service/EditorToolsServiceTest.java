@@ -267,6 +267,45 @@ class EditorToolsServiceTest {
         verify(courseCompetencyService, never()).deleteCourseCompetency(any(), any());
     }
 
+    @Test
+    void missingContextIdsAndEntitiesFailWithoutMutation() {
+        assertThat(service.editCompetency(10L, "Title", null, null, JUSTIFICATION, null)).contains("No course context");
+        assertThat(service.deleteCompetency(10L, JUSTIFICATION, null)).contains("No course context");
+        assertThat(service.editCompetency(null, "Title", null, null, JUSTIFICATION, toolContext)).contains("competencyId is required");
+        assertThat(service.deleteCompetency(null, JUSTIFICATION, toolContext)).contains("competencyId is required");
+        assertThat(service.editCompetency(10L, "Title", null, null, JUSTIFICATION, toolContext)).contains("Competency not found");
+        assertThat(service.deleteCompetency(10L, JUSTIFICATION, toolContext)).contains("Competency not found");
+        assertThat(appliedActions).isEmpty();
+        verifyNoInteractions(courseCompetencyService, atlasMLNotificationService);
+    }
+
+    @Test
+    void taxonomyEditsRejectInvalidValuesAndAvoidSavingEquivalentFields() {
+        var existing = newCompetency(10L, "Title", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(10L)).thenReturn(Optional.of(existing));
+        assertThat(service.editCompetency(10L, " Title ", " Desc ", " apply ", JUSTIFICATION, toolContext)).contains("noop");
+        assertThat(service.editCompetency(10L, null, null, "invented", JUSTIFICATION, toolContext)).contains("taxonomy must be one of");
+        verify(courseCompetencyRepository, never()).save(any());
+        when(courseCompetencyRepository.save(any())).thenAnswer(call -> call.getArgument(0));
+        assertThat(service.editCompetency(10L, null, null, " analyze ", JUSTIFICATION, toolContext)).contains("taxonomy");
+        assertThat(existing.getTaxonomy()).isEqualTo(CompetencyTaxonomy.ANALYZE);
+        assertThat(appliedActions).hasSize(1);
+    }
+
+    @Test
+    void persistenceFailuresReturnErrorAndDoNotPublishAuditOrMlNotifications() {
+        var existing = newCompetency(10L, "Title", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(courseCompetencyRepository.save(any())).thenThrow(new org.springframework.dao.DataAccessResourceFailureException("database unavailable"));
+        assertThat(service.editCompetency(10L, "New title", null, null, JUSTIFICATION, toolContext)).contains("Failed to update competency");
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(10L)).thenReturn(Optional.of(existing));
+        org.mockito.Mockito.doThrow(new org.springframework.dao.DataAccessResourceFailureException("database unavailable")).when(courseCompetencyService)
+                .deleteCourseCompetency(existing, existing.getCourse());
+        assertThat(service.deleteCompetency(10L, JUSTIFICATION, toolContext)).contains("Failed to delete competency");
+        assertThat(appliedActions).isEmpty();
+        verifyNoInteractions(atlasMLNotificationService);
+    }
+
     private static Course courseWithId(long id) {
         Course course = new Course();
         course.setId(id);

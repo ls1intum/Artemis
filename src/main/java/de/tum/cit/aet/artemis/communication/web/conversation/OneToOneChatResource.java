@@ -95,6 +95,9 @@ public class OneToOneChatResource extends ConversationManagementResource {
         else {
             throw new BadRequestAlertException("A one-to-one chat must specify the other participant by userId or login", "oneToOneChat", "missingPartner");
         }
+        if (otherUser.getId().equals(requestingUser.getId())) {
+            throw new BadRequestAlertException("A one-to-one chat can only be started with another user", "oneToOneChat", "sameUser");
+        }
         log.debug("REST request to create one to one chat in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherUser.getLogin());
         return createOneToOneChat(requestingUser, otherUser, course);
     }

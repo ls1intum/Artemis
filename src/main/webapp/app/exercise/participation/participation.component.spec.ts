@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { ParticipationPrivacyService } from './participation-privacy.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -11,12 +11,12 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -31,7 +31,17 @@ import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { DialogService } from 'primeng/dynamicdialog';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ResultService } from 'app/exercise/result/result.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { Range } from 'app/foundation/util/utils';
+import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -39,6 +49,10 @@ describe('ParticipationComponent', () => {
     let participationService: ParticipationService;
     let exerciseService: ExerciseService;
     let alertService: AlertService;
+    let resultService: ResultService;
+    let profileService: ProfileService;
+    let router: Router;
+    let queryParams: Params;
 
     const course: Course = { id: 10, presentationScore: 1 };
 
@@ -59,9 +73,20 @@ describe('ParticipationComponent', () => {
         participantIdentifier: 'alice',
     };
 
-    const route = { params: of({ exerciseId: '1' } as Params) } as ActivatedRoute;
+    const route = {
+        params: of({ courseId: '10', exerciseId: '1' } as Params),
+        snapshot: {
+            get queryParamMap() {
+                return convertToParamMap(queryParams);
+            },
+        },
+    } as unknown as ActivatedRoute;
+
+    const filters = () => component.filterGroups().flatMap((group) => group.items);
+    const headerKeys = () => component.columns().map((column) => column.headerKey);
 
     beforeEach(() => {
+        queryParams = {};
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -76,10 +101,16 @@ describe('ParticipationComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(EventManager),
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: ResultService, useClass: MockResultService },
+                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         })
+            .overrideComponent(ParticipationComponent, {
+                remove: { imports: [CodeButtonComponent] },
+                add: { imports: [MockComponent(CodeButtonComponent)] },
+            })
             .compileComponents()
             .then(() => {
                 componentFixture = TestBed.createComponent(ParticipationComponent);
@@ -87,6 +118,10 @@ describe('ParticipationComponent', () => {
                 participationService = TestBed.inject(ParticipationService);
                 exerciseService = TestBed.inject(ExerciseService);
                 alertService = TestBed.inject(AlertService);
+                resultService = TestBed.inject(ResultService);
+                profileService = TestBed.inject(ProfileService);
+                router = TestBed.inject(Router);
+                vi.spyOn(router, 'navigate').mockResolvedValue(true);
                 component.exercise.set(exercise);
             });
     });
@@ -95,14 +130,135 @@ describe('ParticipationComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should choose the exam page from the loaded exercise kind before requesting participations', () => {
+        component.exercise.set({ ...exercise, course: undefined, exerciseGroup: { id: 8, exam: { id: 9, course } } });
+        const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+        component.onLazyLoad({ first: 0, rows: 50, sortField: 'id' });
+        expect(search).toHaveBeenCalledWith(1, expect.anything(), 'exam');
+    });
+
     describe('Initialization', () => {
         it('should initialize with exerciseId from route', () => {
-            const exerciseFindStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            const exerciseFindStub = vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
             component.ngOnInit();
 
             expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(1);
             expect(component.exercise()).toEqual(exercise);
+            expect(component.course()?.id).toBe(10);
+        });
+
+        it('should open the score range named in the query parameters', () => {
+            queryParams = { scoreRangeFilter: '3' };
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+            component.ngOnInit();
+
+            expect(component.rangeFilter()).toEqual(new Range(30, 40));
+        });
+    });
+
+    describe('Columns', () => {
+        const render = async (ex: Exercise, dto: ParticipationManagementDTO) => {
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: ex })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [dto], totalElements: 1 }));
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+            return componentFixture.nativeElement.querySelector('jhi-table-view tbody tr') as HTMLElement;
+        };
+
+        it('should show the state and the result of a participation side by side', () => {
+            component.exercise.set({ ...exercise, isAtLeastInstructor: true, dueDate: dayjs() });
+
+            expect(headerKeys()).toEqual([
+                'artemisApp.participation.student',
+                'artemisApp.participation.initializationState',
+                'artemisApp.participation.initializationDate',
+                'artemisApp.exercise.lastResult',
+                'artemisApp.exercise.completionDate',
+                'artemisApp.exercise.submissionCount',
+                'artemisApp.participation.individualDueDate',
+            ]);
+        });
+
+        it('should list the team members below the team instead of in a column of their own', async () => {
+            const row = await render(
+                { ...exercise, isAtLeastInstructor: true, teamMode: true },
+                { ...sampleDto, participantName: 'Team A', teamId: 7, teamStudents: [{ name: 'Bob', login: 'bob' }] },
+            );
+
+            expect(headerKeys()).not.toContain('artemisApp.participation.students');
+            const teamCell = row.querySelector('td')!;
+            expect(teamCell.querySelector('a[href*="/teams/7"]')?.textContent).toContain('Team A');
+            expect(teamCell.textContent).toContain('bob');
+        });
+
+        it('should mark a practice participation in its status', async () => {
+            const row = await render({ ...exercise, isAtLeastInstructor: true }, { ...sampleDto, testRun: true, initializationState: 'INITIALIZED' });
+
+            expect(row.querySelector('[data-testid="participation-practice-tag"]')).not.toBeNull();
+        });
+
+        it('should name the assessment type next to the result only where manual results exist', async () => {
+            const dto: ParticipationManagementDTO = { ...sampleDto, submissionId: 2, resultId: 5, score: 80, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() };
+            // MockResultService leaves out what jhi-result needs to render the score
+            Object.defineProperty(resultService, 'getResultString', { value: vi.fn(() => '80%') });
+            const row = await render({ ...exercise, isAtLeastInstructor: true, assessmentType: AssessmentType.MANUAL }, dto);
+
+            expect(row.querySelector('jhi-result')).not.toBeNull();
+            expect(row.querySelector('[data-testid="participation-assessment-type"]')?.textContent).toContain(AssessmentType.MANUAL);
+        });
+
+        it('should hide the assessment type and note for automatically assessed exercises', () => {
+            component.exercise.set({ ...exercise, assessmentType: AssessmentType.AUTOMATIC });
+            expect(component.showAssessmentType()).toBe(false);
+            expect(component.showAssessmentNote()).toBe(false);
+
+            component.exercise.set({ ...exercise, assessmentType: AssessmentType.SEMI_AUTOMATIC, allowComplaintsForAutomaticAssessments: true });
+            expect(component.showAssessmentType()).toBe(true);
+            expect(component.showAssessmentNote()).toBe(true);
+        });
+    });
+
+    describe('Live repository actions', () => {
+        it.each([
+            ['tutor', false, false],
+            ['editor', true, false],
+            ['instructor', true, true],
+        ])('shows the online editor only to editors and instructors (%s)', async (_role, isAtLeastEditor, isAtLeastInstructor) => {
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: { ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, isAtLeastEditor, isAtLeastInstructor, dueDate: dayjs().add(1, 'day') },
+                    }),
+                ),
+            );
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(
+                of({ content: [{ ...sampleDto, repositoryUri: 'https://localhost/git/EX/alice.git' }], totalElements: 1 }),
+            );
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+
+            expect(!!componentFixture.nativeElement.querySelector('a[href*="code-editor"]')).toBe(isAtLeastEditor || isAtLeastInstructor);
+            expect(componentFixture.nativeElement.querySelector('jhi-code-button')).not.toBeNull();
+        });
+
+        it('preserves editor and instructor access while identities are masked', () => {
+            component.exercise.set({
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                isAtLeastEditor: true,
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                dueDate: dayjs().subtract(1, 'hour'),
+            });
+            expect(component.hideParticipantInformation()).toBe(true);
+            expect(component.canAccessLiveRepository()).toBe(true);
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastEditor: true, exerciseGroup: { id: 1 } });
+            expect(component.canAccessLiveRepository()).toBe(true);
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true, exerciseGroup: { id: 1 } });
+            expect(component.canAccessLiveRepository()).toBe(true);
         });
     });
 
@@ -116,7 +272,7 @@ describe('ParticipationComponent', () => {
                 isAtLeastInstructor: false,
                 dueDate: dayjs().add(1, 'day'),
             };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(
                 of({ content: [{ ...sampleDto, repositoryUri: 'https://localhost/git/EX/alice.git' }], totalElements: 1 }),
             );
@@ -128,6 +284,7 @@ describe('ParticipationComponent', () => {
             expect(component.columns()[0].field).toBe('participantName');
             expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.repository')).toBe(true);
             expect(componentFixture.nativeElement.querySelector('jhi-code-button')).not.toBeNull();
+            expect(componentFixture.nativeElement.querySelector('a[href*="code-editor"]')).toBeNull();
             const notice = componentFixture.nativeElement.querySelector('[data-testid="tutor-participation-access-notice"]');
             expect(notice).not.toBeNull();
             expect(notice.textContent).toContain(assessmentType === AssessmentType.AUTOMATIC ? 'tutorAccess.available' : 'tutorAccess.untilDueDate');
@@ -145,7 +302,7 @@ describe('ParticipationComponent', () => {
                 isAtLeastInstructor: false,
                 dueDate,
             };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
             const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
             componentFixture.detectChanges();
             component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
@@ -158,8 +315,9 @@ describe('ParticipationComponent', () => {
             expect(component.hideParticipantInformation()).toBe(true);
             expect(component.tableOptions().showSearch).toBe(false);
             expect(component.participations()[0].participantName).toBeUndefined();
-            expect(search).toHaveBeenLastCalledWith(1, expect.objectContaining({ searchTerm: '', sortedColumn: 'id' }));
+            expect(search).toHaveBeenLastCalledWith(1, expect.objectContaining({ searchTerm: '', sortedColumn: 'id' }), 'course');
             expect(componentFixture.nativeElement.querySelector('jhi-code-button')).toBeNull();
+            expect(componentFixture.nativeElement.querySelector('a[href*="code-editor"]')).toBeNull();
             expect(componentFixture.nativeElement.querySelector('[data-testid="tutor-participation-access-notice"]').textContent).toContain('tutorAccess.anonymousAssessment');
             expect(componentFixture.nativeElement.querySelector('a[href*="assessment-dashboard"]')).not.toBeNull();
         });
@@ -177,7 +335,7 @@ describe('ParticipationComponent', () => {
                 assessmentType: AssessmentType.SEMI_AUTOMATIC,
                 dueDate: dayjs().subtract(1, 'day'),
             };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: tutorExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: tutorExercise })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
 
             componentFixture.detectChanges();
@@ -204,7 +362,6 @@ describe('ParticipationComponent', () => {
                 field: 'participantName',
                 sort: true,
             });
-            expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.students')).toBe(teamMode);
         });
 
         it.each(['participantName', 'participantIdentifier', 'buildPlanId'])(
@@ -219,6 +376,7 @@ describe('ParticipationComponent', () => {
                 expect(searchSpy).toHaveBeenCalledWith(
                     exercise.id,
                     expect.objectContaining({ page: 2, pageSize: 25, searchTerm: '', sortedColumn: 'id', filterProp: FilterProp.NO_SUBMISSIONS }),
+                    'course',
                 );
             },
         );
@@ -229,7 +387,7 @@ describe('ParticipationComponent', () => {
 
             component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
 
-            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', sortedColumn: 'participantName' }));
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', sortedColumn: 'participantName' }), 'course');
         });
 
         it('should identify an anonymous participation in the due-date success message', () => {
@@ -270,7 +428,7 @@ describe('ParticipationComponent', () => {
 
         async function renderRows(teamMode: boolean, rows: ParticipationManagementDTO[]): Promise<HTMLElement> {
             const instructorExercise = { ...exercise, teamMode, isAtLeastTutor: true, isAtLeastInstructor: true };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: instructorExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: instructorExercise })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: rows, totalElements: rows.length }));
 
             componentFixture.detectChanges();
@@ -283,6 +441,17 @@ describe('ParticipationComponent', () => {
         function bodyRows(table: HTMLElement): HTMLTableRowElement[] {
             return Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr'));
         }
+
+        it('should offer a new manual assessment for the team row but not its individual practice row', async () => {
+            const table = await renderRows(true, [
+                { ...teamDto, submissionId: 21 },
+                { ...practiceDto, submissionCount: 1, submissionId: 22 },
+            ]);
+            const [teamRow, practiceRow] = bodyRows(table);
+
+            expect(teamRow.querySelector('jhi-manage-assessment-buttons a')?.textContent).toContain('artemisApp.assessment.dashboard.actions.assess');
+            expect(practiceRow.querySelector('jhi-manage-assessment-buttons a')).toBeNull();
+        });
 
         it('should list a team row and a practice row of a team exercise', async () => {
             const table = await renderRows(true, [teamDto, practiceDto]);
@@ -330,11 +499,11 @@ describe('ParticipationComponent', () => {
             expect(teamRow.querySelector('a[href*="/teams/7"]')).not.toBeNull();
         });
 
-        it('should not mark rows of an individual exercise as practice in the name column', async () => {
+        it('should mark practice in the status column for an individual exercise', async () => {
             const table = await renderRows(false, [{ ...practiceDto, testRun: true }, sampleDto]);
 
             expect(bodyRows(table)).toHaveLength(2);
-            expect(table.querySelector('[data-testid="participation-practice-tag"]')).toBeNull();
+            expect(bodyRows(table)[0].querySelector('td [data-testid="participation-practice-tag"]')).not.toBeNull();
             expect(table.querySelector('[data-testid="participation-practice-student"]')).toBeNull();
             expect(table.querySelector('a[href*="/teams/"]')).toBeNull();
             expect(bodyRows(table)[0].textContent).toContain('Carol Clark');
@@ -344,7 +513,7 @@ describe('ParticipationComponent', () => {
         it('should keep the identity columns of a team exercise for practice rows', async () => {
             await renderRows(true, [practiceDto]);
 
-            expect(component.columns().map((column) => column.headerKey)).toEqual(expect.arrayContaining(['artemisApp.participation.team', 'artemisApp.participation.students']));
+            expect(component.columns().map((column) => column.headerKey)).toEqual(expect.arrayContaining(['artemisApp.participation.team']));
             expect(component.participations()).toEqual([practiceDto]);
         });
     });
@@ -376,21 +545,75 @@ describe('ParticipationComponent', () => {
         });
     });
 
-    describe('Relevant filters', () => {
-        it('should not include FAILED and NO_PRACTICE filters for non-programming exercises', () => {
+    describe('Filters', () => {
+        it('should not include the build filters for non-programming exercises', () => {
             component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
 
-            expect(component.relevantFilters()).not.toContain(FilterProp.FAILED);
-            expect(component.relevantFilters()).not.toContain(FilterProp.NO_PRACTICE);
-            expect(component.relevantFilters()).toContain(FilterProp.ALL);
-            expect(component.relevantFilters()).toContain(FilterProp.NO_SUBMISSIONS);
+            expect(filters()).not.toContain(FilterProp.FAILED);
+            expect(filters()).not.toContain(FilterProp.BUILD_FAILED);
+            expect(filters()).not.toContain(FilterProp.NO_PRACTICE);
+            expect(filters()).toContain(FilterProp.NO_SUBMISSIONS);
         });
 
-        it('should include FAILED and NO_PRACTICE filters for programming exercises', () => {
+        it('should include the build filters for programming exercises', () => {
             component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
 
-            expect(component.relevantFilters()).toContain(FilterProp.FAILED);
-            expect(component.relevantFilters()).toContain(FilterProp.NO_PRACTICE);
+            expect(filters()).toContain(FilterProp.FAILED);
+            expect(filters()).toContain(FilterProp.BUILD_FAILED);
+            expect(filters()).toContain(FilterProp.NO_PRACTICE);
+        });
+
+        it.each([
+            [FilterProp.SUCCESSFUL, { type: ExerciseType.PROGRAMMING } as Exercise, false, true],
+            [FilterProp.UNSUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
+            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+            [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
+            [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
+        ])('should offer the result filter %s only where it applies', (filter: FilterProp, ex: Partial<Exercise>, newManualResultsAllowed: boolean, expected: boolean) => {
+            component.exercise.set(ex as Exercise);
+            component.newManualResultAllowed.set(newManualResultsAllowed);
+
+            expect(filters().includes(filter)).toBe(expected);
+        });
+
+        it('should pass the score range to the search', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.rangeFilter.set(new Range(60, 70));
+
+            component.onLazyLoad({ first: 0, rows: 50 });
+
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ scoreRangeLower: 60, scoreRangeUpper: 70 }), 'course');
+        });
+
+        it('should reset filter options, drop the range from the URL and reload', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            component.rangeFilter.set(new Range(0, 10));
+            component.activeFilter.set(FilterProp.SUCCESSFUL);
+            searchSpy.mockClear();
+
+            component.resetFilterOptions();
+
+            expect(component.rangeFilter()).toBeUndefined();
+            expect(component.activeFilter()).toBe(FilterProp.ALL);
+            expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { scoreRangeFilter: undefined } }));
+            expect(searchSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should refresh the current page', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchSpy.mockClear();
+
+            component.refresh();
+
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(component.participations()).toEqual([sampleDto]);
         });
     });
 
@@ -403,23 +626,6 @@ describe('ParticipationComponent', () => {
             component.exercise.set({ ...exercise, exerciseGroup: { id: 5, exam: { id: 2 } } });
 
             expect(component.getParticipationLink(42)).toEqual(['42']);
-        });
-
-        it('should compute scoresRoute for non-exam exercise', () => {
-            component.exercise.set({ ...exercise, type: ExerciseType.TEXT, id: 1, course: { id: 10 } });
-
-            expect(component.scoresRoute()).toEqual(['/course-management', 10, 'text-exercises', 1, 'scores']);
-        });
-
-        it('should compute scoresRoute for exam exercise', () => {
-            component.exercise.set({
-                ...exercise,
-                type: ExerciseType.TEXT,
-                id: 1,
-                exerciseGroup: { id: 5, exam: { id: 2, course: { id: 10 } } },
-            });
-
-            expect(component.scoresRoute()).toEqual(['/course-management', 10, 'exams', 2, 'exercise-groups', 5, 'text-exercises', 1, 'scores']);
         });
     });
 
@@ -473,7 +679,7 @@ describe('ParticipationComponent', () => {
         beforeEach(async () => {
             dto = { ...sampleDto, individualDueDate };
             const exerciseWithDueDate = { ...exercise, course: undefined, dueDate };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseWithDueDate })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: exerciseWithDueDate })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [dto], totalElements: 1 }));
             component.startEditDueDate(dto);
             componentFixture.detectChanges();
@@ -842,5 +1048,140 @@ describe('ParticipationComponent', () => {
 
             expect(updateStub).not.toHaveBeenCalled();
         });
+    });
+
+    describe('Exports', () => {
+        it.each([false, true])('should offer exports only to instructors (instructor: %s)', async (isAtLeastInstructor) => {
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: { ...exercise, isAtLeastInstructor } })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            const view = TestBed.inject(CourseTitleBarService).actionsTemplate()!.createEmbeddedView({});
+            view.detectChanges();
+            const container = document.createElement('div');
+            view.rootNodes.forEach((node) => container.append(node));
+
+            expect(!!container.querySelector('button[jhi-exercise-action-button]')).toBe(isAtLeastInstructor);
+            view.destroy();
+        });
+
+        it('should export names correctly for individual students', () => {
+            const exportDto: ParticipationNameExportDTO = { participantName: 'participantName', participantIdentifier: 'login1' };
+            vi.spyOn(participationService, 'getParticipationNamesForExport').mockReturnValue(of([exportDto]));
+            const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
+
+            component.exportNames();
+
+            expect(resultServiceStub).toHaveBeenCalledExactlyOnceWith(['participantName'], 'results-names.csv');
+        });
+
+        it('should export names with team students format', () => {
+            const exportDto: ParticipationNameExportDTO = { participantName: 'Team A', participantIdentifier: 'team-a', teamStudentNames: ['Alice', 'Bob'] };
+            vi.spyOn(participationService, 'getParticipationNamesForExport').mockReturnValue(of([exportDto]));
+            const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
+
+            component.exportNames();
+
+            const rows: string[] = resultServiceStub.mock.calls[0][0];
+            expect(rows[0]).toBe('Team Name,Team Short Name,Students');
+            expect(rows[1]).toContain('Team A');
+            expect(rows[1]).toContain('Alice');
+        });
+
+        it('should not export when participant list is empty', () => {
+            vi.spyOn(participationService, 'getParticipationNamesForExport').mockReturnValue(of([]));
+            const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
+
+            component.exportNames();
+
+            expect(resultServiceStub).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('getBuildPlanUrl', () => {
+        const programmingExercise = { ...exercise, type: ExerciseType.PROGRAMMING, projectKey: 'key' } as ProgrammingExercise;
+
+        it('should construct build plan URL from template', () => {
+            component.exercise.set(programmingExercise);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'https://example.com/job/{projectKey}/job/{buildPlanId}' } as ProfileInfo);
+
+            expect(component.getBuildPlanUrl({ ...sampleDto, buildPlanId: '1' })).toBe('https://example.com/job/key/job/1');
+        });
+
+        it('should return undefined when no template available', () => {
+            component.exercise.set(programmingExercise);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({} as ProfileInfo);
+
+            expect(component.getBuildPlanUrl({ ...sampleDto, buildPlanId: '1' })).toBeUndefined();
+        });
+    });
+
+    describe('Results', () => {
+        it('should return undefined when dto has no resultId', () => {
+            expect(component.toResult(sampleDto)).toBeUndefined();
+        });
+
+        it('should build a Result from dto fields', () => {
+            const result = component.toResult({ ...sampleDto, resultId: 42, score: 75, successful: true, assessmentType: AssessmentType.AUTOMATIC });
+
+            expect(result).toMatchObject({ id: 42, score: 75, successful: true, assessmentType: AssessmentType.AUTOMATIC });
+        });
+
+        it('should add one result per correction round besides the newest one', () => {
+            const participation = component.toParticipation({
+                ...sampleDto,
+                submissionId: 20,
+                resultId: 31,
+                correctionRoundResults: [
+                    { resultId: 30, correctionRound: 0, assessmentType: AssessmentType.MANUAL },
+                    { resultId: 31, correctionRound: 1, assessmentType: AssessmentType.MANUAL },
+                ],
+            });
+
+            const results = participation.submissions![0].results!;
+            expect(results.map((result) => result.id)).toEqual([31, 30]);
+            expect(results[0].correctionRound).toBe(1);
+        });
+
+        it('should build a programming participation with a programming submission', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+
+            const participation = component.toParticipation({ ...sampleDto, participationId: 10, submissionId: 20, resultId: 30, buildFailed: true });
+
+            expect(participation.id).toBe(10);
+            expect(participation.type).toBe(ParticipationType.PROGRAMMING);
+            expect(participation.submissions![0].id).toBe(20);
+            expect(participation.submissions![0].results![0].id).toBe(30);
+            expect((participation.submissions![0] as any).submissionExerciseType).toBe('programming');
+            expect((participation.submissions![0] as any).buildFailed).toBe(true);
+        });
+
+        it('should build a plain submission without programming fields for a non-programming exercise', () => {
+            const participation = component.toParticipation({ ...sampleDto, submissionId: 20, resultId: 30, buildFailed: true });
+
+            expect(participation.type).toBe(ParticipationType.STUDENT);
+            expect(participation.submissions![0].submissionExerciseType).toBeUndefined();
+            expect('buildFailed' in participation.submissions![0]).toBe(false);
+        });
+
+        it('should build a participation without submissions when there is none', () => {
+            expect(component.toParticipation(sampleDto).submissions).toHaveLength(0);
+        });
+    });
+    it('reports the current page failure while ignoring failure of an older request', () => {
+        const first = new Subject<PageableResult<ParticipationManagementDTO>>();
+        const current = new Subject<PageableResult<ParticipationManagementDTO>>();
+        vi.spyOn(participationService, 'searchParticipations').mockReturnValueOnce(first).mockReturnValueOnce(current);
+        const alert = vi.spyOn(alertService, 'error');
+        component.onLazyLoad({ first: 0, rows: 50, sortField: 'id' });
+        component.onLazyLoad({ first: 50, rows: 50, sortField: 'id' });
+        current.next({ content: [sampleDto], totalElements: 51 });
+        first.error(new HttpErrorResponse({ status: 403 }));
+        expect(component.participations()).toEqual([sampleDto]);
+        expect(alert).not.toHaveBeenCalled();
+        current.error(new HttpErrorResponse({ status: 403 }));
+        expect(alert).toHaveBeenCalledExactlyOnceWith('artemisApp.participation.loadError');
+        expect(component.isLoading()).toBe(false);
+        expect(component.participations()).toEqual([sampleDto]);
     });
 });

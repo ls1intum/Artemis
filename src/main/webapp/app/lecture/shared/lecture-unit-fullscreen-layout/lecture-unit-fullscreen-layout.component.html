@@ -19,7 +19,7 @@
                 layout="vertical"
                 [panelSizes]="horizontalSplit().sizes"
                 [minSizes]="horizontalMinSizes()"
-                [gutterSize]="12"
+                [gutterSize]="6"
                 (onResizeStart)="onSplitterResizeStart('vertical')"
                 (onResizeEnd)="onHorizontalResize($event)"
             >
@@ -44,7 +44,7 @@
             layout="horizontal"
             [panelSizes]="verticalSplit().sizes"
             [minSizes]="verticalMinSizes()"
-            [gutterSize]="12"
+            [gutterSize]="6"
             (onResizeStart)="onSplitterResizeStart('horizontal')"
             (onResizeEnd)="onVerticalResize($event)"
         >

@@ -1,0 +1,179 @@
+<div class="flex min-w-0 items-center gap-2" data-testid="code-editor-ai-actions">
+    <div class="flex items-center gap-2" data-testid="code-editor-ai-action-buttons">
+        <!-- One entry point for every AI action; an action that cannot run now stays in the menu, disabled with its reason. -->
+        <button
+            #menuTrigger
+            tumAetUiButton
+            type="button"
+            size="small"
+            class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
+            severity="primary"
+            variant="outlined"
+            [tumAetUiMenuTrigger]="aiMenu"
+            data-testid="hyperion-ai-menu"
+        >
+            @if (progressRunning()) {
+                <jhi-hyperion-status state="running" [showLabel]="false" [label]="'artemisApp.hyperion.generation.status.running' | artemisTranslate" />
+            } @else if (busy()) {
+                <fa-icon [icon]="faSpinner" animation="spin" />
+            } @else {
+                <fa-icon [icon]="facArtemisIntelligence" />
+            }
+            <span jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.title"></span>
+            @if (selectedFeedbackCount()) {
+                <tumaet-ui-tag class="flex" size="sm" severity="info" rounded [value]="'' + selectedFeedbackCount()" data-testid="hyperion-adapt-selected-count" />
+            }
+            <fa-icon [icon]="faChevronDown" size="xs" />
+        </button>
+
+        @if (issueCount()) {
+            <button
+                tumAetUiButton
+                type="button"
+                size="small"
+                class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
+                severity="secondary"
+                variant="outlined"
+                (click)="issuesToggled.emit()"
+                [attr.aria-label]="'artemisApp.hyperion.generation.actions.showIssues' | artemisTranslate"
+                data-testid="hyperion-show-issues"
+            >
+                <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" />
+                <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
+                <tumaet-ui-tag class="flex" size="sm" severity="warn" rounded [value]="issueCountLabel()" data-testid="hyperion-issue-count" />
+            </button>
+        }
+
+        @if (cancelAvailable()) {
+            <button
+                tumAetUiButton
+                type="button"
+                size="small"
+                class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
+                severity="secondary"
+                variant="outlined"
+                (click)="cancelRequested.emit()"
+                data-testid="hyperion-cancel-ai-operation"
+            >
+                <fa-icon [icon]="faBan" />
+                <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
+            </button>
+        }
+    </div>
+</div>
+
+<!-- A disabled entry keeps pointer events so its title explains why; the menu itself never runs a disabled entry. -->
+<ng-template #aiMenu>
+    <tumaet-ui-menu>
+        @if (progressLink()) {
+            <button
+                type="button"
+                tumAetUiMenuItem
+                class="aria-disabled:pointer-events-auto! aria-disabled:hover:bg-transparent!"
+                (triggered)="progressRequested.emit()"
+                data-testid="hyperion-editor-open-generation"
+            >
+                @if (progressRunning()) {
+                    <jhi-hyperion-status state="running" [showLabel]="false" [label]="'artemisApp.hyperion.generation.status.running' | artemisTranslate" />
+                } @else {
+                    <fa-icon [icon]="faListCheck" />
+                }
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.viewRun"></span>
+            </button>
+        }
+        @if (adaptOffered()) {
+            <button
+                type="button"
+                tumAetUiMenuItem
+                class="aria-disabled:pointer-events-auto! aria-disabled:hover:bg-transparent!"
+                [disabled]="!!adaptUnavailableReason()"
+                [attr.title]="adaptUnavailableReason() || '' | artemisTranslate"
+                [attr.aria-description]="adaptUnavailableReason() || '' | artemisTranslate"
+                (triggered)="requestAdapt()"
+                data-testid="hyperion-adapt-with-feedback"
+            >
+                <fa-icon [icon]="facArtemisIntelligence" />
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.adapt"></span>
+            </button>
+        }
+        @if (variantOffered()) {
+            <button
+                type="button"
+                tumAetUiMenuItem
+                class="aria-disabled:pointer-events-auto! aria-disabled:hover:bg-transparent!"
+                [disabled]="!!variantBlockedReason()"
+                [attr.title]="variantBlockedReason() || '' | artemisTranslate"
+                [attr.aria-description]="variantBlockedReason() || '' | artemisTranslate"
+                (triggered)="requestVariant()"
+                data-testid="hyperion-create-variant"
+            >
+                <fa-icon [icon]="faClone" />
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.createVariant"></span>
+            </button>
+        }
+        <button
+            type="button"
+            tumAetUiMenuItem
+            class="aria-disabled:pointer-events-auto! aria-disabled:hover:bg-transparent!"
+            [disabled]="!!refineBlockedReason()"
+            [attr.title]="refineBlockedReason() || '' | artemisTranslate"
+            [attr.aria-description]="refineBlockedReason() || '' | artemisTranslate"
+            (triggered)="openRefinement()"
+            data-testid="hyperion-refine-problem-statement"
+        >
+            <fa-icon [icon]="faPen" />
+            <span [jhiTranslate]="refineLabelKey()"></span>
+        </button>
+        <button
+            type="button"
+            tumAetUiMenuItem
+            class="aria-disabled:pointer-events-auto! aria-disabled:hover:bg-transparent!"
+            [disabled]="!!consistencyBlockedReason()"
+            [attr.title]="consistencyBlockedReason() || '' | artemisTranslate"
+            [attr.aria-description]="consistencyBlockedReason() || '' | artemisTranslate"
+            (triggered)="consistencyRequested.emit()"
+            data-testid="hyperion-check-consistency"
+        >
+            <fa-icon [icon]="faCheckDouble" />
+            <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
+        </button>
+    </tumaet-ui-menu>
+</ng-template>
+
+<!-- The prompt is kept on dismiss so typed text is not lost. -->
+<tumaet-ui-popover #refinementPopover [ariaLabel]="refineLabelKey() | artemisTranslate">
+    <div class="flex w-[min(28rem,80vw)] flex-col gap-3" data-testid="hyperion-refinement-panel">
+        <div class="flex items-center justify-between gap-3">
+            <span class="text-sm font-semibold" [jhiTranslate]="refineLabelKey()"></span>
+            <button
+                tumAetUiButton
+                type="button"
+                severity="secondary"
+                variant="text"
+                size="small"
+                (click)="refinementPopover.close()"
+                [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
+            >
+                <fa-icon [icon]="faTimes" />
+            </button>
+        </div>
+        <textarea
+            tumAetUiTextarea
+            class="w-full resize-y"
+            rows="5"
+            [ngModel]="prompt()"
+            (ngModelChange)="prompt.set($event)"
+            [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
+            [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
+            [disabled]="!!refineBlockedReason()"
+            [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
+        ></textarea>
+        <div class="flex items-center justify-between gap-3">
+            <span class="text-xs text-muted-color" [class.text-state-danger]="promptNearLimit()">{{ prompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
+            <button tumAetUiButton type="button" size="small" [disabled]="!promptSubmittable()" (click)="submitRefinement()" data-testid="hyperion-refine-submit">
+                <fa-icon [icon]="faPaperPlane" />
+                <span [jhiTranslate]="refineSubmitKey()"></span>
+            </button>
+        </div>
+    </div>
+</tumaet-ui-popover>

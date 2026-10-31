@@ -22,15 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -45,6 +46,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForCourseDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForStudentResponseDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -127,7 +129,8 @@ public class QuizExerciseRetrievalResource {
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
     @GetMapping("exams/{examId}/quiz-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForExam(@PathVariable long examId) {
         log.debug("REST request to get all quiz exercises for the exam with id : {}", examId);
         ExamRepositoryApi examRepoApi = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
@@ -176,18 +179,35 @@ public class QuizExerciseRetrievalResource {
     @GetMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExerciseDetailsDTO> getQuizExercise(@PathVariable long quizExerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
+        return loadQuizExerciseDetails(quizExerciseId, false);
+    }
+
+    /**
+     * Retrieves management details of an exam quiz exercise.
+     *
+     * @param quizExerciseId the id of the exam exercise to retrieve
+     * @return the full management details of the exam exercise
+     */
+    @GetMapping("quiz-exercises/{quizExerciseId}/for-exam")
+    @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<QuizExerciseDetailsDTO> getQuizExerciseForExam(@PathVariable long quizExerciseId) {
+        return loadQuizExerciseDetails(quizExerciseId, true);
+    }
+
+    private ResponseEntity<QuizExerciseDetailsDTO> loadQuizExerciseDetails(long quizExerciseId, boolean forExam) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         var user = userRepository.getUserWithAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExerciseId);
+        if (forExam ? !quizExercise.isExamExercise() : !quizExercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
+        }
         if (quizExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
         }
         if (quizExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(quizExercise.getId());
-            if (channel != null) {
-                quizExercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(quizExercise.getId());
+            if (channelName != null) {
+                quizExercise.setChannelName(channelName);
             }
         }
         setQuizBatches(user, quizExercise);
@@ -208,7 +228,7 @@ public class QuizExerciseRetrievalResource {
     @FeatureUsage(UserFeature.QUIZ_LIVE)
     @GetMapping("quiz-exercises/{quizExerciseId}/for-student")
     @EnforceAtLeastStudent
-    public ResponseEntity<?> getQuizExerciseForStudent(@PathVariable long quizExerciseId) {
+    public ResponseEntity<QuizExerciseForStudentResponseDTO> getQuizExerciseForStudent(@PathVariable long quizExerciseId) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         User user = userRepository.getUserWithAuthorities();
@@ -219,7 +239,7 @@ public class QuizExerciseRetrievalResource {
         var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
         log.info("Found batch {} for user {}", batch.orElse(null), user.getLogin());
         quizExercise.setQuizBatches(batch.stream().collect(Collectors.toSet()));
-        Object dto = quizExerciseService.createQuizExerciseDTOForStudent(quizExercise, batch);
+        QuizExerciseForStudentResponseDTO dto = quizExerciseService.createQuizExerciseDTOForStudent(quizExercise, batch);
         return ResponseEntity.ok(dto);
     }
 
@@ -227,16 +247,28 @@ public class QuizExerciseRetrievalResource {
      * Search for all quiz exercises by id, title and course title. The result is pageable since there
      * might be hundreds of exercises in the DB.
      *
-     * @param search         The pageable search containing the page size, page number and query string
-     * @param isCourseFilter Whether to search in the courses for exercises
-     * @param isExamFilter   Whether to search in the groups for exercises
-     * @return The desired page, sorted and matching the given query
+     * @param page           the zero-based page number
+     * @param pageSize       the maximum number of exercises on one page
+     * @param sortingOrder   the sort direction
+     * @param sortedColumn   the exercise field used for sorting
+     * @param searchTerm     the title or id fragment to find
+     * @param isCourseFilter whether to include course exercises
+     * @param isExamFilter   whether to include exam exercises
+     * @return the matching page
      */
     @GetMapping("quiz-exercises")
-    @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<QuizExerciseForSearchDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<SearchResultPageDTO<QuizExerciseForSearchDTO>> getAllExercisesOnPage(@RequestParam int page, @RequestParam int pageSize,
+            @RequestParam SortingOrder sortingOrder, @RequestParam String sortedColumn, @RequestParam(defaultValue = "") String searchTerm,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
-        final var user = userRepository.getUserWithAuthorities();
+        SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
+        search.setPage(page);
+        search.setPageSize(pageSize);
+        search.setSortingOrder(sortingOrder);
+        search.setSortedColumn(sortedColumn);
+        search.setSearchTerm(searchTerm);
+        User user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 

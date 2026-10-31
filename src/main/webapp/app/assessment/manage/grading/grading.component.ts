@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormField, applyEach, form, required, validate, validateTree } from '@angular/forms/signals';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -35,6 +36,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { faDownload, faFileImport, faMagic, faTrash } from '@fortawesome/free-solid-svg-icons';
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -91,6 +93,7 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
         FaIconComponent,
         NgbTooltip,
         FormsModule,
+        NgTemplateOutlet,
         FormField,
         GradingPresentationsComponent,
         ArtemisTranslatePipe,
@@ -103,6 +106,7 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
         TumAetUiButtonDirective,
+        PointsInputComponent,
     ],
 })
 export class GradingComponent implements OnInit {
@@ -347,7 +351,7 @@ export class GradingComponent implements OnInit {
                         this.onChangeMaxPoints(this.exam()?.examMaxPoints);
                     });
                 } else {
-                    this.courseService.find(this.courseId!).subscribe((courseResponse) => {
+                    this.courseService.findForInstructor(this.courseId!).subscribe((courseResponse) => {
                         this.course.set(courseResponse.body!);
                         this.gradingScaleMeta.course = this.course();
                         this.maxPoints.set(this.course()?.maxPoints);
@@ -683,13 +687,17 @@ export class GradingComponent implements OnInit {
     }
 
     /**
-     * Detailed view: a points bound was edited. Points are optional (undefined when no max points are set), so they are
-     * not bound via the signal-form `[formField]` directive (which requires a definite field) but written here directly.
+     * Detailed view: a points bound was left or confirmed with Enter. Points are optional (undefined when no max points are
+     * set or the field is emptied), so they are not bound via the signal-form `[formField]` directive (which requires a
+     * definite field) but written here directly. An unchanged value is ignored, so passing through the field does not
+     * recompute the percentage from the points.
      */
-    onDetailedPointsInput(index: number, lowerBound: boolean, value: number): void {
-        // valueAsNumber is NaN for an emptied input; coerce to undefined like the previous ngModel number accessor did,
-        // so validation treats the field as missing instead of letting NaN slip through the bound checks.
-        const points = Number.isNaN(value) ? undefined : value;
+    onDetailedPointsInput(index: number, lowerBound: boolean, value: number | null | undefined): void {
+        const points = value ?? undefined;
+        const current = this.gradeStepsModel().gradeSteps[index];
+        if (points === (lowerBound ? current.lowerBoundPoints : current.upperBoundPoints)) {
+            return;
+        }
         this.updateGradeSteps((gradeSteps) => {
             const gradeStep = gradeSteps[index];
             if (lowerBound) {
@@ -941,6 +949,17 @@ export class GradingComponent implements OnInit {
             this.setPercentage(gradeStep, false);
             this.cascadePercentageInterval(gradeSteps, selectedIndex);
         });
+    }
+
+    /**
+     * Points interval view: the interval of a grade step was left or confirmed with Enter. An emptied field or a value that
+     * the field already shows is ignored.
+     */
+    onPointsIntervalInput(index: number, value: number | null | undefined): void {
+        if (value == undefined || value === this.getPointsInterval(this.gradeStepsModel().gradeSteps[index])) {
+            return;
+        }
+        this.setPointsInterval(index, value);
     }
 
     getPercentageInterval(gradeStep: GradeStep): number {

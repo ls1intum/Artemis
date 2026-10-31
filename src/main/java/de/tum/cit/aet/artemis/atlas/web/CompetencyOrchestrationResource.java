@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.OrchestratorDefaultsDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -58,7 +58,7 @@ public class CompetencyOrchestrationResource {
      * @return {@code 200 OK} with the {@link OrchestratorDefaultsDTO}
      */
     @GetMapping("defaults")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.AtlasAgent)
     public ResponseEntity<OrchestratorDefaultsDTO> getDefaults() {
         return ResponseEntity.ok(new OrchestratorDefaultsDTO(orchestratorProperties.debounceWindowSeconds(), orchestratorProperties.maxDailyOrchestrations()));

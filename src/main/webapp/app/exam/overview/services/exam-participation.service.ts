@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Service, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
@@ -7,7 +7,6 @@ import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.mode
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
@@ -89,8 +88,14 @@ export class ExamParticipationService {
      * @param studentExamId the id of the student Exam which should be loaded
      * @returns the studentExam with Exercises for the conduction-phase
      */
-    public loadStudentExamWithExercisesForConduction(courseId: number, examId: number, studentExamId: number): Observable<StudentExam | undefined> {
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction';
+    public loadStudentExamWithExercisesForConduction(
+        courseId: number,
+        examId: number,
+        studentExamId: number,
+        purpose: 'student' | 'instructor-owner' = 'student',
+    ): Observable<StudentExam | undefined> {
+        const suffix = purpose === 'instructor-owner' ? '/for-instructor' : '';
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction' + suffix;
         return this.getStudentExamFromServer(url).pipe(
             // During the conduction, blocking the student on a failed request would be worse than letting them work on
             // the copy cached on this device, which is a faithful snapshot of the exam they were handed.
@@ -155,17 +160,11 @@ export class ExamParticipationService {
      *
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
-     * @param userId the id of the student if the current caller is an instructor, the grade info for current user's exam will be retrieved if this argument is empty
      * @param studentExamId the id of the student exam
      */
-    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, studentExamId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
-        let params = new HttpParams();
-        if (userId) {
-            params = params.set('userId', userId.toString());
-        }
-
+    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExamWithGradeDTO> {
         const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/grade-summary`;
-        return this.httpClient.get<StudentExamWithGradeDTO>(url, { params });
+        return this.httpClient.get<StudentExamWithGradeDTO>(url);
     }
 
     /**
@@ -350,17 +349,6 @@ export class ExamParticipationService {
      */
     public saveExamSessionTokenToSessionStorage(examSessionToken: string): void {
         this.sessionStorageService.store('ExamSessionToken', examSessionToken);
-    }
-
-    /**
-     * Update a quizSubmission
-     *
-     * @param exerciseId
-     * @param quizSubmission
-     */
-    public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
-        const url = `api/quiz/exercises/${exerciseId}/submissions/exam`;
-        return this.httpClient.put<QuizSubmission>(url, quizSubmission);
     }
 
     public setLastSaveFailed(saveFailed: boolean, courseId: number, examId: number): void {

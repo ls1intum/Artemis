@@ -28,6 +28,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { Component, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -35,7 +36,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
@@ -45,7 +46,7 @@ import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -70,14 +71,14 @@ class StubTitleChannelNameComponent {
     isTitleDisallowed = signal(false);
 }
 
-// Provided under the real class, so that the host's viewChild(ExerciseTitleChannelNamePrimengComponent) finds it.
+// Provided under the real class, so that the host's viewChild(ExerciseTitleChannelNameComponent) finds it.
 @Component({
-    selector: 'jhi-exercise-title-channel-name-primeng',
+    selector: 'jhi-exercise-title-channel-name',
     template: '<jhi-title-channel-name />',
     imports: [StubTitleChannelNameComponent],
-    providers: [{ provide: ExerciseTitleChannelNamePrimengComponent, useExisting: forwardRef(() => StubExerciseTitleChannelNamePrimengComponent) }],
+    providers: [{ provide: ExerciseTitleChannelNameComponent, useExisting: forwardRef(() => StubExerciseTitleChannelNameComponent) }],
 })
-class StubExerciseTitleChannelNamePrimengComponent {
+class StubExerciseTitleChannelNameComponent {
     exercise = input<ModelingExercise>();
     titlePattern = input<string>('');
     minTitleLength = input<number>(0);
@@ -200,7 +201,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 {
                     provide: CourseManagementService,
                     useValue: {
-                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findForManagement: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
                         findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
                     },
                 },
@@ -253,11 +254,12 @@ describe('ModelingExerciseUpdateComponent', () => {
                 set: {
                     imports: [
                         FormsModule,
+                        PointsInputComponent,
                         MockDirective(TranslateDirective),
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,
-                        StubExerciseTitleChannelNamePrimengComponent,
+                        StubExerciseTitleChannelNameComponent,
                         MockComponent(TeamConfigFormGroupComponent),
                         MockComponent(IncludedInOverallScorePickerComponent),
                         MockComponent(PresentationScoreComponent),
@@ -268,7 +270,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
-                        MockComponent(CompetencySelectionPrimengComponent),
+                        MockComponent(CompetencySelectionComponent),
                         ExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
@@ -955,6 +957,18 @@ describe('ModelingExerciseUpdateComponent', () => {
         });
 
         // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should take decimal points and bonus points typed with a comma or a point', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+
+            await typeInto('#field_points', '2,5');
+            await typeInto('#field_bonusPoints', '0.75');
+
+            expect(exercise.maxPoints).toBe(2.5);
+            expect(exercise.bonusPoints).toBe(0.75);
+            expect(comp.invalidReasons()).toEqual([]);
+        });
+
         it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
             const exercise = filledInExercise();
             exercise.maxPoints = undefined;
@@ -1008,9 +1022,7 @@ describe('ModelingExerciseUpdateComponent', () => {
 
         it('should follow the title component when it writes a new title', async () => {
             await render(filledInExercise());
-            const titleComponent: StubExerciseTitleChannelNamePrimengComponent = fixture.debugElement.query(
-                By.directive(StubExerciseTitleChannelNamePrimengComponent),
-            ).componentInstance;
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
 
             comp.modelingExercise.title = 'ab';
             titleComponent.exerciseChange.emit(comp.modelingExercise);
@@ -1068,9 +1080,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         it('should edit the exercise in place, so that the child components keep the object they were given', async () => {
             const exercise = filledInExercise();
             await render(exercise);
-            const titleComponent: StubExerciseTitleChannelNamePrimengComponent = fixture.debugElement.query(
-                By.directive(StubExerciseTitleChannelNamePrimengComponent),
-            ).componentInstance;
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
 
             await typeInto('#field_points', '7');
             selectDiagramTypeOption(1);

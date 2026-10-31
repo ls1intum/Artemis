@@ -50,6 +50,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperion-activity-tray.component';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
@@ -141,10 +142,18 @@ describe('NavbarComponent', () => {
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent, CourseNotificationOverviewComponent],
+                    imports: [
+                        ThemeSwitchComponent,
+                        JhiConnectionWarningComponent,
+                        LoadingNotificationComponent,
+                        ImageComponent,
+                        CourseNotificationOverviewComponent,
+                        HyperionActivityTrayComponent,
+                    ],
                 },
                 add: {
                     imports: [
+                        MockComponent(HyperionActivityTrayComponent),
                         StubThemeSwitchComponent,
                         StubConnectionWarningComponent,
                         StubLoadingNotificationComponent,
@@ -176,11 +185,18 @@ describe('NavbarComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should not render the variant generation tray host without jobs', () => {
-        TestBed.inject(ExerciseVariantGenerationService).jobs.set([]);
+    it('mounts exactly one AI activity tray for both workflows and hides it during an exam', () => {
         fixture.detectChanges();
-
+        component.currAccount.set({ login: 'editor' } as User);
+        component.hyperionExerciseGenerationEnabled.set(true);
+        TestBed.inject(ExerciseVariantGenerationService).jobs.set([{ jobId: 'quiz', phase: 'TRANSFORMING' }]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('jhi-hyperion-activity-tray')).toHaveLength(1);
         expect(fixture.nativeElement.querySelector('jhi-variant-generation-tray')).toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-hyperion-jobs-indicator')).toBeNull();
+        component.isExamActive.set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('jhi-hyperion-activity-tray')).toBeNull();
     });
 
     it('should display the current course next to the logo', () => {
@@ -533,6 +549,19 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special Cases for Breadcrumbs', () => {
+        it('uses the translated TUM.Live label for the course connection route', () => {
+            router.setUrl('/course-management/1/gocast-binding');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.gocast.title',
+                translate: true,
+                uri: '/course-management/1/gocast-binding/',
+            } as MockBreadcrumb);
+        });
+
         it.each(['', '?filter=pending'])('translates the presentation breadcrumb with suffix %s', (suffix) => {
             router.setUrl(`/course-management/1/presentations${suffix}`);
             fixture.detectChanges();
@@ -556,12 +585,17 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/exercises/'))).toBe(false);
         });
 
-        it('submissions link to the scores, since there is no list of submissions only', () => {
-            router.setUrl('/course-management/1/text-exercises/2/submissions');
+        it.each([
+            '/course-management/1/text-exercises/2/submissions',
+            '/course-management/1/text-exercises/2/participations/3/submissions',
+            '/course-management/1/exams/4/exercise-groups/5/text-exercises/2/participations/3/submissions',
+        ])('submissions link to the participation page for %s', (url) => {
+            router.setUrl(url);
 
             fixture.detectChanges();
 
-            expect(component.breadcrumbs().some((crumb) => crumb.uri === '/course-management/1/text-exercises/2/scores/')).toBe(true);
+            const participationUrl = url.substring(0, url.indexOf('/text-exercises/2/') + '/text-exercises/2/'.length) + 'participations/';
+            expect(component.breadcrumbs().some((crumb) => crumb.uri === participationUrl && crumb.label === 'artemisApp.exercise.submissions')).toBe(true);
             expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/submissions/'))).toBe(false);
         });
 
@@ -709,14 +743,16 @@ describe('NavbarComponent', () => {
 
         it('should show the exercise title and correct exercise link for generic exercise routes', () => {
             const exerciseService = TestBed.inject(ExerciseService);
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(
+                of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })),
+            );
             const testUrl = '/course-management/1/exercises/2';
             router.setUrl(testUrl);
 
             fixture.detectChanges();
 
-            expect(exerciseService.find).toHaveBeenCalledOnce();
-            expect(exerciseService.find).toHaveBeenCalledWith(2);
+            expect(exerciseService.findForStaff).toHaveBeenCalledOnce();
+            expect(exerciseService.findForStaff).toHaveBeenCalledWith(2);
             expect(component.breadcrumbs()).toHaveLength(4);
             expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Programming Exercise',

@@ -1,0 +1,71 @@
+---
+id: sign-in
+title: Signing In to Artemis from VS Code
+sidebar_label: Signing In
+---
+
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../../src/components/Image/Image";
+
+import loginServer from '../../assets/vscode-extension/login-server.png';
+import loginPassword from '../../assets/vscode-extension/login-password.png';
+
+You sign in with the same account you use in the browser, on one Artemis server at a time. The extension asks for
+your username first, and the server then decides how that account signs in.
+
+## Choosing the Server
+
+The extension connects to `https://artemis.tum.de` unless you choose another server. The server it is about to use
+is named at the bottom of the login page, next to **Server:**. Select that line, or run **Artemis: Set Server URL**
+from the command palette, to pick a different one from the list or enter its address under **Enter custom URL...**.
+
+<Image src={loginServer} alt="The Artemis login page in the VS Code sidebar, with the username field and the server line at the bottom" size={ImageSize.medium} caption="The login page, naming the server it signs in to" />
+
+Changing the server while you are signed in signs you out, since your session is only valid on the server that
+issued it. In EduIDE the workspace fixes the server, and you cannot change it.
+
+## Signing In
+
+Enter your username and select **Continue**. What the page shows next depends on how your account signs in.
+
+If it uses a password, the page asks for it. **Remember me on this device** is checked by default and asks Artemis for
+a longer session, like the checkbox in the browser; uncheck it on a shared computer. Then select
+**Login to Artemis**.
+
+<Image src={loginPassword} alt="The second step of the login, asking for the password of the account entered before" size={ImageSize.medium} caption="The password step, after the username" />
+
+If it uses single sign-on, the button reads **Sign in with** followed by the name of your identity provider. It
+opens the provider's login page in your browser. After you sign in there, the browser returns you to VS Code and the
+extension completes the sign-in.
+
+Some single sign-on setups only work in the browser. For those accounts the page says that the extension cannot sign
+you in and asks you to log in on the Artemis website instead.
+
+**← Back** returns to the username step if you entered the wrong one.
+
+After a successful sign-in the extension opens its dashboard, or the page you chose as start page in the
+[settings](/student/tools-reference/vscode-extension/settings-and-commands#settings).
+
+<Callout variant={CalloutVariant.info}>
+
+  If sign-in fails, the message names the reason: a wrong username or password, an account that is not activated,
+  a server that cannot be reached or does not answer in time, or an address with no Artemis server behind it. A
+  server that cannot be reached or an address without Artemis usually means the server address is wrong, so check
+  it on the login page.
+
+</Callout>
+
+## Signing In in EduIDE
+
+In EduIDE you do not sign in at all. The workspace starts with your Artemis session already in place and the server
+fixed, so the extension opens straight to your exercise. If the session runs out while you work, the extension asks
+you to restart the workspace, which signs you in again.
+
+## Signing Out
+
+Select **Logout from Artemis** at the bottom of the dashboard, or run **Artemis: Logout** from the command palette.
+Signing out removes the stored session from this computer. In EduIDE there is no logout, because the session belongs
+to the workspace.
+
+When your session expires on its own, the extension tells you and offers **Log In** to sign in again.

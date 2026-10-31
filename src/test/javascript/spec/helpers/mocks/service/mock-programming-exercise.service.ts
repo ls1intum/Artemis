@@ -14,6 +14,8 @@ export class MockProgrammingExerciseService {
     exportInstructorExercise = (exerciseId: number) => of({ body: undefined });
     exportInstructorRepository = (exerciseId: number, repositoryType: RepositoryType) => of({ body: undefined });
     exportStudentRepository = (exerciseId: number, participationId: number) => of({ body: undefined });
+    exportSolutionSnapshotForStaff = (exerciseId: number, includeTests: boolean) => of({ body: undefined });
+    exportStudentRepositoryForStaff = (exerciseId: number, participationId: number, identified = false) => of({ body: undefined });
     exportStudentRequestedRepository = (exerciseId: number, includeTests: boolean) => of({ body: undefined });
     getTheiaConfig = (exerciseId: number) => of({});
     createStructuralSolutionEntries = (exerciseId: number) => of({});

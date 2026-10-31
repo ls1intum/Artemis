@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.TEST_CASES;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,6 +24,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,13 +37,17 @@ import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
@@ -48,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
@@ -106,9 +114,23 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final FeedbackMessageService feedbackMessageService;
 
+    private final Optional<HyperionExerciseMutationApi> mutationApi;
+
+    private final GitService gitService;
+
+    private final String defaultBranch;
+
+    private final ProgrammingExerciseBuildConfigRepository buildConfigs;
+
     public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService,
+            Optional<HyperionExerciseMutationApi> mutationApi, GitService gitService, ProgrammingExerciseBuildConfigRepository buildConfigs,
+            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+        this.defaultBranch = defaultBranch;
+        this.mutationApi = mutationApi;
+        this.gitService = gitService;
+        this.buildConfigs = buildConfigs;
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -246,7 +268,8 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     public Optional<TestCaseFeedback> createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful, final ProgrammingExercise exercise,
             Set<ProgrammingExerciseTestCase> activeTestCases) {
-        var testCase = activeTestCases.stream().filter(test -> testName.equals(test.getTestName())).findAny();
+        String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
+        var testCase = activeTestCases.stream().filter(test -> storedTestName.equalsIgnoreCase(test.getTestName())).findAny();
         if (testCase.isEmpty()) {
             // This feedback was created by a test which is not known to Artemis (not part of the solution result), e.g. a test invented by a student.
             log.debug("Ignoring feedback of unknown test case {} for exercise {}", testName, exercise.getId());
@@ -331,6 +354,36 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param exercise    the programming exercise for which the test cases should be extracted from the new result
      */
     public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        if (mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled).isPresent() && buildResult instanceof BuildResult localResult
+                && (exercise.getReleaseDate() == null || exercise.getReleaseDate().isAfter(ZonedDateTime.now()))
+                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exercise.getId())) {
+            if (StringUtils.isBlank(buildResult.assignmentRepoCommitHash()) || StringUtils.isBlank(buildResult.testsRepoCommitHash())) {
+                return;
+            }
+            boolean synchronizationBuildSuccessful = Integer.valueOf(0).equals(localResult.buildScriptExitCode())
+                    && localResult.jobs().stream().anyMatch(job -> !job.successfulTests().isEmpty()) && localResult.jobs().stream().allMatch(job -> job.failedTests().isEmpty());
+            boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(),
+                    synchronizationBuildSuccessful, () -> {
+                        ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
+                        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
+                        if (!buildResult.assignmentRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
+                                || !buildResult.testsRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
+                            return false;
+                        }
+                        extractCurrentTestCases(buildResult, current);
+                        return true;
+                    });
+            if (!synchronizedCases) {
+                log.info("Skipped canonical test discovery for exercise {}: the draft is being saved or the build revisions are superseded; the result is still graded",
+                        exercise.getId());
+            }
+            return;
+        }
+        extractCurrentTestCases(buildResult, exercise);
+    }
+
+    private void extractCurrentTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
@@ -357,13 +410,12 @@ public class ProgrammingExerciseFeedbackCreationService {
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
         // Get test cases where the activate state has changed (re-added or removed tests).
-        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks);
+        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks,
+                exercise.getProgrammingLanguage());
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
         testCasesToSave.addAll(newTestCases);
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
-
-        setTestCaseType(testCasesToSave, exercise.getProgrammingLanguage());
 
         // Ensure no duplicate TestCase is present: TestCases have to have a unique name per exercise.
         // Just using the uniqueness property of the set is not enough, as the equals/hash functions
@@ -385,18 +437,21 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
-            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks) {
-        // We compare the new generated test cases from feedback with the existing test cases from the database
-        return existingTestCases.stream().filter(existing -> {
-            Optional<ProgrammingExerciseTestCase> matchingTestCase = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
-            // Either the test case was active and is not part of the feedback anymore
-            boolean existingTestCaseRemoved = matchingTestCase.isEmpty() && existing.isActive();
-            // OR was not active before and is now part of the feedback again.
-            boolean inactiveTestReactivated = matchingTestCase.isPresent() && !existing.isActive();
-            return existingTestCaseRemoved || inactiveTestReactivated;
-        }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
-        // If an existing test gets reactivated, we reuse its grading settings (weight, visibility, etc.).
-        // The user should not need to enter these settings again.
+            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, ProgrammingLanguage programmingLanguage) {
+        Map<String, ProgrammingExerciseTestCaseType> reportedTypes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        testCasesFromFeedbacks.forEach(testCase -> reportedTypes.put(testCase.getTestName(), testCase.getType()));
+        // Reuse the grading settings (weight, visibility, etc.) when an inactive test reappears.
+        return existingTestCases.stream().filter(existing -> reportedTypes.containsKey(existing.getTestName()) != existing.isActive()).map(existing -> {
+            var updated = existing.clone().active(!existing.isActive());
+            // clone() does not copy the type. A disappearing test keeps its type, and a reappearing one uses
+            // the classification of its original CI name rather than the shortened database name.
+            updated.setType(reportedTypes.getOrDefault(existing.getTestName(), existing.getType()));
+            if (!updated.isActive() && updated.getType() == ProgrammingExerciseTestCaseType.DEFAULT) {
+                // Legacy short names may not have been classified yet; known structural types must survive shortening.
+                setTestCaseType(Set.of(updated), programmingLanguage);
+            }
+            return updated;
+        }).collect(Collectors.toSet());
     }
 
     /**
@@ -431,11 +486,15 @@ public class ProgrammingExerciseFeedbackCreationService {
     private Set<ProgrammingExerciseTestCase> getTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         Visibility defaultVisibility = exercise.getDefaultTestCaseVisibility();
 
-        return buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
+        Set<ProgrammingExerciseTestCase> testCases = buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
                 // we use default values for weight, bonus multiplier and bonus points
                 .map(testCase -> new ProgrammingExerciseTestCase().testName(testCase.name()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
                         .visibility(defaultVisibility))
                 .collect(Collectors.toSet());
+        // Structural Java names end in ']'; shortening them before classification would lose that information.
+        setTestCaseType(testCases, exercise.getProgrammingLanguage());
+        testCases.forEach(testCase -> testCase.setTestName(ProgrammingExerciseTestCase.normalizeTestName(testCase.getTestName())));
+        return testCases;
     }
 
     /**

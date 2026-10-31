@@ -20,20 +20,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisCategoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisCategoryUpdateDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 
 /**
@@ -61,12 +64,22 @@ public class StaticCodeAnalysisResource {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
+
+    private final UserRepository userRepository;
+
+    private final ExerciseVersionService exerciseVersionService;
+
     public StaticCodeAnalysisResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisService staticCodeAnalysisService, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository) {
+            StaticCodeAnalysisService staticCodeAnalysisService, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard, UserRepository userRepository, ExerciseVersionService exerciseVersionService) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
+        this.userRepository = userRepository;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -76,13 +89,12 @@ public class StaticCodeAnalysisResource {
      * @return the static code analysis categories
      */
     @GetMapping("programming-exercises/{exerciseId}/static-code-analysis-categories")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<StaticCodeAnalysisCategoryDTO>> getStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkSCAEnabledForExerciseElseThrow(programmingExercise);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
@@ -96,7 +108,7 @@ public class StaticCodeAnalysisResource {
      * @return the updated static code analysis categories
      */
     @PatchMapping("programming-exercises/{exerciseId}/static-code-analysis-categories")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<StaticCodeAnalysisCategoryDTO>> updateStaticCodeAnalysisCategories(@PathVariable Long exerciseId,
             @RequestBody List<StaticCodeAnalysisCategoryUpdateDTO> categories) {
         log.debug("REST request to update static code analysis categories for programming exercise {}", exerciseId);
@@ -104,12 +116,20 @@ public class StaticCodeAnalysisResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         checkSCAEnabledForExerciseElseThrow(programmingExercise);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         validateCategories(categories, exerciseId);
-        List<StaticCodeAnalysisCategory> updates = categories.stream().map(StaticCodeAnalysisCategoryUpdateDTO::toEntity).toList();
-        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.updateCategories(exerciseId, updates);
-        return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+            if (lease.coordinated()) {
+                programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            }
+            checkSCAEnabledForExerciseElseThrow(programmingExercise);
+            Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.updateCategories(exerciseId,
+                    categories.stream().map(StaticCodeAnalysisCategoryUpdateDTO::toEntity).toList());
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, userRepository.getUser());
+            }
+            return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
+        }
     }
 
     /**
@@ -119,16 +139,24 @@ public class StaticCodeAnalysisResource {
      * @return static code analysis categories with the default configuration
      */
     @PatchMapping("programming-exercises/{exerciseId}/static-code-analysis-categories/reset")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<StaticCodeAnalysisCategoryDTO>> resetStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to reset static code analysis categories for programming exercise {}", exerciseId);
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkSCAEnabledForExerciseElseThrow(programmingExercise);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
-        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.resetCategories(programmingExercise);
-        return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+            if (lease.coordinated()) {
+                programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            }
+            checkSCAEnabledForExerciseElseThrow(programmingExercise);
+            Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.resetCategories(programmingExercise);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, userRepository.getUser());
+            }
+            return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
+        }
     }
 
     /**
@@ -140,13 +168,12 @@ public class StaticCodeAnalysisResource {
      * @see StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
      */
     @PatchMapping("programming-exercises/{exerciseId}" + "/static-code-analysis-categories/import")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<StaticCodeAnalysisCategoryDTO>> importStaticCodeAnalysisCategoriesFromExercise(@PathVariable Long exerciseId, @RequestParam Long sourceExerciseId) {
         log.debug("REST request to import static code analysis categories to programming exercise {} from exercise {}", exerciseId, sourceExerciseId);
 
         ProgrammingExercise targetExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkSCAEnabledForExerciseElseThrow(targetExercise);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, targetExercise, null);
 
         ProgrammingExercise sourceExercise = programmingExerciseRepository.findByIdElseThrow(sourceExerciseId);
         checkSCAEnabledForExerciseElseThrow(sourceExercise);
@@ -156,9 +183,21 @@ public class StaticCodeAnalysisResource {
             throw new ConflictException("SCA configurations can only be imported from exercises with the same programming language", ENTITY_NAME, "programmingLanguageMismatch");
         }
 
-        // the copies are mapped after they were saved, so the response carries the generated ids
-        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.importCategoriesFromExercise(sourceExercise, targetExercise);
-        return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+            if (lease.coordinated()) {
+                targetExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            }
+            checkSCAEnabledForExerciseElseThrow(targetExercise);
+            if (targetExercise.getProgrammingLanguage() != sourceExercise.getProgrammingLanguage()) {
+                throw new ConflictException("SCA configurations can only be imported from exercises with the same programming language", ENTITY_NAME,
+                        "programmingLanguageMismatch");
+            }
+            Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.importCategoriesFromExercise(sourceExercise, targetExercise);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(targetExercise, userRepository.getUser());
+            }
+            return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
+        }
     }
 
     private static List<StaticCodeAnalysisCategoryDTO> toDTOs(Collection<StaticCodeAnalysisCategory> categories) {

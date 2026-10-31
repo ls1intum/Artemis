@@ -18,7 +18,7 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
         const courseId = route.params['courseId'];
-        const course$ = this.courseManagementService.find(courseId).pipe(
+        const course$ = this.courseManagementService.findForManagement(courseId).pipe(
             filter((response: HttpResponse<Course>) => response.ok),
             map((response: HttpResponse<Course>) => response.body ?? undefined),
             filter((course: Course | undefined): course is Course => course !== undefined),

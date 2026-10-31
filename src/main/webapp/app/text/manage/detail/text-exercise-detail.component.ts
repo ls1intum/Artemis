@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -72,7 +73,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * Loads the text exercise and subscribes to changes of it on component initialization.
      */
     ngOnInit() {
-        // TODO: route determines whether the component is in exam mode
         this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
         });
@@ -84,17 +84,18 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exerciseId of the text exercise of type {number}
      */
     load(exerciseId: number) {
-        // TODO: Use a separate find method for exam exercises containing course, exam, exerciseGroup and exercise exerciseId
-        this.textExerciseService.find(exerciseId).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
-            this.textExercise.set(textExerciseResponse.body!);
-            this.isExamExercise.set(!!this.textExercise().exerciseGroup);
-            this.course.set(this.isExamExercise() ? this.textExercise().exerciseGroup?.exam?.course : this.textExercise().course);
+        (isExamExerciseRoute(this.route.snapshot) ? this.textExerciseService.findForExam(exerciseId) : this.textExerciseService.find(exerciseId)).subscribe(
+            (textExerciseResponse: HttpResponse<TextExercise>) => {
+                this.textExercise.set(textExerciseResponse.body!);
+                this.isExamExercise.set(!!this.textExercise().exerciseGroup);
+                this.course.set(this.isExamExercise() ? this.textExercise().exerciseGroup?.exam?.course : this.textExercise().course);
 
-            this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().problemStatement);
-            this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().exampleSolution);
-            this.detailOverviewSections.set(this.getExerciseDetailSections());
-        });
+                this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().problemStatement);
+                this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().exampleSolution);
+                this.detailOverviewSections.set(this.getExerciseDetailSections());
+            },
+        );
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats.set(statistics);
         });

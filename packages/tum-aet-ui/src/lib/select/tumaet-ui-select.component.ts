@@ -1,3 +1,4 @@
+import { OptionControl } from '../internal/option-control';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -50,31 +51,13 @@ const TYPEAHEAD_DEBOUNCE_MS = 500;
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumAetUiSelectComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TumAetUiSelectComponent implements ControlValueAccessor {
+export class TumAetUiSelectComponent extends OptionControl implements ControlValueAccessor {
     private readonly overlayService = inject(TumAetUiOverlayService);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
     private readonly document = inject(DOCUMENT);
     private readonly injector = inject(Injector);
     private readonly formField = inject(TUM_AET_UI_FORM_FIELD, { optional: true });
-
-    readonly options = input<readonly unknown[]>([]);
-
-    /** Property name used as the visible label for object options. */
-    readonly optionLabel = input<string>();
-
-    /** Property name written to the form value; omit it to write the option itself. */
-    readonly optionValue = input<string>();
-
-    readonly placeholder = input<string>();
-
-    readonly disabled = input(false, { transform: booleanAttribute });
-
-    /**
-     * Reports the select as required to assistive technology. A `tumaet-ui-form-field` marker is decorative, so a
-     * required select sets this as well. Validation stays with the form control.
-     */
-    readonly required = input(false, { transform: booleanAttribute });
 
     readonly showClear = input(false, { transform: booleanAttribute });
 
@@ -163,6 +146,7 @@ export class TumAetUiSelectComponent implements ControlValueAccessor {
     private typeaheadReset?: ReturnType<typeof setTimeout>;
 
     constructor() {
+        super();
         // Tell an enclosing field which id to label whenever this control was given one of its own.
         effect(() => {
             const ownId = this.inputId();
@@ -218,24 +202,6 @@ export class TumAetUiSelectComponent implements ControlValueAccessor {
     setDisabledState(isDisabled: boolean): void {
         this.disabledByForm.set(isDisabled);
     }
-    protected label(option: unknown): string {
-        const key = this.optionLabel();
-        const raw = key && option !== null && typeof option === 'object' ? (option as Record<string, unknown>)[key] : option;
-        return this.toText(raw);
-    }
-
-    private toText(value: unknown): string {
-        switch (typeof value) {
-            case 'string':
-                return value;
-            case 'number':
-            case 'boolean':
-            case 'bigint':
-                return String(value);
-            default:
-                return '';
-        }
-    }
     /** The strings the filter searches for one option: the named `filterBy` fields, or the visible label. */
     private filterFields(option: unknown): string[] {
         const keys = this.filterBy()
@@ -246,14 +212,6 @@ export class TumAetUiSelectComponent implements ControlValueAccessor {
             return [this.label(option)];
         }
         return keys.map((key) => this.toText((option as Record<string, unknown>)[key]));
-    }
-
-    private resolveValue(option: unknown): unknown {
-        const key = this.optionValue();
-        if (key && option !== null && typeof option === 'object') {
-            return (option as Record<string, unknown>)[key];
-        }
-        return option;
     }
 
     private valuesMatch(a: unknown, b: unknown): boolean {

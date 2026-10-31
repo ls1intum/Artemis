@@ -7,6 +7,10 @@ import java.util.regex.Pattern;
  */
 public final class Constants {
 
+    public static final String HYPERION_LIVE_SAVE_COORDINATION_MAP = "hyperion-live-save-coordination";
+
+    public static final String HYPERION_GENERATION_JOBS_MAP = "hyperion-exercise-generation-jobs";
+
     // NOTE: those 4 values have to be the same as in app.constants.ts
     public static final int USERNAME_MIN_LENGTH = 4;
 
@@ -412,6 +416,13 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
+     * The name of the Spring profile used for seeding a demo course on startup.
+     * NOTE: this profile is opt-in and intended for demo and manual testing instances only. It must never be activated on a production instance,
+     * because the seeding routine writes demo courses, users and content directly into the database.
+     */
+    public static final String PROFILE_DEMO = "demo";
+
+    /**
      * The name of the Spring profile used for activating the scheduling functionality.
      * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
      * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,
@@ -427,6 +438,13 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
+
+    /**
+     * Profile combination for seeding the demo course, which must happen exactly once per database.
+     * Multiple nodes run {@link #PROFILE_CORE} (see the node1/node2 deployment configurations), so gating the seeding on {@link #PROFILE_SCHEDULING} as well restricts it to the
+     * primary node. Without this, every core node would seed concurrently on startup and could create the demo data more than once.
+     */
+    public static final String PROFILE_DEMO_AND_SCHEDULING = PROFILE_DEMO + " & " + PROFILE_SCHEDULING;
 
     /**
      * The name of the module feature used for Theia as an external online IDE.
@@ -477,6 +495,14 @@ public final class Constants {
      * The name of the module feature used for Hyperion functionality.
      */
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
+
+    /**
+     * The name of the module feature used for whole-exercise generation.
+     */
+    public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
+
+    /** The independent AI Worker coordinator module feature. */
+    public static final String MODULE_FEATURE_AIWORKER = "aiworker";
 
     /**
      * The name of the module feature used for Deimos malicious participation analysis functionality.
@@ -585,6 +611,14 @@ public final class Constants {
      * The name of the property used to enable or disable Hyperion functionality.
      */
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
+
+    /**
+     * The name of the property used to enable or disable whole-exercise generation.
+     */
+    public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
+
+    /** The property that enables the AI Worker coordinator on a core node. */
+    public static final String AIWORKER_ENABLED_PROPERTY_NAME = "artemis.aiworker.enabled";
 
     /**
      * The name of the property used to enable or disable Iris / Pyris functionality.

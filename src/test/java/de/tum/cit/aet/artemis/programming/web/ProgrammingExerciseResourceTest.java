@@ -21,6 +21,8 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -76,11 +78,15 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 
-class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+// Use the existing generation-disabled lane for ordinary exercise operations and their query budget.
+class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILocalVCBatchTest {
 
     private static final String TEST_PREFIX = "programmingexerciseresource";
+
+    @Value("${artemis.hyperion.exercise-generation.enabled:false}")
+    private boolean exerciseGenerationEnabled;
 
     /** The timeline a variant group owns in the tests below; its members must keep exactly these dates. */
     private static final ZonedDateTime GROUP_BASE_DATE = ZonedDateTime.parse("2099-01-01T00:00:00Z");
@@ -205,7 +211,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildConfigOnlyReturnsRestrictedSetOfInformation() throws Exception {
         ProgrammingExerciseTheiaConfigDTO imageDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/theia-config", HttpStatus.OK,
                 ProgrammingExerciseTheiaConfigDTO.class);
@@ -215,7 +221,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportTemplateRepositoryAsInMemoryZip_shouldReturnValidZipWithContent() throws Exception {
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -239,7 +245,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportRepositoryWithFullHistory() throws Exception {
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -264,7 +270,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportStudentRequestedSolutionRepository_shouldReturnZipWithoutGit() throws Exception {
         programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -281,7 +287,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportStudentRequestedTestsRepository_shouldReturnZipWithoutGit() throws Exception {
         // Example solution published and tests released with example solution
         programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
@@ -300,7 +306,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportOwnStudentRepository_shouldReturnZipWithoutGit() throws Exception {
         var participations = programmingExerciseStudentParticipationTestRepository.findByExerciseId(programmingExercise.getId());
         assertThat(participations).isNotEmpty();
@@ -322,7 +328,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportedExerciseJsonWithCategories() throws Exception {
         /*
          * The factory method populateUnreleasedProgrammingExercise() will call
@@ -377,7 +383,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportedExerciseJsonWithoutCategories() throws Exception {
         // GIVEN
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
@@ -415,7 +421,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProblemStatement_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
         String tooLongProblemStatement = "a".repeat(100_001);
 
@@ -424,7 +430,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateProgrammingExercise_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
@@ -440,7 +446,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateProgrammingExercise_rejectsInvalidAutomaticallyComputedBuildAndTestDateBeforePersistence() throws Exception {
         addInstructorToCourse();
         long exerciseCountBeforeRequest = programmingExerciseRepository.count();
@@ -460,7 +466,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
         programmingExercise.setProblemStatement("a".repeat(100_001));
 
@@ -470,7 +476,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_withTooLongBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
         addInstructorToCourse();
 
@@ -487,7 +493,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_withTooLongDockerFlags_shouldReturnBadRequest() throws Exception {
         addInstructorToCourse();
 
@@ -504,7 +510,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateProgrammingExercise_withTooLongBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
         addInstructorToCourse();
 
@@ -519,7 +525,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         // The create DTO maps the submitted plagiarism config onto the transient exercise; the validation must still
         // reject invalid values before anything is persisted.
@@ -543,7 +549,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_validPlagiarismDetectionConfig_updatesExistingConfigInPlace() throws Exception {
         addInstructorToCourse();
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
@@ -575,7 +581,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         addInstructorToCourse();
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
@@ -612,7 +618,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReEvaluateAndUpdateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequestAndPreservesExistingConfig() throws Exception {
         addInstructorToCourse();
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
@@ -648,7 +654,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_omittedPlagiarismDetectionConfig_preservesExisting() throws Exception {
         addInstructorToCourse();
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
@@ -690,7 +696,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * changes that row in place: same id, new values.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_submittedPlagiarismDetectionConfig_updatesThePermanentRowInPlace() throws Exception {
         long configId = prepareExerciseWithPlagiarismDetectionConfig();
         programmingExercise.setPlagiarismDetectionConfig(submittedPlagiarismDetectionConfig());
@@ -706,7 +712,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * Re-evaluate runs the same apply step as the general update, so the in-place update must hold there too.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReEvaluateProgrammingExercise_submittedPlagiarismDetectionConfig_updatesThePermanentRowInPlace() throws Exception {
         long configId = prepareExerciseWithPlagiarismDetectionConfig();
         programmingExercise.setPlagiarismDetectionConfig(submittedPlagiarismDetectionConfig());
@@ -784,7 +790,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_preservesBuildAndTestDateOffset() throws Exception {
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
@@ -820,7 +826,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_rejectsInvalidAutomaticallyComputedBuildAndTestDateBeforeAuxiliaryRepositoryChanges() throws Exception {
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
@@ -858,7 +864,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_preservesExamBuildAndTestDateOffset() throws Exception {
         programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
@@ -899,7 +905,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseTimeline_preservesExamBuildAndTestDateOffset() throws Exception {
         programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
@@ -947,7 +953,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * the DTO itself binds the key.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateProgrammingExercise_rawJsonWithId_badRequest() throws Exception {
         addInstructorToCourse();
 
@@ -970,11 +976,15 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * them itself (the links need managed competencies), so the resource resolves them through the competency link
      * service; without that call the exercise would be created with no links at all and nothing would fail loudly.
      */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void testCreateProgrammingExercise_withCompetencyLinks_persistsTheLinks() throws Exception {
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 30 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateProgrammingExercise_withCompetencyLinks_persistsTheLinks(int linkCount) throws Exception {
         addInstructorToCourse();
-        Competency competency = competencyUtilService.createCompetency(course);
+        Set<Competency> competencies = new HashSet<>();
+        for (int index = 0; index < linkCount; index++) {
+            competencies.add(competencyUtilService.createCompetency(course));
+        }
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setShortName("compLinks");
@@ -984,20 +994,33 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
         var buildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
         buildConfig.setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
-        newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
+        Set<CompetencyExerciseLink> links = new HashSet<>();
+        competencies.forEach(competency -> links.add(new CompetencyExerciseLink(competency, newExercise, 1)));
+        newExercise.setCompetencyLinks(links);
 
-        var created = request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
-                ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        var created = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
+                ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(linkCount == 1 ? 120 : 260);
 
         // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
         List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(created.id());
-        assertThat(storedLinks).hasSize(1);
-        assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
-        assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
+        Set<Long> expectedIds = new HashSet<>();
+        competencies.forEach(competency -> expectedIds.add(competency.getId()));
+        assertThat(storedLinks).hasSize(linkCount);
+        assertThat(storedLinks).extracting(link -> link.getCompetency().getId()).containsExactlyInAnyOrderElementsOf(expectedIds);
+        assertThat(storedLinks).allSatisfy(link -> {
+            assertThat(link.getWeight()).isEqualTo(1);
+            assertThat(link.isGeneratedByAi()).isFalse();
+        });
+        assertThat(created.competencyLinks()).hasSize(linkCount);
+        assertThat(created.competencyLinks()).extracting(link -> link.competency().id()).containsExactlyInAnyOrderElementsOf(expectedIds);
+        assertThat(created.competencyLinks()).allSatisfy(link -> {
+            assertThat(link.weight()).isEqualTo(1);
+            assertThat(link.generatedByAi()).isFalse();
+        });
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateProgrammingExercise_withHyperionCompetencyLink_persistsProvenanceAtomically() throws Exception {
         addInstructorToCourse();
         Competency competency = competencyUtilService.createCompetency(course);
@@ -1024,7 +1047,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * the full traced read contract for a course exercise.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_responseCarriesClientReadContract_courseExercise() throws Exception {
         addInstructorToCourse();
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
@@ -1056,7 +1079,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * navigation walks {@code exerciseGroup.exam.course}. A flat id silently breaks saving an exam exercise.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_responseCarriesClientReadContract_examExercise() throws Exception {
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         course = programmingExercise.getExerciseGroup().getExam().getCourse();
@@ -1086,7 +1109,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * the way {@code toUpdateProgrammingExerciseDTO} does - and saves again, for a course and an exam exercise.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_clientShapedBodyRebuiltFromResponse_courseExercise() throws Exception {
         addInstructorToCourse();
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
@@ -1104,7 +1127,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_clientShapedBodyRebuiltFromResponse_examExercise() throws Exception {
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         course = programmingExercise.getExerciseGroup().getExam().getCourse();
@@ -1128,7 +1151,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * remaining rows, and the ids of surviving criteria must not be regenerated.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_emptyGradingCriteria_deletesAllCriterionRows() throws Exception {
         addInstructorToCourse();
         exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
@@ -1156,7 +1179,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * assigns to the managed exercise inserts a second {@code submission_policy} row.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_resentSubmissionPolicy_keepsExactlyOneRowWithSameId() throws Exception {
         addInstructorToCourse();
         var policy = new LockRepositoryPolicy();
@@ -1190,7 +1213,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * write path that assigns the collection directly leaves {@code aux_repo.exercise_id} null.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_auxiliaryRepositories_keepIdsAndBackReference() throws Exception {
         addInstructorToCourse();
         var auxRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
@@ -1214,7 +1237,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * dropped, the following save would orphan (and thereby delete) every structured grading instruction.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReEvaluateProgrammingExercise_gradingCriterionIdsAreStable() throws Exception {
         addInstructorToCourse();
         exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
@@ -1244,7 +1267,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * after the test ids were replaced by test names, plus the update alert header.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProblemStatement_responseCarriesClientReadContract() throws Exception {
         addInstructorToCourse();
         final String newProblemStatement = "a brand new problem statement";
@@ -1270,7 +1293,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * {@code buildAndTestStudentSubmissionsAfterDueDate}, so the recomputed value has to be on the wire.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseTimeline_responseCarriesClientReadContract() throws Exception {
         addInstructorToCourse();
         ZonedDateTime newDueDate = ZonedDateTime.now().plusDays(3);
@@ -1303,14 +1326,15 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * The DTO mapper must not pull additional sub-graphs (test cases, tasks, plagiarism cases) into the update path.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_doesNotFanOutQueries() throws Exception {
+        assertThat(exerciseGenerationEnabled).isFalse();
         addInstructorToCourse();
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
 
         assertThatDb(() -> request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK))
-                .hasBeenCalledAtMostTimes(70);
+                .hasBeenCalledAtMostTimes(49);
     }
 
     /**
@@ -1320,7 +1344,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private static UpdateProgrammingExerciseDTO toClientUpdateDTO(ProgrammingExerciseResponseDTO response) {
         Long exerciseGroupId = response.exerciseGroup() != null ? response.exerciseGroup().id() : null;
         Long courseId = exerciseGroupId != null ? null : (response.course() != null ? response.course().id() : null);
-        Set<GradingCriterionDTO> gradingCriteria = response.gradingCriteria() == null ? null : new HashSet<>(response.gradingCriteria());
+        List<GradingCriterionDTO> gradingCriteria = response.gradingCriteria();
         return new UpdateProgrammingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(), response.problemStatement(), response.categories(),
                 response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(), response.allowComplaintsForAutomaticAssessments(),
                 response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.gradingInstructions(), response.releaseDate(), response.startDate(),
@@ -1349,11 +1373,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         return new UpdateProgrammingExerciseDTO(dto.id(), dto.title(), dto.channelName(), dto.shortName(), dto.problemStatement(), dto.categories(), dto.difficulty(),
                 dto.maxPoints(), dto.bonusPoints(), dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.presentationScoreEnabled(),
                 dto.secondCorrectionEnabled(), dto.gradingInstructions(), dto.releaseDate(), dto.startDate(), dto.dueDate(), dto.assessmentDueDate(),
-                dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria, dto.competencyLinks(), dto.testRepositoryUri(),
-                dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(), dto.staticCodeAnalysisEnabled(),
-                dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(), dto.buildAndTestStudentSubmissionsAfterDueDate(),
-                dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(), dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig(),
-                dto.plagiarismDetectionConfig());
+                dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria == null ? null : List.copyOf(gradingCriteria), dto.competencyLinks(),
+                dto.testRepositoryUri(), dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(),
+                dto.staticCodeAnalysisEnabled(), dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(),
+                dto.buildAndTestStudentSubmissionsAfterDueDate(), dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(),
+                dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig(), dto.plagiarismDetectionConfig());
     }
 
     /**
@@ -1404,7 +1428,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * the unrelated part of the edit still lands, and the member's timeline self-heals.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseCannotChangeVariantGroupTimeline() throws Exception {
         attachProgrammingExerciseToVariantGroup();
         requestTimelineShiftAlongsideUnownedChange();
@@ -1420,7 +1444,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * same guard: otherwise re-evaluating a grouped exercise is a second way to desynchronize its timeline.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReEvaluateProgrammingExerciseCannotChangeVariantGroupTimeline() throws Exception {
         attachProgrammingExerciseToVariantGroup();
         requestTimelineShiftAlongsideUnownedChange();

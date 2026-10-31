@@ -9,13 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -25,11 +26,15 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationUserDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
+import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.ResponsibleUserDTO;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -80,7 +85,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @MethodSource("courseConfigurationProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration,
             HttpStatus expectedStatus) throws Exception {
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
@@ -92,7 +97,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_shouldReturnConversationsWhereMember() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
@@ -159,7 +164,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_onlyFewDatabaseCalls() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
@@ -192,7 +197,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_shouldCarryTheDatesOfTheReferencedExercise() throws Exception {
         // The sidebar marks a channel as current from these dates. They used to be looked up in the course's exercises,
         // which only worked while the course carried all of its content.
@@ -217,7 +222,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_onlyChannelsIfMessagingDisabled() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
@@ -277,7 +282,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsFavorite_shouldToggleIsFavorite() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -319,7 +324,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsFavorite_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -337,7 +342,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsMuted_shouldToggleIsMuted() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -379,7 +384,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsMuted_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -397,7 +402,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsHidden_shouldToggleIsHidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -439,7 +444,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsHidden_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -457,7 +462,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchConversationMembers_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -480,7 +485,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchMembersOfConversation_shouldFindMembersWhereLoginOrNameMatches() throws Exception {
         var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "student1");
@@ -540,7 +545,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchMembersOfCourseWideChannel_sortedByName_shouldFindMembers() throws Exception {
         Channel courseWideChannel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide-member-search");
 
@@ -610,20 +615,118 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void markMessagesAsRead() throws Exception {
+    void unreadMessages_shouldReturnTrue_ForReplyToOwnMessage() throws Exception {
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
+                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var ownMessage = this.postInConversation(oneToOneChat.getId(), "student1");
+        assertThat(unreadMessagesInCourse()).as("nothing happened yet that the user has not seen").isFalse();
+
+        // the only thing that happens afterwards is a reply in the thread of the message of the user
+        userUtilService.changeUser(testPrefix + "tutor1");
+        replyToMessage(ownMessage.id());
+
+        userUtilService.changeUser(testPrefix + "student1");
+        assertThat(unreadMessagesInCourse()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void unreadMessages_shouldReturnFalse_ForOwnReply() throws Exception {
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
+                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var ownMessage = this.postInConversation(oneToOneChat.getId(), "student1");
+
+        replyToMessage(ownMessage.id());
+
+        assertThat(unreadMessagesInCourse()).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,student1", "true,student1", "false,instructor1", "true,instructor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deletingPost_preservesUnreadRepliesAndDecrementsOnlyUnreadRecipients(boolean postUnread, String deleter) throws Exception {
+        var channel = createChannel(false, TEST_PREFIX + "delete-unread");
+        addUsersToConversation(channel.getId(), "student1", "tutor1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        var thread = postInConversation(channel.getId(), "student1");
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        replyToMessage(thread.id());
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        var post = postInConversation(channel.getId(), "student1");
+        var postDate = conversationMessageRepository.findByIdElseThrow(post.id()).getCreationDate();
+
+        // Establish read positions immediately around this post. The author never counts their own post.
+        for (String login : List.of("student1", "tutor1", "instructor1")) {
+            var user = userUtilService.getUserByLogin(TEST_PREFIX + login);
+            var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(channel.getId(), user.getId());
+            boolean hasReadPost = login.equals("tutor1") && !postUnread;
+            participant.setLastRead(hasReadPost ? postDate : postDate.minusNanos(1_000_000));
+            participant.setUnreadMessagesCount(login.equals("student1") || hasReadPost ? 0L : 1L);
+            conversationParticipantRepository.saveAndFlush(participant);
+        }
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        replyToMessage(thread.id());
+        assertThat(unreadCountOf(channel.getId(), "student1")).as("the post author has an unread reply, but not their own post").isEqualTo(1);
+        assertThat(unreadCountOf(channel.getId(), "tutor1")).as("the earlier replier has the reply and possibly the unread post").isEqualTo(postUnread ? 2 : 1);
+        assertThat(unreadCountOf(channel.getId(), "instructor1")).as("the moderator has only the unread post, not their own reply").isEqualTo(1);
+
+        userUtilService.changeUser(TEST_PREFIX + deleter);
+        request.delete("/api/communication/courses/" + exampleCourseId + "/messages/" + post.id(), HttpStatus.OK);
+
+        assertThat(conversationMessageRepository.findById(post.id())).isEmpty();
+        assertThat(conversationMessageRepository.findById(thread.id())).isPresent();
+        assertThat(unreadCountOf(channel.getId(), "student1")).as("deleting one's own post cannot consume its author's unread reply").isEqualTo(1);
+        assertThat(unreadCountOf(channel.getId(), "tutor1")).as("only an unread top-level post is subtracted; the unread reply remains").isEqualTo(1);
+        assertThat(unreadCountOf(channel.getId(), "instructor1")).as("a moderator deleting another author's unread post also loses that post's count").isZero();
+    }
+
+    private Long unreadCountOf(Long conversationId, String login) {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + login);
+        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversationId, user.getId()).getUnreadMessagesCount();
+    }
+
+    private boolean unreadMessagesInCourse() throws Exception {
+        return request.get("/api/communication/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
+    }
+
+    private void replyToMessage(Long messageId) throws Exception {
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/answer-messages", new CreateAnswerPostDTO("A reply", new ParentPostDTO(messageId)),
+                AnswerPostResponseDTO.class, HttpStatus.CREATED);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "messages", "patch", "bulk" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void readIsCommittedBeforeResponse(String readPath) throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(exampleCourse, "mark-as-read");
-        channel.setLastMessageDate(ZonedDateTime.now().minusDays(1));
         ConversationParticipant participant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        ZonedDateTime previousRead = ZonedDateTime.now().minusDays(1);
+        participant.setLastRead(previousRead);
+        participant.setUnreadMessagesCount(3L);
+        conversationParticipantRepository.saveAndFlush(participant);
 
-        request.patch("/api/communication/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/mark-as-read", null, HttpStatus.OK);
+        if ("messages".equals(readPath)) {
+            var params = new LinkedMultiValueMap<String, String>();
+            params.add("conversationIds", channel.getId().toString());
+            request.getList("/api/communication/courses/" + exampleCourseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+        }
+        else if ("bulk".equals(readPath)) {
+            request.postWithoutLocation("/api/communication/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
+        }
+        else {
+            request.patch("/api/communication/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/mark-as-read", null, HttpStatus.OK);
+        }
 
-        conversationParticipantRepository.flush();
-        ConversationParticipant updatedParticipant = conversationParticipantRepository
-                .findConversationParticipantByConversationIdAndUserIdElseThrow(participant.getConversation().getId(), participant.getUser().getId());
-        assertThat(updatedParticipant.getLastRead()).isNotNull();
-        // lenient assertion to prevent flaky behavior
-        assertThat(updatedParticipant.getLastRead()).satisfiesAnyOf(lastRead -> assertThat(lastRead).isCloseTo(participant.getLastRead(), Assertions.within(1, ChronoUnit.SECONDS)),
-                lastRead -> assertThat(lastRead).isAfter(participant.getLastRead()));
+        // No await: HTTP success must mean the transaction committed, so an immediate list GET is authoritative.
+        ConversationParticipant updated = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(channel.getId(),
+                participant.getUser().getId());
+        assertThat(updated.getUnreadMessagesCount()).isZero();
+        assertThat(updated.getLastRead().toInstant()).isAfter(previousRead.toInstant());
+        var conversations = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
+        assertThat(conversations).filteredOn(conversation -> conversation.getId().equals(channel.getId())).singleElement().satisfies(conversation -> {
+            assertThat(conversation.getUnreadMessagesCount()).isZero();
+            assertThat(conversation.getLastReadDate().toInstant()).isAfter(previousRead.toInstant());
+        });
     }
 
     @Test
@@ -707,7 +810,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_AND_MESSAGING", "COMMUNICATION_ONLY" })
     void testEnableCommunication(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);

@@ -41,6 +41,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { Component, forwardRef, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
@@ -219,7 +220,7 @@ describe('TextExercise Management Update Component', () => {
                 {
                     provide: CourseManagementService,
                     useValue: {
-                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findForManagement: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
                         findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
                     },
                 },
@@ -264,6 +265,7 @@ describe('TextExercise Management Update Component', () => {
                 set: {
                     imports: [
                         FormsModule,
+                        PointsInputComponent,
                         MockDirective(TranslateDirective),
                         FaIconComponent,
                         NgbTooltip,
@@ -795,6 +797,18 @@ describe('TextExercise Management Update Component', () => {
         });
 
         // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should take decimal points and bonus points typed with a comma or a point', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+
+            await typeInto('#field_points', '2,5');
+            await typeInto('#field_bonusPoints', '0.75');
+
+            expect(exercise.maxPoints).toBe(2.5);
+            expect(exercise.bonusPoints).toBe(0.75);
+            expect(component.invalidReasons()).toEqual([]);
+        });
+
         it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
             const exercise = filledInExercise();
             exercise.maxPoints = undefined;

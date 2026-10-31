@@ -109,15 +109,14 @@ export class AttachmentVideoUnitService {
     }
 
     /**
-     * Resolves a video page URL to its underlying playlist URL (e.g., .m3u8).
-     * This is used for video platforms that require an API call to get the actual playable URL.
+     * Resolves the TUM Live video of a unit to its HLS playlist URL (.m3u8). The URL is signed and valid for seven hours, so
+     * it is requested again whenever the unit is opened.
      *
-     * @param pageUrl - The public page URL of the video
+     * @param lectureUnitId - The attachment video unit
      * @returns Observable<string | undefined> - The playlist URL if found, undefined otherwise
      */
-    getPlaylistUrl(pageUrl: string): Observable<string | undefined> {
-        const params = new HttpParams().set('url', pageUrl);
-        return this.httpClient.get('/api/videosource/playlist', { params, responseType: 'text' }).pipe(catchError(() => of(undefined)));
+    getPlaylistUrl(lectureUnitId: number): Observable<string | undefined> {
+        return this.httpClient.get(`api/lecture/lecture-units/${lectureUnitId}/playlist`, { responseType: 'text' }).pipe(catchError(() => of(undefined)));
     }
 
     /**

@@ -55,6 +55,7 @@ import {
 } from 'app/exercise/util/exercise-validation.util';
 import { ExerciseFormState } from 'app/exercise/util/exercise-form-state';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -82,6 +83,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FeatureOverlayComponent,
         ExerciseTimelineComponent,
         ExerciseGroupDateNoticeComponent,
+        PointsInputComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit {
@@ -233,7 +235,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                             this.exerciseState.patch('course', undefined);
                         } else {
                             // The target course where we want to import into
-                            this.courseService.find(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
+                            this.courseService.findForManagement(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.exerciseState.patch('exerciseGroup', undefined);
                         }

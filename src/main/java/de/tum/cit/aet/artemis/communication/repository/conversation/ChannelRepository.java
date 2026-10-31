@@ -71,6 +71,22 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             """)
     Long findChannelIdByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Reads the name of the channel of an exercise.
+     * <p>
+     * A projection, because the channel points back at its exercise and its course with eager associations: loading the channel as an entity to read its name reads
+     * the exercise with all its columns, and the course, as well.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the name of the channel, or null if the exercise has none
+     */
+    @Query("""
+            SELECT DISTINCT channel.name
+            FROM Channel channel
+            WHERE channel.exercise.id = :exerciseId
+            """)
+    String findChannelNameByExerciseId(@Param("exerciseId") Long exerciseId);
+
     @Query("""
             SELECT DISTINCT channel.id
             FROM Channel channel
@@ -82,12 +98,10 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             SELECT DISTINCT channel
             FROM Channel channel
                 LEFT JOIN channel.conversationParticipants conversationParticipant
-                LEFT JOIN channel.lecture lecture
                 LEFT JOIN FETCH channel.course
                 LEFT JOIN FETCH channel.creator
             WHERE channel.course.id = :courseId
                 AND (channel.isCourseWide OR (channel.id = conversationParticipant.conversation.id AND conversationParticipant.user.id = :userId))
-                AND (lecture IS NULL OR NOT lecture.isTutorialLecture)
             ORDER BY channel.name
             """)
     List<Channel> findChannelsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);

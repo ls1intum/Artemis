@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -29,7 +30,7 @@ public class WorkerTransport {
 
     private static final Duration ACKNOWLEDGEMENT_TTL = Duration.ofHours(4);
 
-    private static final Duration HEARTBEAT_TTL = Duration.ofSeconds(10);
+    private static final Duration HEARTBEAT_TTL = Duration.ofSeconds(30);
 
     private static final int CHUNK_CHARS = 512 * 1024;
 
@@ -74,6 +75,59 @@ public class WorkerTransport {
 
     private DistributedMap<String, String> events(String workerId) {
         return eventMaps.computeIfAbsent(workerId, id -> provider.getMap("aiworker-events-" + id));
+    }
+
+    /**
+     * Eventually reclaims abandoned delivery, including chunks written after a previous sweep removed their manifest.
+     * Ownership reads must fail rather than report absence when the provider is unavailable. Execution UUIDs are never reused.
+     *
+     * @param workerId  provisioned worker whose delivery is scanned
+     * @param ownsLease fresh exact-execution lease check
+     */
+    public void pruneUnclaimed(String workerId, Predicate<UUID> ownsLease) {
+        Maps maps = maps();
+        pruneEntries(maps.chunks(), workerId, true, ownsLease);
+        pruneEntries(events(workerId), workerId, false, ownsLease);
+        pruneEntries(maps.acknowledgements(), workerId, false, ownsLease);
+    }
+
+    private static void pruneEntries(DistributedMap<String, String> entries, String workerId, boolean chunks, Predicate<UUID> ownsLease) {
+        for (String key : entries.keySet()) {
+            UUID executionId = executionIdFromKey(key, workerId, chunks);
+            if (executionId != null && !ownsLease.test(executionId)) {
+                String observed = entries.get(key);
+                if (observed != null) {
+                    entries.remove(key, observed);
+                }
+            }
+        }
+    }
+
+    private static UUID executionIdFromKey(String key, String workerId, boolean chunk) {
+        String prefix = workerId + ":";
+        if (!key.startsWith(prefix)) {
+            return null;
+        }
+        String[] parts = key.substring(prefix.length()).split(":", -1);
+        if (parts.length != (chunk ? 3 : 2) || parts[1].length() != 19) {
+            return null;
+        }
+        try {
+            UUID executionId = UUID.fromString(parts[0]);
+            if (!executionId.toString().equals(parts[0]) || Long.parseLong(parts[1]) < 0 || !parts[1].chars().allMatch(character -> character >= '0' && character <= '9')) {
+                return null;
+            }
+            if (chunk) {
+                int index = Integer.parseInt(parts[2]);
+                if (index < 0 || !Integer.toString(index).equals(parts[2])) {
+                    return null;
+                }
+            }
+            return executionId;
+        }
+        catch (IllegalArgumentException malformedKey) {
+            return null;
+        }
     }
 
     public void send(WorkerCommandDTO command) {

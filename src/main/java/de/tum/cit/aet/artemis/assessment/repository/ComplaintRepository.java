@@ -37,7 +37,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     @Query("""
             SELECT c
             FROM Complaint c
-                LEFT JOIN c.result r
+                LEFT JOIN FETCH c.result r
+                LEFT JOIN FETCH r.assessor
                 LEFT JOIN r.submission s
             WHERE s.id = :submissionId
             """)

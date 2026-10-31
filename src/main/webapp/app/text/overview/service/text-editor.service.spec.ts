@@ -101,4 +101,11 @@ describe('TextEditorService', () => {
         expect(req.request.params.get('resultId')).toBe(resultId.toString());
         req.flush(mockParticipation);
     });
+    it.each(['owner', 'staff-preview'] as const)('selects text editor URL from explicit %s purpose', (purpose) => {
+        textEditorService.get(123, 456, purpose).subscribe((data) => expect(data.id).toBe(123));
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe(`api/text/participations/123/text-editor${purpose === 'staff-preview' ? '/for-staff' : ''}`);
+        expect(req.request.params.get('resultId')).toBe('456');
+        req.flush({ id: 123 });
+    });
 });

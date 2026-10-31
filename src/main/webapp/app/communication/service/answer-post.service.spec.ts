@@ -5,6 +5,7 @@ import { take } from 'rxjs/operators';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
 import { communicationAnswerPostToCreateUser1, communicationResolvingAnswerPostUser1 } from 'test/helpers/sample/communication-sample-data';
 import { provideHttpClient } from '@angular/common/http';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 
 describe('AnswerPost Service', () => {
     let service: AnswerPostService;
@@ -68,6 +69,31 @@ describe('AnswerPost Service', () => {
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
             vi.advanceTimersByTime(0);
+        });
+
+        it('keeps a denied source request available to its inline error handler', () => {
+            const onError = vi.fn();
+            service.getSourceAnswerPostsByIds(1, [2]).subscribe({ error: onError });
+            const req = httpMock.expectOne('api/communication/courses/1/answer-messages-source-posts?answerPostIds=2');
+            expect(req.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+
+            req.flush({ title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+
+            expect(onError).toHaveBeenCalledOnce();
+            expect(onError.mock.calls[0][0].status).toBe(403);
+        });
+
+        it('allows global alerts for a denied verification action', () => {
+            const onError = vi.fn();
+            service.verify(1, 2).subscribe({ error: onError });
+            const req = httpMock.expectOne('api/communication/courses/1/answer-messages/2/verify');
+            expect(req.request.method).toBe('PATCH');
+            expect(req.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(false);
+
+            req.flush({ title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+
+            expect(onError).toHaveBeenCalledOnce();
+            expect(onError.mock.calls[0][0].status).toBe(403);
         });
 
         it('should get source answer posts by IDs', () => {

@@ -80,7 +80,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withNewDueDate() {
         ZonedDateTime originalDueDate = ZonedDateTime.now().plusDays(7);
         Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), originalDueDate, ZonedDateTime.now().plusDays(8), testCourse);
@@ -113,7 +113,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withNullOriginalDueDate() throws Exception {
         // Create an exercise with null due date
         Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), null, ZonedDateTime.now().plusDays(8), testCourse);
@@ -152,7 +152,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withNullUpdatedDueDate() {
         ZonedDateTime originalDueDate = ZonedDateTime.now().plusDays(7);
         Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), originalDueDate, ZonedDateTime.now().plusDays(8), testCourse);
@@ -183,7 +183,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withUnchangedDueDate() {
         // Create original exercise
         ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);

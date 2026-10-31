@@ -52,7 +52,8 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -340,14 +341,9 @@ public class CompetencyResource {
             throws URISyntaxException {
         log.info("REST request to all competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
 
-        if (importOptions.sourceCourseId().isEmpty()) {
-            throw new BadRequestAlertException("No source course specified", ENTITY_NAME, "noSourceCourse");
-        }
-        else if (courseId == importOptions.sourceCourseId().get()) {
-            throw new BadRequestAlertException("Cannot import from a course into itself", ENTITY_NAME, "courseCycle");
-        }
+        long sourceCourseId = CompetencyValidationService.sourceCourseIdForImport(importOptions, courseId, ENTITY_NAME);
         var targetCourse = courseRepository.findByIdElseThrow(courseId);
-        var sourceCourse = courseRepository.findByIdElseThrow(importOptions.sourceCourseId().get());
+        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
         var competencies = competencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
@@ -434,16 +430,17 @@ public class CompetencyResource {
     /**
      * POST atlas/competencies/suggest : suggests competencies using AtlasML.
      * <p>
-     * The target course is carried in the request body ({@code course_id}). {@code @EnforceAtLeastEditor} only gates the
-     * general editor role, so the caller must additionally be at least an editor in <em>that</em> course; this is
-     * checked programmatically below to prevent a user from requesting suggestions for a course they cannot edit.
+     * The target course is carried in the request body ({@code course_id}), so the annotations only require an authenticated user
+     * and the caller must be at least an editor in <em>that</em> course; this is checked programmatically below to prevent a user
+     * from requesting suggestions for a course they cannot edit.
      *
      * @param request the request containing the description and the target course id for competency suggestions
      * @return the ResponseEntity with status 200 (OK) and with body the suggested competencies
      */
     @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
     @PostMapping("competencies/suggest")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.AtlasML)
     public ResponseEntity<SuggestCompetencyResponseDTO> suggestCompetencies(@RequestBody SuggestCompetencyRequestDTO request) {
         log.debug("REST request to suggest competencies using AtlasML with description: {}", request.description());

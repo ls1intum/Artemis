@@ -63,11 +63,17 @@ describe('Submission Export Button Component', () => {
         );
     });
 
+    it('should preserve the known exam source when opening the export dialog', () => {
+        fixture.componentRef.setInput('examExercise', true);
+        component.openSubmissionExportDialog(mouseEvent);
+        expect(vi.mocked(dialogService.open).mock.calls[0][1]?.inputValues).toEqual({ exerciseId, exerciseType, examExercise: true });
+    });
+
     it('should set input values for dialog', () => {
         const openSpy = vi.spyOn(dialogService, 'open');
 
         component.openSubmissionExportDialog(mouseEvent);
 
-        expect(openSpy.mock.calls[0][1]?.inputValues).toEqual({ exerciseId, exerciseType });
+        expect(openSpy.mock.calls[0][1]?.inputValues).toEqual({ exerciseId, exerciseType, examExercise: false });
     });
 });

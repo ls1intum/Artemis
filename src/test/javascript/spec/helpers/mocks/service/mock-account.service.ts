@@ -22,7 +22,6 @@ export class MockAccountService implements IAccountService {
     fetch = () => of({ body: { id: 99 } as User } as any);
     updateLanguage = (languageKey: string) => of({});
     getImageUrl = () => 'blob';
-    hasAuthority = (authority: string) => Promise.resolve(true);
     isAtLeastTutor = () => this.hasAnyAuthorityDirect([Authority.TUTOR]);
     hasEditorAccess = () => this.hasAnyAuthorityDirect([Authority.EDITOR]);
     isPasskeyRequiredForAdministratorFeatures = () => false;
@@ -46,7 +45,6 @@ export class MockAccountService implements IAccountService {
     getVcsAccessToken = (participationId: number) => of();
     createVcsAccessToken = (participationId: number) => of();
     getToolToken = () => of();
-    setUserEnabledMemiris = (enabled: boolean) => of();
     setUserAcceptedExternalLLMUsage = (accepted: boolean) => of();
     // Both mirror the real service so specs can observe the cached decision (the Iris chatbot gates its
     // AI-selection modal on it). restore… keeps an absent timestamp absent, exactly like production.

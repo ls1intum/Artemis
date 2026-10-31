@@ -20,7 +20,6 @@ env:
 
 permissions:
   contents: read
-  checks: write
   actions: read
 
 jobs:
@@ -28,11 +27,15 @@ jobs:
   server-tests-mysql:
     runs-on: aet-large-ubuntu
     timeout-minutes: 80
+    permissions:
+      contents: read
+      actions: read
+      checks: write # dorny/test-reporter creates the MySQL test check.
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Setup Java
-      uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+      uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
       with:
         distribution: 'temurin'
         java-version: |
@@ -40,7 +43,7 @@ jobs:
           ${{ env.java }}
     - name: Setup Gradle
       # Sole Gradle dependency-cache mechanism (prunes unused artifacts -> leaner cache, less eviction). See ci-build.yml.
-      uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
     - name: Java Tests (module-affected)
       if: ${{ !env.RUN_ALL_TESTS }}
       run: |

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -9,11 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -29,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisCategoryDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -68,13 +72,16 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     void testCreateDefaultCategories_noConfigurationAvailable() {
         // Haskell does not have a default configuration at the time of creation of this test
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
-        staticCodeAnalysisService.createDefaultCategories(programmingExercise);
+        assertThatDb(() -> {
+            staticCodeAnalysisService.createDefaultCategories(programmingExercise);
+            return null;
+        }).hasBeenCalledTimes(0);
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId());
         assertThat(categories).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetStaticCodeAnalysisCategories() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         var categories = assertThatDb(() -> request.get(endpoint, HttpStatus.OK, new TypeReference<List<StaticCodeAnalysisCategoryDTO>>() {
@@ -83,7 +90,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetStaticCodeAnalysisCategories_wireShape() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         var rawCategories = objectMapper.<List<Map<String, Object>>>readValue(request.get(endpoint, HttpStatus.OK, String.class), new TypeReference<>() {
@@ -98,16 +105,35 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @MethodSource("languagesWithDefaultCategories")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateDefaultCategories(ProgrammingLanguage programmingLanguage) {
         var testExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember(), programmingLanguage);
         testExercise = programmingExerciseRepository.save(testExercise);
-        staticCodeAnalysisService.createDefaultCategories(testExercise);
-        // Swift has only one default category at the time of creation of this test
+        var storedExercise = testExercise;
+        var defaults = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(programmingLanguage);
+        // JPA IDENTITY persistence inserts each category once; the cap prevents additional reads/merges, not those required inserts.
+        assertThatDb(() -> {
+            staticCodeAnalysisService.createDefaultCategories(storedExercise);
+            return null;
+        }).hasBeenCalledAtMostTimes(defaults.size());
+        // Verify every persisted setting, not just the number of category rows.
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(testExercise.getId());
-        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+        assertThat(categories).hasSize(defaults.size());
+        for (var defaultCategory : defaults) {
+            assertThat(categories).filteredOn(category -> category.getName().equals(defaultCategory.name())).singleElement().satisfies(category -> {
+                assertThat(category.getId()).isNotNull();
+                assertThat(category.getExercise().getId()).isEqualTo(storedExercise.getId());
+                assertThat(category.getPenalty()).isEqualTo(defaultCategory.penalty());
+                assertThat(category.getMaxPenalty()).isEqualTo(defaultCategory.maxPenalty());
+                assertThat(category.getState()).isEqualTo(defaultCategory.state());
+            });
+        }
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            assertThat(categories).hasSize(60);
+        }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             assertThat(categories).hasSize(6);
             assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(1);
         }
@@ -121,15 +147,33 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         }
     }
 
+    private static Stream<ProgrammingLanguage> languagesWithDefaultCategories() {
+        return StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().keySet().stream();
+    }
+
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testSaveCategories_preservesNullableMaxPenaltyZeroesAndQuotedNames() {
+        var categories = List
+                .of(new StaticCodeAnalysisDefaultCategory("O'Reilly — 名称", 0.25, null, CategoryState.INACTIVE, List.of()),
+                        new StaticCodeAnalysisDefaultCategory("Feedback", 0.5, -1.5, CategoryState.FEEDBACK, List.of()),
+                        new StaticCodeAnalysisDefaultCategory("Graded", 0.0, 0.0, CategoryState.GRADED, List.of()))
+                .stream().map(category -> category.toStaticCodeAnalysisCategory(programmingExercise)).toList();
+        staticCodeAnalysisCategoryRepository.saveAll(categories);
+        assertThat(staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId())).extracting(StaticCodeAnalysisCategory::getName,
+                StaticCodeAnalysisCategory::getState, StaticCodeAnalysisCategory::getPenalty, StaticCodeAnalysisCategory::getMaxPenalty)
+                .containsExactlyInAnyOrder(tuple("O'Reilly — 名称", CategoryState.INACTIVE, 0.25, null), tuple("Feedback", CategoryState.FEEDBACK, 0.5, -1.5),
+                        tuple("Graded", CategoryState.GRADED, 0.0, 0.0));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         request.getList(endpoint, HttpStatus.FORBIDDEN, StaticCodeAnalysisCategory.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "USER")
     void testGetStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         userUtilService.addTeachingAssistant(TEST_PREFIX + "other-ta1");
@@ -137,7 +181,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetStaticCodeAnalysisCategories_staticCodeAnalysisNotEnabled_badRequest() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExercise);
         request.getList(endpoint, HttpStatus.BAD_REQUEST, StaticCodeAnalysisCategory.class);
@@ -145,7 +189,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) throws Exception {
         var programmingExSCAEnabled = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage, TEST_PREFIX);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExSCAEnabled);
@@ -176,14 +220,14 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetCategories_staticCodeAnalysisNotEnabled_badRequest() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories/reset", programmingExercise);
         request.patch(endpoint, "{}", HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "USER")
     void testResetCategories_instructorInWrongCourse_forbidden() throws Exception {
         userUtilService.addInstructor(TEST_PREFIX + "other-instructor1");
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories/reset", programmingExerciseSCAEnabled);
@@ -192,7 +236,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
         // Create a programming exercise with real categories
         var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(true, programmingLanguage, TEST_PREFIX);
@@ -226,14 +270,14 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         userUtilService.addTeachingAssistant(TEST_PREFIX + "other-ta");
@@ -241,14 +285,14 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories_staticCodeAnalysisNotEnabled_badRequest() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExercise);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories_categoryIdMissing_badRequest() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setId(null);
@@ -256,7 +300,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories_penaltyNullOrNegative_badRequest() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setPenalty(null);
@@ -266,7 +310,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories_maxPenaltySmallerThanPenalty_badRequest() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         var category = programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next();
@@ -276,7 +320,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories_stateIsNull_badRequest() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setState(null);
@@ -284,7 +328,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories_exerciseIdsDoNotMatch_conflict() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().getExercise().setId(1234L);
@@ -325,7 +369,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testImportCategories() throws Exception {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, sourceExercise);
@@ -361,7 +405,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testImportCategories_noSCASource() throws Exception {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
@@ -370,7 +414,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testImportCategories_noSCATarget() throws Exception {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
         ProgrammingExercise targetExerciseNoSCA = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
@@ -380,7 +424,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testImportCategories_asTutor() throws Exception {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
@@ -389,7 +433,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testImportCategories_differentLanguages() throws Exception {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, ProgrammingLanguage.SWIFT);
 
@@ -398,7 +442,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testImportCategories_asEditor_wrongCourse() throws Exception {
         Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true);
         Exercise sourceExercise = otherCourse.getExercises().iterator().next();

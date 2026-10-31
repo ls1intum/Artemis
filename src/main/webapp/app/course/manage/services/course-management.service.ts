@@ -1,3 +1,4 @@
+import { onUserChange } from 'app/core/auth/user-change.util';
 import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashboardFromDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
@@ -108,17 +109,10 @@ export class CourseManagementService implements OnDestroy {
     private fetchingCoursesForNotifications = false;
 
     private stateGeneration = 0;
-    private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
     constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.resetState();
-            }
-        });
+        this.authenticationStateSubscription = onUserChange(this.accountService, () => this.resetState());
     }
 
     ngOnDestroy(): void {
@@ -183,7 +177,26 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId - the id of the course to be found
      */
     find(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<CourseManagementDTO>(`${this.resourceUrl}/${courseId}`, { observe: 'response' }).pipe(
+        return this.findWithProjection(courseId);
+    }
+
+    findForTutor(courseId: number): Observable<EntityResponseType> {
+        return this.findWithProjection(courseId, '/for-tutor');
+    }
+
+    findForInstructor(courseId: number): Observable<EntityResponseType> {
+        return this.findWithProjection(courseId, '/for-instructor');
+    }
+
+    /** Chooses the management audience from the persisted account context before requesting course data. */
+    findForManagement(courseId: number): Observable<EntityResponseType> {
+        // Angular route parameters may carry the numeric identifier as a string at runtime.
+        const id = Number(courseId);
+        return this.accountService.isAtLeastInstructorInCourseWithId(id) ? this.findForInstructor(id) : this.findForTutor(id);
+    }
+
+    private findWithProjection(courseId: number, suffix = ''): Observable<EntityResponseType> {
+        return this.http.get<CourseManagementDTO>(`${this.resourceUrl}/${courseId}${suffix}`, { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOResponse(res, courseFromManagementDTO)),
             map((res) => this.applyCourseResponseSideEffects(res)),
         );

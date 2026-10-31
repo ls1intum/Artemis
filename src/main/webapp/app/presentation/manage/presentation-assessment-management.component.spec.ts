@@ -122,7 +122,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 { provide: DialogService, useValue: dialogService },
                 {
                     provide: ExerciseService,
-                    useValue: { getTitlesForCourse: vi.fn().mockReturnValue(of([])) },
+                    useValue: { getTitlesForCourseForStaff: vi.fn().mockReturnValue(of([])) },
                 },
                 {
                     provide: ActivatedRoute,
@@ -283,7 +283,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.courseId()).toBe(courseId);
         expect(component.course()).toBe(course);
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledWith(courseId);
-        expect(TestBed.inject(ExerciseService).getTitlesForCourse).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(TestBed.inject(ExerciseService).getTitlesForCourseForStaff).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(component.presentationAssessments()).toEqual([presentationAssessment]);
     });
 
@@ -407,9 +407,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         applySearch('ab12cde');
         fixture.detectChanges();
 
-        const studentButton = query('[data-testid="toggle-overview-row-details"]')!;
+        const studentButton = query('[data-testid="toggle-row-details"]')!;
         expect(studentButton.querySelector('strong.truncate')!.textContent!.trim()).toBe(expectedName);
-        expect(query('#presentation-overview-default-picture-11\\:ab12cde')!.textContent!.trim()).toBe(expectedInitials);
+        expect(query('#presentation-student-default-picture-11\\:ab12cde')!.textContent!.trim()).toBe(expectedInitials);
     });
 
     it('should request and display rows for the selected presentation', () => {
@@ -649,20 +649,14 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.selectedPresentationExerciseRoute()).toEqual(['/course-management', courseId, 'text-exercises', 7]);
     });
 
-    it('should expose stable keys and expansion state in the row view models', () => {
+    it('should expose stable keys in the row view models', () => {
+        const source = component.currentPageStudentRows()[0];
         const row = component.studentRows()[0];
-        component.toggleStudentRowDetails(row);
 
-        const selectedRow = component.studentRows()[0];
-        const overviewRow = component.studentRows()[0];
-        expect(selectedRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
-        expect(overviewRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
-        expect(selectedRow.student).toBe(row.student);
-        expect(selectedRow.instance).toBe(row.instance);
-        expect(selectedRow.presentationAssessment).toBe(row.presentationAssessment);
-        expect(overviewRow.student).toBe(row.student);
-        expect(overviewRow.instance).toBe(row.instance);
-        expect(overviewRow.presentationAssessment).toBe(row.presentationAssessment);
+        expect(row).toMatchObject({ rowKey: '11:student1', assessed: true });
+        expect(row.student).toBe(source.student);
+        expect(row.instance).toBe(source.instance);
+        expect(row.presentationAssessment).toBe(source.presentationAssessment);
     });
 
     it('should open the create dialog without persisting on cancel', () => {
@@ -1305,7 +1299,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         fixture.detectChanges();
         expect(query('.presentation-detail-row')).toBeNull();
 
-        clickByTestId('toggle-overview-row-details');
+        clickByTestId('toggle-row-details');
 
         const link = query('.presentation-detail-row a[href="https://example.org/meeting"]')!;
         expect(link.getAttribute('target')).toBe('_blank');
@@ -1391,13 +1385,13 @@ describe('PresentationAssessmentManagementComponent', () => {
     });
 
     it('should collapse an expanded row again', () => {
-        clickByTestId('toggle-overview-row-details');
+        clickByTestId('toggle-row-details');
         expect(query('.presentation-detail-row')).not.toBeNull();
 
-        clickByTestId('toggle-overview-row-details');
+        clickByTestId('toggle-row-details');
 
         expect(query('.presentation-detail-row')).toBeNull();
-        expect(query('[data-testid="toggle-overview-row-details"]')!.getAttribute('aria-expanded')).toBe('false');
+        expect(query('[data-testid="toggle-row-details"]')!.getAttribute('aria-expanded')).toBe('false');
     });
 
     it('should open an empty presentation dialog from the create button in the title bar', () => {
@@ -1489,7 +1483,7 @@ describe('PresentationAssessmentManagementComponent', () => {
     it('should keep the exercise titles of the current visit when a delayed load of an earlier visit arrives', () => {
         const firstVisit = new Subject<ExerciseTitle[]>();
         const current: ExerciseTitle[] = [{ id: 7, title: 'Current exercise' }];
-        vi.mocked(TestBed.inject(ExerciseService).getTitlesForCourse).mockReturnValueOnce(firstVisit).mockReturnValueOnce(of([])).mockReturnValueOnce(of(current));
+        vi.mocked(TestBed.inject(ExerciseService).getTitlesForCourseForStaff).mockReturnValueOnce(firstVisit).mockReturnValueOnce(of([])).mockReturnValueOnce(of(current));
         visitCourseTwoThenThreeThenTwoAgain();
 
         firstVisit.next([{ id: 8, title: 'Stale exercise' }]);

@@ -52,6 +52,7 @@ jobs:
     outputs:
       build_relevant: ${{ steps.decide.outputs.build_relevant }}
       has_java: ${{ steps.decide.outputs.has_java }}
+      has_sandbox_tests: ${{ steps.decide.outputs.has_sandbox_tests }}
       has_docs: ${{ steps.decide.outputs.has_docs }}
       has_i18n: ${{ steps.decide.outputs.has_i18n }}
       has_gradle: ${{ steps.decide.outputs.has_gradle }}
@@ -163,6 +164,18 @@ jobs:
               - 'config/pmd/**'
               - 'supporting_scripts/analyze_java_files.py'
               - 'supporting_scripts/find_slow_queries.py'
+            has_sandbox_tests:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-test.yml'
+              - 'build.gradle'
+              - 'gradle/**'
+              - 'deployment/docker/hyperion/**'
+              - 'src/main/java/de/tum/cit/aet/artemis/aiworker/**'
+              - 'src/test/java/de/tum/cit/aet/artemis/aiworker/**'
+              - 'src/main/java/de/tum/cit/aet/artemis/hyperion/**'
+              - 'src/test/java/de/tum/cit/aet/artemis/hyperion/**'
+              - 'src/main/resources/templates/java/test/gradle/**'
+              - 'src/main/resources/templates/hyperion/**'
             # bean-instantiations boots the *production* context (gradle test is skipped), so it
             # only cares about main sources + the build graph — not test sources or the analysis
             # helpers that has_java carries for the quality jobs.
@@ -203,6 +216,7 @@ jobs:
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
+              - 'config/pnpm/**'
               - 'supporting_scripts/generate-tum-aet-ui-reference-page.mjs'
             has_tum_aet_ui:
               - '.github/workflows/release-tum-aet-ui.yml'
@@ -250,6 +264,7 @@ jobs:
               - 'supporting_scripts/test_check_action_pinning.py'
               - 'supporting_scripts/update_python_dependency_locks.sh'
               - 'supporting_scripts/test_template_test_requirements.py'
+              - 'supporting_scripts/badges/**'
               - 'src/main/resources/templates/c/gcc/test/testUtils/**'
               - 'src/main/resources/templates/c_plus_plus/test/testUtils/**'
             # Files that server tests read from disk but that the deny-lists above (and `build`) treat as
@@ -285,6 +300,7 @@ jobs:
              || github.event_name == 'merge_group' }}
           F_BUILD: ${{ steps.relevant.outputs.build }}
           F_JAVA: ${{ steps.area.outputs.has_java }}
+          F_SANDBOX_TESTS: ${{ steps.area.outputs.has_sandbox_tests }}
           F_DOCS: ${{ steps.area.outputs.has_docs }}
           F_I18N: ${{ steps.area.outputs.has_i18n }}
           F_GRADLE: ${{ steps.area.outputs.has_gradle }}
@@ -306,13 +322,14 @@ jobs:
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
+            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
             {
               echo "build_relevant=${F_BUILD:-false}"
               echo "has_java=${F_JAVA:-false}"
+              echo "has_sandbox_tests=${F_SANDBOX_TESTS:-false}"
               echo "has_docs=${F_DOCS:-false}"
               echo "has_i18n=${F_I18N:-false}"
               echo "has_gradle=${F_GRADLE:-false}"
@@ -420,6 +437,7 @@ jobs:
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
       # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
       run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+      run_sandbox_tests: ${{ needs.detect-changes.outputs.has_sandbox_tests == 'true' }}
       # A pull request that cannot affect one suite does not run it (see `detect-changes`). Always true
       # for anything but a pull request.
       # `!= 'false'`, so that an output that went missing runs the suite instead of silently skipping it.
@@ -444,7 +462,7 @@ jobs:
     name: Report PR Coverage
     needs: [detect-changes, test]
     if: >-
-      always() &&
+      !cancelled() &&
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.detect-changes.outputs.build_relevant == 'true' &&
@@ -454,7 +472,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    # Own group (not the umbrella's) so a superseded push doesn't tear a mid-flight PR-body update.
+    # Serialize coverage writers for this PR; superseded workflow runs remain cancellable.
     concurrency:
       group: coverage-inrun-${{ github.event.pull_request.number }}
       cancel-in-progress: false
@@ -620,18 +638,20 @@ jobs:
     timeout-minutes: 10
     continue-on-error: true
     permissions:
-      # Sole purpose: pushing coverage.json to the orphan `badges` branch. Nothing here runs
+      # Sole purpose: pushing coverage.json and coverage.svg to the orphan `badges` branch. Nothing here runs
       # PR-author code — the job only reads artifacts the trusted `test` job produced.
       contents: write
     # No job-level `concurrency:` here, deliberately. The umbrella's own `ci-${{ github.ref }}` group
     # (cancel-in-progress false for push) already serializes develop runs end to end, so two of these
-    # can never be in flight at once. Unlike `deploy-docs`, nothing outside this file writes `badges`,
-    # so a second group would only add a way for the job to be cancelled while pending.
+    # can never be in flight at once. The shared publisher retries a non-force push over concurrent
+    # metadata updates from publish-badges.yml; no second pending-job cancellation group is needed.
     steps:
       - name: Check out the badge tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          sparse-checkout: supporting_scripts/code-coverage/coverage-badge
+          sparse-checkout: |
+            supporting_scripts/code-coverage/coverage-badge
+            supporting_scripts/badges
           # This checkout only supplies the script; the push happens from the `badges` checkout below.
           persist-credentials: false
 
@@ -702,7 +722,6 @@ jobs:
           # legitimate halving of the codebase would otherwise freeze the badge invisibly.
           if [ "$status" -eq 3 ]; then
             echo "::notice::Coverage badge unchanged; the published value stands."
-            exit 0
           fi
           if [ "$status" -eq 4 ]; then
             echo "::warning::Coverage badge guard rejected the computed value (reason logged above);" \
@@ -710,32 +729,18 @@ jobs:
                  "described in supporting_scripts/code-coverage/coverage-badge/README.md."
             exit 0
           fi
-          if [ "$status" -ne 0 ]; then
+          if [ "$status" -ne 0 ] && [ "$status" -ne 3 ]; then
             echo "::warning::Coverage badge computation failed (exit ${status}); keeping the published value."
             exit 0
           fi
 
-          # Every command is checked explicitly rather than leaning on `set -e`: `set -e` is
-          # suspended inside an `if` condition (and inside subshells within one), and this job must
-          # never turn develop red — a badge that could not be pushed is a warning, not a failure.
-          publish_badge() {
-            cd badges-branch || return 1
-            git config user.name 'github-actions[bot]' || return 1
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com' || return 1
-            git add coverage.json || return 1
-            # Defensive: the script only exits 0 when the value changed, so an empty diff would mean
-            # the two disagree. Nothing to push either way.
-            if git diff --cached --quiet; then
-              echo "::notice::Coverage badge file is byte-identical; nothing to push."
-              return 0
-            fi
-            local message
-            message=$(jq -r .message coverage.json) || return 1
-            git commit -m "Update the coverage badge to ${message}" || return 1
-            git push origin HEAD:badges || return 1
-          }
-
-          if ! publish_badge; then
+          # Render even when the percentage is unchanged, so existing JSON gains its SVG
+          # on the first successful run after migrating away from the hosted badge API.
+          if ! node supporting_scripts/badges/render-badges.mjs coverage badges-branch; then
+            echo "::warning::Could not render the coverage badge; the published value stands."
+            exit 0
+          fi
+          if ! node supporting_scripts/badges/publish-badges.mjs badges-branch coverage.json coverage.svg; then
             echo "::warning::Could not publish the coverage badge; the published value stands."
           fi
           exit 0
@@ -859,6 +864,7 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # E2E JUnit reports create check runs
     with:
       branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -919,7 +925,7 @@ jobs:
   # producer here too, or a cascading skip could pass the gate green over broken code.
   all-required-ci-passed:
     name: All required CI Passed
-    if: always()
+    if: ${{ !cancelled() }}
     needs:
       - detect-changes
       - build
@@ -989,7 +995,7 @@ jobs:
   # another job's `needs:`, so it cannot block merging.
   ci-summary:
     name: CI Summary
-    if: always()
+    if: ${{ !cancelled() }}
     needs:
       - detect-changes
       - build
@@ -1014,7 +1020,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Render run timeline
-        uses: Kesin11/actions-timeline@57fc93f20c6da7fbc14063c6d24a2a5627c799ad  # v3.2.0
+        uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf  # v3.2.1
         with:
           show-waiting-runner: true
       - name: Render summary

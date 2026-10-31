@@ -132,7 +132,9 @@ public class ProgrammingExerciseImportFromFileService {
 
             handleLegacyLocalCIProgrammingExercise(buildConfig);
 
-            originalProgrammingExercise.setCourse(course);
+            if (!originalProgrammingExercise.isExamExercise()) {
+                originalProgrammingExercise.setCourse(course);
+            }
             originalProgrammingExercise.setTestCasesChanged(false);
 
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, buildConfig, course);

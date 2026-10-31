@@ -2,12 +2,15 @@ package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
+import org.springframework.ai.tool.ToolCallback;
 
 import com.knuddels.jtokkit.api.EncodingType;
 
@@ -25,10 +28,33 @@ final class AgentConversationContext {
     }
 
     static long estimateContextTokens(List<Message> conversation, long lastPromptTokens, int messagesAtLastCall) {
+        return estimateContextTokens(conversation, lastPromptTokens, messagesAtLastCall, 0);
+    }
+
+    static long estimateContextTokens(List<Message> conversation, long lastPromptTokens, int messagesAtLastCall, long toolDefinitionTokens) {
         if (lastPromptTokens <= 0 || messagesAtLastCall < 0 || messagesAtLastCall > conversation.size()) {
-            return estimateTokens(conversation, 0, conversation.size());
+            return estimateTokens(conversation, 0, conversation.size()) + toolDefinitionTokens;
         }
+        // Provider input already includes the tool definitions; add only messages appended since that call.
         return lastPromptTokens + estimateTokens(conversation, messagesAtLastCall, conversation.size());
+    }
+
+    static long estimateToolDefinitionTokens(ToolCallback[] callbacks) {
+        long tokens = 0;
+        for (ToolCallback callback : callbacks) {
+            var definition = callback.getToolDefinition();
+            tokens += TOOL_CALL_OVERHEAD_TOKENS + estimateTextTokens(definition.name()) + estimateTextTokens(definition.description())
+                    + estimateTextTokens(definition.inputSchema());
+        }
+        return tokens;
+    }
+
+    static long promptTokensOf(@Nullable ChatResponse response) {
+        if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
+            return 0;
+        }
+        // Usage is null-marked, but a provider implementation can still return null; count that as zero rather than failing the run.
+        return Objects.requireNonNullElse(response.getMetadata().getUsage().getPromptTokens(), 0).longValue();
     }
 
     static long estimateTokens(List<Message> conversation, int from, int to) {

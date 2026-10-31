@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
@@ -8,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -17,8 +19,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-
-import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +54,8 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionFunction;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionOn;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -214,34 +216,6 @@ public class HazelcastConfiguration {
         System.setProperty("hazelcast.phone.home.enabled", "false");
     }
 
-    /**
-     * Gracefully shuts down all Hazelcast instances when the Spring context is destroyed.
-     *
-     * <p>
-     * <strong>Shutdown Order:</strong> Both cluster members and clients are shut down.
-     * This method is called during application shutdown (triggered by {@code @PreDestroy}).
-     *
-     * <p>
-     * <strong>Graceful Shutdown:</strong> Hazelcast's shutdown process:
-     * <ol>
-     * <li>Notifies other cluster members of departure</li>
-     * <li>Migrates owned partitions to remaining members (for cluster members)</li>
-     * <li>Closes network connections</li>
-     * <li>Releases resources</li>
-     * </ol>
-     *
-     * <p>
-     * <strong>Why Both shutdownAll() Calls:</strong> Depending on the deployment mode,
-     * this application may have created either a cluster member instance or a client
-     * instance. Calling both shutdown methods ensures cleanup regardless of mode.
-     */
-    @PreDestroy
-    public void destroy() {
-        log.info("Shutting down Hazelcast");
-        Hazelcast.shutdownAll();
-        HazelcastClient.shutdownAll();
-    }
-
     // ==================== Metrics ====================
 
     /**
@@ -325,7 +299,7 @@ public class HazelcastConfiguration {
      *                              (TTL, backup count, etc.)
      * @return the configured HazelcastInstance appropriate for the deployment context
      */
-    @Bean(name = "hazelcastInstance")
+    @Bean(name = "hazelcastInstance", destroyMethod = "shutdown")
     public HazelcastInstance hazelcastInstance(ArtemisProperties artemisProperties) {
         if (isTestEnvironment()) {
             return createTestHazelcastInstance(artemisProperties);
@@ -378,7 +352,8 @@ public class HazelcastConfiguration {
      */
     private boolean shouldRunAsHazelcastClient() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        return activeProfiles.contains(PROFILE_BUILDAGENT) && !activeProfiles.contains(PROFILE_CORE) && !activeProfiles.contains(PROFILE_TEST_BUILDAGENT);
+        return (activeProfiles.contains(PROFILE_BUILDAGENT) || activeProfiles.contains(PROFILE_AIWORKER)) && !activeProfiles.contains(PROFILE_CORE)
+                && !activeProfiles.contains(PROFILE_TEST_BUILDAGENT);
     }
 
     // ==================== Test Instance Configuration ====================
@@ -418,6 +393,8 @@ public class HazelcastConfiguration {
         config.setClusterName("test-cluster-" + UUID.randomUUID());
 
         configureCacheMaps(config, artemisProperties);
+        configureMemberAttributes(config);
+        configureSplitBrainProtection(config);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         // The build job queue must be configured here as well, otherwise it silently degrades to FIFO in tests while
@@ -804,31 +781,9 @@ public class HazelcastConfiguration {
     }
 
     /**
-     * Configures split-brain protection to handle network partitions.
+     * Keeps authoring ownership and short exercise writes unavailable unless every configured data member is present.
      *
-     * <p>
-     * <strong>What is Split-Brain:</strong> When a network partition occurs, cluster members
-     * can't communicate and may form separate sub-clusters. Each sub-cluster thinks it's the
-     * "real" cluster and continues operating independently. When the partition heals, data
-     * inconsistencies must be resolved.
-     *
-     * <p>
-     * <strong>Protection Mechanism:</strong> Split-brain protection defines a minimum cluster
-     * size (quorum) required for operations. With {@code minimumClusterSize=2}, a single
-     * isolated node cannot perform cluster operations, preventing inconsistent writes.
-     *
-     * <p>
-     * <strong>Merge Policy:</strong> The merge delay settings (30 seconds for first run,
-     * 30 seconds between subsequent runs) control how quickly Hazelcast attempts to merge
-     * sub-clusters after a partition heals. The delay prevents thrashing during unstable
-     * network conditions.
-     *
-     * <p>
-     * <strong>Trade-off:</strong> This configuration prioritizes consistency over availability.
-     * A single-node partition becomes read-only, which is acceptable for Artemis where data
-     * consistency is more important than availability during network issues.
-     *
-     * @param config the Hazelcast configuration to modify
+     * @param config the member configuration
      */
     private void configureSplitBrainProtection(Config config) {
         var splitBrainConfig = new SplitBrainProtectionConfig();
@@ -838,6 +793,30 @@ public class HazelcastConfiguration {
 
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainConfig);
+        int expectedMembers = env.getProperty("jhipster.cache.hazelcast.expected-data-member-count", Integer.class, 1);
+        if (expectedMembers < 1) {
+            throw new IllegalArgumentException("Configure a positive Hazelcast expected-data-member-count");
+        }
+        String authoringProtection = "hyperion-live-save-complete-membership";
+        String countAttribute = "artemis.hyperion.expected-data-members";
+        String enabledAttribute = "artemis.hyperion.exercise-generation-enabled";
+        String configuredCount = Integer.toString(expectedMembers);
+        String configuredEnabled = Boolean.toString(env.getProperty("artemis.hyperion.exercise-generation.enabled", Boolean.class, false));
+        config.getMemberAttributeConfig().setAttribute(countAttribute, configuredCount).setAttribute(enabledAttribute, configuredEnabled);
+        // An intentional singleton works; missing, unexpected, or differently configured data members fail closed.
+        var authoringConfig = new SplitBrainProtectionConfig(authoringProtection, true).setProtectOn(SplitBrainProtectionOn.READ_WRITE)
+                .setFunctionImplementation((SplitBrainProtectionFunction & Serializable) members -> {
+                    var dataMembers = members.stream().filter(member -> !member.isLiteMember()).toList();
+                    return dataMembers.size() == expectedMembers && dataMembers.stream()
+                            .allMatch(member -> configuredCount.equals(member.getAttribute(countAttribute)) && configuredEnabled.equals(member.getAttribute(enabledAttribute)));
+                });
+        config.addSplitBrainProtectionConfig(authoringConfig);
+        for (String name : List.of(Constants.HYPERION_GENERATION_JOBS_MAP, Constants.HYPERION_LIVE_SAVE_COORDINATION_MAP)) {
+            var authoringMap = new MapConfig(name).setBackupCount(config.getMapConfig("default").getBackupCount())
+                    .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.NONE).setMaxSizePolicy(MaxSizePolicy.PER_NODE))
+                    .setSplitBrainProtectionName(authoringProtection);
+            config.addMapConfig(authoringMap);
+        }
         config.setProperty(ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.getName(), "30");
         config.setProperty(ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.getName(), "30");
     }
@@ -1062,9 +1041,8 @@ public class HazelcastConfiguration {
      * Configures client identity and cluster name.
      *
      * <p>
-     * <strong>Instance Name:</strong> Uses the build agent's short name for identification
-     * in logs and management tools. Falls back to instance name + "-client" suffix if not
-     * configured.
+     * AI Workers use their required worker id with an {@code aiworker-} prefix. Build agents retain their short name,
+     * or the instance name with a {@code -client} suffix when no short name is configured.
      *
      * <p>
      * <strong>Cluster Name:</strong> In production mode ({@code spring.hazelcast.localInstances=false}),
@@ -1074,11 +1052,16 @@ public class HazelcastConfiguration {
      * @param clientConfig the client configuration to modify
      */
     private void configureClientIdentity(ClientConfig clientConfig) {
-        String buildAgentShortName = env.getProperty("artemis.continuous-integration.build-agent.short-name");
-        if (buildAgentShortName == null || buildAgentShortName.trim().isEmpty()) {
-            buildAgentShortName = instanceName + "-client";
+        if (env.acceptsProfiles(Profiles.of(PROFILE_AIWORKER))) {
+            clientConfig.setInstanceName("aiworker-" + env.getRequiredProperty("artemis.aiworker.id"));
         }
-        clientConfig.setInstanceName(buildAgentShortName);
+        else {
+            String buildAgentShortName = env.getProperty("artemis.continuous-integration.build-agent.short-name");
+            if (buildAgentShortName == null || buildAgentShortName.trim().isEmpty()) {
+                buildAgentShortName = instanceName + "-client";
+            }
+            clientConfig.setInstanceName(buildAgentShortName);
+        }
 
         if (!hazelcastLocalInstances) {
             clientConfig.setClusterName("prod");

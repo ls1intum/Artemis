@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -55,7 +57,11 @@ examples.forEach((exampleChannel) => {
                 imports: [ChannelsOverviewDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
                 declarations: [LoadingIndicatorContainerStubComponent],
                 providers: [
-                    MockProvider(ChannelService),
+                    MockProvider(ChannelService, {
+                        getChannelsOfCourseForStaff: vi.fn(() => of(new HttpResponse({ body: [] }))),
+                        getChannelsOfCourseForInstructor: vi.fn(() => of(new HttpResponse({ body: [] }))),
+                    }),
+                    { provide: AccountService, useClass: MockAccountService },
                     MockProvider(ConversationService),
                     MockProvider(AlertService),
                     MockProvider(DialogService),
@@ -64,6 +70,29 @@ examples.forEach((exampleChannel) => {
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             });
+        });
+
+        it.each(['student', 'tutor', 'instructor'])('chooses %s channel audience before requesting', (role) => {
+            const account = TestBed.inject(AccountService);
+            vi.spyOn(account, 'isAtLeastInstructorInCourse').mockReturnValue(role === 'instructor');
+            vi.spyOn(account, 'isAtLeastTutorInCourse').mockReturnValue(role !== 'student');
+            const student = vi.spyOn(channelService, 'getChannelsOfCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const staff = vi.spyOn(channelService, 'getChannelsOfCourseForStaff').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const instructor = vi.spyOn(channelService, 'getChannelsOfCourseForInstructor').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.clearAllMocks();
+            component.course.set(course);
+            component.loadChannelsOfCourse();
+            for (const [audience, spy] of [
+                ['student', student],
+                ['tutor', staff],
+                ['instructor', instructor],
+            ] as const) {
+                if (role === audience) {
+                    expect(spy).toHaveBeenCalledExactlyOnceWith(course.id);
+                } else {
+                    expect(spy).not.toHaveBeenCalled();
+                }
+            }
         });
 
         afterEach(() => {
@@ -78,7 +107,7 @@ examples.forEach((exampleChannel) => {
             channelOne = generateExampleChannelDTO({ id: 1, name: 'one', subType: exampleChannel.subType } as ChannelDTO);
             channelTwo = generateExampleChannelDTO({ id: 2, name: 'two', subType: exampleChannel.subType } as ChannelDTO);
             channelService = TestBed.inject(ChannelService);
-            getChannelsOfCourseSpy = vi.spyOn(channelService, 'getChannelsOfCourse').mockReturnValue(
+            getChannelsOfCourseSpy = vi.spyOn(channelService, 'getChannelsOfCourseForInstructor').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: [channelOne, channelTwo, ...examples],

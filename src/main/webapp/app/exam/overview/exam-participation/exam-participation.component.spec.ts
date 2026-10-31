@@ -52,7 +52,7 @@ import { ArtemisServerDateService } from 'app/foundation/service/server-date.ser
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, NEVER, Subject, of, throwError } from 'rxjs';
-import { skip } from 'rxjs/operators';
+import { skip, tap } from 'rxjs/operators';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -64,6 +64,8 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 describe('ExamParticipationComponent', () => {
     // Backing signal for the mocked submission-sync contract; see the MockProvider below.
     const submissionSyncVersion = signal(0);
@@ -749,6 +751,128 @@ describe('ExamParticipationComponent', () => {
             expectSyncedSubmissions(submission, syncedSubmission);
         });
 
+        describe('text saves of one submission', () => {
+            const pendingSaves: Subject<HttpResponse<TextSubmission>>[] = [];
+            let sentTexts: (string | undefined)[];
+            let inFlight: number;
+            let maxInFlight: number;
+            let submission: TextSubmission;
+
+            // Every request stays open until the test completes it, so tests control the order of the responses.
+            beforeEach(() => {
+                const textExercise = new TextExercise(new Course(), undefined);
+                textExercise.id = 5;
+                const participation = new StudentParticipation();
+                submission = new TextSubmission();
+                submission.text = 'Answer A';
+                submission.isSynced = false;
+                participation.submissions = [submission];
+                textExercise.studentParticipations = [participation];
+                comp.studentExam().exercises = [textExercise];
+                pendingSaves.length = 0;
+                sentTexts = [];
+                inFlight = 0;
+                maxInFlight = 0;
+                vi.spyOn(textSubmissionService, 'update').mockImplementation((answer) => {
+                    sentTexts.push(answer.text);
+                    inFlight++;
+                    maxInFlight = Math.max(maxInFlight, inFlight);
+                    const save = new Subject<HttpResponse<TextSubmission>>();
+                    pendingSaves.push(save);
+                    return save.pipe(
+                        tap({
+                            next: () => inFlight--,
+                            error: () => inFlight--,
+                        }),
+                    );
+                });
+            });
+
+            function respond(index: number) {
+                pendingSaves[index].next(new HttpResponse({ body: new TextSubmission() }));
+                pendingSaves[index].complete();
+            }
+
+            function edit(text: string) {
+                submission.text = text;
+                submission.isSynced = false;
+            }
+
+            it('should send the newest text only after the previous save responded, never two requests at once', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                comp.triggerSave(false);
+                // Save B must not overlap with save A: the database write order has to equal the send order.
+                expect(sentTexts).toEqual(['Answer A']);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                expect(submission.isSynced).toBe(false);
+
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(maxInFlight).toBe(1);
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+            });
+
+            it('should only send the latest of several edits made while a save is in flight', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                edit('Answer C');
+                comp.triggerSave(false);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer C']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(submission.text).toBe('Answer C');
+            });
+
+            it('should keep the submission synced when the student undoes to the text that is being saved', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                edit('Answer A');
+
+                respond(0);
+                // The server holds the same text as the editor, so nothing has to be sent again.
+                expect(sentTexts).toEqual(['Answer A']);
+                expect(submission.isSynced).toBe(true);
+            });
+
+            it('should release the slot after a failed save so the next trigger sends the latest text', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                pendingSaves[0].error(new HttpErrorResponse({ status: 500 }));
+                expect(submission.isSynced).toBe(false);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+            });
+
+            it('should still flush the latest text of a forced save while a save is in flight', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(true);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(submission.text).toBe('Answer B');
+            });
+        });
+
         it('should sync modeling submissions', () => {
             const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
             modelingExercise.id = 5;
@@ -771,16 +895,18 @@ describe('ExamParticipationComponent', () => {
             quizExercise.id = 5;
             const participation = new StudentParticipation();
             const submission = new QuizSubmission();
+            submission.id = 1;
             const syncedSubmission = new QuizSubmission();
+            syncedSubmission.id = 2;
             syncedSubmission.isSynced = true;
             participation.submissions = [submission, syncedSubmission];
             quizExercise.studentParticipations = [participation];
             comp.studentExam().exercises = [quizExercise];
-            quizSubmissionUpdateSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
+            quizSubmissionUpdateSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             comp.triggerSave(false);
             await new Promise((resolve) => setTimeout(resolve, 500));
-            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
-            expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
+            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, toQuizSubmissionFromLiveClient(submission));
+            expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, toQuizSubmissionFromLiveClient(syncedSubmission));
             expectSyncedSubmissions(submission, syncedSubmission);
         });
     });
@@ -827,7 +953,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
             // The mocked submission services return synchronous observables, so the re-send happens synchronously.
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -836,7 +962,7 @@ describe('ExamParticipationComponent', () => {
             // All three not-yet-saved answers must be re-sent to the server instead of being silently dropped.
             expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
         });
 
         it('should force the recovery re-send even when the websocket is not (re)connected yet at resume', () => {
@@ -847,14 +973,14 @@ describe('ExamParticipationComponent', () => {
             // and it must fire regardless — otherwise the restored answers are silently deferred to the next autosave
             // cycle, the answer-loss window this recovery path exists to close (regression: ExamSubmissionRecovery E2E).
             comp.connected.set(false);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
             comp.examStarted(studentExam, true);
 
             // All three restored answers are re-sent immediately, not deferred, despite the websocket being down.
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
             expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
         });
@@ -881,7 +1007,7 @@ describe('ExamParticipationComponent', () => {
         it('should not re-send anything and mark submissions synced on a normal (fresh) start', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -921,7 +1047,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
             // the text re-send fails (still-flaky connection on resume), while quiz and modeling succeed
-            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
             const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
@@ -945,7 +1071,7 @@ describe('ExamParticipationComponent', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
-            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
             const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
@@ -965,7 +1091,7 @@ describe('ExamParticipationComponent', () => {
             textSubmission.isSynced = true;
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -973,8 +1099,68 @@ describe('ExamParticipationComponent', () => {
 
             // an already-synced answer must not be re-sent (avoids overwriting good server state / a duplicate submission)
             expect(textSpy).not.toHaveBeenCalled();
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
+        });
+
+        describe('after a page reload during the exam', () => {
+            // What the server returns for a student who has already started: the exam is running and the student exam is marked started.
+            const buildStartedStudentExam = () => {
+                const { studentExam } = buildResumeStudentExam();
+                studentExam.exam!.visibleDate = dayjs().subtract(1, 'hours');
+                studentExam.id = 1;
+                studentExam.started = true;
+                studentExam.startedDate = dayjs().subtract(5, 'minutes');
+                studentExam.submitted = false;
+                return studentExam;
+            };
+
+            const cover = () => fixture.debugElement.query(By.css('jhi-exam-participation-cover'));
+
+            it('should show the start cover again and neither resume nor create a session by itself when the last save succeeded', () => {
+                // Intended behavior: a reload sends the student back to the start cover, where typing the name and confirming the rules
+                // starts the exam again (a new exam session). Only a failed save resumes automatically (next test).
+                // Let Angular run its own first change detection (ngOnInit) before arranging the state under test.
+                fixture.changeDetectorRef.detectChanges();
+                const examStartedSpy = vi.spyOn(comp, 'examStarted');
+                const loadLocalSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage');
+                vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+
+                comp.handleStudentExam(buildStartedStudentExam());
+                fixture.changeDetectorRef.detectChanges();
+
+                expect(examStartedSpy).not.toHaveBeenCalled();
+                expect(loadLocalSpy).not.toHaveBeenCalled();
+                expect(comp.examStartConfirmed()).toBe(false);
+                expect(comp.loadingExam()).toBe(false);
+                expect(cover()).not.toBeNull();
+                expect(fixture.debugElement.query(By.css('jhi-exam-bar'))).toBeNull();
+            });
+
+            it('should resume the exam without the start cover and re-send the unsaved answers when the last save failed', () => {
+                // The one automatic resume: the unsaved answers only exist in local storage, so the exam is restored from there.
+                fixture.changeDetectorRef.detectChanges();
+                const { studentExam: localExam, textSubmission } = buildResumeStudentExam();
+                localExam.id = 1;
+                localExam.started = true;
+                vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(true);
+                vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').mockReturnValue(of(localExam));
+                const examStartedSpy = vi.spyOn(comp, 'examStarted');
+                const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+                vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+                vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+
+                comp.handleStudentExam(buildStartedStudentExam());
+
+                expect(examStartedSpy).toHaveBeenCalledOnce();
+                expect(examStartedSpy).toHaveBeenCalledWith(comp.studentExam(), true);
+                expect(comp.examStartConfirmed()).toBe(true);
+                expect(comp.loadingExam()).toBe(false);
+                // the unsaved text answer is re-sent at once, without waiting for the websocket or the next autosave
+                expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+                fixture.changeDetectorRef.detectChanges();
+                expect(cover()).toBeNull();
+            });
         });
     });
 

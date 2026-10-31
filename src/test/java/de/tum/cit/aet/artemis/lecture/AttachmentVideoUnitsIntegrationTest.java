@@ -108,19 +108,19 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void testAll_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAll_WrongLecture_shouldReturnNotFound() throws Exception {
         // Tests that files created for another lecture are not accessible
         // even by instructors of other lectures
@@ -139,7 +139,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAll_IOException_ShouldReturnInternalServerError() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -159,7 +159,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void uploadSlidesForProcessing_asInstructor_shouldGetFilename() throws Exception {
         var filePart = createLectureFile(true);
 
@@ -169,7 +169,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void uploadSlidesForProcessing_asInstructor_shouldThrowError() throws Exception {
         var filePartWord = createLectureFile(false);
         request.postWithMultipartFile("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/upload", null, "upload", filePartWord,
@@ -177,7 +177,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void uploadSlidesForProcessing_corruptedPdf_shouldReturnBadRequest() throws Exception {
         var corruptedPdf = new MockMultipartFile("file", "corrupted.pdf", MediaType.APPLICATION_PDF_VALUE, "This is plain text, not a PDF document".getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/upload").file(corruptedPdf);
@@ -186,7 +186,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAttachmentVideoUnitsData_asInstructor_shouldGetUnitsInformationVideo() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -199,7 +199,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAttachmentVideoUnitsData_asInstructor_realSlides() throws Exception {
         var realFile = readFromFile();
         String filename = manualFileUpload(lecture1.getId(), realFile);
@@ -212,7 +212,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAttachmentVideoUnitsData_asInstructor_shouldThrowError() throws Exception {
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -222,7 +222,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSlidesToRemove_asInstructor_shouldGetUnitsInformation() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -238,7 +238,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSlidesToRemove_asInstructor_shouldThrowError() throws Exception {
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -252,7 +252,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAttachmentVideoUnits_asInstructor_shouldCreateAttachmentVideoUnits() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -279,7 +279,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAttachmentVideoUnits_asInstructor_shouldRemoveSlides() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -325,7 +325,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAttachmentVideoUnits_asInstructor_shouldThrowError() throws Exception {
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);

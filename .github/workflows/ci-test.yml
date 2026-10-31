@@ -15,6 +15,10 @@ on:
         description: 'When true, run every test. When false, only run tests in modules affected by changes vs base_branch.'
         required: true
         type: boolean
+      run_sandbox_tests:
+        description: 'Whether the AI Worker sandbox or Hyperion code changed and needs real Docker tests.'
+        required: true
+        type: boolean
       run_server_tests:
         description: 'When false, the server suite (planning, shards and report) is skipped. ci.yml passes false for a pull request that cannot affect it.'
         required: false
@@ -47,6 +51,55 @@ env:
   java: 25
 
 jobs:
+  sandbox-tests:
+    name: AI Worker Sandbox Tests
+    if: inputs.run_sandbox_tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup Java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      - name: Build the offline sandbox image
+        run: |
+          docker build -f deployment/docker/hyperion/gradle-sandbox.Dockerfile -t aiworker-sandbox-test .
+          image=$(docker image inspect aiworker-sandbox-test --format '{{.Id}}')
+          echo "AI_WORKER_TEST_IMAGE=$image" >> "$GITHUB_ENV"
+          echo "HYPERION_GRADLE_TEST_IMAGE=$image" >> "$GITHUB_ENV"
+      - name: Test Docker isolation and offline Gradle builds
+        run: ./gradlew test --tests '*DockerSandboxIsolationTest' --tests '*DockerGradleBuildTest' -x webapp
+      - name: Verify both image-gated suites ran
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          for name in ('DockerSandboxIsolationTest', 'DockerGradleBuildTest'):
+              reports = list(Path('build/test-results/test').glob(f'TEST-*.{name}.xml'))
+              if len(reports) != 1:
+                  raise SystemExit(f'Expected one test report for {name}, found {len(reports)}')
+              suite = ElementTree.parse(reports[0]).getroot()
+              if int(suite.get('tests', '0')) == 0 or int(suite.get('skipped', '0')) != 0:
+                  raise SystemExit(f'{name} did not run every image-gated test')
+          PY
+      - name: Test Report
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a  # v3.2.0
+        if: ${{ !cancelled() }}
+        with:
+          name: AI Worker Sandbox Tests
+          path: build/test-results/test/*.xml
+          reporter: java-junit
+
   # Decides how the server suite is cut up. A full run is split into one shard per test bucket; a
   # module-affected run stays a single shard, because its selection cuts across buckets.
   server-test-shards:
@@ -113,13 +166,13 @@ jobs:
           # every test, defeating the optimisation.
           fetch-depth: 0
       - name: Setup Java
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'temurin'
           java-version: ${{ env.java }}
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - name: Java Tests
         # Wrapped in run_with_hang_dump.sh so a hung test is thread-dumped before the Gradle task
         # timeout (gradle/test.gradle) fires - the only forensic data a silent hang leaves.
@@ -225,12 +278,12 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup Java
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'temurin'
           java-version: ${{ env.java }}
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - name: Download Coverage Execution Data
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:

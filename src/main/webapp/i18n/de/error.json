@@ -1,10 +1,13 @@
 {
     "error": {
+        "exerciseGenerationCancellationUnavailable": "Der Abbruch konnte nicht bestätigt werden. Prüfe den aktuellen Status des Laufs und versuche es erneut.",
         "title": "Fehlerseite!",
         "http": {
             "400": "Ungültige Anfrage.",
             "401": "Du bist nicht authentifiziert, um auf diese Seite zuzugreifen.",
-            "403": "Du hast nicht die nötigen Berechtigungen, um diese Seite anzuzeigen.",
+            "403": "Du hast keine Berechtigung, auf diesen Inhalt zuzugreifen oder diese Aktion auszuführen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.",
+            "403Read": "Du hast keine Berechtigung, den angeforderten Inhalt anzusehen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.",
+            "403Action": "Du hast keine Berechtigung, diese Aktion auszuführen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.",
             "404": "Die Seite existiert nicht.",
             "405": "Die verwendete Anfrage Methode ist für diese URL nicht erlaubt.",
             "409": "Es gab einen Konflikt bei der Bearbeitung Deiner Anfrage.",
@@ -75,6 +78,7 @@
         "internalServerError": "Interner Serverfehler",
         "server.not.reachable": "Server ist nicht erreichbar",
         "url.not.found": "Nicht gefunden",
+        "Email": "Feld {{fieldName}} muss eine gültige E-Mail-Adresse sein!",
         "NotBlank": "Feld {{fieldName}} darf nicht leer sein!",
         "NotNull": "Feld {{fieldName}} darf nicht leer sein!",
         "Size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Längenanforderungen!",
@@ -85,6 +89,7 @@
         "concurrentModification": "Die Präsentation wurde geändert, während deine Änderung geprüft wurde. Bitte lade die Seite neu und versuche es erneut.",
         "studentNotInCourse": "Die ausgewählte Person ist keine Studentin oder kein Student dieses Kurses.",
         "maxPointsBelowExistingResult": "Die maximale Punktzahl darf nicht unter einem bereits eingetragenen Ergebnis liegen.",
+        "maxScoreInvalid": "Die maximale Punktzahl einer Aufgabe muss größer als 0 sein.",
         "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximale Punktzahl nicht überschreiten.",
         "exerciseNotInCourse": "Die verknüpfte Aufgabe muss zu diesem Kurs gehören.",
         "studentAlreadyAssigned": "Diese Studierenden haben diese Präsentation bereits: {{ logins }}",
@@ -332,11 +337,9 @@
             "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
             "courseHasNoTimeZone": "Für diesen Kurs ist keine Zeitzone konfiguriert.",
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
-
             "tutorialPeriodMissing": "Das Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
             "tutorialPeriodInvalidFormat": "Das Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
             "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
-
             "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
             "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
         },
@@ -355,6 +358,9 @@
         "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
-        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
+        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
+        "generationBriefRequired": "Gib eine Aufgabenbeschreibung ein, bevor du eine Aufgabe ohne Problemstellung generierst.",
+        "generationCapacityUnavailable": "Artemis hat gerade keine freie Kapazität für die KI-Generierung. Es wurde nichts generiert — versuche es in ein paar Minuten erneut.",
+        "exerciseGenerationRunning": "Die Aufgabe ist durch einen anderen Vorgang oder eine unvollständige Wiederherstellung gesperrt. Versuche es später erneut; wende dich bei einer erforderlichen Wiederherstellung an die Administration."
     }
 }
