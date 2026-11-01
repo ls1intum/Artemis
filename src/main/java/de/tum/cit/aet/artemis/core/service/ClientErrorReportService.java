@@ -51,9 +51,16 @@ public class ClientErrorReportService {
     /** The same without the line feed, which separates the lines of a stack trace. */
     private static final Pattern CONTROL_CHARACTERS_EXCEPT_LINE_FEED = Pattern.compile("[[\\p{Cntrl}\\u0085\\u2028\\u2029]&&[^\\n]]+");
 
-    /** Personal data in a text: {@code user=barney_young}, {@code User{...}} and email addresses. */
-    private static final List<Pattern> PERSONAL_DATA_PATTERNS = List.of(Pattern.compile("user=\\S+"), Pattern.compile("User\\{[^}]*}"),
-            Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"));
+    /**
+     * Personal data in a text: {@code user=barney_young}, a {@code User{...}} dump, also one that the client cut off before its closing
+     * brace, and email addresses. Every repetition is bounded, so that a value made of many repetitions of the start of a pattern cannot make
+     * the matching slow: the work is at most the bound times the length of the value.
+     */
+    private static final List<Pattern> PERSONAL_DATA_PATTERNS = List.of(Pattern.compile("user=\\S+"), Pattern.compile("User\\{[^}]{0,2000}(?:}|$)"),
+            Pattern.compile("[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\\.[A-Za-z]{2,24}"));
+
+    /** The value of a field that holds the login of a user in serialized data, as in {@code {"userLogin":"ge12abc"}}. */
+    private static final Pattern SERIALIZED_LOGIN = Pattern.compile("(\"(?:userLogin|studentLogin|login|username)\"\\s{0,5}:\\s{0,5})\"[^\"]{0,255}\"");
 
     /** A repository in a url, named {@code <project key>-<suffix>.git}. */
     private static final Pattern REPOSITORY_IN_URL = Pattern.compile("/git/([A-Z0-9]+)/([^/]+)\\.git");
@@ -79,7 +86,8 @@ public class ClientErrorReportService {
     public void report(ClientErrorReportDTO report, String userAgent) {
         boolean authenticated = SecurityUtils.isAuthenticated();
         if (!authenticated) {
-            rateLimitService.enforcePerMinute(rateLimitService.resolveClientId(), RateLimitType.CLIENT_ERROR_REPORT);
+            // the peer, not the first value of a header that the sender chooses, so that nobody can pick a new budget for every report
+            rateLimitService.enforcePerMinute(rateLimitService.resolvePeerId(), RateLimitType.CLIENT_ERROR_REPORT);
         }
         logReport(report, userAgent, authenticated);
     }
@@ -174,6 +182,7 @@ public class ClientErrorReportService {
         for (Pattern pattern : PERSONAL_DATA_PATTERNS) {
             cleaned = pattern.matcher(cleaned).replaceAll(REMOVED);
         }
+        cleaned = SERIALIZED_LOGIN.matcher(cleaned).replaceAll("$1\"" + REMOVED + "\"");
         return REPOSITORY_IN_URL.matcher(cleaned).replaceAll(ClientErrorReportService::withoutParticipant);
     }
 

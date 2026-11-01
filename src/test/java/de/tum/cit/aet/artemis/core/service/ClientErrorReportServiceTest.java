@@ -10,9 +10,11 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.domain.ClientErrorSeverity;
@@ -89,6 +91,41 @@ class ClientErrorReportServiceTest {
         return Stream.of(Arguments.of("Could not load user=barney_young now", "Could not load [removed] now"),
                 Arguments.of("Failed for User{id=1, login='barney'} here", "Failed for [removed] here"),
                 Arguments.of("Mail to barney.young@example.org failed", "Mail to [removed] failed"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("serializedLogins")
+    void removesTheLoginThatSerializedDataContains(String message, String expected) {
+        assertThat(format(report(message))).endsWith("]: " + expected);
+    }
+
+    private static Stream<Arguments> serializedLogins() {
+        return Stream.of(Arguments.of("Discrepancy {\"scoreAchieved\":80,\"userLogin\":\"ge12abc\"}", "Discrepancy {\"scoreAchieved\":80,\"userLogin\":\"[removed]\"}"),
+                Arguments.of("{\"login\" : \"barney\", \"studentLogin\":\"ge34def\"}", "{\"login\" : \"[removed]\", \"studentLogin\":\"[removed]\"}"),
+                Arguments.of("{\"username\":\"bart\"} and {\"title\":\"kept\"}", "{\"username\":\"[removed]\"} and {\"title\":\"kept\"}"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Failed for User{id=1, login='barney'} here", "Failed for User{id=1, login='barney", "User{id=1, login='barney'" })
+    void removesAUserDumpEvenIfTheClientCutItOffBeforeTheClosingBrace(String message) {
+        assertThat(format(report(message))).doesNotContain("barney");
+    }
+
+    @Test
+    void removesATruncatedUserDumpFromTheStack() {
+        var report = new ClientErrorReportDTO(ClientErrorSeverity.ERROR, "boom", "Error: boom\n    at a (User{id=1, login='barney", null, null, null, null);
+
+        assertThat(format(report)).doesNotContain("barney");
+    }
+
+    @Test
+    @Timeout(5)
+    void handlesValuesMadeOfManyRepetitionsOfTheStartOfAPatternInShortTime() {
+        // the repetitions that made the regular expressions slow: many starts of a pattern and no end of it
+        String attack = "User{".repeat(1_500) + "%".repeat(1_500) + "a@".repeat(1_500);
+        var report = new ClientErrorReportDTO(ClientErrorSeverity.ERROR, attack, attack, attack, null, null, null);
+
+        assertThat(format(report)).isNotEmpty();
     }
 
     @Test

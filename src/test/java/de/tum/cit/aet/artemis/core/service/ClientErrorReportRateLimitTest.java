@@ -53,7 +53,7 @@ class ClientErrorReportRateLimitTest {
     void setUp() {
         SecurityContextHolder.clearContext();
         rateLimitService = mock(RateLimitService.class);
-        when(rateLimitService.resolveClientId()).thenReturn(client);
+        when(rateLimitService.resolvePeerId()).thenReturn(client);
         service = spy(new ClientErrorReportService(rateLimitService));
         doNothing().when(service).logReport(any(), any(), anyBoolean());
     }

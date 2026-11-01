@@ -201,6 +201,45 @@ class RateLimitServiceTest {
     }
 
     @Test
+    void testResolvePeerId_IgnoresForwardingHeadersSoASenderCannotChooseItsOwnBudget() throws AddressStringException {
+        try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
+            mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
+            when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
+            when(httpServletRequest.getRemoteAddr()).thenReturn("203.0.113.7");
+
+            IPAddress peerId = rateLimitService.resolvePeerId();
+
+            assertThat(peerId).isEqualTo(new IPAddressString("203.0.113.7").toAddress());
+            // no header is read at all, so there is nothing that a sender could set to change the address
+            verify(httpServletRequest, never()).getHeader(anyString());
+        }
+    }
+
+    @Test
+    void testResolvePeerId_WithoutARequestOrAnAddressItCanParse_ShouldReturnNull() {
+        try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
+            mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(null);
+            assertThat(rateLimitService.resolvePeerId()).isNull();
+        }
+        try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
+            mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
+            when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
+            when(httpServletRequest.getRemoteAddr()).thenReturn("not an address");
+            assertThat(rateLimitService.resolvePeerId()).isNull();
+        }
+    }
+
+    @Test
+    void testRejectionIsLoggedExceptForTheLimitThatBoundsTheLog() {
+        assertThat(RateLimitType.CLIENT_ERROR_REPORT.isRejectionLogged()).isFalse();
+        for (RateLimitType type : RateLimitType.values()) {
+            if (type != RateLimitType.CLIENT_ERROR_REPORT) {
+                assertThat(type.isRejectionLogged()).as(type.name()).isTrue();
+            }
+        }
+    }
+
+    @Test
     void testResolveClientId_Ipv6() throws AddressStringException {
         try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
             mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);

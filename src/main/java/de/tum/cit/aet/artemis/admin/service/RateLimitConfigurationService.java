@@ -98,7 +98,7 @@ public class RateLimitConfigurationService {
     /**
      * Checks if rate limiting is enabled globally.
      *
-     * @return true if rate limiting is enabled, false otherwise (default: false)
+     * @return true if rate limiting is enabled, false otherwise (default: true)
      */
     public boolean isRateLimitingEnabled() {
         return properties.isEnabled();
