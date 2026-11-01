@@ -27,8 +27,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 @Profile(PROFILE_CORE)
 public class CourseHomeWelcomeService {
 
+    // At most 249 label-dot pairs fit before a two-character suffix in the 500-character output limit.
+    // Bound the repeated group as well as the input, so regex matching cannot recurse without a limit.
     private static final Pattern UNSAFE = Pattern.compile(
-            "(?iu)(https?://|www\\.|[<>`\\[\\]{}*#]|\\b(?:[\\p{L}\\d-]+\\.)+[\\p{L}]{2,}\\b|\\b(?:today|tomorrow|tonight|yesterday|heute|morgen|gestern|übermorgen|noon|midnight|morning|afternoon|evening|vormittag|nachmittag|abend|mitternacht|hours?|minutes?|days?|weeks?|months?|years?|stunden?|minuten?|tagen?|wochen?|monate[n]?|jahre[n]?|deadline|abgabefrist|monday|tuesday|wednesday|thursday|friday|saturday|sunday|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)\\b|\\b(?:next|this)\\s+(?:week|month|year)|\\b(?:nächste|diese|kommende)\\w*\\s+(?:woche|monat|jahr))");
+            "(?iu)(https?://|www\\.|[<>`\\[\\]{}*#]|\\b(?:[\\p{L}\\d-]+\\.){1,249}[\\p{L}]{2,}\\b|\\b(?:today|tomorrow|tonight|yesterday|heute|morgen|gestern|übermorgen|noon|midnight|morning|afternoon|evening|vormittag|nachmittag|abend|mitternacht|hours?|minutes?|days?|weeks?|months?|years?|stunden?|minuten?|tagen?|wochen?|monate[n]?|jahre[n]?|deadline|abgabefrist|monday|tuesday|wednesday|thursday|friday|saturday|sunday|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)\\b|\\b(?:next|this)\\s+(?:week|month|year)|\\b(?:nächste|diese|kommende)\\w*\\s+(?:woche|monat|jahr))");
 
     private static final Pattern CLOCK_TIME = Pattern
             .compile("(?iu)(\\buhr\\b|\\b(?:at|um|gegen)\\s+(?:(?:half(?:\\s+past)?|quarter(?:\\s+(?:past|to))?|halb|viertel(?:\\s+(?:nach|vor))?|dreiviertel)\\s+)?"
@@ -82,14 +84,14 @@ public class CourseHomeWelcomeService {
             return CompletableFuture.completedFuture(fallback(request, "revoked"));
         }
         try {
-            return client.get().generate(input).handle((output, error) -> {
-                if (error != null || output == null || output.isEmpty()) {
+            return client.get().generate(input).thenApply(output -> output.orElse(null)).handle((output, error) -> {
+                if (error != null || output == null) {
                     return fallback(request, "provider");
                 }
                 if (!policy.canGenerate(user.getId())) {
                     return fallback(request, "revoked");
                 }
-                String text = output.get().strip();
+                String text = output.strip();
                 if (!valid(text)) {
                     return fallback(request, "invalid_output");
                 }
