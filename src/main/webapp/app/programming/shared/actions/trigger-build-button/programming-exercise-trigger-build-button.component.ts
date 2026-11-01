@@ -3,7 +3,7 @@ import { filter, finalize, tap } from 'rxjs/operators';
 import { EMPTY, Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
 import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -26,7 +26,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private participationWebsocketService = inject(ParticipationWebsocketService);
 
     FeatureToggle = FeatureToggle;
-    ButtonType = ButtonType;
+    readonly ButtonSize = ButtonSize;
 
     readonly exercise = input.required<ProgrammingExercise>();
     // Optional: the button is rendered for repositories that may have no participation (e.g. an auxiliary

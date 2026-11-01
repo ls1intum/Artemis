@@ -1,16 +1,19 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
-import { catchError, tap } from 'rxjs/operators';
+import { Component, inject, input, output, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
 import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exercise.utils';
@@ -21,49 +24,56 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
 @Component({
     selector: 'jhi-programming-exercise-trigger-all-button',
     template: `
-        <jhi-button
+        <button
+            type="button"
+            tumAetUiButton
             id="trigger-all-button"
-            [disabled]="disabled()"
-            [btnSize]="btnSize()"
-            [btnType]="ButtonType.ERROR"
-            [isLoading]="isTriggeringBuildAll()"
-            [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
-            [tooltipPlacement]="TooltipPlacement.BOTTOM"
-            [icon]="faRedo"
-            [title]="'artemisApp.programmingExercise.resubmitAll'"
-            [shouldToggle]="shouldToggle()"
-            [toggleBreakpoint]="toggleBreakpoint()"
-            [featureToggle]="FeatureToggle.ProgrammingExercises"
-            (onClick)="openTriggerAllModal()"
-        />
+            [size]="btnSize() === ButtonSize.SMALL ? 'small' : btnSize() === ButtonSize.LARGE ? 'large' : 'default'"
+            severity="danger"
+            [variant]="inDropdown() ? 'text' : 'solid'"
+            [class]="inDropdown() ? 'w-full justify-start!' : ''"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [forceDisabled]="disabled() || isTriggeringBuildAll()"
+            [attr.aria-label]="'artemisApp.programmingExercise.resubmitAll' | artemisTranslate"
+            [attr.aria-busy]="isTriggeringBuildAll()"
+            [tumAetUiTooltip]="'artemisApp.programmingExercise.resubmitAllTooltip' | artemisTranslate"
+            tumAetUiTooltipPlacement="bottom"
+            (click)="openTriggerAllModal()"
+        >
+            <fa-icon [icon]="faRedo" [animation]="isTriggeringBuildAll() ? 'spin' : undefined" />
+            <span
+                [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''"
+                [jhiTranslate]="'artemisApp.programmingExercise.resubmitAll'"
+            ></span>
+        </button>
     `,
-    imports: [ButtonComponent],
+    imports: [TumAetUiButtonDirective, TumAetUiTooltipDirective, FaIconComponent, ArtemisTranslatePipe, FeatureToggleDirective, TranslateDirective],
 })
-export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
+export class ProgrammingExerciseTriggerAllButtonComponent {
     private submissionService = inject(ProgrammingSubmissionService);
     private programmingBuildRunService = inject(ProgrammingBuildRunService);
     private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
 
     FeatureToggle = FeatureToggle;
-    ButtonType = ButtonType;
     ButtonSize = ButtonSize;
-    TooltipPlacement = TooltipPlacement;
     readonly exercise = input.required<ProgrammingExercise>();
     readonly disabled = input(false);
+    readonly inDropdown = input(false);
     readonly btnSize = input(ButtonSize.MEDIUM);
     readonly shouldToggle = input(false);
     readonly toggleBreakpoint = input<'md' | 'xl'>('xl');
 
     readonly onBuildTriggered = output();
-    readonly isTriggeringBuildAll = signal(false);
+    readonly confirmationOpening = output<void>();
+    readonly isTriggeringBuildAll = toSignal(
+        toObservable(this.exercise).pipe(
+            switchMap((exercise) => this.programmingBuildRunService.getBuildRunUpdates(exercise.id!).pipe(map((state) => state === BuildRunState.RUNNING))),
+        ),
+        { initialValue: false },
+    );
     // Icons
     faRedo = faRedo;
-
-    ngOnInit() {
-        // The info that the builds were triggered comes from a websocket channel.
-        this.subscribeBuildRunUpdates();
-    }
 
     /**
      * Opens a modal in that the user has to confirm to trigger all participations.
@@ -71,6 +81,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
      * and will create new results for the students (which could be confusing to them).
      */
     openTriggerAllModal() {
+        this.confirmationOpening.emit();
         const dialogRef = this.dialogService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, {
             header: this.translateService.instant('artemisApp.programmingExercise.resubmitAll'),
             width: '50rem',
@@ -94,13 +105,6 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
                     this.onBuildTriggered.emit();
                 });
         });
-    }
-
-    private subscribeBuildRunUpdates() {
-        this.programmingBuildRunService
-            .getBuildRunUpdates(this.exercise().id!)
-            .pipe(tap((buildRunState) => this.isTriggeringBuildAll.set(buildRunState === BuildRunState.RUNNING)))
-            .subscribe();
     }
 }
 

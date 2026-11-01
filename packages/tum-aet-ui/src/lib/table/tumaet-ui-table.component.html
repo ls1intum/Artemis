@@ -1,16 +1,21 @@
-@if (showSearch()) {
-    <div class="tumaet:mb-3">
-        <div class="tumaet:relative">
-            <fa-icon [icon]="faMagnifyingGlass" class="tumaet:pointer-events-none tumaet:absolute tumaet:start-3 tumaet:top-1/2 tumaet:-translate-y-1/2 tumaet:text-muted" />
-            <input
-                #searchInput
-                type="search"
-                [placeholder]="searchPlaceholder() | tumAetUiTranslate"
-                [attr.aria-label]="searchPlaceholder() | tumAetUiTranslate"
-                (input)="onSearchInput(searchInput.value)"
-                class="tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1.5 tumaet:ps-10 tumaet:pe-3 tumaet:text-sm tumaet:text-text"
-            />
-        </div>
+@if (showSearch() || tableActions()) {
+    <div class="tumaet:mb-3 tumaet:flex tumaet:flex-wrap tumaet:items-center tumaet:gap-2">
+        @if (showSearch()) {
+            <div class="tumaet-ui-table-search tumaet:relative tumaet:min-w-0 tumaet:grow tumaet:basis-60">
+                <fa-icon [icon]="faMagnifyingGlass" class="tumaet:pointer-events-none tumaet:absolute tumaet:start-3 tumaet:top-1/2 tumaet:-translate-y-1/2 tumaet:text-muted" />
+                <input
+                    #searchInput
+                    type="search"
+                    [placeholder]="searchPlaceholder() | tumAetUiTranslate"
+                    [attr.aria-label]="searchPlaceholder() | tumAetUiTranslate"
+                    (input)="onSearchInput(searchInput.value)"
+                    class="tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1.5 tumaet:ps-10 tumaet:pe-3 tumaet:text-sm tumaet:text-text"
+                />
+            </div>
+        }
+        @if (tableActions(); as actions) {
+            <ng-container [ngTemplateOutlet]="actions" />
+        }
     </div>
 }
 

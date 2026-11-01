@@ -23,6 +23,14 @@ const meta = {
         placeholder: 'Choose a language',
         showClear: true,
     },
+    parameters: {
+        docs: {
+            description: {
+                component:
+                    'The panel uses a backdrop: clicking outside dismisses it and consumes that click. Set matchTriggerWidth to false for a content-sized panel with wrapping option labels.',
+            },
+        },
+    },
     argTypes: {
         size: {
             control: 'inline-radio',

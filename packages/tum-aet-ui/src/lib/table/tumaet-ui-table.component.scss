@@ -5,6 +5,10 @@
     min-height: 0;
 }
 
+.tumaet-ui-table-search {
+    max-width: var(--tumaet-ui-table-search-max-width, none);
+}
+
 .cdk-table {
     width: 100%;
 

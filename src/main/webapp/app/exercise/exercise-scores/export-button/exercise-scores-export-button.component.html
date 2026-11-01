@@ -1,37 +1,59 @@
 @if (isProgrammingExerciseResults) {
-    <div class="inline">
-        <button size="small" severity="info" tumAetUiButton type="button" id="export-results-dropdown" class="me-1" [tumAetUiMenuTrigger]="exportMenu">
-            <fa-icon [icon]="faDownload" />
-            <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.export.results.title"></span>
-        </button>
-        <ng-template #exportMenu
-            ><tumaet-ui-menu>
-                <button type="button" tumAetUiMenuItem (triggered)="exportResults(false, false)" jhiTranslate="artemisApp.exercise.export.results.withoutTestCases"></button>
-                <button
-                    type="button"
-                    tumAetUiTooltip="{{ 'artemisApp.exercise.export.results.withTestCasesTooltip' | artemisTranslate }}"
-                    tumAetUiTooltipPlacement="left"
-                    tumAetUiMenuItem
-                    (triggered)="exportResults(true, false)"
-                    jhiTranslate="artemisApp.exercise.export.results.withTestCases"
-                ></button>
-                <button
-                    type="button"
-                    tumAetUiTooltip="{{ 'artemisApp.exercise.export.results.withTestCasesAndFeedbackTooltip' | artemisTranslate }}"
-                    tumAetUiTooltipPlacement="left"
-                    tumAetUiMenuItem
-                    (triggered)="exportResults(true, true)"
-                    jhiTranslate="artemisApp.exercise.export.results.withTestCasesAndFeedback"
-                >
-                    With test cases<br />and feedback
-                </button>
-            </tumaet-ui-menu></ng-template
-        >
-    </div>
-}
-@if (!isProgrammingExerciseResults) {
-    <button size="small" severity="info" tumAetUiButton type="button" class="me-1" (click)="exportResults(false, false)">
+    <button
+        type="button"
+        tumAetUiButton
+        size="small"
+        [variant]="inDropdown() ? 'text' : 'solid'"
+        [severity]="inDropdown() ? 'secondary' : 'info'"
+        [class]="inDropdown() ? 'w-full justify-start!' : ''"
+        id="export-results-dropdown"
+        [tumAetUiMenuTrigger]="resultExportMenu"
+        [tumAetUiMenuPosition]="inDropdown() ? submenuPositions : undefined"
+    >
         <fa-icon [icon]="faDownload" />
-        <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.export.results.title"></span>
+        <span [class]="inDropdown() ? '' : 'hidden md:inline'" jhiTranslate="artemisApp.exercise.export.results.title"></span>
+        <fa-icon [icon]="inDropdown() ? faChevronRight : faChevronDown" class="ms-auto" />
+    </button>
+    <ng-template #resultExportMenu>
+        <tumaet-ui-menu [class]="inDropdown() ? 'min-w-64! max-w-[calc(100vw-2rem)] p-3! gap-1' : ''">
+            <button
+                type="button"
+                tumAetUiMenuItem
+                [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
+                (triggered)="exportResults(false, false)"
+                jhiTranslate="artemisApp.exercise.export.results.withoutTestCases"
+            ></button>
+            <button
+                type="button"
+                tumAetUiMenuItem
+                [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
+                (triggered)="exportResults(true, false)"
+                [tumAetUiTooltip]="'artemisApp.exercise.export.results.withTestCasesTooltip' | artemisTranslate"
+                tumAetUiTooltipPlacement="left"
+                jhiTranslate="artemisApp.exercise.export.results.withTestCases"
+            ></button>
+            <button
+                type="button"
+                tumAetUiMenuItem
+                [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
+                (triggered)="exportResults(true, true)"
+                [tumAetUiTooltip]="'artemisApp.exercise.export.results.withTestCasesAndFeedbackTooltip' | artemisTranslate"
+                tumAetUiTooltipPlacement="left"
+                jhiTranslate="artemisApp.exercise.export.results.withTestCasesAndFeedback"
+            ></button>
+        </tumaet-ui-menu>
+    </ng-template>
+} @else {
+    <button
+        type="button"
+        tumAetUiButton
+        size="small"
+        [variant]="inDropdown() ? 'text' : 'solid'"
+        [severity]="inDropdown() ? 'secondary' : 'info'"
+        [class]="inDropdown() ? 'w-full justify-start!' : ''"
+        (click)="exportResults(false, false)"
+    >
+        <fa-icon [icon]="faDownload" />
+        <span [class]="inDropdown() ? '' : 'hidden md:inline'" jhiTranslate="artemisApp.exercise.export.results.title"></span>
     </button>
 }

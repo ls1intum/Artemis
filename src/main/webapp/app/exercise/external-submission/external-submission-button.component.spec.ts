@@ -1,7 +1,7 @@
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
@@ -30,6 +30,18 @@ describe('ExternalSubmissionButtonComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it.each([false, true])('preserves the default appearance and supports the outlined toolbar button (%s)', (outlined) => {
+        fixture.componentRef.setInput('exercise', { id: 1 } as Exercise);
+        if (outlined) {
+            fixture.componentRef.setInput('outlined', true);
+        }
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.query(By.directive(TumAetUiButtonComponent)).componentInstance as TumAetUiButtonComponent;
+        expect(button.severity()).toBe(outlined ? 'secondary' : 'warn');
+        expect(button.variant()).toBe(outlined ? 'outlined' : 'solid');
     });
 
     it('should open external submission dialog on click', () => {

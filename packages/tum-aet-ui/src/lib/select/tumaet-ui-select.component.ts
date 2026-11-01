@@ -59,6 +59,9 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
     private readonly injector = inject(Injector);
     private readonly formField = inject(TUM_AET_UI_FORM_FIELD, { optional: true });
 
+    /** Keep the panel aligned to the trigger; disable for content-sized menus. */
+    readonly matchTriggerWidth = input(true, { transform: booleanAttribute });
+
     readonly showClear = input(false, { transform: booleanAttribute });
 
     /** Adds a search field above the option list, for option sets too long to scan. */
@@ -249,7 +252,11 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
         const initialIndex = selectedIndex >= 0 ? selectedIndex : this.visibleOptions().length > 0 ? 0 : -1;
         this.keyManager.setActiveItem(initialIndex);
         const origin = this.trigger();
-        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true, matchOriginWidth: true });
+        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', {
+            hasBackdrop: true,
+            matchOriginWidth: this.matchTriggerWidth(),
+            minWidthFromOrigin: !this.matchTriggerWidth(),
+        });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.scrollOptionIntoView(initialIndex);
         this.overlayRef.backdropClick().subscribe(() => this.close());

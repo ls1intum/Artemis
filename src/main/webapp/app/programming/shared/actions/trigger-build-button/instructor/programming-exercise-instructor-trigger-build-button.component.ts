@@ -1,16 +1,20 @@
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Component, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-exercise-trigger-build-button.component';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-trigger-build-button',
     templateUrl: '../programming-exercise-trigger-build-button.component.html',
-    imports: [ButtonComponent],
+    imports: [TumAetUiButtonDirective, TumAetUiTooltipDirective, FeatureToggleDirective, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
 })
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     private translateService = inject(TranslateService);

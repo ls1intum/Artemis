@@ -46,6 +46,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
@@ -94,6 +96,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -3092,6 +3095,36 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
+        void getParticipationsPage_combinesCategoriesAndKeepsAlternativesWithinCategory() throws Exception {
+            var manualSuccess = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var automaticSuccess = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var manualFailure = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
+            var practice = participationUtilService.createAndSavePracticeParticipationForExercise(textExercise, TEST_PREFIX + "student4");
+            for (var participation : List.of(manualSuccess, automaticSuccess, manualFailure, practice)) {
+                var result = participationUtilService.createSubmissionAndResult(participation, participation == manualFailure ? 30 : 100, true);
+                result.setSuccessful(participation != manualFailure);
+                result.setAssessmentType(participation == automaticSuccess ? AssessmentType.AUTOMATIC : AssessmentType.MANUAL);
+                resultRepository.save(result);
+            }
+
+            var search = buildParticipationSearch("", "Successful,Manual,NoPracticeMode", "id", SortingOrder.ASCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId());
+
+            search = buildParticipationSearch("", "Successful,Unsuccessful,Manual,NoPracticeMode", "id", SortingOrder.ASCENDING);
+            results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId(), manualFailure.getId());
+
+            search = new ParticipationSearchDTO(0, 1, SortingOrder.ASCENDING, "id", "", "Successful,Unsuccessful,Manual,Automatic,NoPracticeMode", 50, 100);
+            var page = request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(search))).andExpect(status().isOk())
+                    .andReturn();
+            assertThat(page.getResponse().getHeader("X-Total-Count")).isEqualTo("2");
+            results = request.getObjectMapper().readValue(page.getResponse().getContentAsString(),
+                    request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, ParticipationManagementDTO.class));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId());
+        }
+
+        @Test
         void getParticipationsPage_filterSuccessful() throws Exception {
             var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
             var r1 = participationUtilService.createSubmissionAndResult(p1, 100, true);
@@ -3147,6 +3180,36 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().participantIdentifier()).contains("student1");
+
+            r1.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            resultRepository.save(r1);
+            var manualResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(manualResults).isEmpty();
+            var semiAutomaticSearch = buildParticipationSearch("", "SemiAutomatic", "id", SortingOrder.ASCENDING);
+            var semiAutomaticResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                    pageableSearchUtilService.searchMapping(semiAutomaticSearch));
+            assertThat(semiAutomaticResults).extracting(ParticipationManagementDTO::participationId).containsExactly(p1.getId());
+        }
+
+        @Test
+        void getParticipationsPage_filterSemiAutomaticModelingAssessment() throws Exception {
+            var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+            var result = participationUtilService.createSubmissionAndResult(participation, 80, true);
+            result.addFeedback(new Feedback().type(FeedbackType.AUTOMATIC).credits(1.0));
+            result.determineAssessmentType();
+            assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            resultRepository.save(result);
+
+            var url = "/api/exercise/exercises/" + modelingExercise.getId() + "/participations/page";
+            var search = buildParticipationSearch("", "SemiAutomatic", "id", SortingOrder.ASCENDING);
+            var results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(participation.getId());
+            assertThat(results.getFirst().assessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            for (var filter : List.of("Manual", "Automatic")) {
+                var exclusiveSearch = buildParticipationSearch("", filter, "id", SortingOrder.ASCENDING);
+                var excluded = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(exclusiveSearch));
+                assertThat(excluded).isEmpty();
+            }
         }
 
         @Test
@@ -3165,6 +3228,43 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().participantIdentifier()).contains("student2");
+        }
+
+        @Test
+        void getParticipationsPage_intersectsGradedManualAndLockedProgrammingFilters() throws Exception {
+            var lockedManual = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+            var ungradedManual = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+            var lockedAutomatic = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student3");
+            var completedManual = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student4");
+            Result lockedManualResult = null;
+            for (var participation : List.of(lockedManual, ungradedManual, lockedAutomatic, completedManual)) {
+                var result = participationUtilService.createSubmissionAndResult(participation, 80, participation != ungradedManual);
+                result.setAssessmentType(participation == lockedAutomatic ? AssessmentType.AUTOMATIC : AssessmentType.MANUAL);
+                if (participation != completedManual) {
+                    result.setCompletionDate(null);
+                    result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+                }
+                result = resultRepository.save(result);
+                if (participation == lockedManual) {
+                    lockedManualResult = result;
+                }
+            }
+            var url = "/api/exercise/exercises/" + programmingExercise.getId() + "/participations/page";
+            var gradedSearch = buildParticipationSearch("", "Graded", "id", SortingOrder.ASCENDING);
+            var graded = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(gradedSearch));
+            assertThat(graded).extracting(ParticipationManagementDTO::participationId).containsExactlyInAnyOrder(lockedManual.getId(), lockedAutomatic.getId(),
+                    completedManual.getId());
+            for (var filter : List.of("Manual,Locked,Graded", "Manual,Locked,NoPracticeMode,Graded")) {
+                var search = buildParticipationSearch("", filter, "id", SortingOrder.ASCENDING);
+                var results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+                assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(lockedManual.getId());
+            }
+            assertThat(lockedManualResult).isNotNull();
+            lockedManualResult.setRated(false);
+            resultRepository.save(lockedManualResult);
+            var search = buildParticipationSearch("", "Manual,Locked,Graded", "id", SortingOrder.ASCENDING);
+            var empty = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(empty).isEmpty();
         }
 
         @Test
@@ -3319,6 +3419,26 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().participantIdentifier()).contains("student2");
+
+            var validSearch = buildParticipationSearch("", "ValidSubmissions", "id", SortingOrder.ASCENDING);
+            var validResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(validSearch));
+            assertThat(validResults).extracting(ParticipationManagementDTO::participationId).containsExactly(p1.getId());
+        }
+
+        @Test
+        void getParticipationsPage_filterGradedQuizParticipations() throws Exception {
+            var course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Graded filter", TEST_PREFIX);
+            var quiz = ExerciseUtilService.getFirstExerciseWithType(course, QuizExercise.class);
+            var graded = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student1");
+            var ungraded = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student2");
+            var missingResult = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student3");
+            participationUtilService.createSubmissionAndResult(graded, 80, true);
+            participationUtilService.createSubmissionAndResult(ungraded, 80, false);
+            var url = "/api/exercise/exercises/" + quiz.getId() + "/participations/page";
+            var search = buildParticipationSearch("", "Graded", "id", SortingOrder.ASCENDING);
+            var results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(graded.getId());
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).doesNotContain(ungraded.getId(), missingResult.getId());
         }
 
         @Test

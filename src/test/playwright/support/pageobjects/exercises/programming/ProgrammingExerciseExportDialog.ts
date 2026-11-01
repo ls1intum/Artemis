@@ -18,7 +18,7 @@ export class ProgrammingExerciseExportDialog {
      * button, and the popover is rendered into the document body, so the dialog trigger only exists once it is open.
      */
     async open() {
-        await this.page.locator('button[jhi-exercise-action-button]').filter({ hasText: 'Export' }).first().click();
+        await this.page.getByTestId('participation-export-button').click();
         const repositoryExportButton = this.page.locator('jhi-programming-assessment-repo-export button');
         await repositoryExportButton.waitFor({ state: 'visible' });
         await repositoryExportButton.click();

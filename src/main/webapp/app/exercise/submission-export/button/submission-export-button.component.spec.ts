@@ -45,8 +45,11 @@ describe('Submission Export Button Component', () => {
     it('should open export submission dialog', () => {
         const mouseEventSpy = vi.spyOn(mouseEvent, 'stopPropagation');
         const openSpy = vi.spyOn(dialogService, 'open');
+        const buttonPressed = vi.spyOn(component.buttonPressed, 'emit');
 
         component.openSubmissionExportDialog(mouseEvent);
+
+        expect(buttonPressed).toHaveBeenCalledOnce();
 
         expect(mouseEventSpy).toHaveBeenCalledOnce();
         expect(openSpy).toHaveBeenCalledOnce();

@@ -3,33 +3,43 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/export-dialog/programming-assessment-repo-export-dialog.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-assessment-repo-export',
     template: `
-        <jhi-button
-            [disabled]="!programmingExercises()"
-            [btnType]="ButtonType.INFO"
-            [btnSize]="ButtonSize.SMALL"
-            [shouldSubmit]="false"
-            [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
-            [icon]="faDownload"
-            [title]="singleParticipantMode() ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title'"
-            (onClick)="openRepoExportDialog($event)"
-        />
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            [variant]="inDropdown() ? 'text' : 'solid'"
+            [severity]="inDropdown() ? 'secondary' : 'primary'"
+            [class]="inDropdown() ? 'w-full justify-start!' : ''"
+            [jhiFeatureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
+            [forceDisabled]="!programmingExercises() || false"
+            [attr.aria-label]="
+                (singleParticipantMode() ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title') | artemisTranslate
+            "
+            (click)="openRepoExportDialog($event)"
+        >
+            <fa-icon [icon]="faDownload" />
+            <span [jhiTranslate]="singleParticipantMode() ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title'"></span>
+        </button>
     `,
-    imports: [ButtonComponent],
+    imports: [TumAetUiButtonDirective, FaIconComponent, ArtemisTranslatePipe, FeatureToggleDirective, TranslateDirective],
 })
 export class ProgrammingAssessmentRepoExportButtonComponent {
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
 
-    readonly ButtonType = ButtonType;
-    readonly ButtonSize = ButtonSize;
+    readonly inDropdown = input(false);
+
     readonly FeatureToggle = FeatureToggle;
 
     readonly participationIdList = input<number[]>();

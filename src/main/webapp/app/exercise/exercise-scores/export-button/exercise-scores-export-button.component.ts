@@ -1,3 +1,4 @@
+import { ConnectedPosition } from '@angular/cdk/overlay';
 import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -11,7 +12,7 @@ import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercise/re
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronRight, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CsvCellValue, CsvRow, downloadCsv } from 'app/foundation/util/csv-download.util';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
 
@@ -36,6 +37,14 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class ExerciseScoresExportButtonComponent {
     private resultService = inject(ResultService);
     private alertService = inject(AlertService);
+
+    readonly inDropdown = input(false);
+    protected readonly submenuPositions: ConnectedPosition[] = [
+        { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top', offsetX: 8 },
+        { originX: 'start', originY: 'top', overlayX: 'end', overlayY: 'top', offsetX: -8 },
+    ];
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faChevronDown = faChevronDown;
 
     readonly exercises = input<Exercise[]>([]); // Used to export multiple scores together
     readonly exercise = input<Exercise | ProgrammingExercise>();

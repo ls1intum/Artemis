@@ -1,10 +1,11 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { SubmissionExportDialogComponent } from '../dialog/submission-export-dialog.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
@@ -18,18 +19,24 @@ import { TranslateService } from '@ngx-translate/core';
             type="button"
             [jhiFeatureToggle]="FeatureToggle.Exports"
             [disabled]="!exerciseId()"
-            severity="info"
+            [variant]="inDropdown() ? 'text' : 'solid'"
+            [severity]="inDropdown() ? 'secondary' : 'info'"
+            [class]="inDropdown() ? 'w-full justify-start!' : ''"
+            [attr.aria-label]="'artemisApp.instructorDashboard.exportSubmissions.title' | artemisTranslate"
             size="small"
             (click)="openSubmissionExportDialog($event)"
         >
             <fa-icon [icon]="faDownload" /><span jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title"></span>
         </button>
     `,
-    imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent, FeatureToggleDirective],
+    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TranslateDirective, FaIconComponent, FeatureToggleDirective],
 })
 export class SubmissionExportButtonComponent {
     private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
+
+    readonly inDropdown = input(false);
+    readonly buttonPressed = output<void>();
 
     readonly FeatureToggle = FeatureToggle;
 
@@ -53,6 +60,7 @@ export class SubmissionExportButtonComponent {
             return;
         }
 
+        this.buttonPressed.emit();
         this.dialogService.open(SubmissionExportDialogComponent, {
             header: this.translateService.instant('artemisApp.instructorDashboard.exportSubmissions.title'),
             size: 'large',

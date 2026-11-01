@@ -39,7 +39,8 @@
 
 <ng-template #panel>
     <div
-        class="tumaet-ui-select-panel tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:border-border tumaet:bg-overlay-background tumaet:text-text tumaet:shadow-md"
+        [class]="matchTriggerWidth() ? 'tumaet:w-full' : 'tumaet:w-max'"
+        class="tumaet-ui-select-panel tumaet:box-border tumaet:min-w-full tumaet:max-w-full tumaet:rounded-md tumaet:border tumaet:border-border tumaet:bg-overlay-background tumaet:text-text tumaet:shadow-md"
     >
         @if (filter()) {
             <div class="tumaet:border-b tumaet:border-border tumaet:p-1">
@@ -74,7 +75,9 @@
                     (keydown.enter)="selectOption(option)"
                     (mouseenter)="setActive(i)"
                 >
-                    <span class="tumaet:flex-1 tumaet:truncate">{{ label(option) }}</span>
+                    <span class="tumaet:min-w-0 tumaet:flex-1" [class]="matchTriggerWidth() ? 'tumaet:truncate' : 'tumaet:whitespace-normal tumaet:break-words'">{{
+                        label(option)
+                    }}</span>
                     @if (isSelected(option)) {
                         <fa-icon [icon]="faCheck" class="tumaet:ms-2 tumaet:shrink-0" />
                     }
