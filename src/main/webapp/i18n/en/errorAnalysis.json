@@ -1,0 +1,37 @@
+{
+    "artemisApp": {
+        "errorAnalysis": {
+            "title": "Error analysis",
+            "note": "Errors that are alike are one row. The analysis lives in the memory of the server node that answers: it starts again when the node restarts, and it counts only what this node saw. A quiet page is therefore not proof that nothing went wrong.",
+            "empty": "No errors in this time span with these filters.",
+            "summary": "Groups: {{ groups }}, errors: {{ errors }}",
+            "loadError": "The error analysis could not be loaded.",
+            "span": {
+                "label": "Time span",
+                "DAY": "Last day",
+                "WEEK": "Last week",
+                "MONTH": "Last month"
+            },
+            "location": {
+                "label": "Location",
+                "ALL": "All",
+                "SERVER": "Server",
+                "CLIENT": "Client"
+            },
+            "severity": {
+                "label": "Minimum severity",
+                "WARN": "Warning",
+                "ERROR": "Error",
+                "CRITICAL": "Critical"
+            },
+            "column": {
+                "severity": "Severity",
+                "location": "Location",
+                "message": "Error",
+                "count": "Count",
+                "firstSeen": "First seen",
+                "lastSeen": "Last seen"
+            }
+        }
+    }
+}

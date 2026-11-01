@@ -1,0 +1,21 @@
+---
+id: error-analysis
+title: Error Analysis
+sidebar_label: Error Analysis
+---
+
+The error analysis shows which errors happen on your Artemis installation, on the server and in the browsers of your users, without a separate monitoring service. Open it under **Administration > Error Analysis**.
+
+## What the page shows
+
+Errors that are alike are one row. A row has the severity, the location (**Server** or **Client**), the message, how often the error happened in the selected time span, when it happened first, and when it happened last. The most frequent errors come first. Numbers, identifiers, UUIDs and email addresses in a message are replaced by placeholders, so `Could not find exercise 17` and `Could not find exercise 42` are one row with the message `Could not find exercise <n>`.
+
+The filters above the table select the time span (last day, last week or last month, the last day by default), the location (all by default) and the least serious errors to show. The severity is a minimum: **Error**, the default, shows errors and critical errors, **Warning** adds warnings, and **Critical** shows only the errors that stop the application from working at all. The time when an error happened first is the first time since the server started, so it can be earlier than the selected time span.
+
+## Where the errors come from
+
+The server counts every warning and error that it writes to its log, with the name of the logger as part of the message, and the type of the exception if there is one. The errors of the clients are the reports that the browsers send, see [Client Error Reports](/admin/client-error-reports). A hint, which a client reports with the severity `INFO`, is not an error and is not counted.
+
+## What to know before you rely on it
+
+Nothing is stored in the database, so the analysis cannot fill it, and it needs no maintenance. The price is that the counts live in the memory of the server node that answers the request. They start again when the node restarts, and a node counts only what it saw itself, so in a cluster the page shows the errors of one node. The page says so, because a quiet page is not proof that nothing went wrong. The memory is bounded: the analysis keeps the 1000 groups that were seen most recently and forgets what is older than 30 days. For the history, and for all nodes together, use the log of your deployment.

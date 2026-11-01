@@ -102,6 +102,13 @@ const childRoutes: Routes = [
         },
     },
     {
+        path: 'error-analysis',
+        loadComponent: () => import('app/admin/error-analysis/error-analysis.component').then((m) => m.ErrorAnalysisComponent),
+        data: {
+            pageTitle: 'artemisApp.errorAnalysis.title',
+        },
+    },
+    {
         path: 'build-overview',
         loadComponent: () => import('app/localci/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
         data: {

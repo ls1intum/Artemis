@@ -17,13 +17,13 @@ A report contains the message and the stack of the error, the path of the page w
 
 ## Where to find the reports
 
-The server logs every report with the logger of `ClientErrorReportService` and a message that starts with `Client error report`. The log level follows the severity of the report: `ERROR` for an error, `WARN` for a recoverable problem and `INFO` for a hint. The stack follows on the next lines, each starting with a tab.
+The server logs every report with the logger of `ClientErrorReportService` and a message that starts with `Client error report`. The severity of the report is part of the message, and it decides the log level: `INFO` for a hint, `WARN` for a problem the application recovers from, and `ERROR` for an error and for a `CRITICAL` error, which is one that stops the application from working at all, such as a client that cannot start. The stack is part of the message. The log configuration of Artemis escapes line breaks in logged values, so it appears on the same line, with `\n` where a new line starts.
 
 ```text
-ERROR ClientErrorReportService : Client error report [version=9.8.0, url=/courses/1/exams/2, authenticated=true, userAgent=Mozilla/5.0 ..., tags={feature=quiz}, extra={exerciseId=42}]: Unknown question type: foo
-	Error: Unknown question type: foo
-	    at ...
+ERROR ClientErrorReportService : Client error report [severity=ERROR, version=9.8.0, url=/courses/1/exams/2, authenticated=true, userAgent=Mozilla/5.0 ..., tags={feature=quiz}, extra={exerciseId=42}]: Unknown question type: foo\n\tError: Unknown question type: foo\n\t    at ...
 ```
+
+The [error analysis](/admin/error-analysis) counts the reports of all clients and groups the ones that are alike, so you do not have to read the log to see which errors are frequent.
 
 Every node that receives a report writes it to its own log, so search the aggregated log of your deployment for `Client error report` to see the reports of all nodes together.
 
@@ -44,7 +44,7 @@ artemis:
 
 <Callout variant={CalloutVariant.info}>
 
-  This limit cannot be switched off. Unlike the other rate limits, it also applies when `artemis.rate-limiting.enabled` is `false` or the rate limit feature is toggled off, because anybody who can reach the server could otherwise fill its log through this endpoint. Only an address in `artemis.rate-limiting.exempt-addresses` is not limited, see [Security](/admin/production-setup/security#rate-limiting).
+  This limit cannot be switched off. Unlike the other rate limits, which are on by default and can be switched off, it also applies when `artemis.rate-limiting.enabled` is `false` or the rate limit feature is toggled off, because anybody who can reach the server could otherwise fill its log through this endpoint. Only an address in `artemis.rate-limiting.exempt-addresses` is not limited, see [Security](/admin/production-setup/security#rate-limiting).
 
 </Callout>
 

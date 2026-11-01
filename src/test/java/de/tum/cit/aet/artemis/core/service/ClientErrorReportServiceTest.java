@@ -15,8 +15,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
-import de.tum.cit.aet.artemis.core.domain.ClientErrorSeverity;
+import de.tum.cit.aet.artemis.core.domain.ErrorSeverity;
 import de.tum.cit.aet.artemis.core.dto.ClientErrorReportDTO;
+import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisService;
 
 /**
  * Tests how the values of a client are cleaned before they are logged. That the entry reaches the log with the level of its
@@ -24,10 +25,10 @@ import de.tum.cit.aet.artemis.core.dto.ClientErrorReportDTO;
  */
 class ClientErrorReportServiceTest {
 
-    private final ClientErrorReportService service = new ClientErrorReportService(mock(RateLimitService.class));
+    private final ClientErrorReportService service = new ClientErrorReportService(mock(RateLimitService.class), mock(ErrorAnalysisService.class));
 
     private static ClientErrorReportDTO report(String message) {
-        return new ClientErrorReportDTO(ClientErrorSeverity.ERROR, message, null, null, null, null, null);
+        return new ClientErrorReportDTO(ErrorSeverity.ERROR, message, null, null, null, null, null);
     }
 
     private String format(ClientErrorReportDTO report) {
@@ -36,18 +37,18 @@ class ClientErrorReportServiceTest {
 
     @Test
     void formatsTheContextOfTheReport() {
-        var report = new ClientErrorReportDTO(ClientErrorSeverity.ERROR, "Unknown question type", null, "/courses/1/exams/2?token=secret#top", "9.8.0",
+        var report = new ClientErrorReportDTO(ErrorSeverity.ERROR, "Unknown question type", null, "/courses/1/exams/2?token=secret#top", "9.8.0",
                 Map.of("exerciseId", "42", "step", "3"), Map.of("feature", "quiz"));
 
         String entry = service.formatEntry(report, "Mozilla/5.0 (X11; Linux x86_64)", true);
 
-        assertThat(entry).isEqualTo("Client error report [version=9.8.0, url=/courses/1/exams/2, authenticated=true, userAgent=Mozilla/5.0 (X11; Linux x86_64), "
+        assertThat(entry).isEqualTo("Client error report [severity=ERROR, version=9.8.0, url=/courses/1/exams/2, authenticated=true, userAgent=Mozilla/5.0 (X11; Linux x86_64), "
                 + "tags={feature=quiz}, extra={exerciseId=42, step=3}]: Unknown question type");
     }
 
     @Test
     void formatsAReportWithoutContext() {
-        assertThat(format(report("No context"))).isEqualTo("Client error report [version=, url=, authenticated=false, userAgent=, tags={}, extra={}]: No context");
+        assertThat(format(report("No context"))).isEqualTo("Client error report [severity=ERROR, version=, url=, authenticated=false, userAgent=, tags={}, extra={}]: No context");
     }
 
     @Test
@@ -57,7 +58,7 @@ class ClientErrorReportServiceTest {
         char bell = (char) 0x0007;
         char nul = (char) 0x0000;
         String forged = "boom\r\n2026-11-01 12:00:00 ERROR [main] Forged : admin logged in" + lineSeparator + "and" + nextLine + "more" + bell;
-        var report = new ClientErrorReportDTO(ClientErrorSeverity.ERROR, forged, null, "/a\nb", "1\n2", Map.of("k\ney", "v\r\nalue"), Map.of("t" + nul + "ag", "x\ny"));
+        var report = new ClientErrorReportDTO(ErrorSeverity.ERROR, forged, null, "/a\nb", "1\n2", Map.of("k\ney", "v\r\nalue"), Map.of("t" + nul + "ag", "x\ny"));
 
         String entry = service.formatEntry(report, "agent\r\nX-Forged: yes", false);
 
@@ -67,7 +68,7 @@ class ClientErrorReportServiceTest {
     @Test
     void startsEveryLineOfTheStackWithATabSoThatNoLineLooksLikeALogEntry() {
         String stack = "Error: boom\n    at a (a.js:1:1)\r\n2026-11-01 12:00:00 ERROR [main] Forged : admin logged in\n    at b (b.js:2:2)";
-        var report = new ClientErrorReportDTO(ClientErrorSeverity.ERROR, "boom", stack, null, null, null, null);
+        var report = new ClientErrorReportDTO(ErrorSeverity.ERROR, "boom", stack, null, null, null, null);
 
         String entry = format(report);
 
@@ -93,8 +94,8 @@ class ClientErrorReportServiceTest {
 
     @Test
     void removesPersonalDataFromTheStackAndTheContext() {
-        var report = new ClientErrorReportDTO(ClientErrorSeverity.ERROR, "boom", "Error: user=barney\n    at a (barney@example.org)", null, null,
-                Map.of("owner", "barney@example.org"), null);
+        var report = new ClientErrorReportDTO(ErrorSeverity.ERROR, "boom", "Error: user=barney\n    at a (barney@example.org)", null, null, Map.of("owner", "barney@example.org"),
+                null);
 
         assertThat(format(report)).doesNotContain("barney");
     }
@@ -111,7 +112,7 @@ class ClientErrorReportServiceTest {
     @Test
     void shortensEveryValueToItsLimit() {
         String tooLong = StringUtils.repeat('Q', 10_000);
-        var report = new ClientErrorReportDTO(ClientErrorSeverity.ERROR, tooLong, tooLong, tooLong, tooLong, Map.of("k", tooLong), Map.of(tooLong, "v"));
+        var report = new ClientErrorReportDTO(ErrorSeverity.ERROR, tooLong, tooLong, tooLong, tooLong, Map.of("k", tooLong), Map.of(tooLong, "v"));
 
         String entry = service.formatEntry(report, tooLong, false);
 
@@ -128,7 +129,7 @@ class ClientErrorReportServiceTest {
             tooMany.put("key" + i, "v");
         }
 
-        String entry = format(new ClientErrorReportDTO(ClientErrorSeverity.ERROR, "boom", null, null, null, tooMany, null));
+        String entry = format(new ClientErrorReportDTO(ErrorSeverity.ERROR, "boom", null, null, null, tooMany, null));
 
         assertThat(StringUtils.countMatches(entry, "=v")).isEqualTo(ClientErrorReportDTO.MAX_ENTRIES);
     }

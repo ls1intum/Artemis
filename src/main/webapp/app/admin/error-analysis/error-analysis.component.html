@@ -1,0 +1,92 @@
+<h5 *adminTitleBarTitle id="error-analysis-page-heading" class="mb-0" jhiTranslate="artemisApp.errorAnalysis.title"></h5>
+
+<div *adminTitleBarActions class="flex flex-wrap items-center gap-2">
+    <span data-testid="span-filter">
+        <tumaet-ui-select-button
+            [attr.aria-label]="'artemisApp.errorAnalysis.span.label' | artemisTranslate"
+            [options]="spanOptions"
+            [ngModel]="span()"
+            (ngModelChange)="span.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [allowEmpty]="false"
+            [itemTemplate]="optionLabel"
+        />
+    </span>
+    <span data-testid="location-filter">
+        <tumaet-ui-select-button
+            [attr.aria-label]="'artemisApp.errorAnalysis.location.label' | artemisTranslate"
+            [options]="locationOptions"
+            [ngModel]="location()"
+            (ngModelChange)="location.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [allowEmpty]="false"
+            [itemTemplate]="optionLabel"
+        />
+    </span>
+    <span data-testid="severity-filter">
+        <tumaet-ui-select-button
+            [attr.aria-label]="'artemisApp.errorAnalysis.severity.label' | artemisTranslate"
+            [options]="severityOptions"
+            [ngModel]="minSeverity()"
+            (ngModelChange)="minSeverity.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [allowEmpty]="false"
+            [itemTemplate]="optionLabel"
+        />
+    </span>
+    <ng-template #optionLabel let-option>
+        {{ option.label | artemisTranslate }}
+    </ng-template>
+</div>
+
+<p class="text-muted-color text-sm mb-4" data-testid="error-analysis-note" jhiTranslate="artemisApp.errorAnalysis.note"></p>
+
+@if (loading() && !groups()) {
+    <div class="flex justify-center my-5">
+        <fa-icon [icon]="faSpinner" animation="spin" size="3x" />
+    </div>
+} @else if (groups(); as groups) {
+    @if (groups.length === 0) {
+        <p class="text-muted-color" data-testid="error-analysis-empty" jhiTranslate="artemisApp.errorAnalysis.empty"></p>
+    } @else {
+        <p class="text-sm mb-2" data-testid="error-analysis-summary" [class.opacity-50]="loading()">
+            {{ 'artemisApp.errorAnalysis.summary' | artemisTranslate: { groups: groups.length, errors: totalCount() } }}
+        </p>
+        <div class="overflow-x-auto" [class.opacity-50]="loading()">
+            <table tumAetUiTable size="small" style="min-width: 100%" aria-describedby="error-analysis-page-heading" data-testid="error-analysis-table">
+                <thead>
+                    <tr>
+                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.severity"></span></th>
+                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.location"></span></th>
+                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.message"></span></th>
+                        <th scope="col" class="text-end"><span jhiTranslate="artemisApp.errorAnalysis.column.count"></span></th>
+                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.firstSeen"></span></th>
+                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.lastSeen"></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (group of groups; track group.location + group.severity + group.message) {
+                        <tr data-testid="error-analysis-row">
+                            <td class="whitespace-nowrap">
+                                <tumaet-ui-tag [severity]="severityTag(group.severity)" data-testid="error-severity">{{
+                                    'artemisApp.errorAnalysis.severity.' + group.severity | artemisTranslate
+                                }}</tumaet-ui-tag>
+                            </td>
+                            <td class="whitespace-nowrap" data-testid="error-location">{{ 'artemisApp.errorAnalysis.location.' + group.location | artemisTranslate }}</td>
+                            <td class="font-mono text-xs wrap-anywhere" data-testid="error-message">{{ group.message }}</td>
+                            <td class="text-end font-semibold" data-testid="error-count">{{ group.count }}</td>
+                            <td class="whitespace-nowrap text-sm" data-testid="error-first-seen">{{ group.firstSeen | artemisDate: 'long' : true }}</td>
+                            <td class="whitespace-nowrap text-sm" data-testid="error-last-seen">{{ group.lastSeen | artemisDate: 'long' : true }}</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}

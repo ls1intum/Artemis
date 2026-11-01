@@ -91,7 +91,7 @@ class ClientErrorReportIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private static Stream<Arguments> severities() {
-        return Stream.of(Arguments.of("INFO", Level.INFO), Arguments.of("WARN", Level.WARN), Arguments.of("ERROR", Level.ERROR));
+        return Stream.of(Arguments.of("INFO", Level.INFO), Arguments.of("WARN", Level.WARN), Arguments.of("ERROR", Level.ERROR), Arguments.of("CRITICAL", Level.ERROR));
     }
 
     @ParameterizedTest

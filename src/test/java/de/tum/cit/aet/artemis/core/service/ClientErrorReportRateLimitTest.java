@@ -26,11 +26,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
-import de.tum.cit.aet.artemis.core.domain.ClientErrorSeverity;
+import de.tum.cit.aet.artemis.core.domain.ErrorSeverity;
 import de.tum.cit.aet.artemis.core.dto.ClientErrorReportDTO;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisService;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 
@@ -41,7 +42,7 @@ class ClientErrorReportRateLimitTest {
 
     private static final String USER_AGENT = "Mozilla/5.0";
 
-    private static final ClientErrorReportDTO REPORT = new ClientErrorReportDTO(ClientErrorSeverity.ERROR, "boom", null, "/login", "9.8.0", null, null);
+    private static final ClientErrorReportDTO REPORT = new ClientErrorReportDTO(ErrorSeverity.ERROR, "boom", null, "/login", "9.8.0", null, null);
 
     private final IPAddress client = new IPAddressString("203.0.113.7").getAddress();
 
@@ -54,7 +55,7 @@ class ClientErrorReportRateLimitTest {
         SecurityContextHolder.clearContext();
         rateLimitService = mock(RateLimitService.class);
         when(rateLimitService.resolveClientId()).thenReturn(client);
-        service = spy(new ClientErrorReportService(rateLimitService));
+        service = spy(new ClientErrorReportService(rateLimitService, mock(ErrorAnalysisService.class)));
         doNothing().when(service).logReport(any(), any(), anyBoolean());
     }
 

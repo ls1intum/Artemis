@@ -1,0 +1,37 @@
+{
+    "artemisApp": {
+        "errorAnalysis": {
+            "title": "Fehleranalyse",
+            "note": "Gleichartige Fehler sind eine Zeile. Die Analyse liegt im Arbeitsspeicher des Server-Knotens, der antwortet: Sie beginnt neu, wenn der Knoten neu startet, und zählt nur, was dieser Knoten gesehen hat. Eine leere Seite ist deshalb kein Beweis, dass nichts schiefgelaufen ist.",
+            "empty": "Keine Fehler in diesem Zeitraum mit diesen Filtern.",
+            "summary": "Gruppen: {{ groups }}, Fehler: {{ errors }}",
+            "loadError": "Die Fehleranalyse konnte nicht geladen werden.",
+            "span": {
+                "label": "Zeitraum",
+                "DAY": "Letzter Tag",
+                "WEEK": "Letzte Woche",
+                "MONTH": "Letzter Monat"
+            },
+            "location": {
+                "label": "Ort",
+                "ALL": "Alle",
+                "SERVER": "Server",
+                "CLIENT": "Client"
+            },
+            "severity": {
+                "label": "Mindestschweregrad",
+                "WARN": "Warnung",
+                "ERROR": "Fehler",
+                "CRITICAL": "Kritisch"
+            },
+            "column": {
+                "severity": "Schweregrad",
+                "location": "Ort",
+                "message": "Fehler",
+                "count": "Anzahl",
+                "firstSeen": "Zuerst gesehen",
+                "lastSeen": "Zuletzt gesehen"
+            }
+        }
+    }
+}
