@@ -1,30 +1,7 @@
 name: Sonar
 
-# SonarQube Cloud analysis of the deployed application (server + client), set up alongside Codacy so
-# the two code-quality grades can be compared on the same code. Scope and rationale live in
-# `gradle/sonar.gradle`; the CI contract is in this directory's README.md, section
-# "The code quality analyses".
-#
-# ADVISORY WHEN CALLED BY CI. Never in another job's `needs:` and never gating: the job is
-# `continue-on-error` when called by CI. Manual scans fail visibly on scanner errors.
-# It publishes a grade; it does not decide whether code is mergeable — the enforcing gates are
-# `ci-quality.yml` and `ci-test.yml`.
-#
-# That guarantee covers this workflow and not the commit status. SonarQube Cloud's GitHub App posts
-# its own `SonarCloud Code Analysis` check with the quality gate verdict, which no job here produces
-# and `continue-on-error` cannot reach, so a failed gate is a red X on develop beside a green job.
-# It blocks nothing (branch protection requires only `All required CI Passed`), and the conditions
-# it applies live in the quality gate the project is assigned in SonarQube Cloud, not in this file.
-
-# Two entry points on purpose:
-#   workflow_call     — from ci.yml on develop pushes, after a green `test`, importing its coverage.
-#   workflow_dispatch — standalone, to get a grade on demand without waiting out a full CI run
-#                       (~2 h with the e2e tail). Analyses the ref it is dispatched on. A manual run
-#                       has no `test` job of its own, so it imports the coverage of the latest
-#                       fully tested `ci.yml` run for exactly the commit it analyses (a pull request
-#                       build counts) and falls back to no coverage when there is none. Without this
-#                       the quality gate reads 0.0% coverage on new code for a dispatched run, which
-#                       is a measurement artifact and not a property of the code.
+# Required PR quality gate; waits for the server verdict without rerunning tests.
+# Fork events only verify exact-source evidence using trusted base-branch tools.
 on:
   workflow_call:
     inputs:
@@ -41,7 +18,7 @@ on:
     secrets:
       SONAR_TOKEN:
         description: 'SonarQube Cloud analysis token for the ls1intum organization.'
-        required: true
+        required: false
   # Bounded recovery switch: select only the repository's own default branch, never an arbitrary
   # source SHA or build argument. This lets a repaired workflow refresh develop before it is merged.
   # checkov:skip=CKV_GHA_7:The boolean only selects the trusted repository default branch for analysis.
@@ -51,6 +28,10 @@ on:
         description: 'Analyze the repository default branch using this workflow revision (recovery mode).'
         type: boolean
         default: false
+      pull_request_number:
+        description: 'Scan reviewed code promoted to internal sonar/pr-<number>; 0 analyzes this ref.'
+        type: number
+        default: 0
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -65,60 +46,95 @@ jobs:
     name: SonarQube Cloud Analysis
     runs-on: ubuntu-latest
     # Generous on purpose: ~350k lines of Java plus ~260k of TypeScript is a long scan, and
-    # Sonar's TypeScript analyzer dominates it. A timeout costs the run's result, not the build.
+    # Sonar's TypeScript analyzer dominates it. Timeout, upload and quality-gate errors fail closed.
     timeout-minutes: 90
-    continue-on-error: ${{ github.event_name != 'workflow_dispatch' }}
     permissions:
       contents: read
+      pull-requests: read
       actions: read  # lists the CI runs of the commit and downloads their coverage artifacts
+    defaults:
+      run:
+        working-directory: .sonar-source
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Tools stay separate from source: a promoted commit may predate these helpers.
+      - name: Check out trusted analysis tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Recovery reads real default-branch sources while running the selected workflow revision.
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.analyze_default_branch && github.event.repository.default_branch || inputs.commit_sha || github.sha }}
-          # Sonar attributes issues to authors and separates new code from old via git history, so a
-          # shallow clone degrades the analysis rather than failing it. `0` is what Sonar documents.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && github.event.pull_request.base.sha || github.workflow_sha }}
+          path: .sonar-tools
+          persist-credentials: false
+      - name: Resolve source identity or verify exact fork analysis
+        id: analysis
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          REQUESTED_SHA: ${{ inputs.commit_sha || github.sha }}
+          PULL_REQUEST: ${{ inputs.pull_request_number || 0 }}
+          DEFAULT_BRANCH: ${{ inputs.analyze_default_branch || false }}
+        with:
+          script: |
+            await require('./.sonar-tools/.github/scripts/sonar-pr.js').prepareAnalysis({
+              github, context, core, requestedSha: process.env.REQUESTED_SHA,
+              pullRequest: process.env.PULL_REQUEST,
+              defaultBranch: process.env.DEFAULT_BRANCH === 'true',
+            });
+      - name: Check out analyzed source
+        if: steps.analysis.outputs.scan == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.analysis.outputs.sha }}
           fetch-depth: 0
+          path: .sonar-source
+          persist-credentials: false
 
       - name: Record analyzed source revision
+        if: steps.analysis.outputs.scan == 'true'
         id: source
         env:
-          SONAR_BRANCH_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.analyze_default_branch && github.event.repository.default_branch || github.head_ref || github.ref_name }}
+          EXPECTED_SHA: ${{ steps.analysis.outputs.sha }}
+          SONAR_BRANCH_NAME: ${{ steps.analysis.outputs.branch }}
         run: |
           set -Eeuo pipefail
           sha=$(git rev-parse HEAD)
+          test "$sha" = "$EXPECTED_SHA"
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "Analyzing $SONAR_BRANCH_NAME at $sha" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Java
+        if: steps.analysis.outputs.scan == 'true'
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
 
       - name: Setup Gradle
+        if: steps.analysis.outputs.scan == 'true'
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       # Before Setup Node.js, so that its `cache: 'pnpm'` finds the package manager it keys on.
       - name: Setup pnpm
+        if: steps.analysis.outputs.scan == 'true'
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           run_install: false
+          package_json_file: .sonar-source/package.json
 
       # Sonar's JavaScript/TypeScript analyzer shells out to Node. The runner image ships one, but
       # pinning it here keeps the analysis reproducible when that image changes, matching how every
       # other job in this repo pins Node rather than inheriting it.
       - name: Setup Node.js
+        if: steps.analysis.outputs.scan == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
+          cache-dependency-path: .sonar-source/pnpm-lock.yaml
 
       # Also REQUIRED, for the same reason `compileJava` is below. Sonar's TypeScript analyzer runs
       # the real compiler: `tsconfig.json` resolves Angular, RxJS and the rest through
       # `node_modules`, and on a clean checkout every one of those imports is unresolved. The scan
       # still succeeds, silently, with the type-aware rules degraded to what syntax alone can see.
       - name: Install client dependencies
+        if: steps.analysis.outputs.scan == 'true'
         run: pnpm install --frozen-lockfile
 
       # And this is required for the same reason again. `tsconfig.json` maps `@tumaet/ui-angular` to
@@ -129,6 +145,7 @@ jobs:
       # no source imports and runs a vite version check that would fail this job for a reason
       # unrelated to the scan.
       - name: Build the TUM AET UI package the client imports
+        if: steps.analysis.outputs.scan == 'true'
         run: pnpm run tum-aet-ui:build
 
       # Match the checked-out source revision, which can differ from the workflow ref in recovery
@@ -137,7 +154,7 @@ jobs:
       - name: Find the CI run that produced coverage for this commit
         id: coverage-run
         continue-on-error: true
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: steps.analysis.outputs.scan == 'true' && (github.event_name == 'workflow_dispatch' && steps.analysis.outputs.pull_request == '0')
         env:
           SHA: ${{ steps.source.outputs.sha }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -171,52 +188,70 @@ jobs:
             }
             if (!coverageRun) core.warning(`No verified complete coverage exists for ${process.env.SHA}; analyzing without coverage.`);
 
-      # Coverage is imported from the reports the `test` job already uploaded, so no suite is re-run
-      # here. Both downloads are `continue-on-error`: a missing report costs the coverage metric and
-      # nothing else, and must not lose us the ratings that are the point of this job.
-      #
-      # The download paths are the ones `gradle/sonar.gradle` names in
-      # `sonar.coverage.jacoco.xmlReportPaths` / `sonar.javascript.lcov.reportPaths`. The artifact
-      # unpacks to `aggregated/jacocoTestReport.xml`, hence the `build/reports/jacoco` target.
-      - name: Download the server JaCoCo report
-        if: ${{ inputs.with_coverage || steps.coverage-run.outputs.run_id != '' }}
-        continue-on-error: true
+      - name: Find promoted PR test coverage
+        if: steps.analysis.outputs.scan == 'true' && (github.event_name == 'workflow_dispatch' && steps.analysis.outputs.pull_request != '0')
+        id: pr-coverage-run
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        with:
+          script: |
+            core.setOutput('run_id', await require('./.sonar-tools/.github/scripts/sonar-pr.js').findPrCoverage({
+              github, context, sha: process.env.SOURCE_SHA,
+            }));
+      - name: Discover scope-labelled coverage artifacts
+        if: steps.analysis.outputs.scan == 'true'
+        id: reports
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          COVERAGE_RUN: ${{ steps.pr-coverage-run.outputs.run_id || steps.coverage-run.outputs.run_id || inputs.with_coverage && github.run_id || '' }}
+        with:
+          script: |
+            if (!process.env.COVERAGE_RUN) return;
+            const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
+              ...context.repo, run_id: Number(process.env.COVERAGE_RUN), per_page: 100,
+            });
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              ...context.repo, run_id: Number(process.env.COVERAGE_RUN), per_page: 100, filter: 'latest',
+            });
+            const names = require('./.sonar-tools/.github/scripts/sonar-pr.js').coverageArtifacts(jobs, artifacts);
+            core.setOutput('run_id', process.env.COVERAGE_RUN);
+            core.setOutput('server_full', String(names.has('Server JaCoCo XML')));
+            core.setOutput('client_full', String(names.has('Vitest Coverage Report')));
+            core.setOutput('server_selected', String(!names.has('Server JaCoCo XML') && names.has('Sonar Server Coverage')));
+            core.setOutput('client_selected', String(!names.has('Vitest Coverage Report') && names.has('Sonar Client Coverage')));
+      - name: Download complete server coverage
+        if: steps.analysis.outputs.scan == 'true' && (steps.reports.outputs.server_full == 'true')
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: Server JaCoCo XML
-          path: build/reports/jacoco
-          run-id: ${{ steps.coverage-run.outputs.run_id || github.run_id }}
+          path: .sonar-source/build/reports/jacoco
+          run-id: ${{ steps.reports.outputs.run_id }}
           github-token: ${{ github.token }}
-
-      - name: Download the client coverage report
-        if: ${{ inputs.with_coverage || steps.coverage-run.outputs.run_id != '' }}
-        continue-on-error: true
+      - name: Download complete client coverage
+        if: steps.analysis.outputs.scan == 'true' && (steps.reports.outputs.client_full == 'true')
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: Vitest Coverage Report
-          path: build/test-results/vitest/coverage
-          run-id: ${{ steps.coverage-run.outputs.run_id || github.run_id }}
+          path: .sonar-source/build/test-results/vitest/coverage
+          run-id: ${{ steps.reports.outputs.run_id }}
           github-token: ${{ github.token }}
-
-      # Gated on coverage having been requested, so a dispatched run for a commit with no successful CI
-      # run does not emit two warnings that mean nothing. When coverage WAS requested, a missing report
-      # is worth a warning: it means an artifact name drifted, which would otherwise show up only as a
-      # silent coverage drop in Sonar.
-      - name: Report which coverage inputs were found
-        if: ${{ inputs.with_coverage || steps.coverage-run.outputs.run_id != '' }}
-        run: |
-          set -Eeuo pipefail
-          jacoco=build/reports/jacoco/aggregated/jacocoTestReport.xml
-          lcov=build/test-results/vitest/coverage/lcov.info
-          for report in "$jacoco" "$lcov"; do
-            if [ -s "$report" ]; then
-              echo "Found $report"
-            else
-              echo "::warning::$report is missing or empty; Sonar will report no coverage for it." \
-                   "The ratings and issue counts are unaffected."
-            fi
-          done
-
+      - name: Download selected server execution data
+        if: steps.analysis.outputs.scan == 'true' && (steps.reports.outputs.server_selected == 'true')
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: Sonar Server Coverage
+          path: .sonar-source/build/jacoco
+          run-id: ${{ steps.reports.outputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Download selected client coverage
+        if: steps.analysis.outputs.scan == 'true' && (steps.reports.outputs.client_selected == 'true')
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: Sonar Client Coverage
+          path: .sonar-source/build/test-results/vitest/sonar-coverage
+          run-id: ${{ steps.reports.outputs.run_id }}
+          github-token: ${{ github.token }}
       # `compileJava` is REQUIRED, not an optimization. Sonar's Java analyzer needs bytecode, and the
       # Gradle plugin derives `sonar.java.binaries` from the main source set's output directory only
       # if that directory exists — with no prior compile the property is silently omitted and the
@@ -226,11 +261,15 @@ jobs:
       # `-x webapp` skips the Angular production build: Sonar analyzes the TypeScript sources, not
       # the bundled output, so the ~10 min build would buy nothing.
       - name: Build and analyze
+        if: steps.analysis.outputs.scan == 'true'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # Scanner 6+ forks a JVM; org.gradle.jvmargs does not configure its heap.
           SONAR_SCANNER_JAVA_OPTS: '-Xmx6g'
           # Keep the published branch and SCM revision aligned with the checked-out source.
-          SONAR_BRANCH_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.analyze_default_branch && github.event.repository.default_branch || github.head_ref || github.ref_name }}
+          SONAR_BRANCH_NAME: ${{ steps.analysis.outputs.branch }}
+          SONAR_PULL_REQUEST: ${{ steps.analysis.outputs.pull_request }}
+          SONAR_BASE_BRANCH: ${{ steps.analysis.outputs.base }}
+          SONAR_SELECTED_SERVER: ${{ steps.reports.outputs.server_selected }}
           SONAR_REVISION: ${{ steps.source.outputs.sha }}
-        run: ./gradlew compileJava sonar -x webapp "-Dsonar.branch.name=${SONAR_BRANCH_NAME}" "-Dsonar.scm.revision=${SONAR_REVISION}"
+        run: bash ../.sonar-tools/.github/scripts/run-sonar.sh

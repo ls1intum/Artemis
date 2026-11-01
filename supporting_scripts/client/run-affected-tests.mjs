@@ -17,6 +17,8 @@ const globalSource = /^(?:openapi\/|core\/(?:config|environments|util|global)\/|
 // custom rule tests also consume global inputs such as .nvmrc, build.gradle and gradle/.
 const nonClientPrefixes = ['documentation/', 'src/main/java/', 'src/test/java/', 'src/main/resources/', 'src/test/resources/'];
 const configs = ['vitest.config.ts', 'config/testing/vitest.monaco.config.ts'];
+const sonarCoverageRoot = 'build/test-results/vitest/sonar-coverage';
+const sonarCoverageDirectory = (root, configFile) => path.join(root, sonarCoverageRoot, configFile.includes('monaco') ? 'monaco' : 'normal');
 const fullPlan = (reason) => ({ mode: 'full', reason });
 
 function clientRelevant(file) {
@@ -235,11 +237,21 @@ export async function prepareRelatedProject({ root, configFile, sources, log = c
                 watch: false,
                 run: true,
                 related: sources.map((file) => path.resolve(root, file)),
-                coverage: { enabled: false },
+                coverage: {
+                    enabled: true,
+                    provider: 'istanbul',
+                    reporter: ['lcovonly'],
+                    reportsDirectory: sonarCoverageDirectory(root, configFile),
+                    // With allTestsRun=false this also avoids scanning unexecuted source files.
+                    cleanOnRerun: true,
+                },
                 maxWorkers: 2,
                 reporters: ['default', 'junit'],
                 outputFile: path.resolve(root, `build/test-results/vitest/${configFile.includes('monaco') ? 'monaco-' : ''}junit.xml`),
             });
+            // Full-suite thresholds have no meaningful denominator for selected specs. Keep the
+            // configured source inclusion/exclusion rules, but report only their actual execution.
+            context.config.coverage.thresholds = undefined;
             const selected = new Map();
             // Resolve each input independently: a tested component must not hide an untested
             // service in the same PR. Vite reuses transformed modules across these graph walks.
@@ -275,6 +287,9 @@ export async function prepareRelatedProject({ root, configFile, sources, log = c
                         // The default reporter's related summary describes only the final per-input
                         // query. Our explicit list describes the union including guardrails.
                         context.config.related = undefined;
+                        // Discovery cached transforms before Istanbul was initialized. The public
+                        // toggle invalidates those cache paths so execution is instrumented.
+                        await context.enableCoverage();
                         await context.standalone();
                         // start() rediscovers the same graph; execute the exact prepared specs.
                         const result = await context.runTestSpecifications(specifications);
@@ -302,7 +317,7 @@ export async function runRelatedProject({ execute = true, ...options }) {
     }
 }
 
-/** GITHUB_OUTPUT makes coverage-producing full runs distinguishable from selected PR tests. */
+/** Complete-suite coverage and partial selected-spec Sonar coverage have separate output contracts. */
 export async function executePlan(
     plan,
     { root, outputFile = process.env.GITHUB_OUTPUT, log = console.log, runCommand: command = runCommand, prepareRelatedProject: prepare = prepareRelatedProject, prebuilt = false },
@@ -323,6 +338,7 @@ export async function executePlan(
     report(plan);
     // A selected run must never leave an old full-suite summary that could be mistaken for new coverage.
     fs.rmSync(path.join(root, 'build/test-results/vitest/coverage'), { recursive: true, force: true });
+    fs.rmSync(path.join(root, sonarCoverageRoot), { recursive: true, force: true });
     if (plan.mode === 'none') return 0;
     log(`Graph seeds:\n${plan.sources.map((file) => `  ${file}`).join('\n')}`);
     if (!prebuilt) await command(['run', 'prebuild'], root);
@@ -371,7 +387,10 @@ export async function executePlan(
     }
     if (closeErrors.length) throw new AggregateError([...executionErrors, ...(selectionError ? [selectionError] : []), ...closeErrors], 'Cannot close prepared Vitest projects');
     if (executionErrors.length) throw executionErrors[0];
-    return fallbackReason ? runFull(fallbackReason) : status;
+    if (fallbackReason) return runFull(fallbackReason);
+    const sonarCoverage = status === 0 && configs.some((configFile) => fs.existsSync(path.join(sonarCoverageDirectory(root, configFile), 'lcov.info')));
+    if (outputFile) fs.appendFileSync(outputFile, `sonar_coverage=${sonarCoverage}\n`);
+    return status;
 }
 
 async function main() {
