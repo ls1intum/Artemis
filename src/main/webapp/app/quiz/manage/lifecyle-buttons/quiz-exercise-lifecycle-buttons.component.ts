@@ -128,7 +128,7 @@ export class QuizExerciseLifecycleButtonsComponent {
      * End the given quiz-exercise immediately
      */
     endQuiz() {
-        return this.quizExerciseApi.performActionForQuizExercise(this.quizExercise().id!, 'end-now').subscribe({
+        return this.quizExerciseApi.endQuizExercise(this.quizExercise().id!).subscribe({
             next: (dates) => {
                 const updatedExercise = deepClone(this.quizExercise());
                 this.applyDatesToExercise(updatedExercise, dates);
