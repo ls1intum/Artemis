@@ -37,7 +37,7 @@ Rules:
 - Spread the questions across the supplied material. No two questions may test the same fact.
 - No question may refer to another question. Each question must be answerable alone, in any order, without having seen the others.
 - For single-choice questions, produce exactly the requested number of answer options, of which exactly one is correct.
-- For multiple-choice questions, produce exactly the requested number of answer options, of which at least one and at most three are correct.
+- For multiple-choice questions, produce exactly the requested number of answer options. The task states for each question how many of them are correct: mark exactly that many options correct, and make every correct option a distinct claim that is correct on its own.
 - For true-false questions, produce exactly the two options "True" and "False", of which exactly one is correct.
 - Every distractor must be plausible to a student who has not mastered the topic, and unambiguously wrong to one who has.
 - Distractors must reflect realistic misconceptions about this material, not filler text or joke answers.
@@ -51,6 +51,7 @@ Rules:
 - Aim every question at the requested difficulty.
 - Write in the requested language.
 - Use basic Markdown (bold, italic, inline code, code blocks, tables, and lists) in question text and answer options where it structures the information and improves clarity. Avoid over-formatting.
+- Set every piece of source code in Markdown code: a fragment inside a sentence, such as an identifier, an expression, a literal or a keyword, in backticks; anything that spans one or more whole lines, such as a statement, a method or a class, in a fenced code block that names the language. This applies to the question text, to every answer option and to the explanation. An answer option that consists of code is written entirely in backticks. Code outside code formatting is a defect.
 - If a question mentions a tableau, table, graph, network or program instance, the full data of that instance must appear inside the question text. A question that mentions material not contained in its own text is invalid and will be discarded.
 - When you construct a numeric instance, verify it before returning it: a solution you state as feasible must satisfy every stated constraint, a value you state as optimal must actually be optimal for the stated data, and every derived number must follow from the given ones. A question whose premise is mathematically inconsistent is worthless.
 - Check the quantifier of every claim you mark correct. "Some optimal solution is attained at a vertex" and "every optimal solution is a vertex" are different statements and only one of them is true. Decide whether the claim holds always, sometimes or never, and word the option so that it says which.

@@ -37,6 +37,7 @@ final class HyperionQuizQuestionChecks {
 
     private static final int MAX_OPTION_TEXT_LENGTH = 2_000;
 
+    /** Options a multiple-choice question may mark correct at most when the caller names no bound. */
     private static final int MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE = 3;
 
     /** Minimum absolute length excess before the correct option counts as conspicuously long. */
@@ -100,13 +101,26 @@ final class HyperionQuizQuestionChecks {
     }
 
     /**
-     * Validates a question against the rules every question of a filtered generation must satisfy.
+     * Validates a question against the rules every question of a filtered generation must satisfy; a multiple-choice question may mark
+     * one to three options correct.
      *
      * @param question     the mapped question
      * @param allowedTypes question types the request asked for
      * @return the first defect found, empty when the question is usable
      */
     static Optional<Defect> defectOf(GeneratedQuizQuestionDTO question, Set<QuizQuestionGenerationType> allowedTypes) {
+        return defectOf(question, allowedTypes, MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE);
+    }
+
+    /**
+     * Validates a question against the rules every question of a filtered generation must satisfy.
+     *
+     * @param question          the mapped question
+     * @param allowedTypes      question types the request asked for
+     * @param maxCorrectOptions the most options a multiple-choice question may mark correct
+     * @return the first defect found, empty when the question is usable
+     */
+    static Optional<Defect> defectOf(GeneratedQuizQuestionDTO question, Set<QuizQuestionGenerationType> allowedTypes, int maxCorrectOptions) {
         if (!allowedTypes.contains(question.type())) {
             return Optional.of(Defect.TYPE_NOT_REQUESTED);
         }
@@ -143,7 +157,7 @@ final class HyperionQuizQuestionChecks {
         long correct = options.stream().filter(GeneratedQuizAnswerOptionDTO::correct).count();
         boolean correctCountValid = switch (question.type()) {
             case SINGLE_CHOICE, TRUE_FALSE -> correct == 1;
-            case MULTIPLE_CHOICE -> correct >= 1 && correct <= MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE;
+            case MULTIPLE_CHOICE -> correct >= 1 && correct <= maxCorrectOptions;
         };
         if (!correctCountValid) {
             return Optional.of(Defect.CORRECT_COUNT);
