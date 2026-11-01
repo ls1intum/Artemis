@@ -1,11 +1,11 @@
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, output, signal, viewChild } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 import {
     DifficultyFilterOption,
@@ -31,36 +31,42 @@ import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
     templateUrl: './exercise-filter-modal.component.html',
     styleUrls: ['./exercise-filter-modal.component.scss'],
     imports: [
+        TumAetUiCheckboxComponent,
+        TumAetUiButtonDirective,
         FormsModule,
         ReactiveFormsModule,
         FontAwesomeModule,
         CustomExerciseCategoryBadgeComponent,
         RangeSliderComponent,
-        NgbTypeahead,
+        TumAetUiAutoCompleteComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
 })
 export class ExerciseFilterModalComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    private activeModal = inject(TumAetUiDialogRef);
 
     protected readonly faFilter = faFilter;
 
     readonly filterApplied = output<ExerciseFilterResults>();
 
-    readonly instance = viewChild<NgbTypeahead>('categoriesFilterSelection');
+    readonly instance = viewChild<TumAetUiAutoCompleteComponent>('categoriesFilterSelection');
+    readonly categorySuggestions = signal<{ label: string; value: ExerciseCategoryFilterOption }[]>([]);
 
     readonly selectedCategoryOptions = signal<ExerciseCategoryFilterOption[]>([]);
     readonly selectableCategoryOptions = signal<ExerciseCategoryFilterOption[]>([]);
 
     readonly noFiltersAvailable = signal(false);
 
-    focus$ = new Subject<string>();
-    click$ = new Subject<string>();
-
     form?: FormGroup;
 
-    model?: string;
+    private readonly searchModel = signal<string | undefined>(undefined);
+    get model(): string | undefined {
+        return this.searchModel();
+    }
+    set model(value: string | undefined) {
+        this.searchModel.set(value);
+    }
 
     sidebarData?: SidebarData;
 
@@ -113,31 +119,21 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.activeModal.close();
     }
 
-    search: OperatorFunction<string, readonly ExerciseCategoryFilterOption[]> = (text$: Observable<string>) => {
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.instance()?.isPopupOpen()));
-        const inputFocus$ = this.focus$;
+    requestCategorySearch(query: string): void {
+        const matches = this.selectableCategoryOptions().filter((option) => this.resultFormatter(option).toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+        this.categorySuggestions.set(matches.map((value) => ({ label: this.resultFormatter(value), value })));
+    }
 
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) =>
-                term === ''
-                    ? this.selectableCategoryOptions()
-                    : this.selectableCategoryOptions().filter((categoryFilter: ExerciseCategoryFilterOption) => {
-                          if (categoryFilter.category.category !== undefined) {
-                              return categoryFilter.category.category?.toLowerCase().indexOf(term.toLowerCase()) > -1;
-                          }
+    selectCategory(event: TumAetUiAutoCompleteOptionEvent): void {
+        const option = this.categorySuggestions().find((suggestion) => suggestion === event.value);
+        if (option) {
+            this.onSelectItem({ item: option.value, preventDefault: () => {} });
+        }
+    }
 
-                          return false;
-                      }),
-            ),
-        );
-    };
     resultFormatter = (exerciseCategory: ExerciseCategoryFilterOption) => exerciseCategory.category.category ?? '';
 
-    // Bound to both the typeahead's (selectItem) output and (keydown.enter): the former emits an
-    // NgbTypeaheadSelectItemEvent (carrying the selected item), the latter a native keyboard Event (no item).
-    // The keydown binding types its payload as the generic DOM Event, hence the widened union here.
-    onSelectItem(event: NgbTypeaheadSelectItemEvent<ExerciseCategoryFilterOption> | Event) {
+    onSelectItem(event: { item: ExerciseCategoryFilterOption; preventDefault: () => void } | Event) {
         const isEnterPressedForNotExistingItem = !('item' in event) || !event.item;
         if (isEnterPressedForNotExistingItem) {
             event.preventDefault();
@@ -151,7 +147,8 @@ export class ExerciseFilterModalComponent implements OnInit {
         const filterOption: ExerciseCategoryFilterOption = event.item;
         filterOption.searched = true;
         this.updateCategoryOptionsStates();
-        this.model = undefined; // Clear the input field after selection
+        this.model = undefined;
+        this.instance()?.clear();
     }
 
     removeItem(item: ExerciseCategoryFilterOption): () => void {

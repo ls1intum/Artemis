@@ -1,6 +1,7 @@
-<form [formGroup]="form" class="form-group col-auto border border-warning p-3">
+<form [formGroup]="form" class="form-group col-auto border border-warning p-3" data-testid="plagiarism-control-settings">
     <button
         type="button"
+        data-testid="plagiarism-control-toggle"
         class="btn btn-secondary me-1"
         (click)="isCPCCollapsed = !isCPCCollapsed"
         jhiTranslate="{{ isCPCCollapsed ? 'artemisApp.plagiarism.showContinuousPlagiarismControl' : 'artemisApp.plagiarism.hideContinuousPlagiarismControl' }}"
@@ -109,10 +110,15 @@
             </div>
 
             <div class="col-12 col-md-6 col-xl-3">
-                <div class="form-group d-flex flex-column h-100">
-                    <div class="label-row">
-                        <span class="form-control-label" jhiTranslate="artemisApp.plagiarism.plagiarismCaseResponsePeriod"></span>
-                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip' | artemisTranslate" />
+                <div class="form-group d-flex flex-column h-100" data-testid="plagiarism-response-period-field">
+                    <div class="label-row" data-testid="plagiarism-response-period-label-row">
+                        <span class="form-control-label" data-testid="plagiarism-response-period-label" jhiTranslate="artemisApp.plagiarism.plagiarismCaseResponsePeriod"></span>
+                        <fa-icon
+                            data-testid="plagiarism-response-period-help"
+                            [icon]="faQuestionCircle"
+                            placement="bottom auto"
+                            [ngbTooltip]="'artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip' | artemisTranslate"
+                        />
                     </div>
                     <input
                         [attr.aria-label]="'artemisApp.plagiarism.plagiarismCaseResponsePeriod' | artemisTranslate"

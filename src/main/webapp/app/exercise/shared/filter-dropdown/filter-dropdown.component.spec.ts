@@ -123,3 +123,35 @@ describe('FilterDropdownComponent', () => {
         });
     });
 });
+
+describe('FilterDropdownComponent rendered filters', () => {
+    it.each([false, true])('keeps filter selection usable after ancestor scrolling and allows reset (grouped: %s)', async (grouped) => {
+        await TestBed.configureTestingModule({
+            imports: [FilterDropdownComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+        const fixture = TestBed.createComponent(FilterDropdownComponent);
+        fixture.componentRef.setInput('activeFilter', 'All');
+        fixture.componentRef.setInput('filters', ['Successful', 'Unsuccessful']);
+        if (grouped) {
+            fixture.componentRef.setInput('groupedFilters', [{ labelKey: 'Results', items: ['Successful', 'Unsuccessful'] }]);
+        }
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+        let selected: string | undefined;
+        fixture.componentInstance.filterChange.subscribe((filter) => (selected = filter));
+        fixture.nativeElement.dispatchEvent(new Event('scroll'));
+        select.selectedIndex = 1;
+        select.dispatchEvent(new Event('change'));
+        fixture.detectChanges();
+        expect(selected).toBe('Successful');
+        expect(select.disabled).toBe(false);
+        if (grouped) expect(select.querySelector('optgroup')?.label).toBe('Results');
+
+        select.selectedIndex = 0;
+        select.dispatchEvent(new Event('change'));
+        fixture.detectChanges();
+        expect(selected).toBe('All');
+    });
+});

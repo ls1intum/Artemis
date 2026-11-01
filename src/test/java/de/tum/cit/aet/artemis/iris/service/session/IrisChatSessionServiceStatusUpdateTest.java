@@ -49,7 +49,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
-import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -143,8 +142,6 @@ class IrisChatSessionServiceStatusUpdateTest {
             return null;
         }).when(pyrisJobService).updateJob(any(PyrisJob.class));
 
-        var savedAssistantMessage = new IrisMessage();
-        savedAssistantMessage.setId(100L);
         var firstSaveStarted = new CountDownLatch(1);
         var releaseFirstSave = new CountDownLatch(1);
         when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(invocation -> {
@@ -154,15 +151,13 @@ class IrisChatSessionServiceStatusUpdateTest {
             message.setId(100L);
             return message;
         });
-        when(irisMessageRepository.findById(100L)).thenReturn(Optional.of(savedAssistantMessage));
 
         var tokens = List.of(new LLMRequest("gpt-test", 10, 1.0F, 20, 2.0F, "IRIS_CHAT_TEST"));
         var trace = new LLMTokenUsageTrace();
         trace.setId(200L);
         when(llmTokenUsageService.saveLLMTokenUsage(eq(tokens), eq(LLMServiceType.IRIS), any())).thenReturn(trace);
 
-        var createdMemory = new MemirisMemoryDTO("mem-1", "Memory", "content", List.of(), List.of(), false, false);
-        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, "Locked title", List.of("suggestion"), tokens, null, List.of(createdMemory));
+        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, "Locked title", List.of("suggestion"), tokens);
 
         var executor = Executors.newFixedThreadPool(2);
         try {
@@ -193,9 +188,8 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         verify(irisChatWebsocketService, times(1)).sendStatusUpdate(eq(session), eq("run-1"), eq(PyrisRunState.RUNNING), isNull(), eq("Locked title"), eq(List.of("suggestion")),
                 eq(tokens), isNull(), isNull());
-        verify(irisMessageRepository).findById(100L);
-        verify(irisMessageRepository).save(savedAssistantMessage);
-        assertThat(savedAssistantMessage.getCreatedMemories()).containsExactly(createdMemory);
+        // The duplicate update only repeats the status; it does not touch the stored message again.
+        verify(irisMessageRepository, never()).save(any(IrisMessage.class));
         assertThat(session.getTitle()).isEqualTo("Locked title");
     }
 
@@ -221,7 +215,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         });
 
         var activity = new PyrisActivityDTO("activity-1", PyrisActivityKind.TOOL, "lecture_content_retrieval", PyrisActivityState.FINISHED, "Lecture 1", "2 chunks", 120L);
-        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, List.of(activity), 3);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.FINISHED, null, null, null, null, null, null, List.of(activity), 3);
 
         var updatedJob = irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
@@ -251,7 +245,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         });
 
         var activity = new PyrisActivityDTO("activity-1", PyrisActivityKind.TOOL, "lecture_content_retrieval", PyrisActivityState.RUNNING, "Lecture 1", null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO("Let me check first", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, List.of(activity), 3, false);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("Let me check first", PyrisRunState.RUNNING, null, null, null, null, null, null, List.of(activity), 3, false);
 
         var updatedJob = irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
@@ -281,7 +275,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         stubJobLock(job);
 
         var suggestedContext = new PyrisSuggestedContextDTO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 11L);
-        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null, true, suggestedContext, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, true, suggestedContext, null);
 
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
@@ -310,7 +304,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         stubJobLock(job);
 
         var suggestedContext = new PyrisSuggestedContextDTO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 999L);
-        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null, true, suggestedContext, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, true, suggestedContext, null);
 
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
@@ -329,7 +323,7 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
         var suggestedContext = new PyrisSuggestedContextDTO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 11L);
-        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null, null, suggestedContext, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, suggestedContext, null);
 
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
@@ -347,8 +341,7 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
         var suggestedContext = new PyrisSuggestedContextDTO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 11L);
-        var statusUpdate = new PyrisChatStatusUpdateDTO("Let me check first", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null, false,
-                suggestedContext, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("Let me check first", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, false, suggestedContext, null);
 
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
@@ -399,7 +392,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         });
 
         var suggestedContext = new PyrisSuggestedContextDTO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 11L);
-        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null, true, suggestedContext, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, true, suggestedContext, null);
 
         var executor = Executors.newFixedThreadPool(2);
         try {
@@ -480,7 +473,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         session.setCourseId(1L);
         when(irisSessionRepository.findById(2L)).thenReturn(Optional.of(session));
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null, null, null,
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null,
                 new PyrisCompactionDTO("- the student asked about heaps", 41L));
 
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
@@ -488,8 +481,8 @@ class IrisChatSessionServiceStatusUpdateTest {
         var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
         verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.SUMMARY));
         var content = (IrisJsonMessageContent) messageCaptor.getValue().getContent().getFirst();
-        assertThat(content.getJsonNode().get("summary").asString()).isEqualTo("- the student asked about heaps");
-        assertThat(content.getJsonNode().get("coversThroughMessageId").asLong()).isEqualTo(41L);
+        assertThat(JsonObjectMapper.get().readTree(content.getContentAsString()).get("summary").asString()).isEqualTo("- the student asked about heaps");
+        assertThat(JsonObjectMapper.get().readTree(content.getContentAsString()).get("coversThroughMessageId").asLong()).isEqualTo(41L);
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
     }
 
@@ -499,7 +492,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         session.setId(2L);
         when(irisSessionRepository.findById(2L)).thenReturn(Optional.of(session));
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FINISHED, null, null, null, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FINISHED, null, null, null, null);
 
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 

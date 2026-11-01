@@ -28,6 +28,8 @@ import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 describe('ListOfComplaintsComponent', () => {
@@ -72,6 +74,7 @@ describe('ListOfComplaintsComponent', () => {
             imports: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(SortService),
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: Router, useClass: MockRouter },
@@ -83,6 +86,7 @@ describe('ListOfComplaintsComponent', () => {
         })
             .compileComponents()
             .then(() => {
+                vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(true);
                 fixture = TestBed.createComponent(ListOfComplaintsComponent);
                 comp = fixture.componentInstance;
 
@@ -105,6 +109,24 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     describe('loadComplaints', () => {
+        it('chooses explicit tutor exercise scope and ignores another tutor in the route', () => {
+            vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
+            const tutorRequest = vi.spyOn(complaintService, 'findForTutorByExerciseId');
+            activatedRoute.setParameters({ tutorId: 12, courseId: 34, exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
+            expect(tutorRequest).toHaveBeenCalledExactlyOnceWith(56, ComplaintType.MORE_FEEDBACK);
+            expect(findAllByTutorIdForExerciseIdStub).not.toHaveBeenCalled();
+        });
+
+        it('chooses explicit tutor course scope without a tutor route parameter', () => {
+            vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
+            const tutorRequest = vi.spyOn(complaintService, 'findForTutorByCourseId');
+            activatedRoute.setParameters({ courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
+            expect(tutorRequest).toHaveBeenCalledExactlyOnceWith(34, ComplaintType.MORE_FEEDBACK);
+            expect(findAllByCourseIdStub).not.toHaveBeenCalled();
+        });
+
         it('find for tutor by exercise', () => {
             activatedRoute.setParameters({ tutorId: 12, courseId: 34, exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();

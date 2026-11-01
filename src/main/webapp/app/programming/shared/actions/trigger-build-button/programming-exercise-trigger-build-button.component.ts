@@ -2,7 +2,7 @@ import { Component, OnDestroy, effect, inject, input, signal, untracked } from '
 import { filter, finalize, tap } from 'rxjs/operators';
 import { EMPTY, Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
-import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -130,6 +130,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                             this.isBuilding.set(false);
                             this.participationHasLatestSubmissionWithoutResult.set(false);
                             break;
+                        case ProgrammingSubmissionState.IS_QUEUED:
                         case ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION:
                             this.isBuilding.set(true);
                             break;
@@ -175,7 +176,17 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.isRetrievingBuildStatus.set(false);
             return EMPTY;
         }
-        return this.submissionService.triggerBuild(participationId, submissionType).pipe(finalize(() => this.isRetrievingBuildStatus.set(false)));
+        const exerciseId = this.exercise().id;
+        if (submissionType === SubmissionType.INSTRUCTOR && exerciseId === undefined) {
+            this.isRetrievingBuildStatus.set(false);
+            return EMPTY;
+        }
+        const type = this.participation()?.type;
+        const build =
+            submissionType === SubmissionType.INSTRUCTOR
+                ? this.submissionService.triggerInstructorBuild(exerciseId!, participationId, type === ParticipationType.TEMPLATE || type === ParticipationType.SOLUTION)
+                : this.submissionService.triggerBuild(participationId, submissionType);
+        return build.pipe(finalize(() => this.isRetrievingBuildStatus.set(false)));
     }
 
     triggerFailed(lastGraded = false) {

@@ -85,8 +85,6 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { IrisActivityFeedComponent } from 'app/iris/overview/base-chatbot/iris-activity-feed/iris-activity-feed.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
-import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
-import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
 import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
@@ -149,7 +147,6 @@ const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_D
         IrisCitationTextComponent,
         IrisMcqQuestionComponent,
         IrisMcqCarouselComponent,
-        IrisChatMemoriesIndicatorComponent,
         IrisActivityFeedComponent,
         ConfirmDialogModule,
         MenuModule,
@@ -175,6 +172,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly clipboard = inject(Clipboard);
     private readonly onboardingService = inject(IrisOnboardingService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
+    private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
@@ -464,6 +462,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isFocused = signal(false);
     private cycleIntervalId: ReturnType<typeof setInterval> | undefined;
     private cycleFadeTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private focusAfterAcceptanceTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     readonly currentPlaceholder = computed(() => {
         const labels = this.interpolatedLabels();
@@ -507,18 +506,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         return this.translateService.instant('artemisApp.exerciseChatbot.inputMessage');
     });
-
-    protected getAccessedMemories(message: IrisMessage): MemirisMemory[] {
-        return message.accessedMemories ?? [];
-    }
-
-    protected getCreatedMemories(message: IrisMessage): MemirisMemory[] {
-        return message.createdMemories ?? [];
-    }
-
-    protected hasMemories(message: IrisMessage): boolean {
-        return this.getAccessedMemories(message).length > 0 || this.getCreatedMemories(message).length > 0;
-    }
 
     protected getActivities(message: IrisMessage): IrisActivityItem[] {
         return message.sender === IrisSender.LLM ? (message.activities ?? []) : [];
@@ -661,7 +648,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 } else if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
                     this.scrollToBottom('smooth');
                 }
-                const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
+                const timeoutId = setTimeout(() => this.focusUnlessFocusIsElsewhere(this.messageTextarea()?.nativeElement), 10);
                 onCleanup(() => clearTimeout(timeoutId));
             }
             // Track new messages for animation (compare against previous IDs, not current).
@@ -732,16 +719,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
 
         // Focus on message textarea after initialization
-        const focusTimeoutId = setTimeout(() => {
-            const textarea = this.messageTextarea();
-            const acceptBtn = this.acceptButton();
-            if (textarea) {
-                textarea.nativeElement.focus();
-            } else if (acceptBtn) {
-                acceptBtn.nativeElement.focus();
-            }
-        }, 150);
+        const focusTimeoutId = setTimeout(() => this.focusUnlessFocusIsElsewhere((this.messageTextarea() ?? this.acceptButton())?.nativeElement), 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
+        this.destroyRef.onDestroy(() => clearTimeout(this.focusAfterAcceptanceTimeoutId));
         this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
         this.destroyRef.onDestroy(() => {
             if (this.draftSwapScrollRafId !== undefined) {
@@ -894,14 +874,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
     }
 
+    /**
+     * Focuses the element unless the user is working outside the chat, e.g. in the tab list that opened it or in the
+     * editor: taking the focus there would break their keyboard navigation.
+     */
+    private focusUnlessFocusIsElsewhere(element: HTMLElement | undefined) {
+        const focused = document.activeElement;
+        if (element && (!focused || focused === document.body || this.elementRef.nativeElement.contains(focused))) {
+            element.focus();
+        }
+    }
+
     private focusInputAfterAcceptance() {
-        setTimeout(() => {
-            if (this.messageTextarea()) {
-                this.messageTextarea()!.nativeElement.focus();
-            } else if (this.acceptButton()) {
-                this.acceptButton()!.nativeElement.focus();
-            }
-        }, 150);
+        this.focusAfterAcceptanceTimeoutId = setTimeout(() => this.focusUnlessFocusIsElsewhere((this.messageTextarea() ?? this.acceptButton())?.nativeElement), 150);
     }
 
     /**

@@ -15,6 +15,8 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -29,6 +31,12 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 public class ModelingSubmission extends Submission {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingSubmission.class);
+
+    /** Property of an Apollon v3 model that holds its elements. */
+    private static final String ELEMENTS_PROPERTY = "elements";
+
+    /** Property of an Apollon v4 model that holds its nodes. */
+    private static final String NODES_PROPERTY = "nodes";
 
     @Override
     public String getSubmissionExerciseType() {
@@ -98,21 +106,61 @@ public class ModelingSubmission extends Submission {
             if (model == null || model.isBlank()) {
                 return true;
             }
-            var jsonNode = jacksonObjectMapper.readTree(getModel());
+            try (JsonParser parser = jacksonObjectMapper.createParser(getModel())) {
+                // The model is read as a token stream: its size is bounded only by MAX_SUBMISSION_MODEL_LENGTH, and only the emptiness of two properties matters.
+                if (parser.nextToken() != JsonToken.START_OBJECT) {
+                    // A model that is not a JSON object has neither elements nor nodes
+                    parser.skipChildren();
+                    return true;
+                }
+                Boolean elementsEmpty = null;
+                boolean nodesEmpty = true;
+                while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
+                    String property = parser.currentName();
+                    JsonToken valueToken = parser.nextToken();
+                    // As with a parsed tree, a property that occurs twice counts with its last value
+                    if (ELEMENTS_PROPERTY.equals(property)) {
+                        elementsEmpty = consumeValueAndCheckEmpty(parser, valueToken);
+                    }
+                    else if (NODES_PROPERTY.equals(property)) {
+                        nodesEmpty = consumeValueAndCheckEmpty(parser, valueToken);
+                    }
+                    else {
+                        parser.skipChildren();
+                    }
+                }
 
-            // Check for v3 (elements)
-            var elements = jsonNode.get("elements");
-            if (elements != null) {
-                return elements.isEmpty();
+                // Check for v3 (elements), then for v4 (nodes)
+                return elementsEmpty != null ? elementsEmpty : nodesEmpty;
             }
-
-            // Check for v4 (nodes)
-            var nodes = jsonNode.get("nodes");
-            return nodes == null || nodes.isEmpty();
         }
         catch (JacksonException ex) {
             log.warn("Failed to parse model JSON", ex);
             return false;
         }
+    }
+
+    /**
+     * Reads the value the parser currently points at to its end and tells whether it is empty. An object or an array is empty if it has no members; a string, a number,
+     * a boolean and null have no members and are therefore empty as well.
+     *
+     * @param parser     the parser, positioned at the first token of the value
+     * @param valueToken the first token of the value
+     * @return true if the value has no members, false otherwise
+     */
+    private static boolean consumeValueAndCheckEmpty(JsonParser parser, JsonToken valueToken) {
+        if (!valueToken.isStructStart()) {
+            return true;
+        }
+        JsonToken token = parser.nextToken();
+        boolean empty = token.isStructEnd();
+        // Read on to the closing token of the value: a nested value is skipped as a whole, so the first closing token that is seen at this level is the one of the value.
+        while (!token.isStructEnd()) {
+            if (token.isStructStart()) {
+                parser.skipChildren();
+            }
+            token = parser.nextToken();
+        }
+        return empty;
     }
 }

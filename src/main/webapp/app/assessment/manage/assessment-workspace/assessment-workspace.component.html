@@ -1,5 +1,5 @@
 <ng-template #instructionsSection>
-    <section class="assessment-workspace__section">
+    <section class="assessment-workspace__section" data-testid="assessment-workspace-instructions">
         <header class="assessment-workspace__section-header">
             <fa-icon [icon]="faInstructions" aria-hidden="true" />
             <h2 jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></h2>
@@ -10,41 +10,36 @@
     </section>
 </ng-template>
 
-<p-splitter
+<tumaet-ui-splitter
     class="assessment-workspace assessment-workspace__primary-split"
+    data-testid="assessment-workspace"
     [class.assessment-workspace__split--vertical]="primaryVertical()"
     [layout]="primaryLayout()"
     [panelSizes]="primarySizes()"
     [minSizes]="[36, 24]"
-    [gutterSize]="12"
-    [pt]="primaryPassThrough()"
     [stateKey]="storageKey()"
-    stateStorage="local"
 >
     <ng-template #panel>
-        <div class="assessment-workspace__canvas">
+        <div class="assessment-workspace__canvas" data-testid="assessment-workspace-canvas">
             <ng-content select="[assessmentWorkspaceCanvas]" />
         </div>
     </ng-template>
 
     <ng-template #panel>
         @if (showDetails()) {
-            <p-splitter
+            <tumaet-ui-splitter
                 class="assessment-workspace__support-split"
                 [class.assessment-workspace__split--horizontal]="supportHorizontal()"
                 [layout]="supportLayout()"
                 [panelSizes]="[52, 48]"
                 [minSizes]="[24, 24]"
-                [gutterSize]="12"
-                [pt]="supportPassThrough()"
                 [stateKey]="sidebarStorageKey()"
-                stateStorage="local"
             >
                 <ng-template #panel>
                     <ng-container [ngTemplateOutlet]="instructionsSection" />
                 </ng-template>
                 <ng-template #panel>
-                    <section class="assessment-workspace__section">
+                    <section class="assessment-workspace__section" data-testid="assessment-workspace-details">
                         <header class="assessment-workspace__section-header">
                             <fa-icon [icon]="faDetails" aria-hidden="true" />
                             <h2 [jhiTranslate]="detailsLabelKey()"></h2>
@@ -54,9 +49,9 @@
                         </div>
                     </section>
                 </ng-template>
-            </p-splitter>
+            </tumaet-ui-splitter>
         } @else {
             <ng-container [ngTemplateOutlet]="instructionsSection" />
         }
     </ng-template>
-</p-splitter>
+</tumaet-ui-splitter>

@@ -1,3 +1,4 @@
+import { QuestionReevaluationActionsComponent } from '../question-reevaluation-actions/question-reevaluation-actions.component';
 import {
     AfterViewInit,
     Component,
@@ -48,14 +49,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import {
     faAngleDown,
     faAngleRight,
     faBan,
     faBars,
-    faChevronDown,
-    faChevronUp,
     faCopy,
     faEye,
     faFont,
@@ -79,6 +78,7 @@ import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-l
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        QuestionReevaluationActionsComponent,
         FaIconComponent,
         FormsModule,
         CustomMaxLengthDirective,
@@ -100,7 +100,7 @@ import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-l
         SelectModule,
         CheckboxModule,
         InputTextModule,
-        InputNumberModule,
+        PointsInputComponent,
     ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit, OnDestroy {
@@ -114,8 +114,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     protected readonly faUndo = faUndo;
     protected readonly faFont = faFont;
     protected readonly faEye = faEye;
-    protected readonly faChevronUp = faChevronUp;
-    protected readonly faChevronDown = faChevronDown;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faBars = faBars;
     protected readonly faUnlink = faUnlink;

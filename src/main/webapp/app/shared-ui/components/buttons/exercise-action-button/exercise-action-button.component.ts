@@ -24,7 +24,7 @@ export class ExerciseActionButtonComponent {
     buttonLabel = input<string | undefined>(undefined);
     hideLabelMobile = input(true);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
-    overwriteDisabled = input(false);
+    forceDisabled = input(false);
     buttonLoading = input(false);
     outlined = input(false);
     smallButton = input(false);
@@ -35,7 +35,7 @@ export class ExerciseActionButtonComponent {
     protected isPrimary = computed(() => !this.outlined() && !(this.overrideSecondary() ?? false));
     protected isSecondary = computed(() => !this.outlined() && (this.overrideSecondary() ?? false));
 
-    protected isDisabled = computed(() => this.buttonLoading() || this.overwriteDisabled());
+    protected isDisabled = computed(() => this.buttonLoading() || this.forceDisabled());
 
     // Icons
     faCircleNotch = faCircleNotch;

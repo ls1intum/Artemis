@@ -45,10 +45,12 @@ jhi-collapsed-panel-rail {
     display: flex;
     min-height: 2.5rem;
     flex: none;
+
     // A page whose header holds tabs lets them run down to the line below the header, so their indicator sits on it
     align-items: var(--feedback-panel-header-align, center);
     padding: var(--feedback-panel-header-padding-block, 0.3rem) 0 var(--feedback-panel-header-padding-block, 0.3rem) var(--feedback-panel-header-padding-start, 0.75rem);
     border-bottom: var(--feedback-panel-header-border-width, 1px) solid var(--feedback-panel-header-border, var(--border-color));
+
     // A page whose tabs run down to the line draws the line inside the header instead (border width 0, line width 1px): the tabs are then
     // above it by paint order, with no negative margin whose result depends on how the sizes round
     box-shadow: inset 0 calc(-1 * var(--feedback-panel-header-line-width, 0px)) 0 var(--feedback-panel-header-border, var(--border-color));
@@ -66,6 +68,7 @@ jhi-collapsed-panel-rail {
 
 .feedback-bottom-panel__heading {
     margin: 0;
+
     // Like the tabs of the exercise details beside it: the kit's small tab, which is 14px and 600 on a 20px line
     font-size: var(--tumaet-ui-font-size-sm);
     font-weight: 600;
@@ -89,13 +92,15 @@ jhi-collapsed-panel-rail {
     margin-block: calc(-1 * var(--feedback-panel-header-padding-block, 0.3rem));
     padding: 0;
     color: inherit;
+    cursor: pointer;
+    background: transparent;
     border: 0;
-    border-left: var(--bs-border-width) solid var(--bs-border-color);
+    border-left: 1px solid var(--border-color);
     border-radius: 0;
 
     &:hover,
     &:focus-visible {
-        color: var(--bs-primary);
+        color: var(--primary);
         background: var(--hover-slightly-darker-body-bg);
     }
 }

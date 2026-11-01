@@ -108,12 +108,12 @@
                     }
                 </span>
                 @if (unreadCount() > 0 && shouldDisplayUnreadCount()) {
-                    <span class="unread-count me-n2">{{ formattedUnreadCount() }}</span>
+                    <span class="unread-count me-1" data-testid="conversation-unread-count">{{ formattedUnreadCount() }}</span>
                 }
                 @let attendanceText = item.attendanceText;
                 @let attendanceChipColor = item.attendanceChipColor;
                 @if (attendanceText && attendanceChipColor) {
-                    <div class="attendance-chip" [style.background-color]="attendanceChipColor">
+                    <div class="attendance-chip" data-testid="sidebar-attendance-chip" [style.background-color]="attendanceChipColor">
                         {{ attendanceText }}
                     </div>
                 }

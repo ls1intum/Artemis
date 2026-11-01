@@ -1,11 +1,11 @@
-<div class="row justify-content-center overflow-hidden">
+<div class="grid grid-cols-12 gap-4 justify-center overflow-hidden">
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
         <li
             class="ms-0"
             [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)"
             (click)="navigate()"
-            [pTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"
+            [tumAetUiTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"
             [attr.aria-label]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"
             #keyboardAction4
             [attr.role]="routerLink() ? 'button' : null"
@@ -20,7 +20,7 @@
             <li
                 [ngClass]="calculateClasses(TRAINED)"
                 (click)="navigate()"
-                [pTooltip]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
+                [tumAetUiTooltip]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
                 [attr.aria-label]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
                 #keyboardAction13
                 [attr.role]="routerLink() ? 'button' : null"

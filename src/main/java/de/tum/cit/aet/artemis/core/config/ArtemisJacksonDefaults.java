@@ -86,7 +86,7 @@ public final class ArtemisJacksonDefaults {
                 // left alone because pinning it would not restore the Jackson 2 shape anyway: Jackson 2 wrote
                 // java.time.Month as the name ("MARCH"), Jackson 3 writes a number whichever way the flag is set, and
                 // Artemis serializes neither Month nor MonthDay (the calendar module uses YearMonth, unaffected).
-                // Jackson 3 stops stripping trailing zeroes, so a BigDecimal read into a JsonNode renders differently.
+                // Jackson 3 stops stripping trailing zeroes, so a BigDecimal read into a parsed JSON tree renders differently.
                 // TODO: only one production file imports BigDecimal, so this pin is almost certainly unnecessary.
                 // Confirm no BigDecimal reaches a response body or an archived JSON file, then remove it.
                 .enable(JsonNodeFeature.STRIP_TRAILING_BIGDECIMAL_ZEROES);

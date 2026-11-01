@@ -29,13 +29,15 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
-import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
+import de.tum.cit.aet.artemis.communication.service.ForwardedMessageService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
@@ -56,12 +58,12 @@ public class AnswerMessageResource {
 
     private final UserRepository userRepository;
 
-    private final AnswerPostRepository answerPostRepository;
+    private final ForwardedMessageService forwardedMessageService;
 
-    public AnswerMessageResource(AnswerMessageService answerMessageService, UserRepository userRepository, AnswerPostRepository answerPostRepository) {
+    public AnswerMessageResource(AnswerMessageService answerMessageService, UserRepository userRepository, ForwardedMessageService forwardedMessageService) {
         this.answerMessageService = answerMessageService;
         this.userRepository = userRepository;
-        this.answerPostRepository = answerPostRepository;
+        this.forwardedMessageService = forwardedMessageService;
     }
 
     /**
@@ -153,18 +155,24 @@ public class AnswerMessageResource {
             return ResponseEntity.notFound().build();
         }
 
-        // authorization: the caller may only retrieve answer posts they can access (course-wide channel or participant of the conversation).
-        // We check access against the posts that were actually found (not the requested IDs) so that non-existent IDs yield 404, not 403.
+        // Reading the original conversation and receiving a forward are separate permissions. Only the former
+        // permits returning conversation metadata and replies; a forward grants access to its source content alone.
         User user = userRepository.getUser();
         Set<Long> foundAnswerPostIds = answerPosts.stream().map(AnswerPost::getId).collect(Collectors.toSet());
-        answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(foundAnswerPostIds, user.getId());
+        Set<Long> directlyAccessibleIds = forwardedMessageService.findDirectlyAccessibleIds(answerPosts, PostingType.ANSWER, courseId, user);
+        Set<Long> forwardedSourceIds = directlyAccessibleIds.size() == foundAnswerPostIds.size() ? Set.of()
+                : forwardedMessageService.findAccessibleSourceIds(foundAnswerPostIds, PostingType.ANSWER, courseId, user);
+        if (foundAnswerPostIds.stream().anyMatch(id -> !directlyAccessibleIds.contains(id) && !forwardedSourceIds.contains(id))) {
+            throw new AccessForbiddenException("AnswerPost", foundAnswerPostIds);
+        }
 
         if (answerPosts.stream().anyMatch(post -> !post.getPost().getConversation().getCourse().getId().equals(courseId))) {
             throw new BadRequestAlertException("Some answer posts do not belong to the specified course", answerMessageService.getEntityName(), "invalidCourse");
         }
 
         log.debug("getSourceAnswerPostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
-        List<AnswerPostResponseDTO> body = answerPosts.stream().map(AnswerPostResponseDTO::from).toList();
+        List<AnswerPostResponseDTO> body = answerPosts.stream()
+                .map(source -> directlyAccessibleIds.contains(source.getId()) ? AnswerPostResponseDTO.from(source) : AnswerPostResponseDTO.fromForwardedSource(source)).toList();
         return ResponseEntity.ok().body(body);
     }
 
@@ -176,8 +184,7 @@ public class AnswerMessageResource {
      * tutor-in-course authorization inside {@code AnswerMessageService#verifyAnswerMessage} via
      * {@code checkHasAtLeastRoleInCourseElseThrow(TEACHING_ASSISTANT, ...)} plus a channel-membership check.
      * This mirrors the reject (delete) endpoint. The in-body check also covers the channel membership, which no
-     * annotation expresses, so it stays even though {@code @EnforceAtLeastTutorInCourse} no longer requires the global
-     * {@code ROLE_TA} authority that course tutors do not necessarily carry.
+     * annotation expresses, so it stays even though {@code @EnforceAtLeastTutorInCourse} could express the tutor role.
      *
      * @param courseId        id of the course the answer message belongs to
      * @param answerMessageId id of the answer message to approve

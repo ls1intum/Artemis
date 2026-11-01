@@ -19,6 +19,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
@@ -137,6 +139,60 @@ class RepositoryServiceFileOperationsTest {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.renameFile(repository, new FileMove("Missing.java", "New.java")));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { ".git", ".GIT", ".Git" })
+    void renameFile_toAnInvalidName_isRejected(String newName) throws Exception {
+        FileUtils.write(workingTree.resolve("nested/prepared/content.txt").toFile(), "content", StandardCharsets.UTF_8);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).as("renaming a directory to '%s' must be rejected", newName)
+                .isThrownBy(() -> repositoryService.renameFile(repository, new FileMove("nested/prepared", newName)));
+
+        assertThat(workingTree.resolve("nested/prepared/content.txt")).as("nothing is moved").isRegularFile();
+        assertThat(workingTree.resolve("nested").resolve(newName)).as("nothing is created").doesNotExist();
+    }
+
+    @Test
+    void renameFile_aFileToAnInvalidName_isRejected() throws Exception {
+        FileUtils.write(workingTree.resolve("nested/prepared").toFile(), "content", StandardCharsets.UTF_8);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.renameFile(repository, new FileMove("nested/prepared", ".git")));
+
+        assertThat(workingTree.resolve("nested/prepared")).isRegularFile();
+        assertThat(workingTree.resolve("nested/.git")).doesNotExist();
+    }
+
+    @Test
+    void createFolder_withAnInvalidName_isRejected() throws Exception {
+        Files.createDirectories(workingTree.resolve("nested"));
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "nested/.git", content("")));
+
+        assertThat(workingTree.resolve("nested/.git")).doesNotExist();
+    }
+
+    @Test
+    void createFile_withAnInvalidName_isRejected() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "nested/.git", content("content")));
+
+        assertThat(workingTree.resolve("nested/.git")).doesNotExist();
+    }
+
+    @Test
+    void createFile_insideAFolderWithAnInvalidName_isRejected() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "nested/.git/config", content("content")));
+
+        assertThat(workingTree.resolve("nested/.git")).doesNotExist();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { ".gitignore", ".gitattributes", ".github/workflows/ci.yml", "src/.gitkeep", "git/info/exclude" })
+    void createFile_withSimilarNames_isAllowed(String path) throws Exception {
+        // Only the exact name is invalid, similar names are ordinary content of an exercise.
+        repositoryService.createFile(repository, path, content("content"));
+
+        assertThat(workingTree.resolve(path)).isRegularFile().content(StandardCharsets.UTF_8).isEqualTo("content");
+    }
+
     @Test
     void deleteFile_removesTheFile() throws Exception {
         FileUtils.write(workingTree.resolve("src/Main.java").toFile(), "public class Main {}", StandardCharsets.UTF_8);
@@ -203,4 +259,56 @@ class RepositoryServiceFileOperationsTest {
     void getFileContentFromBareRepository_forACommitThatCannotBeResolved_returnsEmpty() throws Exception {
         assertThat(repositoryService.getFileContentFromBareRepository(repository, "no-such-commit", "src/Main.java")).isEmpty();
     }
+
+    @Test
+    void rawBlobLookupDistinguishesPresentAbsentAndBlankPaths() throws Exception {
+        FileUtils.writeStringToFile((workingTree.resolve("message.txt")).toFile(), "exact committed contents", StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern("message.txt").call();
+        var commit = GitService.commit(git).setMessage("Commit raw text").setAuthor("Fixture", "fixture@example.com").call();
+        assertThat(repositoryService.getFileContentFromBareRepository(repository, commit.getName(), "message.txt")).contains("exact committed contents");
+        assertThat(repositoryService.getFileContentFromBareRepository(repository, commit.getName(), "absent.txt")).isEmpty();
+        assertThat(repositoryService.getFileContentFromBareRepository(repository, commit.getName(), " ")).isEmpty();
+    }
+
+    @Test
+    void emptyRepositoryHasNoSnapshotBeforeDeadlineOrAtHead() throws Exception {
+        assertThat(repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(repository, java.time.ZonedDateTime.now())).isEmpty();
+        assertThat(repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(repository, null)).isEmpty();
+        assertThat(Files.isDirectory(workingTree.resolve(".git"))).isTrue();
+    }
+
+    @Test
+    void clearingRepositoryPreservesGitHistoryAndRemovesNestedContent() throws Exception {
+        Files.createDirectories(workingTree.resolve("nested"));
+        FileUtils.writeStringToFile((workingTree.resolve("nested/source.txt")).toFile(), "tracked source", StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        var commit = GitService.commit(git).setMessage("Commit source").setAuthor("Fixture", "fixture@example.com").call();
+        repositoryService.deleteAllContentInRepository(repository);
+        assertThat(workingTree.resolve("nested")).doesNotExist();
+        assertThat(workingTree.resolve(".git")).isDirectory();
+        assertThat(repository.resolve("HEAD")).isEqualTo(commit.getId());
+    }
+
+    @Test
+    void unavailableBareRepositoryFallsBackToCheckoutAndReportsCheckoutFailure() throws Exception {
+        FileUtils.writeStringToFile((workingTree.resolve("cached.txt")).toFile(), "cached committed contents", StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit cached source").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        var checkout = org.mockito.Mockito.mock(GitService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenThrow(new de.tum.cit.aet.artemis.programming.exception.GitException("Bare storage unavailable"));
+        org.mockito.Mockito.when(checkout.getOrCheckoutRepository(uri, true, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var fallback = new RepositoryService(checkout, bare, Optional.empty());
+        assertThat(fallback.getFilesContentFromBareRepositoryForLastCommit(uri)).containsEntry("cached.txt", "cached committed contents");
+        assertThat(fallback.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(uri, java.time.ZonedDateTime.now().plusHours(1))).containsEntry("cached.txt",
+                "cached committed contents");
+        org.mockito.Mockito.doThrow(new org.eclipse.jgit.api.errors.TransportException("Checkout unavailable")).when(checkout).getOrCheckoutRepository(uri, true, false);
+        org.assertj.core.api.Assertions.assertThatIOException().isThrownBy(() -> fallback.getFilesContentFromBareRepositoryForLastCommit(uri))
+                .withMessageContaining("Failed to retrieve repository content");
+    }
+
 }

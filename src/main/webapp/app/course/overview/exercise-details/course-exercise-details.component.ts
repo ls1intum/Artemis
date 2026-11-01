@@ -34,12 +34,12 @@ import { LiveQuizParticipationStatus, QuizExercise, QuizStatus } from 'app/quiz/
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
-import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
@@ -249,7 +249,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faBook = faBook;
     faEye = faEye;
     faWrench = faWrench;
-    faTable = faTable;
     faListAlt = faListAlt;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
@@ -312,8 +311,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Both modes are selected from the URL, not just practice: going back after a switch leaves the editor on the other
      * participation, and a mode that only ever moved towards practice would then describe the wrong one. A routed id
      * that belongs to neither participation (not loaded yet) leaves the mode untouched.
+     * Quiz routes name the mode directly; in particular, the live route has no participation id to match.
      */
     private syncModeWithRoutedParticipation(): void {
+        const targetUrl = this.router.currentNavigation()?.finalUrl?.toString() ?? this.router.url;
+        const targetPath = targetUrl.split(/[?#]/, 1)[0];
+        const quizMode = /\/quiz-exercises\/\d+\/(live|practice)(?:\/|;|$)/.exec(targetPath)?.[1];
+        if (quizMode) {
+            this.participationMode.set(quizMode === 'practice' ? 'practice' : 'graded');
+            return;
+        }
         const routedParticipationId = this.routedParticipationId();
         if (routedParticipationId === undefined) {
             return;
@@ -512,17 +519,22 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
-                    if (
-                        (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.length > getAllResultsOfAllSubmissions(currentGraded?.submissions).length ||
-                            getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.completionDate === undefined) &&
-                        getAllResultsOfAllSubmissions(changedParticipation.submissions).last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                        getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful !== undefined
-                    ) {
-                        if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === true) {
-                            this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
-                        } else if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === false) {
-                            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
-                        }
+                    const changedResults = getAllResultsOfAllSubmissions(changedParticipation.submissions);
+                    const previousParticipation = this._studentParticipations().find((participation) => participation.id === changedParticipation.id);
+                    const previousResults = getAllResultsOfAllSubmissions(previousParticipation?.submissions);
+                    const completedAthenaResult = getNewestResult(
+                        changedResults.filter((result) => {
+                            if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || result.successful === undefined) {
+                                return false;
+                            }
+                            const previous = previousResults.find((oldResult) => result.id !== undefined && oldResult.id === result.id);
+                            return !previous || previous.successful === undefined;
+                        }),
+                    );
+                    if (completedAthenaResult?.successful === true) {
+                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
+                    } else if (completedAthenaResult?.successful === false) {
+                        this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     }
                     const currentParticipations = this._studentParticipations();
                     let updatedParticipations: StudentParticipation[];
@@ -546,7 +558,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     }
                     this._studentParticipations.set(updatedParticipations);
                     this.sortResults();
-                    this.navigateToAthenaResult(changedParticipation);
+                    if (completedAthenaResult?.successful === true) {
+                        this.navigateToAthenaResult(changedParticipation, completedAthenaResult);
+                    }
                 }
             });
     }
@@ -827,8 +841,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const tutorActionItems = this.getDefaultItems().slice();
         if (this.exercise?.type === ExerciseType.QUIZ) {
             this.getQuizItems().forEach((item) => tutorActionItems.push(item));
-        } else {
-            tutorActionItems.push(this.getParticipationItem());
         }
         return tutorActionItems;
     }
@@ -840,11 +852,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 icon: faEye,
                 translation: 'entity.action.view',
             },
-            {
-                routerLink: `${this.baseResource()}scores`,
-                icon: faTable,
-                translation: 'entity.action.scores',
-            },
+            this.getParticipationItem(),
         ];
     }
 
@@ -918,8 +926,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         };
     }
 
-    private navigateToAthenaResult(changedParticipation: StudentParticipation) {
-        const athenaSubmission = changedParticipation.submissions?.find((s) => s.results?.some((r) => r.assessmentType === AssessmentType.AUTOMATIC_ATHENA && r.successful));
+    private navigateToAthenaResult(changedParticipation: StudentParticipation, completedResult: Result) {
+        const athenaSubmission = changedParticipation.submissions?.find((submission) => submission.results?.some((result) => result.id === completedResult.id));
 
         const submissionId = athenaSubmission?.id;
         if (!submissionId || !this.exercise?.type || !changedParticipation.id) {

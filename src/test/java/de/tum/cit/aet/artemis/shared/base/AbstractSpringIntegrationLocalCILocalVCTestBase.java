@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
+import org.springframework.test.context.bean.override.mockito.MockReset;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.localci.service.BuildAgentConfigurationOverrides;
 import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIService;
 import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
@@ -46,12 +48,14 @@ import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
+import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -86,6 +90,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
     @MockitoSpyBean
     protected BareGitRepositoryService bareGitRepositoryServiceSpy;
+
+    // Spy is only used for hooking into the deletion of a programming exercise, between the point where its participations are cleaned up and the point where the
+    // exercise row is removed, to force the interleaving with a build result. Please use the real bean otherwise.
+    @MockitoSpyBean
+    protected RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
 
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
@@ -132,8 +141,18 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoSpyBean
     protected LocalCITriggerService localCITriggerService;
 
-    @MockitoSpyBean
+    /**
+     * Stubbed once when the context is built and never reset, because the build agent calls it from scheduled and build threads while tests run: stubbing or resetting a
+     * spy while another thread calls it corrupts the pending stubbing. Tests change what it returns through {@link #buildAgentConfigurationOverrides}.
+     */
+    @MockitoSpyBean(reset = MockReset.NONE)
     protected BuildAgentConfiguration buildAgentConfiguration;
+
+    @Autowired
+    protected BuildAgentConfigurationOverrides buildAgentConfigurationOverrides;
+
+    @MockitoSpyBean
+    protected BuildLogEntryService fallbackBuildLogEntryService;
 
     @MockitoSpyBean
     protected ResourceLoaderService resourceLoaderService;
@@ -244,9 +263,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService,
-                programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService,
-                pyrisPipelineService, pyrisEventService, ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
+        Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService,
+                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService, pyrisEventService,
+                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, repositoryVcsAccessTokenService, fallbackBuildLogEntryService);
+        buildAgentConfigurationOverrides.reset();
+        // Preserve startup answers while discarding calls recorded by scheduled and build threads.
+        Mockito.clearInvocations(buildAgentConfiguration);
         super.resetSpyBeans();
     }
 

@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,6 +66,17 @@ class GenerationRequestServiceTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { "Pacific/Kiritimati", "America/Los_Angeles" })
+    void releaseEligibilityComparesInstantsAcrossTimeZones(String zone) {
+        var exercise = exercise();
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of(zone));
+        exercise.setReleaseDate(now.minusMinutes(5));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
+        exercise.setReleaseDate(now.plusMinutes(5));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isFalse();
+    }
+
+    @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = { "short", "                                       " })
     void placeholdersAreNotAuthoritative(String statement) {
@@ -113,11 +126,12 @@ class GenerationRequestServiceTest {
 
     @ParameterizedTest
     @EnumSource(ProjectType.class)
-    void onlyGradleIsQualified(ProjectType type) {
+    void onlyGradleAndMavenAreQualified(ProjectType type) {
         var exercise = exercise();
         exercise.setProjectType(type);
-        // Both Gradle types share the test harness the sandbox verifies against; PLAIN_GRADLE is what the create form assigns to a Java exercise by default.
-        assertThat(service.isGenerationSupported(exercise)).isEqualTo(type == ProjectType.GRADLE_GRADLE || type == ProjectType.PLAIN_GRADLE);
+        // The sandbox verifies the Gradle and Maven test harnesses; black-box Maven and non-Java project types stay unqualified.
+        assertThat(service.isGenerationSupported(exercise))
+                .isEqualTo(type == ProjectType.GRADLE_GRADLE || type == ProjectType.PLAIN_GRADLE || type == ProjectType.PLAIN_MAVEN || type == ProjectType.MAVEN_MAVEN);
     }
 
     @Test

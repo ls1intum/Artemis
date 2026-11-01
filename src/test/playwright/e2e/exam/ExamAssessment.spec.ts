@@ -351,13 +351,16 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
     const dashboardCourse = { id: SEED_COURSES.examAssessment.id } as any;
     let exam: Exam;
     let exerciseId: number;
+    let exerciseGroupId: number;
 
     test.beforeAll('Prepare exam', async ({ browser }) => {
         const page = await newBrowserPage(browser);
         exam = await prepareEndedExam(dashboardCourse, ExerciseType.TEXT, page, 2);
         // prepareEndedExam leaves the page signed in as admin, which reading the exercise groups needs.
         const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
-        exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
+        const exerciseGroup = exerciseGroups.find((group) => group.exercises?.length)!;
+        exerciseId = exerciseGroup.exercises![0].id!;
+        exerciseGroupId = exerciseGroup.id!;
     });
 
     test('Dashboard offers only the first round until the second correction is enabled', async ({ page, login, examManagement, courseAssessment, exerciseAssessment }) => {
@@ -449,10 +452,10 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         await examParticipation.checkResultScore('90%');
     });
 
-    test('Exercise scores page offers the actions of each correction round', async ({ page, login }) => {
+    test('Participation table offers the actions of each correction round', async ({ page, login }) => {
         await login(instructor);
-        // The scores page renders one set of assessment actions per correction round of the exam.
-        await page.goto(`/course-management/${dashboardCourse.id}/text-exercises/${exerciseId}/scores`);
+        // The participation table renders one set of assessment actions per correction round of the exam.
+        await page.goto(`/course-management/${dashboardCourse.id}/exams/${exam.id}/exercise-groups/${exerciseGroupId}/text-exercises/${exerciseId}/participations`);
         await page.waitForLoadState('domcontentloaded');
 
         const studentRow = page.locator('tr', { hasText: studentOneName });
@@ -514,12 +517,15 @@ test.describe.serial('Cancelling one correction round leaves the other one alone
     const cancelCourse = { id: SEED_COURSES.examAssessment.id } as any;
     let exam: Exam;
     let exerciseId: number;
+    let exerciseGroupId: number;
 
     test.beforeAll('Prepare exam', async ({ browser }) => {
         const page = await newBrowserPage(browser);
         exam = await prepareEndedExam(cancelCourse, ExerciseType.TEXT, page, 2);
         const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
-        exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
+        const exerciseGroup = exerciseGroups.find((group) => group.exercises?.length)!;
+        exerciseId = exerciseGroup.exercises![0].id!;
+        exerciseGroupId = exerciseGroup.id!;
     });
 
     test('First round is assessed and the second one is left as a draft', async ({ page, login, examAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
@@ -539,9 +545,9 @@ test.describe.serial('Cancelling one correction round leaves the other one alone
         await expect(exerciseAssessment.getLockedMessage()).toBeVisible();
     });
 
-    test('Scores view offers to continue and to cancel only the round that is a draft', async ({ page, login }) => {
+    test('Participation table offers to continue and to cancel only the round that is a draft', async ({ page, login }) => {
         await login(instructor);
-        await page.goto(`/course-management/${cancelCourse.id}/text-exercises/${exerciseId}/scores`);
+        await page.goto(`/course-management/${cancelCourse.id}/exams/${exam.id}/exercise-groups/${exerciseGroupId}/text-exercises/${exerciseId}/participations`);
         await page.waitForLoadState('domcontentloaded');
 
         const studentRow = page.locator('tr', { hasText: studentOneName });
@@ -559,7 +565,7 @@ test.describe.serial('Cancelling one correction round leaves the other one alone
 
     test('Cancelling the second round releases it and keeps the first round assessed', async ({ page, login }) => {
         await login(instructor);
-        await page.goto(`/course-management/${cancelCourse.id}/text-exercises/${exerciseId}/scores`);
+        await page.goto(`/course-management/${cancelCourse.id}/exams/${exam.id}/exercise-groups/${exerciseGroupId}/text-exercises/${exerciseId}/participations`);
         await page.waitForLoadState('domcontentloaded');
 
         const studentRow = page.locator('tr', { hasText: studentOneName });

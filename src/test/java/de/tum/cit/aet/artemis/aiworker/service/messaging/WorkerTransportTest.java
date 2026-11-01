@@ -202,6 +202,169 @@ class WorkerTransportTest {
         assertThat(applied).hasValue(1);
     }
 
+    @Test
+    void prunePreservesLiveExecutionAndRemovesAbandonedDelivery() {
+        var live = new ExecutionIdentityDTO("live", "document:2", UUID.randomUUID(), "worker-1", identity.workerIncarnation(), 1);
+        worker.publish(event(WorkerEventType.CHECKPOINT, "abandoned", 20));
+        var liveEvent = new WorkerEventDTO(WorkerCommandDTO.PROTOCOL_VERSION, "worker-1", live.workerIncarnation(), 21, Instant.now(), WorkerEventType.FINISHED, live, true,
+                "sha256:" + "a".repeat(64), null, "live output", new WorkerCapacityDTO(2, List.of()), capability);
+        worker.publish(liveEvent);
+        worker.pruneUnclaimed("worker-1", execution -> execution.equals(live.executionId()));
+
+        assertThat(core.receive(identity, _ -> {
+            throw new AssertionError("abandoned execution remained");
+        })).isFalse();
+        assertThat(provider.getMap("aiworker-events-worker-1").size()).isEqualTo(1);
+        assertThat(core.receive(live, observed -> assertThat(observed).isEqualTo(liveEvent))).isTrue();
+        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isTrue();
+    }
+
+    @Test
+    void pruneRemovesIncompleteManifestsAndIndependentOrphanChunksAndAcknowledgements() {
+        DistributedMap<String, String> chunks = spy(provider.getMap("aiworker-event-chunks"));
+        when(provider.<String, String>getMap("aiworker-event-chunks")).thenReturn(chunks);
+        var transport = new WorkerTransport(provider, new WorkerMessageCodecApi());
+        org.mockito.Mockito.doCallRealMethod().doThrow(new IllegalStateException("interrupted publication")).when(chunks).put(any(String.class), any(String.class));
+        assertThatThrownBy(() -> transport.publish(event(WorkerEventType.CHECKPOINT, "x".repeat(1024 * 1024), 22))).isInstanceOf(IllegalStateException.class);
+        assertThat(provider.getMap("aiworker-events-worker-1").values()).anyMatch(value -> value.toString().startsWith("W:"));
+        assertThat(chunks.isEmpty()).isFalse();
+        org.mockito.Mockito.doCallRealMethod().when(chunks).put(any(String.class), any(String.class));
+        String orphan = "worker-1:" + UUID.randomUUID() + ":0000000000000000023";
+        chunks.put(orphan + ":0", "orphan chunk");
+        provider.getExpiringMap("aiworker-event-acknowledgements", java.time.Duration.ofHours(4)).put(orphan, "orphan acknowledgement");
+
+        transport.pruneUnclaimed("worker-1", _ -> false);
+
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isTrue();
+        assertThat(chunks.isEmpty()).isTrue();
+        assertThat(provider.getExpiringMap("aiworker-event-acknowledgements", java.time.Duration.ofHours(4)).isEmpty()).isTrue();
+    }
+
+    @Test
+    void nextSweepReclaimsPhysicalWritesFromALatePublisher() {
+        worker.publish(event(WorkerEventType.CHECKPOINT, "before owner loss", 24));
+        worker.pruneUnclaimed("worker-1", _ -> false);
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isTrue();
+
+        // A paused publisher may still finish; cleanup does not claim to fence it.
+        worker.publish(event(WorkerEventType.FINISHED, "late output", 25));
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isFalse();
+        provider.getMap("aiworker-events-worker-1").clear();
+        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isFalse();
+        worker.pruneUnclaimed("worker-1", _ -> false);
+
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isTrue();
+        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isTrue();
+    }
+
+    @Test
+    void ownershipReadFailureNeverMeansAnUnclaimedExecution() {
+        worker.publish(event(WorkerEventType.FINISHED, "keep evidence", 26));
+        var unavailable = new IllegalStateException("lease store unavailable");
+
+        assertThatThrownBy(() -> worker.pruneUnclaimed("worker-1", _ -> {
+            throw unavailable;
+        })).isSameAs(unavailable);
+        assertThat(provider.getMap("aiworker-events-worker-1").size()).isEqualTo(1);
+        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isFalse();
+        assertThat(core.receive(identity, observed -> assertThat(observed.payload()).isEqualTo("keep evidence"))).isTrue();
+    }
+
+    @Test
+    void failedDeletionLeavesAbandonedEvidenceForTheNextSweep() {
+        DistributedMap<String, String> chunks = spy(provider.getMap("aiworker-event-chunks"));
+        when(provider.<String, String>getMap("aiworker-event-chunks")).thenReturn(chunks);
+        var transport = new WorkerTransport(provider, new WorkerMessageCodecApi());
+        transport.publish(event(WorkerEventType.FINISHED, "retry cleanup", 29));
+        org.mockito.Mockito.doThrow(new IllegalStateException("delete unavailable")).doCallRealMethod().when(chunks).remove(any(String.class), any(String.class));
+
+        assertThatThrownBy(() -> transport.pruneUnclaimed("worker-1", _ -> false)).isInstanceOf(IllegalStateException.class);
+        assertThat(chunks.isEmpty()).isFalse();
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isFalse();
+        transport.pruneUnclaimed("worker-1", _ -> false);
+        assertThat(chunks.isEmpty()).isTrue();
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isTrue();
+    }
+
+    @Test
+    void pruneUsesTheObservedValueAndRetriesAChangedEntryOnTheNextSweep() {
+        DistributedMap<String, String> chunks = spy(provider.getMap("aiworker-event-chunks"));
+        when(provider.<String, String>getMap("aiworker-event-chunks")).thenReturn(chunks);
+        var transport = new WorkerTransport(provider, new WorkerMessageCodecApi());
+        String key = "worker-1:" + identity.executionId() + ":0000000000000000027:0";
+        chunks.put(key, "observed chunk");
+        org.mockito.Mockito.doAnswer(invocation -> {
+            chunks.put(key, "late chunk");
+            return invocation.callRealMethod();
+        }).when(chunks).remove(key, "observed chunk");
+
+        transport.pruneUnclaimed("worker-1", _ -> false);
+        assertThat(chunks.get(key)).isEqualTo("late chunk");
+        transport.pruneUnclaimed("worker-1", _ -> false);
+        assertThat(chunks.isEmpty()).isTrue();
+    }
+
+    @Test
+    void pruneRequiresCanonicalExecutionKeysAndTheExactWorkerPrefix() {
+        DistributedMap<String, String> chunks = provider.getMap("aiworker-event-chunks");
+        List<String> keys = List.of("worker-10:" + identity.executionId() + ":0000000000000000028:0", "worker-1:1-1-1-1-1:0000000000000000028:0",
+                "worker-1:" + identity.executionId() + ":28:0", "worker-1:" + identity.executionId() + ":0000000000000000028:-1",
+                "worker-1:" + identity.executionId() + ":0000000000000000028:00", "worker-1:" + identity.executionId() + ":0000000000000000000:0:extra");
+        keys.forEach(key -> chunks.put(key, "keep malformed or foreign entry"));
+
+        worker.pruneUnclaimed("worker-1", _ -> {
+            throw new AssertionError("malformed or foreign entry reached lease lookup");
+        });
+
+        assertThat(chunks.keySet()).containsExactlyInAnyOrderElementsOf(keys);
+    }
+
+    @Test
+    void pruneDoesNotLoadLiveChunkPayloads() {
+        DistributedMap<String, String> chunks = spy(provider.getMap("aiworker-event-chunks"));
+        when(provider.<String, String>getMap("aiworker-event-chunks")).thenReturn(chunks);
+        var transport = new WorkerTransport(provider, new WorkerMessageCodecApi());
+        String key = "worker-1:" + identity.executionId() + ":0000000000000000032:0";
+        chunks.put(key, "live chunk");
+
+        transport.pruneUnclaimed("worker-1", identity.executionId()::equals);
+
+        verify(chunks, never()).entrySet();
+        verify(chunks, never()).get(any());
+        assertThat(chunks.size()).isEqualTo(1);
+    }
+
+    @Test
+    void pruneReclaimsZeroSequenceManifestsAndChunks() {
+        String key = "worker-1:" + identity.executionId() + ":0000000000000000000";
+        provider.<String, String>getMap("aiworker-events-worker-1").put(key, "W:1:1:unused:1");
+        provider.<String, String>getMap("aiworker-event-chunks").put(key + ":0", "x");
+
+        worker.pruneUnclaimed("worker-1", _ -> false);
+
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isTrue();
+        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isTrue();
+    }
+
+    @Test
+    void pruningAnAbandonedManifestRestoresTheLiveWorkersPublicationQuota() {
+        String abandoned = "worker-1:" + identity.executionId() + ":0000000000000000030";
+        provider.<String, String>getMap("aiworker-events-worker-1").put(abandoned, "W:1:1:" + "0".repeat(64) + ":268435456");
+        var live = new ExecutionIdentityDTO("live", "document:2", UUID.randomUUID(), "worker-1", identity.workerIncarnation(), 1);
+        var liveEvent = new WorkerEventDTO(WorkerCommandDTO.PROTOCOL_VERSION, "worker-1", live.workerIncarnation(), 31, Instant.now(), WorkerEventType.FINISHED, live, true,
+                "sha256:" + "a".repeat(64), null, "live output", new WorkerCapacityDTO(2, List.of()), capability);
+
+        assertThatThrownBy(() -> worker.publish(liveEvent)).isInstanceOf(IllegalStateException.class).hasMessage("Worker event storage is full");
+        assertThat(provider.getMap("aiworker-events-worker-1").size()).isEqualTo(1);
+        worker.pruneUnclaimed("worker-1", execution -> execution.equals(live.executionId()));
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isTrue();
+
+        worker.publish(liveEvent);
+        assertThat(core.receive(live, observed -> assertThat(observed).isEqualTo(liveEvent))).isTrue();
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isTrue();
+        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isTrue();
+    }
+
     private WorkerEventDTO event(WorkerEventType type, String payload, long sequence) {
         return new WorkerEventDTO(WorkerCommandDTO.PROTOCOL_VERSION, "worker-1", identity.workerIncarnation(), sequence, Instant.now(), type,
                 type == WorkerEventType.HEARTBEAT ? null : identity, true, "sha256:" + "a".repeat(64), null, payload, new WorkerCapacityDTO(1, List.of()), capability);

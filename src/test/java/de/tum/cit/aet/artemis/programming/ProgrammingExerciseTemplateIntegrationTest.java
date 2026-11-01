@@ -436,7 +436,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @MethodSource("languageTypeBuilder")
     void testTemplateExercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         checkPreconditionsForJavaTemplateExecution(projectType);
@@ -444,7 +444,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @MethodSource("languageTypeBuilder")
     void testTemplateSolution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         checkPreconditionsForJavaTemplateExecution(projectType);

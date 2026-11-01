@@ -66,7 +66,7 @@ public class ExerciseVariantGenerationPipelineService {
     /** Re-prompts for malformed planner output before FAILED. */
     private static final int MAX_PLANNING_RETRIES = 2;
 
-    /** A heavy programming round measured ~900k tokens; this leaves headroom. */
+    /** Total token ceiling for the quiz transformation and repair sequence. */
     private static final long TOKEN_BUDGET_PER_ATTEMPT = 2_000_000;
 
     /**
@@ -301,7 +301,7 @@ public class ExerciseVariantGenerationPipelineService {
             tokensUsed += agentResult.tokensUsed();
             jobService.addTokensUsed(jobId, agentResult.tokensUsed());
             jobService.recordToolCallStats(jobId, toolset.toolCallStats());
-            String roundSummary = "Agent round " + attempt + "/" + MAX_VERIFY_ATTEMPTS + " finished" + (agentResult.touchedTestRepo() ? " (test repository changed)" : "");
+            String roundSummary = "Agent round " + attempt + "/" + MAX_VERIFY_ATTEMPTS + " finished";
             jobService.recordStepOutput(jobId, agentPhase,
                     new StepOutput(roundSummary, agentResult.finishSummary() != null ? truncate(agentResult.finishSummary()) : "(no summary)", Instant.now()));
 
@@ -311,7 +311,7 @@ public class ExerciseVariantGenerationPipelineService {
             jobService.recordStepOutput(jobId, VariantJobPhase.VERIFYING,
                     new StepOutput(report.passed() ? "All gates green" : report.findings().size() + " finding(s) — attempt " + attempt + "/" + MAX_VERIFY_ATTEMPTS,
                             renderReport(report), Instant.now()));
-            // VERIFYING is the longest phase of a round (the programming gates wait for real CI builds), so a
+            // VERIFYING can be the longest phase of a round, so a
             // cancel accepted while it ran must be honored here. Every exit below returns straight into
             // FINALIZING, which is past the last cancel window — without this check the job would finish anyway.
             checkCancelled(jobId);
@@ -524,7 +524,6 @@ public class ExerciseVariantGenerationPipelineService {
 
     private String planPromptTemplate(VariantJob job) {
         return switch (job.getExerciseType()) {
-            case PROGRAMMING -> "prompts/hyperion/variants/plan_programming.st";
             case QUIZ -> "prompts/hyperion/variants/plan_quiz.st";
             default -> throw new PhaseFailedException("Failed in PLANNING: unsupported exercise type " + job.getExerciseType());
         };
@@ -532,7 +531,6 @@ public class ExerciseVariantGenerationPipelineService {
 
     private String transformPromptTemplate(VariantJob job) {
         return switch (job.getExerciseType()) {
-            case PROGRAMMING -> "prompts/hyperion/variants/transform_programming_system.st";
             case QUIZ -> "prompts/hyperion/variants/transform_quiz_system.st";
             default -> throw new PhaseFailedException("Failed in TRANSFORMING: unsupported exercise type " + job.getExerciseType());
         };
@@ -660,7 +658,7 @@ public class ExerciseVariantGenerationPipelineService {
         if (message == null) {
             return "";
         }
-        int buildLogsIndex = message.indexOf(VariantBuildVerificationService.BUILD_LOGS_SECTION);
+        int buildLogsIndex = message.indexOf(VerificationReport.BUILD_LOGS_SECTION);
         String summary = buildLogsIndex >= 0 ? message.substring(0, buildLogsIndex) + "\n(build logs omitted — see the verification step log)" : message;
         final int maxLength = 1500;
         return summary.length() <= maxLength ? summary : summary.substring(0, maxLength) + " […]";

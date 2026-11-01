@@ -1,5 +1,6 @@
-import { Component, computed, inject, input } from '@angular/core';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { Component, computed, inject, input } from '@angular/core';
+
 import { RouterLink } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

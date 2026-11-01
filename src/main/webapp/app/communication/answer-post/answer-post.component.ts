@@ -1,3 +1,4 @@
+import { SavedPostingBannerComponent } from '../saved-posting-banner/saved-posting-banner.component';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -33,10 +34,10 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -48,6 +49,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./answer-post.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        SavedPostingBannerComponent,
         NgClass,
         FormsModule,
         ButtonModule,
@@ -282,26 +284,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
             AnswerPostComponent.activeDropdownPost = this;
 
-            this.dropdownPosition.set({
-                x: event.clientX,
-                y: event.clientY,
-            });
-
-            this.showDropdown.set(true);
-            this.adjustDropdownPosition();
+            this.openDropdownAt(event);
             this.disableBodyScroll();
-        }
-    }
-
-    /**
-     * Adjusts dropdown position if it would overflow the screen.
-     */
-    adjustDropdownPosition() {
-        const dropdownWidth = 200;
-        const screenWidth = window.innerWidth;
-
-        if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.update((position) => cloneWith(position, { x: screenWidth - dropdownWidth - 10 }));
         }
     }
 

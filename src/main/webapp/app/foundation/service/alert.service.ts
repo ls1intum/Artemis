@@ -5,9 +5,9 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { AlertError } from 'app/core/alert/alert-error.model';
 import { Subscription } from 'rxjs';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { HttpErrorResponse } from '@angular/common/http';
+import type { HttpErrorEvent } from 'app/core/interceptor/errorhandler.interceptor';
 import dayjs from 'dayjs/esm';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -81,7 +81,8 @@ export class AlertService {
         });
 
         this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: EventWithContent<unknown> | string) => {
-            const httpErrorResponse = (response as EventWithContent<HttpErrorResponse>).content;
+            const event = response as HttpErrorEvent;
+            const httpErrorResponse = event.content;
             if (httpErrorResponse.error?.skipAlert) {
                 return;
             }
@@ -125,16 +126,38 @@ export class AlertService {
                     }
                     break;
 
+                case 403: {
+                    // Some callers explain a denied action locally; preserve their suppression.
+                    if (this.conflictErrorKeysToSkip.includes(httpErrorResponse.error?.errorKey)) {
+                        break;
+                    }
+                    const messageKey = httpErrorResponse.error?.message;
+                    const translatedMessage = typeof messageKey === 'string' && messageKey ? this.translateService.instant(messageKey, httpErrorResponse.error?.params) : undefined;
+                    const hasSpecificTranslation =
+                        messageKey !== 'error.http.403' &&
+                        typeof translatedMessage === 'string' &&
+                        translatedMessage !== messageKey &&
+                        !translatedMessage.startsWith(translationNotFoundMessage);
+                    if (hasSpecificTranslation) {
+                        this.addErrorAlert('Access denied', messageKey, httpErrorResponse.error.params);
+                    } else {
+                        // A refused background request does not mean the current page itself is forbidden.
+                        const fallbackKey = !event.requestMethod
+                            ? 'error.http.403'
+                            : ['GET', 'HEAD', 'OPTIONS'].includes(event.requestMethod)
+                              ? 'error.http.403Read'
+                              : 'error.http.403Action';
+                        this.addErrorAlert('You do not have permission to access this content or perform this action.', fallbackKey);
+                    }
+                    break;
+                }
+
                 case 404:
                     // Disabled
                     break;
 
                 default:
                     if (httpErrorResponse.error && httpErrorResponse.error.title) {
-                        // To avoid displaying this alerts twice, we need to filter the received errors. In this case, we filter for the cannot register instructor error.
-                        if (httpErrorResponse.status === 403 && this.conflictErrorKeysToSkip.includes(httpErrorResponse.error.errorKey)) {
-                            break;
-                        }
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
                     }
             }
@@ -192,7 +215,7 @@ export class AlertService {
             if (translationFound) {
                 alertInternal.message = translatedMessage;
             } else {
-                // Sent a sentry warning with the unknown translation key
+                // Report the unknown translation key
                 captureException(new Error('Unknown translation key: ' + translationKey));
 
                 // Fallback to displaying the translation key

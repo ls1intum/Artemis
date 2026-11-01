@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,17 +25,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -47,7 +46,11 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqQuestionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqStoredResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
@@ -83,12 +86,10 @@ public class IrisMessageResource {
 
     private final UserRepository userRepository;
 
-    private final JsonMapper objectMapper;
-
     private final IrisProactiveEpisodeService irisProactiveEpisodeService;
 
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisChatSessionService irisChatSessionService,
-            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, JsonMapper objectMapper,
+            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository,
             IrisProactiveEpisodeService irisProactiveEpisodeService) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
@@ -96,7 +97,6 @@ public class IrisMessageResource {
         this.irisMessageService = irisMessageService;
         this.irisMessageRepository = irisMessageRepository;
         this.userRepository = userRepository;
-        this.objectMapper = objectMapper;
         this.irisProactiveEpisodeService = irisProactiveEpisodeService;
     }
 
@@ -174,10 +174,15 @@ public class IrisMessageResource {
      */
     @FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
     @PostMapping("sessions/{sessionId}/tutor-suggestion")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> sendTutorSuggestionMessage(@PathVariable Long sessionId) throws URISyntaxException {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+        if (!(session instanceof IrisTutorSuggestionSession)) {
+            throw new AccessForbiddenException("Only tutor suggestion sessions can request a tutor suggestion");
+        }
         irisSessionService.checkIsIrisActivated(session);
+        irisSessionService.checkHasAccessToIrisSession(session, userRepository.getUser());
 
         irisSessionService.requestMessageFromIris(session);
 
@@ -344,58 +349,60 @@ public class IrisMessageResource {
         var jsonContent = message.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).map(IrisJsonMessageContent.class::cast).findFirst()
                 .orElseThrow(() -> new BadRequestException("Message has no MCQ content"));
 
-        JsonNode root = jsonContent.getJsonNode();
-        if (!(root instanceof ObjectNode rootObj)) {
+        IrisMcqContentDTO content;
+        try {
+            content = jsonContent.readAs(IrisMcqContentDTO.class);
+        }
+        catch (JacksonException e) {
+            // JSON that is not an object, or whose fields have another JSON type than an MCQ, is no MCQ the response could belong to
             throw new BadRequestException("Message content is not a valid MCQ");
         }
 
-        // asString("") keeps a malformed stored node on the existing BadRequest path instead of raising a 500:
-        // Jackson 3 throws on a non-string node where Jackson 2's asText() returned "".
-        String type = rootObj.path("type").asString("");
+        String type = content.type() != null ? content.type() : "";
         if (!MCQ_TYPES.contains(type)) {
             throw new BadRequestException("Message content is not an MCQ");
         }
 
+        IrisMcqContentDTO updatedContent;
         if ("mcq".equals(type)) {
-            ArrayNode options = rootObj.withArray("options");
-            if (responseDTO.selectedIndex() < 0 || responseDTO.selectedIndex() >= options.size()) {
+            int optionCount = content.options() != null ? content.options().size() : 0;
+            if (responseDTO.selectedIndex() < 0 || responseDTO.selectedIndex() >= optionCount) {
                 throw new BadRequestException("Selected index is out of bounds");
             }
-            ObjectNode response = objectMapper.createObjectNode();
-            response.put("selectedIndex", responseDTO.selectedIndex());
-            response.put("submitted", responseDTO.submitted());
-            rootObj.set("response", response);
+            var response = new IrisMcqStoredResponseDTO(responseDTO.selectedIndex(), responseDTO.submitted(), null, null);
+            updatedContent = new IrisMcqContentDTO(content.type(), content.question(), content.options(), content.explanation(), response, content.questions(), content.responses(),
+                    content.additionalProperties());
         }
         else {
-            ArrayNode questions = rootObj.withArray("questions");
-            if (responseDTO.questionIndex() == null || responseDTO.questionIndex() < 0 || responseDTO.questionIndex() >= questions.size()) {
+            List<IrisMcqQuestionDTO> questions = content.questions() != null ? content.questions() : List.of();
+            Integer questionIndex = responseDTO.questionIndex();
+            if (questionIndex == null || questionIndex < 0 || questionIndex >= questions.size()) {
                 throw new BadRequestException("Question index is out of bounds");
             }
-            ArrayNode questionOptions = ((ObjectNode) questions.get(responseDTO.questionIndex())).withArray("options");
-            if (responseDTO.selectedIndex() < 0 || responseDTO.selectedIndex() >= questionOptions.size()) {
+            IrisMcqQuestionDTO question = questions.get(questionIndex);
+            int questionOptionCount = question != null && question.options() != null ? question.options().size() : 0;
+            if (responseDTO.selectedIndex() < 0 || responseDTO.selectedIndex() >= questionOptionCount) {
                 throw new BadRequestException("Selected index is out of bounds");
             }
 
-            ArrayNode responses = rootObj.withArray("responses");
+            List<IrisMcqStoredResponseDTO> responses = new ArrayList<>(content.responses() != null ? content.responses() : List.of());
+            var newResponse = new IrisMcqStoredResponseDTO(responseDTO.selectedIndex(), responseDTO.submitted(), questionIndex, null);
             boolean updated = false;
             for (int i = 0; i < responses.size(); i++) {
-                if (responses.get(i).path("questionIndex").asInt(-1) == responseDTO.questionIndex()) {
-                    ((ObjectNode) responses.get(i)).put("selectedIndex", responseDTO.selectedIndex());
-                    ((ObjectNode) responses.get(i)).put("submitted", responseDTO.submitted());
+                if (responses.get(i) != null && questionIndex.equals(responses.get(i).questionIndex())) {
+                    responses.set(i, new IrisMcqStoredResponseDTO(responseDTO.selectedIndex(), responseDTO.submitted(), questionIndex, responses.get(i).additionalProperties()));
                     updated = true;
                     break;
                 }
             }
             if (!updated) {
-                ObjectNode newResponse = objectMapper.createObjectNode();
-                newResponse.put("questionIndex", responseDTO.questionIndex());
-                newResponse.put("selectedIndex", responseDTO.selectedIndex());
-                newResponse.put("submitted", responseDTO.submitted());
                 responses.add(newResponse);
             }
+            updatedContent = new IrisMcqContentDTO(content.type(), content.question(), content.options(), content.explanation(), content.response(), questions, responses,
+                    content.additionalProperties());
         }
 
-        jsonContent.setJsonNode(root);
+        jsonContent.replaceContent(updatedContent);
         irisMessageRepository.save(message);
         return ResponseEntity.ok().build();
     }

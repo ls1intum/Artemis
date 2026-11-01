@@ -35,7 +35,7 @@ The main application is stored under `/src/main` and separated into modules:
                       When you want to do changes to the database, you will need to add a new changelog file here.
                       To understand how to create a new changelog file you can check existing changelog files or read documentation: https://www.liquibase.org/documentation/databasechangelog.html.
 * java - Artemis Spring Boot application is located here. It contains the following folders:
-    * config - different classes for configuring database, Sentry, Liquibase, etc.
+    * config - different classes for configuring database, Liquibase, etc.
     * **domain** - all the entities and data classes are located here (the model of the server application).
     * **dto** - contains Data Transfer Objects (DTOs) that are used to transfer data between the server and the client.
     * exception - store custom types of exceptions here. We encourage it to create custom exceptions to help other developers understand what problem exactly happened.
@@ -255,7 +255,7 @@ For comprehensive REST API guidelines including controller best practices, route
 Key points:
 * RestControllers should be stateless and delegate business logic to `@Service` classes
 * Always use DTOs for request and response bodies (never expose entities directly)
-* Use appropriate authorization annotations (`@EnforceAtLeastInstructor`, `@EnforceRoleInResource`, etc.)
+* Use appropriate authorization annotations (`@EnforceAtLeastInstructorInCourse`, `@EnforceRoleInResource`, etc.)
 * Follow route naming conventions (kebab-case, proper structure)
 
 ### Assigning endpoints to a feature for the usage analysis
