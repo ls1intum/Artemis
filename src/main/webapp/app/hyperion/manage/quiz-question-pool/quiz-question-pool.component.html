@@ -203,7 +203,7 @@
 
     @if (competencyOptions().length > 1) {
         <div class="flex flex-wrap items-center gap-2">
-            <label for="pool-competency-filter" class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.filter.competency"></label>
+            <label for="pool-competency-filter" class="m-0 font-semibold">{{ 'artemisApp.hyperion.quizQuestionPool.filter.competency' | artemisTranslate }}</label>
             <tumaet-ui-select
                 inputId="pool-competency-filter"
                 class="w-72 max-w-full"

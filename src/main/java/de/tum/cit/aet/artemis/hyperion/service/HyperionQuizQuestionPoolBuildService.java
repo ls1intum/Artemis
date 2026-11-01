@@ -227,16 +227,22 @@ public class HyperionQuizQuestionPoolBuildService {
         for (Map.Entry<Long, ? extends List<Long>> entry : new TreeMap<>(unitIdsByCompetency).entrySet()) {
             for (Long lectureUnitId : entry.getValue().stream().sorted().toList()) {
                 for (Map.Entry<QuizQuestionGenerationType, Integer> typeCount : countsByType.entrySet()) {
-                    int[] perDifficulty = splitByPercent(typeCount.getValue(), percents);
-                    for (int index = 0; index < difficulties.length; index++) {
-                        if (perDifficulty[index] > 0) {
-                            targets.put(new Cell(entry.getKey(), lectureUnitId, language, typeCount.getKey(), difficulties[index]), perDifficulty[index]);
-                        }
-                    }
+                    putDifficultyCells(targets, new Cell(entry.getKey(), lectureUnitId, language, typeCount.getKey(), difficulties[0]), typeCount.getValue(), percents);
                 }
             }
         }
         return targets;
+    }
+
+    /** Puts one cell per difficulty that receives at least one of the type's questions, varying only the difficulty of the given cell. */
+    private static void putDifficultyCells(Map<Cell, Integer> targets, Cell cell, int count, int[] percents) {
+        QuizQuestionDifficulty[] difficulties = QuizQuestionDifficulty.values();
+        int[] perDifficulty = splitByPercent(count, percents);
+        for (int index = 0; index < difficulties.length; index++) {
+            if (perDifficulty[index] > 0) {
+                targets.put(new Cell(cell.competencyId(), cell.lectureUnitId(), cell.language(), cell.questionType(), difficulties[index]), perDifficulty[index]);
+            }
+        }
     }
 
     /**

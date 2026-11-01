@@ -5,8 +5,8 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
 @Service()
 export class HyperionGuard implements CanActivate {
-    private profileService = inject(ProfileService);
-    private router = inject(Router);
+    private readonly profileService = inject(ProfileService);
+    private readonly router = inject(Router);
 
     /**
      * Check if the client can activate a route.

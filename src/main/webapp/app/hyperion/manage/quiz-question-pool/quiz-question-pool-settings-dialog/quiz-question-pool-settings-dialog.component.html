@@ -2,11 +2,9 @@
     @let draftValue = draft();
     <div class="flex flex-col gap-4" data-testid="pool-settings-dialog">
         <div class="flex flex-col gap-1">
-            <label
-                for="pool-single-choice-questions"
-                class="font-semibold"
-                jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.singleChoiceQuestionsPerLectureUnit"
-            ></label>
+            <label for="pool-single-choice-questions" class="font-semibold">{{
+                'artemisApp.hyperion.quizQuestionPool.settings.singleChoiceQuestionsPerLectureUnit' | artemisTranslate
+            }}</label>
             <tumaet-ui-input-number
                 inputId="pool-single-choice-questions"
                 [ngModel]="draftValue.singleChoiceQuestionsPerLectureUnit"
@@ -35,17 +33,15 @@
                 [ariaLabel]="'artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceEnabled' | artemisTranslate"
             />
             <label for="pool-multiple-choice-enabled" class="m-0">
-                <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceEnabled"></span>
-                <small class="block text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceHelp"></small>
+                <span>{{ 'artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceEnabled' | artemisTranslate }}</span>
+                <small class="block text-muted-color">{{ 'artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceHelp' | artemisTranslate }}</small>
             </label>
         </div>
         @if (draftValue.multipleChoiceEnabled) {
             <div class="flex flex-col gap-1">
-                <label
-                    for="pool-multiple-choice-questions"
-                    class="font-semibold"
-                    jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceQuestionsPerLectureUnit"
-                ></label>
+                <label for="pool-multiple-choice-questions" class="font-semibold">{{
+                    'artemisApp.hyperion.quizQuestionPool.settings.multipleChoiceQuestionsPerLectureUnit' | artemisTranslate
+                }}</label>
                 <tumaet-ui-input-number
                     inputId="pool-multiple-choice-questions"
                     [ngModel]="draftValue.multipleChoiceQuestionsPerLectureUnit"
@@ -68,11 +64,9 @@
                 <legend class="float-none mb-1 w-auto p-0 text-base font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.correctOptions"></legend>
                 <div class="flex flex-wrap gap-3">
                     <div class="flex min-w-24 flex-1 flex-col gap-1">
-                        <label
-                            for="pool-min-correct-options"
-                            class="text-sm text-muted-color"
-                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.minCorrectOptions"
-                        ></label>
+                        <label for="pool-min-correct-options" class="text-sm text-muted-color">{{
+                            'artemisApp.hyperion.quizQuestionPool.settings.minCorrectOptions' | artemisTranslate
+                        }}</label>
                         <tumaet-ui-input-number
                             inputId="pool-min-correct-options"
                             [ngModel]="draftValue.multipleChoiceMinCorrectOptions"
@@ -87,11 +81,9 @@
                         />
                     </div>
                     <div class="flex min-w-24 flex-1 flex-col gap-1">
-                        <label
-                            for="pool-max-correct-options"
-                            class="text-sm text-muted-color"
-                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.maxCorrectOptions"
-                        ></label>
+                        <label for="pool-max-correct-options" class="text-sm text-muted-color">{{
+                            'artemisApp.hyperion.quizQuestionPool.settings.maxCorrectOptions' | artemisTranslate
+                        }}</label>
                         <tumaet-ui-input-number
                             inputId="pool-max-correct-options"
                             [ngModel]="draftValue.multipleChoiceMaxCorrectOptions"
@@ -124,7 +116,7 @@
             <legend class="float-none mb-1 w-auto p-0 text-base font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.difficultyMix"></legend>
             <div class="flex flex-wrap gap-3">
                 <div class="flex min-w-24 flex-1 flex-col gap-1">
-                    <label for="pool-easy-percent" class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.easyPercent"></label>
+                    <label for="pool-easy-percent" class="text-sm text-muted-color">{{ 'artemisApp.hyperion.quizQuestionPool.settings.easyPercent' | artemisTranslate }}</label>
                     <tumaet-ui-input-number
                         inputId="pool-easy-percent"
                         [ngModel]="draftValue.easyPercent"
@@ -139,7 +131,7 @@
                     />
                 </div>
                 <div class="flex min-w-24 flex-1 flex-col gap-1">
-                    <label for="pool-medium-percent" class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.mediumPercent"></label>
+                    <label for="pool-medium-percent" class="text-sm text-muted-color">{{ 'artemisApp.hyperion.quizQuestionPool.settings.mediumPercent' | artemisTranslate }}</label>
                     <tumaet-ui-input-number
                         inputId="pool-medium-percent"
                         [ngModel]="draftValue.mediumPercent"
@@ -154,7 +146,7 @@
                     />
                 </div>
                 <div class="flex min-w-24 flex-1 flex-col gap-1">
-                    <label for="pool-hard-percent" class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.hardPercent"></label>
+                    <label for="pool-hard-percent" class="text-sm text-muted-color">{{ 'artemisApp.hyperion.quizQuestionPool.settings.hardPercent' | artemisTranslate }}</label>
                     <tumaet-ui-input-number
                         inputId="pool-hard-percent"
                         [ngModel]="draftValue.hardPercent"
@@ -188,8 +180,8 @@
                 [ariaLabel]="'artemisApp.hyperion.quizQuestionPool.settings.poolGenerationEnabled' | artemisTranslate"
             />
             <label for="pool-generation-enabled" class="m-0">
-                <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.poolGenerationEnabled"></span>
-                <small class="block text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.poolGenerationHelp"></small>
+                <span>{{ 'artemisApp.hyperion.quizQuestionPool.settings.poolGenerationEnabled' | artemisTranslate }}</span>
+                <small class="block text-muted-color">{{ 'artemisApp.hyperion.quizQuestionPool.settings.poolGenerationHelp' | artemisTranslate }}</small>
             </label>
         </div>
     </div>

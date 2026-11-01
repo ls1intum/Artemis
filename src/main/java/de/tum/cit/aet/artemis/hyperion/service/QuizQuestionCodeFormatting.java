@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -19,16 +20,24 @@ final class QuizQuestionCodeFormatting {
 
     private static final Pattern STATEMENT_END = Pattern.compile("[;{}]\\s*(//.*)?$");
 
-    private static final Pattern KEYWORD_START = Pattern.compile("^(public|private|protected|static|final|abstract|void|int|long|short|byte|double|float|boolean|char|String"
-            + "|class|interface|enum|record|return|for|while|do|if|else|switch|case|break|continue|try|catch|finally|throw|throws|new|import|package|var|def|System\\.out)\\b");
+    /** Words that open a statement or declaration in a C-family language. */
+    private static final Set<String> KEYWORDS = Set.of("public", "private", "protected", "static", "final", "abstract", "void", "int", "long", "short", "byte", "double", "float",
+            "boolean", "char", "String", "class", "interface", "enum", "record", "return", "for", "while", "do", "if", "else", "switch", "case", "break", "continue", "try",
+            "catch", "finally", "throw", "throws", "new", "import", "package", "var", "def");
+
+    private static final Pattern LEADING_WORD = Pattern.compile("^\\w+");
 
     private static final Pattern CODE_PUNCTUATION = Pattern.compile("[(){}\\[\\];=]");
 
-    private static final Pattern MARKDOWN_OR_MATH = Pattern.compile("^([-*+>]\\s|#+\\s|\\||\\d+[.)]\\s)|\\\\[(\\[]|\\$");
+    private static final Pattern MARKDOWN_LINE_START = Pattern.compile("^(?:[-*+>]\\s|#+\\s|\\||\\d+[.)]\\s)");
+
+    private static final Pattern LATEX = Pattern.compile("\\\\[(\\[]|\\$");
 
     private static final Pattern PLAIN_WORD = Pattern.compile("^\\p{L}+[,.?!:;]?$");
 
-    private static final Pattern OPERATOR_TOKEN = Pattern.compile("^(=|==|!=|<=|>=|<|>|\\+|-|\\*|/|%|&&|\\|\\||\\+=|-=|\\*=|/=|->|=>|\\?|\\{|\\}|\\(|\\))$");
+    /** Tokens that only appear between operands in code. */
+    private static final Set<String> OPERATORS = Set.of("=", "==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "%", "&&", "||", "+=", "-=", "*=", "/=", "->", "=>", "?", "{",
+            "}", "(", ")");
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
@@ -91,10 +100,18 @@ final class QuizQuestionCodeFormatting {
 
     private static boolean isCodeLine(String line) {
         String stripped = line.strip();
-        if (stripped.isEmpty() || MARKDOWN_OR_MATH.matcher(stripped).find() || readsAsProse(stripped)) {
+        if (stripped.isEmpty() || MARKDOWN_LINE_START.matcher(stripped).find() || LATEX.matcher(stripped).find() || readsAsProse(stripped)) {
             return false;
         }
-        return STATEMENT_END.matcher(stripped).find() || (KEYWORD_START.matcher(stripped).find() && CODE_PUNCTUATION.matcher(stripped).find());
+        return STATEMENT_END.matcher(stripped).find() || (startsWithKeyword(stripped) && CODE_PUNCTUATION.matcher(stripped).find());
+    }
+
+    private static boolean startsWithKeyword(String line) {
+        if (line.startsWith("System.out")) {
+            return true;
+        }
+        var leadingWord = LEADING_WORD.matcher(line);
+        return leadingWord.find() && KEYWORDS.contains(leadingWord.group());
     }
 
     private static boolean readsAsProse(String line) {
@@ -104,7 +121,7 @@ final class QuizQuestionCodeFormatting {
         }
         long plainWords = 0;
         for (String token : tokens) {
-            if (OPERATOR_TOKEN.matcher(token).matches()) {
+            if (OPERATORS.contains(token)) {
                 return false;
             }
             if (PLAIN_WORD.matcher(token).matches()) {

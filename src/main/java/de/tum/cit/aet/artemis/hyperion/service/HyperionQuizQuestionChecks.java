@@ -134,6 +134,11 @@ final class HyperionQuizQuestionChecks {
         if (DANGLING_REFERENCE.matcher(question.questionText()).find() && !question.questionText().contains("\n")) {
             return Optional.of(Defect.DANGLING_REFERENCE);
         }
+        return optionDefectOf(question, maxCorrectOptions);
+    }
+
+    /** The first defect of the question's answer options, empty when they are usable. */
+    private static Optional<Defect> optionDefectOf(GeneratedQuizQuestionDTO question, int maxCorrectOptions) {
         List<GeneratedQuizAnswerOptionDTO> options = question.options();
         int requiredOptions = optionCountFor(question.type());
         if (options == null || options.size() != requiredOptions) {

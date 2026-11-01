@@ -20,7 +20,7 @@ import {
 
 @Service()
 export class QuizQuestionPoolService {
-    private api = inject(HyperionQuizQuestionPoolApi);
+    private readonly api = inject(HyperionQuizQuestionPoolApi);
 
     /**
      * Loads how far the course's pool has come.
