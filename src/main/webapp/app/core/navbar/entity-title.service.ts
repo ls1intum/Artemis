@@ -2,7 +2,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { OnDestroy, Service, inject } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { EMPTY, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
+import { EMPTY, Observable, ReplaySubject, Subject, Subscription, map } from 'rxjs';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { AccountService } from 'app/core/auth/account.service';
 
 export enum EntityType {
@@ -25,6 +26,7 @@ const FETCH_FALLBACK_TIMEOUT = 3000;
 @Service()
 export class EntityTitleService implements OnDestroy {
     private http = inject(HttpClient);
+    private readonly tutorialGroupApi = inject(TutorialGroupApi);
     private readonly accountService = inject(AccountService);
 
     private readonly titleSubjects = new Map<string, { subject: Subject<string>; revision: number; timeout?: ReturnType<typeof setTimeout> }>();
@@ -178,21 +180,22 @@ export class EntityTitleService implements OnDestroy {
             case EntityType.ORGANIZATION:
                 resourceUrl += 'core/organizations';
                 break;
-            case EntityType.TUTORIAL_GROUP:
-                resourceUrl += 'tutorialgroup/tutorial-groups';
-                break;
         }
 
         const generation = this.stateGeneration;
         const mapKey = EntityTitleService.createMapKey(type, ids);
         const revision = this.titleSubjects.get(mapKey)?.revision;
-        this.http.get(`${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).subscribe((response: HttpResponse<string>) => {
+        const title$ =
+            type === EntityType.TUTORIAL_GROUP
+                ? this.tutorialGroupApi.getTitle(ids[0])
+                : this.http.get(`${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).pipe(map((response: HttpResponse<string>) => response.body));
+        title$.subscribe((title) => {
             // Skip the write-back if a logout / user change happened between the request being issued
             // and the response arriving — otherwise we would repopulate the cleared cache (and via
             // setTitle's computeIfAbsent, seed a fresh subject) with the previous user's title.
             if (this.stateGeneration !== generation || this.titleSubjects.get(mapKey)?.revision !== revision) return;
-            if (response.body) {
-                this.setTitle(type, ids, response.body);
+            if (title) {
+                this.setTitle(type, ids, title);
             }
         });
     }

@@ -12,13 +12,14 @@ vi.mock('@sentry/angular', async (importOriginal) => {
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import * as Sentry from '@sentry/angular';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 describe('EntityTitleService', () => {
     let service: EntityTitleService;
@@ -77,16 +78,35 @@ describe('EntityTitleService', () => {
         subscription.unsubscribe();
     });
 
+    it('fetches a tutorial group title as plain text through the generated API', () => {
+        vi.useFakeTimers();
+        try {
+            const titles: string[] = [];
+            service.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+            vi.advanceTimersByTime(3000);
+
+            const http = TestBed.inject(HttpTestingController);
+            const request = http.expectOne('/api/tutorialgroup/tutorial-groups/17/title');
+            expect(request.request.method).toBe('GET');
+            expect(request.request.responseType).toBe('text');
+            request.flush('Tutorial title');
+            expect(titles).toEqual(['Tutorial title']);
+            http.verify();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('does not overwrite a renamed tutorial group with an older fallback response', () => {
         vi.useFakeTimers();
         try {
-            const response = new Subject<HttpResponse<string>>();
-            vi.spyOn(TestBed.inject(HttpClient), 'get').mockReturnValue(response);
+            const response = new Subject<string>();
+            vi.spyOn(TestBed.inject(TutorialGroupApi), 'getTitle').mockReturnValue(response);
             const titles: string[] = [];
             service.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
             vi.advanceTimersByTime(3000);
             service.setTitle(EntityType.TUTORIAL_GROUP, [17], 'Renamed group');
-            response.next(new HttpResponse({ body: 'Previous group title' }));
+            response.next('Previous group title');
             expect(titles).toEqual(['Renamed group']);
         } finally {
             vi.useRealTimers();
@@ -262,6 +282,22 @@ describe('EntityTitleService - authentication state changes', () => {
 
         const result = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
         expect(result).toBe('Course Title');
+    });
+
+    it('ignores a tutorial group title response after logout', () => {
+        vi.useFakeTimers();
+        scoped.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe();
+        vi.advanceTimersByTime(3000);
+        const request = TestBed.inject(HttpTestingController).expectOne('/api/tutorialgroup/tutorial-groups/17/title');
+
+        authState.next(undefined);
+        request.flush('Previous user title');
+
+        const titles: string[] = [];
+        const subscription = scoped.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+        expect(titles).toEqual([]);
+        subscription.unsubscribe();
+        TestBed.inject(HttpTestingController).verify();
     });
 
     it('should ignore in-flight title fetches that resolve after a logout', () => {
