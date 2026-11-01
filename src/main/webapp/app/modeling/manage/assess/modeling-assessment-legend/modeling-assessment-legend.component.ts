@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faCircleInfo, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCircleInfo, faInfo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -26,6 +26,6 @@ export class ModelingAssessmentLegendComponent {
     readonly scoreTones = [
         { text: 'artemisApp.modelingAssessment.legend.positiveScore', icon: faCheck as IconProp, tone: 'positive' },
         { text: 'artemisApp.modelingAssessment.legend.negativeScore', icon: faTimes as IconProp, tone: 'negative' },
-        { text: 'artemisApp.modelingAssessment.legend.feedbackWithoutScore', icon: faExclamationTriangle as IconProp, tone: 'zero' },
+        { text: 'artemisApp.modelingAssessment.legend.feedbackWithoutScore', icon: faInfo as IconProp, tone: 'zero' },
     ];
 }
