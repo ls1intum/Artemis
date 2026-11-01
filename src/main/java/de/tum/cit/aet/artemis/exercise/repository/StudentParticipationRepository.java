@@ -2311,13 +2311,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             @Nullable Specification<StudentParticipation> assessmentFilter) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
                 .and(StudentParticipationSpecs.ownedByTeamTutor(teamOwnerId)).and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode))
-                .and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff)).and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
-                .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
+                .and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff)).and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper));
 
         if (assessmentFilter != null) {
             spec = spec.and(StudentParticipationSpecs.isNotPracticeMode()).and(assessmentFilter);
         }
 
+        spec = spec.and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
         Page<StudentParticipation> page = findAll(spec, unsortedPageable);
         return page.map(StudentParticipation::getId);

@@ -2416,6 +2416,35 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(rows).extracting(AssessmentQueueRowDTO::participationId).containsExactly(included.getFirst());
     }
 
+    @ParameterizedTest
+    @CsvSource({ "false,true", "false,false", "true,true", "true,false" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void assessmentQueueRetainsOnlyOwnUnfinishedOlderAssessments(boolean completed, boolean owned) throws Exception {
+        var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1));
+        var olderSubmission = participationUtilService.addSubmission(exercise, new TextSubmission().submitted(true), TEST_PREFIX + "student1");
+        var result = new Result().submission(olderSubmission).assessmentType(AssessmentType.MANUAL);
+        result.setExerciseId(exercise.getId());
+        result.setCorrectionRound(0);
+        result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + (owned ? "tutor1" : "instructor1")));
+        result.setCompletionDate(completed ? ZonedDateTime.now() : null);
+        result = resultRepository.save(result);
+        var latestSubmission = participationUtilService.addSubmission((StudentParticipation) olderSubmission.getParticipation(), new TextSubmission().submitted(false));
+        var search = new AssessmentQueueSearchDTO(0, 1, SortingOrder.ASCENDING, "submissionDate", "");
+        var response = request
+                .performMvcRequest(
+                        MockMvcRequestBuilders.get("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue").params(pageableSearchUtilService.searchMapping(search)))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        var expectedCount = owned && !completed ? 1 : 0;
+        assertThat(response.getHeader("X-Total-Count")).isEqualTo(Integer.toString(expectedCount));
+        var rows = request.getObjectMapper().readValue(response.getContentAsString(), AssessmentQueueRowDTO[].class);
+        assertThat(rows).hasSize(expectedCount);
+        if (expectedCount == 1) {
+            assertThat(rows[0].submissionId()).isEqualTo(latestSubmission.getId());
+            assertThat(rows[0].olderAssessmentDrafts()).extracting(draft -> draft.resultId()).containsExactly(result.getId());
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void assessmentQueueCarriesSubmittedAndDeadlineEligibility() throws Exception {

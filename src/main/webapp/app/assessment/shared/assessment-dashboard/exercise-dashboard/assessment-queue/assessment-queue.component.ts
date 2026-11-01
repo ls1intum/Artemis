@@ -1,7 +1,7 @@
 import { LanguageTableCellComponent } from '../language-table-cell/language-table-cell.component';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Language } from 'app/course/shared/entities/course.model';
-import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -128,7 +128,10 @@ export class AssessmentQueueComponent {
     });
     private readonly participationRows = computed(() => (this.pageResource.hasValue() ? this.pageResource.value().content : []));
     readonly rows = computed<AssessmentQueueRow[]>(() => this.participationRows().map((dto) => this.prepareRow(dto)));
-    readonly totalRecords = computed(() => (this.pageResource.hasValue() ? this.pageResource.value().totalElements : 0));
+    readonly totalRecords = linkedSignal<number | undefined, number>({
+        source: () => (this.pageResource.hasValue() ? this.pageResource.value().totalElements : undefined),
+        computation: (total, previous) => total ?? previous?.value ?? 0,
+    });
     readonly isLoading = this.pageResource.isLoading;
 
     readonly course = computed(() => getCourseFromExercise(this.exercise())!);

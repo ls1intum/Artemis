@@ -133,6 +133,33 @@ describe('AssessmentQueueComponent', () => {
         expect(comp.isLoading()).toBe(false);
     });
 
+    it('keeps the rendered paginator on the requested page while its response is pending', async () => {
+        const pending = new Subject<{ content: AssessmentQueueRowDTO[]; totalElements: number }>();
+        const searchSpy = vi
+            .spyOn(participationService, 'searchAssessmentQueue')
+            .mockReturnValueOnce(of({ content: [teamRow], totalElements: 60 }))
+            .mockReturnValueOnce(pending);
+        comp.refresh();
+        await flushResource();
+        searchSpy.mockClear();
+
+        const next = fixture.nativeElement.querySelector('button[aria-label="Next page"]') as HTMLButtonElement;
+        next.click();
+        await flushResource();
+        expect(searchSpy).toHaveBeenCalledExactlyOnceWith(7, expect.objectContaining({ page: 1 }));
+        expect(comp.totalRecords()).toBe(60);
+        expect(comp.isLoading()).toBe(true);
+        expect(pending.observed).toBe(true);
+
+        pending.next({ content: [{ ...teamRow, participationId: 22 }], totalElements: 45 });
+        pending.complete();
+        await flushResource();
+        expect(comp.totalRecords()).toBe(45);
+        expect(comp.rows()[0].dto.participationId).toBe(22);
+        expect(searchSpy).toHaveBeenCalledTimes(1);
+        expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent.trim()).toBe('2');
+    });
+
     it('unsubscribes from a pending page request when destroyed', async () => {
         const response = new Subject<{ content: AssessmentQueueRowDTO[]; totalElements: number }>();
         vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(response);

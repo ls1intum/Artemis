@@ -53,6 +53,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission_;
  */
 public class StudentParticipationSpecs {
 
+    private static final String QUEUE_LATEST_SUBMISSION = "queueLatestSubmission";
+
     // --------------------------------------------------
     // Helpers
     // --------------------------------------------------
@@ -118,31 +120,37 @@ public class StudentParticipationSpecs {
         }
         ZonedDateTime now = ZonedDateTime.now();
         return (root, query, cb) -> {
+            Expression<Long> latestId = latestSubmissionId(root, query, cb);
+            Join<StudentParticipation, Submission> latest = root.join(Participation_.SUBMISSIONS, JoinType.LEFT);
+            latest.on(cb.equal(latest.get(DomainObject_.ID), latestId));
+            latest.alias(QUEUE_LATEST_SUBMISSION);
+
             Subquery<Long> manualResults = query.subquery(Long.class);
             Root<Result> result = manualResults.from(Result.class);
             Predicate manual = result.get(Result_.ASSESSMENT_TYPE).in(AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC);
-            manualResults.select(result.get(DomainObject_.ID)).where(manual,
-                    cb.equal(result.get(Result_.SUBMISSION).get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)));
+            manualResults.select(result.get(DomainObject_.ID)).where(manual, cb.equal(result.get(Result_.SUBMISSION), latest));
 
-            Subquery<Long> ownResults = query.subquery(Long.class);
-            Root<Result> ownResult = ownResults.from(Result.class);
-            ownResults.select(ownResult.get(DomainObject_.ID)).where(ownResult.get(Result_.ASSESSMENT_TYPE).in(AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC),
-                    cb.equal(ownResult.get(Result_.SUBMISSION).get(Submission_.PARTICIPATION), root),
-                    instructor ? cb.conjunction() : cb.equal(ownResult.get(Result_.ASSESSOR).get(DomainObject_.ID), userId),
-                    cb.or(cb.equal(ownResult.get(Result_.SUBMISSION).get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)),
-                            cb.and(cb.isNull(ownResult.get(Result_.COMPLETION_DATE)), cb.equal(ownResult.get(Result_.ASSESSOR).get(DomainObject_.ID), userId))));
+            Subquery<Long> visibleLatestResults = query.subquery(Long.class);
+            Root<Result> visibleResult = visibleLatestResults.from(Result.class);
+            visibleLatestResults.select(visibleResult.get(DomainObject_.ID)).where(
+                    visibleResult.get(Result_.ASSESSMENT_TYPE).in(AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC), cb.equal(visibleResult.get(Result_.SUBMISSION), latest),
+                    instructor ? cb.conjunction() : cb.equal(visibleResult.get(Result_.ASSESSOR).get(DomainObject_.ID), userId));
 
-            Subquery<Long> readySubmission = query.subquery(Long.class);
-            Root<Submission> submission = readySubmission.from(Submission.class);
+            // Find the requester's drafts independently of the latest submission, including drafts on older work.
+            Subquery<Long> draftParticipations = query.subquery(Long.class);
+            Root<Result> draft = draftParticipations.from(Result.class);
+            draftParticipations.select(draft.get(Result_.SUBMISSION).get(Submission_.PARTICIPATION).get(DomainObject_.ID)).where(
+                    draft.get(Result_.ASSESSMENT_TYPE).in(AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC),
+                    cb.equal(draft.get(Result_.ASSESSOR).get(DomainObject_.ID), userId), cb.isNull(draft.get(Result_.COMPLETION_DATE)));
+
             Predicate deadlinePassed = cb.or(cb.lessThanOrEqualTo(root.get(StudentParticipation_.INDIVIDUAL_DUE_DATE), now),
                     cb.and(cb.isNull(root.get(StudentParticipation_.INDIVIDUAL_DUE_DATE)),
                             exercise.getDueDate() == null || !exercise.getDueDate().isAfter(now) ? cb.conjunction() : cb.disjunction()));
             boolean finalTestsPending = exercise instanceof ProgrammingExercise programming && programming.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                     && programming.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now);
-            readySubmission.select(submission.get(DomainObject_.ID)).where(cb.equal(submission.get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)),
-                    cb.isTrue(submission.get(Submission_.SUBMITTED)),
+            Predicate ready = cb.and(cb.isTrue(latest.get(Submission_.SUBMITTED)),
                     instructor ? cb.conjunction() : cb.and(deadlinePassed, finalTestsPending ? cb.disjunction() : cb.conjunction()), cb.not(cb.exists(manualResults)));
-            return cb.or(cb.exists(readySubmission), cb.exists(ownResults));
+            return cb.or(ready, cb.exists(visibleLatestResults), root.get(DomainObject_.ID).in(draftParticipations));
         };
     }
 
@@ -259,9 +267,14 @@ public class StudentParticipationSpecs {
     // --------------------------------------------------
 
     /**
-     * Builds a subquery that returns the ID of the latest submission for the given participation root.
+     * Reuses the queue's latest-submission join, or looks up the latest submission for other participation queries.
      */
-    private static Subquery<Long> latestSubmissionIdSubquery(Root<StudentParticipation> root, jakarta.persistence.criteria.CriteriaQuery<?> query, CriteriaBuilder cb) {
+    private static Expression<Long> latestSubmissionId(Root<StudentParticipation> root, jakarta.persistence.criteria.CriteriaQuery<?> query, CriteriaBuilder cb) {
+        for (var join : root.getJoins()) {
+            if (QUEUE_LATEST_SUBMISSION.equals(join.getAlias())) {
+                return join.get(DomainObject_.ID);
+            }
+        }
         Subquery<Long> sub = query.subquery(Long.class);
         Root<Submission> subRoot = sub.from(Submission.class);
         sub.select(cb.max(subRoot.get(DomainObject_.ID)));
@@ -285,7 +298,7 @@ public class StudentParticipationSpecs {
         Join<Submission, Result> resultJoin = submissionRoot.join(Submission_.RESULTS);
 
         // Latest submission
-        Subquery<Long> latestSubId = latestSubmissionIdSubquery(root, query, cb);
+        Expression<Long> latestSubId = latestSubmissionId(root, query, cb);
         Predicate isLatestSubmission = cb.equal(submissionRoot.get(DomainObject_.ID), latestSubId);
 
         // Belongs to this participation
@@ -352,7 +365,7 @@ public class StudentParticipationSpecs {
         return (root, query, cb) -> {
             Subquery<Long> existsSub = query.subquery(Long.class);
             Root<ProgrammingSubmission> subRoot = existsSub.from(ProgrammingSubmission.class);
-            Subquery<Long> latestSubId = latestSubmissionIdSubquery(root, query, cb);
+            Expression<Long> latestSubId = latestSubmissionId(root, query, cb);
             existsSub.select(cb.literal(1L));
             existsSub.where(cb.equal(subRoot.get(Submission_.PARTICIPATION), root), cb.equal(subRoot.get(DomainObject_.ID), latestSubId),
                     cb.equal(subRoot.get(ProgrammingSubmission_.BUILD_FAILED), true));
@@ -428,7 +441,7 @@ public class StudentParticipationSpecs {
             }
             Subquery<Long> existsSub = query.subquery(Long.class);
             Root<Submission> subRoot = existsSub.from(Submission.class);
-            Subquery<Long> latestSubId = latestSubmissionIdSubquery(root, query, cb);
+            Expression<Long> latestSubId = latestSubmissionId(root, query, cb);
 
             // No result exists for this submission
             Subquery<Long> noResultSub = query.subquery(Long.class);
@@ -555,13 +568,13 @@ public class StudentParticipationSpecs {
                 case "submissionDate" -> {
                     Subquery<ZonedDateTime> date = query.subquery(ZonedDateTime.class);
                     Root<Submission> submission = date.from(Submission.class);
-                    date.select(submission.get(Submission_.SUBMISSION_DATE)).where(cb.equal(submission.get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)));
+                    date.select(submission.get(Submission_.SUBMISSION_DATE)).where(cb.equal(submission.get(DomainObject_.ID), latestSubmissionId(root, query, cb)));
                     orders.add(asc ? cb.asc(date) : cb.desc(date));
                 }
                 case "submissionLanguage" -> {
                     Subquery<Language> language = query.subquery(Language.class);
                     Root<TextSubmission> submission = language.from(TextSubmission.class);
-                    language.select(submission.get(TextSubmission_.LANGUAGE)).where(cb.equal(submission.get(DomainObject_.ID), latestSubmissionIdSubquery(root, query, cb)));
+                    language.select(submission.get(TextSubmission_.LANGUAGE)).where(cb.equal(submission.get(DomainObject_.ID), latestSubmissionId(root, query, cb)));
                     orders.add(asc ? cb.asc(language) : cb.desc(language));
                 }
                 case "score" -> {
@@ -633,7 +646,7 @@ public class StudentParticipationSpecs {
         Root<Submission> submissionRoot = sub.from(Submission.class);
         Join<Submission, Result> resultJoin = submissionRoot.join(Submission_.RESULTS);
 
-        Subquery<Long> latestSubId = latestSubmissionIdSubquery(root, query, cb);
+        Expression<Long> latestSubId = latestSubmissionId(root, query, cb);
 
         Subquery<Long> latestResultSub = query.subquery(Long.class);
         Root<Result> latestResultRoot = latestResultSub.from(Result.class);
