@@ -50,22 +50,22 @@ class HyperionCourseSettingsServiceTest {
 
         HyperionCourseSettings settings = service.getSettings(5L);
 
-        assertThat(settings).isEqualTo(new HyperionCourseSettings(false, 12, false, 12, 20, 50, 30));
+        assertThat(settings).isEqualTo(new HyperionCourseSettings(false, 12, false, 12, 1, 4, 20, 50, 30));
     }
 
     @Test
     void getSettings_returnsTheStoredPayload() {
         HyperionCourseSettingsEntity entity = new HyperionCourseSettingsEntity();
         entity.setCourseId(5L);
-        entity.setSettings(new HyperionCourseSettings(true, 30, true, 10, 25, 50, 25));
+        entity.setSettings(new HyperionCourseSettings(true, 30, true, 10, 1, 4, 25, 50, 25));
         when(settingsRepository.findByCourseId(5L)).thenReturn(Optional.of(entity));
 
-        assertThat(service.getSettings(5L)).isEqualTo(new HyperionCourseSettings(true, 30, true, 10, 25, 50, 25));
+        assertThat(service.getSettings(5L)).isEqualTo(new HyperionCourseSettings(true, 30, true, 10, 1, 4, 25, 50, 25));
     }
 
     @Test
     void updateSettings_replacesTheRowInPlace() {
-        HyperionCourseSettings settings = new HyperionCourseSettings(false, 8, false, 12, 20, 50, 30);
+        HyperionCourseSettings settings = new HyperionCourseSettings(false, 8, false, 12, 1, 4, 20, 50, 30);
         when(settingsRepository.updateSettings(5L, settings)).thenReturn(1);
 
         HyperionCourseSettings stored = service.updateSettings(5L, settings);
@@ -77,7 +77,7 @@ class HyperionCourseSettingsServiceTest {
 
     @Test
     void updateSettings_addsTheMissingRowBeforeWriting() {
-        HyperionCourseSettings settings = new HyperionCourseSettings(true, 12, false, 12, 20, 50, 30);
+        HyperionCourseSettings settings = new HyperionCourseSettings(true, 12, false, 12, 1, 4, 20, 50, 30);
         when(settingsRepository.updateSettings(5L, settings)).thenReturn(0, 1);
 
         service.updateSettings(5L, settings);
@@ -90,22 +90,30 @@ class HyperionCourseSettingsServiceTest {
 
     @Test
     void settings_substituteDefaultsForFieldsAnOlderPayloadLacks() {
-        HyperionCourseSettings settings = new HyperionCourseSettings(null, null, null, null, null, null, null, null);
+        HyperionCourseSettings settings = new HyperionCourseSettings(null, null, null, null, null, null, null, null, null, null);
 
         assertThat(settings).isEqualTo(HyperionCourseSettings.defaultSettings());
     }
 
     @Test
     void settings_readAPayloadWithOneCountAsTheSingleChoiceCount() {
-        HyperionCourseSettings settings = new HyperionCourseSettings(true, null, 25, null, null, 10, null, null);
+        HyperionCourseSettings settings = new HyperionCourseSettings(true, null, 25, null, null, null, null, 10, null, null);
 
-        assertThat(settings).isEqualTo(new HyperionCourseSettings(true, 25, false, 12, 20, 50, 30));
+        assertThat(settings).isEqualTo(new HyperionCourseSettings(true, 25, false, 12, 1, 4, 20, 50, 30));
+    }
+
+    @Test
+    void settings_readTheCorrectOptionRangeOnlyWhenItIsInOrderAndWithinTheOptions() {
+        assertThat(new HyperionCourseSettings(null, null, null, null, null, 2, 3, null, null, null)).isEqualTo(new HyperionCourseSettings(false, 12, false, 12, 2, 3, 20, 50, 30));
+        assertThat(new HyperionCourseSettings(null, null, null, null, null, 3, 2, null, null, null)).isEqualTo(HyperionCourseSettings.defaultSettings());
+        assertThat(new HyperionCourseSettings(null, null, null, null, null, 1, 5, null, null, null)).isEqualTo(HyperionCourseSettings.defaultSettings());
+        assertThat(new HyperionCourseSettings(null, null, null, null, null, 2, null, null, null, null)).isEqualTo(HyperionCourseSettings.defaultSettings());
     }
 
     @Test
     void settings_preferTheSingleChoiceCountOverTheOlderCount() {
-        HyperionCourseSettings settings = new HyperionCourseSettings(false, 7, 25, true, 3, 0, 100, 0);
+        HyperionCourseSettings settings = new HyperionCourseSettings(false, 7, 25, true, 3, null, null, 0, 100, 0);
 
-        assertThat(settings).isEqualTo(new HyperionCourseSettings(false, 7, true, 3, 0, 100, 0));
+        assertThat(settings).isEqualTo(new HyperionCourseSettings(false, 7, true, 3, 1, 4, 0, 100, 0));
     }
 }

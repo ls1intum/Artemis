@@ -18,6 +18,8 @@ public record HyperionCourseSettingsDTO(
         @Min(HyperionCourseSettings.MIN_QUESTIONS_PER_LECTURE_UNIT) @Max(HyperionCourseSettings.MAX_QUESTIONS_PER_LECTURE_UNIT) @Schema(description = "Single-choice questions the pool holds per lecture unit and competency", requiredMode = Schema.RequiredMode.REQUIRED) int singleChoiceQuestionsPerLectureUnit,
         @Schema(description = "Whether the pool also holds multiple-choice questions", requiredMode = Schema.RequiredMode.REQUIRED) boolean multipleChoiceEnabled,
         @Min(HyperionCourseSettings.MIN_QUESTIONS_PER_LECTURE_UNIT) @Max(HyperionCourseSettings.MAX_QUESTIONS_PER_LECTURE_UNIT) @Schema(description = "Multiple-choice questions the pool holds per lecture unit and competency while they are enabled", requiredMode = Schema.RequiredMode.REQUIRED) int multipleChoiceQuestionsPerLectureUnit,
+        @Min(HyperionCourseSettings.MIN_CORRECT_OPTIONS) @Max(HyperionCourseSettings.MAX_CORRECT_OPTIONS) @Schema(description = "The fewest answer options a multiple-choice question marks correct", requiredMode = Schema.RequiredMode.REQUIRED) int multipleChoiceMinCorrectOptions,
+        @Min(HyperionCourseSettings.MIN_CORRECT_OPTIONS) @Max(HyperionCourseSettings.MAX_CORRECT_OPTIONS) @Schema(description = "The most answer options a multiple-choice question marks correct; not below the fewest", requiredMode = Schema.RequiredMode.REQUIRED) int multipleChoiceMaxCorrectOptions,
         @Min(0) @Max(100) @Schema(description = "Share of each lecture unit's questions generated at the easy difficulty, in percent", requiredMode = Schema.RequiredMode.REQUIRED) int easyPercent,
         @Min(0) @Max(100) @Schema(description = "Share of each lecture unit's questions generated at the medium difficulty, in percent", requiredMode = Schema.RequiredMode.REQUIRED) int mediumPercent,
         @Min(0) @Max(100) @Schema(description = "Share of each lecture unit's questions generated at the hard difficulty, in percent; the three shares add up to 100", requiredMode = Schema.RequiredMode.REQUIRED) int hardPercent) {
@@ -30,7 +32,8 @@ public record HyperionCourseSettingsDTO(
      */
     public static HyperionCourseSettingsDTO of(HyperionCourseSettings settings) {
         return new HyperionCourseSettingsDTO(settings.poolGenerationEnabled(), settings.singleChoiceQuestionsPerLectureUnit(), settings.multipleChoiceEnabled(),
-                settings.multipleChoiceQuestionsPerLectureUnit(), settings.easyPercent(), settings.mediumPercent(), settings.hardPercent());
+                settings.multipleChoiceQuestionsPerLectureUnit(), settings.multipleChoiceMinCorrectOptions(), settings.multipleChoiceMaxCorrectOptions(), settings.easyPercent(),
+                settings.mediumPercent(), settings.hardPercent());
     }
 
     /**
@@ -39,8 +42,17 @@ public record HyperionCourseSettingsDTO(
      * @return the settings
      */
     public HyperionCourseSettings toSettings() {
-        return new HyperionCourseSettings(poolGenerationEnabled, singleChoiceQuestionsPerLectureUnit, multipleChoiceEnabled, multipleChoiceQuestionsPerLectureUnit, easyPercent,
-                mediumPercent, hardPercent);
+        return new HyperionCourseSettings(poolGenerationEnabled, singleChoiceQuestionsPerLectureUnit, multipleChoiceEnabled, multipleChoiceQuestionsPerLectureUnit,
+                multipleChoiceMinCorrectOptions, multipleChoiceMaxCorrectOptions, easyPercent, mediumPercent, hardPercent);
+    }
+
+    /**
+     * Tells whether the fewest correct options do not exceed the most.
+     *
+     * @return whether the correct-option range is in order
+     */
+    public boolean hasOrderedCorrectOptionRange() {
+        return multipleChoiceMinCorrectOptions <= multipleChoiceMaxCorrectOptions;
     }
 
     /**
