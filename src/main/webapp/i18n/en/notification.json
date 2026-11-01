@@ -45,7 +45,8 @@
             "updated": "Updated system notification with identifier {{ param }}",
             "deleted": "Deleted system notification with identifier {{ param }}",
             "sendMaintenanceEmail": "Announce maintenance to all instructors via email",
-            "maintenanceEmailInfo": "An email will be sent to {{ count }} instructor(s) of all ongoing courses."
+            "maintenanceEmailInfo": "An email will be sent to {{ count }} instructor(s) of all ongoing courses.",
+            "textMaxlength": "The notification text must not exceed 2000 characters."
         },
         "groupNotification": {
             "title": {

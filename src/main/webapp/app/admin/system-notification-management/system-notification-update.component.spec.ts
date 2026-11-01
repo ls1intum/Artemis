@@ -174,6 +174,61 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         });
     });
 
+    describe('text field length validation', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+        });
+
+        it('should have no maxlength error when text is exactly 2000 characters', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2000));
+            control?.markAsDirty();
+            fixture.detectChanges();
+
+            expect(control?.hasError('maxlength')).toBe(false);
+            expect(fixture.nativeElement.querySelector('#text-maxlength-error')).toBeNull();
+        });
+
+        it('should have a maxlength error when text exceeds 2000 characters', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2001));
+            control?.markAsDirty();
+            fixture.detectChanges();
+
+            expect(control?.hasError('maxlength')).toBe(true);
+            expect(fixture.nativeElement.querySelector('#text-maxlength-error')).not.toBeNull();
+        });
+
+        it('should disable the save button when text exceeds 2000 characters', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+
+            const saveButton = fixture.nativeElement.querySelector('#saveButton') as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(true);
+        });
+
+        it('should not show the maxlength error on an untouched field', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#text-maxlength-error')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#text')?.getAttribute('aria-describedby')).toBeNull();
+        });
+
+        it('should set aria-invalid and aria-describedby when error is visible', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2001));
+            control?.markAsDirty();
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector('#text') as HTMLInputElement;
+            expect(input.getAttribute('aria-invalid')).toBe('true');
+            expect(input.getAttribute('aria-describedby')).toBe('text-maxlength-error');
+        });
+    });
+
     describe('date pickers', () => {
         const pickerInput = (id: string) => fixture.nativeElement.querySelector(`input#${id}`) as HTMLInputElement;
         const type = (id: string, text: string) => {

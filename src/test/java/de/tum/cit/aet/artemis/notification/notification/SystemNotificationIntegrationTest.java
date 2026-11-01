@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.notification.domain.SystemNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationUpdateDTO;
@@ -193,6 +194,49 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         SystemNotification notification = systemNotificationRepo.save(systemNotification);
         assertThat(systemNotificationRepo.findById(notification.getId())).get().as("system notification is not null").isNotNull();
         request.delete("/api/notification/admin/system-notifications/" + notification.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_textAtMaxLength_ok() throws Exception {
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(null, "Title", "a".repeat(2000), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                SystemNotificationType.WARNING);
+        SystemNotificationDTO response = request.postWithResponseBody("/api/notification/admin/system-notifications", dto, SystemNotificationDTO.class);
+        assertThat(response.text()).hasSize(2000);
+        assertThat(systemNotificationRepo.findById(response.id())).get().extracting(SystemNotification::getText).satisfies(t -> assertThat(t).hasSize(2000));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_textTooLong_badRequest() throws Exception {
+        long countBefore = systemNotificationRepo.count();
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(null, "Title", "a".repeat(2001), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                SystemNotificationType.WARNING);
+        request.post("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_textAtMaxLength_ok() throws Exception {
+        systemNotificationRepo.save(systemNotification);
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(systemNotification.getId(), "Title", "a".repeat(2000), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), SystemNotificationType.WARNING);
+        SystemNotificationDTO response = request.putWithResponseBody("/api/notification/admin/system-notifications", dto, SystemNotificationDTO.class, HttpStatus.OK);
+        assertThat(response.text()).hasSize(2000);
+        assertThat(systemNotificationRepo.findById(response.id())).get().extracting(SystemNotification::getText).satisfies(t -> assertThat(t).hasSize(2000));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_textTooLong_badRequest() throws Exception {
+        String originalText = "original text";
+        systemNotification.setText(originalText);
+        systemNotificationRepo.save(systemNotification);
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(systemNotification.getId(), "Title", "a".repeat(2001), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), SystemNotificationType.WARNING);
+        request.put("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().extracting(SystemNotification::getText).isEqualTo(originalText);
     }
 
     /**
