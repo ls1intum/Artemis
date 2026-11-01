@@ -101,7 +101,10 @@ public class ParticipationRetrievalResource {
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        var response = StudentParticipationDTO.ofWithLatestResult(participation);
+        // Map only the results the owning student may already see, so the score of a not-yet-released manual assessment does not leak here as it does not through the dedicated
+        // student endpoints. The participation itself is always returned; the hidden results are filtered out while mapping, never by mutating the loaded submissions (their result
+        // collection uses orphan removal, so dropping an entry could delete the result).
+        var response = StudentParticipationDTO.ofWithLatestResult(participation, participationAuthCheckService.visibleResultIds(participation));
         return ResponseEntity.ok(canSeeParticipant(participation) ? response : response.withoutParticipantInformation());
     }
 
