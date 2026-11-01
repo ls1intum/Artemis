@@ -19,7 +19,7 @@ name: artemis
 services:
     keycloak-oidc:
         container_name: artemis-keycloak-oidc
-        image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.8.0}
+        image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.8.1}
         pull_policy: missing
         command: start-dev --import-realm
         environment:

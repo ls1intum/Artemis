@@ -17,7 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
@@ -64,6 +64,8 @@ import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.compone
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -102,6 +104,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private examParticipationService = inject(ExamParticipationService);
+    private quizSubmissionApi = inject(QuizSubmissionApi);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private textSubmissionService = inject(TextSubmissionService);
@@ -872,7 +875,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.loadAndDisplaySummary();
             }
         } else {
-            // Directly start the exam when we continue from a failed save
+            // INTENDED BEHAVIOR, DECIDED BY THE PRODUCT OWNER - DO NOT CHANGE IT TO MAKE A FLAKY TEST PASS:
+            // After a page reload during an exam the exam is NOT resumed. The student sees the start cover again (examStartConfirmed
+            // is false after a reload), has to type in their name and confirm the exam rules, and doing so creates a NEW exam session
+            // (examStarted is called by the cover). Already saved answers are loaded from the server for that new session.
+            // The ONLY automatic resume is the failed-save path below: if the last save did not reach the server, the unsaved answers
+            // only exist in local storage, so the exam is restored from there and they are re-sent right away, without the cover.
+            // Consequently a reload shows the cover or resumes depending on whether the last save had completed, and a test that
+            // reloads must set up one of the two cases deterministically (see ExamParticipation.spec.ts, "Reloads exam page ...").
             if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
                 this.examParticipationService
                     .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId())
@@ -1181,7 +1191,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
-                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission).subscribe({
+                        this.quizSubmissionApi.submitQuizForExam(submissionToSync.exercise.id!, toQuizSubmissionFromLiveClient(submissionToSync.submission)).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });

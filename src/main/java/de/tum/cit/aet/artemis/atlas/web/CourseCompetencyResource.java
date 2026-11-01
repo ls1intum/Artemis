@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
@@ -52,8 +53,10 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
@@ -66,6 +69,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisCompetencyApi;
 import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyRecommendationDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -154,6 +159,8 @@ public class CourseCompetencyResource {
     @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/course-competencies/{competencyId}")
     @EnforceAtLeastStudentInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "Get one course competency", description = "Returns a competency or prerequisite of the course with its linked exercises and lecture units, as far as the caller may see them.")
     public ResponseEntity<CourseCompetencyResponseDTO> getCourseCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to get Competency : {}", competencyId);
         var currentUser = userRepository.getUserWithAuthorities();
@@ -176,6 +183,10 @@ public class CourseCompetencyResource {
     @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/course-competencies")
     @EnforceAtLeastStudentInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "List all competencies and prerequisites of a course", description = """
+            Returns every competency and prerequisite of the course. Each one carries the caller's own learning \
+            progress. Set filter=true to leave out those not linked to any exercise or lecture unit.""")
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getCourseCompetenciesWithProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         User user = userRepository.getUserWithAuthorities();
@@ -255,7 +266,8 @@ public class CourseCompetencyResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("course-competencies/for-import")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<SearchResultPageDTO<CourseCompetencyResponseDTO>> getCompetenciesForImport(CompetencyPageableSearchDTO search) {
         final var user = userRepository.getUserWithAuthorities();
         var result = courseCompetencyService.getOnPageWithSizeForImport(search, user);
@@ -277,14 +289,9 @@ public class CourseCompetencyResource {
             throws URISyntaxException {
         log.info("REST request to all course competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
 
-        if (importOptions.sourceCourseId().isEmpty()) {
-            throw new BadRequestAlertException("No source course specified", ENTITY_NAME, "noSourceCourse");
-        }
-        else if (courseId == importOptions.sourceCourseId().get()) {
-            throw new BadRequestAlertException("Cannot import from a course into itself", ENTITY_NAME, "courseCycle");
-        }
+        long sourceCourseId = CompetencyValidationService.sourceCourseIdForImport(importOptions, courseId, ENTITY_NAME);
         var targetCourse = courseRepository.findByIdElseThrow(courseId);
-        var sourceCourse = courseRepository.findByIdElseThrow(importOptions.sourceCourseId().get());
+        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
         var competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
@@ -304,6 +311,8 @@ public class CourseCompetencyResource {
      */
     @GetMapping("courses/{courseId}/course-competencies/relations")
     @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "List the relations between competencies", description = "Returns the edges of the competency graph of the course: tail, head and relation type, by competency id.")
     public ResponseEntity<Set<CompetencyRelationDTO>> getCompetencyRelations(@PathVariable long courseId) {
         log.debug("REST request to get relations for course: {}", courseId);
 
@@ -322,6 +331,10 @@ public class CourseCompetencyResource {
      */
     @PostMapping("courses/{courseId}/course-competencies/relations")
     @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Create a relation between two competencies", description = """
+            Adds an edge to the competency graph. Tail and head must be competencies of this course. The request is \
+            rejected with 400 if the relation type is missing or the relation would create a circular dependency.""")
     public ResponseEntity<CompetencyRelationDTO> createCompetencyRelation(@PathVariable long courseId, @RequestBody CompetencyRelationDTO relation) {
         var tailId = relation.tailCompetencyId();
         var headId = relation.headCompetencyId();
@@ -399,6 +412,9 @@ public class CourseCompetencyResource {
      */
     @PatchMapping("courses/{courseId}/course-competencies/relations/{relationId}")
     @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Change the type of a relation", description = "Changes the relation type of an existing relation. To change tail or head, create a new relation.")
+    @ApiResponse(responseCode = "204", description = "The relation was updated.")
     public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable("relationId") long competencyRelationId,
             @RequestBody @Valid UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
         log.info("REST request to update a competency relation: {}", competencyRelationId);

@@ -1,12 +1,13 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
+import { QuizAnswerSelection } from 'app/quiz/shared/util/quiz-answer-selection';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import dayjs from 'dayjs/esm';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -17,10 +18,17 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/component
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
-import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
-import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
-import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { QuizParticipationApi } from 'app/openapi/api/quiz-participation-api';
+import { QuizExerciseBatchApi } from 'app/openapi/api/quiz-exercise-batch-api';
+import {
+    toQuizBatch,
+    toQuizSubmission,
+    toQuizSubmissionFromLiveClient,
+    toQuizSubmissionFromStudent,
+    toResult,
+    toStudentParticipation,
+} from 'app/quiz/shared/util/generated-quiz-exercise.util';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { LiveQuizParticipationStatus, QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
@@ -33,7 +41,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getIsMobileSignal, onError } from 'app/foundation/util/global.utils';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { getCourseFromExercise, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -48,14 +56,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
-import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
+import { formatQuizRelativeTime, quizCountdown } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { QuizParticipationBase } from './quiz-participation.base';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
-    providers: [ParticipationService, ArtemisDurationFromSecondsPipe],
+    providers: [ArtemisDurationFromSecondsPipe],
     styleUrls: ['./quiz-participation.component.scss'],
     imports: [
         NgClass,
@@ -71,17 +80,19 @@ import { QuizParticipationBase } from './quiz-participation.base';
         FaIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
     ],
 })
 export class QuizParticipationComponent extends QuizParticipationBase implements OnInit, OnDestroy, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
     private durationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private quizExerciseService = inject(QuizExerciseService);
-    private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
-    private quizParticipationService = inject(QuizParticipationService);
+    private quizSubmissionApi = inject(QuizSubmissionApi);
+    private quizParticipationApi = inject(QuizParticipationApi);
+    private quizExerciseBatchApi = inject(QuizExerciseBatchApi);
     private translateService = inject(TranslateService);
     private quizService = inject(ArtemisQuizService);
     private serverDateService = inject(ArtemisServerDateService);
@@ -134,21 +145,14 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     readonly quizExercise = signal<QuizExercise>(undefined!);
     readonly quizBatch = signal<QuizBatch | undefined>(undefined);
     readonly totalScore = signal<number>(0);
-    readonly selectedAnswerOptions = signal(new Map<number, AnswerOption[]>());
-    readonly dragAndDropMappings = signal(new Map<number, DragAndDropMapping[]>());
-    readonly shortAnswerSubmittedTexts = signal(new Map<number, ShortAnswerSubmittedText[]>());
+    private readonly answerSelection = new QuizAnswerSelection();
+    readonly selectedAnswerOptions = this.answerSelection.selectedAnswerOptions;
+    readonly dragAndDropMappings = this.answerSelection.dragAndDropMappings;
+    readonly shortAnswerSubmittedTexts = this.answerSelection.shortAnswerSubmittedTexts;
+    readonly onSelectedAnswerOptionsChange = this.answerSelection.onSelectedAnswerOptionsChange;
+    readonly onDragAndDropMappingsChange = this.answerSelection.onDragAndDropMappingsChange;
+    readonly onShortAnswerSubmittedTextsChange = this.answerSelection.onShortAnswerSubmittedTextsChange;
 
-    onSelectedAnswerOptionsChange(questionId: number, answerOptions: AnswerOption[]): void {
-        this.selectedAnswerOptions.update((map) => new Map(map).set(questionId, answerOptions));
-    }
-
-    onDragAndDropMappingsChange(questionId: number, mappings: DragAndDropMapping[]): void {
-        this.dragAndDropMappings.update((map) => new Map(map).set(questionId, mappings));
-    }
-
-    onShortAnswerSubmittedTextsChange(questionId: number, submittedTexts: ShortAnswerSubmittedText[]): void {
-        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(questionId, submittedTexts));
-    }
     readonly result = signal<Result>(undefined!);
     readonly questionScores = signal<{ [id: number]: number }>({});
     readonly inputExerciseId = input<number>();
@@ -172,6 +176,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
 
     private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
     readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
+
+    readonly submissionConfirmationDismissed = signal(false);
+    private submissionConfirmationQuizId?: number;
 
     quizId!: number; // set in ngOnInit() from route params / inputs
     courseId!: number; // set in ngOnInit() from route params / inputs
@@ -299,6 +306,10 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads latest submission from server and sets up socket connection
      */
     initLiveMode() {
+        if (this.submissionConfirmationQuizId !== this.quizId) {
+            this.submissionConfirmationDismissed.set(false);
+            this.submissionConfirmationQuizId = this.quizId;
+        }
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             if (status.connected && this.disconnected) {
@@ -319,9 +330,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         this.setupAutoSave();
 
         // load the quiz (and existing submission if quiz has started)
-        this.participationService.startQuizParticipation(this.quizId).subscribe({
-            next: (response: HttpResponse<StudentParticipation>) => {
-                this.updateParticipationFromServer(response.body!);
+        this.quizParticipationApi.startParticipation(this.quizId).subscribe({
+            next: (participation) => {
+                this.updateParticipationFromServer(toStudentParticipation(participation));
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
@@ -353,9 +364,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         } else {
             this.viewingExistingPracticeResult.set(false);
             this.practiceLoadSubscription = this.quizExerciseService.findForStudent(this.quizId).subscribe({
-                next: (res: HttpResponse<QuizExercise>) => {
-                    if (res.body && hasDueDatePassed(res.body)) {
-                        this.startQuizPreviewOrPractice(res.body);
+                next: (quizExercise) => {
+                    if (hasDueDatePassed(quizExercise)) {
+                        this.startQuizPreviewOrPractice(quizExercise);
                     } else {
                         alert('Error: This quiz is not open for practice!');
                     }
@@ -369,9 +380,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads an existing practice participation result
      */
     private loadExistingPracticeResult(participationId: number, submissionId?: number) {
-        this.practiceLoadSubscription = this.participationService.getQuizParticipationResult(this.quizId, participationId, submissionId).subscribe({
-            next: (response: HttpResponse<StudentParticipation>) => {
-                this.updateParticipationFromServer(response.body!);
+        this.practiceLoadSubscription = this.quizParticipationApi.getParticipationResult(this.quizId, participationId, submissionId).subscribe({
+            next: (participation) => {
+                this.updateParticipationFromServer(toStudentParticipation(participation));
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
@@ -381,18 +392,16 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads quiz exercise and starts preview mode
      */
     initPreview() {
-        this.quizExerciseService.find(this.quizId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.startQuizPreviewOrPractice(res.body!);
-            },
+        (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe({
+            next: (quizExercise) => this.startQuizPreviewOrPractice(quizExercise),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
 
     initShowSolution() {
-        this.quizExerciseService.find(this.quizId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.quizExercise.set(res.body!);
+        (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe({
+            next: (quizExercise) => {
+                this.quizExercise.set(quizExercise);
                 this.initQuiz();
                 this.showingResult.set(true);
             },
@@ -499,26 +508,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * updates all displayed (relative) times in the UI
      */
     updateDisplayedTimes() {
-        const translationBasePath = 'artemisApp.showStatistic.';
-        // update remaining time
-        if (this.endDate) {
-            const endDate = this.endDate;
-            if (endDate.isAfter(this.serverDateService.now())) {
-                // quiz is still running => calculate remaining seconds and generate text based on that
-                // Get the diff as a floating point number in seconds
-                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
-                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
-            } else {
-                // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds.set(-1);
-                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
-            }
-        } else {
-            // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds.set(0);
-            this.remainingTimeText.set('?');
-        }
-
+        const countdown = quizCountdown(this.endDate, this.serverDateService.now(), this.translateService.instant('artemisApp.showStatistic.quizHasEnded'));
+        this.remainingTimeSeconds.set(countdown.seconds);
+        this.remainingTimeText.set(countdown.text);
         // update submission time
         if (this.submission() && this.submission().submissionDate) {
             // exact value is not important => use default relative time from dayjs for better readability and less distraction
@@ -530,7 +522,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
             if (this.startDate()!.isAfter(this.serverDateService.now())) {
                 this.timeUntilStart.set(this.relativeTimeText(this.startDate()!.diff(this.serverDateService.now(), 'seconds')));
             } else {
-                this.timeUntilStart.set(this.translateService.instant(translationBasePath + 'now'));
+                this.timeUntilStart.set(this.translateService.instant('artemisApp.showStatistic.now'));
                 // Check if websocket has updated the quiz exercise and check that following block is only executed once
                 if (!this.quizBatch()!.started && !this.quizStarted) {
                     this.quizStarted = true;
@@ -592,32 +584,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                 : 0,
         );
 
-        // prepare selection arrays for each question
-        this.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
-        this.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
-        this.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
-
-        if (this.quizExercise().quizQuestions) {
-            this.quizExercise().quizQuestions!.forEach((question) => {
-                switch (question.type) {
-                    case QuizQuestionType.MULTIPLE_CHOICE:
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, []));
-                        break;
-                    case QuizQuestionType.DRAG_AND_DROP:
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, []));
-                        break;
-                    case QuizQuestionType.SHORT_ANSWER:
-                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
-                        break;
-                    default:
-                        captureException('Unknown question type: ' + question.type);
-                        break;
-                }
-            }, this);
-        }
+        this.answerSelection.reset(this.quizExercise().quizQuestions);
     }
 
     /**
@@ -627,39 +594,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * this needs to be done when we get new submission data, e.g. through the websocket connection
      */
     applySubmission() {
-        // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
-        // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
-        this.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
-        this.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
-        this.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
-
-        if (this.quizExercise().quizQuestions) {
-            // iterate through all questions of this quiz
-            this.quizExercise().quizQuestions!.forEach((question) => {
-                // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission().submittedAnswers?.find((answer) => {
-                    return answer.quizQuestion!.id === question.id;
-                });
-
-                switch (question.type) {
-                    case QuizQuestionType.MULTIPLE_CHOICE:
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || []));
-                        break;
-                    case QuizQuestionType.DRAG_AND_DROP:
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || []));
-                        break;
-                    case QuizQuestionType.SHORT_ANSWER:
-                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []));
-                        break;
-                    default:
-                        captureException('Unknown question type: ' + question.type);
-                        break;
-                }
-            }, this);
-        }
+        this.answerSelection.reset(this.quizExercise().quizQuestions, this.submission().submittedAnswers);
     }
 
     /**
@@ -933,8 +868,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         if (this.unsavedChanges() && !this.isSubmitting()) {
             this.applySelection();
             this.submission().submissionDate = this.serverDateService.now();
-            this.quizParticipationService
-                .saveOrSubmitForLiveMode(this.submission(), this.quizId, false)
+            this.quizSubmissionApi
+                .saveOrSubmitForLiveMode(this.quizId, toQuizSubmissionFromLiveClient(this.submission()), false)
                 .pipe(take(1))
                 .subscribe({
                     next: () => {
@@ -1031,9 +966,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
             switch (this.mode()) {
                 case 'practice':
                     if (!this.submission().id) {
-                        this.quizParticipationService.submitForPractice(this.submission(), this.quizId).subscribe({
-                            next: (response: HttpResponse<Result>) => {
-                                this.onSubmitPracticeOrPreviewSuccess(response.body!);
+                        this.quizSubmissionApi.submitForPractice(this.quizId, toQuizSubmissionFromStudent(this.submission())).subscribe({
+                            next: (result) => {
+                                this.onSubmitPracticeOrPreviewSuccess(toResult(result));
                             },
                             error: (error: HttpErrorResponse) => this.onSubmitError(error),
                         });
@@ -1041,9 +976,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                     break;
                 case 'preview':
                     if (!this.submission().id) {
-                        this.quizParticipationService.submitForPreview(this.submission(), this.quizId).subscribe({
-                            next: (response: HttpResponse<Result>) => {
-                                this.onSubmitPracticeOrPreviewSuccess(response.body!);
+                        this.quizSubmissionApi.submitForPreview(this.quizId, toQuizSubmissionFromStudent(this.submission())).subscribe({
+                            next: (result) => {
+                                this.onSubmitPracticeOrPreviewSuccess(toResult(result));
                             },
                             error: (error: HttpErrorResponse) => this.onSubmitError(error),
                         });
@@ -1053,9 +988,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                     // copy submission and send it through websocket with 'submitted = true'
                     const quizSubmission = new QuizSubmission();
                     quizSubmission.submittedAnswers = this.submission().submittedAnswers;
-                    this.quizParticipationService.saveOrSubmitForLiveMode(quizSubmission, this.quizId, true).subscribe({
-                        next: (response: HttpResponse<QuizSubmission>) => {
-                            this.submission.set(response.body!);
+                    this.quizSubmissionApi.saveOrSubmitForLiveMode(this.quizId, toQuizSubmissionFromLiveClient(quizSubmission), true).subscribe({
+                        next: (savedSubmission) => {
+                            this.submission.set(toQuizSubmission(savedSubmission));
                             this.isSubmitting.set(false);
                             this.unsavedChanges.set(false);
                             this.updateSubmissionTime();
@@ -1160,8 +1095,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     refreshQuiz(refresh = false) {
         this.refreshingQuiz.set(refresh);
         this.quizExerciseService.findForStudent(this.quizId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                const quizExercise = res.body!;
+            next: (quizExercise) => {
                 if (quizExercise.quizStarted) {
                     if (quizExercise.quizEnded) {
                         this.waitingForQuizStart.set(false);
@@ -1180,15 +1114,13 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     }
 
     joinBatch() {
-        this.quizExerciseService.join(this.quizId, this.password).subscribe({
-            next: (res: HttpResponse<QuizBatch>) => {
-                if (res.body) {
-                    this.quizBatch.set(res.body);
-                    if (this.quizBatch()?.started) {
-                        this.refreshQuiz();
-                    } else {
-                        this.subscribeToWebsocketChannels();
-                    }
+        this.quizExerciseBatchApi.joinBatch(this.quizId, { password: this.password }).subscribe({
+            next: (batch) => {
+                this.quizBatch.set(toQuizBatch(batch));
+                if (this.quizBatch()?.started) {
+                    this.refreshQuiz();
+                } else {
+                    this.subscribeToWebsocketChannels();
                 }
             },
             error: (error: HttpErrorResponse) => {

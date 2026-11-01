@@ -57,29 +57,21 @@ export interface PostContextFilter {
 }
 
 /**
- * The content of a Post is composed of `PostingContentPart` that allows rendering the parts individually and creating references to other posts.
- * For example, the content "You can find more information on this topic in #5 and #6 as well." will be split up in two separate `PostingContentPart`s:
- * { contentBeforeReference: "You can find more information on this topic in ",
- *   linkToReference: "/courses/{courseId}/discussion",
+ * A reference within the content of a posting, e.g. a mention of a user or a link to a post, an exercise or an attachment.
+ * The posting renders its content as one Markdown document and mounts a `PostingContentPart` where the Markdown placed the reference.
+ * For example, the content "More information on this topic is in #5." has the `PostingContentPart`
+ * { linkToReference: "/courses/{courseId}/discussion",
  *   queryParams: {searchText: #5},
  *   referenceStr: "#5",
- *   contentAfterReference: " and " }
- * The second PostingContentPart is:
- * { contentBeforeReference: undefined // only exists for the first PostingContentPart,
- *   linkToReference: "/courses/{courseId}/discussion",
- *   queryParams: {searchText: #6},
- *   referenceStr: "#6",
- *   contentAfterReference: " as well. " }
+ *   referenceType: ReferenceType.POST }
  */
 export interface PostingContentPart {
-    contentBeforeReference?: string; // string before occurrence of reference pattern -> only for the first PostContentPart in the content of a posting
     linkToReference?: RouteComponents; // link the reference navigates to
     attachmentToReference?: string; // attachment link the reference opens
     slideToReference?: string; // slide link the reference opens
     queryParams?: Params; // params that are required for navigating
     referenceStr?: string; // string that is within the anchor tag
     referenceType?: ReferenceType; // type of artifact to reference
-    contentAfterReference?: string; // string after occurrence of reference pattern
     imageToReference?: string; // image link the reference opens
 }
 
@@ -134,6 +126,12 @@ export interface ContextInformation {
 export type RouteComponents = (string | number)[];
 
 export const CommunicationWebsocketChannelPrefix = '/topic/communication/';
+
+/**
+ * The ways a user takes over the scroll position of a message list. The browser fires no scroll event that tells their
+ * scrolling apart from a position the application set itself.
+ */
+export const USER_SCROLL_EVENTS = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const;
 
 /**
  * whitespace accepted only together with a character excluding newline character

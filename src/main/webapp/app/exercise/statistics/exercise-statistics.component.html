@@ -1,7 +1,7 @@
 @if (exercise(); as exercise) {
     <div>
-        <h2 class="row mb-5 col-md-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title"></h2>
-        <div class="mb-3 d-flex justify-content-around">
+        <h2 class="col-span-12 grid grid-cols-12 gap-4 mb-5 md:col-span-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title"></h2>
+        <div class="mb-3 flex justify-around">
             <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics()" [exerciseType]="exercise.type!" />
         </div>
         @if (exerciseStatistics(); as exerciseStatistics) {
@@ -12,27 +12,18 @@
                 [exerciseType]="exercise.type!"
                 [courseId]="course()?.id!"
                 [exerciseId]="exercise.id!"
+                [exerciseGroup]="exercise.exerciseGroup"
             />
         }
-        <div class="separator w-100 mb-4"></div>
-        <div class="row mb-5">
-            <div class="offset-md-2 col-md-9 btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.DAY">
-                    <input type="radio" name="options" id="option1" (click)="onTabChanged(SpanType.DAY)" />{{ 'statistics.span.day' | artemisTranslate }}
-                </label>
-                <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.WEEK">
-                    <input type="radio" name="options" id="option2" checked (click)="onTabChanged(SpanType.WEEK)" />{{ 'statistics.span.week' | artemisTranslate }}
-                </label>
-                <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.MONTH">
-                    <input type="radio" name="options" id="option3" (click)="onTabChanged(SpanType.MONTH)" />{{ 'statistics.span.month' | artemisTranslate }}
-                </label>
-                <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.QUARTER">
-                    <input type="radio" name="options" id="option4" (click)="onTabChanged(SpanType.QUARTER)" />{{ 'statistics.span.quarter' | artemisTranslate }}
-                </label>
-                <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.YEAR">
-                    <input type="radio" name="options" id="option5" (click)="onTabChanged(SpanType.YEAR)" />{{ 'statistics.span.year' | artemisTranslate }}
-                </label>
-            </div>
+        <div class="separator w-full mb-4"></div>
+        <div class="grid grid-cols-12 gap-4 mb-5">
+            <div
+                jhi-statistics-span-selector
+                [currentSpan]="currentSpan()"
+                (spanChange)="onTabChanged($event)"
+                class="col-span-12 md:col-start-3 md:col-span-9 inline-flex flex-wrap items-center"
+                data-toggle="buttons"
+            ></div>
         </div>
         @for (graph of graphTypes; track graph; let i = $index) {
             <div id="exercise-statistics-graph-{{ i }}" class="graph">

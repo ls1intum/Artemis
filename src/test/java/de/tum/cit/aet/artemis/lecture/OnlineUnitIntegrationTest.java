@@ -7,8 +7,12 @@ import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
 import java.util.List;
@@ -29,11 +33,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
+import org.springframework.test.util.AopTestUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
+import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinuteAspect;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -67,6 +80,9 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
+    @Autowired
+    private LimitRequestsPerMinuteAspect requestLimitAspect;
+
     private Lecture lecture1;
 
     private OnlineUnit onlineUnit;
@@ -77,7 +93,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         this.onlineUnit = new OnlineUnit();
         this.onlineUnit.setDescription("LoremIpsum");
@@ -107,7 +123,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
@@ -119,7 +135,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createOnlineUnit_asInstructor_shouldCreateOnlineUnit() throws Exception {
         onlineUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, onlineUnit, 1)));
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
@@ -139,35 +155,53 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createOnlineUnit_invalidUrl_shouldReturnBadRequest() throws Exception {
         onlineUnit.setSource("abc123");
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", OnlineUnitDTO.of(onlineUnit), OnlineUnitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createOnlineUnit_missingSource_shouldReturnBadRequest() throws Exception {
         OnlineUnitDTO onlineUnitWithoutSource = new OnlineUnitDTO(null, onlineUnit.getName(), onlineUnit.getReleaseDate(), onlineUnit.getDescription(), null, null, null);
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", onlineUnitWithoutSource, OnlineUnitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createOnlineUnit_descriptionAtMaxLength_shouldCreateOnlineUnit() throws Exception {
+        OnlineUnitDTO onlineUnitAtMaxLength = new OnlineUnitDTO(null, onlineUnit.getName(), onlineUnit.getReleaseDate(), "a".repeat(1000),
+                "https://www.youtube.com/embed/8iU8LPEa4o0", null, null);
+        var persistedOnlineUnit = request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", onlineUnitAtMaxLength, OnlineUnitDTO.class,
+                HttpStatus.CREATED);
+        assertThat(persistedOnlineUnit.description()).hasSize(1000);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createOnlineUnit_descriptionTooLong_shouldReturnBadRequest() throws Exception {
+        OnlineUnitDTO onlineUnitTooLong = new OnlineUnitDTO(null, onlineUnit.getName(), onlineUnit.getReleaseDate(), "a".repeat(1001), "https://www.youtube.com/embed/8iU8LPEa4o0",
+                null, null);
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", onlineUnitTooLong, OnlineUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void createOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", OnlineUnitDTO.of(onlineUnit), OnlineUnitDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createOnlineUnit_withId_shouldReturnBadRequest() throws Exception {
         onlineUnit.setId(999L);
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", OnlineUnitDTO.of(this.onlineUnit), OnlineUnitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineUnit_asInstructor_shouldUpdateOnlineUnit() throws Exception {
         onlineUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, onlineUnit, 1)));
         persistOnlineUnitWithLecture();
@@ -185,7 +219,35 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateOnlineUnit_descriptionAtMaxLength_shouldUpdateOnlineUnit() throws Exception {
+        persistOnlineUnitWithLecture();
+
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
+        this.onlineUnit.setDescription("a".repeat(1000));
+        var updatedOnlineUnit = request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit),
+                OnlineUnitDTO.class, HttpStatus.OK);
+        assertThat(updatedOnlineUnit.description()).hasSize(1000);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateOnlineUnit_descriptionTooLong_shouldReturnBadRequest() throws Exception {
+        persistOnlineUnitWithLecture();
+
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
+        this.onlineUnit.setDescription("a".repeat(1001));
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit), OnlineUnitDTO.class,
+                HttpStatus.BAD_REQUEST);
+
+        var unchanged = request.get("/api/lecture/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.OK, OnlineUnitDTO.class);
+        assertThat(unchanged.description()).isEqualTo("LoremIpsum");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -204,7 +266,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createOnlineUnit_publishesContentChangedEvent() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", OnlineUnitDTO.of(onlineUnit), OnlineUnitDTO.class, HttpStatus.CREATED);
@@ -212,7 +274,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineUnit_changedDescription_publishesContentChangedEvent() throws Exception {
         // A valid source URL is required by the resource's source validation.
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
@@ -224,7 +286,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineUnit_unchangedContent_doesNotPublishContentChangedEvent() throws Exception {
         // Persist with a valid source so the PUT passes source validation without changing description or source.
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
@@ -252,7 +314,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void updateOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -264,7 +326,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineUnit_noId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -275,7 +337,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineUnit_incorrectLectureId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -286,7 +348,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOnlineUnit_correctId_shouldReturnOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -301,7 +363,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getOnlineUnit_incorrectId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -311,7 +373,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "https://www.google.de", "HTTP://example.com:80?query=1" })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getOnlineResource(String link) throws Exception {
         var url = new URI(link).toURL().toString();
         var connectionMock = mock(Connection.class);
@@ -322,41 +384,92 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("link", link);
+        params.add("courseId", String.valueOf(lecture1.getCourse().getId()));
         OnlineResourceDTO onlineResourceDTO = request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.OK, OnlineResourceDTO.class, params);
         assertThat(onlineResourceDTO.url()).isEqualTo(url);
         assertThat(onlineResourceDTO.title()).isNull();
         assertThat(onlineResourceDTO.description()).isNull();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void getOnlineResource_excessRequestsAreRejectedBeforeAnotherFetch() throws Exception {
+        persistOnlineUnitWithLecture();
+        long unitsBefore = onlineUnitRepository.count();
+        String link = "https://example.com";
+        var connection = mock(Connection.class);
+        jsoupMock.when(() -> Jsoup.connect(link)).thenReturn(connection);
+        when(connection.timeout(anyInt())).thenReturn(connection);
+        when(connection.maxBodySize(anyInt())).thenReturn(connection);
+        when(connection.get()).thenReturn(new Document(link));
+
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setOnlineResourceFetchRequestsPerMinute(1);
+        var features = mock(FeatureToggleService.class);
+        when(features.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features);
+        Object aspectTarget = AopTestUtils.getUltimateTargetObject(requestLimitAspect);
+        Object originalLimiter = ReflectionTestUtils.getField(aspectTarget, "rateLimitService");
+        try {
+            ReflectionTestUtils.setField(aspectTarget, "rateLimitService", limiter);
+            request.performMvcRequest(
+                    get("/api/lecture/lectures/online-units/fetch-online-resource").param("link", link).param("courseId", lecture1.getCourse().getId().toString()))
+                    .andExpect(status().isOk());
+            request.performMvcRequest(
+                    get("/api/lecture/lectures/online-units/fetch-online-resource").param("link", link).param("courseId", lecture1.getCourse().getId().toString()))
+                    .andExpect(status().isTooManyRequests()).andExpect(header().exists("Retry-After"));
+            verify(connection, times(1)).get();
+            assertThat(onlineUnitRepository.count()).isEqualTo(unitsBefore);
+            assertThat(onlineUnitRepository.findById(onlineUnit.getId()).orElseThrow().getSource()).isEqualTo(onlineUnit.getSource());
+        }
+        finally {
+            ReflectionTestUtils.setField(aspectTarget, "rateLimitService", originalLimiter);
+        }
+        assertThat(ReflectionTestUtils.getField(aspectTarget, "rateLimitService")).isSameAs(originalLimiter);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "abc", "123", "file://", "ftp://", "http://127.0.0.1", "http://localhost:80", "http://example..com", "http://intranet", "http://-bad.example.com",
             "http://bad_label.example.com", "http://bad-.example.com", "http://example.c0m", "http://example.c", "ftp://example.com" })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getOnlineResource_malformedUrl(String link) throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("link", link);
+        params.add("courseId", String.valueOf(lecture1.getCourse().getId()));
         request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.BAD_REQUEST, OnlineResourceDTO.class, params);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getOnlineResource_labelLongerThanLimit() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("link", "http://" + "a".repeat(64) + ".com/");
+        params.add("courseId", String.valueOf(lecture1.getCourse().getId()));
         request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.BAD_REQUEST, OnlineResourceDTO.class, params);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getOnlineResource_domainLongerThanLimit() throws Exception {
         String label = "a".repeat(60);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("link", "http://" + String.join(".", label, label, label, label, label) + ".com/");
+        params.add("courseId", String.valueOf(lecture1.getCourse().getId()));
         request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.BAD_REQUEST, OnlineResourceDTO.class, params);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getOnlineResource_asStudent_shouldBeForbidden() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("link", "https://www.google.de");
+        params.add("courseId", String.valueOf(lecture1.getCourse().getId()));
+        request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.FORBIDDEN, OnlineResourceDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteOnlineUnit_correctId_shouldDeleteOnlineUnit() throws Exception {
         onlineUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, onlineUnit, 1)));
         persistOnlineUnitWithLecture();
@@ -366,6 +479,36 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.FORBIDDEN, OnlineUnitDTO.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.empty()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void onlineResourceReadsMetadataAndReportsNetworkFailure() throws Exception {
+        String url = "https://example.com/metadata";
+        var connection = mock(Connection.class);
+        jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connection);
+        when(connection.timeout(anyInt())).thenReturn(connection);
+        when(connection.maxBodySize(anyInt())).thenReturn(connection);
+        when(connection.get()).thenReturn(org.jsoup.parser.Parser
+                .parse("<html><head><meta name='title' content='Course title'><meta property='og:description' content='Course description'></head></html>", url));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("link", url);
+        params.add("courseId", lecture1.getCourse().getId().toString());
+        var response = request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.OK, OnlineResourceDTO.class, params);
+        assertThat(response.url()).isEqualTo(url);
+        assertThat(response.title()).isEqualTo("Course title");
+        assertThat(response.description()).isEqualTo("Course description");
+        when(connection.get()).thenThrow(new java.io.IOException("external metadata unavailable"));
+        request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.INTERNAL_SERVER_ERROR, OnlineResourceDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void emptyMetadataLinkIsRejectedBeforeNetworkAccess() throws Exception {
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/lecture/lectures/online-units/fetch-online-resource")
+                .param("link", "").param("courseId", lecture1.getCourse().getId().toString()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest());
+        jsoupMock.verifyNoInteractions();
     }
 
 }

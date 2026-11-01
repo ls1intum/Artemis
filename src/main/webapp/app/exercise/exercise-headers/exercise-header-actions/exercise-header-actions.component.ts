@@ -1,60 +1,45 @@
-import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild, viewChildren } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
-    IconDefinition,
-    faEye,
-    faFileSignature,
-    faFolderOpen,
-    faListAlt,
-    faPaperPlane,
-    faPlayCircle,
-    faRobot,
-    faSignal,
-    faTable,
-    faUsers,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { AlertService } from 'app/foundation/service/alert.service';
-import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
-import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { finalize } from 'rxjs/operators';
-import { ParticipationService } from 'app/exercise/participation/participation.service';
+    TumAetUiButtonDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiPopoverComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+
+import { ProgrammingExerciseParticipationActionsComponent } from 'app/exercise/participation/programming-exercise-participation-actions/programming-exercise-participation-actions.component';
+import { StudentExerciseActionsDirective } from 'app/exercise/participation/student-exercise-actions.directive';
+import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
+
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faEye, faFileSignature, faListAlt, faPaperPlane, faPlayCircle, faRobot, faSignal, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
     RequestFeedbackButtonComponent,
     countSuccessfulAthenaFeedbackRequests,
 } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
-import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 interface InstructorActionItem {
@@ -67,40 +52,36 @@ interface InstructorActionItem {
     selector: 'jhi-exercise-header-actions',
     templateUrl: './exercise-header-actions.component.html',
     imports: [
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
+        ProgrammingExerciseParticipationActionsComponent,
         FaIconComponent,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownItem,
-        NgbTooltip,
         RouterLink,
         TranslateDirective,
         ArtemisTranslatePipe,
         NgTemplateOutlet,
         ExerciseActionButtonComponent,
-        FeatureToggleDirective,
         StartPracticeModeButtonComponent,
         CodeButtonComponent,
         RequestFeedbackButtonComponent,
-        NgbPopover,
-        TranslatePipe,
     ],
     providers: [ExternalCloningService],
 })
-export class ExerciseHeaderActionsComponent {
+export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirective {
     private readonly elementRef = inject(ElementRef);
     private readonly quizExerciseService = inject(QuizExerciseService);
-    private readonly alertService = inject(AlertService);
-    private readonly courseExerciseService = inject(CourseExerciseService);
-    private readonly participationService = inject(ParticipationService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
-    private readonly profileService = inject(ProfileService);
 
+    private readonly programmingActions = viewChildren(ProgrammingExerciseParticipationActionsComponent);
     private readonly actionButtons = viewChildren(ExerciseActionButtonComponent);
-    private readonly submitPopoverRef = viewChild<NgbPopover>('submitPopoverRef');
+    private readonly submitOrigin = viewChild<ElementRef<HTMLElement>>('submitOrigin');
+    private readonly submitPopoverRef = viewChild<TumAetUiPopoverComponent>('submitPopoverRef');
 
-    protected readonly faFolderOpen = faFolderOpen;
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
     protected readonly faPlayCircle = faPlayCircle;
@@ -109,16 +90,9 @@ export class ExerciseHeaderActionsComponent {
     protected readonly faPaperPlane = faPaperPlane;
     protected readonly faRobot = faRobot;
 
-    protected readonly FeatureToggle = FeatureToggle;
     protected readonly ExerciseType = ExerciseType;
-    protected readonly InitializationState = InitializationState;
-    protected readonly ButtonType = ButtonType;
     protected readonly PlagiarismVerdict = PlagiarismVerdict;
 
-    readonly exercise = input.required<Exercise>();
-    readonly courseId = input.required<number>();
-    readonly smallButtons = input<boolean>(false);
-    readonly examMode = input<boolean>(false);
     readonly onSubmitExercise = input<() => void>();
     readonly onContinueExercise = input<() => void>();
     readonly onRestartPractice = input<() => boolean>();
@@ -128,7 +102,6 @@ export class ExerciseHeaderActionsComponent {
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
 
-    readonly newParticipation = output<StudentParticipation>();
     readonly participationModeChange = output<ParticipationMode>();
 
     // Instructor actions
@@ -163,38 +136,29 @@ export class ExerciseHeaderActionsComponent {
         return items;
     });
 
-    // Student actions state
-    private readonly _uninitializedQuiz = signal(false);
-    private readonly _quizNotStarted = signal(false);
-    private readonly _gradedParticipation = signal<StudentParticipation | undefined>(undefined);
-    private readonly _practiceParticipation = signal<StudentParticipation | undefined>(undefined);
-    private readonly _programmingExercise = signal<ProgrammingExercise | undefined>(undefined);
-    private readonly _isTeamAvailable = signal(false);
-    private readonly _hasRatedGradedResult = signal(false);
-    private readonly _editorLabel = signal<string | undefined>(undefined);
-    private readonly _numberOfGradedParticipationResults = signal(0);
-    private readonly _isLoading = signal(false);
-    private readonly _studentParticipations = signal<StudentParticipation[]>([]);
-
-    readonly uninitializedQuiz = this._uninitializedQuiz.asReadonly();
-    readonly quizNotStarted = this._quizNotStarted.asReadonly();
-    readonly gradedParticipation = this._gradedParticipation.asReadonly();
-    readonly practiceParticipation = this._practiceParticipation.asReadonly();
-    readonly programmingExercise = this._programmingExercise.asReadonly();
-    readonly isTeamAvailable = this._isTeamAvailable.asReadonly();
-    readonly hasRatedGradedResult = this._hasRatedGradedResult.asReadonly();
-    readonly editorLabel = this._editorLabel.asReadonly();
-    readonly numberOfGradedParticipationResults = this._numberOfGradedParticipationResults.asReadonly();
-    readonly isLoading = this._isLoading.asReadonly();
-    readonly studentParticipations = this._studentParticipations.asReadonly();
-
-    readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
-
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
+    readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
+    readonly repositoryUriForCodeButton = computed(() => this.getRepositoryUriForCodeButton());
+    readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
-    readonly routerLinkForRepositoryView = computed(() => {
+    private readonly feedbackDeadlineClock = signal(Date.now());
+    private readonly pendingAthenaFeedbackDeadline = computed(() => {
+        const type = this.exercise().type;
+        if (type !== ExerciseType.TEXT && type !== ExerciseType.MODELING) {
+            return 0;
+        }
+        return getAllResultsOfAllSubmissions(this.activeParticipationForCode()?.submissions).reduce((deadline, result) => {
+            if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || result.successful !== undefined) {
+                return deadline;
+            }
+            return Math.max(deadline, result.completionDate ? dayjs(result.completionDate).valueOf() : Infinity);
+        }, 0);
+    });
+    protected readonly hasPendingAthenaFeedback = computed(() => this.pendingAthenaFeedbackDeadline() > this.feedbackDeadlineClock());
+
+    readonly repositoryViewLink = computed(() => {
         const participation = this.activeParticipationForCode();
         if (!participation?.id) {
             return ['/courses', this.courseId(), 'exercises', this.exercise().id!];
@@ -223,29 +187,21 @@ export class ExerciseHeaderActionsComponent {
     });
     readonly hasProgrammingSubmission = computed(() => !!this.activeParticipationForCode()?.submissions?.some((submission) => submission.submitted));
 
-    readonly beforeDueDate = computed(() => {
-        const exercise = this.exercise();
-        return !exercise.dueDate || !hasExerciseDueDatePassed(exercise, this._gradedParticipation());
-    });
-
     constructor() {
-        effect(() => {
-            const exercise = this.exercise();
-            untracked(() => {
-                if (!exercise) {
-                    return;
-                }
-                this._studentParticipations.set(exercise.studentParticipations ?? []);
-                this.updateParticipations();
-                this._isTeamAvailable.set(!!(exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId));
-                this.resetExerciseSpecificState();
-                this.initializeExerciseSpecificState(exercise);
-            });
+        super();
+        // A reloaded pending request must unlock at its lease deadline, even without a result notification.
+        effect((onCleanup) => {
+            const deadline = this.pendingAthenaFeedbackDeadline();
+            const now = Date.now();
+            this.feedbackDeadlineClock.set(now);
+            if (Number.isFinite(deadline) && deadline > now) {
+                const timeout = setTimeout(() => this.feedbackDeadlineClock.set(Date.now()), deadline - now + 1);
+                onCleanup(() => clearTimeout(timeout));
+            }
         });
-
         // Automatically make the rightmost action button primary, all others secondary
         effect(() => {
-            const buttons = this.actionButtons();
+            const buttons = [...this.actionButtons(), ...this.programmingActions().flatMap((actions) => actions.actionButtons())];
             const nonOutlined = buttons.filter((b) => !b.outlined());
             nonOutlined.forEach((b) => b.overrideSecondary.set(true));
             if (nonOutlined.length > 0) {
@@ -254,65 +210,31 @@ export class ExerciseHeaderActionsComponent {
         });
     }
 
-    private resetExerciseSpecificState(): void {
+    protected override resetExerciseSpecificState(): void {
         this._uninitializedQuiz.set(false);
         this._quizNotStarted.set(false);
         this._programmingExercise.set(undefined);
         this._editorLabel.set(undefined);
     }
 
-    private initializeExerciseSpecificState(exercise: Exercise): void {
-        if (exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = exercise as QuizExercise;
-            this._uninitializedQuiz.set(ArtemisQuizService.isUninitialized(quizExercise));
-            this._quizNotStarted.set(ArtemisQuizService.notStarted(quizExercise));
-        } else if (exercise.type === ExerciseType.PROGRAMMING) {
-            this._programmingExercise.set(exercise);
-        } else if (exercise.type === ExerciseType.MODELING) {
-            this._editorLabel.set('openModelingEditor');
-        } else if (exercise.type === ExerciseType.TEXT) {
-            this._editorLabel.set('openTextEditor');
-        } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
-            this._editorLabel.set('uploadFile');
-        }
+    private getRepositoryUriForCodeButton(): string {
+        const participations = this.studentParticipations();
+        const participation = this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
+        return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
     }
 
-    receiveNewParticipation(newParticipation: StudentParticipation) {
-        const currentParticipations = this._studentParticipations();
-        let updatedParticipations: StudentParticipation[];
-        if (currentParticipations.map((participation) => participation.id).includes(newParticipation.id)) {
-            updatedParticipations = currentParticipations.map((participation) => (participation.id === newParticipation.id ? newParticipation : participation));
-        } else {
-            updatedParticipations = [...currentParticipations, newParticipation];
-        }
-        this._studentParticipations.set(updatedParticipations);
-        this.updateParticipations();
-        this.newParticipation.emit(newParticipation);
+    private isProgrammingExerciseStudentParticipation(participation: StudentParticipation): participation is ProgrammingExerciseStudentParticipation {
+        return participation.type === ParticipationType.PROGRAMMING;
     }
 
-    updateParticipations() {
-        const currentParticipations = this._studentParticipations();
-        const gradedParticipation = this.participationService.getSpecificStudentParticipation(currentParticipations, false);
-        this._gradedParticipation.set(gradedParticipation);
-        this._numberOfGradedParticipationResults.set(getAllResultsOfAllSubmissions(gradedParticipation?.submissions).length);
-        this._practiceParticipation.set(this.participationService.getSpecificStudentParticipation(currentParticipations, true));
-        this._hasRatedGradedResult.set(
-            !!getAllResultsOfAllSubmissions(gradedParticipation?.submissions)?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
-        );
+    private getProgrammingParticipationForCodeButton(): ProgrammingExerciseStudentParticipation | undefined {
+        const participations = this.studentParticipations();
+        return this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
     }
 
-    isStartExerciseAvailable(): boolean {
-        const exercise = this.exercise();
-        const individualExerciseOrTeamAssigned = !!(!exercise.teamMode || exercise.studentAssignedTeamId);
-        return !this.examMode() && individualExerciseOrTeamAssigned && isStartExerciseAvailable(this.exercise(), this._gradedParticipation());
-    }
-
-    isResumeExerciseAvailable(participation?: StudentParticipation): boolean {
-        return !this.examMode() && isResumeExerciseAvailable(this.exercise(), participation);
-    }
-
-    isStartPracticeAvailable(): boolean {
-        return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation(), this._gradedParticipation());
+    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenSourceInfo {
+        const participationId = this.programmingParticipationForCodeButton()!.id!;
+        return { returnedTokenType: 'participation-token', participationId };
     }
 
     /**
@@ -332,106 +254,10 @@ export class ExerciseHeaderActionsComponent {
         return !this._practiceParticipation();
     });
 
-    startExercise() {
-        // The button is only disabled after the next render, so ignore a second click that arrives before that
-        if (this._isLoading()) {
-            return;
-        }
-        this._isLoading.set(true);
-        const programmingExercise = this._programmingExercise();
-        this.courseExerciseService
-            .startExercise(this.exercise().id!, this.exercise())
-            .pipe(finalize(() => this._isLoading.set(false)))
-            .subscribe({
-                next: (participation) => {
-                    this.receiveNewParticipation(participation);
-                    if (programmingExercise) {
-                        if (participation.initializationState === InitializationState.INITIALIZED) {
-                            if (programmingExercise.allowOfflineIde) {
-                                this.alertService.success('artemisApp.exercise.personalRepositoryClone');
-                            } else {
-                                this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
-                            }
-                        } else {
-                            this.alertService.error('artemisApp.exercise.startError');
-                        }
-                    }
-                },
-                error: (err: HttpErrorResponse) => {
-                    const responseCodesWithErrorKeySentByServer = [403];
-                    if (!responseCodesWithErrorKeySentByServer.includes(err.status)) {
-                        this.alertService.error('artemisApp.exercise.startError');
-                    }
-                },
-            });
-    }
-
-    resumeProgrammingExercise(testRun: boolean) {
-        this._isLoading.set(true);
-        const participation = testRun ? this._practiceParticipation() : this._gradedParticipation();
-        this.courseExerciseService
-            .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
-            .pipe(finalize(() => this._isLoading.set(false)))
-            .subscribe({
-                next: (resumedParticipation: StudentParticipation) => {
-                    this.receiveNewParticipation(resumedParticipation);
-                    this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
-                },
-                error: (error) => {
-                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
-                },
-            });
-    }
-
-    get isBeforeStartDateAndStudent(): boolean {
-        const exercise = this.exercise();
-        return !exercise.isAtLeastTutor && !!exercise.startDate && dayjs().isBefore(exercise.startDate);
-    }
-
-    public shouldDisplayIDEButtons(): boolean {
-        if (!this.isRepositoryUriSet()) {
-            return false;
-        }
-        const practiceParticipation = this._practiceParticipation();
-        const gradedParticipation = this._gradedParticipation();
-        const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise());
-        const activePracticeParticipation = practiceParticipation?.initializationState === InitializationState.INITIALIZED && (shouldPreferPractice || this.examMode());
-        const activeGradedParticipation = gradedParticipation?.initializationState === InitializationState.INITIALIZED;
-        const inactiveGradedParticipation =
-            !!gradedParticipation?.initializationState &&
-            [InitializationState.INACTIVE, InitializationState.FINISHED].includes(gradedParticipation.initializationState) &&
-            !isStartExerciseAvailable(this.exercise(), gradedParticipation);
-
-        return activePracticeParticipation || activeGradedParticipation || inactiveGradedParticipation;
-    }
-
-    private isRepositoryUriSet(): boolean {
-        const participations = this._studentParticipations();
-        const activeParticipation: ProgrammingExerciseStudentParticipation = this.participationService.getSpecificStudentParticipation(participations, false) ?? participations[0];
-        return !!activeParticipation?.repositoryUri;
-    }
-
-    get assignedTeamId(): number | undefined {
-        const participations = this._studentParticipations();
-        // Fall through rather than branch: the course overview projects the participation without its team, and even
-        // before that a team-mode participation could arrive without one. The exercise carries the resolved team id.
-        return participations?.[0]?.team?.id ?? this.exercise().studentAssignedTeamId;
-    }
-
-    get allowEditing(): boolean {
-        const gradedParticipation = this._gradedParticipation();
-        return (
-            (gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate()) ||
-            gradedParticipation?.initializationState === InitializationState.FINISHED
-        );
-    }
-
     private createTutorActions(): InstructorActionItem[] {
         const tutorActionItems = [...this.getDefaultItems()];
         if (this.exercise().type === ExerciseType.QUIZ) {
             tutorActionItems.push(...this.getQuizItems());
-        } else {
-            tutorActionItems.push(this.getParticipationItem());
         }
         return tutorActionItems;
     }
@@ -443,11 +269,7 @@ export class ExerciseHeaderActionsComponent {
                 icon: faEye,
                 translation: 'entity.action.view',
             },
-            {
-                routerLink: `${this.baseResource()}scores`,
-                icon: faTable,
-                translation: 'entity.action.scores',
-            },
+            this.getParticipationItem(),
         ];
     }
 
@@ -538,11 +360,15 @@ export class ExerciseHeaderActionsComponent {
     }
 
     submitAndShowPopover() {
+        if (this.hasPendingAthenaFeedback()) {
+            return;
+        }
         this.onSubmitExercise()?.();
         if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
         }
-        this.submitPopoverRef()?.open();
+        const origin = this.submitOrigin()?.nativeElement;
+        if (origin) this.submitPopoverRef()?.open(origin);
     }
 
     @HostListener('document:click', ['$event'])
@@ -555,7 +381,7 @@ export class ExerciseHeaderActionsComponent {
         const target = event.target as HTMLElement;
 
         // Don't close if clicking inside the popover, the trigger element, or an alert
-        if (target.closest('.popover') || target.closest('jhi-alert-overlay') || this.elementRef.nativeElement.contains(target)) {
+        if (target.closest('[role="dialog"]') || target.closest('jhi-alert-overlay') || this.elementRef.nativeElement.contains(target)) {
             return;
         }
 

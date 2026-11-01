@@ -26,13 +26,12 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExercisePeerComparisonDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseScoresChartService;
 
-/**
- * Controller to provides endpoints to query the necessary data for the exercise-scores-chart.component.ts in the client
- */
+/** Read-only course exercise statistics, including similar-student comparisons and the legacy score API. */
 @Profile(PROFILE_CORE)
 @Lazy
 @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
@@ -64,15 +63,18 @@ public class ExerciseScoresChartResource {
     /**
      * GET /courses/:courseId/charts/exercise-scores
      * <p>
-     * This call returns the information used for the exercise-scores-chart. It will get the score of
-     * the requesting user,the average score and the best score in course exercises
+     * Preserves the published legacy response with the requesting student's score, course average and best score.
+     * The redesigned statistics page uses {@link #getPeerComparison(Long)} instead.
      * <p>
      * Note: Only released course exercises with assessment due date over are considered!
      * <p>
      *
      * @param courseId id of the course for which to get the exercise scores
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
+     * @deprecated New clients should migrate to {@link #getPeerComparison(Long)} for anonymous similar-student comparisons.
+     *             The response formats differ; this operation remains available for API compatibility.
      */
+    @Deprecated(since = "10.5")
     @GetMapping("courses/{courseId}/charts/exercise-scores")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
@@ -87,6 +89,22 @@ public class ExerciseScoresChartResource {
 
     private Set<Exercise> filterExercises(Set<Exercise> exercises) {
         return exercises.stream().filter(this::isExerciseFinished).collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns the student's own results and averages for students with similar overall assessed results.
+     * Small or indistinguishable cohorts produce no comparison rather than a whole-course fallback.
+     *
+     * @param courseId the course to compare within
+     * @return only aggregate peer results, never individual peer records
+     */
+    @GetMapping("courses/{courseId}/charts/peer-comparison")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ExercisePeerComparisonDTO> getPeerComparison(@PathVariable Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        return ResponseEntity.ok(exerciseScoresChartService.getPeerComparison(course, user));
     }
 
     private boolean isExerciseFinished(Exercise exercise) {

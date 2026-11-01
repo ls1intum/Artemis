@@ -132,6 +132,9 @@ public class AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
+        if (originalResult == null) {
+            throw new BadRequestAlertException("The result you are referring to does not exist", "AssessmentUpdate", "resultnotfound");
+        }
         // a complaint update may retain the existing feedback, in which case there is nothing new to validate
         if (assessmentUpdate.feedbacks() != null) {
             resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
@@ -141,6 +144,7 @@ public class AssessmentService {
         }
         // the update is copied onto a new result below, but the feedback ids are still read while the request is mapped
         checkFeedbackBelongsToResultElseThrow(assessmentUpdate.feedbacks(), originalResult);
+        complaintResponseService.checkComplaintResponseBelongsToResultElseThrow(assessmentUpdate.complaintResponse().getId(), originalResult.getId());
         // Save the complaint response
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.complaintResponse());
 

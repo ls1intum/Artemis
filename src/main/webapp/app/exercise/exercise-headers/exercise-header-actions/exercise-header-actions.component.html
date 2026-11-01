@@ -1,6 +1,6 @@
-<div class="d-flex flex-wrap align-items-center gap-1 flex-shrink-0">
+<div class="flex flex-wrap items-center gap-1 shrink-0">
     @if (plagiarismCaseInfo() && plagiarismCaseInfo()!.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
-        <a class="btn btn-danger btn-sm" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()!.id]">
+        <a size="small" severity="danger" tumAetUiButton [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()!.id]">
             @if (!plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
             } @else {
@@ -9,42 +9,36 @@
         </a>
     }
     @if (exercise().isAtLeastTutor) {
-        <div ngbDropdown class="d-inline">
-            <button type="button" id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
+        <div class="inline">
+            <button severity="secondary" tumAetUiButton type="button" id="instructor-actions-dropdown" [tumAetUiMenuTrigger]="instructorActions">
                 <fa-icon [icon]="faWrench" />
-                <span class="d-none d-md-inline">
+                <span class="hidden md:inline">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise().isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate }}</span
                 >
             </button>
-            <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
-                @for (instructorActionItem of instructorActionItems(); track instructorActionItem) {
-                    <a class="btn" [routerLink]="instructorActionItem.routerLink" ngbDropdownItem>
-                        @if (instructorActionItem.icon) {
-                            <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-3" />
-                        }
-                        <span [jhiTranslate]="instructorActionItem.translation"></span>
-                    </a>
-                }
-            </div>
+            <ng-template #instructorActions
+                ><tumaet-ui-menu>
+                    @for (instructorActionItem of instructorActionItems(); track instructorActionItem) {
+                        <a [routerLink]="instructorActionItem.routerLink" tumAetUiMenuItem>
+                            @if (instructorActionItem.icon) {
+                                <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-3" />
+                            }
+                            <span [jhiTranslate]="instructorActionItem.translation"></span>
+                        </a>
+                    }</tumaet-ui-menu
+            ></ng-template>
         </div>
     }
     @if (onSubmitExercise()) {
         @if (showFeedbackPopover()) {
-            <span
-                [ngbPopover]="submitPopContent"
-                [autoClose]="false"
-                placement="bottom-end bottom-start bottom auto"
-                container="body"
-                triggers="manual"
-                popoverClass="ai-feedback-popover"
-                #submitPopoverRef="ngbPopover"
-            >
+            <span #submitOrigin>
                 <button
                     type="button"
                     data-testid="submit-exercise-popover"
                     jhi-exercise-action-button
                     [buttonIcon]="faPaperPlane"
                     [buttonLabel]="'entity.action.submit' | artemisTranslate"
+                    [forceDisabled]="hasPendingAthenaFeedback()"
                     [smallButton]="smallButtons()"
                     (click)="submitAndShowPopover()"
                 ></button>
@@ -56,7 +50,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faPaperPlane"
                 [buttonLabel]="(exercise().type === ExerciseType.QUIZ ? submitLabel() : 'entity.action.submit') | artemisTranslate"
-                [overwriteDisabled]="exercise().type === ExerciseType.QUIZ && submitDisabled()"
+                [forceDisabled]="hasPendingAthenaFeedback() || (exercise().type === ExerciseType.QUIZ && submitDisabled())"
                 [smallButton]="smallButtons()"
                 (click)="onSubmitExercise()!()"
             ></button>
@@ -75,7 +69,7 @@
     @switch (exercise().type) {
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {
-            <div class="btn-group">
+            <div class="inline-flex flex-wrap items-center">
                 @if (showQuizStartPracticeButton()) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
@@ -95,49 +89,7 @@
         <!-- QUIZ EXERCISE ACTIONS END -->
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
-            <div class="d-flex flex-wrap gap-1">
-                @if (isTeamAvailable()) {
-                    <button
-                        type="button"
-                        class="view-team"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faUsers"
-                        [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                        [smallButton]="smallButtons()"
-                        [hideLabelMobile]="true"
-                        [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
-                    ></button>
-                }
-                @if (isStartExerciseAvailable()) {
-                    <span
-                        [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
-                        [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
-                    >
-                        <button
-                            type="button"
-                            [id]="'start-exercise-' + exercise().id"
-                            class="start-exercise"
-                            jhi-exercise-action-button
-                            [buttonIcon]="faPlayCircle"
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                            [buttonLoading]="isLoading()"
-                            [smallButton]="smallButtons()"
-                            [hideLabelMobile]="false"
-                            [overwriteDisabled]="isBeforeStartDateAndStudent"
-                            (click)="startExercise()"
-                        ></button>
-                    </span>
-                }
-                @if (isStartPracticeAvailable()) {
-                    <jhi-start-practice-mode-button
-                        [id]="'start-practice-' + exercise().id"
-                        class="start-practice"
-                        [smallButtons]="smallButtons()"
-                        [exercise]="exercise()"
-                        (practiceModeStarted)="receiveNewParticipation($event)"
-                    />
-                }
+            <div class="flex flex-wrap gap-1" jhi-programming-exercise-participation-actions [actions]="this">
                 @if (exercise().type === ExerciseType.PROGRAMMING && showFeedbackPopover() && activeParticipationForCode() && programmingExercise()?.allowOnlineEditor === false) {
                     <jhi-request-feedback-button
                         [exercise]="exercise()"
@@ -149,58 +101,24 @@
                 @if (shouldDisplayIDEButtons()) {
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
-                            [loading]="isLoading()"
-                            [smallButtons]="smallButtons()"
-                            [participations]="studentParticipations()"
-                            [exercise]="exercise()"
-                            [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
+                            [disabled]="isLoading()"
+                            [size]="smallButtons() ? 'small' : 'default'"
+                            [programmingLanguage]="programmingExercise()?.programmingLanguage"
+                            [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
+                            [exerciseId]="exercise().id!"
+                            [repositoryViewLink]="repositoryViewLink()"
                             [hideLabelMobile]="true"
-                            [repositoryUri]="''"
-                            [isPractice]="participationMode() === 'practice'"
+                            [repositoryUri]="repositoryUriForCodeButton()"
+                            [vcsAccessTokenSourceInfo]="vcsAccessTokenDataForCodeButton()"
                         />
                     }
-                }
-                @if (
-                    (gradedParticipation()?.initializationState === InitializationState.INACTIVE || gradedParticipation()?.initializationState === InitializationState.FINISHED) &&
-                    isResumeExerciseAvailable(gradedParticipation())
-                ) {
-                    <button
-                        type="button"
-                        [id]="'resume-exercise-' + exercise().id"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faPlayCircle"
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
-                        [buttonLoading]="isLoading()"
-                        [smallButton]="smallButtons()"
-                        [hideLabelMobile]="false"
-                        (click)="resumeProgrammingExercise(false)"
-                    ></button>
-                }
-                @if (
-                    (practiceParticipation()?.initializationState === InitializationState.INACTIVE ||
-                        practiceParticipation()?.initializationState === InitializationState.FINISHED) &&
-                    isResumeExerciseAvailable(practiceParticipation())
-                ) {
-                    <button
-                        type="button"
-                        [id]="'resume-practice-exercise-' + exercise().id"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faPlayCircle"
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        [buttonLabel]="'artemisApp.exerciseActions.resumeExercisePractice' | artemisTranslate"
-                        [buttonLoading]="isLoading()"
-                        [smallButton]="smallButtons()"
-                        [hideLabelMobile]="false"
-                        (click)="resumeProgrammingExercise(true)"
-                    ></button>
                 }
             </div>
         }
         <!-- PROGRAMMING EXERCISE ACTIONS END -->
         <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS START -->
         @default {
-            <div class="btn-group gap-1">
+            <div class="inline-flex flex-wrap items-center gap-1">
                 @if (isTeamAvailable()) {
                     <button
                         type="button"
@@ -216,7 +134,7 @@
                 @if (!gradedParticipation() && isStartExerciseAvailable()) {
                     <span
                         [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
-                        [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+                        [tumAetUiTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
                     >
                         <button
                             type="button"
@@ -228,7 +146,7 @@
                             [buttonLoading]="isLoading()"
                             [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
-                            [overwriteDisabled]="isBeforeStartDateAndStudent"
+                            [forceDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
                     </span>
@@ -263,16 +181,18 @@
     ></button>
 </ng-template>
 
-<ng-template #submitPopContent>
-    <div class="d-flex align-items-center mb-2">
-        <fa-icon [icon]="faRobot" class="me-2" />
-        <h5 class="mb-0" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
-    </div>
-    <p class="mb-3" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
-    <p
-        class="mb-3 text-muted"
-        [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
-        [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
-    ></p>
-    <jhi-request-feedback-button [exercise]="exercise()" [isSubmitted]="true" [participationId]="activeParticipationForCode()?.id" (click)="closeSubmitPopover()" />
-</ng-template>
+<tumaet-ui-popover #submitPopoverRef [ariaLabel]="'artemisApp.exercise.aiFeedbackPopover.title' | artemisTranslate">
+    @if (submitPopoverRef.isOpen()) {
+        <div class="flex items-center mb-2">
+            <fa-icon [icon]="faRobot" class="me-2" />
+            <h5 class="mb-0" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
+        </div>
+        <p class="mb-3" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
+        <p
+            class="mb-3 text-text-secondary"
+            [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
+            [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | artemisTranslate) }"
+        ></p>
+        <jhi-request-feedback-button [exercise]="exercise()" [isSubmitted]="true" [participationId]="activeParticipationForCode()?.id" (click)="closeSubmitPopover()" />
+    }
+</tumaet-ui-popover>

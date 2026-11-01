@@ -53,27 +53,16 @@ public class UserUtilService {
 
     private static final Authority userAuthority = new Authority(Role.STUDENT.getAuthority());
 
-    private static final Authority tutorAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
-
-    private static final Authority editorAuthority = new Authority(Role.EDITOR.getAuthority());
-
-    private static final Authority instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
-
     private static final Authority adminAuthority = new Authority(Role.ADMIN.getAuthority());
 
     private static final Authority superAdminAuthority = new Authority(Role.SUPER_ADMIN.getAuthority());
 
+    // Teaching roles are course roles: tutors, editors and instructors only carry the user authority, the course roles come from user_course_role.
     private static final Set<Authority> studentAuthorities = Set.of(userAuthority);
 
-    private static final Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
+    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, adminAuthority);
 
-    private static final Set<Authority> editorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority);
-
-    private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority);
-
-    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
-
-    private static final Set<Authority> superAdminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority, superAdminAuthority);
+    private static final Set<Authority> superAdminAuthorities = Set.of(userAuthority, adminAuthority, superAdminAuthority);
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -347,6 +336,20 @@ public class UserUtilService {
     }
 
     /**
+     * Gets the shared Iris system account without overwriting its profile. This account survives normal test cleanup.
+     *
+     * @return the existing bot, or a newly created bot with the canonical name
+     */
+    public User getOrCreateIrisBotUser() {
+        return userTestRepository.findOneWithAuthoritiesByLogin(User.IRIS_BOT_LOGIN).orElseGet(() -> {
+            User bot = createAndSaveUser(User.IRIS_BOT_LOGIN);
+            bot.setFirstName("Iris");
+            bot.setLastName("Bot");
+            return userTestRepository.save(bot);
+        });
+    }
+
+    /**
      * Creates and saves multiple Users given the amounts for each role.
      *
      * @param numberOfStudents    The number of students to create
@@ -378,11 +381,11 @@ public class UserUtilService {
         log.debug("Generate {} students...", numberOfStudents);
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, numberOfStudents);
         log.debug("{} students generated. Generate {} tutors...", numberOfStudents, numberOfTutors);
-        var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(UserFactory.USER_PASSWORD), tutorAuthorities, numberOfTutors);
+        var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, numberOfTutors);
         log.debug("{} tutors generated. Generate {} editors...", numberOfTutors, numberOfEditors);
-        var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(UserFactory.USER_PASSWORD), editorAuthorities, numberOfEditors);
+        var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, numberOfEditors);
         log.debug("{} editors generated. Generate {} instructors...", numberOfEditors, numberOfInstructors);
-        var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(UserFactory.USER_PASSWORD), instructorAuthorities, numberOfInstructors);
+        var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, numberOfInstructors);
         log.debug("{} instructors generated", numberOfInstructors);
 
         List<User> usersToAdd = new ArrayList<>();
@@ -485,7 +488,7 @@ public class UserUtilService {
      */
     public void addInstructor(final String instructorName) {
         User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
-        instructor.setAuthorities(instructorAuthorities);
+        instructor.setAuthorities(studentAuthorities);
         instructor = saveWithDefaultAiPreference(instructor);
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
@@ -500,7 +503,7 @@ public class UserUtilService {
      */
     public void addEditor(final String editorName) {
         User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
-        editor.setAuthorities(editorAuthorities);
+        editor.setAuthorities(studentAuthorities);
         editor = saveWithDefaultAiPreference(editor);
         assertThat(editor.getId()).as("Editor has been created").isNotNull();
     }
@@ -515,7 +518,7 @@ public class UserUtilService {
      */
     public void addTeachingAssistant(final String taName) {
         User ta = createOrReuseExistingUser(taName, UserFactory.USER_PASSWORD);
-        ta.setAuthorities(tutorAuthorities);
+        ta.setAuthorities(studentAuthorities);
         ta = saveWithDefaultAiPreference(ta);
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
@@ -785,16 +788,6 @@ public class UserUtilService {
     }
 
     /**
-     * Turns Memiris on or off for an account.
-     *
-     * @param user    the account, which must already be saved
-     * @param enabled whether Memiris may remember anything
-     */
-    public void setMemirisEnabled(User user, boolean enabled) {
-        userAiPreferenceService.setMemirisEnabled(user.getId(), enabled);
-    }
-
-    /**
      * Records the fixture's default AI decision for a generated account. The preference is a row keyed on the user id, so
      * it can only be recorded once the account is saved, which is why it is applied here rather than by UserFactory. The
      * many Iris and Athena tests that rely on the fixture default depend on this.
@@ -805,10 +798,8 @@ public class UserUtilService {
         if (user.getId() == null) {
             return;
         }
-        // Only when the account has no preference row at all. Checking the decision instead would re-seed an account whose
-        // decision a test cleared on purpose: clearAiSelectionDecision leaves the row behind when it still holds a Memiris
-        // choice, and a null decision then looks exactly like never having decided.
-        if (!userAiPreferenceService.hasPreferenceRow(user.getId())) {
+        // Only when the account has not decided yet, so a decision a test recorded on purpose is kept.
+        if (userAiPreferenceService.findDecision(user.getId()) == null) {
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
         }
     }

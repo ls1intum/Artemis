@@ -126,7 +126,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(TeamImportStrategyType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromExerciseIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
         List<Team> sourceTeams = teamUtilService.addTeamsForExercise(sourceExercise, 3, tutor);
         testImportTeamsIntoExercise(ImportType.FROM_EXERCISE, importStrategyType, null, sourceTeams);
@@ -134,7 +134,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(TeamImportStrategyType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromListIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
         testImportTeamsIntoExercise(ImportType.FROM_LIST, importStrategyType, importedTeamsBody, importedTeams);
     }
@@ -146,14 +146,14 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromExerciseIntoExerciseWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
         List<Team> sourceTeams = teamUtilService.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sT", 2, tutor);
         testImportTeamsIntoExerciseWithNoConflictsUsingPurgeExistingStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromListWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
         testImportTeamsIntoExerciseWithNoConflictsUsingPurgeExistingStrategy(ImportType.FROM_LIST, importedTeamsBody, importedTeams);
     }
@@ -166,7 +166,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromExerciseIntoExerciseWithNoConflictsUsingCreateOnlyStrategy() throws Exception {
         List<Team> sourceTeams = teamUtilService.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sourceTeam", 3, tutor);
         // destination teams before + source teams = destination teams after
@@ -174,7 +174,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromListIntoExerciseWithNoConflictsUsingCreateOnlyStrategy() throws Exception {
         // destination teams before + imported teams = destination teams after
         testImportTeamsIntoExerciseWithNoConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, importedTeamsBody, importedTeams);
@@ -188,14 +188,14 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromExerciseIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
         List<Team> sourceTeams = teamUtilService.addTeamsForExercise(sourceExercise, TEST_PREFIX + "ssn", TEST_PREFIX + "o", 3, tutor);
         testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportFromListIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
         Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody(TEST_PREFIX + "ssn", TEST_PREFIX + "o", REGISTRATION_NUMBER_PREFIX + "O");
         importedTeams = importedTeamsWithBody.getFirst();
@@ -211,7 +211,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromExerciseIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
         List<Team> sourceTeamsWithoutConflict = teamUtilService.addTeamsForExercise(sourceExercise, TEST_PREFIX + "st", 1, tutor);
         teamUtilService.addTeamsForExercise(sourceExercise, TEST_PREFIX + "ssn", TEST_PREFIX + "o", 2, tutor);
@@ -219,7 +219,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportFromListIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
         Pair<List<Team>, List<Team>> importedTeamsWithConflictAndBody = getImportedTeamsAndBody(TEST_PREFIX + "ssn", TEST_PREFIX + "o", "O");
         List<Team> importedTeamsWithConflictBody = importedTeamsWithConflictAndBody.getSecond();
@@ -237,7 +237,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromExerciseIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
         List<Team> sourceTeamsWithoutConflict = teamUtilService.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sto", 1, tutor);
         List<Team> sourceTeamsWithStudentConflict = teamUtilService.addTeamsForExercise(sourceExercise, TEST_PREFIX + "st", 3, tutor);
@@ -246,7 +246,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromListIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
         Pair<List<Team>, List<Team>> importedTeamsWithStudentConflictAndBody = getImportedTeamsAndBody(TEST_PREFIX + "wc", TEST_PREFIX + "im", REGISTRATION_NUMBER_PREFIX + "X");
         List<Team> importedTeamsWithStudentConflict = importedTeamsWithStudentConflictAndBody.getFirst();
@@ -257,7 +257,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromExerciseBadRequests() throws Exception {
         // Specifying the destination exercise to also be the source exercise should fail
         request.put(importFromExerciseUrl(destinationExercise), null, HttpStatus.BAD_REQUEST);
@@ -276,7 +276,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromListBadRequests() throws Exception {
         // If the destination exercise is not a team exercise, the request should fail
         destinationExercise.setMode(ExerciseMode.INDIVIDUAL);
@@ -304,19 +304,19 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testImportTeamsFromExerciseForbiddenAsTutor() throws Exception {
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testImportTeamsFromListForbiddenAsTutor() throws Exception {
         request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
         User instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         userUtilService.unenrollUserFromCourse(instructor1, course);
@@ -324,7 +324,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
         User instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         userUtilService.unenrollUserFromCourse(instructor1, course);

@@ -28,6 +28,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -68,7 +69,7 @@ describe('Course Management Exercises Component', () => {
                     getGroupsForCourse: () => of([]),
                 }),
                 MockProvider(QuizExerciseService, {
-                    findForCourse: () => of(new HttpResponse({ body: [] })),
+                    findForCourse: () => of([]),
                 }),
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),
@@ -358,7 +359,7 @@ describe('Course Management Exercises Component', () => {
         });
 
         it('deletes quiz, modeling and file-upload exercises via their services', () => {
-            const quizDelete = vi.spyOn(TestBed.inject(QuizExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const quizDelete = vi.spyOn(TestBed.inject(QuizExerciseDeletionApi), 'deleteQuizExercise').mockReturnValue(of(undefined));
             const modelingDelete = vi.spyOn(TestBed.inject(ModelingExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
             const fileUploadDelete = vi.spyOn(TestBed.inject(FileUploadExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
             comp.exercises.set([
@@ -618,7 +619,7 @@ describe('Course Management Exercises Component', () => {
             course.exercises = [quiz];
             const loadedQuiz = { id: 3, type: ExerciseType.QUIZ, quizBatches: [{ id: 1, started: true }], isEditable: false } as QuizExercise;
             const quizService = TestBed.inject(QuizExerciseService);
-            vi.spyOn(quizService, 'findForCourse').mockReturnValue(of(new HttpResponse({ body: [loadedQuiz] })));
+            vi.spyOn(quizService, 'findForCourse').mockReturnValue(of([loadedQuiz]));
             vi.spyOn(quizService, 'getStatus').mockReturnValue(QuizStatus.ACTIVE);
 
             comp.ngOnInit();
@@ -644,10 +645,20 @@ describe('Course Management Exercises Component', () => {
             expect(comp.groups()[0].exercises?.[0].title).toBe('Renamed');
         });
 
-        it('removes a deleted exercise from the list, its group and the selection', () => {
+        it.each(['row', 'generated draft'])('removes a deleted %s from the list, cards, group and selection', (source) => {
             comp.toggleSelection(1);
 
-            comp.onExerciseDeleted(comp.exercises()[0]);
+            if (source === 'row') {
+                comp.onExerciseDeleted(comp.exercises()[0]);
+            } else {
+                comp.onGeneratedExerciseDeleted(1);
+            }
+            expect(
+                comp
+                    .cards()
+                    .flatMap((card) => card.exercises)
+                    .some((exercise) => exercise.id === 1),
+            ).toBe(false);
 
             expect(comp.exercises().map((e) => e.id)).toEqual([2]);
             expect(comp.groups()[0].exercises).toHaveLength(0);

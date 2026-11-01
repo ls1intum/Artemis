@@ -114,7 +114,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
                 this.courseDescriptionForm().setCourseDescription('');
             }
             // Description loading is asynchronous so the child view exists before its form is populated.
-            firstValueFrom(this.courseManagementService.find(courseId))
+            firstValueFrom(this.courseManagementService.findForInstructor(courseId))
                 .then((course) => {
                     if (!this.destroyRef.destroyed && this.courseEpoch === epoch && this.courseId === courseId) {
                         this.courseDescriptionForm().setCourseDescription(course.body?.description ?? '');

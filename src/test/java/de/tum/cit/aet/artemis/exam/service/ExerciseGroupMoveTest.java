@@ -57,7 +57,7 @@ class ExerciseGroupMoveTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testMoveSucceedsWhileTheExamHasNoStudentExam() {
         ExerciseGroup targetGroup = exam.getExerciseGroups().get(1);
         Exercise movedExercise = exam.getExerciseGroups().getFirst().getExercises().iterator().next();
@@ -68,7 +68,7 @@ class ExerciseGroupMoveTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testMoveIsRejectedOnceAStudentExamExists() {
         // A test run counts: it has already picked one exercise per group, so a move would desync that selection.
         studentExamService.createTestRun(exam, testRunExerciseIds, 6000);

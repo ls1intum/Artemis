@@ -16,7 +16,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -41,8 +41,8 @@ import { ApollonRailDisclosureComponent } from 'app/modeling/shared/modeling-edi
 import {
     RAIL_DISCLOSURE_MAX_HEIGHT,
     applyBottomCenterPlacement,
-    calculateBottomCenterPlacement,
     clearBottomCenterPlacement,
+    measureBottomCenterPlacement,
     measureRailDisclosureMaxHeight,
     synchronizeResizeObserverTargets,
 } from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
@@ -522,18 +522,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             ]);
         }
 
-        const bottomCenterStyle = getComputedStyle(bottomCenter);
-        const editorStyle = getComputedStyle(apollonRoot);
-        const placement = calculateBottomCenterPlacement({
-            root: apollonRoot.getBoundingClientRect(),
-            zoom: zoom.getBoundingClientRect(),
-            minimap: minimap.getBoundingClientRect(),
-            surface: persistentSurface.getBoundingClientRect(),
+        const placement = measureBottomCenterPlacement({
+            root: apollonRoot,
+            zoom,
+            minimap,
+            surface: persistentSurface,
+            positionedElement: bottomCenter,
+            chromeContainer: apollonRoot,
+            shiftProperty: '--modeling-assessment-bottom-center-shift-x',
             obstruction: this.panelObstruction(),
-            chromeGap: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-gap')) || 0,
-            chromeEdge: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-edge')) || 0,
-            rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
-            previousShift: Number.parseFloat(bottomCenterStyle.getPropertyValue('--modeling-assessment-bottom-center-shift-x')) || 0,
         });
 
         applyBottomCenterPlacement(bottomCenter, '--modeling-assessment-bottom-center-shift-x', placement);

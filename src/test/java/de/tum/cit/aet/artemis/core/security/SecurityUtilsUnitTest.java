@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 /**
@@ -235,6 +238,40 @@ class SecurityUtilsUnitTest {
     }
 
     @Test
+    void testRunAsActsAsTheUserWithTheirOwnAuthoritiesAndRestoresTheCaller() {
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        Authentication caller = new UsernamePasswordAuthenticationToken("caller1", "password", List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        securityContext.setAuthentication(caller);
+        SecurityContextHolder.setContext(securityContext);
+        User student = new User();
+        student.setLogin("student1");
+        student.setAuthorities(Set.of(new Authority(Role.STUDENT.getAuthority())));
+
+        Authentication seen = SecurityUtils.runAs(student, () -> SecurityContextHolder.getContext().getAuthentication());
+
+        assertThat(seen.getName()).isEqualTo("student1");
+        // The user acts with their own authorities rather than with the administrator authority of makeAuthorizationObject.
+        assertThat(seen.getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactly(Role.STUDENT.getAuthority());
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(caller);
+    }
+
+    @Test
+    void testRunAsRestoresEvenWhenTheWorkThrows() {
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        Authentication caller = new UsernamePasswordAuthenticationToken("caller1", "password", List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        securityContext.setAuthentication(caller);
+        SecurityContextHolder.setContext(securityContext);
+        User student = new User();
+        student.setLogin("student1");
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> SecurityUtils.runAs(student, () -> {
+            throw new IllegalStateException("boom");
+        }));
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(caller);
+    }
+
+    @Test
     void testSetSystemAuthorizationObjectDiscardsAStalePrincipal() {
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("leftover", "password", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
@@ -252,9 +289,9 @@ class SecurityUtilsUnitTest {
      */
     @Test
     void testGetCurrentUserHighestRolePicksTheHighestPrecedence() {
-        authenticateWith(Role.STUDENT.getAuthority(), Role.INSTRUCTOR.getAuthority(), Role.TEACHING_ASSISTANT.getAuthority());
+        authenticateWith(Role.STUDENT.getAuthority(), Role.ADMIN.getAuthority());
 
-        assertThat(SecurityUtils.getCurrentUserHighestRole()).isEqualTo(Role.INSTRUCTOR);
+        assertThat(SecurityUtils.getCurrentUserHighestRole()).isEqualTo(Role.ADMIN);
     }
 
     @Test
@@ -265,10 +302,11 @@ class SecurityUtilsUnitTest {
     }
 
     @Test
-    void testGetCurrentUserHighestRoleIgnoresAuthoritiesThatAreNotRoles() {
-        authenticateWith("SOMETHING_ELSE", Role.EDITOR.getAuthority());
+    void testGetCurrentUserHighestRoleIgnoresAuthoritiesThatAreNotGlobalRoles() {
+        // the instructor authority is what tokens issued before the teaching roles became course roles still carry
+        authenticateWith("SOMETHING_ELSE", Role.INSTRUCTOR.getAuthority(), Role.STUDENT.getAuthority());
 
-        assertThat(SecurityUtils.getCurrentUserHighestRole()).isEqualTo(Role.EDITOR);
+        assertThat(SecurityUtils.getCurrentUserHighestRole()).isEqualTo(Role.STUDENT);
     }
 
     @Test

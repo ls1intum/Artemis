@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -63,7 +64,10 @@ public class RateLimitConfig {
      * @param redissonClient the Redisson client holding the bucket state
      * @return bucket storage for the Redis provider
      */
+    // Exactly one of the three storages exists at runtime, because the conditions match one value of artemis.distributed-data.provider each. Static analysis
+    // cannot evaluate them and reports every injection of the ProxyManager as ambiguous (Sonar java:S9352); @Primary changes nothing at runtime.
     @Bean
+    @Primary
     @Conditional(RedisDistributedDataCondition.class)
     public ProxyManager<String> redisRateLimitProxyManager(RedissonClient redissonClient) {
         CommandAsyncExecutor commandExecutor = ((Redisson) redissonClient).getCommandExecutor();

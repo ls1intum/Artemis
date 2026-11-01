@@ -1,7 +1,6 @@
-import { Component, OnInit, inject, input, output, signal, viewChildren } from '@angular/core';
+import { QuizAnswerSelection } from 'app/quiz/shared/util/quiz-answer-selection';
+import { Component, OnInit, inject, input, output, viewChildren } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
-import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
@@ -9,7 +8,6 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import type { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
-import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -20,14 +18,13 @@ import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-ex
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
 import { parseJson } from 'app/foundation/util/json.util';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -71,21 +68,13 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     saveCurrentExercise = output<void>();
 
-    readonly selectedAnswerOptions = signal(new Map<number, AnswerOption[]>());
-    readonly dragAndDropMappings = signal(new Map<number, DragAndDropMapping[]>());
-    readonly shortAnswerSubmittedTexts = signal(new Map<number, ShortAnswerSubmittedText[]>());
-
-    onSelectedAnswerOptionsChange(questionId: number, answerOptions: AnswerOption[]): void {
-        this.selectedAnswerOptions.update((map) => new Map(map).set(questionId, answerOptions));
-    }
-
-    onDragAndDropMappingsChange(questionId: number, mappings: DragAndDropMapping[]): void {
-        this.dragAndDropMappings.update((map) => new Map(map).set(questionId, mappings));
-    }
-
-    onShortAnswerSubmittedTextsChange(questionId: number, submittedTexts: ShortAnswerSubmittedText[]): void {
-        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(questionId, submittedTexts));
-    }
+    private readonly answerSelection = new QuizAnswerSelection();
+    readonly selectedAnswerOptions = this.answerSelection.selectedAnswerOptions;
+    readonly dragAndDropMappings = this.answerSelection.dragAndDropMappings;
+    readonly shortAnswerSubmittedTexts = this.answerSelection.shortAnswerSubmittedTexts;
+    readonly onSelectedAnswerOptionsChange = this.answerSelection.onSelectedAnswerOptionsChange;
+    readonly onDragAndDropMappingsChange = this.answerSelection.onDragAndDropMappingsChange;
+    readonly onShortAnswerSubmittedTextsChange = this.answerSelection.onShortAnswerSubmittedTextsChange;
 
     ngOnInit(): void {
         this.initQuiz();
@@ -113,34 +102,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         if (!this.examTimeline()) {
             this.quizService.randomizeOrder(this.quizConfiguration().quizQuestions, this.quizConfiguration().randomizeQuestionOrder);
         }
-        // prepare selection arrays for each question
-        this.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
-        this.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
-        this.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
-
-        const quizQuestions = this.quizConfiguration().quizQuestions;
-
-        if (quizQuestions) {
-            quizQuestions.forEach((question) => {
-                switch (question.type) {
-                    case QuizQuestionType.MULTIPLE_CHOICE:
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, []));
-                        break;
-                    case QuizQuestionType.DRAG_AND_DROP:
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, []));
-                        break;
-                    case QuizQuestionType.SHORT_ANSWER:
-                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
-                        break;
-                    default:
-                        captureException('Unknown question type: ' + question.type);
-                        break;
-                }
-            }, this);
-        }
+        this.answerSelection.reset(this.quizConfiguration().quizQuestions);
     }
 
     private highlightQuizQuestion(questionId: number): void {
@@ -185,61 +147,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * this needs to be done when we get new submission data, e.g. through the websocket connection
      */
     updateViewFromSubmission() {
-        // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
-        // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
-        this.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
-        this.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
-        this.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
-
-        const quizQuestions = this.quizConfiguration().quizQuestions;
-        if (quizQuestions?.length) {
-            // iterate through all questions of this quiz
-            quizQuestions.forEach((question) => {
-                // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.studentSubmission()?.submittedAnswers?.find((answer) => {
-                    return answer.quizQuestion?.id === question.id;
-                });
-
-                switch (question.type) {
-                    case QuizQuestionType.MULTIPLE_CHOICE:
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        if (submittedAnswer) {
-                            const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
-                            // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                            this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, selectedOptions ? deepClone(selectedOptions) : []));
-                        } else {
-                            // not found, set to empty array
-                            this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, []));
-                        }
-                        break;
-                    case QuizQuestionType.DRAG_AND_DROP:
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        if (submittedAnswer) {
-                            const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
-                            // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                            this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, mappings ? deepClone(mappings) : []));
-                        } else {
-                            // not found, set to empty array
-                            this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, []));
-                        }
-                        break;
-                    case QuizQuestionType.SHORT_ANSWER:
-                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        if (submittedAnswer) {
-                            const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
-                            // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                            this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, submittedTexts ? deepClone(submittedTexts) : []));
-                        } else {
-                            // not found, set to empty array
-                            this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
-                        }
-                        break;
-                    default:
-                        captureException('Unknown question type: ' + question.type);
-                        break;
-                }
-            }, this);
-        }
+        this.answerSelection.reset(this.quizConfiguration().quizQuestions, this.studentSubmission()?.submittedAnswers, true);
     }
 
     /**

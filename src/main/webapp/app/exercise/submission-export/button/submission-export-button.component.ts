@@ -1,39 +1,41 @@
 import { Component, inject, input } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { SubmissionExportDialogComponent } from '../dialog/submission-export-dialog.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exercise-submission-export',
     template: `
-        <jhi-button
-            [featureToggle]="FeatureToggle.Exports"
+        <button
+            tumAetUiButton
+            type="button"
+            [jhiFeatureToggle]="FeatureToggle.Exports"
             [disabled]="!exerciseId()"
-            [btnType]="ButtonType.INFO"
-            [btnSize]="ButtonSize.SMALL"
-            [shouldSubmit]="false"
-            [icon]="faDownload"
-            [title]="'artemisApp.instructorDashboard.exportSubmissions.title'"
-            (onClick)="openSubmissionExportDialog($event)"
-        />
+            severity="info"
+            size="small"
+            (click)="openSubmissionExportDialog($event)"
+        >
+            <fa-icon [icon]="faDownload" /><span jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title"></span>
+        </button>
     `,
-    imports: [ButtonComponent],
+    imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent, FeatureToggleDirective],
 })
 export class SubmissionExportButtonComponent {
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
 
-    readonly ButtonType = ButtonType;
-    readonly ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
     readonly exerciseId = input<number>();
     readonly exerciseType = input<ExerciseType>();
+    readonly examExercise = input(false);
 
     // Icons
     readonly faDownload = faDownload;
@@ -53,14 +55,14 @@ export class SubmissionExportButtonComponent {
 
         this.dialogService.open(SubmissionExportDialogComponent, {
             header: this.translateService.instant('artemisApp.instructorDashboard.exportSubmissions.title'),
-            width: '50rem',
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
             inputValues: {
                 exerciseId,
                 exerciseType,
+                examExercise: this.examExercise(),
             },
         });
     }

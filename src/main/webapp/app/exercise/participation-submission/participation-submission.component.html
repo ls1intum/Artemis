@@ -1,25 +1,39 @@
 @if (participation()) {
     <div>
-        <h2
-            jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation"
-            [translateValues]="{ participant: getName(), exercise: exercise()?.title }"
-        ></h2>
+        <div class="flex flex-wrap items-start justify-between gap-2">
+            <h2
+                jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation"
+                [translateValues]="{ participant: getName(), exercise: exercise()?.title }"
+            ></h2>
+            @if (programmingExercise(); as programmingExercise) {
+                @if (programmingExercise.isAtLeastInstructor && !isLoading()) {
+                    <jhi-programming-exercise-instructor-trigger-build-button
+                        data-testid="trigger-build"
+                        [exercise]="programmingExercise"
+                        [participation]="participation()!"
+                        [title]="'artemisApp.programmingExercise.resubmitSingleLabel'"
+                    />
+                }
+            }
+        </div>
         @if (exercise()?.releaseDate) {
             <h4>
                 <span class="me-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}: {{ (exercise()!.releaseDate | artemisDate) || 'N/A' }} </span>
-                <span class="badge {{ exerciseStatusBadge() }}">{{ exercise()!.releaseDate | artemisTimeAgo }} </span>
+                <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold {{ exerciseStatusBadge() }}">{{ exercise()!.releaseDate | artemisTimeAgo }} </span>
             </h4>
         }
         @if (dueDate()) {
             <h4>
                 <span class="me-2"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: {{ (dueDate() | artemisDate) || 'N/A' }} </span>
-                <span class="badge {{ exerciseStatusBadge() }}"> {{ dueDate() | artemisTimeAgo }} </span>
+                <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold {{ exerciseStatusBadge() }}"> {{ dueDate() | artemisTimeAgo }} </span>
             </h4>
         }
         @if (exercise()?.assessmentDueDate) {
             <h4>
                 <span class="me-2"> {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}: {{ (exercise()!.assessmentDueDate | artemisDate) || 'N/A' }} </span>
-                <span class="badge {{ exerciseStatusBadge() }}">{{ exercise()!.assessmentDueDate | artemisTimeAgo }}</span>
+                <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold {{ exerciseStatusBadge() }}">{{
+                    exercise()!.assessmentDueDate | artemisTimeAgo
+                }}</span>
             </h4>
         }
     </div>
@@ -27,7 +41,7 @@
 
 <jhi-table-view
     [cols]="columns()"
-    [vals]="submissions()"
+    [vals]="displayedSubmissions()"
     [loading]="isLoading()"
     [rowActions]="exercise()?.isAtLeastInstructor ? actionsTemplate : null"
     [options]="tableOptions"
@@ -37,7 +51,7 @@
 <ng-template #actionsTemplate let-submission>
     <button
         type="button"
-        class="btn btn-danger btn-sm me-1"
+        class="me-1"
         id="deleteButton"
         jhiDeleteButton
         deleteQuestion="artemisApp.participation.participationSubmission.delete"
@@ -58,7 +72,21 @@
 </ng-template>
 
 <ng-template #resultsTemplate let-params>
-    <div class="d-flex flex-column">
+    <div class="flex flex-col gap-1">
+        @if (activeBuild(); as build) {
+            @if (build.submission?.id === params.data.id) {
+                <jhi-result
+                    [exercise]="exercise()"
+                    [participation]="participation()!"
+                    [isBuilding]="build.submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION"
+                    [isQueued]="build.submissionState === ProgrammingSubmissionState.IS_QUEUED"
+                    [buildStartDate]="build.buildTimingInfo?.buildStartDate"
+                    [estimatedCompletionDate]="build.buildTimingInfo?.estimatedCompletionDate"
+                    [showProgressBar]="showBuildProgressBar"
+                    [isOwnParticipation]="false"
+                />
+            }
+        }
         @for (result of params.value ?? []; track result) {
             <div>
                 <jhi-result
@@ -71,7 +99,7 @@
                 />
                 @if (exercise()?.isAtLeastInstructor) {
                     <span
-                        class="badge"
+                        class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
                         style="border-radius: 0px"
                         jhiDeleteButton
                         [buttonSize]="buttonSizeSmall"
@@ -86,8 +114,10 @@
                     </span>
                     @if (result?.buildJobId) {
                         <button
+                            variant="text"
+                            tumAetUiButton
                             type="button"
-                            class="btn btn-link detail-link p-0"
+                            class="detail-link p-0"
                             style="text-decoration: none"
                             (click)="viewBuildLogs(result.buildJobId)"
                             jhiTranslate="artemisApp.result.buildLogs.viewLogs"
@@ -108,7 +138,7 @@
 </ng-template>
 
 <ng-template #assessmentTypeTemplate let-params>
-    <div class="d-flex flex-column">
+    <div class="flex flex-col">
         @for (result of params.value ?? []; track result) {
             <div>{{ result.assessmentType }}</div>
         }
@@ -116,7 +146,7 @@
 </ng-template>
 
 <ng-template #assessorTemplate let-params>
-    <div class="d-flex flex-column">
+    <div class="flex flex-col">
         @for (result of params.value ?? []; track result) {
             @if (result.assessor?.name) {
                 <div style="min-width: 150px">{{ result.assessor?.name }}</div>
@@ -128,8 +158,8 @@
 </ng-template>
 
 <ng-template #completionDateTemplate let-params>
-    <div class="d-flex flex-column">
-        @for (result of params.value ?? []; track result) {
+    <div class="flex flex-col">
+        @for (result of params.data.results ?? []; track result) {
             <div>{{ result.completionDate | artemisDate: 'long' : true }}</div>
         }
     </div>

@@ -18,6 +18,7 @@ import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.mo
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -681,8 +682,8 @@ describe('CourseOverviewComponent', () => {
     it('should have competencies and tutorial groups', () => {
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
 
-        const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
-            body: [new TutorialGroup()],
+        const tutorialGroupsResponse: HttpResponse<TutorialGroupSummary[]> = new HttpResponse({
+            body: [{ id: 1 }],
             status: 200,
         });
         const configurationResponse: HttpResponse<TutorialGroupConfigurationDTO> = new HttpResponse({

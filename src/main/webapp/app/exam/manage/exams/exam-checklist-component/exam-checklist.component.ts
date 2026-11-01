@@ -11,7 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subject, Subscription } from 'rxjs';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-check/checklist-check.component';
 import { ExamChecklistExerciseGroupTableComponent } from './exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';

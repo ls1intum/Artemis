@@ -156,9 +156,11 @@ public class SharedQueueManagementService {
 
     /**
      * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo, only executed on the main node (with active scheduling)
-     * This method is scheduled to run every 5 minutes with an initial delay of 30 seconds.
+     * This method is scheduled to run every 5 minutes with an initial delay of 30 seconds. Both can be changed with
+     * {@code artemis.continuous-integration.image-cleanup.info-push-interval-seconds} and
+     * {@code artemis.continuous-integration.image-cleanup.info-push-delay-seconds}.
      */
-    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 30 * 1000)
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.info-push-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.image-cleanup.info-push-delay-seconds:30}", timeUnit = TimeUnit.SECONDS)
     public void pushDockerImageCleanupInfo() {
         if (profileService.isSchedulingActive()) {
             var startDate = System.currentTimeMillis();
@@ -324,6 +326,23 @@ public class SharedQueueManagementService {
     }
 
     /**
+     * Cancel all queued and running build jobs of an exercise, i.e. of its template, solution and student participations.
+     * <p>
+     * Used when the exercise is deleted: a job that is still waiting is removed from the queue, a running one is cancelled on its build agent.
+     * A job that has already finished and whose result is waiting to be processed is not affected, so the result processing has to drop such a result itself.
+     *
+     * @param exerciseId id of the exercise
+     */
+    public void cancelAllJobsForExercise(long exerciseId) {
+        List<BuildJobQueueItem> toRemove = distributedDataAccessService.getQueuedJobs().stream().filter(queuedJob -> queuedJob.exerciseId() == exerciseId).toList();
+        distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
+        updateCancelledQueuedBuildJobsStatus(toRemove);
+
+        distributedDataAccessService.getProcessingJobs().stream().filter(runningJob -> runningJob.exerciseId() == exerciseId)
+                .forEach(runningJob -> cancelBuildJob(runningJob.id()));
+    }
+
+    /**
      * Clear all build related data from the distributed data structures.
      * This method should only be called by an admin user.
      */
@@ -332,6 +351,7 @@ public class SharedQueueManagementService {
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedDockerImageCleanupInfo().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
         distributedDataAccessService.getDistributedBuildAgentInformation().clear();
     }
 

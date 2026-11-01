@@ -846,18 +846,10 @@ public class SharedQueueProcessingService {
                 checkAvailabilityAndProcessNextBuild();
             }
             catch (Exception e) {
-                log.error("Error in build success handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
-                // Ensure we continue processing next builds even if cleanup/update fails
-                try {
-                    checkAvailabilityAndProcessNextBuild();
-                }
-                catch (Exception ignored) {
-                    log.error("Failed to check for next build after error in success handler", ignored);
-                }
+                recoverAfterCompletionHandlerFailure(buildJob, e, "success");
             }
             finally {
-                activeBuildAttempts.remove(buildJob.id(), attemptState);
-                buildJobManagementService.releaseBuildJob(futureResult);
+                releaseBuildAttempt(buildJob, attemptState, futureResult);
             }
         });
 
@@ -923,21 +915,28 @@ public class SharedQueueProcessingService {
                 checkAvailabilityAndProcessNextBuild();
             }
             catch (Exception e) {
-                log.error("Error in build exception handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
-                // Ensure we continue processing next builds even if cleanup/update fails
-                try {
-                    checkAvailabilityAndProcessNextBuild();
-                }
-                catch (Exception ignored) {
-                    log.error("Failed to check for next build after error in exception handler", ignored);
-                }
+                recoverAfterCompletionHandlerFailure(buildJob, e, "exception");
             }
             finally {
-                activeBuildAttempts.remove(buildJob.id(), attemptState);
-                buildJobManagementService.releaseBuildJob(futureResult);
+                releaseBuildAttempt(buildJob, attemptState, futureResult);
             }
             return null;
         });
+    }
+
+    private void recoverAfterCompletionHandlerFailure(BuildJobQueueItem buildJob, Exception failure, String handler) {
+        log.error("Error in build {} handler for job {}: {}. Attempting to continue processing.", handler, buildJob.id(), failure.getMessage(), failure);
+        try {
+            checkAvailabilityAndProcessNextBuild();
+        }
+        catch (Exception recoveryFailure) {
+            log.error("Failed to check for next build after error in {} handler", handler, recoveryFailure);
+        }
+    }
+
+    private void releaseBuildAttempt(BuildJobQueueItem buildJob, BuildAttemptState attemptState, CompletableFuture<BuildResult> futureResult) {
+        activeBuildAttempts.remove(buildJob.id(), attemptState);
+        buildJobManagementService.releaseBuildJob(futureResult);
     }
 
     private void finishInternallyRequeuedAttempt(BuildJobQueueItem buildJob, BuildAttemptState attemptState) {

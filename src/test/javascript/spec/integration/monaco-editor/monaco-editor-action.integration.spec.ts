@@ -201,7 +201,7 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it('should provide test case completions', async () => {
-        comp.changeModel('testCase', '', 'custom-md');
+        comp.changeModel('testCase', 'testC', 'custom-md');
         const model = comp.models[0];
         const action = new TestCaseAction();
         action.values = [
@@ -214,11 +214,18 @@ describe('MonacoEditorActionIntegration', () => {
         const completionFunction = registerCompletionProviderStub.mock.calls[0][1].provideCompletionItems;
         expect(completionFunction).toBeDefined();
         // We do not use completionContext and cancellationToken, but they are required by the function signature. Therefore, we pass empty objects.
-        const completionList = await completionFunction(model, new monaco.Position(1, 1), {} as monaco.languages.CompletionContext, {} as monaco.CancellationToken);
+        const completionList = await completionFunction(model, new monaco.Position(1, 6), {} as monaco.languages.CompletionContext, {} as monaco.CancellationToken);
         const suggestions = (completionList as monaco.languages.CompletionList)!.suggestions;
         expect(suggestions).toHaveLength(2);
         expect(suggestions[0].label).toBe(action.values[0].value);
         expect(suggestions[1].label).toBe(action.values[1].value);
+        expect(suggestions[0]).toMatchObject({
+            kind: monaco.languages.CompletionItemKind.Constant,
+            insertText: 'testCase1',
+            detail: 'Test',
+            range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 6 },
+        });
+        expect((completionList as monaco.languages.CompletionList).incomplete).toBe(false);
 
         // The completion provider should only provide completions for the current model.
         comp.changeModel('other', '', 'custom-md');

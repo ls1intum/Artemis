@@ -201,7 +201,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateConversationPostInCourseWideChannel(boolean isAnnouncement) throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test", isAnnouncement);
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
@@ -224,7 +224,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreatePostInChannelOfUnreleasedExerciseOnlyReachesStaff() throws Exception {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseChannel.getExercise().getId());
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
@@ -248,7 +248,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateAnnouncementInPrivateChannel() throws Exception {
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
@@ -287,10 +287,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // path let a late increment overwrite a recipient's read. Most other write work here stays async.
         // + 1 durable outbox enqueue (a synchronous INSERT recording the SearchableEntities upsert intent, which replaced
         // the former fire-and-forget async Weaviate write). The actual Weaviate write still happens later off the request.
+        // + 1 author read reset, now completed before the response rather than queued on the async executor.
+        // This is the same UPDATE as before; it now counts toward the request's query budget.
+        // + 1 lock on the conversation row, taken because the author's participant does not exist yet and is created. It makes requests
+        // that create the same participant at the same time wait for each other, so none of them fails on the unique index. It is only
+        // taken once per user and conversation.
         // further database calls are made in async code
         // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
         assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(10);
+                .hasBeenCalledTimes(12);
     }
 
     @ParameterizedTest
@@ -688,7 +693,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testPinPost_asTutor() throws Exception {
         Post postToPin = existingConversationMessages.getFirst();
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -729,7 +734,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testEditConversationPost_forbidden() throws Exception {
         // conversation post of tutor1 must not be editable by tutor2
         Post conversationPostToUpdate = existingConversationMessages.getFirst();
@@ -758,7 +763,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of user must not be deletable by tutors
         Post conversationPostToDelete = existingConversationMessages.getFirst();
@@ -797,14 +802,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostResponseDTO createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, PostResponseDTO.class,
                 HttpStatus.CREATED);
 
-        // Wait for the post-creation @Async increment to settle: the count must reach 1 before student2 reads the
-        // conversation. Both the increment (ConversationMessagingService#notifyAboutMessageCreation) and the read reset
-        // (ConversationParticipantRepository#updateLastReadAsync) run asynchronously, so without this gate the increment
-        // can land after the reset and leave the count permanently at 1.
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-            SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(1);
-        });
+        assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(1);
 
         userUtilService.changeUser(TEST_PREFIX + "student2");
         // we read the messages by "getting" them from the server as student
@@ -815,11 +813,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Set<PostResponseDTO> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         assertThat(returnedPosts).hasSize(1);
 
-        await().untilAsserted(() -> {
-            SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isZero();
-            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student1)).isZero();
-        });
+        assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isZero();
+        assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student1)).isZero();
     }
 
     @Test
@@ -889,9 +884,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String messageId = createdPost1.id().toString();
 
         // Wait for both post-creation @Async increments to settle: count must reach 2 before we proceed.
-        // Without this gate, the subsequent mark-as-read @Async could race with stale post-creation increments,
-        // and the baseline `unreadCount == 0` could be satisfied by the initial state alone (never observing
-        // that mark-as-read actually ran).
+        // Establish a nonzero count before verifying the read reset. Both writes complete before their HTTP responses.
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
             assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(2);
@@ -984,7 +977,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseWideMessagesWithPinnedOnly() throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "channel-for-pinned-test", false);
         ConversationParticipant instructorParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
@@ -1485,7 +1478,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldSendAnnouncementNotificationWhenFeatureIsEnabled() throws Exception {
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
@@ -1509,7 +1502,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotSendAnAnnouncementEmailToATestUserThatNeverConfiguredIt() throws Exception {
         var regularMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         var testUserMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
