@@ -9,26 +9,16 @@ import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 We migrate the Artemis server to an API-driven development approach using OpenAPI specifications. This especially helps us with client generation to avoid subtle bugs that are often unnoticed in code reviews.
 
-Currently, the OpenAPI specs are generated for the `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, and `quiz` modules, plus the entire `notification` module, including global settings, system/admin/public operations, course preferences/feed/state and native push registration/unregistration. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
+Currently, the OpenAPI specs are generated for the `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, `quiz`, and `notification` modules. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
 
 <Callout variant={CalloutVariant.info}>
     If you want to make use of the OpenAPI specs, you need to ensure that the endpoint you are working on is a DTO-only endpoint. This means that the endpoint should not return or
     expect any domain objects, but only Data Transfer Objects (DTOs) or primitives.
 </Callout>
 
-Declare required DTO properties explicitly with `@Schema(requiredMode = Schema.RequiredMode.REQUIRED)`, including primitive response flags and counts that are always serialized. No global primitive-field inference runs. Inputs whose omitted values are deliberately accepted remain optional, with their existing defaults/null handling documented; schema metadata does not add runtime validation or change Jackson defaults.
+Declare required DTO properties explicitly with `@Schema(requiredMode = Schema.RequiredMode.REQUIRED)`, preserve optional and nullable fields, and document response headers such as pagination totals so generated callers can access them.
 
-The Angular generator uses Observable HttpClient services (`useHttpResource=false`, `separateResources=false`) and enables `observeResponseHeaders`. An Observable operation with declared success response headers returns `HttpResponse<T>`, retaining pagination, Location and alert headers for its callers. Declare the headers actually produced by the endpoint. System notification alert header names follow `jhipster.clientApp.name` during export. The pruning step preserves literal null values in nullable enums.
-
-System notification administration reads and writes belong to `AdminSystemNotificationApi` under `/api/notification/admin/system-notifications` and require administrator access. The list declares `Link` and `X-Total-Count` response headers and Spring paging parameters. The detail read declares its 404 response. `PublicSystemNotificationApi` serves active and future notifications under `/api/notification/public/system-notifications/active`, including before authentication.
-
-Course notification preference schemas distinguish complete effective channel flags in responses from partial, nullable channel overrides in requests. The settings adapter normalizes an omitted empty response map for its UI subjects; channel flags remain the generated booleans without new defaults.
-
-Course feed schemas use the outer `notificationType` to discriminate 28 flat envelope variants. The ordered shared pipeline registers sealed payload records with their explicit required annotations, composes complete envelope branches, then filters and strips DTO suffixes. This changes only OpenAPI metadata; Jackson, legacy read-only `parameters` and flat push JSON retain their existing shape. Optional payload references remain optional, while primitive payload flags and counts remain required.
-
-`CourseNotificationPage` preserves the internal cached page's fields and totals, including null reconstruction results. Its item schema references a named union containing all envelope branches and a literal null branch. With the pinned generator this emits a nullable item alias; wrapping only the envelope reference and null would collapse during normalization. The client date/state adapter rejects a null item before committing converted content and never silently removes it or changes totals.
-
-Push registration/unregistration have generated contracts and services, with no production Angular caller. Registration preserves existing credential parsing, encryption and DEFAULT API fallback; its schema does not add field validation. Unregistration retains optional query parameters and the deprecated optional body. A nonblank query token and a supplied query device type each independently override their body field. The generated DELETE call passes the body in HttpClient options; it does not make the body mandatory or merge precedence on the client. Legacy body support remains in the existing architecture baseline. Native implementation is outside this client migration.
+System notification management uses `AdminSystemNotificationApi` and requires administrator access. Active and future notification banners remain available before authentication through `PublicSystemNotificationApi`.
 
 ## Generating OpenAPI Specs and Client Files
 
@@ -43,8 +33,6 @@ To generate the OpenAPI spec, run the following command in the root directory:
 ```bash
 ./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp
 ```
-
-The application scan includes the notification controllers alongside the other DTO-based modules. The agent group scans all Artemis packages and selects operations by their agent-access annotations. Both specifications use the same pruning task, which preserves literal null values.
 
 This starts a throwaway server, reads its specification and writes an `openapi.yaml` file to the `config/openapi` directory. The server
 uses port 8080 and its SSH server port 7921. If a development server already uses them, add `-PopenApiServerPort=<port>` and
