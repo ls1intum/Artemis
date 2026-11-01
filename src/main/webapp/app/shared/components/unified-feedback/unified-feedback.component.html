@@ -1,4 +1,4 @@
-<div class="unified-feedback" [ngClass]="inferredAlertClass()">
+<div class="unified-feedback" [ngClass]="inferredAlertClass()" [class.unified-feedback--assessment]="assessmentLayout()">
     <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback-reference">
@@ -12,45 +12,103 @@
                     <span class="unified-feedback-icon-badge">
                         <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
                     </span>
-                    @if (editable() && titleEditable()) {
-                        <textarea
-                            #titleTextarea
-                            class="unified-feedback-title-input"
-                            rows="1"
-                            [ngModel]="displayTitle()"
-                            (ngModelChange)="onTitleInput($event)"
-                            (input)="onTitleTextareaInput()"
-                            [placeholder]="defaultTitlePlaceholder()"
-                            [attr.aria-label]="defaultTitlePlaceholder()"
-                            [disabled]="readOnly()"
-                        ></textarea>
-                    } @else if (inferredTitle()) {
+                    @if (showTitle() && editable() && titleEditable() && (!assessmentLayout() || !feedback()?.gradingInstruction)) {
+                        <label class="unified-feedback-title-field">
+                            @if (assessmentLayout()) {
+                                <span class="unified-feedback-section-label unified-feedback-title-label">{{
+                                    'artemisApp.assessment.detail.feedbackHeader' | artemisTranslate
+                                }}</span>
+                            }
+                            <textarea
+                                #titleTextarea
+                                class="unified-feedback-title-input"
+                                rows="1"
+                                [ngModel]="displayTitle()"
+                                (ngModelChange)="onTitleInput($event)"
+                                (input)="onTitleTextareaInput()"
+                                [placeholder]="defaultTitlePlaceholder()"
+                                [attr.aria-label]="assessmentLayout() ? null : defaultTitlePlaceholder()"
+                                [disabled]="readOnly()"
+                            ></textarea>
+                        </label>
+                    } @else if (showTitle() && inferredTitle() && (!assessmentLayout() || !feedback()?.gradingInstruction || title())) {
                         <span class="unified-feedback-title" [tumAetUiTooltip]="inferredTitle()!">{{ inferredTitle() }}</span>
                     }
                 </div>
                 <div class="unified-feedback-header-right">
                     @if (editable()) {
-                        <jhi-points-input
-                            class="unified-feedback-points-input"
-                            data-testid="unified-feedback-points-input"
-                            fluid
-                            showButtons
-                            snapToStep
-                            [step]="CREDITS_STEP"
-                            [ngModel]="feedbackCredits()"
-                            (ngModelChange)="onCreditsChange($event)"
-                            (focusout)="onCreditsCommit()"
-                            (keydown.enter)="onCreditsCommit()"
-                            [ariaLabel]="pointsAriaLabel()"
-                            [disabled]="readOnly() || !!feedback()?.gradingInstruction"
-                        />
+                        @if (assessmentLayout() && feedback()?.gradingInstruction) {
+                            <div class="unified-feedback-points" data-testid="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">
+                                {{ pointsLabel() }}
+                            </div>
+                        } @else {
+                            <div class="unified-feedback-score-control" [class.unified-feedback-assessment-points]="assessmentLayout()">
+                                @if (assessmentLayout()) {
+                                    <button
+                                        type="button"
+                                        data-testid="decrease-feedback-points"
+                                        [disabled]="readOnly()"
+                                        [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
+                                        (mousedown)="$event.preventDefault()"
+                                        (click)="stepAssessmentCredits(-1)"
+                                    >
+                                        <span aria-hidden="true">−</span>
+                                    </button>
+                                }
+                                <jhi-points-input
+                                    class="unified-feedback-points-input"
+                                    data-testid="unified-feedback-points-input"
+                                    fluid
+                                    [showButtons]="!assessmentLayout()"
+                                    snapToStep
+                                    [step]="CREDITS_STEP"
+                                    [ngModel]="feedbackCredits()"
+                                    (ngModelChange)="onCreditsChange($event)"
+                                    (focusout)="onCreditsCommit()"
+                                    (keydown.enter)="onCreditsCommit()"
+                                    [ariaLabel]="pointsAriaLabel()"
+                                    [disabled]="readOnly() || !!feedback()?.gradingInstruction"
+                                />
+                                @if (assessmentLayout()) {
+                                    <button
+                                        type="button"
+                                        data-testid="increase-feedback-points"
+                                        [disabled]="readOnly()"
+                                        [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
+                                        (mousedown)="$event.preventDefault()"
+                                        (click)="stepAssessmentCredits(1)"
+                                    >
+                                        <span aria-hidden="true">+</span>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    } @else if (showPoints()) {
+                        <div class="unified-feedback-points" data-testid="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">
+                            {{ pointsLabel() }}
+                        </div>
+                        @if (isSubsequentFeedback()) {
+                            <fa-icon class="unified-feedback-subsequent-icon" [icon]="faExclamationTriangle" [tumAetUiTooltip]="subsequentFeedbackTooltip()" />
+                        }
+                    }
+                    @if (editable() || (assessmentLayout() && !readOnly())) {
                         <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- This toolbar only isolates its nested controls from the feedback row. -->
-                        <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
-                            @if (feedback()?.gradingInstruction) {
-                                <jhi-grading-instruction-link-icon [feedback]="feedback()!" />
+                        <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()" (keydown.enter)="stopToolbarEnterPropagation($event)">
+                            <ng-content select="[unifiedFeedbackViewControls]" />
+                            @if (editable() && !readOnly() && feedback()?.gradingInstruction) {
+                                <jhi-grading-instruction-link-icon [feedback]="feedback()!" (linkRemoved)="onInstructionUnlinked.emit()" />
                             }
                             @if (!readOnly()) {
-                                @if (canDismissWithoutConfirm()) {
+                                @if (assessmentLayout()) {
+                                    <jhi-confirm-icon
+                                        data-testid="delete-feedback"
+                                        [initialIcon]="faTrashAlt"
+                                        [confirmIcon]="faTimes"
+                                        [initialTooltip]="dismissTooltip()"
+                                        [confirmTooltip]="dismissConfirmTooltip()"
+                                        (confirmEvent)="handleDeleteConfirmed()"
+                                    />
+                                } @else if (canDismissWithoutConfirm()) {
                                     <button
                                         type="button"
                                         id="dismiss-icon"
@@ -58,12 +116,12 @@
                                         [attr.aria-label]="dismissTooltip()"
                                         (click)="handleDeleteConfirmed()"
                                     >
-                                        <fa-icon [icon]="faTimes" />
+                                        <fa-icon [icon]="assessmentLayout() ? faTrashAlt : faTimes" />
                                     </button>
                                 } @else {
                                     <jhi-confirm-icon
                                         id="confirm-icon"
-                                        [initialIcon]="faTimes"
+                                        [initialIcon]="assessmentLayout() ? faTrashAlt : faTimes"
                                         [confirmIcon]="faTrashAlt"
                                         [initialTooltip]="dismissTooltip()"
                                         [confirmTooltip]="dismissConfirmTooltip()"
@@ -72,16 +130,21 @@
                                 }
                             }
                         </div>
-                    } @else if (showPoints()) {
-                        <div class="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">{{ pointsLabel() }}</div>
-                        @if (isSubsequentFeedback()) {
-                            <fa-icon class="unified-feedback-subsequent-icon" [icon]="faExclamationTriangle" [tumAetUiTooltip]="subsequentFeedbackTooltip()" />
-                        }
                     }
                 </div>
             </div>
 
             @if (editable()) {
+                <ng-content select="[unifiedFeedbackBeforeDetail]" />
+                @if (assessmentLayout() && feedback()?.gradingInstruction; as instruction) {
+                    <div class="unified-feedback-assessment-criterion">
+                        <span class="unified-feedback-section-label">{{ 'artemisApp.assessment.detail.instruction' | artemisTranslate }}</span>
+                        <p>{{ instruction.instructionDescription }}</p>
+                    </div>
+                }
+                @if (assessmentLayout()) {
+                    <span class="unified-feedback-section-label">{{ 'artemisApp.assessment.detail.feedback' | artemisTranslate }}</span>
+                }
                 @if (gradingInstructionText()) {
                     <div class="unified-feedback-rubric-label">
                         <span>{{ gradingInstructionText() }}</span>
@@ -93,7 +156,9 @@
                     <textarea
                         #detailTextarea
                         class="unified-feedback-detail-input"
-                        [class.unified-feedback-detail-input-missing]="isDetailMissing()"
+                        data-testid="feedback-detail"
+                        [class.unified-feedback-detail-input-missing]="!assessmentLayout() && isDetailMissing()"
+                        [attr.aria-invalid]="isDetailMissing() || null"
                         rows="2"
                         [ngModel]="feedbackDetail() ?? ''"
                         (ngModelChange)="onDetailChange($event)"
@@ -120,13 +185,17 @@
                     <jhi-assessment-correction-round-badge [feedback]="fb" [highlightDifferences]="highlightDifferences()" />
                 }
             } @else if (feedbackContent()) {
-                <div class="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
+                @if (assessmentLayout()) {
+                    <span class="unified-feedback-section-label">{{ 'artemisApp.assessment.detail.feedback' | artemisTranslate }}</span>
+                }
+                <div class="unified-feedback-text" data-testid="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
             }
             @if (editable() && feedback() && Feedback.isFeedbackSuggestion(feedback()!)) {
                 <div class="unified-feedback-footer">
                     <jhi-feedback-suggestion-badge [feedbackText]="feedbackTitle()" variant="footer" />
                 </div>
             }
+            <ng-content select="[unifiedFeedbackFooter]" />
         </div>
     </div>
 </div>

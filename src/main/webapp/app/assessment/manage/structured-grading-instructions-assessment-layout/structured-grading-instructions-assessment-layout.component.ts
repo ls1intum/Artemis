@@ -1,21 +1,14 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiMessageComponent,
-    TumAetUiTableDirective,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
-import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { Component, OnDestroy, computed, inject, input, viewChildren } from '@angular/core';
+import { faCrosshairs, faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -35,28 +28,29 @@ export interface SortedGradingCriterion {
         FaIconComponent,
         TranslateDirective,
         ExpandableSectionComponent,
-        TumAetUiTooltipDirective,
         HelpIconComponent,
         MarkdownDirective,
         TumAetUiCheckboxComponent,
         TumAetUiTagComponent,
-        ArtemisTranslatePipe,
-        TumAetUiButtonDirective,
-        TumAetUiTableDirective,
+        TumAetUiButtonComponent,
         TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
     ],
 })
-export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
-    private readonly selectionService = inject(GradingInstructionSelectionService);
+export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnDestroy {
+    protected readonly selectionService = inject(GradingInstructionSelectionService);
     private readonly deleteDialogService = inject(DeleteDialogService);
 
     public readonly criteria = input.required<GradingCriterion[]>();
     readonly readonly = input<boolean>();
-    readonly allowDrop = signal<boolean>(undefined!);
+    readonly allowArming = input(true);
+    readonly allowDrop = computed(() => !this.readonly());
     // Icons
     faInfoCircle = faInfoCircle;
-    faExpand = faExpand;
-    faCompress = faCompress;
+    faCrosshairs = faCrosshairs;
+    faMinus = faMinus;
+    faPlus = faPlus;
 
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
 
@@ -76,13 +70,6 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         const applied = this.selectionService.appliedInstructionIds();
         return this.sortedCriteria().map((criterion) => criterion.instructions.filter((instruction) => instruction.id !== undefined && applied.has(instruction.id)).length);
     });
-
-    /**
-     * OnInit set the allowDrop property to allow drop of SGI if not in readOnly mode
-     */
-    ngOnInit(): void {
-        this.allowDrop.set(!this.readonly());
-    }
 
     collapseAll() {
         this.expandableSections().forEach((section) => {
@@ -141,7 +128,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             return;
         }
         this.deleteDialogService.openDeleteDialog({
-            deleteQuestion: 'artemisApp.feedback.delete.question',
+            deleteQuestion: 'artemisApp.feedback.delete.allInstances',
             translateValues: { text: '' },
             actionType: ActionType.Delete,
             buttonType: ButtonType.ERROR,
@@ -150,31 +137,49 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         });
     }
 
-    /**
-     * Set the tooltip of the draggable grading instruction to be equal to the feedback detail text
-     * @param {GradingInstruction} instr - the instruction object from which the feedback detail text is retrieved
-     */
-    setTooltip(instr: GradingInstruction) {
-        return 'Feedback: ' + instr.feedback;
+    /** One more application, while a finite usage limit (if any) still has room. */
+    incrementApplication(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.canIncrementApplication(instruction)) {
+            return;
+        }
+        this.selectionService.addApplication(instruction);
+    }
+
+    /** One fewer application owned by the feedback list. Referenced-only applications stay put. */
+    decrementApplication(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.canDecrementApplication(instruction)) {
+            return;
+        }
+        this.selectionService.removeOneApplication(instruction);
+    }
+
+    canIncrementApplication(instruction: GradingInstruction): boolean {
+        return this.isDraggable(instruction);
+    }
+
+    canDecrementApplication(instruction: GradingInstruction): boolean {
+        return this.selectionService.isRemovable(instruction);
     }
 
     /**
-     * Set the color of the draggable grading instruction based on the credits of the instruction
-     *  @param {GradingInstruction} instr - the instruction object we set its color based on its credits
+     * {@link GradingInstruction.usageCount} of 1 is a single application. Zero/unset means unlimited, and any higher
+     * value is a finite multi-use limit — both need the stepper once applied.
      */
-    setInstrColour(instr: GradingInstruction) {
-        let colour;
-        if (instr.credits === 0) {
-            colour = 'var(--sgi-assessment-layout-zero-background)';
-        } else if (instr.credits < 0) {
-            colour = 'var(--sgi-assessment-layout-negative-background)';
-        } else {
-            colour = 'var(--sgi-assessment-layout-positive-background)';
-        }
-        return colour;
+    isMultiUse(instruction: GradingInstruction): boolean {
+        return (instruction.usageCount ?? 0) !== 1;
     }
+
+    /** Multi-use instructions always expose the counter; single-use stays checkbox-only. */
+    showUsageStepper(instruction: GradingInstruction): boolean {
+        return this.isMultiUse(instruction);
+    }
+
     setScore(nr: number) {
-        return nr + 'P';
+        return nr > 0 ? `+${nr}` : `${nr}`;
     }
     /**
      * Connects the SGI with the Feedback of a Submission Element in assessment detail
@@ -193,7 +198,35 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     /**
      * disables drag if on readOnly mode
      */
-    disableDrag() {
-        return this.allowDrop();
+    /**
+     * Keyboard stand-in for drag-and-drop when there is no checkbox host: Enter/Space on the card toggles the instruction.
+     * Selectable cards use {@link armInstruction} on their dedicated button instead (nested controls forbid role=button).
+     */
+    onInstructionKeydown(event: KeyboardEvent, instruction: GradingInstruction): void {
+        if (!this.allowArming() || this.selectable() || !this.isDraggable(instruction)) {
+            return;
+        }
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        event.preventDefault();
+        this.selectionService.toggleArmedInstruction(instruction);
+    }
+
+    /**
+     * Selectable-branch stand-in for drag-and-drop: toggles the instruction for the next referenced feedback target.
+     * Checkboxes stay the path for the unreferenced feedback list; existing target consumers still apply the armed instruction.
+     */
+    armInstruction(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.allowArming() || !this.isDraggable(instruction)) {
+            return;
+        }
+        this.selectionService.toggleArmedInstruction(instruction);
+    }
+
+    ngOnDestroy(): void {
+        this.selectionService.clearArmedInstruction();
     }
 }

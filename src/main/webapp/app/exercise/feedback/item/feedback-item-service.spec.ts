@@ -45,7 +45,7 @@ describe('FeedbackItemService', () => {
         const expected = {
             name: 'artemisApp.result.detail.feedback',
             text: 'GI feedback\ndetailText',
-            title: 'text',
+            title: undefined,
             type: 'Reviewer',
             feedbackReference: feedback,
         } as FeedbackItem;
@@ -59,7 +59,7 @@ describe('FeedbackItemService', () => {
         const expected = {
             name: 'artemisApp.result.detail.feedback',
             text: 'GI feedback\ndetailText',
-            title: 'text',
+            title: undefined,
             type: 'Subsequent',
             feedbackReference: feedback,
         } as FeedbackItem;

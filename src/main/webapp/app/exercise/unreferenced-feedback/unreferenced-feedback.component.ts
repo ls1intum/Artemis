@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, input, model } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -7,11 +7,13 @@ import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unref
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 //One rendered block of the feedback list: the feedback belonging to a single grading criterion.
 export interface FeedbackGroup {
+    /** Keep criterion groups distinct from Other feedback when linking inserts or removes a group. */
+    key: GradingCriterion | 'other';
     title: string;
     translateTitle: boolean;
     feedbacks: Feedback[];
@@ -23,7 +25,15 @@ export interface FeedbackGroup {
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: ['./unreferenced-feedback.component.scss'],
-    imports: [TumAetUiTagComponent, TumAetUiMessageComponent, TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
+    imports: [
+        NgTemplateOutlet,
+        TranslateDirective,
+        UnreferencedFeedbackDetailComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -116,12 +126,12 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
                 continue;
             }
             groupFeedbacks.forEach((feedback) => alreadyGrouped.add(feedback));
-            groups.push(toGroup(criterion.title ?? '', false, groupFeedbacks, contributingCredits));
+            groups.push(toGroup(criterion.title ?? '', false, groupFeedbacks, contributingCredits, criterion));
         }
 
         const ungrouped = feedbacks.filter((feedback) => !alreadyGrouped.has(feedback));
         if (ungrouped.length > 0) {
-            groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped, contributingCredits));
+            groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped, contributingCredits, 'other'));
         }
         return groups;
     });
@@ -139,6 +149,8 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      * Awarded / deducted / final points for the assessment, using the same structured-grading usage and
      * positive/max-point capping as the assessment save path.
      */
+    readonly placeAddButtonWithOtherGroup = computed(() => this.showGroupHeaders() && this.feedbackGroups().some((group) => group.translateTitle));
+
     readonly pointsSummary = computed(() => {
         const { awarded, deducted, total } = this.assessmentScore();
         return { awarded, deducted, total };
@@ -212,10 +224,20 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     }
 
     applyInstruction(instruction: GradingInstruction): void {
+        if (!this.selectionService.canApplyInstruction(instruction)) {
+            return;
+        }
         const feedback = this.createFeedback();
         feedback.gradingInstruction = instruction;
         feedback.credits = instruction.credits;
         this.appendFeedback(feedback);
+    }
+
+    unapplyOneInstruction(instruction: GradingInstruction): void {
+        const feedback = this.unreferencedFeedback.findLast((item) => item.gradingInstruction?.id === instruction.id);
+        if (feedback) {
+            this.deleteFeedback(feedback);
+        }
     }
 
     unapplyInstruction(instruction: GradingInstruction): void {
@@ -279,7 +301,7 @@ function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number>
     return counts;
 }
 
-function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>): FeedbackGroup {
+function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>, key: FeedbackGroup['key']): FeedbackGroup {
     const points = feedbacks.reduce((sum, feedback) => sum + (contributingCredits.get(feedback) ?? 0), 0);
     let pointsSeverity: TumAetUiTagSeverity = 'secondary';
     if (points > 0) {
@@ -287,5 +309,5 @@ function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], 
     } else if (points < 0) {
         pointsSeverity = 'danger';
     }
-    return { title, translateTitle, feedbacks, points, pointsSeverity };
+    return { key, title, translateTitle, feedbacks, points, pointsSeverity };
 }

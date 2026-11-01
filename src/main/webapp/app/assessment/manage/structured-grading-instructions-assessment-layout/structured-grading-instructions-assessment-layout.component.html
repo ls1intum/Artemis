@@ -1,27 +1,24 @@
-@if (criteria()) {
-    <div class="mb-2">
-        <button type="button" (click)="expandAll()" tumAetUiButton severity="secondary" variant="outlined" size="small">
-            <fa-icon [icon]="faExpand" /> <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
-        </button>
-        <button type="button" (click)="collapseAll()" tumAetUiButton severity="secondary" variant="outlined" size="small">
-            <fa-icon [icon]="faCompress" /> <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
-        </button>
+@if (allowDrop()) {
+    <tumaet-ui-message severity="info" class="mb-3 block" [icon]="faInfoCircle" [text]="'artemisApp.exercise.dragDropInstruction' | artemisTranslate" />
+}
+@if (sortedCriteria().length) {
+    <div class="mb-3 flex items-center gap-1">
+        <tumaet-ui-button variant="text" severity="secondary" size="small" (clicked)="expandAll()">
+            <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
+        </tumaet-ui-button>
+        <span class="text-muted-color" aria-hidden="true">·</span>
+        <tumaet-ui-button variant="text" severity="secondary" size="small" (clicked)="collapseAll()">
+            <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
+        </tumaet-ui-button>
     </div>
 }
-@if (allowDrop()) {
-    <tumaet-ui-message severity="info">
-        <fa-icon [icon]="faInfoCircle" />
-        <span [jhiTranslate]="selectable() ? 'artemisApp.exercise.applyInstructionHint' : 'artemisApp.exercise.dragDropInstruction'"></span>
-    </tumaet-ui-message>
-}
 @for (criterion of sortedCriteria(); track criterionIndex; let criterionIndex = $index) {
-    <div>
+    <div class="mb-4">
         <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
             <ng-container expandableSectionHeaderActions>
                 @if (selectable()) {
                     <tumaet-ui-tag
                         severity="secondary"
-                        class="font-normal!"
                         [value]="
                             'artemisApp.assessmentInstructions.appliedCount'
                                 | artemisTranslate: { applied: appliedCountPerCriterion()[criterionIndex], total: criterion.instructions.length }
@@ -29,51 +26,108 @@
                     />
                 }
             </ng-container>
-            @for (instruction of criterion.instructions; track instruction; let instructionIndex = $index) {
-                <!-- draggable is bound as a property: as an interpolated attribute the string "false" would still be draggable. -->
-                <div
-                    class="rounded"
-                    [draggable]="isDraggable(instruction)"
-                    (dragstart)="disableDrag()"
-                    (dragstart)="drag($event, instruction)"
-                    id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
-                    [style.background-color]="setInstrColour(instruction)"
-                >
-                    <table role="presentation" class="w-full text-left layout-table" tumAetUiTable>
-                        <tbody>
-                            <tr>
-                                <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
-                                <td [jhiMarkdown]="instruction!.gradingScale!"></td>
-                                <td [jhiMarkdown]="instruction!.instructionDescription!" [tumAetUiTooltip]="setTooltip(instruction)"></td>
-                                <td class="td-usage-count">
-                                    @if (selectable()) {
-                                        <span
-                                            [tumAetUiTooltip]="
-                                                isLockedByReferencedFeedback(instruction) ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''
+            <div class="flex flex-col gap-2">
+                @for (instruction of criterion.instructions; track instruction; let instructionIndex = $index) {
+                    <div
+                        class="flex flex-col gap-2 rounded-xl border border-(--border-color) p-3"
+                        [class.sgi-item--armed]="allowArming() && selectionService.isArmed(instruction)"
+                        [draggable]="isDraggable(instruction)"
+                        [attr.tabindex]="allowArming() && !selectable() && isDraggable(instruction) ? 0 : null"
+                        [attr.role]="allowArming() && !selectable() && isDraggable(instruction) ? 'button' : null"
+                        [attr.aria-pressed]="allowArming() && !selectable() && isDraggable(instruction) ? selectionService.isArmed(instruction) : null"
+                        (keydown)="onInstructionKeydown($event, instruction)"
+                        (dragstart)="drag($event, instruction)"
+                        id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
+                    >
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-2">
+                                <tumaet-ui-tag
+                                    [severity]="instruction.credits > 0 ? 'success' : instruction.credits < 0 ? 'danger' : 'secondary'"
+                                    [value]="setScore(instruction.credits)"
+                                />
+                                @if (instruction.gradingScale) {
+                                    <span class="min-w-0 text-lg font-bold [overflow-wrap:anywhere]">{{ instruction.gradingScale }}</span>
+                                }
+                            </div>
+                            <div class="flex items-center gap-2">
+                                @if (selectable()) {
+                                    @if (allowArming()) {
+                                        <button
+                                            type="button"
+                                            class="sgi-item__control"
+                                            data-testid="arm-instruction"
+                                            [disabled]="!isDraggable(instruction)"
+                                            [attr.aria-pressed]="selectionService.isArmed(instruction)"
+                                            [attr.aria-label]="
+                                                (selectionService.isArmed(instruction) ? 'artemisApp.exercise.unarmInstruction' : 'artemisApp.exercise.armInstruction')
+                                                    | artemisTranslate
                                             "
+                                            (click)="armInstruction($event, instruction)"
                                         >
-                                            <tumaet-ui-checkbox
-                                                [checked]="isApplied(instruction)"
-                                                [disabled]="isLockedByReferencedFeedback(instruction)"
-                                                [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
-                                                (click)="toggleApplied($event, instruction)"
-                                            />
-                                        </span>
-                                    } @else {
-                                        @if (instruction!.usageCount && instruction!.usageCount !== 0) {
-                                            <span>{{ instruction.usageCount }}</span>
-                                        } @else {
-                                            &#8734;
-                                        }
-                                        <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
+                                            <fa-icon [icon]="faCrosshairs" />
+                                        </button>
                                     }
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            }
+                                    @if (showUsageStepper(instruction)) {
+                                        <div class="sgi-item__stepper" role="group" [attr.aria-label]="'artemisApp.exercise.usageCountHint' | artemisTranslate">
+                                            <button
+                                                type="button"
+                                                data-testid="decrease-instruction-usage"
+                                                [disabled]="!canDecrementApplication(instruction)"
+                                                [attr.aria-label]="'artemisApp.exercise.decreaseInstructionUsage' | artemisTranslate"
+                                                (click)="decrementApplication($event, instruction)"
+                                            >
+                                                <fa-icon [icon]="faMinus" />
+                                            </button>
+                                            <span
+                                                [tumAetUiTooltip]="
+                                                    (instruction.usageCount
+                                                        ? 'artemisApp.assessment.detail.feedbackUsage.limited'
+                                                        : 'artemisApp.assessment.detail.feedbackUsage.unlimited'
+                                                    ) | artemisTranslate: { used: selectionService.applicationCount(instruction), limit: instruction.usageCount }
+                                                "
+                                                >{{ selectionService.applicationCount(instruction) }} / {{ instruction.usageCount || '∞' }}</span
+                                            >
+                                            <button
+                                                type="button"
+                                                data-testid="increase-instruction-usage"
+                                                [disabled]="!canIncrementApplication(instruction)"
+                                                [attr.aria-label]="'artemisApp.exercise.increaseInstructionUsage' | artemisTranslate"
+                                                (click)="incrementApplication($event, instruction)"
+                                            >
+                                                <fa-icon [icon]="faPlus" />
+                                            </button>
+                                        </div>
+                                    }
+
+                                    <span
+                                        [tumAetUiTooltip]="
+                                            isLockedByReferencedFeedback(instruction) ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''
+                                        "
+                                    >
+                                        <tumaet-ui-checkbox
+                                            [checked]="isApplied(instruction)"
+                                            [disabled]="isLockedByReferencedFeedback(instruction)"
+                                            [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
+                                            (click)="toggleApplied($event, instruction)"
+                                        />
+                                    </span>
+                                } @else {
+                                    <span class="text-muted-color inline-flex items-center gap-1 text-sm">
+                                        {{ instruction.usageCount || '∞' }}
+                                        <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        <div class="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] items-baseline gap-x-2 gap-y-1">
+                            <span class="text-sm font-bold" jhiTranslate="artemisApp.assessment.detail.instruction"></span>
+                            <div class="sgi-item__markdown text-muted-color markdown-preview min-w-0 text-sm" [jhiMarkdown]="instruction.instructionDescription"></div>
+                            <span class="text-sm font-bold" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
+                            <div class="sgi-item__markdown text-muted-color markdown-preview min-w-0 text-sm" [jhiMarkdown]="instruction.feedback"></div>
+                        </div>
+                    </div>
+                }
+            </div>
         </jhi-expandable-section>
-        <br />
     </div>
 }

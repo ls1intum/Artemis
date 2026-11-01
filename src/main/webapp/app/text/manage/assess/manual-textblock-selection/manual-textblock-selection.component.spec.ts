@@ -17,6 +17,8 @@ import { SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/enti
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -73,6 +75,7 @@ describe('ManualTextblockSelectionComponent', () => {
             imports: [ManualTextblockSelectionComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 MockProvider(StructuredGradingCriterionService),
                 MockProvider(TextAssessmentAnalytics),

@@ -12,16 +12,28 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-text-block-feedback-editor',
     templateUrl: './text-block-feedback-editor.component.html',
     styleUrls: ['./text-block-feedback-editor.component.scss'],
-    imports: [UnifiedFeedbackComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, TextblockFeedbackDropdownComponent, FaIconComponent, TranslateDirective],
+    imports: [
+        UnifiedFeedbackComponent,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        TextblockFeedbackDropdownComponent,
+        FaIconComponent,
+        TranslateDirective,
+        TumAetUiButtonDirective,
+    ],
 })
 export class TextBlockFeedbackEditorComponent {
     private route = inject(ActivatedRoute);
+    protected readonly selectionService = inject(GradingInstructionSelectionService);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -80,6 +92,12 @@ export class TextBlockFeedbackEditorComponent {
     /**
      * Hook to indicate a score change; resets the correction status because it is now stale
      */
+    applyArmedInstruction(): void {
+        if (!this.readOnly() && this.structuredGradingCriterionService.applyArmedInstructionToFeedback(this.feedback())) {
+            this.onScoreChange();
+        }
+    }
+
     onScoreChange(): void {
         this.feedback().correctionStatus = undefined;
         this.didChange();

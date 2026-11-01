@@ -1,6 +1,8 @@
 <div class="unreferenced-feedback-detail" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
     <jhi-unified-feedback
+        [assessmentLayout]="true"
         [editable]="true"
+        (onInstructionUnlinked)="emitChanges()"
         [readOnly]="readOnly()"
         [feedback]="feedback()"
         [highlightDifferences]="highlightDifferences()"
@@ -11,5 +13,13 @@
         (feedbackDetailChange)="emitChanges()"
         (feedbackCreditsChange)="emitChanges()"
         (onDelete)="delete()"
-    />
+    >
+        <ng-container ngProjectAs="[unifiedFeedbackBeforeDetail]">
+            @if (!readOnly() && selectionService.hasArmedInstruction()) {
+                <button class="assessment-apply-instruction" tumAetUiButton size="small" type="button" variant="outlined" severity="secondary" (click)="applyArmedInstruction()">
+                    <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
+                </button>
+            }
+        </ng-container>
+    </jhi-unified-feedback>
 </div>

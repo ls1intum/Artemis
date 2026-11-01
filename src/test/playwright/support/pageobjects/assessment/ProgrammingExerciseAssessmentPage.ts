@@ -18,12 +18,17 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
 
     /**
      * Fills the explicitly selected card (0-based) among the feedback entries on a code line (also 0-based).
-     * Manual feedback commits while typing; nonmanual automatic feedback requires its save button.
+     * Inline edits are committed through the card’s Save control.
      */
     async fillInlineFeedback(lineIndex: number, feedbackIndex: number, points: number, feedback: string) {
         const card = this.getInlineFeedback(lineIndex).nth(feedbackIndex);
+        const edit = card.getByTestId('feedback-edit');
+        if (await edit.isVisible()) {
+            await edit.click();
+        }
         await card.getByRole('textbox', { name: 'Feedback', exact: true }).fill(feedback);
         await this.setPoints(card, points);
+        await card.getByTestId('feedback-save').click();
     }
 
     private getInlineFeedback(lineIndex: number) {

@@ -1,445 +1,345 @@
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
-import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
+import { signal } from '@angular/core';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from './code-editor-tutor-assessment-inline-feedback.component';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackType,
-    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { By } from '@angular/platform-browser';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { By } from '@angular/platform-browser';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackComponent>;
-    let sgiService: StructuredGradingCriterionService;
-    const fileName = 'testFile';
-    const codeLine = 1;
+    let selection: GradingInstructionSelectionService;
+    let originalResizeObserver: typeof ResizeObserver;
 
     beforeEach(() => {
+        originalResizeObserver = global.ResizeObserver;
         TestBed.configureTestingModule({
             imports: [CodeEditorTutorAssessmentInlineFeedbackComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
+            providers: [
+                { provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
         fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
         comp = fixture.componentInstance;
-        // No feedback bound -> working copy defaults to a fresh Feedback (viewOnly = false), mirroring the original setter.
-        fixture.componentRef.setInput('feedback', undefined);
-        fixture.componentRef.setInput('readOnly', false);
-        fixture.componentRef.setInput('selectedFile', fileName);
-        fixture.componentRef.setInput('codeLine', codeLine);
-        sgiService = TestBed.inject(StructuredGradingCriterionService);
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    it('should update feedback and emit to parent', () => {
-        const onUpdateFeedbackSpy = vi.fn();
-        comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
-        comp.updateFeedback();
-
-        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
-        expect(comp.currentFeedback().type).toBe(FeedbackType.MANUAL);
-
-        expect(onUpdateFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
-    });
-
-    it('should enable edit feedback and emit to parent', () => {
-        const onEditFeedbackSpy = vi.fn();
-        comp.onEditFeedback.subscribe(onEditFeedbackSpy);
-        comp.editFeedback(codeLine);
-
-        expect(onEditFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onEditFeedbackSpy).toHaveBeenCalledWith(codeLine);
-    });
-
-    it('should cancel feedback and emit to parent', () => {
-        const onCancelFeedbackSpy = vi.fn();
-        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
-        comp.cancelFeedback();
-
-        expect(onCancelFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onCancelFeedbackSpy).toHaveBeenCalledWith(codeLine);
-    });
-
-    it('should delete feedback and emit to parent', () => {
-        const onDeleteFeedbackSpy = vi.fn();
-        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
-        comp.deleteFeedback();
-
-        expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
-    });
-
-    it('should discard an unsaved feedback when the built-in dismiss action fires', () => {
-        const onCancelFeedbackSpy = vi.fn();
-        const onDeleteFeedbackSpy = vi.fn();
-        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
-        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
-
-        comp.removeFeedback();
-
-        expect(onCancelFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onDeleteFeedbackSpy).not.toHaveBeenCalled();
-    });
-
-    it('should delete a persisted feedback when the built-in dismiss action fires', () => {
-        fixture.componentRef.setInput('feedback', { id: 1, type: FeedbackType.MANUAL, credits: 1, text: 'File testFile at line 2' } as Feedback);
-        const onCancelFeedbackSpy = vi.fn();
-        const onDeleteFeedbackSpy = vi.fn();
-        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
-        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
-
-        comp.removeFeedback();
-
-        expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
-        expect(onCancelFeedbackSpy).not.toHaveBeenCalled();
-    });
-
-    it('should update feedback with SGI and emit to parent', () => {
-        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
-        // Fake call as a DragEvent cannot be created programmatically
-        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback: Feedback) => {
-            feedback.gradingInstruction = instruction;
-            feedback.credits = instruction.credits;
-        });
-        // Call spy function with empty event
-        comp.updateFeedbackOnDrop(new Event(''));
-
-        expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
-        expect(comp.currentFeedback().credits).toEqual(instruction.credits);
-        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
-        expect(comp.currentFeedback().text).toBe(`File ${fileName} at line ${codeLine + 1}`);
-    });
-
-    it('should keep the suggestion identity but mark it adapted when an SGI is dropped on an accepted suggestion', () => {
-        const suggestionText = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`;
-        fixture.componentRef.setInput('feedback', {
-            type: FeedbackType.MANUAL,
-            text: suggestionText,
-        } as Feedback);
-        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
-        // Fake call as a DragEvent cannot be created programmatically
-        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback: Feedback) => {
-            feedback.gradingInstruction = instruction;
-            feedback.credits = instruction.credits;
-        });
-
-        comp.updateFeedbackOnDrop(new Event(''));
-
-        expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
-        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
-        // The auto-generated title must not overwrite the suggestion identity, but dropping an SGI is an edit like
-        // any other, so the accepted suggestion transitions to adapted.
-        expect(comp.currentFeedback().text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
-    });
-
-    it('should count feedback with one credit as positive', () => {
-        const feedbackWithCredit = new Feedback();
-        feedbackWithCredit.credits = 1;
-        fixture.componentRef.setInput('feedback', feedbackWithCredit);
-
-        comp.updateFeedback();
-
-        expect(comp.currentFeedback().positive).toBe(true);
-    });
-
-    it('should display the feedback text properly', () => {
-        const gradingInstruction = {
-            id: 1,
-            credits: 1,
-            gradingScale: 'scale',
-            instructionDescription: 'description',
-            feedback: 'instruction feedback',
-            usageCount: 0,
-        } as GradingInstruction;
-        const feedback = {
-            id: 1,
-            detailText: 'feedback1',
-            text: 'File src/sorting/BubbleSort.java at line 4',
-            credits: 1.5,
-        } as Feedback;
-
-        let textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
-        expect(textToBeDisplayed).toBe(feedback.detailText);
-
-        feedback.gradingInstruction = gradingInstruction;
-        textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
-        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.detailText);
-    });
-
-    it('should escape special characters', () => {
-        const feedbackWithSpecialCharacters = {
-            detailText: 'feedback <with> special characters & "',
-        } as Feedback;
-        const expectedTextToBeDisplayed = 'feedback &lt;with&gt; special characters &amp; &quot;';
-
-        const textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedbackWithSpecialCharacters);
-        expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
-    });
-
-    it('should not display a points pill for non-graded feedback suggestions', () => {
-        fixture.componentRef.setInput('feedback', {
-            type: FeedbackType.AUTOMATIC,
-            text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
-        } as Feedback);
-        fixture.detectChanges();
-
-        const pointsElement = fixture.debugElement.query(By.css('.unified-feedback-points'));
-        expect(pointsElement).toBeNull();
-    });
-
-    it('should display a points pill for graded feedback', () => {
-        fixture.componentRef.setInput('feedback', {
-            credits: 1,
-            type: FeedbackType.AUTOMATIC,
-            text: 'feedback',
-        } as Feedback);
-        fixture.detectChanges();
-
-        const pointsElement = fixture.debugElement.query(By.css('.unified-feedback-points'));
-        expect(pointsElement).not.toBeNull();
-        expect(pointsElement.nativeElement.textContent).toContain('+1');
-    });
-
-    it('should render the feedback content for non-graded feedback suggestions', () => {
-        fixture.componentRef.setInput('feedback', {
-            type: FeedbackType.AUTOMATIC,
-            text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
-            detailText: 'Consider extracting this into a helper method.',
-        } as Feedback);
-        fixture.detectChanges();
-
-        const contentElement = fixture.debugElement.query(By.css('.unified-feedback-text')).nativeElement;
-        expect(contentElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
-    });
-
-    it('should render the feedback content for graded feedback', () => {
-        // Manual feedback is always open for editing now, so the collapsed content view needs read-only mode.
-        fixture.componentRef.setInput('feedback', {
-            type: FeedbackType.MANUAL,
-            text: 'feedback',
-            detailText: 'Off-by-one error on this line.',
-        } as Feedback);
-        fixture.componentRef.setInput('readOnly', true);
-        fixture.detectChanges();
-
-        const contentElement = fixture.debugElement.query(By.css('.unified-feedback-text')).nativeElement;
-        expect(contentElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
-    });
-
-    it('should render an editable title field for a feedback suggestion while editing', async () => {
-        fixture.componentRef.setInput('feedback', {
-            type: FeedbackType.MANUAL,
-            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
-            detailText: 'Add a null check.',
-            credits: 1,
-        } as Feedback);
-        comp.editFeedback(codeLine);
-        fixture.detectChanges();
-        // The app is zoneless: the ngModel-bound input value is only written to the DOM after an extra stabilization pass.
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        const titleInput = fixture.debugElement.query(By.css('.unified-feedback-title-input'));
-        expect(titleInput).toBeTruthy();
-        expect(titleInput.nativeElement.value).toBe('Missing null check');
-    });
-
-    it('should not render an editable title field for a non-suggestion feedback while editing', async () => {
-        // The title of a non-suggestion feedback is auto-generated on save, so it must not be offered as an input.
-        fixture.componentRef.setInput('feedback', {
-            type: FeedbackType.MANUAL,
-            text: 'File testFile at line 2',
-            detailText: 'Add a null check.',
-            credits: 1,
-        } as Feedback);
-        comp.editFeedback(codeLine);
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        expect(fixture.debugElement.query(By.css('.unified-feedback-title-input'))).toBeNull();
-    });
-
-    it('should show the suggestion badge only in the editable view, not the read-only collapsed view', () => {
-        // Manual feedback (an accepted suggestion is manual) is always open while editable, so there is no
-        // separate "start editing" step to compare against - only the read-only collapsed view lacks the badge.
-        fixture.componentRef.setInput('feedback', {
-            type: FeedbackType.MANUAL,
-            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
-            detailText: 'Add a null check.',
-            credits: 1,
-        } as Feedback);
-        fixture.componentRef.setInput('readOnly', true);
-        fixture.detectChanges();
-        expect(fixture.debugElement.query(By.css('jhi-feedback-suggestion-badge'))).toBeNull();
-
-        fixture.componentRef.setInput('readOnly', false);
-        fixture.detectChanges();
-        expect(fixture.debugElement.query(By.css('jhi-feedback-suggestion-badge'))).toBeTruthy();
-    });
-
-    it('should mark an accepted suggestion as adapted when its detail text is edited while editing', () => {
-        fixture.componentRef.setInput('feedback', {
-            type: FeedbackType.MANUAL,
-            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
-            detailText: 'Add a null check.',
-            credits: 1,
-        } as Feedback);
-        comp.editFeedback(codeLine);
-        fixture.detectChanges();
-
-        const detailTextarea = fixture.debugElement.query(By.css('.unified-feedback-detail-input')).nativeElement as HTMLTextAreaElement;
-        detailTextarea.value = 'Add a null check before dereferencing the pointer.';
-        detailTextarea.dispatchEvent(new Event('input'));
-        fixture.detectChanges();
-
-        expect(comp.currentFeedback().text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
-    });
-
-    it('should render the collapsed view through the unified feedback card in read-only mode', () => {
-        fixture.componentRef.setInput('feedback', {
-            type: FeedbackType.MANUAL,
-            text: 'File testFile at line 2',
-            detailText: 'Add a null check.',
-            credits: 1,
-        } as Feedback);
-        fixture.componentRef.setInput('readOnly', true);
-        fixture.detectChanges();
-
-        const unifiedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
-        expect(unifiedFeedback).toBeTruthy();
-        expect(unifiedFeedback.componentInstance.editable()).toBe(false);
-    });
-
-    it('should auto-commit a manual feedback when its detail text changes, with no save button', () => {
-        fixture.componentRef.setInput('feedback', { type: FeedbackType.MANUAL, text: 'File testFile at line 2', credits: 1 } as Feedback);
-        const onUpdateFeedbackSpy = vi.fn();
-        comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
-        fixture.detectChanges();
-
-        expect(fixture.debugElement.query(By.css('[data-testid="feedback-save"]'))).toBeNull();
-
-        const detailTextarea = fixture.debugElement.query(By.css('.unified-feedback-detail-input')).nativeElement as HTMLTextAreaElement;
-        detailTextarea.value = 'Off-by-one error here.';
-        detailTextarea.dispatchEvent(new Event('input'));
-        fixture.detectChanges();
-
-        expect(onUpdateFeedbackSpy).toHaveBeenCalledOnce();
-        expect(comp.currentFeedback().detailText).toBe('Off-by-one error here.');
-        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
-    });
-
-    it('should keep the explicit save button for a non-manual feedback opened for editing', () => {
-        fixture.componentRef.setInput('feedback', { type: FeedbackType.AUTOMATIC, text: 'SCAFeedbackIdentifier:Rule', credits: 1 } as Feedback);
-        fixture.detectChanges();
-
-        comp.editFeedback(codeLine);
-        fixture.detectChanges();
-
-        expect(fixture.debugElement.query(By.css('[data-testid="feedback-save"]'))).toBeTruthy();
-    });
-
-    it('should revert an in-progress edit of a non-manual feedback when the built-in dismiss action fires', () => {
-        fixture.componentRef.setInput('feedback', { id: 1, type: FeedbackType.AUTOMATIC, credits: 2, text: 'original' } as Feedback);
-        fixture.detectChanges();
-        comp.editFeedback(codeLine);
-        comp.currentFeedback().credits = 5;
-        const onDeleteFeedbackSpy = vi.fn();
-        const onCancelFeedbackSpy = vi.fn();
-        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
-        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
-
-        comp.removeFeedback();
-
-        expect(comp.currentFeedback().credits).toBe(2);
-        expect(comp.viewOnly()).toBe(true);
-        expect(onDeleteFeedbackSpy).not.toHaveBeenCalled();
-        expect(onCancelFeedbackSpy).not.toHaveBeenCalled();
-    });
-
-    it('should not mutate the bound non-manual feedback object while an edit is in progress', () => {
-        // The bound object is shared with the container's automaticFeedback list until an explicit save; an
-        // in-progress edit (or one that is later dismissed) must never leak field changes into it.
-        const boundFeedback = { id: 1, type: FeedbackType.AUTOMATIC, credits: 2, text: 'original' } as Feedback;
-        fixture.componentRef.setInput('feedback', boundFeedback);
-        fixture.detectChanges();
-
-        comp.editFeedback(codeLine);
-        expect(comp.currentFeedback()).not.toBe(boundFeedback);
-        comp.currentFeedback().credits = 5;
-        comp.currentFeedback().text = 'edited';
-
-        expect(boundFeedback.credits).toBe(2);
-        expect(boundFeedback.text).toBe('original');
-
-        comp.removeFeedback();
-
-        expect(boundFeedback.credits).toBe(2);
-        expect(boundFeedback.text).toBe('original');
-    });
-
-    it('should commit a non-manual feedback as a distinct object so the original is not left in the automatic bucket', () => {
-        const boundFeedback = { id: 1, type: FeedbackType.AUTOMATIC, credits: 2, text: 'SCAFeedbackIdentifier:Rule' } as Feedback;
-        fixture.componentRef.setInput('feedback', boundFeedback);
-        fixture.detectChanges();
-        comp.editFeedback(codeLine);
-
-        comp.updateFeedback();
-
-        expect(comp.currentFeedback()).not.toBe(boundFeedback);
-        expect(comp.currentFeedback().type).toBe(FeedbackType.MANUAL);
-        expect(boundFeedback.type).toBe(FeedbackType.AUTOMATIC);
-    });
-
-    it('should cancel the open edit when the built-in dismiss button is clicked', () => {
-        const onCancelFeedbackSpy = vi.fn();
-        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
-        // A fresh, empty feedback is dismissible without confirmation, so the plain dismiss button renders.
-        fixture.detectChanges();
-
-        const dismissButton = fixture.debugElement.query(By.css('#dismiss-icon'));
-        expect(dismissButton).toBeTruthy();
-        dismissButton.nativeElement.click();
-        fixture.detectChanges();
-
-        expect(onCancelFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onCancelFeedbackSpy).toHaveBeenCalledWith(codeLine);
-    });
-});
-
-describe('CodeEditorTutorAssessmentInlineFeedbackComponent compiled with preserved whitespace', () => {
-    // The application compiles templates with `preserveWhitespaces: true` (tsconfig.json), the test compiler does not.
-    // With whitespace kept, a block around the save button has more than one root node and is not projected into the
-    // extra-controls slot of the unified feedback, which has no other slot, so only this setup shows a missing button.
-    it('should render the save button of a non-manual feedback opened for editing', () => {
-        TestBed.configureTestingModule({
-            imports: [CodeEditorTutorAssessmentInlineFeedbackComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
-        });
-        TestBed.overrideComponent(CodeEditorTutorAssessmentInlineFeedbackComponent, { set: { preserveWhitespaces: true } });
-        const fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
-        fixture.componentRef.setInput('feedback', { type: FeedbackType.AUTOMATIC, text: 'SCAFeedbackIdentifier:Rule', credits: 1 } as Feedback);
         fixture.componentRef.setInput('readOnly', false);
         fixture.componentRef.setInput('selectedFile', 'testFile');
         fixture.componentRef.setInput('codeLine', 1);
-        fixture.detectChanges();
+        selection = TestBed.inject(GradingInstructionSelectionService);
+    });
+    afterEach(() => {
+        global.ResizeObserver = originalResizeObserver;
+        vi.restoreAllMocks();
+    });
 
-        fixture.componentInstance.editFeedback(1);
+    async function settle() {
         fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+    }
 
-        expect(fixture.debugElement.query(By.css('[data-testid="feedback-save"]'))).toBeTruthy();
+    function savedFeedback(): Feedback {
+        return { id: 1, text: 'File testFile at line 2', detailText: 'Original comment', credits: 1, type: FeedbackType.MANUAL, reference: 'file:testFile_line:1' };
+    }
+
+    async function open(feedback: Feedback) {
+        fixture.componentRef.setInput('feedback', feedback);
+        await settle();
+        comp.editFeedback(1);
+        await settle();
+    }
+
+    async function typeComment(value: string) {
+        const textarea = fixture.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
+        textarea.value = value;
+        textarea.dispatchEvent(new Event('input'));
+        await settle();
+    }
+
+    it('uses the shared card and commits a new feedback only on Save', async () => {
+        const updated = vi.fn();
+        comp.onUpdateFeedback.subscribe(updated);
+        await settle();
+        await typeComment('New comment');
+        const shared = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent)).componentInstance as UnifiedFeedbackComponent;
+        shared.onCreditsChange(1.5);
+        await settle();
+        expect(comp.hasUnsavedEdits()).toBe(true);
+        expect(updated).not.toHaveBeenCalled();
+        fixture.nativeElement.querySelector('[data-testid="feedback-save"]').click();
+        await settle();
+        expect(updated).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({ detailText: 'New comment', credits: 1.5, type: FeedbackType.MANUAL, reference: 'file:testFile_line:1', positive: true }),
+        );
+        expect(comp.viewOnly()).toBe(true);
+    });
+
+    it('blocks empty text and blank points immediately', async () => {
+        await settle();
+        const save = () => fixture.nativeElement.querySelector('[data-testid="feedback-save"]') as HTMLButtonElement;
+        expect(save().disabled).toBe(true);
+        await typeComment('Comment');
+        const shared = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent)).componentInstance as UnifiedFeedbackComponent;
+        shared.onCreditsChange(2);
+        await settle();
+        expect(save().disabled).toBe(false);
+        shared.onCreditsChange(undefined);
+        await settle();
+        expect(save().disabled).toBe(true);
+    });
+
+    it('keeps saved feedback unchanged until Save and discards local edits on Cancel', async () => {
+        const feedback = savedFeedback();
+        const updated = vi.fn();
+        comp.onUpdateFeedback.subscribe(updated);
+        await open(feedback);
+        await typeComment('Unsaved edit');
+        expect(feedback.detailText).toBe('Original comment');
+        expect(comp.hasUnsavedEdits()).toBe(true);
+        fixture.nativeElement.querySelector('[data-testid="feedback-cancel"]').click();
+        await settle();
+        expect(comp.currentFeedback().detailText).toBe('Original comment');
+        expect(comp.hasUnsavedEdits()).toBe(false);
+        expect(updated).not.toHaveBeenCalled();
+    });
+
+    it('retains local comment and points when the parent rebinds unchanged feedback', async () => {
+        const feedback = savedFeedback();
+        await open(feedback);
+        await typeComment('Edited comment');
+        comp.currentFeedback().credits = -2;
+        fixture.componentRef.setInput('feedback', { ...feedback });
+        await settle();
+        expect(comp.currentFeedback()).toMatchObject({ detailText: 'Edited comment', credits: -2 });
+        comp.updateFeedback();
+        expect(comp.currentFeedback()).toMatchObject({ detailText: 'Edited comment', credits: -2 });
+    });
+
+    it('reserves the original instruction through unlink, apply elsewhere and Cancel', async () => {
+        const instruction = { id: 7, credits: 1, usageCount: 1, feedback: 'Rubric feedback' } as GradingInstruction;
+        const applyElsewhere = vi.fn();
+        selection.register({
+            appliedInstructionIds: signal(new Set([7])),
+            appliedInstructionCounts: signal(new Map([[7, 1]])),
+            removableInstructionIds: signal(new Set()),
+            applyInstruction: applyElsewhere,
+            unapplyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
+        });
+        const feedback = savedFeedback();
+        feedback.gradingInstruction = instruction;
+        await open(feedback);
+        comp.currentFeedback().gradingInstruction = undefined;
+        const shared = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent)).componentInstance as UnifiedFeedbackComponent;
+        shared.onInstructionUnlinked.emit();
+        selection.addApplication(instruction);
+        expect(applyElsewhere).not.toHaveBeenCalled();
+        expect(selection.applicationCount(instruction)).toBe(1);
+        comp.cancelFeedback();
+        expect(comp.currentFeedback().gradingInstruction?.id).toBe(7);
+        expect(selection.applicationCount(instruction)).toBe(1);
+    });
+
+    it('links an accepted suggestion on a detached copy and keeps its identity until Save', async () => {
+        const feedback = savedFeedback();
+        feedback.id = undefined;
+        feedback.text = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion title`;
+        const updated = vi.fn();
+        comp.onUpdateFeedback.subscribe(updated);
+        await open(feedback);
+        selection.toggleArmedInstruction({ id: 7, credits: 2, feedback: 'Instruction feedback' } as GradingInstruction);
+        comp.applyArmedInstruction();
+        await settle();
+        expect(feedback.text).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion title`);
+        expect(feedback.gradingInstruction).toBeUndefined();
+        expect(comp.currentFeedback().text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Suggestion title`);
+        expect(updated).not.toHaveBeenCalled();
+        comp.cancelFeedback();
+        expect(comp.currentFeedback()).toEqual(feedback);
+    });
+
+    it('keeps the suggestion title editor visible after clearing its title', async () => {
+        const feedback = savedFeedback();
+        feedback.text = `${FEEDBACK_SUGGESTION_IDENTIFIER}Suggestion title`;
+        await open(feedback);
+
+        const title = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
+        title.value = '';
+        title.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title-input')).not.toBeNull();
+
+        title.value = 'Replacement title';
+        title.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+        expect(comp.currentFeedback().text).toBe(`${FEEDBACK_SUGGESTION_IDENTIFIER}Replacement title`);
+    });
+
+    it('lets assessment shortcuts reach the assessment while stopping other card keys', async () => {
+        await open(savedFeedback());
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        const textarea = fixture.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
+        for (const init of [
+            { key: 's', ctrlKey: true },
+            { key: 'Enter', ctrlKey: true },
+            { key: 'ArrowRight', ctrlKey: true, shiftKey: true },
+        ]) {
+            textarea.dispatchEvent(new KeyboardEvent('keydown', { ...init, bubbles: true }));
+        }
+        expect(bubbled).toHaveBeenCalledTimes(3);
+
+        textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(bubbled).toHaveBeenCalledTimes(3);
+
+        const toolbarButton = fixture.nativeElement.querySelector('[data-testid="feedback-save"]') as HTMLButtonElement;
+        toolbarButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
+        expect(bubbled).toHaveBeenCalledTimes(4);
+        toolbarButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(bubbled).toHaveBeenCalledTimes(4);
+    });
+
+    it('observes the detail textarea when an existing card opens and its width shrinks', async () => {
+        let callback: ResizeObserverCallback | undefined;
+        const observed: Element[] = [];
+        class ResizeObserverMock {
+            constructor(observerCallback: ResizeObserverCallback) {
+                callback = observerCallback;
+            }
+            observe(element: Element) {
+                observed.push(element);
+            }
+            disconnect() {}
+        }
+        global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
+
+        const feedback = savedFeedback();
+        fixture.componentRef.setInput('feedback', feedback);
+        await settle();
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-detail"]')).toBeNull();
+        comp.editFeedback(1);
+        await settle();
+
+        const textarea = fixture.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
+        expect(observed).toContain(textarea);
+        const shared = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent)).componentInstance as UnifiedFeedbackComponent;
+        const autogrow = vi.spyOn(shared as unknown as { autogrowDetailTextarea: () => void }, 'autogrowDetailTextarea');
+        callback?.([{ target: textarea, contentRect: { width: 80 } } as unknown as ResizeObserverEntry], {} as ResizeObserver);
+        expect(autogrow).toHaveBeenCalledOnce();
+    });
+
+    it('keeps a new linked draft counted until it is canceled', async () => {
+        const instruction = { id: 7, credits: 1, usageCount: 1, feedback: 'Rubric feedback' } as GradingInstruction;
+        selection.register({
+            appliedInstructionIds: signal(new Set()),
+            appliedInstructionCounts: signal(new Map()),
+            removableInstructionIds: signal(new Set()),
+            applyInstruction: vi.fn(),
+            unapplyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
+        });
+        await settle();
+        selection.toggleArmedInstruction(instruction);
+        comp.applyArmedInstruction();
+        expect(selection.applicationCount(instruction)).toBe(1);
+        expect(selection.canApplyInstruction(instruction)).toBe(false);
+        comp.cancelFeedback();
+        expect(selection.applicationCount(instruction)).toBe(0);
+    });
+
+    it('reports raw point edits even before a partial negative value reaches the model', async () => {
+        await open(savedFeedback());
+        const input = fixture.nativeElement.querySelector('jhi-points-input input') as HTMLInputElement;
+        input.value = '-';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+        expect(comp.hasUnsavedEdits()).toBe(true);
+        comp.cancelFeedback();
+        expect(comp.hasUnsavedEdits()).toBe(false);
+    });
+
+    it('opens a detached edit session when an instruction is dropped onto a collapsed card', async () => {
+        const feedback = savedFeedback();
+        fixture.componentRef.setInput('feedback', feedback);
+        await settle();
+        const instruction = { id: 7, credits: 2, feedback: 'Rubric feedback' };
+        const event = { preventDefault: vi.fn(), dataTransfer: { getData: () => JSON.stringify(instruction) } } as unknown as Event;
+        comp.updateFeedbackOnDrop(event);
+        await settle();
+        expect(comp.viewOnly()).toBe(false);
+        expect(comp.currentFeedback().gradingInstruction?.id).toBe(7);
+        expect(feedback.gradingInstruction).toBeUndefined();
+        expect(comp.hasUnsavedEdits()).toBe(true);
+        comp.cancelFeedback();
+        expect(comp.currentFeedback()).toEqual(feedback);
+    });
+
+    it('preserves partial negative entry and steps off-grid values from the raw input', async () => {
+        await settle();
+        const input = fixture.nativeElement.querySelector('jhi-points-input input') as HTMLInputElement;
+        for (const value of ['-', '-2']) {
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            await settle();
+            expect(input.value).toBe(value);
+        }
+        input.value = '1.3';
+        input.dispatchEvent(new Event('input'));
+        await settle();
+        const increment = fixture.nativeElement.querySelector('[data-testid="increase-feedback-points"]') as HTMLButtonElement;
+        const down = new MouseEvent('mousedown', { cancelable: true });
+        increment.dispatchEvent(down);
+        expect(down.defaultPrevented).toBe(true);
+        increment.click();
+        await settle();
+        expect(comp.currentFeedback().credits).toBe(1.5);
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(input.value).toBe('1.5');
+    });
+
+    it('renders linked criteria and student-facing feedback without the hidden old title', async () => {
+        const feedback = savedFeedback();
+        feedback.text = 'Hidden old title';
+        feedback.gradingInstruction = { id: 7, credits: 1, feedback: 'Student-facing text' } as GradingInstruction;
+        fixture.componentRef.setInput('gradingCriteria', [{ title: 'Criterion title', structuredGradingInstructions: [feedback.gradingInstruction] }]);
+        fixture.componentRef.setInput('feedback', feedback);
+        await settle();
+        expect(fixture.nativeElement.textContent).toContain('Criterion title');
+        expect(fixture.nativeElement.querySelector('[data-testid="unified-feedback-text"]').textContent).toContain('Student-facing text');
+        expect(fixture.nativeElement.textContent).not.toContain('Hidden old title');
+    });
+
+    it('does not offer mutation controls in read-only mode', async () => {
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.componentRef.setInput('feedback', savedFeedback());
+        await settle();
+        expect(fixture.nativeElement.querySelector('button')).toBeNull();
+        const update = vi.fn();
+        comp.onUpdateFeedback.subscribe(update);
+        comp.updateFeedback();
+        comp.editFeedback(1);
+        expect(update).not.toHaveBeenCalled();
+        expect(comp.viewOnly()).toBe(true);
+    });
+
+    it('ignores a drop without instruction data', () => {
+        const update = vi.spyOn(TestBed.inject(StructuredGradingCriterionService), 'updateFeedbackWithStructuredGradingInstructionEvent');
+        const event = new Event('drop');
+        comp.updateFeedbackOnDrop(event);
+        expect(update).toHaveBeenCalledWith(comp.currentFeedback(), event);
     });
 });

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
@@ -169,6 +170,18 @@ describe('AssessmentInstructionsComponent', () => {
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, gradingCriteria: criteria } as ProgrammingExercise);
         });
 
+        it('disables arming for modeling while keeping it enabled for programming', () => {
+            fixture.detectChanges();
+            const layout = () =>
+                fixture.debugElement.query(By.directive(StructuredGradingInstructionsAssessmentLayoutComponent))
+                    .componentInstance as StructuredGradingInstructionsAssessmentLayoutComponent;
+            expect(layout().allowArming()).toBe(true);
+
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING, gradingCriteria: criteria } as ModelingExercise);
+            fixture.detectChanges();
+            expect(layout().allowArming()).toBe(false);
+        });
+
         it('should not be selectable, and count nothing as applied, without a registered feedback list', () => {
             fixture.detectChanges();
 
@@ -182,6 +195,7 @@ describe('AssessmentInstructionsComponent', () => {
                 appliedInstructionCounts: signal(new Map([[1, 1]])),
                 removableInstructionIds: signal(new Set([1])),
                 applyInstruction: vi.fn(),
+                unapplyOneInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             };
             TestBed.inject(GradingInstructionSelectionService).register(host);
@@ -197,6 +211,7 @@ describe('AssessmentInstructionsComponent', () => {
                 appliedInstructionCounts: signal(new Map()),
                 removableInstructionIds: signal(new Set()),
                 applyInstruction: vi.fn(),
+                unapplyOneInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             });
             fixture.componentRef.setInput('readOnly', true);

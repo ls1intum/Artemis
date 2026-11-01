@@ -1,13 +1,57 @@
-.layout-table {
-    margin: 1px;
+.sgi-item__markdown ::ng-deep p {
+    margin: 0;
+}
 
-    .td-score,
-    .td-usage-count {
-        width: 4%;
+.sgi-item__control,
+.sgi-item__stepper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background: transparent;
+    color: inherit;
+}
+
+.sgi-item__control,
+.sgi-item__stepper button {
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+    }
+}
+
+.sgi-item__control fa-icon {
+    display: flex;
+}
+
+.sgi-item__stepper {
+    overflow: hidden;
+
+    button {
+        border: 0;
+        background: transparent;
+        color: inherit;
     }
 
-    .td-usage-count {
-        position: relative;
-        white-space: nowrap;
+    span {
+        padding-inline: 0.375rem;
+        color: var(--secondary);
+        font-size: 0.75rem;
+        font-variant-numeric: tabular-nums;
     }
+}
+
+.sgi-item--armed {
+    border-color: var(--tumaet-ui-primary-color);
+}
+
+.sgi-item__control[aria-pressed='true'] {
+    background: var(--tumaet-ui-primary-color);
+    color: var(--tumaet-ui-primary-contrast-color);
 }
