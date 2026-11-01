@@ -693,6 +693,28 @@ describe('FileUploadAssessmentComponent', () => {
 
             expect(saveSpy).toHaveBeenCalledWith(expect.any(Array), component.submission()!.id, 'Test note');
         });
+
+        it('should refuse to save points outside the bounds and name the bounds', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: 100.5, detailText: 'too many points' })]);
+            const saveSpy = vi.spyOn(fileUploadAssessmentService, 'saveAssessment');
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSaveAssessment();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the points', () => {
+            vi.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSaveAssessment();
+
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
     });
 
     describe('onSubmitAssessment', () => {

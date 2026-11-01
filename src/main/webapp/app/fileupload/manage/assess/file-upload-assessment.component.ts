@@ -43,6 +43,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FileService } from 'app/foundation/service/file.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
+/** The message of the bound the server enforces on the points of a feedback, see {@link Feedback.haveCreditsInBounds}. */
+const FEEDBACK_CREDITS_OUT_OF_BOUNDS = 'error.feedbackCreditsOutOfBounds';
+
+function isCreditsOutOfBounds(error: HttpErrorResponse): boolean {
+    return error.error?.errorKey === 'feedbackCreditsOutOfBounds';
+}
+
 @Component({
     providers: [FileUploadAssessmentService],
     templateUrl: './file-upload-assessment.component.html',
@@ -410,6 +417,10 @@ export class FileUploadAssessmentComponent implements OnInit {
             this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
             return;
         }
+        if (!Feedback.haveCreditsInBounds(this.assessments)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
+            return;
+        }
 
         this.isLoading.set(true);
         this.fileUploadAssessmentService
@@ -426,7 +437,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                         return;
                     }
                     this.alertService.closeAll();
-                    this.alertService.error('artemisApp.assessment.messages.saveFailed');
+                    this.alertService.error(isCreditsOutOfBounds(error) ? FEEDBACK_CREDITS_OUT_OF_BOUNDS : 'artemisApp.assessment.messages.saveFailed');
                 },
             });
     }
@@ -435,6 +446,10 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.validateAssessment();
         if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
+            return;
+        }
+        if (!Feedback.haveCreditsInBounds(this.assessments)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
             return;
         }
 
@@ -457,7 +472,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                 },
                 error: (error: HttpErrorResponse) => {
                     if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
-                        this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`);
+                        this.onError(isCreditsOutOfBounds(error) ? FEEDBACK_CREDITS_OUT_OF_BOUNDS : `artemisApp.${error.error.entityName}.${error.error.message}`);
                     }
                 },
             });
@@ -606,6 +621,11 @@ export class FileUploadAssessmentComponent implements OnInit {
             assessmentAfterComplaint.onError();
             return;
         }
+        if (!Feedback.haveCreditsInBounds(this.assessments)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
+            assessmentAfterComplaint.onError();
+            return;
+        }
 
         const submissionId = this.submission()?.id;
         if (!submissionId) {
@@ -637,6 +657,8 @@ export class FileUploadAssessmentComponent implements OnInit {
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {
                         this.alertService.error(error.message, error.params);
+                    } else if (isCreditsOutOfBounds(httpErrorResponse)) {
+                        this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
                     } else {
                         this.alertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
                     }

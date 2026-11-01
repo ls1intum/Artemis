@@ -16,6 +16,9 @@ export enum FeedbackHighlightColor {
     GREEN = 'rgba(40, 167, 69, 0.6)',
 }
 
+/** The bound the server enforces on the points of a feedback the assessor gives. */
+const MAX_MANUAL_CREDITS = 100;
+
 export enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
     MANUAL = 'MANUAL',
@@ -286,6 +289,21 @@ export class Feedback implements BaseEntity {
 
     public static haveCreditsAndComments(that: Feedback[]): boolean {
         return that.filter(Feedback.hasCreditsAndComment).length > 0 && that.filter(Feedback.hasCreditsAndComment).length === that.length;
+    }
+
+    /**
+     * Checks that every feedback the assessor gives has points the server accepts (Feedback.MAX_MANUAL_CREDITS on the server). A feedback linked to a grading instruction
+     * takes the points of the instruction, and an automatic feedback is not given by the assessor, so neither is checked here.
+     * @param that the feedback of the assessment
+     */
+    public static haveCreditsInBounds(that: Feedback[] | undefined): boolean {
+        return (that ?? []).every(
+            (feedback) =>
+                feedback.credits === undefined ||
+                feedback.gradingInstruction !== undefined ||
+                feedback.type === FeedbackType.AUTOMATIC ||
+                (Number.isFinite(feedback.credits) && Math.abs(feedback.credits) <= MAX_MANUAL_CREDITS),
+        );
     }
 
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string, dropInfo?: DropInfo): Feedback {

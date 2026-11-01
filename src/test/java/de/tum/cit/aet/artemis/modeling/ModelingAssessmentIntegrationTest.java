@@ -428,6 +428,76 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testManualAssessmentSave_creditsOutOfBounds() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        feedbacks.getFirst().setCredits(Feedback.MAX_MANUAL_CREDITS + 0.5);
+
+        createAssessment(submission, feedbacks, "/assessment", HttpStatus.BAD_REQUEST);
+
+        feedbacks.getFirst().setCredits(-Feedback.MAX_MANUAL_CREDITS - 0.5);
+        createAssessment(submission, feedbacks, "/assessment", HttpStatus.BAD_REQUEST);
+
+        assertThat(resultRepository.findDistinctBySubmissionId(submission.getId())).as("no result is saved for a refused assessment").isNotPresent();
+
+        feedbacks.getFirst().setCredits((double) Feedback.MAX_MANUAL_CREDITS);
+        createAssessment(submission, feedbacks, "/assessment", HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testManualAssessmentSave_creditsOutOfBoundsNotExemptedByClientData() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(classExercise));
+        var instruction = criteria.getFirst().getStructuredGradingInstructions().iterator().next();
+
+        // a linked feedback whose credits differ from the stored instruction would still count its own credits
+        var linkedFeedback = new Feedback().credits(1000.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("linked with other credits");
+        linkedFeedback.setGradingInstruction(instruction);
+        createAssessment(submission, List.of(linkedFeedback), "/assessment", HttpStatus.BAD_REQUEST);
+
+        // a new automatic feedback is sent by the client, not computed by the server
+        var automaticFeedback = new Feedback().credits(Feedback.MAX_MANUAL_CREDITS + 1.0).type(FeedbackType.AUTOMATIC).detailText("client automatic feedback");
+        createAssessment(submission, List.of(automaticFeedback), "/assessment", HttpStatus.BAD_REQUEST);
+
+        // a new automatic feedback with the marker of a static code analysis finding is still sent by the client
+        var markedFeedback = new Feedback().credits(1000.0).type(FeedbackType.AUTOMATIC).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "fake");
+        createAssessment(submission, List.of(markedFeedback), "/assessment", HttpStatus.BAD_REQUEST);
+
+        var notANumberFeedback = new Feedback().credits(Double.NaN).type(FeedbackType.MANUAL_UNREFERENCED).detailText("not a number");
+        createAssessment(submission, List.of(notANumberFeedback), "/assessment", HttpStatus.BAD_REQUEST);
+
+        assertThat(resultRepository.findDistinctBySubmissionId(submission.getId())).as("no result is saved for a refused assessment").isNotPresent();
+
+        linkedFeedback.setCredits(instruction.getCredits());
+        createAssessment(submission, List.of(linkedFeedback), "/assessment", HttpStatus.OK);
+
+        // a stored manual feedback relabelled as automatic is not a stored automatic feedback
+        var storedResult = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
+        var storedFeedback = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(storedResult.getId()).getFeedbacks().iterator().next();
+        storedFeedback.setGradingInstruction(null);
+        storedFeedback.setType(FeedbackType.AUTOMATIC);
+        storedFeedback.setCredits(1000.0);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + storedResult.getId() + "/assessment",
+                new ModelingAssessmentDTO(toFeedbackDTOs(List.of(storedFeedback)), null), HttpStatus.BAD_REQUEST);
+
+        // a stored automatic feedback sent as manual would be saved as a manual feedback with these credits
+        var storedAutomatic = participationUtilService
+                .addFeedbackToResult(new Feedback().credits(150.0).type(FeedbackType.AUTOMATIC).text("automatic"),
+                        resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(storedResult.getId()))
+                .getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).findFirst().orElseThrow();
+        storedAutomatic.setType(FeedbackType.MANUAL);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + storedResult.getId() + "/assessment",
+                new ModelingAssessmentDTO(toFeedbackDTOs(List.of(storedAutomatic)), null), HttpStatus.BAD_REQUEST);
+        storedAutomatic.setType(FeedbackType.AUTOMATIC);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + storedResult.getId() + "/assessment",
+                new ModelingAssessmentDTO(toFeedbackDTOs(List.of(storedAutomatic)), null), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSubmit_classDiagram() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
