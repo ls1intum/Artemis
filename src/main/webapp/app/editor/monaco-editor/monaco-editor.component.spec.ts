@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
-vi.mock('@sentry/angular', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('@sentry/angular')>()),
+vi.mock('app/core/error-reporting/capture-exception', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('app/core/error-reporting/capture-exception')>()),
     captureException: vi.fn(),
 }));
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';

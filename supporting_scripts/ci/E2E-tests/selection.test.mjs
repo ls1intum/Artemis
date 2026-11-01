@@ -1,7 +1,7 @@
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { discoverSpecs, selectTests, validateMapping } from './select-tests.mjs';
@@ -65,6 +65,36 @@ function assertPartition(result, directory) {
 }
 
 describe('E2E selector against real commit diffs', () => {
+    it('can be imported from Node stdin without running the CLI or resolving a nonexistent entry file', () => {
+        const stdout = execFileSync(process.execPath, ['--input-type=module', '-'], {
+            cwd: fileURLToPath(root),
+            input: "const { selectTests } = await import('./supporting_scripts/ci/E2E-tests/select-tests.mjs'); console.log(typeof selectTests);",
+            encoding: 'utf8',
+        });
+        assert.equal(stdout.trim(), 'function');
+    });
+    for (const link of ['directory', 'file']) {
+        it(`emits a complete selection when the CLI is launched through a ${link} symlink`, () => {
+            const { directory, commit } = repository();
+            put(directory, 'src/main/java/de/tum/cit/aet/artemis/tutorialgroup/service/TutorialGroupService.java');
+            commit();
+            const alias = join(temporaryRoot(), 'selector');
+            const script = 'supporting_scripts/ci/E2E-tests/select-tests.mjs';
+            symlinkSync(link === 'directory' ? directory : join(directory, script), alias, link === 'directory' ? 'dir' : 'file');
+            const output = join(temporaryRoot(), 'github-output');
+            const stdout = execFileSync(process.execPath, [link === 'directory' ? join(alias, script) : alias, 'base'], {
+                cwd: directory,
+                encoding: 'utf8',
+                env: { ...process.env, GITHUB_OUTPUT: output },
+            });
+            assert.match(stdout, /^OUTPUT: RUN_ALL_TESTS=false$/m);
+            const result = Object.fromEntries([...stdout.matchAll(/^OUTPUT: ([^=]+)=(.*)$/gm)].map(([, key, value]) => [key, value]));
+            assertPartition(result, directory);
+            assert.ok(paths(result).includes('e2e/tutorialgroup/TutorialGroupEditing.spec.ts'));
+            assert.ok(!paths(result).includes('e2e/quiz/QuizExerciseParticipation.spec.ts'));
+            assert.match(readFileSync(output, 'utf8'), /^RUN_ALL_TESTS=false$/m);
+        });
+    }
     for (const module of [
         'text',
         'quiz',

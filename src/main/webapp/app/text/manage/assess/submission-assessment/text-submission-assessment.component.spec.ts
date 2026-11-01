@@ -38,7 +38,7 @@ import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -191,7 +191,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: AthenaService, useClass: MockAthenaService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -532,6 +532,21 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(navigateBackSpy).toHaveBeenCalledOnce();
         expect(cancelAssessmentStub).toHaveBeenCalledOnce();
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id, component.result()?.id);
+    });
+
+    it('keeps the assessment usable when cancellation is declined', async () => {
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        vi.spyOn(window, 'confirm').mockReturnValue(false);
+        const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment');
+        const navigateBackSpy = vi.spyOn(component, 'navigateBack');
+
+        component.cancel();
+
+        expect(component.cancelBusy()).toBe(false);
+        expect(cancelSpy).not.toHaveBeenCalled();
+        expect(navigateBackSpy).not.toHaveBeenCalled();
     });
 
     it('should go to next submission', async () => {

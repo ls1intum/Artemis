@@ -11,12 +11,12 @@
 >
     <div class="w-[32rem] max-w-[calc(100vw-2rem)]" data-testid="holiday-dialog">
         <h3
-            class="mt-0 mb-3 text-base font-semibold"
+            class="mt-0 mb-4! text-base font-semibold"
             [jhiTranslate]="isEditMode() ? 'artemisApp.pages.tutorialFreePeriodsManagement.editHoliday' : 'artemisApp.pages.tutorialFreePeriodsManagement.addHoliday'"
         ></h3>
         <!-- The native submit event, not ngSubmit: that one is an NgForm output and this form carries no form controls. -->
-        <form class="flex flex-col gap-4" (submit)="onSubmit($event)">
-            <div class="flex flex-col gap-3 sm:flex-row">
+        <form class="flex flex-col gap-6!" (submit)="onSubmit($event)">
+            <div class="flex flex-col gap-4! sm:flex-row">
                 <tumaet-ui-form-field class="flex-1" [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.from' | artemisTranslate">
                     <!--
                     The picker carries the date and the time together, so one pair of fields covers a single day, a run

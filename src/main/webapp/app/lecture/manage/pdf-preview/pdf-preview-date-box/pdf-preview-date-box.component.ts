@@ -6,12 +6,11 @@ import dayjs from 'dayjs/esm';
 import { HiddenPage, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDatePickerComponent, TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
 
 interface CategorizedExercise {
     type: ExerciseType;
@@ -25,7 +24,18 @@ const FOREVER = dayjs('9999-12-31');
     templateUrl: './pdf-preview-date-box.component.html',
     styleUrls: ['./pdf-preview-date-box.component.scss'],
     standalone: true,
-    imports: [FontAwesomeModule, NgbTooltipModule, RouterModule, TranslateDirective, CommonModule, FormsModule, ArtemisTranslatePipe, TumAetUiDatePickerComponent],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiRadioButtonComponent,
+        FontAwesomeModule,
+        RouterModule,
+        TranslateDirective,
+        CommonModule,
+        FormsModule,
+        ArtemisTranslatePipe,
+        TumAetUiDatePickerComponent,
+    ],
 })
 export class PdfPreviewDateBoxComponent implements OnInit {
     // Injected services

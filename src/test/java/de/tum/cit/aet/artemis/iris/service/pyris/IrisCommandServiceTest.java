@@ -14,7 +14,6 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,21 +28,21 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandAckDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCommandParametersDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandRequestWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
@@ -121,7 +120,7 @@ class IrisCommandServiceTest {
     @BeforeEach
     void setUp() {
         commandService = new IrisCommandService(coordinationService, distributedDataProvider, irisWebsocketService, irisChatWebsocketService, irisMessageService,
-                irisSessionRepository, userRepository, JsonMapper.builder().build(), Optional.of(lectureUnitRepositoryApi), materialVersionService);
+                irisSessionRepository, userRepository, Optional.of(lectureUnitRepositoryApi), materialVersionService);
         job = new ChatJob("job-1", COURSE_ID, SESSION_ID, null, null, null, null);
     }
 
@@ -133,17 +132,11 @@ class IrisCommandServiceTest {
     }
 
     private static PyrisCommandDTO pointOutCommand(@Nullable Long lectureUnitId, @Nullable Integer page, @Nullable Integer timestamp) {
-        var parameters = new LinkedHashMap<String, JsonNode>();
-        if (lectureUnitId != null) {
-            parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(lectureUnitId));
-        }
-        if (page != null) {
-            parameters.put("page", JsonNodeFactory.instance.numberNode(page));
-        }
-        if (timestamp != null) {
-            parameters.put("timestamp", JsonNodeFactory.instance.numberNode(timestamp));
-        }
-        return new PyrisCommandDTO("pointOut", parameters);
+        return new PyrisCommandDTO("pointOut", parameters(lectureUnitId, page, timestamp));
+    }
+
+    private static IrisCommandParametersDTO parameters(@Nullable Number lectureUnitId, @Nullable Number page, @Nullable Number timestamp) {
+        return new IrisCommandParametersDTO(lectureUnitId, page, null, timestamp, null, null, null, null);
     }
 
     private void stubSessionAndUser() {
@@ -205,7 +198,7 @@ class IrisCommandServiceTest {
         // The marker mirrors the command's {type, parameters} shape so history readers parse it like a command, with
         // what only Artemis can resolve added to the parameters: the unit's name and the lecture it belongs to. The
         // lecture is what a click on the chip navigates by later, when the chat may sit in a different one entirely.
-        var marker = ((IrisJsonMessageContent) savedMarker.getValue().getContent().getFirst()).getJsonNode();
+        var marker = JsonObjectMapper.get().readTree(((IrisJsonMessageContent) savedMarker.getValue().getContent().getFirst()).getContentAsString());
         assertThat(marker.get("type").stringValue()).isEqualTo("pointOut");
         assertThat(marker.get("parameters").get("lectureUnitId").asLong()).isEqualTo(LECTURE_UNIT_ID);
         assertThat(marker.get("parameters").get("page").asInt()).isEqualTo(3);
@@ -229,9 +222,9 @@ class IrisCommandServiceTest {
 
         verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
         var request = (IrisCommandRequestWebsocketDTO) dispatched.getValue();
-        assertThat(request.parameters().get("materialType").stringValue()).isEqualTo("attachment");
-        assertThat(request.parameters().get("materialVersion").asInt()).isEqualTo(3);
-        var markerParameters = ((IrisJsonMessageContent) savedMarker.getValue().getContent().getFirst()).getJsonNode().get("parameters");
+        assertThat(request.parameters().materialType()).isEqualTo("attachment");
+        assertThat(request.parameters().materialVersion()).isEqualTo(3);
+        var markerParameters = JsonObjectMapper.get().readTree(((IrisJsonMessageContent) savedMarker.getValue().getContent().getFirst()).getContentAsString()).get("parameters");
         assertThat(markerParameters.get("materialType").stringValue()).isEqualTo("attachment");
         assertThat(markerParameters.get("materialVersion").asInt()).isEqualTo(3);
     }
@@ -248,8 +241,8 @@ class IrisCommandServiceTest {
 
         verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
         var parameters = ((IrisCommandRequestWebsocketDTO) dispatched.getValue()).parameters();
-        assertThat(parameters.get("materialType").stringValue()).isEqualTo("video");
-        assertThat(parameters.get("materialVersion").asInt()).isEqualTo(7);
+        assertThat(parameters.materialType()).isEqualTo("video");
+        assertThat(parameters.materialVersion()).isEqualTo(7);
     }
 
     @Test
@@ -258,17 +251,16 @@ class IrisCommandServiceTest {
         stubLectureUnitInCourse(COURSE_ID);
         when(materialVersionService.getSnapshot("job-1")).thenReturn(Map.of(LECTURE_UNIT_ID, new LectureUnitIngestedVersionsDTO(LECTURE_UNIT_ID, null, null)));
         when(coordinationService.register(anyString(), eq("student1"), eq(false))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
-        var parameters = new LinkedHashMap<>(pointOutCommand(LECTURE_UNIT_ID, 3).parameters());
-        parameters.put("materialType", JsonNodeFactory.instance.stringNode("video"));
-        parameters.put("materialVersion", JsonNodeFactory.instance.numberNode(99));
+        var pointOut = pointOutCommand(LECTURE_UNIT_ID, 3).parameters();
+        var parameters = new IrisCommandParametersDTO(pointOut.lectureUnitId(), pointOut.page(), null, null, "video", 99, null, null);
         var dispatched = ArgumentCaptor.forClass(Object.class);
 
         commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null);
 
         verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
         var stampedParameters = ((IrisCommandRequestWebsocketDTO) dispatched.getValue()).parameters();
-        assertThat(stampedParameters.get("materialType").stringValue()).isEqualTo("attachment");
-        assertThat(stampedParameters.get("materialVersion").asInt()).isZero();
+        assertThat(stampedParameters.materialType()).isEqualTo("attachment");
+        assertThat(stampedParameters.materialVersion()).isEqualTo(0);
     }
 
     @Test
@@ -283,14 +275,14 @@ class IrisCommandServiceTest {
 
         verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
         var parameters = ((IrisCommandRequestWebsocketDTO) dispatched.getValue()).parameters();
-        assertThat(parameters.get("materialType").stringValue()).isEqualTo("attachment");
-        assertThat(parameters.get("materialVersion").asInt()).isZero();
+        assertThat(parameters.materialType()).isEqualTo("attachment");
+        assertThat(parameters.materialVersion()).isEqualTo(0);
     }
 
     @Test
     void commandDtos_serializeTheWayPyrisAndTheClientExpect() throws Exception {
         var mapper = JsonMapper.builder().build();
-        var parameters = Map.<String, JsonNode>of("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));
+        var parameters = parameters(LECTURE_UNIT_ID, null, null);
 
         // Pyris requires "applied" in the response body; NON_EMPTY must not drop the primitive false.
         assertThat(mapper.writeValueAsString(PyrisCommandResultDTO.notApplied())).isEqualTo("{\"applied\":false}");
@@ -370,23 +362,21 @@ class IrisCommandServiceTest {
         assertThat(commandService.executeCommand(job, pointOutCommand(null, 3), null).applied()).isFalse();
         assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, null), null).applied()).isFalse();
 
-        var parameters = new LinkedHashMap<String, JsonNode>();
-        parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));
-        parameters.put("page", JsonNodeFactory.instance.numberNode(0));
-        parameters.put("timestamp", JsonNodeFactory.instance.numberNode(0));
-        assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
+        var zeroPage = new PyrisCommandDTO("pointOut", parameters(LECTURE_UNIT_ID, 0, 0));
+        assertThat(commandService.executeCommand(job, zeroPage, null).applied()).isFalse();
 
-        parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(new BigInteger("18446744073709551617")));
-        parameters.put("page", JsonNodeFactory.instance.numberNode(1));
-        assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
+        var unitIdOutOfLongRange = new PyrisCommandDTO("pointOut", parameters(new BigInteger("18446744073709551617"), 1, 0));
+        assertThat(commandService.executeCommand(job, unitIdOutOfLongRange, null).applied()).isFalse();
 
-        parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));
-        parameters.put("timestamp", JsonNodeFactory.instance.numberNode(-1));
-        assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
+        var negativeTimestamp = new PyrisCommandDTO("pointOut", parameters(LECTURE_UNIT_ID, 1, -1));
+        assertThat(commandService.executeCommand(job, negativeTimestamp, null).applied()).isFalse();
 
-        parameters.remove("page");
-        parameters.put("timestamp", JsonNodeFactory.instance.numberNode(new BigDecimal("1e10000")));
-        assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
+        var infiniteTimestamp = new PyrisCommandDTO("pointOut", parameters(LECTURE_UNIT_ID, null, new BigDecimal("1e10000")));
+        assertThat(commandService.executeCommand(job, infiniteTimestamp, null).applied()).isFalse();
+
+        // A parameter that is not a number reaches the service as NaN, which differs from an absent one.
+        var notANumber = new PyrisCommandDTO("pointOut", parameters(LECTURE_UNIT_ID, Double.NaN, 5));
+        assertThat(commandService.executeCommand(job, notANumber, null).applied()).isFalse();
 
         verify(coordinationService, never()).register(anyString(), anyString(), anyBoolean());
         verify(irisWebsocketService, never()).send(any(), any(), any());
@@ -407,7 +397,7 @@ class IrisCommandServiceTest {
 
         // No lecture module at all, so there are no units to point into.
         var serviceWithoutLectures = new IrisCommandService(coordinationService, distributedDataProvider, irisWebsocketService, irisChatWebsocketService, irisMessageService,
-                irisSessionRepository, userRepository, JsonMapper.builder().build(), Optional.empty(), materialVersionService);
+                irisSessionRepository, userRepository, Optional.empty(), materialVersionService);
         assertThat(serviceWithoutLectures.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null).applied()).isFalse();
 
         verify(coordinationService, never()).register(anyString(), anyString(), anyBoolean());

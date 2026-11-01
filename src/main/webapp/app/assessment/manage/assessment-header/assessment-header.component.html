@@ -1,6 +1,6 @@
-<h3 class="top-container flex-wrap flex-lg-nowrap">
+<h3 class="top-container flex-wrap lg:flex-nowrap">
     <!--back button only used in assessment dashboard-->
-    <div class="row-container me-2 d-flex align-items-center gap-2">
+    <div class="row-container me-2 flex items-center gap-2">
         @if (isTestRun()) {
             <span jhiTranslate="artemisApp.assessment.testRunAssessment"></span>
         } @else {
@@ -9,16 +9,26 @@
         <ng-content select="[jhiBannerSlot]" />
     </div>
     @if (hasAssessmentDueDatePassed() && !result()?.completionDate) {
-        <p-message severity="warn" [closable]="true" (onClose)="hasAssessmentDueDatePassed.set(false)" [style]="{ fontSize: '65%' }">
+        <tumaet-ui-message severity="warn" [style]="{ fontSize: '65%' }">
             <span jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver"></span>
-        </p-message>
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="text"
+                (click)="hasAssessmentDueDatePassed.set(false)"
+                [attr.aria-label]="'entity.action.close' | artemisTranslate"
+            >
+                ×
+            </button>
+        </tumaet-ui-message>
     }
     @if (!isLoading()) {
-        <div class="row-container flex-wrap flex-lg-nowrap">
+        <div class="row-container flex-wrap lg:flex-nowrap">
             @if (!isAssessor() && !hasComplaint()) {
                 <span
                     id="assessmentLocked"
-                    class="text-danger m-2"
+                    class="text-state-danger m-2"
                     style="font-size: 65%"
                     jhiTranslate="artemisApp.assessment.assessmentLocked"
                     [translateValues]="{ otherUser: result()?.assessor?.name + ' (' + result()?.assessor?.login + ')' }"
@@ -83,37 +93,39 @@
             @if (isAssessor() && (!hasComplaint() || exercise()?.isAtLeastInstructor)) {
                 <span
                     data-testid="assessmentLockedCurrentUser"
-                    class="text-danger m-2"
+                    class="text-state-danger m-2"
                     style="font-size: 65%"
                     jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
                 ></span>
             }
             <!-- Highlight the difference between first and second correction -->
             @if (!isProgrammingExercise() && result() && correctionRound() > 0) {
-                <button type="button" class="btn ms-2 btn-primary" (click)="toggleHighlightDifferences()" [disabled]="saveBusy() || submitBusy() || cancelBusy()">
+                <button type="button" class="ms-2" (click)="toggleHighlightDifferences()" [disabled]="saveBusy() || submitBusy() || cancelBusy()" tumAetUiButton severity="primary">
                     @if (!highlightDifferences()) {
                         <span
-                            ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
+                            tumAetUiTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
                             jhiTranslate="artemisApp.assessment.diffView.differenceActivate"
                         ></span>
                     }
                     @if (highlightDifferences()) {
                         <span
-                            ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOff' | artemisTranslate }}"
+                            tumAetUiTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOff' | artemisTranslate }}"
                             jhiTranslate="artemisApp.assessment.diffView.differenceDeactivate"
                         ></span>
                     }
                 </button>
             }
             <br />
-            <div class="d-flex flex-wrap flex-lg-nowrap">
+            <div class="flex flex-wrap lg:flex-nowrap">
                 @if (!result()?.completionDate) {
                     <button
                         type="button"
-                        class="btn m-1 btn-primary"
+                        class="m-1"
                         (click)="save.emit()"
                         [disabled]="saveDisabled"
-                        [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
+                        [tumAetUiTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
+                        tumAetUiButton
+                        severity="primary"
                     >
                         @if (saveBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
@@ -131,7 +143,15 @@
                                 : ('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'
                         "
                     >
-                        <button type="button" id="submit" class="btn m-1 btn-success" (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()" [disabled]="submitDisabled">
+                        <button
+                            type="button"
+                            id="submit"
+                            class="m-1"
+                            tumAetUiButton
+                            severity="success"
+                            (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()"
+                            [disabled]="submitDisabled"
+                        >
                             @if (submitBusy()) {
                                 <fa-icon [icon]="faSpinner" animation="spin" />
                             }
@@ -142,9 +162,11 @@
                         <button
                             type="button"
                             id="cancel"
-                            class="btn m-1 btn-danger"
+                            class="m-1"
                             (click)="onCancel.emit()"
                             [disabled]="!(exercise()?.isAtLeastInstructor || isAssessor()) || saveBusy() || submitBusy() || cancelBusy()"
+                            tumAetUiButton
+                            severity="danger"
                         >
                             @if (cancelBusy()) {
                                 <fa-icon [icon]="faSpinner" animation="spin" />
@@ -156,10 +178,12 @@
                 @if (overrideVisible) {
                     <button
                         type="button"
-                        class="btn m-1 btn-danger"
+                        class="m-1"
                         (click)="onSubmit.emit()"
                         [disabled]="overrideDisabled"
-                        [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
+                        [tumAetUiTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
+                        tumAetUiButton
+                        severity="danger"
                     >
                         @if (submitBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
@@ -168,7 +192,7 @@
                     </button>
                 }
                 @if (result()?.completionDate && exercise()?.isAtLeastInstructor && (exercise()!.type === ExerciseType.MODELING || exercise()!.type === ExerciseType.TEXT)) {
-                    <button type="button" class="btn m-1 btn-primary" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()">
+                    <button type="button" class="m-1" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()" tumAetUiButton severity="primary">
                         @if (submitBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         }
@@ -181,11 +205,13 @@
                 @if (assessNextVisible) {
                     <button
                         type="button"
-                        class="btn m-1 btn-success"
+                        class="m-1"
                         data-testid="assessNextButton"
                         [disabled]="assessNextDisabled"
                         (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
-                        [ngbTooltip]="nextSubmissionShortcut"
+                        [tumAetUiTooltip]="nextSubmissionShortcut"
+                        tumAetUiButton
+                        severity="success"
                     >
                         @if (nextSubmissionBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
@@ -193,7 +219,7 @@
                         <span jhiTranslate="artemisApp.assessment.button.nextSubmission"></span>
                     </button>
                 }
-                <a [routerLink]="exerciseDashboardLink()" class="btn m-1 btn-info">
+                <a [routerLink]="exerciseDashboardLink()" class="m-1" tumAetUiButton severity="info">
                     <span jhiTranslate="entity.action.exerciseDashboard"></span>
                 </a>
             </div>

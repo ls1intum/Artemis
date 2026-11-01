@@ -20,7 +20,7 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -44,7 +44,7 @@ describe('TextAssessmentAreaComponent', () => {
             imports: [TextAssessmentAreaComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 MockProvider(StructuredGradingCriterionService),
                 MockProvider(TextAssessmentAnalytics),

@@ -1,3 +1,5 @@
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,6 +43,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: PdfEngineService, useValue: engineService },
+                { provide: CourseExerciseService, useValue: { findAllExercisesWithDueDatesForCourse: () => of({ body: [] }) } },
             ],
         }).compileComponents();
 
@@ -86,6 +89,36 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         preview.click();
         expect(enlarge).toHaveBeenCalledExactlyOnceWith(1, 'slide1');
         expect(component.originalCanvas()).toBe(preview.querySelector('canvas'));
+    });
+
+    it('hides the selected page through its popover and clears the open state after saving', async () => {
+        fixture.componentRef.setInput('isAttachmentVideoUnit', true);
+        await setPages();
+        const emitted = vi.fn();
+        component.hiddenPagesOutput.subscribe(emitted);
+        expect(document.querySelector('#date-box-checkbox')).toBeNull();
+
+        const visibilityButton = fixture.nativeElement.querySelector('#hide-show-button-slide1') as HTMLButtonElement;
+        expect(visibilityButton.getAttribute('aria-label')).toBe('artemisApp.attachment.pdfPreview.dateBox.hidePage');
+        visibilityButton.click();
+        await fixture.whenStable();
+        expect(component.isPopoverOpen()).toBe(true);
+        expect(component.activeButtonPage()?.slideId).toBe('slide1');
+        const forever = document.querySelector<HTMLInputElement>('#date-box-checkbox');
+        expect(forever).not.toBeNull();
+        forever!.click();
+        await fixture.whenStable();
+        const save = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')).find((button) => button.textContent?.trim() === 'entity.action.save');
+        expect(save).toBeDefined();
+        save!.click();
+        await fixture.whenStable();
+
+        expect(emitted).toHaveBeenCalledWith(expect.objectContaining({ slide1: expect.objectContaining({ date: expect.anything() }) }));
+        expect(component.isPopoverOpen()).toBe(false);
+        expect(component.activeButtonPage()).toBeUndefined();
+        fixture.componentRef.setInput('hiddenPages', emitted.mock.calls[0][0]);
+        await fixture.whenStable();
+        expect(visibilityButton.getAttribute('aria-label')).toBe('artemisApp.attachment.pdfPreview.thumbnailGrid.showPage');
     });
 
     it('should render every ordered page through the engine', async () => {

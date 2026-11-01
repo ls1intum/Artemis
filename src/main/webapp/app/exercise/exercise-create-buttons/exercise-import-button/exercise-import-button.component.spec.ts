@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router, provideRouter } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClient } from '@angular/common/http';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { Subject } from 'rxjs';
@@ -25,7 +25,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 describe('ExerciseImportButtonComponent', () => {
     let component: ExerciseImportButtonComponent;
     let fixture: ComponentFixture<ExerciseImportButtonComponent>;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let router: Router;
     let httpMock: HttpTestingController;
 
@@ -49,7 +49,7 @@ describe('ExerciseImportButtonComponent', () => {
                 ]),
                 LocalStorageService,
                 SessionStorageService,
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -58,7 +58,7 @@ describe('ExerciseImportButtonComponent', () => {
 
         fixture = TestBed.createComponent(ExerciseImportButtonComponent);
         component = fixture.componentInstance;
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         fixture.componentRef.setInput('course', { id: 123 });
         fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
         router = TestBed.inject(Router);
@@ -78,7 +78,7 @@ describe('ExerciseImportButtonComponent', () => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
 
         const onCloseSubject = new Subject<Exercise | undefined>();
-        const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
+        const mockDialogRef = { onClose: onCloseSubject.asObservable() } as TumAetUiDialogRef;
         const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         const routerSpy = vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
         const beforeNavigateSpy = vi.spyOn(component.beforeNavigate, 'emit');
@@ -152,7 +152,7 @@ describe('ExerciseImportButtonComponent', () => {
         const source = exerciseType === ExerciseType.PROGRAMMING ? new ProgrammingExercise(sourceIsExam ? undefined : sourceCourse, group) : new TextExercise(sourceCourse, group);
         source.id = 42;
         source.title = 'Selected source';
-        const dialogRef = new DynamicDialogRef();
+        const dialogRef = new TumAetUiDialogRef<Exercise>(vi.fn(), vi.fn());
         vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
         const navigateSpy = vi.spyOn(router, 'navigate');
 
@@ -173,7 +173,7 @@ describe('ExerciseImportButtonComponent', () => {
         fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         const source = new ProgrammingExercise(undefined, undefined);
         source.title = 'Imported archive';
-        const dialogRef = new DynamicDialogRef();
+        const dialogRef = new TumAetUiDialogRef<Exercise>(vi.fn(), vi.fn());
         vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
         const navigateSpy = vi.spyOn(router, 'navigate');
 
@@ -188,7 +188,7 @@ describe('ExerciseImportButtonComponent', () => {
     });
 
     it('does not navigate when the import dialog is dismissed', () => {
-        const dialogRef = new DynamicDialogRef();
+        const dialogRef = new TumAetUiDialogRef<Exercise>(vi.fn(), vi.fn());
         vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
         const navigateSpy = vi.spyOn(router, 'navigate');
 

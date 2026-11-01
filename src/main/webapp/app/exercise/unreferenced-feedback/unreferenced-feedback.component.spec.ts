@@ -1,3 +1,4 @@
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -9,7 +10,7 @@ import { By } from '@angular/platform-browser';
 import { UnreferencedFeedbackDetailStubComponent } from 'test/helpers/stubs/exercise/unreferenced-feedback-detail-stub.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { TranslateService } from '@ngx-translate/core';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -26,7 +27,7 @@ describe('UnreferencedFeedbackComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [UnreferencedFeedbackComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: TumAetUiDialogService, useClass: MockDialogService }, provideHttpClient()],
         })
             .overrideComponent(UnreferencedFeedbackComponent, {
                 remove: { imports: [TranslateDirective, UnreferencedFeedbackDetailComponent] },

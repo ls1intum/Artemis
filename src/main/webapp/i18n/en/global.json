@@ -22,7 +22,9 @@
             "expandMenu": "Expand menu (Ctrl + M)",
             "collapseMenu": "Collapse menu (Ctrl + M)",
             "enabled": "Enabled",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "resizePanels": "Resize panels",
+            "selectAllRows": "Select all rows"
         },
         "weekdays": {
             "monday": "Monday",

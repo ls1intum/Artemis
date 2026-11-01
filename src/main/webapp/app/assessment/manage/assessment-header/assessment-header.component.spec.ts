@@ -1,17 +1,16 @@
 import { By } from '@angular/platform-browser';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
-import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,7 +24,7 @@ describe('AssessmentHeaderComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [
-                MockModule(NgbTooltipModule),
+                MockDirective(TumAetUiTooltipDirective),
                 AssessmentHeaderComponent,
                 MockComponent(AssessmentWarningComponent),
                 MockDirective(TranslateDirective),

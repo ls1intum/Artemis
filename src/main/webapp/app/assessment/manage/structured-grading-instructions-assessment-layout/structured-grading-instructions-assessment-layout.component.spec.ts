@@ -11,11 +11,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { DeleteDialogData, triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -28,15 +28,14 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                MockDirective(NgbTooltip),
-                MockDirective(NgbCollapse),
+                MockDirective(TumAetUiTooltipDirective),
                 FaIconComponent,
                 StructuredGradingInstructionsAssessmentLayoutComponent,
                 MockComponent(HelpIconComponent),
                 ExpandableSectionComponent,
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: TumAetUiDialogService, useClass: MockDialogService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {

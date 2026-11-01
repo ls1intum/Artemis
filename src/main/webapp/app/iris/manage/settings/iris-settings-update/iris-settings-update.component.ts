@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import {
     IRIS_PIPELINE_VARIANTS,
@@ -349,7 +349,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 },
                 error: (error) => {
                     this.isLoading.set(false);
-                    captureException('Error loading Iris settings', error);
+                    captureException(new Error('Error loading Iris settings', { cause: error }));
                     this.alertService.error('artemisApp.iris.settings.error.load');
                 },
             });
@@ -403,7 +403,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 },
                 error: (error) => {
                     this.isSaving.set(false);
-                    captureException('Error saving Iris settings', error);
+                    captureException(new Error('Error saving Iris settings', { cause: error }));
                     if (error.status === 400 && error.error && error.error.message) {
                         this.alertService.error(error.error.message);
                     } else {
@@ -485,7 +485,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 },
                 error: (error) => {
                     this.isAutoSaving.set(false);
-                    captureException('Error saving Iris enabled state', error);
+                    captureException(new Error('Error saving Iris enabled state', { cause: error }));
                     // Revert on error
                     const currentSettings = this.settings();
                     if (currentSettings) {

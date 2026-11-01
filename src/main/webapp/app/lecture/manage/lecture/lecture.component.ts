@@ -6,22 +6,16 @@ import { LectureService } from '../services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faChalkboardTeacher, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardTeacher, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { Subject, from } from 'rxjs';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { SortService } from 'app/foundation/service/sort.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
@@ -34,7 +28,16 @@ import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/at
 import { PDF_UPLOAD_CONFIRMATION_STATE_KEY, PdfUploadConfirmation } from 'app/lecture/manage/lecture-update/pdf-upload-confirmation.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogComponent,
+    TumAetUiEmptyStateComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiTableDirective,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -47,16 +50,18 @@ export enum LectureDateFilter {
     selector: 'jhi-lecture',
     templateUrl: './lecture.component.html',
     imports: [
+        LectureImportComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiDialogComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
         TranslateDirective,
         DocumentationButtonComponent,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgClass,
         FaIconComponent,
-        NgbDropdownMenu,
         RouterLink,
-        SortDirective,
-        SortByDirective,
         DeleteButtonDirective,
         ArtemisDatePipe,
         CourseTitleBarTitleComponent,
@@ -74,8 +79,6 @@ export class LectureComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
     private sortService = inject(SortService);
 
     readonly lectures = signal<Lecture[]>([]);
@@ -105,7 +108,6 @@ export class LectureComponent implements OnInit, OnDestroy {
     faChalkboardTeacher = faChalkboardTeacher;
     faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
-    faSort = faSort;
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -123,35 +125,28 @@ export class LectureComponent implements OnInit, OnDestroy {
     /**
      * Opens the import modal and imports the selected lecture
      */
-    openImportModal() {
-        const dialogRef = this.dialogService.open(LectureImportComponent, {
-            header: this.translateService.instant('artemisApp.lecture.import.label'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-        });
+    readonly isImportDialogVisible = signal(false);
 
-        dialogRef?.onClose.subscribe((result: Lecture | undefined) => {
-            if (result) {
-                this.lectureService
-                    .import(this.courseId, result.id!)
-                    .pipe(
-                        filter((res: HttpResponse<Lecture>) => res.ok),
-                        map((res: HttpResponse<Lecture>) => res.body),
-                        filter((body): body is Lecture => body != undefined),
-                    )
-                    .subscribe({
-                        next: (res: Lecture) => {
-                            this.lectures.set([...this.lectures(), res]);
-                            void this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
-                        },
-                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                    });
-            }
-        });
+    openImportModal(): void {
+        this.isImportDialogVisible.set(true);
+    }
+
+    importLecture(result: Lecture): void {
+        this.isImportDialogVisible.set(false);
+        this.lectureService
+            .import(this.courseId, result.id!)
+            .pipe(
+                filter((response: HttpResponse<Lecture>) => response.ok),
+                map((response: HttpResponse<Lecture>) => response.body),
+                filter((body): body is Lecture => body != undefined),
+            )
+            .subscribe({
+                next: (lecture: Lecture) => {
+                    this.lectures.set([...this.lectures(), lecture]);
+                    void this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
     }
 
     private deleteLectureFromDisplayedLectures(lectureId: number) {

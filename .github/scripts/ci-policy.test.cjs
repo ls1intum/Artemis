@@ -66,7 +66,7 @@ test('the current-head check shares change detection and its failure remains req
     assert.match(detect, /tests_deferred: \$\{\{ steps.ready.outputs.tests_deferred \}\}/);
     assert.doesNotMatch(workflow, /^  pr-ready:/m);
     assert.match(job('all-required-ci-passed'), /      - detect-changes/);
-    assert.match(workflow, /types: \[opened, synchronize, reopened, ready_for_review\]/);
+    assert.match(workflow, /types: \[opened, synchronize, reopened, ready_for_review, edited\]/);
 });
 test('drafts keep test TypeScript compilation on the public quality runner', () => {
     const quality = fs.readFileSync(path.join(__dirname, '../workflows/ci-quality.yml'), 'utf8');
@@ -75,7 +75,18 @@ test('drafts keep test TypeScript compilation on the public quality runner', () 
     assert.match(step, /if: inputs.check_test_types/);
     assert.match(step, /run: pnpm exec tsc --project config\/client\/tsconfig.spec.json/);
 });
-function changeOutputs({ draft, files, event = 'pull_request', force = false }) {
+function matchesPathFilter(name, files) {
+    const block = job('detect-changes').match(new RegExp(`^            ${name}:\\n((?:              - '[^']+'\\n)+)`, 'm'));
+    assert.ok(block, `Expected path filter ${name}`);
+    const patterns = [...block[1].matchAll(/- '([^']+)'/g)].map((match) => match[1]);
+    const exclusions = patterns.every((pattern) => pattern.startsWith('!'));
+    assert.ok(exclusions || patterns.every((pattern) => !pattern.startsWith('!')), 'Mixed path predicates need explicit quantifier handling');
+    // The relevant step uses every for exclusions; the area step uses some for inclusions.
+    return files.some((file) =>
+        exclusions ? patterns.every((pattern) => !path.matchesGlob(file, pattern.slice(1))) : patterns.some((pattern) => path.matchesGlob(file, pattern)),
+    );
+}
+function changeOutputs({ draft, files, paths, event = 'pull_request', force = false }) {
     const script = job('detect-changes')
         .match(/      - id: decide[\s\S]*?        run: \|\n((?:          [^\n]*\n|\n)+)/)[1]
         .replace(/^ {10}/gm, '');
@@ -84,7 +95,20 @@ function changeOutputs({ draft, files, event = 'pull_request', force = false }) 
     try {
         const result = spawnSync('bash', ['-c', script], {
             encoding: 'utf8',
-            env: { ...process.env, FORCE: String(force), EVENT_NAME: event, IS_DRAFT: String(draft), CHANGED_FILES: String(files), GITHUB_OUTPUT: output },
+            env: {
+                ...process.env,
+                ...(paths && {
+                    F_BUILD: String(matchesPathFilter('build', paths)),
+                    F_SERVER_TESTS: String(matchesPathFilter('server_tests', paths)),
+                    F_SERVER_TEST_INPUTS: String(matchesPathFilter('has_server_test_inputs', paths)),
+                    F_CLIENT_TESTS: String(matchesPathFilter('client_tests', paths)),
+                }),
+                FORCE: String(force),
+                EVENT_NAME: event,
+                IS_DRAFT: String(draft),
+                CHANGED_FILES: String(paths?.length ?? files),
+                GITHUB_OUTPUT: output,
+            },
         });
         assert.equal(result.status, 0, result.stderr);
         return Object.fromEntries(
@@ -98,6 +122,41 @@ function changeOutputs({ draft, files, event = 'pull_request', force = false }) 
         fs.rmSync(directory, { recursive: true, force: true });
     }
 }
+const stylelintConfigs = ['config/stylelint/stylelint.config.json', 'config/stylelint/stylelint.config.js'];
+for (const file of stylelintConfigs) {
+    test(`${file} alone keeps client validation and skips server tests`, () => {
+        const outputs = changeOutputs({ draft: false, paths: [file] });
+        assert.equal(outputs.run_server_tests, 'false');
+        assert.equal(outputs.run_client_tests, 'true');
+        assert.equal(outputs.build_relevant, 'true');
+    });
+}
+test('both Stylelint configs with documentation still skip server tests', () => {
+    const outputs = changeOutputs({ draft: false, paths: [...stylelintConfigs, 'documentation/docs/developer/example.mdx'] });
+    assert.equal(outputs.run_server_tests, 'false');
+    assert.equal(outputs.run_client_tests, 'true');
+});
+for (const file of [
+    'src/main/java/de/tum/cit/aet/artemis/quiz/service/QuizService.java',
+    'src/main/webapp/i18n/en/global.json',
+    'gradle/test.gradle',
+    'config/stylelint/unknown-server-input.json',
+]) {
+    test(`Stylelint mixed with ${file} still runs server tests`, () => {
+        const outputs = changeOutputs({ draft: false, paths: [...stylelintConfigs, file] });
+        assert.equal(outputs.run_server_tests, 'true');
+    });
+}
+for (const event of ['push', 'merge_group', 'workflow_dispatch']) {
+    test(`Stylelint changes on ${event} retain complete server validation`, () => {
+        const outputs = changeOutputs({ draft: false, paths: stylelintConfigs, event });
+        assert.equal(outputs.run_server_tests, 'true');
+    });
+}
+test('explicit full validation overrides the Stylelint-only server skip', () => {
+    const outputs = changeOutputs({ draft: false, paths: stylelintConfigs, force: true });
+    assert.equal(outputs.run_server_tests, 'true');
+});
 test('the 3000-file fallback still defers E2E for drafts and preserves their test-server image', () => {
     const outputs = changeOutputs({ draft: true, files: 3000 });
     assert.equal(outputs.run_e2e, 'false');

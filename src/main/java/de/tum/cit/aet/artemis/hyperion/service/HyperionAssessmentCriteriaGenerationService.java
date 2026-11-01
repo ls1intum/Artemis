@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -114,7 +117,7 @@ public class HyperionAssessmentCriteriaGenerationService {
 
         GeneratedCriteriaOutput output;
         try {
-            if (OBJECT_MAPPER.readTree(responseText).findValue("id") != null) {
+            if (containsIdProperty(responseText)) {
                 throw generationError("Generated assessment criteria must not contain IDs", "invalidResponse");
             }
             output = outputConverter.convert(responseText);
@@ -124,6 +127,38 @@ public class HyperionAssessmentCriteriaGenerationService {
             throw generationError("Generated assessment criteria are malformed", "invalidResponse");
         }
         return mapAndValidate(output, request.maxPoints(), request.bonusPoints());
+    }
+
+    /**
+     * Checks whether the first JSON value of the text has a property named {@code id} at any depth. The generated shape declares no identifiers, and a model that
+     * invents one is not following it, so the whole response is rejected. The check reads the token stream instead of a record because the property can be
+     * anywhere, including in places the output records do not declare.
+     *
+     * @param json the generated JSON text
+     * @return whether a property named {@code id} occurs
+     * @throws JacksonException if the text is not valid JSON
+     */
+    private static boolean containsIdProperty(String json) {
+        try (JsonParser parser = OBJECT_MAPPER.createParser(json)) {
+            int depth = 0;
+            JsonToken token = parser.nextToken();
+            while (token != null) {
+                if (token == JsonToken.PROPERTY_NAME && "id".equals(parser.currentName())) {
+                    return true;
+                }
+                if (token.isStructStart()) {
+                    depth++;
+                }
+                else if (token.isStructEnd()) {
+                    depth--;
+                }
+                if (depth == 0) {
+                    return false;
+                }
+                token = parser.nextToken();
+            }
+            return false;
+        }
     }
 
     private AssessmentCriteriaGenerationResponseDTO mapAndValidate(@Nullable GeneratedCriteriaOutput output, double maximumPoints, double bonusPoints) {
