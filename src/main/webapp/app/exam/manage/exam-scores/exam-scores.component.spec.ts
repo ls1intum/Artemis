@@ -357,6 +357,30 @@ describe('ExamScoresComponent', () => {
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
+    it('should locate a discrepancy by the id of the student and report neither the login nor the scores', () => {
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        const wrongStudent1 = deepClone(examScoreStudent1);
+        wrongStudent1.pointsAchieved = 99;
+        wrongStudent1.scoreAchieved = 99;
+        findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [wrongStudent1, examScoreStudent2] })));
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
+
+        fixture.detectChanges();
+
+        const messages = errorSpy.mock.calls.map(([message]) => message);
+        // the points and the score of student 1 differ, and student 3 is missing
+        expect(messages).toEqual([
+            'Different exam points of the student with the ID 1 in the new calculation',
+            'Different exam score of the student with the ID 1 in the new calculation',
+            'Exam scores of the student with the ID 3 are not included in the new calculation',
+        ]);
+        for (const message of messages) {
+            expect(message).not.toMatch(/user[123]/);
+            expect(message).not.toMatch(/Achieved|login/i);
+            expect(message).not.toMatch(/\b(20|50|99|100)\b/);
+        }
+    });
+
     it('should make duplicated titles unique', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
 
