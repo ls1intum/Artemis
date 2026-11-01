@@ -14,7 +14,21 @@
  */
 export interface HyperionCourseSettings {
     /** Whether the quiz question pool is generated automatically for new lecture material */
-    poolGenerationEnabled?: boolean;
-    /** Questions the pool holds per lecture unit and competency, spread over that unit\'s cells */
-    questionsPerLectureUnit?: number;
+    poolGenerationEnabled: boolean;
+    /** Single-choice questions the pool holds per lecture unit and competency */
+    singleChoiceQuestionsPerLectureUnit: number;
+    /** Whether the pool also holds multiple-choice questions */
+    multipleChoiceEnabled: boolean;
+    /** Multiple-choice questions the pool holds per lecture unit and competency while they are enabled */
+    multipleChoiceQuestionsPerLectureUnit: number;
+    /** The fewest answer options a multiple-choice question marks correct */
+    multipleChoiceMinCorrectOptions: number;
+    /** The most answer options a multiple-choice question marks correct; not below the fewest */
+    multipleChoiceMaxCorrectOptions: number;
+    /** Share of each lecture unit\'s questions generated at the easy difficulty, in percent */
+    easyPercent: number;
+    /** Share of each lecture unit\'s questions generated at the medium difficulty, in percent */
+    mediumPercent: number;
+    /** Share of each lecture unit\'s questions generated at the hard difficulty, in percent; the three shares add up to 100 */
+    hardPercent: number;
 }

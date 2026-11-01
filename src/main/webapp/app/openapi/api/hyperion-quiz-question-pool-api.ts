@@ -15,16 +15,54 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { QuizQuestionPoolDeletion } from '../model/quiz-question-pool-deletion';
 import { QuizQuestionPoolProgress } from '../model/quiz-question-pool-progress';
-import { QuizQuestionPoolItem } from '../model/quiz-question-pool-item';
+import { QuizQuestionPoolPage } from '../model/quiz-question-pool-page';
 import { HyperionCourseSettings } from '../model/hyperion-course-settings';
 import { QuizQuestionPoolBuildStart } from '../model/quiz-question-pool-build-start';
+import { QuizQuestionPoolReview } from '../model/quiz-question-pool-review';
+import { QuizQuestionPoolItem } from '../model/quiz-question-pool-item';
 import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
 export class HyperionQuizQuestionPoolApi {
     private readonly http = inject(HttpClient);
     private readonly basePath = '';
+
+    /**
+     *
+     *
+     * @param courseId
+     */
+    cancelQuizQuestionPoolBuild(courseId: number): Observable<void> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/build/cancel`;
+        return this.http.post<void>(url, null);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param questionId
+     */
+    deleteQuizQuestionPoolQuestion(courseId: number, questionId: number): Observable<void> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/questions/${questionId}`;
+        return this.http.delete<void>(url);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param competencyId
+     */
+    deleteQuizQuestionPoolQuestions(courseId: number, competencyId?: number): Observable<QuizQuestionPoolDeletion> {
+        const queryParams = new URLSearchParams();
+        appendQueryParam(queryParams, 'competencyId', competencyId);
+        const queryString = queryParams.toString();
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/questions${queryString ? `?${queryString}` : ''}`;
+        return this.http.delete<QuizQuestionPoolDeletion>(url);
+    }
 
     /**
      *
@@ -41,13 +79,19 @@ export class HyperionQuizQuestionPoolApi {
      *
      * @param courseId
      * @param competencyId
+     * @param flagged
+     * @param page
+     * @param size
      */
-    getQuizQuestionPoolQuestions(courseId: number, competencyId?: number): Observable<Array<QuizQuestionPoolItem>> {
+    getQuizQuestionPoolQuestions(courseId: number, competencyId?: number, flagged?: boolean, page?: number, size?: number): Observable<QuizQuestionPoolPage> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'competencyId', competencyId);
+        appendQueryParam(queryParams, 'flagged', flagged);
+        appendQueryParam(queryParams, 'page', page);
+        appendQueryParam(queryParams, 'size', size);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/questions${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<QuizQuestionPoolItem>>(url);
+        return this.http.get<QuizQuestionPoolPage>(url);
     }
 
     /**
@@ -68,6 +112,18 @@ export class HyperionQuizQuestionPoolApi {
     startQuizQuestionPoolBuild(courseId: number): Observable<QuizQuestionPoolBuildStart> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/build`;
         return this.http.post<QuizQuestionPoolBuildStart>(url, null);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param questionId
+     * @param quizQuestionPoolReview
+     */
+    updateQuizQuestionPoolReview(courseId: number, questionId: number, quizQuestionPoolReview: QuizQuestionPoolReview): Observable<QuizQuestionPoolItem> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/questions/${questionId}/review`;
+        return this.http.put<QuizQuestionPoolItem>(url, quizQuestionPoolReview);
     }
 
     /**
