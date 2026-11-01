@@ -35,6 +35,7 @@
     // both themes (darker in light, lighter in dark). Hover reads like a link coming alive, with no background block: the
     // label underlines, the keycap's outline turns blue. The transparent border shows up in Windows high contrast mode.
     --iris-handoff-accent: color-mix(in srgb, var(--bs-primary) 70%, var(--bs-body-color));
+
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
@@ -73,6 +74,7 @@
     padding: 0 0.35rem;
     border: 1px solid color-mix(in srgb, var(--bs-primary) 30%, transparent);
     border-radius: 0.3rem;
+
     // Transparent, so the keycap takes the card's colour instead of the page background, which is darker in Artemis.
     background: transparent;
     font-size: 0.7rem;

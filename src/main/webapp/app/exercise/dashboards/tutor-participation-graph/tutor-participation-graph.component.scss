@@ -12,10 +12,10 @@ jhi-tutor-participation-graph {
         text-align: center;
         line-height: 2em;
         border-radius: 1rem;
-        background: green;
+        background: var(--success);
         margin: 0 1rem;
         display: inline-block;
-        color: white;
+        color: var(--tumaet-ui-primary-contrast-color);
         position: relative;
 
         /*z-index: 1;*/
@@ -28,7 +28,7 @@ jhi-tutor-participation-graph {
         left: -4em;
         width: 4em;
         height: 0.2em;
-        background: green;
+        background: var(--success);
         z-index: -1;
     }
 
@@ -37,20 +37,18 @@ jhi-tutor-participation-graph {
     }
 
     .active {
-        background: green;
+        background: var(--success);
     }
 
-    .active + .tooltip + li,
     .active + li {
-        background: red;
+        background: var(--danger);
     }
 
     .not_participated {
         display: none;
 
-        &.active + li + li::before,
-        &.active + li + ngb-tooltip-window + li::before {
-            background: red !important;
+        &.active + li + li::before {
+            background: var(--danger) !important;
         }
     }
 
@@ -59,20 +57,20 @@ jhi-tutor-participation-graph {
     }
 
     .opaque {
-        background: darkred !important;
+        background: var(--danger) !important;
     }
 
     .opaque::before {
-        background: darkred;
+        background: var(--danger);
     }
 
     .orange {
-        background: orange !important;
+        background: var(--warning) !important;
     }
 
     .orange ~ li::before,
     .orange ~ li::after {
-        background: orange !important;
+        background: var(--warning) !important;
     }
 
     .progress-bar-li {
@@ -116,7 +114,7 @@ jhi-tutor-participation-graph {
                 top: 0.5em;
                 width: 1rem;
                 height: 0.2em;
-                background: green;
+                background: var(--success);
                 z-index: -1;
             }
 
@@ -143,20 +141,20 @@ jhi-tutor-participation-graph {
         width: 0.2em;
         right: -1rem;
         height: calc(100% - 1rem);
-        background: green;
+        background: var(--success);
         z-index: -1;
     }
 
     .opaque::after,
     .opaque .stacked-item::before,
     .opaque .stacked-item::after {
-        background: darkred;
+        background: var(--danger);
     }
 
     .orange ~ li .stacked-item::before,
     .orange ~ li .stacked-item::after,
     .orange::after,
     .orange .stacked-item::after {
-        background: orange !important;
+        background: var(--warning) !important;
     }
 }

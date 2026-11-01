@@ -624,6 +624,28 @@ describe('AccountService', () => {
         });
     });
 
+    describe('test mayCreateAgentTokens', () => {
+        it('should deny a user who is not logged in', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+
+        it.each([['STUDENT'], ['TEACHING_ASSISTANT']])('should deny a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+
+        it.each([['EDITOR'], ['INSTRUCTOR']])('should grant a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(true);
+        });
+
+        it('should deny an administrator even if they teach a course', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN], courseRoles: [{ courseId: 1, roles: ['INSTRUCTOR'] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+    });
+
     describe('test isOwnerOfParticipation', () => {
         let participation: Participation;
         const user4 = { login: 'user' } as User;

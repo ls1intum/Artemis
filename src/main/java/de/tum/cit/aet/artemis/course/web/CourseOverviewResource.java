@@ -37,6 +37,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -76,6 +78,7 @@ import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * REST controller for providing courses in the student view.
@@ -250,6 +253,8 @@ public class CourseOverviewResource {
      */
     @GetMapping("courses/for-dropdown")
     @EnforceAtLeastStudent
+    @AllowedScopes(AgentScope.COURSES_READ)
+    @Operation(summary = "List your courses", description = "Returns the id, title and icon of every active course the caller belongs to. Use the ids in the paths of the other operations.")
     public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
         long start = System.nanoTime();
         User user = userRepository.getUserWithCourseRolesAndAuthorities();

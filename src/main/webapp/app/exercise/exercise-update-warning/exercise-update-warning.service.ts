@@ -1,5 +1,6 @@
-import { Component, Service, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { Service, Type, inject } from '@angular/core';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
@@ -7,9 +8,10 @@ import dayjs from 'dayjs/esm';
 
 @Service()
 export class ExerciseUpdateWarningService {
-    private modalService = inject(NgbModal);
+    private modalService = inject(TumAetUiDialogService);
+    private readonly translateService = inject(TranslateService);
 
-    private ngbModalRef!: NgbModalRef; // assigned when the warning modal is opened in checkExerciseBeforeUpdate()
+    private dialogRef!: TumAetUiDialogRef<void, ExerciseUpdateWarningComponent>; // assigned when the warning modal is opened in checkExerciseBeforeUpdate()
 
     instructionDeleted = false;
     creditChanged = false;
@@ -23,12 +25,19 @@ export class ExerciseUpdateWarningService {
      * Open the modal with the given content for the given exercise.
      * @param component the content that should be shown
      */
-    open(component: Component): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.instructionDeleted = this.instructionDeleted;
-        modalRef.componentInstance.creditChanged = this.creditChanged;
-        modalRef.componentInstance.usageCountChanged = this.usageCountChanged;
-        modalRef.componentInstance.immediateReleaseWarning = this.immediateReleaseWarning;
+    open(component: Type<ExerciseUpdateWarningComponent>): TumAetUiDialogRef<void, ExerciseUpdateWarningComponent> {
+        const modalRef = this.modalService.open<ExerciseUpdateWarningComponent, void>(component, {
+            size: 'large',
+            showHeader: false,
+            ariaLabel: this.translateService.instant('artemisApp.exercise.update.warning.warning'),
+            dismissableMask: false,
+            inputValues: {
+                instructionDeleted: this.instructionDeleted,
+                creditChanged: this.creditChanged,
+                usageCountChanged: this.usageCountChanged,
+                immediateReleaseWarning: this.immediateReleaseWarning,
+            },
+        });
 
         return modalRef;
     }
@@ -40,19 +49,19 @@ export class ExerciseUpdateWarningService {
      * @param backupExercise the copy of exercise for which the modal should be shown
      * @param isExamMode flag that indicates if the exercise is part of an exam
      */
-    checkExerciseBeforeUpdate(exercise: Exercise, backupExercise: Exercise, isExamMode: boolean): Promise<NgbModalRef> {
+    checkExerciseBeforeUpdate(exercise: Exercise, backupExercise: Exercise, isExamMode: boolean): Promise<TumAetUiDialogRef<void, ExerciseUpdateWarningComponent>> {
         if (exercise.course?.testCourse) {
-            return new Promise<NgbModalRef>((resolve) => resolve(this.ngbModalRef));
+            return new Promise<TumAetUiDialogRef<void, ExerciseUpdateWarningComponent>>((resolve) => resolve(this.dialogRef));
         }
 
         this.initializeVariables(isExamMode);
         this.loadExercise(exercise, backupExercise);
         this.checkImmediateRelease(exercise, backupExercise);
-        return new Promise<NgbModalRef>((resolve) => {
+        return new Promise<TumAetUiDialogRef<void, ExerciseUpdateWarningComponent>>((resolve) => {
             if (this.creditChanged || this.instructionDeleted || this.usageCountChanged || this.immediateReleaseWarning) {
-                this.ngbModalRef = this.open(ExerciseUpdateWarningComponent as Component);
+                this.dialogRef = this.open(ExerciseUpdateWarningComponent);
             }
-            resolve(this.ngbModalRef);
+            resolve(this.dialogRef);
         });
     }
 

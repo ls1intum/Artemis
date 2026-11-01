@@ -43,7 +43,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -193,15 +192,30 @@ public class ExerciseSharingService {
         try {
             String exerciseDetailString = getEntryFromBasket(EXERCISE_DETAILS_ENTRY, sharingInfo)
                     .orElseThrow(() -> new EntityNotFoundException("Could not retrieve exercise details from imported exercise"));
-            // Remove the id on the JSON tree: the record is immutable, and the exported id belongs to the source instance.
-            ObjectNode exerciseDetailNode = (ObjectNode) objectMapper.readTree(exerciseDetailString);
-            exerciseDetailNode.remove("id");
-            return objectMapper.treeToValue(exerciseDetailNode, ImportProgrammingExerciseRequestDTO.class);
+            return withoutId(objectMapper.readValue(exerciseDetailString, ImportProgrammingExerciseRequestDTO.class));
         }
         catch (Exception e) {
             String errorMessage = e.getMessage();
             throw new EntityNotFoundException("Could not retrieve exercise details from imported exercise: " + errorMessage);
         }
+    }
+
+    /**
+     * Copies the exercise details without their id: the record is immutable, and the exported id belongs to the source instance.
+     *
+     * @param details the exercise details as exported by the source instance
+     * @return the same details with a {@code null} id
+     */
+    private static ImportProgrammingExerciseRequestDTO withoutId(ImportProgrammingExerciseRequestDTO details) {
+        return new ImportProgrammingExerciseRequestDTO(null, details.title(), details.shortName(), details.channelName(), details.packageName(), details.problemStatement(),
+                details.gradingInstructions(), details.categories(), details.difficulty(), details.mode(), details.teamAssignmentConfig(), details.maxPoints(),
+                details.bonusPoints(), details.includedInOverallScore(), details.releaseDate(), details.startDate(), details.dueDate(), details.assessmentDueDate(),
+                details.exampleSolutionPublicationDate(), details.buildAndTestStudentSubmissionsAfterDueDate(), details.assessmentType(),
+                details.allowComplaintsForAutomaticAssessments(), details.presentationScoreEnabled(), details.secondCorrectionEnabled(), details.allowOnlineEditor(),
+                details.allowOfflineIde(), details.allowOnlineIde(), details.staticCodeAnalysisEnabled(), details.maxStaticCodeAnalysisPenalty(), details.showTestNamesToStudents(),
+                details.releaseTestsWithExampleSolution(), details.programmingLanguage(), details.projectType(), details.projectKey(), details.testRepositoryUri(),
+                details.buildConfig(), details.gradingCriteria(), details.competencyLinks(), details.auxiliaryRepositories(), details.submissionPolicy(),
+                details.plagiarismDetectionConfig(), details.course(), details.exerciseGroup(), details.templateParticipation(), details.solutionParticipation());
     }
 
     /**

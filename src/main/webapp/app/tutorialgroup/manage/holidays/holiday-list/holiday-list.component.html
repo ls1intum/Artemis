@@ -1,4 +1,4 @@
-<div class="flex items-center justify-between gap-3 px-4 py-3">
+<div class="flex items-center justify-between gap-4! px-6! py-4!">
     <h2 class="m-0 flex items-baseline gap-2 text-base font-semibold">
         <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.allHolidays"></span>
         <span class="text-sm font-normal opacity-60" data-testid="holiday-list-count">{{ entries().length }}</span>
@@ -19,12 +19,12 @@
 </div>
 
 @if (entries().length === 0) {
-    <p class="px-4 py-6 text-center opacity-60" data-testid="holiday-list-empty" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.noHolidays"></p>
+    <p class="px-6! py-6 text-center opacity-60" data-testid="holiday-list-empty" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.noHolidays"></p>
 } @else {
     <ul class="m-0 list-none p-0" data-testid="holiday-list">
         @for (entry of entries(); track entry.key) {
             <li
-                class="flex items-center gap-3 border-t border-(--tumaet-ui-border-color) px-4 py-2.5"
+                class="flex items-center gap-4! border-t border-(--tumaet-ui-border-color) px-6! py-2.5"
                 data-testid="holiday-list-item"
                 [attr.data-holiday-id]="entry.holiday.period.id"
             >
@@ -86,7 +86,7 @@
 }
 
 @if (filter() === 'upcoming' && pastCount() > 0) {
-    <p class="m-0 border-t border-(--tumaet-ui-border-color) px-4 py-3 text-[0.8125rem] opacity-70" data-testid="holiday-list-past-note">
+    <p class="m-0 border-t border-(--tumaet-ui-border-color) px-6! py-4! text-[0.8125rem] opacity-70" data-testid="holiday-list-past-note">
         {{ 'artemisApp.pages.tutorialFreePeriodsManagement.pastHidden' | artemisTranslate: { count: pastCount() } }}
     </p>
 }

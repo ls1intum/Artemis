@@ -588,6 +588,14 @@ public final class Constants {
     public static final String MODULE_FEATURE_GLOBAL_SEARCH = "globalsearch";
 
     /**
+     * The name of the module feature for agent access (personal access tokens). It is published to the client when
+     * {@link #AGENT_ACCESS_ENABLED_PROPERTY_NAME} is enabled, so the client can hide the token settings otherwise.
+     */
+    public static final String MODULE_FEATURE_AGENT_ACCESS = "agent-access";
+
+    public static final String AGENT_ACCESS_ENABLED_PROPERTY_NAME = "artemis.agent-access.enabled";
+
+    /**
      * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
      */
     public static final String SAML2_PROPERTIES_PREFIX = "saml2";
@@ -794,6 +802,9 @@ public final class Constants {
     public static final String WEBAUTHN_CHALLENGE_COOKIE_NAME = "webauthn-challenge";
 
     public static final String BEARER_PREFIX = "Bearer ";
+
+    /** The start of every personal access token secret, which tells it apart from a JWT in an Authorization header. */
+    public static final String PERSONAL_ACCESS_TOKEN_PREFIX = "art_pat_";
 
     public static final String HAZELCAST = "Hazelcast";
 

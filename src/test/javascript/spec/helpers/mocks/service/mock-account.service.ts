@@ -25,6 +25,7 @@ export class MockAccountService implements IAccountService {
     getImageUrl = () => 'blob';
     isAtLeastTutor = () => this.hasAnyAuthorityDirect([Authority.TUTOR]);
     hasEditorAccess = () => this.hasAnyAuthorityDirect([Authority.EDITOR]);
+    mayCreateAgentTokens = () => this.hasAnyAuthorityDirect([Authority.EDITOR, Authority.INSTRUCTOR]);
     isPasskeyRequiredForAdministratorFeatures = () => false;
     isAtLeastTutorInCourse = (course: Course) => true;
     isAtLeastTutorInCourseWithId = (courseId?: number) => true;

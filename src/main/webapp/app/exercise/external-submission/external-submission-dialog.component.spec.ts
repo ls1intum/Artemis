@@ -12,23 +12,23 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 
 describe('ExternalSubmissionDialogComponent', () => {
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;
     let component: ExternalSubmissionDialogComponent;
     let externalSubmissionService: ExternalSubmissionService;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(async () => {
         dialogRefCloseSpy = vi.fn();
-        dialogRef = { close: dialogRefCloseSpy, onClose: new Subject<any>() } as unknown as DynamicDialogRef;
+        dialogRef = { close: dialogRefCloseSpy, dismiss: dialogRefCloseSpy, onClose: new Subject<any>() } as unknown as TumAetUiDialogRef;
 
         await TestBed.configureTestingModule({
             imports: [ExternalSubmissionDialogComponent],
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogRef, useValue: dialogRef },
                 MockProvider(EventManager),
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
@@ -42,6 +42,30 @@ describe('ExternalSubmissionDialogComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('associates each dynamic feedback label with its own input after feedback is added and removed', async () => {
+        fixture.componentRef.setInput('exercise', { id: 2, title: 'Sorting review' } as Exercise);
+        component.pushFeedback();
+        component.pushFeedback();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const assertFeedbackLabels = (count: number) => {
+            const labels = Array.from(fixture.nativeElement.querySelectorAll('label[for^="feedback"]')) as HTMLLabelElement[];
+            expect(labels).toHaveLength(count * 2);
+            for (const label of labels) {
+                const control = label.parentElement!.querySelector('input, textarea') as HTMLInputElement | HTMLTextAreaElement;
+                expect(control).not.toBeNull();
+                expect(label.control).toBe(control);
+                expect(control.labels).toContain(label);
+            }
+        };
+        assertFeedbackLabels(2);
+        component.popFeedback();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        assertFeedbackLabels(1);
     });
 
     it('should get initial result on init', () => {

@@ -5,14 +5,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
@@ -98,17 +101,15 @@ public class TranscriptionCheckpointService {
 
     /** Parse transcription checkpoint data from JSON, expected format {@code {"language": "en", "segments": [...]}}. */
     private TranscriptionCheckpoint parseTranscriptionCheckpoint(String resultJson) {
-        var tree = objectMapper.readTree(resultJson);
+        CheckpointPayload payload = objectMapper.readValue(resultJson, CheckpointPayload.class);
 
-        var segmentsNode = tree.get("segments");
-        if (segmentsNode == null || !segmentsNode.isArray() || segmentsNode.isEmpty()) {
+        if (payload == null || payload.segments() == null || payload.segments().isEmpty()) {
             log.debug("Checkpoint has no segments, ignoring");
             return null;
         }
 
-        String language = tree.has("language") ? tree.get("language").asString("en") : "en";
-        List<LectureTranscriptionSegment> segments = objectMapper.convertValue(segmentsNode, new TypeReference<>() {
-        });
+        String language = payload.language() != null ? payload.language() : "en";
+        List<LectureTranscriptionSegment> segments = payload.segments();
 
         boolean isEnriched = segments.stream().anyMatch(seg -> seg.slideNumber() != 0);
         return new TranscriptionCheckpoint(language, segments, isEnriched);
@@ -157,6 +158,17 @@ public class TranscriptionCheckpointService {
             log.info("Raw transcription checkpoint saved for unit {}, staying in TRANSCRIBING", lectureUnitId);
             persistTranscription(unit, jobToken, checkpoint, TranscriptionStatus.PENDING);
         }
+    }
+
+    /**
+     * The JSON Iris sends in the {@code result} field of a transcription checkpoint.
+     *
+     * @param language the language of the transcript, absent when Iris does not detect one
+     * @param segments the transcript segments, absent or empty when the checkpoint carries none
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record CheckpointPayload(@Nullable String language, @Nullable List<LectureTranscriptionSegment> segments) {
     }
 
     /**
