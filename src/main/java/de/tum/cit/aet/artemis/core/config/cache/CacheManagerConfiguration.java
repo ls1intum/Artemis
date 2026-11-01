@@ -55,9 +55,12 @@ public class CacheManagerConfiguration {
     /** How long the latest GitHub release looked up by {@code ArtemisVersionService} is reused, so a new release is noticed without a restart. */
     private static final Duration ARTEMIS_VERSION_TIME_TO_LIVE = Duration.ofHours(1);
 
-    private static final Map<String, Duration> EXPIRING_CACHES = Map.of("atlas-session-pending-operations", ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-pending-relations",
-            ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-exercise-preview", ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-relation-preview", ATLAS_SESSION_TIME_TO_LIVE,
-            "atlas-execution-plan", ATLAS_SESSION_TIME_TO_LIVE, "artemisVersion", ARTEMIS_VERSION_TIME_TO_LIVE);
+    /** How long the public usage statistics are reused. The computation scans two years of submissions, so it must not run per request. */
+    private static final Duration PUBLIC_USAGE_STATISTICS_TIME_TO_LIVE = Duration.ofHours(1);
+
+    private static final Map<String, Duration> EXPIRING_CACHES = Map.of("publicUsageStatistics", PUBLIC_USAGE_STATISTICS_TIME_TO_LIVE, "atlas-session-pending-operations",
+            ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-pending-relations", ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-exercise-preview", ATLAS_SESSION_TIME_TO_LIVE,
+            "atlas-session-relation-preview", ATLAS_SESSION_TIME_TO_LIVE, "atlas-execution-plan", ATLAS_SESSION_TIME_TO_LIVE, "artemisVersion", ARTEMIS_VERSION_TIME_TO_LIVE);
 
     /**
      * @param distributedDataProvider the configured provider backing all cluster-wide caches
