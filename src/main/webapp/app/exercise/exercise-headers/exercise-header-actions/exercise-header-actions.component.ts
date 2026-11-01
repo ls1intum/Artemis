@@ -1,4 +1,5 @@
 import {
+    TumAetUiButtonComponent,
     TumAetUiButtonDirective,
     TumAetUiMenuComponent,
     TumAetUiMenuItemDirective,
@@ -9,14 +10,13 @@ import {
 
 import { ProgrammingExerciseParticipationActionsComponent } from 'app/exercise/participation/programming-exercise-participation-actions/programming-exercise-participation-actions.component';
 import { StudentExerciseActionsDirective } from 'app/exercise/participation/student-exercise-actions.directive';
-import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faEye, faFileSignature, faListAlt, faPaperPlane, faPlayCircle, faRobot, faSignal, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -39,7 +39,8 @@ import {
 } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 interface InstructorActionItem {
@@ -47,6 +48,8 @@ interface InstructorActionItem {
     icon?: IconDefinition;
     translation: string;
 }
+
+export const AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY = 'artemisApp.aiFeedbackPopoverDismissed';
 
 @Component({
     selector: 'jhi-exercise-header-actions',
@@ -68,19 +71,20 @@ interface InstructorActionItem {
         StartPracticeModeButtonComponent,
         CodeButtonComponent,
         RequestFeedbackButtonComponent,
+        TumAetUiButtonComponent,
     ],
     providers: [ExternalCloningService],
 })
 export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirective {
-    private readonly elementRef = inject(ElementRef);
     private readonly quizExerciseService = inject(QuizExerciseService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly localStorageService = inject(LocalStorageService);
 
     private readonly programmingActions = viewChildren(ProgrammingExerciseParticipationActionsComponent);
     private readonly actionButtons = viewChildren(ExerciseActionButtonComponent);
-    private readonly submitOrigin = viewChild<ElementRef<HTMLElement>>('submitOrigin');
-    private readonly submitPopoverRef = viewChild<TumAetUiPopoverComponent>('submitPopoverRef');
+    private readonly submitPopover = viewChild<TumAetUiPopoverComponent>('submitPopover');
+    private readonly submitPopoverAnchor = viewChild('submitPopoverAnchor', { read: ElementRef });
 
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
@@ -167,25 +171,29 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
     });
 
     readonly userLLMSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
-    readonly hasUserAcceptedLLM = computed(() => {
-        const selection = this.userLLMSelection();
-        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
+    /** Names On-premise only when the AI Experience selection offers it, which requires a local LLM deployment. */
+    readonly aiFeedbackPopoverDisabledDescriptionKey = computed(() => {
+        const key = this.userLLMSelection() === LLMSelectionDecision.NO_AI ? 'descriptionNoAi' : 'descriptionDisabled';
+        return `artemisApp.exercise.aiFeedbackPopover.${key}${this.profileService.isLLMDeploymentEnabled() ? '' : 'CloudOnly'}`;
     });
+    readonly hasUserAcceptedLLM = computed(() => isAcceptedLLMSelection(this.userLLMSelection()));
     readonly showFeedbackPopover = computed(() => {
         const exercise = this.exercise();
         if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
             // Athena feedback requests for programming exercises require manual assessment to be enabled
             return false;
         }
+        // Not gated on hasUserAcceptedLLM(): the popover itself renders either the AI-feedback request or a
+        // recommendation to enable AI, so it must also be reachable before the assessor has accepted AI usage.
         return (
             !this.examMode() &&
-            this.hasUserAcceptedLLM() &&
             this.athenaEnabled &&
             (exercise.course?.athenaFormativeFeedbackEnabled ?? false) &&
             (exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)
         );
     });
     readonly hasProgrammingSubmission = computed(() => !!this.activeParticipationForCode()?.submissions?.some((submission) => submission.submitted));
+    readonly aiFeedbackPopoverDismissed = signal(this.localStorageService.retrieve<boolean>(AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY) ?? false);
 
     constructor() {
         super();
@@ -356,7 +364,7 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
     }
 
     closeSubmitPopover() {
-        this.submitPopoverRef()?.close();
+        this.submitPopover()?.close();
     }
 
     submitAndShowPopover() {
@@ -364,27 +372,23 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
             return;
         }
         this.onSubmitExercise()?.();
-        if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+        // The request limit only blocks another Athena request, which is only reachable once AI is accepted.
+        if (this.hasUserAcceptedLLM() && countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
         }
-        const origin = this.submitOrigin()?.nativeElement;
-        if (origin) this.submitPopoverRef()?.open(origin);
+        // "Don't show this again" only suppresses the AI-disabled recommendation; once AI is enabled, the popover should reappear.
+        if (!this.hasUserAcceptedLLM() && this.aiFeedbackPopoverDismissed()) {
+            return;
+        }
+        const anchor = this.submitPopoverAnchor();
+        if (anchor) {
+            this.submitPopover()?.open(anchor);
+        }
     }
 
-    @HostListener('document:click', ['$event'])
-    onDocumentClick(event: MouseEvent) {
-        const pop = this.submitPopoverRef();
-        if (!pop?.isOpen()) {
-            return;
-        }
-
-        const target = event.target as HTMLElement;
-
-        // Don't close if clicking inside the popover, the trigger element, or an alert
-        if (target.closest('[role="dialog"]') || target.closest('jhi-alert-overlay') || this.elementRef.nativeElement.contains(target)) {
-            return;
-        }
-
-        pop.close();
+    dismissAiFeedbackPopoverPermanently() {
+        this.aiFeedbackPopoverDismissed.set(true);
+        this.localStorageService.store(AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY, true);
+        this.closeSubmitPopover();
     }
 }

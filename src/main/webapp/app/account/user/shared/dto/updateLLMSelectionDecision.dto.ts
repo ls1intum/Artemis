@@ -18,3 +18,8 @@ export interface UpdateLLMSelectionDecisionDto {
      */
     selection: LLMSelectionDecision;
 }
+
+/** Whether the given decision counts as consent to use AI (cloud or local), as opposed to NO_AI or no decision yet. */
+export function isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
+    return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
+}
