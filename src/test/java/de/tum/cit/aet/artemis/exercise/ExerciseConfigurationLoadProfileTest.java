@@ -145,7 +145,7 @@ class ExerciseConfigurationLoadProfileTest extends AbstractSpringIntegrationInde
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void readingAnExerciseThroughTheApiReadsTheConfigurationExactlyOnce() throws Exception {
         List<String> statements = statementsOf(() -> request.get("/api/exercise/exercises/" + textExerciseId, HttpStatus.OK, ExerciseResponseDTO.class));
 
@@ -159,7 +159,7 @@ class ExerciseConfigurationLoadProfileTest extends AbstractSpringIntegrationInde
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void listingTheExercisesOfACourseReadsTheConfigurationsInOneQuery() throws Exception {
         String url = "/api/course/courses/" + courseId + "/with-exercises";
         List<String> statements = statementsOf(() -> request.get(url, HttpStatus.OK, String.class));

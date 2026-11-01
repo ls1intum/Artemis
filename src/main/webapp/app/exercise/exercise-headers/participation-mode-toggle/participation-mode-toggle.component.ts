@@ -1,10 +1,10 @@
+import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+
 import { Component, computed, input, model } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
-import { SelectButtonModule } from 'primeng/selectbutton';
-import { TagModule } from 'primeng/tag';
+
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export type ParticipationMode = 'practice' | 'graded';
@@ -19,7 +19,7 @@ interface ParticipationModeOption {
     selector: 'jhi-participation-mode-toggle',
     templateUrl: './participation-mode-toggle.component.html',
     styleUrls: ['./participation-mode-toggle.component.scss'],
-    imports: [FormsModule, FaIconComponent, SelectButtonModule, TagModule, TranslateDirective],
+    imports: [TumAetUiButtonDirective, TumAetUiTagComponent, FaIconComponent, TranslateDirective],
 })
 export class ParticipationModeToggleComponent {
     readonly mode = model.required<ParticipationMode>();

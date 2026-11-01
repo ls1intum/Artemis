@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

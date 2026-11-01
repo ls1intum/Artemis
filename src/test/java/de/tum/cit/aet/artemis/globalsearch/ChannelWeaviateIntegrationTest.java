@@ -117,7 +117,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testToggleChannelPrivacy_updatesWeaviate() throws Exception {
         Channel channel = new Channel();
         channel.setName("privacy-test");
@@ -143,7 +143,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testToggleChannelPrivacy_removesPostsFromWeaviate() throws Exception {
         // Create a non-course-wide public channel (toggling to private makes it non-indexable)
         Channel channel = new Channel();
@@ -179,7 +179,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @ParameterizedTest
     @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReconcileDelete_afterPrivateChannelBecomesPublic_rederivesAndKeepsTheCurrentRow(WeaviateOutboxOrigin origin) throws Exception {
         Channel channel = new Channel();
         channel.setName("reconcile-" + reconcileOriginLabel(origin));
@@ -201,7 +201,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @ParameterizedTest
     @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReconcileDelete_afterArchivedChannelIsUnarchived_rederivesAndKeepsTheCurrentRow(WeaviateOutboxOrigin origin) throws Exception {
         Channel channel = new Channel();
         channel.setName("unarchive-" + reconcileOriginLabel(origin));
@@ -242,7 +242,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     class CreateChannelTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateChannel_indexesInWeaviate() throws Exception {
             Channel channel = new Channel();
             channel.setName("test-channel");
@@ -256,7 +256,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateLectureChannel_indexesInWeaviate() throws Exception {
             Lecture lecture = new Lecture();
             lecture.setTitle("Test Lecture");
@@ -271,7 +271,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateExerciseChannel_indexesInWeaviate() throws Exception {
             ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
@@ -282,7 +282,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateChannelsForLectures_indexesInWeaviate() throws Exception {
             Lecture lecture1 = new Lecture();
             lecture1.setTitle("Lecture One");
@@ -310,7 +310,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     class UpdateChannelTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpdateLectureChannelName_updatesWeaviate() throws Exception {
             Lecture lecture = new Lecture();
             lecture.setTitle("Original Lecture");
@@ -335,7 +335,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpdateExerciseChannelName_updatesWeaviate() throws Exception {
             ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             Channel createdChannel = channelService.createExerciseChannel(exercise, Optional.empty());
@@ -353,7 +353,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testArchiveChannel_removesFromWeaviate() throws Exception {
             Channel channel = new Channel();
             channel.setName("archive-test");
@@ -370,7 +370,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUnarchiveChannel_reIndexesInWeaviate() throws Exception {
             Channel channel = new Channel();
             channel.setName("unarchive-test");
@@ -394,7 +394,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     class DeleteChannelTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteChannel_removesFromWeaviate() throws Exception {
             Channel channel = new Channel();
             channel.setName("delete-test");
@@ -412,7 +412,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteChannelForExerciseId_removesFromWeaviate() throws Exception {
             ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             Channel createdChannel = channelService.createExerciseChannel(exercise, Optional.empty());
@@ -426,7 +426,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteChannelViaRest_removesChannelAndPostsFromWeaviate() throws Exception {
             // Create and index a public course-wide channel
             Channel channel = new Channel();

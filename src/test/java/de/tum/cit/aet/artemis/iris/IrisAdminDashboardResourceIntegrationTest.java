@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -366,7 +365,7 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
 
     private static IrisMessage pointOutMarker() {
         IrisMessage marker = new IrisMessage();
-        marker.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().createObjectNode().put("type", "pointOut").put("lectureUnitId", 1L).put("page", 3)));
+        marker.addContent(IrisJsonMessageContent.ofJson("{\"type\":\"pointOut\",\"lectureUnitId\":1,\"page\":3}"));
         return marker;
     }
 }

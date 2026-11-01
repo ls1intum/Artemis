@@ -66,7 +66,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_indexesExamInWeaviate() throws Exception {
         Exam exam = ExamFactory.generateExam(course, "weaviate-create-test");
         exam.setTitle("Weaviate Create Test Exam");
@@ -84,7 +84,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_updatesExamInWeaviate() throws Exception {
         Exam exam = examUtilService.addExam(course);
         examUtilService.addExamChannel(exam, "weaviate-update-test");
@@ -112,7 +112,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_updatesExamInWeaviate() throws Exception {
         // Create exam via API so it gets indexed
         Exam exam = ExamFactory.generateExam(course, "weaviate-wt-test");
@@ -135,7 +135,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_updatesExerciseExamDatesInWeaviate() throws Exception {
         // Create an exam with exercises via util and seed them in Weaviate
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
@@ -170,7 +170,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamDates_updatesExerciseExamDatesInWeaviate() throws Exception {
         // Create an exam with exercises via util and seed them in Weaviate
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);

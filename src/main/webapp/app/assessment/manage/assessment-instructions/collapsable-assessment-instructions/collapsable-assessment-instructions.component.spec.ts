@@ -30,15 +30,15 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
     });
 
     it('should render the expanded panel as a card with a primary header', () => {
-        const header = fixture.debugElement.query(By.css('.expanded-instructions .card > .card-header')).nativeElement as HTMLElement;
+        const header = fixture.debugElement.query(By.css('[data-testid="assessment-instructions-toggle"]')).nativeElement as HTMLElement;
 
-        expect(header.classList).toContain('bg-primary');
-        expect(header.classList).toContain('text-white');
-        expect(header.querySelector('.card-title')).not.toBeNull();
+        expect(header.getAttribute('role')).toBe('button');
+        expect(header.getAttribute('aria-expanded')).toBe('true');
+        expect(header.querySelector('h3')).not.toBeNull();
     });
 
     it('should collapse when the card header is clicked and reopen from the collapsed bar', () => {
-        const header = fixture.debugElement.query(By.css('.expanded-instructions .card-header')).nativeElement as HTMLElement;
+        const header = fixture.debugElement.query(By.css('[data-testid="assessment-instructions-toggle"]')).nativeElement as HTMLElement;
         header.click();
         fixture.detectChanges();
 
@@ -46,7 +46,7 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
         expect(fixture.debugElement.query(By.css('.expanded-instructions'))).toBeNull();
 
         const collapsedBar = fixture.debugElement.query(By.css('.collapsed-instructions')).nativeElement as HTMLElement;
-        expect(collapsedBar.classList).toContain('bg-primary');
+        expect(collapsedBar.getAttribute('aria-expanded')).toBe('false');
         collapsedBar.click();
         fixture.detectChanges();
 

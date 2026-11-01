@@ -6,22 +6,22 @@
 .expanded-instructions {
     width: 30vw;
 
-    .card {
+    .panel-surface {
         width: 100%;
         min-width: 200px;
 
-        .card-header {
+        .feedback-panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
 
-            .card-title {
+            .panel-title {
                 display: flex;
             }
         }
 
-        .card-body {
+        .feedback-panel-body {
             overflow-y: auto;
         }
     }

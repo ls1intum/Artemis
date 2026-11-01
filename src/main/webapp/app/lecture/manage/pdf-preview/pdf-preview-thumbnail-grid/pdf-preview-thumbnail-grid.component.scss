@@ -34,7 +34,7 @@
     width: 250px;
     height: fit-content;
     margin: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--lecture-scrim-color) 20%, transparent);
     transition:
         transform 0.3s,
         box-shadow 0.3s;
@@ -50,7 +50,7 @@
     &.drag-over {
         box-shadow:
             0 0 0 2px var(--primary),
-            0 2px 10px rgba(0, 0, 0, 0.3);
+            0 2px 10px color-mix(in srgb, var(--lecture-scrim-color) 30%, transparent);
         transform: scale(1.03);
     }
 }
@@ -60,7 +60,7 @@
     top: 8px;
     left: 8px;
     z-index: 5;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: color-mix(in srgb, var(--lecture-scrim-color) 50%, transparent);
     color: white;
     border-radius: 3px;
     padding: 2px 5px;
@@ -87,7 +87,7 @@
     align-items: center;
     font-size: 24px;
     color: white;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: color-mix(in srgb, var(--lecture-scrim-color) 50%, transparent);
     z-index: 2;
     transition: opacity 0.3s ease;
     opacity: 0;
@@ -131,7 +131,7 @@
     }
 }
 
-input[type='checkbox'] {
+.pdf-page-selection {
     position: absolute;
     top: -5px;
     right: -5px;
@@ -142,11 +142,11 @@ input[type='checkbox'] {
 
 .cdk-drag-preview {
     z-index: 9999;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 5px 10px color-mix(in srgb, var(--lecture-scrim-color) 30%, transparent) !important;
 }
 
 .cdk-drag-placeholder {
     opacity: 0.3;
-    background: #f0f0f0;
-    border: 2px dashed #ccc !important;
+    background: var(--tumaet-ui-disabled-background);
+    border: 2px dashed var(--border-color) !important;
 }

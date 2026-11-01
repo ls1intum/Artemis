@@ -57,7 +57,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
     class GetCourseCompetenciesTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldRetrieveAllCompetenciesForCourse() throws Exception {
             // Create additional competencies
             competencyUtilService.createCompetency(course, "1");
@@ -72,7 +72,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnErrorForNonExistentCourse() throws Exception {
             Long nonExistentCourseId = 999999L;
 
@@ -85,7 +85,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldIncludeAllCompetencyFieldsInResponse() throws Exception {
             String actualResult = competencyExpertToolsService.getCourseCompetencies(course.getId());
 
@@ -108,7 +108,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
     class GetCourseDescriptionTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnCourseDescription() {
             String expectedDescription = course.getDescription();
             String actualDescription = competencyExpertToolsService.getCourseDescription(course.getId());
@@ -117,7 +117,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnEmptyStringForNonExistentCourse() {
             Long nonExistentCourseId = 999999L;
 
@@ -131,7 +131,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
     class PreviewCompetenciesTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldPreviewSingleNewCompetency() {
             CompetencyOperation operation = new CompetencyOperation(null, "Software Testing", "Understanding testing methodologies and practices", CompetencyTaxonomy.UNDERSTAND);
 
@@ -146,7 +146,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldPreviewMultipleCompetenciesInBatchMode() {
             CompetencyOperation op1 = new CompetencyOperation(null, "Algorithms", "Algorithm design and analysis", CompetencyTaxonomy.ANALYZE);
             CompetencyOperation op2 = new CompetencyOperation(null, "Data Structures", "Common data structures and their usage", CompetencyTaxonomy.APPLY);
@@ -162,7 +162,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldPreviewExistingCompetencyUpdate() {
             CompetencyOperation updateOperation = new CompetencyOperation(existingCompetency.getId(), "Updated Title", "Updated description", CompetencyTaxonomy.CREATE);
 
@@ -173,7 +173,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldIncludeViewOnlyFlagWhenRequested() {
             CompetencyOperation operation = new CompetencyOperation(null, "Read Only Test", "Testing view-only mode", CompetencyTaxonomy.REMEMBER);
 
@@ -186,7 +186,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnErrorWhenNoCompetenciesProvided() {
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(), null);
 
@@ -195,7 +195,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnErrorWhenCompetenciesListIsNull() {
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), null, null);
 
@@ -208,7 +208,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
     class SaveCompetenciesTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldCreateNewCompetencyAndPersistToDatabase() throws Exception {
             CompetencyOperation createOperation = new CompetencyOperation(null, "Design Patterns", "Understanding common software design patterns", CompetencyTaxonomy.ANALYZE);
 
@@ -233,7 +233,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldUpdateExistingCompetencyInDatabase() throws Exception {
             String expectedNewTitle = "Updated OOP Competency";
             String expectedNewDescription = "Advanced object-oriented programming concepts";
@@ -255,7 +255,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldHandleBatchCreateOperations() throws Exception {
             CompetencyOperation op1 = new CompetencyOperation(null, "Competency 1", "Description 1", CompetencyTaxonomy.REMEMBER);
             CompetencyOperation op2 = new CompetencyOperation(null, "Competency 2", "Description 2", CompetencyTaxonomy.UNDERSTAND);
@@ -275,7 +275,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldHandleMixedCreateAndUpdateOperations() throws Exception {
             CompetencyOperation createOp = new CompetencyOperation(null, "New Competency", "New description", CompetencyTaxonomy.ANALYZE);
             CompetencyOperation updateOp = new CompetencyOperation(existingCompetency.getId(), "Updated Existing", "Updated description", CompetencyTaxonomy.EVALUATE);
@@ -295,7 +295,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldContinueOnPartialFailureAndReportErrors() throws Exception {
             CompetencyOperation validOp = new CompetencyOperation(null, "Valid Competency", "Valid description", CompetencyTaxonomy.APPLY);
             CompetencyOperation invalidOp = new CompetencyOperation(999999L, "Invalid Update", "Non-existent ID", CompetencyTaxonomy.UNDERSTAND);
@@ -317,7 +317,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
     class StateTrackingTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldTrackCompetencyCreationState() {
             // Initially, no modification should be tracked
             assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).isFalse();
@@ -331,7 +331,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldTrackCompetencyUpdateState() {
             // Initially, no modification should be tracked
             assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).isFalse();
@@ -345,7 +345,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldNotTrackStateForReadOnlyOperations() {
             // Perform read-only operations
             competencyExpertToolsService.getCourseCompetencies(course.getId());

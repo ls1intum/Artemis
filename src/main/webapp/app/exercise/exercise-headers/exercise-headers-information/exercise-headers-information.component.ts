@@ -1,3 +1,5 @@
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
@@ -25,7 +27,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown/result-history-dropdown.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
 import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 /**
@@ -80,6 +82,7 @@ export type InformationPlacement = 'panel' | 'titleBar';
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
     imports: [
+        TumAetUiTooltipDirective,
         SubmissionResultStatusComponent,
         InformationBoxComponent,
         DifficultyLevelComponent,
@@ -89,7 +92,6 @@ export type InformationPlacement = 'panel' | 'titleBar';
         ArtemisTranslatePipe,
         CommonModule,
         ResultHistoryDropdownComponent,
-        NgbTooltip,
     ],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]

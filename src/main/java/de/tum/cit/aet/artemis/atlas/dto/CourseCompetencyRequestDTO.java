@@ -13,10 +13,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseCompetencyRequestDTO(Long id, @NotBlank @Size(max = 255) String title, @Size(max = 10000) String description, ZonedDateTime softDueDate,
-        @NotNull @Min(1) @Max(100) Integer masteryThreshold, CompetencyTaxonomy taxonomy, Boolean optional) {
+public record CourseCompetencyRequestDTO(@Schema(description = "The id of the competency. Required to update one, omitted to create one.") Long id,
+        @Schema(description = "The title of the competency, at most 255 characters.") @NotBlank @Size(max = 255) String title,
+        @Schema(description = "A description of what the student should be able to do, at most 10000 characters.") @Size(max = 10000) String description,
+        @Schema(description = "A soft due date for reaching the competency. Optional.") ZonedDateTime softDueDate,
+        @Schema(description = "The progress, from 1 to 100 percent, at which the competency counts as mastered.") @NotNull @Min(1) @Max(100) Integer masteryThreshold,
+        @Schema(description = "The taxonomy level of the competency. Optional.") CompetencyTaxonomy taxonomy,
+        @Schema(description = "Whether the competency is optional. Defaults to false.") Boolean optional) {
 
     /**
      * Maps a request DTO to a course competency entity.

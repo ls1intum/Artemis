@@ -26,11 +26,11 @@ available to refresh repository settings independently of a push.
 
 ```text
 ci.yml                                                            (single entry workflow)
-├── detect-changes               (dorny/paths-filter, emits per-area booleans)
+├── detect-changes               (current-head check + dorny/paths-filter, emits per-area booleans)
 │
-│   REQUIRED — gated by `All required CI Passed` (fast + deterministic, run when relevant):
+│   REQUIRED — gated by `All required CI Passed` (run when relevant):
 ├── build           ── uses ci-build.yml          (the .war + Docker image)
-├── test            ── uses ci-test.yml           (server + client test suites)
+├── test            ── uses ci-test.yml           (server + client + AI worker sandbox tests; deferred on draft PRs)
 ├── quality         ── uses ci-quality.yml        (server + client style/lint/type-check, Java analyses)
 ├── gradle-wrapper  ── uses ci-gradle-wrapper.yml (if has_gradle; wrapper-jar integrity)
 ├── docs            ── uses ci-docs.yml           (if has_docs, or on every develop push)
@@ -42,6 +42,7 @@ ci.yml                                                            (single entry 
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
 ├── liquibase       ── uses ci-liquibase.yml      (if has_liquibase; changelogs, seed data and baseline replayed on PostgreSQL and MySQL)
+├── sonar           ── uses ci-sonar.yml          (after test; required PR/new-code gate; GitHub-hosted)
 ├── e2e             ── uses ci-e2e.yml            (after build; required; known-flaky-only failures are exonerated when history is available)
 │
 │   ADVISORY — runs for signal, never blocks merge:
@@ -51,14 +52,13 @@ ci.yml                                                            (single entry 
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
 ├── coverage-badge               (publishes the README coverage figure to the orphan `badges` branch; needs a GREEN `test`)
-├── sonar           ── uses ci-sonar.yml          (SonarQube Cloud grade; needs a GREEN `test`; also dispatchable standalone)
 │
 ├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory codeql/coverage-report — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
 `ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: ${{ !cancelled() }}`).
-The develop-only deploy jobs — `deploy-docs`, `coverage-badge`, `sonar` — are deliberately outside
+The develop-only deploy jobs — `deploy-docs` and `coverage-badge` — are deliberately outside
 its `needs:`, so they never appear in its table and never hold it up. On the run's
 **Summary** page it renders a per-job table (job · required/advisory · result), a failure-only
 local-fix table, and a Gantt timeline (`Kesin11/actions-timeline`) covering the reusable
@@ -68,20 +68,37 @@ Its only permission is `actions: read` (the timeline reads the jobs API).
 
 ### Required vs. advisory
 
-The single required check is `CI / All required CI Passed`. It gates on every job that is
-**fast and deterministic** — `build`, `test`, `quality`, `gradle-wrapper`, `translation`,
-`docs`, `workflows`, `version-consistency`, `bean-instantiations`. They run in parallel and finish
-within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
-the app on H2 in a few minutes; `quality`'s slowest job, the ArchUnit run, still under `test`),
-so requiring them adds no merge latency. The one slow required check is `e2e` (detailed below):
-it is gated too, with a flakiness-aware verdict that exonerates failures known to be flaky.
-Without history, failures after Playwright retries remain blocking. Path-skipped jobs report `skipped`, which the gate
-accepts — so a job only blocks merge when it is *relevant and red*.
+The single required check is `CI / All required CI Passed`. It includes change detection and
+the relevant build, tests, quality, wrapper, translation, docs, workflow, version, bean, skill,
+terminology, dead-code and migration checks, plus **Sonar** and **E2E**.
+
+Sonar waits for measured test coverage and the server-side quality-gate verdict, so it can add merge
+latency. E2E also gates merges, with a flakiness-aware verdict that exonerates failures known to be
+flaky. Without history, failures after Playwright retries remain blocking. Path-skipped jobs report
+`skipped`, which the aggregate accepts. Mandatory scope outputs are validated first so missing
+metadata cannot conceal a required analysis behind a skipped result.
+
+Draft PR runs use the aggregate name **Draft checks passed (tests deferred)**. They do not publish
+the required **All required CI Passed** check for an untested revision. Marking a PR **Ready for review**
+triggers a normal CI run even when its head SHA is unchanged; that run must satisfy the required
+check before merge. Non-PR events, including manual runs on a draft branch, retain the canonical
+required-check name and use full suites when the Test stage is selected. Enable **Bypass change
+detection and run every job** on a manual run to require all stages.
+
+On pull requests, changes confined to `config/stylelint/stylelint.config.json` and its
+`stylelint.config.js` discovery wrapper skip server tests while retaining client validation.
+The server class selector also ignores these two files alongside Java changes, preserving the
+affected Java test selection. Other configuration files, server disk inputs and explicit full
+validation retain their existing server-test requirements.
 
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
 client — Java/TypeScript style, lint, type-check, architecture, plus the Java-only analyses
 (class-dependency caps, query over-fetching). `test` (`ci-test.yml`) runs only the server and
-client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-second style
+client test suites and the AI worker sandbox tests. On draft PRs the whole `test` workflow is deferred,
+while `quality` still runs relevant style, lint, architecture and type checks on GitHub-hosted runners.
+On drafts, **Quality / Client Compilation** also compiles the test TypeScript with
+`pnpm exec tsc --project config/client/tsconfig.spec.json` after the existing compilation prebuild,
+so draft test-code type errors remain visible. This split (mirroring Angular/TypeScript/Vite) keeps a 30-second style
 failure from being buried behind the multi-minute test jobs; the Java analyses are the server
 half of a symmetric `quality` stage, alongside the client checks.
 
@@ -142,6 +159,14 @@ The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for
 A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
 new revision can start.
 
+Before reserving build or self-hosted test capacity, a step in the existing `detect-changes` job
+checks that the PR is open and the run's head is current. It calls `.github/scripts/pr-ready.js`
+immediately, reusing that job's runner and checkout. There is no deliberate delay or separate
+readiness job. Non-PR events pass through, and PR concurrency cancels a superseded run when another
+push arrives. API failures fail the required gate closed; an obsolete head skips expensive work.
+Because `detect-changes` is in `all-required-ci-passed.needs`, a failed revision check cannot become
+a green skip.
+
 Jobs that must evaluate failed or skipped dependencies use `!cancelled()` in their job-level `if`,
 including Phase 2, the E2E reporter, coverage reporting, the required gate and the CI summary.
 This overrides the implicit `success()` check while allowing cancellation. Keep the explicit
@@ -169,13 +194,26 @@ gate closed.
 
 ### Skipping tests on a pull request
 
-The server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
+A draft `pull_request` event defers the entire `ci-test.yml` workflow: server tests, client tests and
+AI worker sandbox tests. E2E and CodeQL also defer draft PRs. Relevant public style, lint,
+architecture and type checks continue, including test TypeScript compilation in
+**Quality / Client Compilation**. The WAR build and the PR image needed for a draft test server
+remain available. This saves test-runner time during implementation, with the tradeoff that
+integration-test feedback arrives after **Ready for review** or a manual full CI run.
+
+The `ready_for_review` event starts normal CI with conservative affected selection and full-suite
+fallbacks. A successful draft run reports **Draft checks passed (tests deferred)** and cannot satisfy
+**All required CI Passed**, including when the promotion keeps the same commit. Manual
+`workflow_dispatch` runs on any branch, including a draft PR branch, use full suites when selected.
+Area filtering can skip the Test stage for documentation-only changes. Enable **Bypass change
+detection and run every job** to request complete validation regardless of the diff.
+
+For ready PRs, the server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
 (seven shards per run), and E2E is the slowest stage, so a **pull request** skips what it cannot
 affect. `detect-changes` emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to
 `ci-test.yml`, and `run_e2e`, which gates the `e2e` job. The skipped jobs report `skipped`; the `test` call as a whole still reports `success` when the other
-suite passes, which is all the gate sees. A skipped suite produces no coverage artifact (the
-coverage reporters only fetch an artifact when the matching `has_*_changes` is true, which implies
-the suite ran).
+suite passes, which is all the gate sees. A skipped or affected suite produces no full-coverage
+artifact. Coverage reporters show the validation scope and only publish tables from complete suites.
 
 - All three outputs are **deny-lists** in the `relevant` step, so a path nobody has classified runs
   the suite. The server suite is skipped only if every changed file is markdown, `LICENSE`,
@@ -198,7 +236,7 @@ the suite ran).
   `packages`. Playwright specs are `*.spec.ts` too, which is why client specs are matched by
   location, and a change under `src/test/playwright` always runs E2E. `build` and the other required
   checks still run.
-- A **draft** pull request does not start E2E either; marking it ready for review starts a CI run,
+- Marking a draft ready for review starts a CI run,
   which runs E2E only if the changes also pass the `e2e_tests` filter above (a pull request that only
   changes tests still skips it). The PR Docker image (`docker-pr` in `ci-build.yml`) is built for
   internal pull requests only, because fork pull requests cannot push to GHCR, and only if the changes
@@ -206,16 +244,85 @@ the suite ran).
   deploys the image of an open pull request, drafts included. A pull request that only changes tests
   gets no image, because neither E2E nor a deploy needs it, and a deploy of such a commit has no
   `sha-<commit>` image to find.
-- Only `pull_request` events skip. A push to `develop`, a merge group, a manual run and a release
-  other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
+- Only `pull_request` events select individual affected suites. When the Test stage is selected,
+  a push to `develop`, a merge group, a manual run and a release other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
   suites' coverage there and `develop` is where anything that slipped past a pull request's own run
   would show up. `@tumaet/*` release tags skip `detect-changes` and with it `test`, like every other
-  Artemis job.
-- A pull request with 3000 changed files or more never skips: the changed files come from the pulls
+  Artemis job. Area filtering can skip an irrelevant Test stage; use the manual bypass to run every job.
+- A pull request with 3000 changed files or more expands every suite's relevance: the changed files come from the pulls
   API, which stops at 3000, so the filters may not have seen all of them. That covers the server
-  suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`).
+  suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`). Draft test/E2E
+  deferral still applies; the image remains available and promotion enables normal test execution.
 - Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
   the server suite uploads none.
+
+### Selecting tests within a pull request
+
+Ready PRs use affected selection after the area filters decide a suite is relevant. Selection is
+relative to the merge base with the actual PR target; missing history falls back to complete tests.
+
+- **Server:** the Python source dependency selector emits an explicit class plan on a public runner.
+  It follows imports, same-package references and injectable inheritance through both source revisions.
+  Type arguments and empty marker interfaces do not connect unrelated implementations. Production
+  changes include tests of affected modules and their typed and HTTP endpoint consumers; isolated test edits can select
+  individual classes. Mandatory architecture and source-scanning guards remain included and count
+  toward the breadth limit. The plan's exact classes reach Gradle through `artemis.test.classes`;
+  execution jobs need only a shallow checkout. Shared contracts, core/configuration, ambiguous wiring,
+  unknown inputs and broad selections retain the seven-shard suite. `get_changed_modules.sh` retains
+  its conservative CSV interface for other callers.
+- **Client:** `pnpm run test:ci:affected --base-ref <fetched-pr-target-ref>` expands changed Angular templates
+  and styles to their TypeScript owners, including Sass imports, then uses Vitest's transitive dependency
+  graph for both ordinary and Monaco specs. Specs importing Node's filesystem APIs always run because
+  source reads do not create graph edges. These guards do not suppress the full-suite fallback when the
+  changed source has no related specs: every changed source or resource owner must have a graph
+  relationship in at least one project. Shared leaf components, services and utilities use that same
+  graph instead of forcing full tests by directory name. The job prints the selected specs. Bootstrap,
+  generated inputs, configuration, unsupported resources, deletions/renames and graph failures retain
+  full validation. Strict test compilation prepares assets once; `--prebuilt` reuses them for test
+  execution, including full fallbacks. Standalone callers still prepare assets by default.
+  Ready PRs retain strict test TypeScript compilation and custom ESLint-rule tests in the client suite.
+  Drafts compile test TypeScript in **Quality / Client Compilation**. A selected test failure fails;
+  it does not retry as a full suite.
+- **E2E:** mapped application changes run their module tests, declared cross-module consumer workflows,
+  changed E2E specs and login/logout/system-health smoke specs. The checked-in dependency contract must
+  account for every discovered spec; additions or unsupported inputs fall back to complete validation.
+  An audited exact-file client surface can replace its broad module for that file only; for example,
+  exam-management UI fixes do not inherit the shared student-course container's exam dependency.
+  A mixed change still unions the broader files' consumers.
+  Java/client unit tests and documentation accompanying a bugfix do not force full E2E. Shared runtime,
+  configuration, Playwright helpers and unknown dependencies do. The selector resolves exact spec paths
+  and computes a disjoint remaining set. Ordinary eligible PRs intentionally omit Phase 2; full callers
+  retain it. Missing expected results fail, and non-PR events keep complete validation.
+
+Use `supporting_scripts/ci/E2E-tests/verify-test-determination.sh --all` to verify every mapping against
+the production selector. It rejects overlapping phase assignments and missing specs; it does not
+maintain a second selection algorithm.
+
+Affected tests keep JUnit results and diagnostics but omit whole-project coverage generation,
+thresholds and uploads. Both internal and fork PR reporters remove stale coverage tables when a
+complete result is unavailable and state the scope and actual test result. Only successful full-mode
+jobs publish `Server JaCoCo XML` and `Client Coverage Summaries`; fork reporting infers coverage scope
+from GitHub's exact run-attempt scope marker and artifact metadata without executing PR code.
+
+Pushes to `develop`, `main` and `release/*`, merge groups, published Artemis releases and manual CI
+runs retain full suites and coverage when their Test stage runs. To request complete validation of a PR branch before merging,
+dispatch **CI** on that branch with **Bypass change detection and run every job** enabled. Re-running
+a PR event preserves affected selection. Full validation on a merge group depends on use of the merge
+queue; a normal PR's green required gate certifies its selected scope.
+
+`ci-workflows.yml` runs behavioral tests for selection, current-revision checks and coverage reporting
+when their implementations change. New global inputs or unsupported dependency mechanisms should
+fall back to full validation until their selection is explicitly covered.
+
+### Dependency submission
+
+`dependency-submission.yml` is the sole Gradle dependency snapshot producer. It runs on dependency
+changes on `develop`, weekly and on demand, using GitHub-hosted runners. Keep **Automatic dependency
+submission** disabled under **Settings → Advanced Security**, while leaving **Dependency graph** and
+**Dependabot alerts** enabled. The managed producer also runs on PR updates and branches, duplicating
+work whose non-default-branch snapshots do not update the repository graph. This switch is a repository
+setting, so reviewing or reverting the workflow files does not change it; re-enable the managed producer
+if the dedicated workflow is removed without a replacement.
 
 ## Action pinning policy
 
@@ -268,6 +375,19 @@ These workflows are intentionally NOT folded into the umbrella:
 | All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
 
 ## E2E image identity and readiness
+
+PR images are deliberately retained after a PR closes. Immediate deletion is housekeeping,
+and GitHub currently provides container-image storage and bandwidth free of charge
+([billing policy](https://docs.github.com/en/billing/concepts/product-billing/github-packages)).
+The same image version carries both `pr-<number>` and `sha-<commit>` tags; deleting the version
+can break CI still pulling it after a merge and remove images needed for later reproduction or
+redeployment.
+Registry deletion also does not reclaim Docker disk space on self-hosted runners.
+
+There is no PR-close image-cleanup workflow. Automatic deletion would require package **Admin**
+access, expanding the capabilities of repository jobs with package-write tokens across the shared
+PR/release package. Keep the current package permissions. If registry growth becomes a practical
+problem, design a separate retention policy that protects release images and images still in use.
 
 Both build paths upload a `docker-tag` artifact containing `sha-<commit_sha>` for the exact
 revision checked out by the build. E2E setup rejects an artifact for any other revision;
@@ -393,61 +513,77 @@ then dispatch the workflow. For local rendering and tests, see
 
 ## The code quality analyses
 
-Two external services grade the code, and neither one gates a merge. The enforcing checks are
-`ci-quality.yml` and `ci-test.yml`; these two publish a figure.
+**SonarQube Cloud is a required pre-merge quality gate** for relevant ready PRs. The scanner waits
+for the server verdict; scanner, upload, timeout and quality-gate failures fail **All required CI
+Passed**. No additional branch-protection check or repository permission is needed. Codacy remains
+a separate external service.
 
-**Codacy** analyzes every `develop` commit on its own infrastructure — nothing in this repo triggers
-it. It serves the `code quality` badge in the root `README.md` from
-`app.codacy.com/project/badge/Grade/…`, and the badge links to the repository dashboard. Its scope
-comes from `.codacy.yaml`, read from the default branch. Note what that grade is and is not: the
-active pattern set is essentially SAST, so an "A" means very few flagged findings per line — it does
-not reflect Spotless, Checkstyle, Modernizer, the ArchUnit rules, the custom ESLint rules, or the
-coverage floors, all of which are enforced here instead. Codacy's *coverage* figure is separately
-stale, which is why the coverage badge is self-hosted (see above).
+PR analysis uses the PR number, exact head SHA, original source branch and actual target branch.
+All configured **new-code** conditions apply: reliability, security, maintainability, coverage,
+duplication and reviewed security hotspots. Existing findings are fixed in source; neither the
+quality gate nor the source/exclusion contract with Codacy is weakened.
 
-**SonarQube Cloud** runs from `ci-sonar.yml` on `develop` pushes, after a green `test`, importing the
-`Server JaCoCo XML` and `Vitest Coverage Report` artifacts that job already uploaded — no suite is
-re-run. It serves five badges in the root `README.md`, straight from `sonarcloud.io/api/project_badges`
-for the `develop` branch: the **quality gate** (which judges the new code of the last 30 days: ratings,
-coverage, duplication, hotspots), the **reliability**, **security** and **maintainability** ratings, and
-the share of **duplicated lines**. Mind what the ratings measure. The badge service reports
-whole-project values and has no badge for the new-code metrics, so the three rating badges grade every
-open finding of the project, including the ones from before the new-code window, while the quality gate
-keeps new code at A. The reliability badge therefore trails the gate until the older bugs are fixed. The
-coverage badge stays the self-hosted one described above. Configuration lives in `gradle/sonar.gradle`.
+### Scope, coverage and runner cost
 
-Three things about it are worth knowing before changing it:
+Analysis runs on GitHub-hosted `ubuntu-latest` with Java 25, Node 24, client dependencies, the TUM
+AET UI package build and compiled Java bytecode. It skips the Angular application bundle and never
+reruns tests. Drafts, superseded revisions and changes entirely outside Sonar's source/configuration
+scope skip analysis. Unknown scope and the 3,000-file API limit expand validation. Draft promotion
+or PR retargeting starts current validation. Body/title edits neither cancel source validation nor
+publish its canonical required check.
 
-1. **Scope is a contract with `.codacy.yaml`.** `gradle/sonar.gradle`'s exclusion list mirrors that
-   file's repository-wide `exclude_paths` floor. Change one without the other and the two grades
-   quietly stop measuring the same code, which is the entire point of running both. The floor is the
-   shared part and not the whole scope: Sonar narrows further to the roots in `sonar.sources`, while
-   `.codacy.yaml` sets no `include_paths`, so Codacy also grades supported repository tooling outside
-   them.
-2. **`compileJava` is required, not an optimization.** Sonar's Java analyzer needs bytecode, and the
-   Gradle plugin only sets `sonar.java.binaries` if the output directory already exists. Without a
-   prior compile the property is silently omitted and the Java half of the analysis degrades with no
-   error, so the job runs `./gradlew compileJava sonar -x webapp`.
-3. **It is dispatchable on its own.** A full CI run takes ~2 h because of the e2e tail, so
-   `ci-sonar.yml` also accepts `workflow_dispatch` for an on-demand grade. That trigger declares no
-   inputs — the ref it is dispatched on is the commit analysed. A dispatched run has no `test` job of
-   its own, so it looks up the newest `ci.yml` run for exactly that commit that **succeeded** and
-   imports the coverage artifacts of that run; for a pull request branch that is the pull request
-   build. When no such run exists the analysis runs without coverage, and the quality gate then
-   shows 0.0% coverage on new code, which describes the missing report and not the code. Dispatch
-   after the CI run of the commit has finished to get the real figure. Checkov's `CKV_GHA_7` also
-   flags dispatch inputs, so keep that trigger input-free.
+Complete test runs reuse their JaCoCo XML and LCOV artifacts. Affected client runs emit measured
+selected-spec LCOV as **Sonar Client Coverage**, with independent normal/Monaco reports. Affected
+server runs upload existing execution data as **Sonar Server Coverage**. A trusted XML-only Gradle
+task generates the selected Java report on the Sonar runner after compilation, without rerunning
+tests or generating the full module/HTML/coverage-verification graph.
 
-The job is `continue-on-error` and never appears in another job's `needs:`, so a Sonar outage, an
-expired `SONAR_TOKEN`, or a missing project cannot fail the run.
+Only reports with successful matching test producers are imported. Selected reports remain partial:
+they are never used for full-project badges or Codacy coverage, and unexecuted changed lines count
+as uncovered. The configured Sonar coverage conditions still apply. There are no old-revision
+substitutions, PR coverage exclusions or forced complete suites solely for Sonar.
 
-That covers the workflow, and only the workflow. SonarQube Cloud's GitHub App posts a second check
-of its own, `SonarCloud Code Analysis`, carrying the quality gate verdict. Nothing in this
-repository produces that check and `continue-on-error` cannot reach it, so a failed gate shows as a
-red X on the `develop` commit while the job beside it is green. It still gates nothing — branch
-protection requires only `All required CI Passed` — but it is the reason `develop` can look red with
-every workflow passing. Which conditions that verdict applies is the quality gate the project is
-assigned in SonarQube Cloud, configured there rather than here.
+### Fork and token-restricted PRs
+
+Automatic fork events, and token-restricted internal PRs such as Dependabot updates, execute no
+source in the analysis job and do not receive the Sonar token.
+A required secretless verifier accepts only a passing public Sonar record matching the original
+PR number, exact head SHA, source branch and Sonar **target** branch. Missing/stale evidence,
+failed gates, malformed responses and API errors block merging.
+
+After reviewing and accepting that exact commit as trusted, a maintainer can keep the original PR:
+
+1. Push the reviewed exact head to internal `chore/sonar/pr-<number>`. Update this promotion ref explicitly
+   if the PR head changes.
+2. Dispatch **Sonar** from the trusted default branch with `pull_request_number=<number>`, leaving
+   `analyze_default_branch=false`. The workflow validates the promotion ref against the current open
+   PR head before checkout; this input cannot choose an arbitrary SHA.
+3. Wait for a passing quality gate, then rerun only the original PR's **Sonar** verification job.
+   Its dependent aggregate reruns without repeating upstream tests.
+
+Promotion is an explicit maintainer trust decision: promoted build scripts run with the analysis
+token during that manual scan. Never automatically promote or analyze unreviewed fork code with
+secrets. Trusted tools and source use separate checkouts, supporting promoted commits predating
+these helpers.
+
+### Develop analysis and recovery
+
+Successful test runs on `develop` still publish full-branch analysis and README badges. The gate
+badge measures new code; rating badges measure all open project findings. Fixing existing bugs
+therefore accompanies prevention in PRs. Merge-group and relevant manual CI runs also include Sonar.
+
+A standalone **Sonar** dispatch normally analyzes its selected ref. Scanner recovery can use
+`analyze_default_branch=true` to analyze the real default-branch source with the selected workflow
+revision. Recovery and a PR number cannot be combined. Branch recovery imports only verified
+complete exact-source coverage. Promoted PR scans can import complete or explicitly selected
+exact-source coverage with successful producers. Promoted PR recovery additionally requires the
+successful CI run's recorded target branch to match the current PR target. Retargeted PRs and older
+runs without that metadata need a fresh successful CI test run before recovery can reuse coverage.
+
+The scanner has its own heap (`SONAR_SCANNER_JAVA_OPTS=-Xmx6g`). A failed upload leaves old analysis
+and badges unchanged. Verify the processed revision and server gate as well as the job conclusion.
+Sonar's GitHub App may post separate decoration; the required CI aggregate waits for the scanner's
+server-side verdict directly.
 
 ## Adding a new CI check
 
