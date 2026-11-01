@@ -20,17 +20,16 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparisonSide;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
@@ -68,8 +67,6 @@ public class PlagiarismResource {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     // correspond to the translation files (suffix) used in the client
     private static final String YOUR_SUBMISSION = "Your submission";
 
@@ -77,7 +74,7 @@ public class PlagiarismResource {
 
     public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismSubmissionRepository plagiarismSubmissionRepository,
             CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, PlagiarismService plagiarismService,
-            PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository) {
+            PlagiarismResultRepository plagiarismResultRepository) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismSubmissionRepository = plagiarismSubmissionRepository;
         this.courseRepository = courseRepository;
@@ -85,7 +82,6 @@ public class PlagiarismResource {
         this.userRepository = userRepository;
         this.plagiarismService = plagiarismService;
         this.plagiarismResultRepository = plagiarismResultRepository;
-        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -98,13 +94,10 @@ public class PlagiarismResource {
      * @return the ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
     @PutMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/status")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> updatePlagiarismComparisonStatus(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") long comparisonId,
             @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
         log.info("REST request to update the status {} of the plagiarism comparison with id: {}", statusDTO.status(), comparisonId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
         var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
         var exercise = comparison.getPlagiarismResult().getExercise();
         var comparisonCourseId = plagiarismComparisonRepository.findCourseIdByIdElseThrow(comparisonId);
@@ -189,18 +182,18 @@ public class PlagiarismResource {
      * @return the ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
     @DeleteMapping("exercises/{exerciseId}/plagiarism-results/{plagiarismResultId}/plagiarism-comparisons")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> deletePlagiarismComparisons(@PathVariable("exerciseId") long exerciseId, @PathVariable("plagiarismResultId") long plagiarismResultId,
             @RequestParam() boolean deleteAll) {
         log.info("REST request to clean up plagiarism comparisons for exercise with id: {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-
         if (deleteAll) {
             // delete all elements for the given exercise
             plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
         }
         else {
+            if (!plagiarismResultRepository.existsByIdAndExerciseId(plagiarismResultId, exerciseId)) {
+                throw new ConflictException("The plagiarism result does not belong to the exercise", "PlagiarismResult", "exerciseMismatch");
+            }
             // delete all plagiarism comparisons which are not approved or denied
             plagiarismComparisonRepository.deletePlagiarismComparisonsByPlagiarismResultIdAndStatus(plagiarismResultId, PlagiarismStatus.NONE);
             // also clean up any old and unused plagiarism results
@@ -217,10 +210,8 @@ public class PlagiarismResource {
      * @return the ResponseEntity with status 200 (OK) and with body the number of plagiarism results
      */
     @GetMapping("exercises/{exerciseId}/potential-plagiarism-count")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Long> getNumberOfPotentialPlagiarismCasesForExercise(@PathVariable("exerciseId") long exerciseId) {
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         return ResponseEntity.ok(plagiarismService.getNumberOfPotentialPlagiarismCasesForExercise(exerciseId));
     }
 }

@@ -251,6 +251,13 @@ $color-selector-background: white;
 $color-selector-border: #ced4da;
 $color-selector-box-shadow: rgba(0, 0, 0, 0.175);
 
+// Student statistics: exercise-type palette for the Artemis score ring.
+$statistics-score-quiz-color: #17a2b8;
+$statistics-score-programming-color: #fd7e14;
+$statistics-score-modeling-color: #6610f2;
+$statistics-score-text-color: #b00b6b;
+$statistics-score-file-upload-color: #2d9c88;
+
 // Component: Statistics average score graph
 $stat-av-sc-legend-background: whitesmoke;
 
@@ -258,6 +265,11 @@ $stat-av-sc-legend-background: whitesmoke;
 $stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
 $stat-av-sc-legend-median: rgba(127, 127, 127, 255);
 $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
+
+// Lecture media keeps a dark canvas; PDF pages keep their authored white paper in either theme.
+$lecture-media-background: $black;
+$lecture-document-background: $white;
+$lecture-scrim-color: $black;
 
 // Component: pdf-preview.component.scss
 $pdf-preview-pdf-container-shadow: scale-color($black, $alpha: -90%);

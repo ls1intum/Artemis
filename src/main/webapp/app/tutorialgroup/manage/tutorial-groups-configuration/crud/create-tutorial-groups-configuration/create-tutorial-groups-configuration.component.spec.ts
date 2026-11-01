@@ -55,7 +55,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
             body: course,
             status: 201,
         });
-        getCourseSpy = vi.spyOn(courseManagementService, 'find').mockReturnValue(of(response));
+        getCourseSpy = vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(of(response));
         fixture.detectChanges();
     });
 

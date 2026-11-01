@@ -73,6 +73,22 @@ describe('TeamComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it.each(['student', 'staff'] as const)('should select and pass the explicit %s team overview purpose from the route', (purpose) => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue(purpose === 'staff' ? '/course-management/1/exercises/2/teams/3' : '/courses/1/exercises/2/teams/3');
+        const body = { ...mockExercise, isAtLeastInstructor: true };
+        const student = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body })));
+        const staff = vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body })));
+        vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse({ body: mockTeam })));
+        const route = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+        route.setParameters({ courseId: 1, exerciseId: 2, teamId: 3 });
+        const view = TestBed.createComponent(TeamComponent).componentInstance;
+        view.ngOnInit();
+        expect(view.overviewPurpose).toBe(purpose);
+        expect(purpose === 'staff' ? staff : student).toHaveBeenCalledExactlyOnceWith(2);
+        expect(purpose === 'staff' ? student : staff).not.toHaveBeenCalled();
+        expect(view.exercise()?.id).toBe(mockExercise.id);
+    });
+
     describe('ngOnInit', () => {
         it('should set team and exercise from services and call find on exerciseService to retreive exercise', async () => {
             const findSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));

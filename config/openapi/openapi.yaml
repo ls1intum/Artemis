@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: "10.5"
+  version: "10.6"
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 tags:
@@ -3911,6 +3911,7 @@ components:
         isUserRegistered: {type: boolean}
         isUserTutor: {type: boolean}
         numberOfRegisteredUsers: {type: integer, format: int32}
+        capacityReached: {type: boolean}
         teachingAssistantName: {type: string}
         teachingAssistantId: {type: integer, format: int64}
         teachingAssistantImageUrl: {type: string}

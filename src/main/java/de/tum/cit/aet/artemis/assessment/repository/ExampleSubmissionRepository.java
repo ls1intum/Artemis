@@ -28,8 +28,6 @@ public interface ExampleSubmissionRepository extends ArtemisJpaRepository<Exampl
 
     Long countAllByExerciseId(long exerciseId);
 
-    Set<ExampleSubmission> findAllByExerciseId(long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results" })
     Set<ExampleSubmission> findAllWithResultByExerciseId(long exerciseId);
 

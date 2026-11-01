@@ -69,6 +69,7 @@
                                     class="w-full max-w-[22.5rem]"
                                     type="text"
                                     [id]="'criterionTitle-' + criterionIndex"
+                                    [tumAetUiInputId]="'criterionTitle-' + criterionIndex"
                                     [name]="'criterionTitle-' + criterionIndex"
                                     [(ngModel)]="criterion.title!"
                                     [ngModelOptions]="{ standalone: true }"
@@ -129,6 +130,7 @@
                                                 <input
                                                     tumAetUiInput
                                                     [id]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex"
+                                                    [tumAetUiInputId]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.gradingScale"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
@@ -149,6 +151,7 @@
                                                     tumAetUiInput
                                                     data-testid="instruction-usage-count"
                                                     [id]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex"
+                                                    [tumAetUiInputId]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.usageCount"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
@@ -183,9 +186,11 @@
                                                     <jhi-help-icon text="artemisApp.exercise.descriptionHint" />
                                                 </label>
                                                 <textarea
+                                                    tumAetUiInput
                                                     tumAetUiTextarea
                                                     class="box-border max-w-full w-full resize-y"
                                                     [id]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
+                                                    [tumAetUiInputId]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.instructionDescription"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
@@ -203,9 +208,11 @@
                                                     <jhi-help-icon text="artemisApp.exercise.feedbackHint" />
                                                 </label>
                                                 <textarea
+                                                    tumAetUiInput
                                                     tumAetUiTextarea
                                                     class="box-border max-w-full w-full resize-y"
                                                     [id]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
+                                                    [tumAetUiInputId]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.feedback"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"

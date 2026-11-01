@@ -2,26 +2,26 @@
     <div class="warning">
         <div><span jhiTranslate="artemisApp.exercise.update.warning.warning"></span></div>
         <ul class="warning-problem">
-            @if (creditChanged) {
+            @if (creditChanged()) {
                 <li class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.creditChanged"></span></li>
             }
-            @if (usageCountChanged) {
+            @if (usageCountChanged()) {
                 <li class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.usageCountChanged"></span></li>
             }
-            @if (instructionDeleted) {
+            @if (instructionDeleted()) {
                 <li class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.instructionDeleted"></span></li>
             }
-            @if (immediateReleaseWarning) {
-                <li class="warning-problem-element"><span jhiTranslate="{{ immediateReleaseWarning }}"></span></li>
+            @if (immediateReleaseWarning()) {
+                <li class="warning-problem-element"><span jhiTranslate="{{ immediateReleaseWarning() }}"></span></li>
             }
         </ul>
-        @if (instructionDeleted) {
+        @if (instructionDeleted()) {
             <div class="warning-info">
-                <input class="form-check-input" type="checkbox" name="deleteFeedback" id="deleteFeedback" [ngModel]="deleteFeedback()" (ngModelChange)="toggleDeleteFeedback()" />
-                <label class="form-check-label text-danger" for="deleteFeedback" jhiTranslate="artemisApp.exercise.update.warning.deleteFeedback"></label>
+                <tumaet-ui-checkbox class="accent-primary" name="deleteFeedback" inputId="deleteFeedback" [ngModel]="deleteFeedback()" (ngModelChange)="toggleDeleteFeedback()" />
+                <label class="cursor-pointer text-state-danger" for="deleteFeedback" jhiTranslate="artemisApp.exercise.update.warning.deleteFeedback"></label>
             </div>
         }
-        @if (creditChanged || usageCountChanged || instructionDeleted) {
+        @if (creditChanged() || usageCountChanged() || instructionDeleted()) {
             <ul class="warning-info">
                 <li class="warning-info"><span jhiTranslate="artemisApp.exercise.update.warning.problems"></span></li>
                 <li class="warning-info"><span jhiTranslate="artemisApp.exercise.update.warning.information"></span></li>
@@ -30,32 +30,34 @@
     </div>
     <div class="edit-modal-footer-content">
         <div class="warning"><span jhiTranslate="artemisApp.exercise.update.warning.confirmText"></span></div>
-        <div class="form-group">
-            <button type="button" class="btn btn-secondary" id="cancel-button" data-dismiss="modal" (click)="clear()">
+        <div class="mb-4!">
+            <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" id="cancel-button" (click)="clear()">
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
-            @if (creditChanged || usageCountChanged || instructionDeleted) {
-                @if (creditChanged || usageCountChanged || instructionDeleted) {
+            @if (creditChanged() || usageCountChanged() || instructionDeleted()) {
+                @if (creditChanged() || usageCountChanged() || instructionDeleted()) {
                     <button
+                        tumAetUiButton
                         type="submit"
                         id="no-reevaluate-button"
+                        severity="warn"
                         (click)="saveExerciseWithoutReevaluation()"
-                        [disabled]="instructionDeleted && deleteFeedback()"
-                        class="btn btn-warning"
+                        [disabled]="instructionDeleted() && deleteFeedback()"
+                        class=""
                     >
                         <fa-icon [icon]="faExclamationTriangle" />
                         <span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation"></span>
                     </button>
                 }
-                @if (creditChanged || usageCountChanged || instructionDeleted) {
-                    <button type="submit" id="reevaluate-button" (click)="reEvaluateExercise()" class="btn btn-success">
+                @if (creditChanged() || usageCountChanged() || instructionDeleted()) {
+                    <button tumAetUiButton type="submit" id="reevaluate-button" (click)="reEvaluateExercise()" class="">
                         <fa-icon [icon]="faCheck" />
                         <span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise"></span>
                     </button>
                 }
             } @else {
-                <button type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" class="btn btn-primary">
+                <button tumAetUiButton type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" class="">
                     <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="entity.action.save"></span>
                 </button>

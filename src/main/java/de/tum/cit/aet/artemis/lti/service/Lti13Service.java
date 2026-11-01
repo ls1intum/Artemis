@@ -32,15 +32,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -107,7 +105,7 @@ public class Lti13Service {
 
     private final LtiService ltiService;
 
-    private final ResultRepository resultRepository;
+    private final ResultGradeRepository resultGradeRepository;
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
@@ -128,7 +126,7 @@ public class Lti13Service {
             DeepLinkingType.LECTURE);
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository,
+            CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultGradeRepository resultGradeRepository,
             Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
             OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
@@ -138,7 +136,7 @@ public class Lti13Service {
         this.courseRepository = courseRepository;
         this.ltiService = ltiService;
         this.launchRepository = launchRepository;
-        this.resultRepository = resultRepository;
+        this.resultGradeRepository = resultGradeRepository;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
         this.tokenRetriever = tokenRetriever;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
@@ -269,7 +267,7 @@ public class Lti13Service {
         }
 
         // the result (and its synthesized feedback) is identical for all launches - load and synthesize it once
-        Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        Optional<Result> result = resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId());
 
         if (result.isEmpty()) {
             log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
@@ -333,17 +331,24 @@ public class Lti13Service {
         return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
     }
 
+    /**
+     * The body of an LTI 1.3 Assignment and Grading Services score publish request.
+     * It is deliberately not annotated with {@code @JsonInclude}: a missing comment or score is sent as {@code null}, as it always was.
+     *
+     * @param userId           the ID of the user on the platform
+     * @param timestamp        the time at which the score was given
+     * @param activityProgress the progress of the user on the activity
+     * @param gradingProgress  the progress of the grading
+     * @param comment          the feedback of the score
+     * @param scoreGiven       the score that was given
+     * @param scoreMaximum     the maximum score
+     */
+    private record ScorePublishRequest(String userId, String timestamp, String activityProgress, String gradingProgress, String comment, Double scoreGiven, double scoreMaximum) {
+    }
+
     private String getScoreBody(String userId, String comment, Double score) {
-        JsonMapper objectMapper = JsonObjectMapper.get();
-        ObjectNode requestBody = objectMapper.createObjectNode();
-        requestBody.put("userId", userId);
-        requestBody.put("timestamp", new DateTime().toString());
-        requestBody.put("activityProgress", "Submitted");
-        requestBody.put("gradingProgress", "FullyGraded");
-        requestBody.put("comment", comment);
-        requestBody.put("scoreGiven", score);
-        requestBody.put("scoreMaximum", 100D);
-        return objectMapper.writeValueAsString(requestBody);
+        ScorePublishRequest requestBody = new ScorePublishRequest(userId, new DateTime().toString(), "Submitted", "FullyGraded", comment, score, 100D);
+        return JsonObjectMapper.get().writeValueAsString(requestBody);
     }
 
     /**

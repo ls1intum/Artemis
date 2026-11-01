@@ -1,3 +1,5 @@
+import { TumAetUiCheckboxComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, DoCheck, OnDestroy, inject, input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -9,7 +11,7 @@ import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -17,30 +19,26 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     template: `
         <ng-container *jhiHasAnyAuthority="IS_AT_LEAST_EDITOR">
             @if (this.showPresentationScoreCheckbox()) {
-                <div class="form-group">
-                    <div class="form-check custom-control custom-checkbox">
-                        <input
-                            type="checkbox"
-                            class="form-check-input custom-control-input"
-                            id="field_presentationScoreEnabled"
+                <div class="flex flex-col gap-1 mb-3">
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox
+                            inputId="field_presentationScoreEnabled"
                             name="presentationScoreEnabled"
                             [ngModel]="exercise().presentationScoreEnabled"
                             (ngModelChange)="exercise().presentationScoreEnabled = $event"
                         />
-                        <label class="form-check-label custom-control-label" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"
-                            >Presentation Score Enabled</label
-                        >
+                        <label class="" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score Enabled</label>
                         <fa-icon
                             [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | artemisTranslate }}"
+                            class="text-text-secondary"
+                            tumAetUiTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | artemisTranslate }}"
                         />
                     </div>
                 </div>
             }
         </ng-container>
     `,
-    imports: [HasAnyAuthorityDirective, FormsModule, TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
+    imports: [TumAetUiCheckboxComponent, TumAetUiTooltipDirective, HasAnyAuthorityDirective, FormsModule, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class PresentationScoreComponent implements DoCheck, OnDestroy {
     private readonly gradingService = inject(GradingService);

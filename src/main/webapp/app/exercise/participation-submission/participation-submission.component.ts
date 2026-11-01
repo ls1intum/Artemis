@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -46,6 +47,7 @@ import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/pr
     selector: 'jhi-participation-submission',
     templateUrl: './participation-submission.component.html',
     imports: [
+        TumAetUiButtonDirective,
         TranslateDirective,
         TableViewComponent,
         ResultComponent,
@@ -86,7 +88,7 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     private _participationId = 0;
 
-    readonly exerciseStatusBadge = signal('bg-success');
+    readonly exerciseStatusBadge = signal('bg-state-success');
     readonly isTmpOrSolutionProgrParticipation = signal(false);
     readonly exercise = signal<Exercise | undefined>(undefined);
     readonly programmingExercise = computed<ProgrammingExercise | undefined>(() => {
@@ -300,7 +302,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                         this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                             const exercise = exerciseResponse.body!;
                             this.exercise.set(exercise);
-                            this.exerciseStatusBadge.set(dayjs().isAfter(dayjs(exercise.dueDate)) ? 'bg-danger' : 'bg-success');
+                            this.exerciseStatusBadge.set(dayjs().isAfter(dayjs(exercise.dueDate)) ? 'bg-state-danger' : 'bg-state-success');
                             const templateParticipation = exercise.templateParticipation;
                             const solutionParticipation = exercise.solutionParticipation;
 
@@ -335,10 +337,12 @@ export class ParticipationSubmissionComponent implements OnInit {
                         });
                     } else {
                         // Get exercise for release and due dates
-                        this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                            this.exercise.set(exerciseResponse.body!);
-                            this.updateStatusBadgeColor();
-                        });
+                        (params['examId'] ? this.exerciseService.findForExamManagement(params['exerciseId']) : this.exerciseService.findForStaff(params['exerciseId'])).subscribe(
+                            (exerciseResponse) => {
+                                this.exercise.set(exerciseResponse.body!);
+                                this.updateStatusBadgeColor();
+                            },
+                        );
                         this.fetchParticipationAndSubmissionsForStudent();
                     }
                 });
@@ -407,7 +411,7 @@ export class ParticipationSubmissionComponent implements OnInit {
             afterDueDate = dayjs().isAfter(dayjs(exercise.dueDate));
         }
 
-        this.exerciseStatusBadge.set(afterDueDate ? 'bg-danger' : 'bg-success');
+        this.exerciseStatusBadge.set(afterDueDate ? 'bg-state-danger' : 'bg-state-success');
     }
 
     /**

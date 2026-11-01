@@ -46,6 +46,7 @@ export class ExamResultOverviewComponent implements OnInit {
     readonly isBonusGradingKeyCollapsed = input(true);
     readonly exerciseInfos = input<Record<number, ExerciseInfo>>(undefined!);
     readonly isTestRun = input(false);
+    readonly gradingKeyPurpose = input<'student' | 'management'>('student');
 
     // Derived from the (async) studentExamWithGrade input — computed so the grading-key card renders under zoneless
     // once the grade DTO arrives (previously set only in ngOnInit via setExamGrade + a manual detectChanges).

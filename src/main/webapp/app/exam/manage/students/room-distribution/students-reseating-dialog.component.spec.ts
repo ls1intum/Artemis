@@ -108,7 +108,7 @@ describe('StudentsReseatingDialogComponent', () => {
         component.openDialog(userA);
         fixture.detectChanges();
 
-        expect(loadSeatsInSelectedRoomSpy).toHaveBeenCalledExactlyOnceWith(rooms[0].id);
+        expect(loadSeatsInSelectedRoomSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, rooms[0].id);
 
         component.openDialog(userB);
         fixture.detectChanges();
@@ -118,7 +118,7 @@ describe('StudentsReseatingDialogComponent', () => {
         expect(component.selectedSeat()).toBe('');
         expect(loadUsedRoomsSpy).toHaveBeenCalledOnce();
         expect(loadSeatsInSelectedRoomSpy).toHaveBeenCalledTimes(2);
-        expect(loadSeatsInSelectedRoomSpy).toHaveBeenLastCalledWith(rooms[1].id);
+        expect(loadSeatsInSelectedRoomSpy).toHaveBeenLastCalledWith(course.id, exam.id, rooms[1].id);
     });
 
     it('should call reseatStudent with correct values', () => {

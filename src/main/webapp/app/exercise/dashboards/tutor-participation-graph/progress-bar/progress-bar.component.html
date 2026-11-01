@@ -1,15 +1,11 @@
-<div class="progress position-relative" [pTooltip]="tooltip()">
-    <div
-        class="progress-bar"
-        role="progressbar"
-        [ngClass]="backgroundColorClass()"
-        [style.width]="normalizedPercentage() + '%'"
-        attr.aria-valuenow="{{ normalizedPercentage() }}"
-        aria-valuemin="0"
-        aria-valuemax="100"
-    >
-        <span class="justify-content-center d-flex position-absolute w-100" [ngClass]="foregroundColorClass()">
-            {{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})
-        </span>
-    </div>
+<div class="relative" [tumAetUiTooltip]="tooltip()">
+    <tumaet-ui-progress-bar
+        [ariaLabel]="tooltip()"
+        [value]="normalizedPercentage()"
+        [showValue]="false"
+        [severity]="normalizedPercentage() < 50 ? 'danger' : normalizedPercentage() < 100 ? 'warn' : 'success'"
+    />
+    <span class="absolute inset-0 flex items-center justify-center text-sm font-medium">
+        <span class="rounded-sm bg-surface-raised px-1 text-text">{{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})</span>
+    </span>
 </div>

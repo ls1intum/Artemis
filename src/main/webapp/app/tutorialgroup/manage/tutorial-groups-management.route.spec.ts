@@ -36,22 +36,31 @@ describe('tutorialGroupManagementRoutes', () => {
             expect(tutorialGroupsRoute?.resolve?.['course']).toBe(TutorialGroupManagementCourseResolver);
         });
 
-        it('guards the management route with the global tutor authority', () => {
+        it('guards the management route with the tutor capability', () => {
             expect(managementRoute?.data?.['authorities']).toBe(IS_AT_LEAST_TUTOR);
             expect(managementRoute?.canActivate).toContain(UserRouteAccessService);
         });
     });
 
-    // The guard checks the *global* authority, the resolver checks the course-specific role. Angular runs every
-    // canActivate before any resolver, so the two rejections apply to different users and neither replaces the other.
+    // The guard checks coarse teaching capabilities through AccountService, while the resolver checks course access.
+    // Angular runs every canActivate before any resolver, so a denied capability must prevent course reads.
     describe('guard and resolver ordering', () => {
         let router: Router;
         let resolver: TutorialGroupManagementCourseResolver;
         let courseManagementService: CourseManagementService;
 
-        const course = { id: 1, isAtLeastTutor: true, timeZone: 'Europe/Berlin' } as Course;
+        let hasAnyAuthority: ReturnType<typeof vi.fn<AccountService['hasAnyAuthority']>>;
 
-        const configureWith = (authorities: Authority[]) => {
+        const configureWith = (hasTutorCapability: boolean) => {
+            const course = Object.assign(new Course(), { id: 1, isAtLeastTutor: true, timeZone: 'Europe/Berlin' });
+            const account = Object.assign(new User(), {
+                id: 1,
+                login: 'user',
+                authorities: [Authority.STUDENT],
+                courseRoles: [{ courseId: 1, roles: [hasTutorCapability ? 'TEACHING_ASSISTANT' : 'STUDENT'] }],
+            });
+            // This suite tests guard/resolver ordering; AccountService owns capability evaluation.
+            hasAnyAuthority = vi.fn<AccountService['hasAnyAuthority']>().mockResolvedValue(hasTutorCapability);
             TestBed.configureTestingModule({
                 providers: [
                     provideRouter([
@@ -75,14 +84,14 @@ describe('tutorialGroupManagementRoutes', () => {
                     MockProvider(AlertService),
                     MockProvider(SessionStorageService),
                     MockProvider(CourseManagementService, {
-                        find: () => of(new HttpResponse({ body: course })),
+                        findForManagement: () => of(new HttpResponse({ body: course })),
                     }),
                     MockProvider(TutorialGroupsConfigurationService, {
                         getOneOfCourse: () => of(generateExampleTutorialGroupsConfigurationDTO({ id: 5 })),
                     }),
                     MockProvider(AccountService, {
-                        identity: () => Promise.resolve({ id: 1, login: 'student', authorities } as User),
-                        hasAnyAuthority: (required: readonly Authority[]) => Promise.resolve(required.some((authority) => authorities.includes(authority))),
+                        identity: () => Promise.resolve(account),
+                        hasAnyAuthority,
                     }),
                 ],
             });
@@ -95,25 +104,31 @@ describe('tutorialGroupManagementRoutes', () => {
             TestBed.resetTestingModule();
         });
 
-        it('rejects a student-only account before the resolver runs', async () => {
-            configureWith([Authority.STUDENT]);
+        it('rejects an account without a tutor capability before the resolver runs', async () => {
+            configureWith(false);
             const resolveSpy = vi.spyOn(resolver, 'resolve');
-            const findSpy = vi.spyOn(courseManagementService, 'find');
+            const findSpy = vi.spyOn(courseManagementService, 'findForManagement');
 
             const activated = await router.navigate(['/course-management', 1, 'tutorial-groups']);
 
             expect(activated).toBe(false);
+            expect(hasAnyAuthority).toHaveBeenCalledExactlyOnceWith(IS_AT_LEAST_TUTOR);
             expect(resolveSpy).not.toHaveBeenCalled();
             expect(findSpy).not.toHaveBeenCalled();
         });
 
-        it('lets an account with the global tutor authority reach the resolver', async () => {
-            configureWith([Authority.STUDENT, Authority.TUTOR]);
+        it('lets an account with a course tutor capability reach the resolver', async () => {
+            configureWith(true);
             const resolveSpy = vi.spyOn(resolver, 'resolve');
+            const findSpy = vi.spyOn(courseManagementService, 'findForManagement');
 
-            await router.navigate(['/course-management', 1, 'tutorial-groups']);
+            const activated = await router.navigate(['/course-management', 1, 'tutorial-groups']);
 
+            expect(activated).toBe(true);
+            expect(router.url).toBe('/course-management/1/tutorial-groups');
+            expect(hasAnyAuthority).toHaveBeenCalledExactlyOnceWith(IS_AT_LEAST_TUTOR);
             expect(resolveSpy).toHaveBeenCalledOnce();
+            expect(findSpy).toHaveBeenCalledExactlyOnceWith('1');
         });
     });
 });

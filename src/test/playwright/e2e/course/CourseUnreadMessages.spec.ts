@@ -7,6 +7,7 @@ import { CommunicationAPIRequests } from '../../support/requests/CommunicationAP
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
+import { readResponseJson } from '../../support/utils';
 
 /** Real REST persistence, websocket delivery and the rendered sidebar must agree. */
 test.describe('Unread messages across conversation types', { tag: '@fast' }, () => {
@@ -169,7 +170,7 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
             }
             const response = await creation;
             expect(response.ok()).toBe(true);
-            const created: { id: number } = await response.json();
+            const created = await readResponseJson<{ id: number }>(response);
             // Keep the same app/service instance: a page.goto here would clear the state that caused the regression.
             await expect(page).toHaveURL(new RegExp(`conversationId=${created.id}$`));
             await expect(page.getByTestId('conversation-name')).toContainText('Instructor User');
@@ -362,9 +363,13 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         await expect(courseMessages.getSinglePost(newest.id!)).toBeInViewport();
         const list = courseMessages.getScrollableMessagesContainer();
         await expect.poll(() => list.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
-        // Reader input releases initial positioning; assigning scrollTop alone is a layout change, not a user scroll.
-        const openingScrollTop = await list.evaluate((element) => element.scrollTop);
+        // Initial positioning runs in an animation frame after the newest post can already be visible.
+        // Measure the reader's movement only once the overflowing list has reached its initial bottom anchor.
         await list.hover();
+        await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+        await expect.poll(() => list.evaluate((element) => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThanOrEqual(2);
+        const openingScrollTop = await list.evaluate((element) => element.scrollTop);
+        // Reader input releases initial positioning; assigning scrollTop alone is a layout change, not a user scroll.
         await page.mouse.wheel(0, -100);
         await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeLessThan(openingScrollTop);
         await list.evaluate((element) => (element.scrollTop = 0));

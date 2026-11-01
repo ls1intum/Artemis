@@ -680,10 +680,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test retriving all organizations containing a given course
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllOrganizationByCourse() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
-        course1 = courseRepository.save(course1);
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);

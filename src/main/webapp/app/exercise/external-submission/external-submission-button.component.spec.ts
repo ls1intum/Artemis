@@ -1,7 +1,7 @@
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
@@ -18,7 +18,11 @@ describe('ExternalSubmissionButtonComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [ExternalSubmissionButtonComponent],
-            providers: [{ provide: DialogService, useValue: { open: dialogServiceOpenSpy } }, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+            providers: [
+                { provide: TumAetUiDialogService, useValue: { open: dialogServiceOpenSpy } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExternalSubmissionButtonComponent);
@@ -33,15 +37,14 @@ describe('ExternalSubmissionButtonComponent', () => {
         fixture.componentRef.setInput('exercise', exercise);
 
         fixture.detectChanges();
-        fixture.debugElement.query(By.css('.btn')).nativeElement.click();
+        fixture.debugElement.query(By.css('button')).nativeElement.click();
 
         expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
         expect(dialogServiceOpenSpy).toHaveBeenCalledWith(
             ExternalSubmissionDialogComponent,
             expect.objectContaining({
                 header: 'artemisApp.submission.createExternal',
-                width: '50rem',
-                modal: true,
+                size: 'large',
                 closable: true,
                 closeOnEscape: true,
                 dismissableMask: false,

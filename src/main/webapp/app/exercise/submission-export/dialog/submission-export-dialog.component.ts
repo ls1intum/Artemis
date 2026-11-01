@@ -1,3 +1,6 @@
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, computed, inject, input, model, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError, tap } from 'rxjs/operators';
@@ -14,23 +17,34 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',
     templateUrl: './submission-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, TumAetUiDatePickerComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiButtonDirective,
+        FormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        TumAetUiDatePickerComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class SubmissionExportDialogComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private submissionExportService = inject(SubmissionExportService);
-    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogRef = inject(TumAetUiDialogRef);
     private alertService = inject(AlertService);
 
     readonly exerciseId = input.required<number>();
     readonly exerciseType = input.required<ExerciseType>();
+    readonly examExercise = input(false);
 
     readonly exercise = signal<Exercise | undefined>(undefined);
     readonly exportInProgress = signal(false);
@@ -58,8 +72,7 @@ export class SubmissionExportDialogComponent implements OnInit {
     ngOnInit() {
         this.isLoading.set(true);
         this.exportInProgress.set(false);
-        this.exerciseService
-            .find(this.exerciseId())
+        (this.examExercise() ? this.exerciseService.findForExamManagement(this.exerciseId()) : this.exerciseService.findForStaff(this.exerciseId()))
             .pipe(
                 tap(({ body: exercise }) => {
                     this.exercise.set(exercise!);
@@ -81,7 +94,7 @@ export class SubmissionExportDialogComponent implements OnInit {
     }
 
     clear() {
-        this.dialogRef.close('cancel');
+        this.dialogRef.dismiss('cancel');
     }
 
     exportSubmissions(exerciseId: number) {

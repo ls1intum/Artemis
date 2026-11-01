@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
 import { Component, computed, effect, inject, input, model } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -6,7 +7,7 @@ import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unref
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
+
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 //One rendered block of the feedback list: the feedback belonging to a single grading criterion.
@@ -22,7 +23,7 @@ export interface FeedbackGroup {
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: ['./unreferenced-feedback.component.scss'],
-    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiMessageComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiTagComponent, TumAetUiMessageComponent, TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
