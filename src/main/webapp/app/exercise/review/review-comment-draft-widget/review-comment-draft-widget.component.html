@@ -1,6 +1,7 @@
 <div class="monaco-review-comment-widget">
     <div class="monaco-review-comment-title">{{ 'artemisApp.review.addCommentTitle' | artemisTranslate }}</div>
     <textarea
+        tumAetUiInput
         [attr.aria-label]="'artemisApp.review.addCommentPlaceholder' | artemisTranslate"
         class="monaco-review-comment-textarea"
         [placeholder]="'artemisApp.review.addCommentPlaceholder' | artemisTranslate"
@@ -10,10 +11,10 @@
         @if (!canSubmit()) {
             <span class="monaco-review-comment-error">{{ 'artemisApp.review.submitBeforeComment' | artemisTranslate }}</span>
         }
-        <button pButton type="button" severity="secondary" size="small" (click)="cancel()">
+        <button tumAetUiButton type="button" severity="secondary" size="small" (click)="cancel()">
             {{ 'artemisApp.review.addCommentCancel' | artemisTranslate }}
         </button>
-        <button pButton data-testid="review-draft-submit" type="button" size="small" [disabled]="!canSubmit()" (click)="submit()">
+        <button tumAetUiButton data-testid="review-draft-submit" type="button" size="small" [disabled]="!canSubmit()" (click)="submit()">
             {{ 'artemisApp.review.addCommentSubmit' | artemisTranslate }}
         </button>
     </div>

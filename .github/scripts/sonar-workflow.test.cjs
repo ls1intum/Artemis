@@ -128,15 +128,12 @@ test('a bad candidate does not hide older valid coverage for the same source SHA
 });
 test('scanner config reaches the separate scanner JVM and manual failures remain visible', () => {
     assert.match(workflow, /SONAR_SCANNER_JAVA_OPTS: '-Xmx6g'/);
-    assert.match(workflow, /continue-on-error: \$\{\{ github.event_name != 'workflow_dispatch' \}\}/);
-    assert.match(workflow, /"-Dsonar.scm.revision=\$\{SONAR_REVISION\}"/);
+    assert.doesNotMatch(workflow, /^    continue-on-error:/m);
+    assert.match(workflow, /run: bash \.\.\/\.sonar-tools\/\.github\/scripts\/run-sonar.sh/);
 });
 test('default-branch recovery is opt-in and checks out the actual default branch', () => {
     assert.match(workflow, /analyze_default_branch:\n\s+description:[^\n]+\n\s+type: boolean\n\s+default: false/);
-    assert.match(
-        workflow,
-        /ref: \$\{\{ github.event_name == 'workflow_dispatch' && inputs.analyze_default_branch && github.event.repository.default_branch \|\| inputs.commit_sha \|\| github.sha \}\}/,
-    );
+    assert.match(workflow, /ref: \$\{\{ steps.analysis.outputs.sha \}\}/);
     assert.match(workflow, /SHA: \$\{\{ steps.source.outputs.sha \}\}/);
 });
 test('source identity is read from checked-out Git rather than the workflow ref', () => {
@@ -147,7 +144,13 @@ test('source identity is read from checked-out Git rather than the workflow ref'
     const summary = path.join(directory, 'summary');
     try {
         execFileSync('bash', ['-c', block[1].replace(/^ {10}/gm, '')], {
-            env: { ...process.env, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary, SONAR_BRANCH_NAME: 'develop' },
+            env: {
+                ...process.env,
+                GITHUB_OUTPUT: output,
+                GITHUB_STEP_SUMMARY: summary,
+                SONAR_BRANCH_NAME: 'develop',
+                EXPECTED_SHA: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+            },
         });
         const sha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
         assert.equal(fs.readFileSync(output, 'utf8'), `sha=${sha}\n`);

@@ -133,8 +133,8 @@ describe('TumAetUiSelectComponent', () => {
 
     it('scrolls the selected option into view when opening', () => {
         const scrollIntoView = vi.fn();
-        const original = HTMLElement.prototype.scrollIntoView;
-        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+        const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, writable: true, value: scrollIntoView });
         try {
             component.writeValue('c');
             fixture.detectChanges();
@@ -142,7 +142,11 @@ describe('TumAetUiSelectComponent', () => {
             expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
             expect(scrollIntoView.mock.instances).toEqual([optionElements()[2]]);
         } finally {
-            Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: original });
+            if (original) {
+                Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', original);
+            } else {
+                Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+            }
         }
     });
 

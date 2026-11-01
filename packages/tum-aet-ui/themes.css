@@ -3,6 +3,7 @@
     color-scheme: light;
 
     --tumaet-ui-spacing: 0.25rem;
+    --tumaet-ui-splitter-divider-size: 6px;
     --tumaet-ui-font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     --tumaet-ui-font-size-xs: 0.75rem;
     --tumaet-ui-font-size-sm: 0.875rem;

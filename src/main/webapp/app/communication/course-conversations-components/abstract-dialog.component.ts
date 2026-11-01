@@ -1,6 +1,6 @@
 import { Directive, OnInit, WritableSignal, inject, isSignal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
 function isWritableSignal(value: unknown): value is WritableSignal<unknown> {
     return isSignal(value) && typeof (value as { set?: unknown }).set === 'function';

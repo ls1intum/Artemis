@@ -1,4 +1,6 @@
 import { ConnectedPosition } from '@angular/cdk/overlay';
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/foundation/util/utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -13,7 +15,7 @@ import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entitie
 import { faChevronDown, faChevronRight, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CsvCellValue, CsvRow, downloadCsv } from 'app/foundation/util/csv-download.util';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
-import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -22,11 +24,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-exercise-scores-export-button',
     templateUrl: './exercise-scores-export-button.component.html',
     imports: [
-        TumAetUiButtonDirective,
         TumAetUiMenuComponent,
-        TumAetUiMenuTriggerDirective,
         TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
         TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,

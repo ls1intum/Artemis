@@ -12,7 +12,7 @@ import { Dimensions } from 'app/shared-ui/image-cropper/interfaces/dimensions.in
 import { ImageTransform } from 'app/shared-ui/image-cropper/interfaces/image-transform.interface';
 import { CropperPosition } from 'app/shared-ui/image-cropper/interfaces/cropper-position.interface';
 import { ImageCroppedEvent } from 'app/shared-ui/image-cropper/interfaces/image-cropped-event.interface';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 

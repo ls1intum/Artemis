@@ -47,6 +47,12 @@ on:
       client_mode:
         description: 'Client test scope: full, affected, or none. Empty when the client job was skipped.'
         value: ${{ jobs.client-tests.outputs.mode }}
+      server_sonar_coverage:
+        description: 'True when successful selected server tests published their execution data for Sonar PR coverage.'
+        value: ${{ jobs.server-tests.outputs.sonar_coverage }}
+      client_sonar_coverage:
+        description: 'True when successful selected client tests emitted LCOV for Sonar PR coverage; independent of complete-suite coverage.'
+        value: ${{ jobs.client-tests.outputs.sonar_coverage }}
     secrets:
       CODACY_PROJECT_TOKEN:
         description: 'Coverage upload token. Optional — coverage is uploaded only on internal PRs by non-bot authors.'
@@ -202,6 +208,8 @@ jobs:
   server-tests:
     name: Server Tests (${{ matrix.shard.name }})
     needs: server-test-shards
+    outputs:
+      sonar_coverage: ${{ steps.sonar-coverage.outputs.artifact-id != '' }}
     if: ${{ inputs.run_server_tests }}
     runs-on: aet-large-ubuntu
     strategy:
@@ -282,6 +290,16 @@ jobs:
           name: Server Coverage Execution Data (${{ matrix.shard.name }})
           path: build/jacoco/test.exec
           if-no-files-found: ignore
+      - name: Upload Selected Server Coverage for Sonar
+        # The selected plan has exactly one shard. Reuse its actual execution data; Sonar builds
+        # a lightweight XML report after compiling the same revision on its public runner.
+        if: ${{ success() && needs.server-test-shards.outputs.full_suite == 'false' }}
+        id: sonar-coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Sonar Server Coverage
+          path: build/jacoco/test.exec
+          if-no-files-found: error
       - name: Count Server Starts
         # Counted here, where the log is, and summed over the shards by the reporting job: the bound is
         # on what a whole run starts, and a single shard only starts the contexts of its own buckets.
@@ -453,6 +471,7 @@ jobs:
     outputs:
       mode: ${{ steps.client-tests.outputs.mode }}
       coverage: ${{ steps.client-tests.outputs.coverage }}
+      sonar_coverage: ${{ steps.client-tests.outputs.sonar_coverage }}
     if: ${{ inputs.run_client_tests }}
     runs-on: aet-large-ubuntu
     # 45 minutes proved too tight on slower runners: the suite finished green but the job was
@@ -523,6 +542,15 @@ jobs:
         with:
           name: Vitest Coverage Report
           path: build/test-results/vitest/coverage/
+      - name: Upload Selected Client Coverage for Sonar
+        # Partial coverage comes from the already selected specs. It does not satisfy the
+        # complete-suite artifact contract used by per-module gates and coverage comments.
+        if: ${{ success() && steps.client-tests.outputs.mode == 'affected' && steps.client-tests.outputs.sonar_coverage == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Sonar Client Coverage
+          path: build/test-results/vitest/sonar-coverage/**/lcov.info
+          if-no-files-found: error
       - name: Upload Client Coverage Summaries
         if: ${{ success() && steps.client-tests.outputs.coverage == 'true' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

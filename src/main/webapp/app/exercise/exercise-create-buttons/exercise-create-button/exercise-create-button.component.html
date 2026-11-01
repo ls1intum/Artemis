@@ -1,4 +1,9 @@
-<p-button [id]="'create-' + exerciseType() + '-exercise'" size="small" (click)="linkToExerciseCreation()" [jhiFeatureToggleLink]="featureToggle() ? featureToggle()! : undefined">
+<tumaet-ui-button
+    [id]="'create-' + exerciseType() + '-exercise'"
+    size="small"
+    (click)="linkToExerciseCreation()"
+    [jhiFeatureToggleLink]="featureToggle() ? featureToggle()! : undefined"
+>
     <fa-icon [icon]="faPlus" />
     <span jhiTranslate="artemisApp.exercise.createAction"></span>
-</p-button>
+</tumaet-ui-button>

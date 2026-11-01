@@ -4,14 +4,14 @@
         tumAetUiButton
         size="small"
         [variant]="inDropdown() ? 'text' : 'solid'"
-        [severity]="inDropdown() ? 'secondary' : 'primary'"
+        [severity]="inDropdown() ? 'secondary' : 'info'"
         [class]="inDropdown() ? 'w-full justify-start!' : ''"
         id="export-results-dropdown"
         [tumAetUiMenuTrigger]="resultExportMenu"
         [tumAetUiMenuPosition]="inDropdown() ? submenuPositions : undefined"
     >
         <fa-icon [icon]="faDownload" />
-        <span jhiTranslate="artemisApp.exercise.export.results.title"></span>
+        <span [class]="inDropdown() ? '' : 'hidden md:inline'" jhiTranslate="artemisApp.exercise.export.results.title"></span>
         <fa-icon [icon]="inDropdown() ? faChevronRight : faChevronDown" class="ms-auto" />
     </button>
     <ng-template #resultExportMenu>
@@ -29,6 +29,7 @@
                 [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
                 (triggered)="exportResults(true, false)"
                 [tumAetUiTooltip]="'artemisApp.exercise.export.results.withTestCasesTooltip' | artemisTranslate"
+                tumAetUiTooltipPlacement="left"
                 jhiTranslate="artemisApp.exercise.export.results.withTestCases"
             ></button>
             <button
@@ -37,6 +38,7 @@
                 [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
                 (triggered)="exportResults(true, true)"
                 [tumAetUiTooltip]="'artemisApp.exercise.export.results.withTestCasesAndFeedbackTooltip' | artemisTranslate"
+                tumAetUiTooltipPlacement="left"
                 jhiTranslate="artemisApp.exercise.export.results.withTestCasesAndFeedback"
             ></button>
         </tumaet-ui-menu>
@@ -47,11 +49,11 @@
         tumAetUiButton
         size="small"
         [variant]="inDropdown() ? 'text' : 'solid'"
-        [severity]="inDropdown() ? 'secondary' : 'primary'"
+        [severity]="inDropdown() ? 'secondary' : 'info'"
         [class]="inDropdown() ? 'w-full justify-start!' : ''"
         (click)="exportResults(false, false)"
     >
         <fa-icon [icon]="faDownload" />
-        <span jhiTranslate="artemisApp.exercise.export.results.title"></span>
+        <span [class]="inDropdown() ? '' : 'hidden md:inline'" jhiTranslate="artemisApp.exercise.export.results.title"></span>
     </button>
 }

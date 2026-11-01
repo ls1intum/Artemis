@@ -11,7 +11,7 @@
                 <jhi-programming-exercise-instructor-submission-state [exercise]="exercise()!" [shouldToggle]="true" [toggleBreakpoint]="'md'" />
             }
             @if (exercise()!.isAtLeastInstructor && !exercise()!.teamMode) {
-                <jhi-external-submission class="inline-block" [exercise]="exercise()!" />
+                <jhi-external-submission class="inline-block" [exercise]="exercise()!" [outlined]="true" />
             }
             @if (exercise()!.isAtLeastInstructor) {
                 <button
@@ -30,7 +30,16 @@
                 </button>
                 <tumaet-ui-popover class="contents" #exportPopover [ariaLabel]="'artemisApp.exercise.export.options' | artemisTranslate">
                     <div class="flex min-w-52 flex-col gap-1">
-                        <button type="button" tumAetUiButton size="small" variant="text" severity="secondary" class="w-full justify-start!" (click)="exportNames()">
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            size="small"
+                            variant="text"
+                            severity="secondary"
+                            class="w-full justify-start!"
+                            [attr.aria-label]="'artemisApp.exercise.export.names' | artemisTranslate"
+                            (click)="exportNames()"
+                        >
                             <fa-icon [icon]="faDownload" />
                             <span jhiTranslate="artemisApp.exercise.export.names"></span>
                         </button>

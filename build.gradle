@@ -116,7 +116,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.5"
+version = "10.6"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -463,7 +463,6 @@ dependencies {
         }
     }
 
-    // Sentry depends on this
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.26.1"
     // Declared explicitly so the direct version wins over the log4j-bom version managed by the Spring Boot BOM, which
     // still sits in the range vulnerable to the improper encoding of non-finite floating-point values during
@@ -500,9 +499,6 @@ dependencies {
     }
 
     implementation "com.thoughtworks.qdox:qdox:2.2.0"
-    implementation "io.sentry:sentry-logback:${sentry_version}"
-    // Use sentry-spring-boot-4-starter for Spring Boot 4 compatibility (replaces sentry-spring-boot-starter-jakarta)
-    implementation "io.sentry:sentry-spring-boot-4-starter:${sentry_version}"
 
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
@@ -952,5 +948,5 @@ tasks.named("dependencyUpdates").configure {
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp
-// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp
+// 15) Generate OpenAPI spec:                       ./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp
 // 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp

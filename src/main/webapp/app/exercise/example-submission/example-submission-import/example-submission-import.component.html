@@ -1,14 +1,25 @@
 <form>
-    <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmissionLabel"></h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="dismiss()"></button>
+    <div class="flex items-center justify-between gap-3 border-b border-border p-4">
+        <h4 class="text-lg font-semibold" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmissionLabel"></h4>
+        <button
+            tumAetUiButton
+            type="button"
+            variant="text"
+            severity="secondary"
+            data-testid="example-submission-import-close"
+            [attr.aria-label]="'entity.action.close' | artemisTranslate"
+            (click)="dismiss()"
+        >
+            <span jhiTranslate="entity.action.close"></span>
+        </button>
     </div>
     @if (exercise(); as exercise) {
-        <div class="modal-body">
-            <div class="form-group form-inline">
-                <label class="form-control-label" jhiTranslate="artemisApp.exampleSubmission.searchSubmission" for="searchParticipant"></label>
+        <div class="p-4">
+            <div class="flex flex-col gap-1 mb-3 flex-wrap items-center gap-2">
+                <label class="font-medium" jhiTranslate="artemisApp.exampleSubmission.searchSubmission" for="searchParticipant"></label>
                 <input
-                    class="form-control ms-2"
+                    tumAetUiInput
+                    class="ms-2"
                     type="text"
                     name="searchParticipant"
                     id="searchParticipant"
@@ -20,9 +31,9 @@
                 }
             </div>
             @if (content().resultsOnPage && content().resultsOnPage.length > 0) {
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead class="thead-dark">
+                <div class="overflow-x-auto">
+                    <table striped tumAetUiTable>
+                        <thead class="bg-surface-sunken">
                             <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
                                 <th>
                                     <span>#</span>
@@ -42,15 +53,15 @@
                                     @if (exercise.type === ExerciseType.TEXT) {
                                         <fa-icon
                                             [icon]="faQuestionCircle"
-                                            class="text-secondary ps-1"
-                                            [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
+                                            class="text-text-secondary ps-1"
+                                            [tumAetUiTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
                                         />
                                     }
                                     @if (exercise.type === ExerciseType.MODELING) {
                                         <fa-icon
                                             [icon]="faQuestionCircle"
-                                            class="text-secondary ps-1"
-                                            [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
+                                            class="text-text-secondary ps-1"
+                                            [tumAetUiTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
                                         />
                                     }
                                 </th>
@@ -90,8 +101,16 @@
                     <p jhiTranslate="artemisApp.assessment.dashboard.emptySearch"></p>
                 }
             }
-            <div class="d-flex justify-content-between p-2">
-                <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
+            <div class="flex justify-between p-2">
+                <!-- The search API supplies page counts, not an exact number of records. -->
+                <tumaet-ui-paginator
+                    [page]="state.page - 1"
+                    [pageSize]="state.pageSize"
+                    [totalRecords]="total()"
+                    [showRowsPerPage]="false"
+                    [showCurrentPageReport]="false"
+                    (pageChange)="onPaginatorPageChange({ page: $event })"
+                />
             </div>
         </div>
     }

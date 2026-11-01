@@ -52,7 +52,6 @@ import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerCommandListener;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerEventPublisher;
 import de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService;
 import de.tum.cit.aet.artemis.core.config.LlmOnlyExporterConfig;
-import de.tum.cit.aet.artemis.core.config.SentryConfiguration;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.hyperion.service.worker.HyperionWorkloadService;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
@@ -86,7 +85,7 @@ class WorkerContextTest {
             "artemis.distributed-data.provider=local", "management.tracing.export.otlp.enabled=false", "management.logging.export.otlp.enabled=false",
             "management.otlp.metrics.export.enabled=false", "management.langfuse.enabled=true",
             "management.opentelemetry.tracing.export.otlp.endpoint=https://example.invalid/v1/traces",
-            "management.opentelemetry.tracing.export.otlp.headers.Authorization=Basic worker-isolation-test", "info.sentry.dsn=https://test@example.invalid/1" })
+            "management.opentelemetry.tracing.export.otlp.headers.Authorization=Basic worker-isolation-test" })
     @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
     abstract static class WorkerChecks {
 
@@ -95,8 +94,8 @@ class WorkerContextTest {
 
         void assertWorkerBoundary() {
             var context = AssertableApplicationContext.get(() -> applicationContext);
-            assertThat(context).doesNotHaveBean(LlmOnlyExporterConfig.class).doesNotHaveBean(SentryConfiguration.class).doesNotHaveBean(SpanExporter.class)
-                    .doesNotHaveBean("otlpLlmTraceExporter").doesNotHaveBean(DispatcherServlet.class).doesNotHaveBean(AiWorkerApi.class).doesNotHaveBean(WorkerClientService.class)
+            assertThat(context).doesNotHaveBean(LlmOnlyExporterConfig.class).doesNotHaveBean(SpanExporter.class).doesNotHaveBean("otlpLlmTraceExporter")
+                    .doesNotHaveBean(DispatcherServlet.class).doesNotHaveBean(AiWorkerApi.class).doesNotHaveBean(WorkerClientService.class)
                     .doesNotHaveBean(WorkerRegistryService.class).doesNotHaveBean(ServletWebServerFactory.class).doesNotHaveBean(javax.sql.DataSource.class)
                     .doesNotHaveBean(EntityManagerFactory.class);
             assertThat(context.getBeanNamesForAnnotation(Controller.class)).isEmpty();

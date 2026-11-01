@@ -14,7 +14,7 @@ export interface FilterGroup {
     selector: 'jhi-filter-dropdown',
     templateUrl: './filter-dropdown.component.html',
     imports: [FormsModule, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiChipComponent, TumAetUiMultiSelectComponent, TumAetUiSelectComponent],
-    host: { class: 'block max-w-full' },
+    styleUrls: ['./filter-dropdown.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilterDropdownComponent {

@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Service, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';

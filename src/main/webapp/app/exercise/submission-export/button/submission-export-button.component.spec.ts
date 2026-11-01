@@ -5,12 +5,12 @@ import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 
 describe('Submission Export Button Component', () => {
     let fixture: ComponentFixture<SubmissionExportButtonComponent>;
     let component: SubmissionExportButtonComponent;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let mouseEvent: MouseEvent;
 
     const exerciseId = 1;
@@ -20,7 +20,7 @@ describe('Submission Export Button Component', () => {
         await TestBed.configureTestingModule({
             imports: [SubmissionExportButtonComponent],
             providers: [
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
@@ -29,7 +29,7 @@ describe('Submission Export Button Component', () => {
 
         fixture = TestBed.createComponent(SubmissionExportButtonComponent);
         component = fixture.componentInstance;
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
 
         fixture.componentRef.setInput('exerciseId', exerciseId);
         fixture.componentRef.setInput('exerciseType', exerciseType);
@@ -57,8 +57,7 @@ describe('Submission Export Button Component', () => {
             SubmissionExportDialogComponent,
             expect.objectContaining({
                 header: 'artemisApp.instructorDashboard.exportSubmissions.title',
-                width: '50rem',
-                modal: true,
+                size: 'large',
                 closable: true,
                 closeOnEscape: true,
                 dismissableMask: true,

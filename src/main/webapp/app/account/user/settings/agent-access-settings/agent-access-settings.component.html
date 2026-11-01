@@ -1,0 +1,134 @@
+<h2 jhiTranslate="artemisApp.userSettings.agentAccess.title"></h2>
+<tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.agentAccess.title' | artemisTranslate">
+    <li tumAetUiListItem>
+        <p class="mb-0 font-medium" jhiTranslate="artemisApp.userSettings.agentAccess.infoText"></p>
+    </li>
+    @if (createdSecret(); as secret) {
+        <li tumAetUiListItem data-testid="agent-token-secret">
+            <p class="mb-2 font-medium text-state-warning" jhiTranslate="artemisApp.userSettings.agentAccess.secretWarning"></p>
+            <div class="flex items-center gap-2">
+                <code class="break-all">{{ secret }}</code>
+                <jhi-copy-to-clipboard-button [copyText]="secret" />
+            </div>
+        </li>
+    }
+    @if (!creating()) {
+        <li tumAetUiListItem>
+            @if (tokens().length > 0) {
+                <table tumAetUiTable [striped]="true" class="w-full">
+                    <thead>
+                        <tr>
+                            <th jhiTranslate="artemisApp.userSettings.agentAccess.name"></th>
+                            <th jhiTranslate="artemisApp.userSettings.agentAccess.token"></th>
+                            <th jhiTranslate="artemisApp.userSettings.agentAccess.scopesTitle"></th>
+                            <th jhiTranslate="artemisApp.userSettings.agentAccess.expiryDate"></th>
+                            <th jhiTranslate="artemisApp.userSettings.agentAccess.lastUsed"></th>
+                            <th jhiTranslate="artemisApp.userSettings.agentAccess.actions"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (token of tokens(); track token.id) {
+                            <tr data-testid="agent-token-row">
+                                <td>{{ token.name }}</td>
+                                <td>
+                                    <code>{{ token.tokenPrefix }}…</code>
+                                </td>
+                                <td>
+                                    @for (scope of token.scopes; track scope) {
+                                        <div>{{ scopeLabelKey(scope) | artemisTranslate }}</div>
+                                    }
+                                </td>
+                                <td>{{ token.expiryDate | artemisDate }}</td>
+                                <td>
+                                    @if (token.lastUsedDate) {
+                                        {{ token.lastUsedDate | artemisDate }}
+                                    } @else {
+                                        <span jhiTranslate="artemisApp.userSettings.agentAccess.neverUsed"></span>
+                                    }
+                                </td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        severity="danger"
+                                        size="small"
+                                        data-testid="revoke-agent-token-button"
+                                        jhiDeleteButton
+                                        [renderButtonStyle]="false"
+                                        [renderButtonText]="false"
+                                        (delete)="revokeToken(token.id)"
+                                        deleteQuestion="artemisApp.userSettings.agentAccess.revokeQuestion"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                        <span jhiTranslate="artemisApp.userSettings.agentAccess.revoke"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            } @else {
+                <div jhiTranslate="artemisApp.userSettings.agentAccess.noTokens"></div>
+            }
+        </li>
+        <li tumAetUiListItem>
+            <tumaet-ui-button class="self-start" data-testid="add-agent-token-button" size="small" [icon]="faPlus" (clicked)="startCreation()">
+                <span jhiTranslate="artemisApp.userSettings.agentAccess.addToken"></span>
+            </tumaet-ui-button>
+        </li>
+    } @else {
+        <li tumAetUiListItem>
+            <h4 jhiTranslate="artemisApp.userSettings.agentAccess.addTokenTitle"></h4>
+
+            <div class="mb-4! sm:w-1/2">
+                <tumaet-ui-form-field controlId="agent-token-name" [label]="'artemisApp.userSettings.agentAccess.name' | artemisTranslate" required>
+                    <input
+                        #nameInput
+                        tumAetUiInput
+                        id="agent-token-name"
+                        [attr.aria-label]="'artemisApp.userSettings.agentAccess.name' | artemisTranslate"
+                        maxlength="100"
+                        [value]="tokenName()"
+                        (input)="tokenName.set(nameInput.value)"
+                    />
+                </tumaet-ui-form-field>
+            </div>
+
+            <fieldset class="mb-4!">
+                <legend class="font-medium" jhiTranslate="artemisApp.userSettings.agentAccess.scopesTitle"></legend>
+                <p class="mb-2" jhiTranslate="artemisApp.userSettings.agentAccess.scopesHint"></p>
+                @for (scope of availableScopes(); track scope) {
+                    <div class="flex items-center gap-2 mb-1">
+                        <tumaet-ui-checkbox [inputId]="'agent-scope-' + scope" [checked]="selectedScopes().includes(scope)" (checkedChange)="setScopeSelected(scope, $event)" />
+                        <label class="m-0" [for]="'agent-scope-' + scope">{{ scopeLabelKey(scope) | artemisTranslate }}</label>
+                    </div>
+                }
+            </fieldset>
+
+            <div class="mb-4! sm:w-1/4">
+                <tumaet-ui-form-field controlId="agent-token-lifetime" [label]="'artemisApp.userSettings.agentAccess.lifetimeInDays' | artemisTranslate" required>
+                    <input
+                        #lifetimeInput
+                        tumAetUiInput
+                        id="agent-token-lifetime"
+                        [attr.aria-label]="'artemisApp.userSettings.agentAccess.lifetimeInDays' | artemisTranslate"
+                        type="number"
+                        min="1"
+                        [value]="lifetimeInDays()"
+                        (input)="onLifetimeInput(lifetimeInput.value)"
+                    />
+                </tumaet-ui-form-field>
+            </div>
+
+            <div class="flex gap-2">
+                <tumaet-ui-button data-testid="create-agent-token-button" size="small" [disabled]="!canCreate()" [icon]="faSave" (clicked)="createToken()">
+                    <span jhiTranslate="artemisApp.userSettings.agentAccess.create"></span>
+                </tumaet-ui-button>
+                <tumaet-ui-button data-testid="cancel-agent-token-button" severity="secondary" size="small" [icon]="faBan" (clicked)="cancelCreation()">
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </tumaet-ui-button>
+            </div>
+        </li>
+    }
+</tumaet-ui-list>
