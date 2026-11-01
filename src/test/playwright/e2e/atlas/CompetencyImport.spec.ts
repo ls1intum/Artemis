@@ -67,8 +67,8 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await expect(page.locator('jhi-course-competencies-relation-graph')).toBeVisible();
 
         // Select the imported competencies to verify the relation exists
-        await page.selectOption('#head', { label: competency2.title! });
         await page.selectOption('#tail', { label: competency1.title! });
+        await page.selectOption('#head', { label: competency2.title! });
 
         // If relation exists, we should see "Delete relation" button
         await expect(page.getByRole('button', { name: 'Delete relation' })).toBeVisible();

@@ -1,15 +1,15 @@
 <div class="course-competency-relation-form-container row gx-2 m-0 p-3 align-items-end">
     <div class="form-group col m-0 ps-0 pe-2">
-        <label for="head" jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyLabel"></label>
+        <label for="tail" jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyLabel"></label>
         <select
             [ngClass]="{ 'border-danger': showCircularDependencyError() }"
             class="form-select mt-1"
-            id="head"
-            name="head"
-            [ngModel]="headCompetencyId()"
-            (ngModelChange)="selectHeadCourseCompetency($event)"
+            id="tail"
+            name="tail"
+            [ngModel]="tailCompetencyId()"
+            (ngModelChange)="selectTailCourseCompetency($event)"
         >
-            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyDefaultOption"></option>
+            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyDefaultOption"></option>
             @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
                 <option [ngValue]="courseCompetency.id">{{ courseCompetency.title }}</option>
             }
@@ -25,16 +25,16 @@
         </select>
     </div>
     <div class="form-group col m-0">
-        <label for="tail" jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyLabel"></label>
+        <label for="head" jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyLabel"></label>
         <select
             [ngClass]="{ 'border-danger': showCircularDependencyError() }"
             class="form-select mt-1"
-            id="tail"
-            name="tail"
-            [ngModel]="tailCompetencyId()"
-            (ngModelChange)="selectTailCourseCompetency($event)"
+            id="head"
+            name="head"
+            [ngModel]="headCompetencyId()"
+            (ngModelChange)="selectHeadCourseCompetency($event)"
         >
-            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyDefaultOption"></option>
+            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyDefaultOption"></option>
             @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
                 <option [disabled]="!isCourseCompetencySelectable(courseCompetency.id!)" [ngValue]="courseCompetency.id">{{ courseCompetency.title }}</option>
             }
@@ -119,9 +119,9 @@
                         >
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>{{ getCompetencyTitleById(s.head_id) }}</strong>
-                                    <span class="mx-1">→</span>
                                     <strong>{{ getCompetencyTitleById(s.tail_id) }}</strong>
+                                    <span class="mx-1">→</span>
+                                    <strong>{{ getCompetencyTitleById(s.head_id) }}</strong>
                                     @if (doesSuggestionAlreadyExist(s)) {
                                         <small class="text-muted ms-2" jhiTranslate="artemisApp.courseCompetency.relations.suggestions.alreadyExists"></small>
                                     }

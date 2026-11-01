@@ -126,33 +126,41 @@ describe('CourseCompetencyRelationFormComponent', () => {
         expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
     });
 
-    it('should set headCompetencyId if it is undefined', () => {
-        component.headCompetencyId.set(undefined);
-        component.tailCompetencyId.set(2);
+    it('should set tailCompetencyId if it is undefined', () => {
+        component.tailCompetencyId.set(undefined);
+        component.headCompetencyId.set(2);
 
         component.selectCourseCompetency(1);
 
-        expect(component.headCompetencyId()).toBe(1);
-        expect(component.tailCompetencyId()).toBeUndefined();
+        expect(component.tailCompetencyId()).toBe(1);
+        expect(component.headCompetencyId()).toBeUndefined();
     });
 
-    it('should set tailCompetencyId if headCompetencyId is defined and tailCompetencyId is undefined', () => {
-        component.headCompetencyId.set(1);
-        component.tailCompetencyId.set(undefined);
+    it('should set headCompetencyId if tailCompetencyId is defined and headCompetencyId is undefined', () => {
+        component.tailCompetencyId.set(1);
+        component.headCompetencyId.set(undefined);
 
         component.selectCourseCompetency(2);
 
-        expect(component.tailCompetencyId()).toBe(2);
+        expect(component.headCompetencyId()).toBe(2);
     });
 
-    it('should reset headCompetencyId if both headCompetencyId and tailCompetencyId are defined', () => {
-        component.headCompetencyId.set(1);
-        component.tailCompetencyId.set(2);
+    it('should reset tailCompetencyId if both tailCompetencyId and headCompetencyId are defined', () => {
+        component.tailCompetencyId.set(1);
+        component.headCompetencyId.set(2);
 
         component.selectCourseCompetency(3);
 
-        expect(component.headCompetencyId()).toBe(3);
-        expect(component.tailCompetencyId()).toBeUndefined();
+        expect(component.tailCompetencyId()).toBe(3);
+        expect(component.headCompetencyId()).toBeUndefined();
+    });
+
+    it('should place the tail select before the head select so the form reads "tail requires head"', () => {
+        fixture.detectChanges();
+
+        const selectIds = Array.from(fixture.nativeElement.querySelectorAll('select')).map((select) => (select as HTMLSelectElement).id);
+
+        expect(selectIds).toEqual(['tail', 'type', 'head']);
     });
 
     it('should create relation', async () => {
@@ -250,49 +258,68 @@ describe('CourseCompetencyRelationFormComponent', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('should select head course competency', () => {
-        component['selectHeadCourseCompetency'](2);
+    it('should select tail course competency', () => {
+        component['selectTailCourseCompetency'](2);
 
-        expect(component.headCompetencyId()).toBe(2);
-        expect(component.tailCompetencyId()).toBeUndefined();
+        expect(component.tailCompetencyId()).toBe(2);
+        expect(component.headCompetencyId()).toBeUndefined();
         expect(component.selectedRelationId()).toBeUndefined();
     });
 
-    it('should set tailCompetencyId and selectedRelationId when an existing relation is found', async () => {
+    it('should set headCompetencyId and selectedRelationId when an existing relation is found', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const tailId = 1;
-        component.headCompetencyId.set(2);
+        const headId = 2;
+        component.tailCompetencyId.set(1);
         component.relationType.set(CompetencyRelationType.EXTENDS);
 
-        component['selectTailCourseCompetency'](tailId);
+        component['selectHeadCourseCompetency'](headId);
 
-        expect(component.tailCompetencyId()).toBe(1);
+        expect(component.headCompetencyId()).toBe(2);
         expect(component.selectedRelationId()).toBe(1);
     });
 
-    it('should set tailCompetencyId and clear selectedRelationId when no existing relation is found', async () => {
+    it('should set headCompetencyId and clear selectedRelationId when no existing relation is found', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const tailId = 2;
-        component.headCompetencyId.set(3);
+        const headId = 2;
+        component.tailCompetencyId.set(3);
         component.relationType.set(CompetencyRelationType.EXTENDS);
 
-        component['selectTailCourseCompetency'](tailId);
+        component['selectHeadCourseCompetency'](headId);
 
-        expect(component.tailCompetencyId()).toBe(2);
+        expect(component.headCompetencyId()).toBe(2);
         expect(component.selectedRelationId()).toBeUndefined();
     });
 
     it('should not allow to create circular dependencies', () => {
-        component.headCompetencyId.set(1);
         component.tailCompetencyId.set(1);
+        component.headCompetencyId.set(1);
         component.relationType.set(CompetencyRelationType.EXTENDS);
 
-        expect(component['selectableTailCourseCompetencyIds']()).not.toContain(1);
+        expect(component['selectableHeadCourseCompetencyIds']()).not.toContain(1);
         expect(component.showCircularDependencyError()).toBeTruthy();
+    });
+
+    it('should not flag the selected existing relation as circular when changing its type', () => {
+        // existing relation: tail 1 EXTENDS head 2; changing it to MATCHES must not count the old EXTENDS edge
+        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+
+        fixture.detectChanges();
+        component.relationType.set(CompetencyRelationType.MATCHES);
+
+        expect(component['selectableHeadCourseCompetencyIds']()).toContain(2);
+        expect(component.showCircularDependencyError()).toBeFalsy();
+    });
+
+    it('should disable heads that would close a cycle', () => {
+        // existing relation: tail 1 EXTENDS head 2, so 2 ASSUMES 1 would be circular
+        component.tailCompetencyId.set(2);
+        component.relationType.set(CompetencyRelationType.ASSUMES);
+
+        expect(component['selectableHeadCourseCompetencyIds']()).toEqual([3]);
     });
 
     it('should delete relation', async () => {
@@ -334,7 +361,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         const mockSuggestionResponse = {
             relations: [
                 { tail_id: '1', head_id: '2', relation_type: 'EXTENDS' },
-                { tail_id: '2', head_id: '3', relation_type: 'REQUIRES' },
+                { tail_id: '3', head_id: '2', relation_type: 'EXTENDS' },
                 { tail_id: '1', head_id: '3', relation_type: 'MATCHES' },
             ],
         };
@@ -434,7 +461,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
             const responseWithExisting = {
                 relations: [
                     { tail_id: '1', head_id: '2', relation_type: 'EXTENDS' }, // This already exists
-                    { tail_id: '2', head_id: '3', relation_type: 'REQUIRES' },
+                    { tail_id: '3', head_id: '2', relation_type: 'EXTENDS' },
                 ],
             };
             getSuggestedCompetencyRelationsSpy.mockResolvedValue(responseWithExisting);
@@ -462,15 +489,22 @@ describe('CourseCompetencyRelationFormComponent', () => {
             expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
         });
 
-        it('should map REQUIRES relation type to ASSUMES', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
+        it('should drop REQUIRES and unknown suggestions and auto-select by the remaining suggestions', async () => {
+            const kept = { tail_id: '3', head_id: '2', relation_type: 'EXTENDS' };
+            // AtlasML's REQUIRES means "tail is a prerequisite of head", the converse of ASSUMES
+            getSuggestedCompetencyRelationsSpy.mockResolvedValue({
+                relations: [
+                    { tail_id: '2', head_id: '3', relation_type: 'REQUIRES' },
+                    kept,
+                    { tail_id: '1', head_id: '3', relation_type: 'UNKNOWN' },
+                    { tail_id: '1', head_id: '2', relation_type: 'toString' },
+                ],
+            });
 
             await component.fetchSuggestions();
 
-            const requiresSuggestion = mockSuggestionResponse.relations[1]; // REQUIRES relation
-            const uiKey = component['getUiRelationTypeKey'](requiresSuggestion);
-
-            expect(uiKey).toBe('ASSUMES');
+            expect(component.suggestedRelations()).toEqual([kept]);
+            expect([...component.selectedSuggestions()]).toEqual([0]);
         });
 
         it('should show import suggestions button when suggestions are loaded', async () => {
