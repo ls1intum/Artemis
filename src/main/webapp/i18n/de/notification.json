@@ -191,6 +191,7 @@
             }
         },
         "courseNotification": {
+            "messagePreviewUnavailable": "Keine Nachrichtenvorschau verfügbar.",
             "newPostNotification": {
                 "settingsTitle": "Neue Nachricht",
                 "title": "Neue Nachricht",
@@ -290,17 +291,17 @@
             },
             "channelDeletedNotification": {
                 "title": "Kanal gelöscht",
-                "content": "{{channelName}} wurde in {{courseTitle}} gelöscht.",
+                "content": "{{channelName}} wurde in {{courseName}} gelöscht.",
                 "settingsTitle": "Kanal gelöscht"
             },
             "addedToChannelNotification": {
                 "title": "Kanal beigetreten",
-                "content": "Du bist {{channelName}} in {{courseTitle}} beigetreten.",
+                "content": "Du bist {{channelName}} in {{courseName}} beigetreten.",
                 "settingsTitle": "Kanal beigetreten"
             },
             "removedFromChannelNotification": {
                 "title": "Aus Kanal entfernt",
-                "content": "Du wurdest aus {{channelName}} in {{courseTitle}} entfernt.",
+                "content": "Du wurdest aus {{channelName}} in {{courseName}} entfernt.",
                 "settingsTitle": "Aus Kanal entfernt"
             },
             "tutorialGroupAssignedNotification": {

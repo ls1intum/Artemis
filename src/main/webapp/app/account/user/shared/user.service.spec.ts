@@ -37,6 +37,12 @@ describe('User Service', () => {
             req.flush([Authority.STUDENT, Authority.ADMIN]);
         });
 
+        it('should call the admin URL to search users', () => {
+            service.search('student').subscribe();
+            const req = httpMock.expectOne({ method: 'GET' });
+            expect(req.request.url).toBe('api/account/admin/users/search?loginOrName=student');
+        });
+
         it('should call correct URL to initialize LTI user', () => {
             service.initializeLTIUser().subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });

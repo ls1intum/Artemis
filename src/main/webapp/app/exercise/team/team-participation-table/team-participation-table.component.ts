@@ -1,3 +1,5 @@
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { Component, OnInit, ViewEncapsulation, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
@@ -5,7 +7,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TeamService } from 'app/exercise/team/team.service';
+import { TeamOverviewPurpose, TeamService } from 'app/exercise/team/team.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,8 +21,8 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ButtonDirective } from 'primeng/button';
-import { Tooltip } from 'primeng/tooltip';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
@@ -44,14 +46,27 @@ class ExerciseForTeam extends Exercise {
     templateUrl: './team-participation-table.component.html',
     styleUrls: ['./team-participation-table.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [AssessmentWarningComponent, TranslateDirective, RouterLink, ButtonDirective, Tooltip, ArtemisDatePipe, ArtemisTranslatePipe, TableViewComponent],
+    imports: [
+        FaIconComponent,
+        AssessmentWarningComponent,
+        TranslateDirective,
+        RouterLink,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TableViewComponent,
+    ],
 })
 export class TeamParticipationTableComponent implements OnInit {
     private teamService = inject(TeamService);
     private alertService = inject(AlertService);
     private router = inject(Router);
     private accountService = inject(AccountService);
+    readonly faFolderOpen = faFolderOpen;
+    readonly faFlag = faFlag;
 
+    readonly overviewPurpose = input<TeamOverviewPurpose>('student');
     readonly team = input.required<Team>();
     readonly course = input.required<Course>();
     readonly exercise = input.required<Exercise>();
@@ -165,7 +180,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     loadAll() {
         this.isLoading.set(true);
-        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team()).subscribe({
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team(), this.overviewPurpose()).subscribe({
             next: (courseResponse) => {
                 const exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
                     return cloneWith(exercise, {
@@ -241,6 +256,29 @@ export class TeamParticipationTableComponent implements OnInit {
 
     onActivate() {
         window.scroll(0, 0);
+    }
+
+    /**
+     * Link to the exercise of a row. The staff overview stays in course management, because the student route would
+     * only open exercises the user may read as a student and shows the student projection.
+     * @param exercise the exercise of the row
+     */
+    exerciseLink(exercise: Exercise): (string | number | undefined)[] {
+        if (this.overviewPurpose() === 'staff') {
+            return ['/course-management', this.course().id, exercise.type + '-exercises', exercise.id];
+        }
+        return ['/courses', this.course().id, 'exercises', exercise.id];
+    }
+
+    /**
+     * Link to the team page of a row. The student route requires membership in the team, so staff stay in course management.
+     * @param exercise the exercise of the row, carrying its team
+     */
+    teamLink(exercise: ExerciseForTeam): (string | number | undefined)[] {
+        if (this.overviewPurpose() === 'staff') {
+            return ['/course-management', this.course().id, 'exercises', exercise.id, 'teams', exercise.team?.id];
+        }
+        return ['/courses', this.course().id, 'exercises', exercise.id, 'teams', exercise.team?.id];
     }
 
     /**

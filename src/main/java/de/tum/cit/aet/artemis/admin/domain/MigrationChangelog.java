@@ -30,7 +30,7 @@ public class MigrationChangelog extends DomainObject {
     @Column(name = "system_version")
     private String systemVersion;
 
-    // document in what server startup period it was executed (same hash, same period). Could be simply datetime hashed
+    // document in what server startup period it was executed (same id, same period). A random id created for each startup, older rows hold an MD5 hash
     @Column(name = "deployment_id")
     private String deploymentId;
 

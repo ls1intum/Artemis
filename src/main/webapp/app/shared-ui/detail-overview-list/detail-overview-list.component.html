@@ -18,7 +18,7 @@
                     @case (DetailType.ProgrammingProblemStatement) {
                         @if (detail.data.exercise?.templateParticipation) {
                             @defer (on idle) {
-                                <dd class="p-3 border" id="detail-value-{{ detail.title }}">
+                                <dd class="p-4! border border-(--tumaet-ui-border-color)!" id="detail-value-{{ detail.title }}">
                                     <jhi-programming-exercise-instructions
                                         [exercise]="detail.data.exercise"
                                         [participation]="detail.data.exercise.templateParticipation!"
@@ -26,7 +26,7 @@
                                     />
                                 </dd>
                             } @placeholder {
-                                <dd class="p-3 border detail-defer-placeholder"></dd>
+                                <dd class="p-4! border border-(--tumaet-ui-border-color)! detail-defer-placeholder"></dd>
                             }
                         }
                     }
@@ -49,7 +49,7 @@
                     @case (DetailType.Markdown) {
                         <dd id="detail-value-{{ detail.title }}">
                             @if (detail.data.innerHtml) {
-                                <div class="p-3 border markdown-preview" [innerHTML]="detail.data.innerHtml"></div>
+                                <div class="p-4! border border-(--tumaet-ui-border-color)! markdown-preview" [innerHTML]="detail.data.innerHtml"></div>
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
                             }
@@ -57,22 +57,23 @@
                     }
                     @case (DetailType.GradingCriteria) {
                         @defer (on idle) {
-                            <dd class="col-md-6 mt-4" id="detail-value-{{ detail.title }}">
+                            <dd class="md:w-1/2 mt-6!" id="detail-value-{{ detail.title }}">
                                 <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
                             </dd>
                         } @placeholder {
-                            <dd class="col-md-6 mt-4 detail-defer-placeholder"></dd>
+                            <dd class="md:w-1/2 mt-6! detail-defer-placeholder"></dd>
                         }
                     }
                     @case (DetailType.ModelingEditor) {
-                        <dd class="p-3 border" id="detail-value-{{ detail.title }}">
+                        <dd class="p-4! border border-(--tumaet-ui-border-color)!" id="detail-value-{{ detail.title }}">
                             @if (!isEmpty(detail.data.umlModel?.nodes) && detail.data.diagramType && detail.data.umlModel) {
                                 @defer (on idle) {
                                     @if (detail.data.isApollonEnabled) {
                                         <button
                                             type="button"
                                             (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
-                                            class="btn btn-primary m-2"
+                                            tumAetUiButton
+                                            class="m-2"
                                             jhiTranslate="entity.action.export"
                                         ></button>
                                     }
@@ -114,12 +115,12 @@
                     }
                     @case (DetailType.Image) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <img [alt]="detail.data.altText" class="details-image rounded-3" [ngSrc]="addPublicFilePrefix(detail.data.imageUrl)!" width="48" height="48" />
+                            <img [alt]="detail.data.altText" class="details-image rounded-lg" [ngSrc]="addPublicFilePrefix(detail.data.imageUrl)!" width="48" height="48" />
                         </dd>
                     }
                     @case (DetailType.DefaultProfilePicture) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <strong class="details-default-profile-picture rounded-3" [style.background-color]="detail.data.color">{{ detail.data.initials }}</strong>
+                            <strong class="details-default-profile-picture rounded-lg" [style.background-color]="detail.data.color">{{ detail.data.initials }}</strong>
                         </dd>
                     }
                     @default {

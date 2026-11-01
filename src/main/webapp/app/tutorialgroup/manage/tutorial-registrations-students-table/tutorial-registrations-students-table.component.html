@@ -1,7 +1,7 @@
 <div class="table-frame">
     @let actionColumn = removeActionColumnInfo();
     <div class="scroll-container">
-        <table class="table-header table-body">
+        <table tumAetUiTable class="table-header table-body">
             <thead>
                 <tr class="header-row">
                     <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></th>
@@ -34,8 +34,16 @@
                         </td>
                         @if (actionColumn) {
                             <td class="action-column">
-                                <button type="button" class="remove-button" (click)="actionColumn.onRemove($event, student)">
-                                    <span class="pi pi-times" aria-hidden="true"></span>
+                                <button
+                                    type="button"
+                                    tumAetUiButton
+                                    size="small"
+                                    severity="danger"
+                                    variant="text"
+                                    [attr.aria-label]="'entity.action.remove' | artemisTranslate"
+                                    (click)="actionColumn.onRemove($event, student)"
+                                >
+                                    <fa-icon [icon]="faXmark" />
                                 </button>
                             </td>
                         }

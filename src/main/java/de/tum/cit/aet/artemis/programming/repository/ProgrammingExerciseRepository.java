@@ -25,10 +25,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.DynamicSpecificationRepository;
@@ -57,6 +55,19 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Lazy
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
+
+    /**
+     * Commits draft preparation before its authoring job can be dispatched.
+     * The callback validates the source and claims coordination; repository copies and builds run after commit.
+     *
+     * @param prepareAndReserve draft initialization followed by its exclusive authoring reservation
+     * @param <T>               prepared authoring result
+     * @return the prepared result after commit
+     */
+    @Transactional
+    default <T> T prepareAuthoringDraft(java.util.function.Supplier<T> prepareAndReserve) {
+        return prepareAndReserve.get();
+    }
 
     /**
      * Checks whether an exercise is outside whole-exercise generation's course-only scope.
@@ -210,36 +221,22 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findForCreationMainGraphById(long exerciseId);
 
     /**
-     * Internal part of {@link #findForCreationById}: the grading criteria of an exercise with their structured instructions.
-     * <p>
-     * Selected from the criteria and not through the exercise, so that the exercise and its course are not read once more for them.
+     * Initializes the managed grading-criteria collection and its instructions without replacing its orphan-removal wrapper.
      *
-     * @param exerciseId of the programming exercise
-     * @return the grading criteria of the exercise
+     * @param exerciseId programming exercise
+     * @return exercise with initialized grading criteria
      */
-    @Query("""
-            SELECT DISTINCT criterion
-            FROM GradingCriterion criterion
-                LEFT JOIN FETCH criterion.structuredGradingInstructions
-            WHERE criterion.exercise.id = :exerciseId
-            """)
-    Set<GradingCriterion> findGradingCriteriaWithInstructionsByExerciseId(@Param("exerciseId") long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria", "gradingCriteria.structuredGradingInstructions" })
+    Optional<ProgrammingExercise> findForCreationGradingCriteriaById(long exerciseId);
 
     /**
-     * Internal part of {@link #findForCreationById}: the competency links of an exercise with their competencies.
-     * <p>
-     * Selected from the links and not through the exercise, so that the exercise and its course are not read once more for them.
+     * Initializes the managed competency links and their competencies in the creation transaction.
      *
-     * @param exerciseId of the programming exercise
-     * @return the competency links of the exercise
+     * @param exerciseId programming exercise
+     * @return exercise with initialized competency links
      */
-    @Query("""
-            SELECT link
-            FROM CompetencyExerciseLink link
-                JOIN FETCH link.competency
-            WHERE link.exercise.id = :exerciseId
-            """)
-    Set<CompetencyExerciseLink> findCompetencyLinksWithCompetencyByExerciseId(@Param("exerciseId") long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency" })
+    Optional<ProgrammingExercise> findForCreationCompetencyLinksById(long exerciseId);
 
     /**
      * Finds a programming exercise by its id with the whole graph a freshly created (or imported) exercise needs:
@@ -247,23 +244,20 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * repositories, plagiarism detection config, submission policy, grading criteria (with their
      * structured instructions) and competency links.
      * <p>
-     * The graph is assembled from three queries instead of one. Join-fetching the grading criteria and the competency
-     * links together with the categories, auxiliary repositories and participation submissions would multiply the result
-     * set - one row per combination of all of them - and each of those rows repeats every exercise column, including the
-     * problem statement. The criteria and the links are therefore selected on their own, by the id of the exercise, and
-     * put on the exercise afterwards. The three queries run in one read-only transaction, so that the exercise and its
-     * course are read once and the criteria and links find them in the session instead of reading them again.
+     * Three queries initialize the main graph, grading criteria and competency links separately. This avoids a Cartesian
+     * product between independent collections and preserves managed collection wrappers. The queries share a persistence
+     * context and initialize its managed collections, including when this read joins an import's write transaction.
      *
      * @param exerciseId of the programming exercise
      * @return the programming exercise with its complete creation graph initialized
      */
-    @Transactional(readOnly = true) // ok because it only reads, and the queries share one session so that the exercise and its course are read once
+    @Transactional(readOnly = true) // ok because it only reads; the queries share a persistence context and initialize managed collections
     default Optional<ProgrammingExercise> findForCreationById(long exerciseId) {
         Optional<ProgrammingExercise> optionalExercise = findForCreationMainGraphById(exerciseId);
-        optionalExercise.ifPresent(exercise -> {
-            exercise.setGradingCriteria(findGradingCriteriaWithInstructionsByExerciseId(exerciseId));
-            exercise.setCompetencyLinks(findCompetencyLinksWithCompetencyByExerciseId(exerciseId));
-        });
+        if (optionalExercise.isPresent()) {
+            findForCreationGradingCriteriaById(exerciseId);
+            findForCreationCompetencyLinksById(exerciseId);
+        }
         return optionalExercise;
     }
 
@@ -384,6 +378,30 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         exercise.setStaticCodeAnalysisCategories(findStaticCodeAnalysisCategoriesByExerciseId(exerciseId));
         return Optional.of(exercise);
     }
+
+    /**
+     * Loads the complete import source in one persistence context.
+     *
+     * @param exerciseId protected source exercise
+     * @return the initialized source, if it exists
+     */
+    @Transactional(readOnly = true)
+    default Optional<ProgrammingExercise> findForAuthoringImportById(long exerciseId) {
+        var source = findForVersioningBaseById(exerciseId);
+        if (source.isPresent()) {
+            // Import joins a write transaction: initialize managed collections without replacing orphan-removal wrappers.
+            findWithTestCasesById(exerciseId);
+            findForAuthoringTasksById(exerciseId);
+            findForAuthoringStaticCodeAnalysisCategoriesById(exerciseId);
+        }
+        return source;
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "tasks", "tasks.testCases" })
+    Optional<ProgrammingExercise> findForAuthoringTasksById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "staticCodeAnalysisCategories")
+    Optional<ProgrammingExercise> findForAuthoringStaticCodeAnalysisCategoriesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "course", "templateParticipation", "solutionParticipation", "submissionPolicy", "auxiliaryRepositories", "competencyLinks",
             "categories", "gradingCriteria" })
@@ -692,6 +710,22 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE pe.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findWithEagerCourseAndExamById(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Loads authorization context for a bounded set of destinations in one query, without participation or repository data.
+     *
+     * @param exerciseIds destination ids
+     * @return exercises with course and exam ownership loaded
+     */
+    @Query("""
+            SELECT pe FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.course
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+                LEFT JOIN FETCH e.course
+            WHERE pe.id IN :exerciseIds
+            """)
+    List<ProgrammingExercise> findAllWithEagerCourseAndExamByIdIn(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -1077,6 +1111,23 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     default ProgrammingExercise findForCreationByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         return getValueElseThrow(findForCreationById(programmingExerciseId), programmingExerciseId);
     }
+
+    /**
+     * Attaches the newly inserted base participations and test repository to a new exercise without merging and
+     * reloading its entire graph. The project key and auxiliary URLs are already stored by the initial insert.
+     *
+     * @param exercise the newly stored exercise with its initialized repository metadata
+     */
+    @Modifying
+    @Transactional // ok because the update attaches the base repositories atomically
+    @Query("""
+            UPDATE ProgrammingExercise exercise
+            SET exercise.testRepositoryUri = :#{#exercise.testRepositoryUri},
+                exercise.templateParticipation = :#{#exercise.templateParticipation},
+                exercise.solutionParticipation = :#{#exercise.solutionParticipation}
+            WHERE exercise.id = :#{#exercise.id}
+            """)
+    void updateRepositoryMetadataForCreation(@Param("exercise") ProgrammingExercise exercise);
 
     /**
      * Saves the given programming exercise to the database.

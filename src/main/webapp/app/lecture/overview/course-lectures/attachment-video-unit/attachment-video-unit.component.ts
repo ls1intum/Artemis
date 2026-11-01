@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 import {
     Component,
     DestroyRef,
@@ -53,7 +54,6 @@ import { ScienceEventType } from 'app/foundation/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisCombinedViewContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
@@ -64,7 +64,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
 import { FormsModule } from '@angular/forms';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { isPdfAttachment } from 'app/lecture/overview/course-lectures/attachment-pdf.util';
 
@@ -80,6 +79,10 @@ const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiToggleSwitchComponent,
         NgTemplateOutlet,
         LectureUnitComponent,
         ArtemisDatePipe,
@@ -89,12 +92,10 @@ const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
         VideoPlayerComponent,
         YouTubePlayerComponent,
         PdfViewerComponent,
-        MessageModule,
         LectureChatbotComponent,
         FaIconComponent,
         LectureUnitFullscreenLayoutComponent,
         FormsModule,
-        ToggleSwitchModule,
     ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
@@ -127,11 +128,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
-    /**
-     * Whether the transcript request is still in flight. It is started just before the loading flag clears, so an empty
-     * transcript only means "there is none" once this has settled too — see {@link isPointOutUnreachable}.
-     */
-    private readonly isTranscriptLoading = signal<boolean>(false);
 
     readonly rawVideoSource = computed(() => this.lectureUnit()?.videoSource ?? null);
     readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
@@ -195,6 +191,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly targetTimestamp = computed(() => this.matchedDeepLink()?.timestamp);
     readonly targetPdfPage = computed(() => this.matchedDeepLink()?.page);
+
+    // The positions the student had reached when the combined view and the split layout swapped, which recreated the video player and the PDF viewer.
+    private readonly resumeVideoTimestamp = signal<number | undefined>(undefined);
+    private readonly resumePdfPage = signal<number | undefined>(undefined);
+    readonly videoInitialTimestamp = computed(() => this.resumeVideoTimestamp() ?? this.targetTimestamp());
+    readonly pdfInitialPage = computed(() => this.resumePdfPage() ?? this.targetPdfPage());
 
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
@@ -406,6 +408,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private applyDeepLink(deepLink: LectureDeepLink): void {
+        // A new target takes precedence over the position the viewers resumed from, but only for what it names: a changed start time of a live player would
+        // cue its video again and stop it, so a link to a page leaves the resumed time alone.
+        if (deepLink.timestamp !== undefined) {
+            this.resumeVideoTimestamp.set(undefined);
+        }
+        if (deepLink.page !== undefined) {
+            this.resumePdfPage.set(undefined);
+        }
         const pdfViewer = this.pdfViewer();
         const pageShownBefore = pdfViewer?.getCurrentPage();
 
@@ -560,15 +570,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      *
      * Video: only a seekable player can hold a timestamp, and anything else falls back to a bare iframe, which cannot.
      * The conditions below mirror the template's, since a player that is never rendered can never be seeked either:
-     * the video player needs a resolved playlist *and* a transcript, while the YouTube player needs neither and renders
-     * on the video id alone. A playlist without a transcript therefore ends in the iframe, not in a player — waiting on
-     * it would block until the server-side ack timeout, which is the very thing this method exists to prevent. A player
-     * that did render but reported failure counts the same way: it will never state a length, so the effect's wait for
-     * a seekable player would otherwise never end.
+     * the video player needs a resolved playlist, the YouTube player the video id; neither needs a transcript. Without
+     * either the unit ends in the iframe — waiting on it would block until the server-side ack timeout, which is the
+     * very thing this method exists to prevent. A player that did render but reported failure counts the same way: it
+     * will never state a length, so the effect's wait for a seekable player would otherwise never end.
      *
-     * Both requests must have settled before their outcome counts. The transcript is requested just before the loading
-     * flag clears and settles after it, so an empty transcript is only final once its own request has finished too;
-     * judging by the loading flag alone would drop a perfectly good point-out in that window.
+     * The playlist is only known once the loading flag has cleared, so its absence counts only after that.
      * @param pointOut the pending navigation target
      * @return whether it can be given up on
      */
@@ -587,8 +594,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (pointOut.timestamp != undefined && this.videoPlayer()?.isUnbounded()) {
             return true;
         }
-        const hasSeekableVideo = ((!!this.playlistUrl() && this.hasTranscript()) || !!this.youtubeVideoId()) && !this.playerFailed();
-        return pointOut.timestamp != undefined && !this.isLoading() && !this.isTranscriptLoading() && !hasSeekableVideo;
+        const hasSeekableVideo = (!!this.playlistUrl() || !!this.youtubeVideoId()) && !this.playerFailed();
+        return pointOut.timestamp != undefined && !this.isLoading() && !hasSeekableVideo;
     }
 
     /**
@@ -652,7 +659,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.transcriptSegments.set([]);
             this.playlistUrl.set(undefined);
             this.isLoading.set(true);
-            this.isTranscriptLoading.set(false);
 
             const src = this.lectureUnit().videoSource;
 
@@ -674,9 +680,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return;
             }
 
-            // Try to resolve a .m3u8 playlist URL from the server
+            // Try to resolve a .m3u8 playlist URL from the server, through the course's TUM.Live connection where there is one
             this.attachmentVideoUnitService
-                .getPlaylistUrl(src)
+                .getPlaylistUrl(this.lectureUnit().id!)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                     next: (resolvedUrl) => {
@@ -706,12 +712,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // unit builds a fresh one, and a stale failure would make every later point-out for this unit be given up
             // on as unreachable.
             this.playerFailed.set(false);
-            this.isTranscriptLoading.set(false);
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();
             this.synchronizeVideoAndSlides.set(false);
             this.clearSynchronizationTargets();
+            // The viewers that were started from these positions are gone, so the next ones start from the deep link again.
+            this.resumeVideoTimestamp.set(undefined);
+            this.resumePdfPage.set(undefined);
         }
     }
 
@@ -722,7 +730,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        this.isTranscriptLoading.set(true);
         this.lectureTranscriptionService
             .getTranscription(id)
             .pipe(
@@ -735,7 +742,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                         return;
                     }
                     this.transcriptSegments.set(segments);
-                    this.isTranscriptLoading.set(false);
                 },
                 error: () => {
                     if (loadGeneration !== this.loadGeneration) {
@@ -743,7 +749,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     }
                     // Failed to fetch transcript, video player will work without it
                     this.transcriptSegments.set([]);
-                    this.isTranscriptLoading.set(false);
                 },
             });
     }
@@ -849,6 +854,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     protected onFullscreenChange(isFullscreen: boolean): void {
+        // The viewers still exist here: they are destroyed by the change detection that follows the layout switch.
+        this.rememberMediaPositions();
         this.fullscreenState.set(isFullscreen);
         if (!isFullscreen) {
             // The view was closed before a point-out could be applied, so its target is now unreachable.
@@ -859,6 +866,25 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // The toggle it explains goes away with the view; a later reopen starts without a stale explanation.
             this.syncDisabledByPointOutState.set(undefined);
         }
+    }
+
+    /**
+     * Fullscreen switches a unit with a video and a PDF between the combined view and the split layout, and each layout
+     * creates its own video player and PDF viewer. The recreated ones start where the student stopped.
+     */
+    private rememberMediaPositions(): void {
+        if (!this.hasRenderableVideo() || !this.hasPdf()) {
+            return;
+        }
+        // A viewer or player that has not reached its start position yet reports the first page or time 0, which must not replace the target of a deep link that is still pending.
+        const pdfViewer = this.pdfViewer();
+        const player = this.activePlayer();
+        const page = pdfViewer && pdfViewer.getTotalPages() > 0 ? pdfViewer.getCurrentPage() : undefined;
+        const timestamp = player?.isSeekable() ? player.getCurrentTime() : undefined;
+        this.resumePdfPage.set(page ?? this.pdfInitialPage());
+        this.resumeVideoTimestamp.set(timestamp ?? this.videoInitialTimestamp());
+        // The new viewer reports the page it starts on, which must not move the video away from where it resumes. It reports nothing for the first page.
+        this.pendingPdfTargetPage = page !== undefined && page > 1 ? page : undefined;
     }
 
     protected onSynchronizationToggleChange(enabled: boolean): void {

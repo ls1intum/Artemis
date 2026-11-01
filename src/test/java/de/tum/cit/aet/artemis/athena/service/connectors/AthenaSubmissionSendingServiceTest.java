@@ -114,7 +114,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendTextSubmissionsSuccess() {
         createTextSubmissionsForSubmissionSending(1);
         athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
@@ -139,7 +139,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendSubmissionsSuccessProgramming() {
         createProgrammingSubmissionForSubmissionSending();
         athenaRequestMockProvider.mockSendSubmissionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
@@ -154,7 +154,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendNoSubmissions() {
         athenaSubmissionSendingService.sendSubmissions(textExercise);
         athenaSubmissionSendingService.sendSubmissions(programmingExercise);
@@ -162,7 +162,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendMultipleSubmissionBatches() {
         createTextSubmissionsForSubmissionSending(MAX_NUMBER_OF_TOTAL_PARTICIPATIONS); // 190 = almost twice the batch size (100)
         // expect two batches of submissions
@@ -177,7 +177,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendSubmissionsWithFeedbackSuggestionsDisabledText() {
         textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);

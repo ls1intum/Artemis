@@ -13,7 +13,6 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { PaginatorState } from 'primeng/paginator';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('RatingListComponent', () => {
@@ -113,7 +112,7 @@ describe('RatingListComponent', () => {
 
     it('should reload ratings on page change', () => {
         const loadSpy = vi.spyOn(component, 'loadRatings');
-        component.onPageChange({ page: 1 } as PaginatorState);
+        component.onPageChange(1);
         expect(component.page()).toBe(2);
         expect(loadSpy).toHaveBeenCalled();
     });

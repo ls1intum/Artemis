@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -73,7 +73,8 @@ public class PlagiarismPostResource {
      *         or with status 400 (Bad Request) if the checks on user, course- or post-validity fail
      */
     @PostMapping("courses/{courseId}/posts")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<PlagiarismPostCreationResponseDTO> createPost(@PathVariable Long courseId, @Valid @RequestBody PlagiarismPostCreationDTO postDto)
             throws URISyntaxException {
         log.debug("POST createPost invoked for course {} with post {}", courseId, postDto.content());
@@ -93,7 +94,8 @@ public class PlagiarismPostResource {
      *         or with status 400 (Bad Request) if the checks on user, course- or post-validity fail
      */
     @PutMapping("courses/{courseId}/posts/{postId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<PostResponseDTO> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody PlagiarismPostUpdateRequestDTO request) {
         log.debug("PUT updatePost invoked for course {} with content length {}", courseId, request.content() == null ? 0 : request.content().length());
         long start = System.nanoTime();
@@ -135,7 +137,8 @@ public class PlagiarismPostResource {
      *         or 400 (Bad Request) if the checks on user, course, or post-validity fail
      */
     @DeleteMapping("courses/{courseId}/posts/{postId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deletePost(@PathVariable Long courseId, @PathVariable Long postId) {
         log.debug("DELETE deletePost invoked for course {} on post {}", courseId, postId);
         long start = System.nanoTime();

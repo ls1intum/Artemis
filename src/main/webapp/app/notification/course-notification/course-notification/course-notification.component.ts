@@ -13,6 +13,17 @@ import { renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render
 import { escapeString } from 'app/foundation/util/text.utils';
 import { RouterLink } from '@angular/router';
 
+// Each preview translation interpolates one specific field; thread answers use the reply, not the parent post.
+const MARKDOWN_PREVIEW_PARAMETERS: Partial<Record<string, string>> = {
+    newPostNotification: 'postMarkdownContent',
+    newAnswerNotification: 'replyMarkdownContent',
+    irisResponseNeedsReviewNotification: 'replyMarkdownContent',
+    newMentionNotification: 'postMarkdownContent',
+    newAnnouncementNotification: 'postMarkdownContent',
+    newCpcPlagiarismCaseNotification: 'postMarkdownContent',
+    newPlagiarismCaseNotification: 'postMarkdownContent',
+};
+
 /**
  * Component for displaying a single course notification.
  * Renders notification content, metadata, and handles interaction events.
@@ -120,7 +131,15 @@ export class CourseNotificationComponent {
         this.notificationParameters.set(notificationParameters);
         this.notificationType.set(notification.notificationType!);
         // A notification carrying a message of its editor shows that message, otherwise the generic content of its type.
-        this.notificationContentKey.set(`artemisApp.courseNotification.${notification.notificationType}.${hasNotificationText ? 'contentWithNotificationText' : 'content'}`);
+        const previewParameter = MARKDOWN_PREVIEW_PARAMETERS[notification.notificationType ?? ''];
+        const preview = previewParameter ? notificationParameters[previewParameter] : undefined;
+        // Forwarded-only posts have no wrapper text, and empty values are omitted by the server. Do not leave
+        // an interpolation token (or a blank card body) visible when the preview is missing or renders to no text.
+        this.notificationContentKey.set(
+            previewParameter && (typeof preview !== 'string' || !preview.trim())
+                ? 'artemisApp.courseNotification.messagePreviewUnavailable'
+                : `artemisApp.courseNotification.${notification.notificationType}.${hasNotificationText ? 'contentWithNotificationText' : 'content'}`,
+        );
         this.notificationUrl.set(this.parseUrlToRouterObject(notification.relativeWebAppUrl!));
         this.notificationTimeTranslationKey.set(this.courseNotificationService.getDateTranslationKey(notification));
         this.notificationTimeTranslationParameters.set(this.courseNotificationService.getDateTranslationParams(notification));

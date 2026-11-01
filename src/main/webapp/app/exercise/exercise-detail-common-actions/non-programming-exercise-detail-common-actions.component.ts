@@ -1,3 +1,5 @@
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Observable, Subject } from 'rxjs';
@@ -9,12 +11,12 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faBook, faChartBar, faListAlt, faRobot, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faChartBar, faListAlt, faRobot, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_IRIS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
@@ -24,7 +26,16 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe, FeatureOverlayComponent],
+    imports: [
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
+        DeleteButtonDirective,
+        ArtemisTranslatePipe,
+        FeatureOverlayComponent,
+    ],
 })
 export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
     private textExerciseService = inject(TextExerciseService);
@@ -69,7 +80,6 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     faBook = faBook;
     faWrench = faWrench;
     faUsers = faUsers;
-    faTable = faTable;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faUserCheck = faUserCheck;

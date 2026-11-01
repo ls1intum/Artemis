@@ -13,6 +13,7 @@ This documentation covers:
 - Hyperion AI-assisted exercise authoring setup
 - Managing SSH access and network routing
 - Monitoring, scaling, and integrating external services
+- [Agent Access](./agent-access.mdx), which lets instructors give coding agents limited access
 
 Begin with the **[Security Configuration](./production-setup/security.mdx)** section to ensure your deployment follows secure setup practices.
 

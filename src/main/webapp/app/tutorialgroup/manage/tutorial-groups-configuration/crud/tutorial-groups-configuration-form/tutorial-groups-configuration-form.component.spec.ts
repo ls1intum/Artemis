@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
@@ -30,14 +29,7 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ReactiveFormsModule,
-                FormsModule,
-                NgbTypeaheadModule,
-                TutorialGroupsConfigurationFormComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [ReactiveFormsModule, FormsModule, TutorialGroupsConfigurationFormComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

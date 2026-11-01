@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -14,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [
         TranslateDirective,
         TutorialGroupsRegistrationImportDialogComponent,
-        DialogModule,
+        TumAetUiDialogComponent,
         FaIconComponent,
         TumAetUiButtonDirective,
         TumAetUiTooltipDirective,
@@ -24,6 +24,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class TutorialGroupsImportButtonComponent {
     readonly warningDialogVisible = signal<boolean>(false);
     readonly importDialog = viewChild<TutorialGroupsRegistrationImportDialogComponent>('importDialog');
+    private readonly importButton = viewChild('importButton', { read: ElementRef<HTMLButtonElement> });
 
     courseId = input.required<number>();
 
@@ -34,6 +35,10 @@ export class TutorialGroupsImportButtonComponent {
     openTutorialGroupImportDialog(event: MouseEvent) {
         event.stopPropagation();
         this.importDialog()?.open();
+    }
+
+    protected restoreImportFocus(): void {
+        this.importButton()?.nativeElement.focus();
     }
 
     onImportCompleted(): void {

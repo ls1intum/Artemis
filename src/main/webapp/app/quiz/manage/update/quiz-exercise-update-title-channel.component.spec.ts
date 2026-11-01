@@ -21,10 +21,10 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
-import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
+import { QuizAiGenerationModalComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 
@@ -103,11 +103,11 @@ describe('QuizExerciseUpdateComponent title and channel validation', () => {
         })
             .overrideComponent(QuizExerciseUpdateComponent, {
                 remove: {
-                    imports: [CategorySelectorPrimengComponent, CompetencySelectionComponent, QuizQuestionListEditComponent, QuizAiGenerationModalComponent],
+                    imports: [CategorySelectorComponent, CompetencySelectionComponent, QuizQuestionListEditComponent, QuizAiGenerationModalComponent],
                 },
                 add: {
                     imports: [
-                        MockComponent(CategorySelectorPrimengComponent),
+                        MockComponent(CategorySelectorComponent),
                         MockComponent(CompetencySelectionComponent),
                         MockComponent(QuizQuestionListEditComponent),
                         MockComponent(QuizAiGenerationModalComponent),

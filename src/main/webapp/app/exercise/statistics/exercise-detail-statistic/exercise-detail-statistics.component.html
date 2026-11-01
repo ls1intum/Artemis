@@ -1,8 +1,9 @@
-<div class="row d-flex justify-content-between">
+<div class="grid grid-cols-12 gap-4 justify-between" data-testid="exercise-statistics-summary">
     <jhi-doughnut-chart
-        class="col-md-4"
+        class="col-span-12 md:col-span-4"
         [course]="course()"
         [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
+        [exerciseGroup]="exercise().exerciseGroup"
         [exerciseId]="exercise().id!"
         [exerciseType]="exerciseType()"
         [currentPercentage]="doughnutStats()?.averageScoreOfExercise"
@@ -10,9 +11,10 @@
         [currentMax]="doughnutStats()?.maxPointsOfExercise"
     />
     <jhi-doughnut-chart
-        class="col-md-4"
+        class="col-span-12 md:col-span-4"
         [course]="course()"
         [contentType]="DoughnutChartType.PARTICIPATIONS"
+        [exerciseGroup]="exercise().exerciseGroup"
         [exerciseId]="exercise().id!"
         [exerciseType]="exerciseType()"
         [currentPercentage]="doughnutStats()?.participationsInPercent"
@@ -21,7 +23,7 @@
     />
     @if (isCommunicationEnabled(course())) {
         <jhi-doughnut-chart
-            class="col-md-4"
+            class="col-span-12 md:col-span-4"
             [course]="course()"
             [contentType]="DoughnutChartType.QUESTIONS"
             [exerciseId]="exercise().id!"

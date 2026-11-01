@@ -29,6 +29,7 @@ that for you if they are missing).
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 import re
 import shutil
@@ -236,7 +237,7 @@ class Liquibase:
         self.workspace = workspace
         self.version = gradle_property("liquibase_version")
 
-    def command(self, database: Database, changelog: str, command: str, contexts: str = "prod") -> subprocess.CompletedProcess:
+    def command(self, database: Database, changelog: str, command: str, contexts: str = "prod", command_args: tuple[str, ...] = ()) -> subprocess.CompletedProcess:
         driver = self._driver_for(database.engine)
         argv = [
             "docker", "run", "--rm",
@@ -253,6 +254,7 @@ class Liquibase:
             f"--password={database.engine.password}",
             f"--contexts={contexts}",
             command,
+            *command_args,
         ]
         return run(argv)
 
@@ -533,7 +535,7 @@ def check_upgrade_from_floor(engine: Engine, liquibase: Liquibase, port: int) ->
 
 def seed_expectations() -> list[tuple[str, int]]:
     """
-    Returns (table, row count) for every CSV the seed changelogs load.
+    Returns (table, surviving row count) for every CSV the seed changelogs load.
 
     Parsed, not matched with a regular expression: a pattern anchored on attribute order finds nothing
     the day someone writes tableName before file, and an expectation that quietly disappears turns this
@@ -543,8 +545,14 @@ def seed_expectations() -> list[tuple[str, int]]:
     for changelog in sorted((LIQUIBASE_DIR / "data").glob("*.xml")):
         for element in ElementTree.parse(changelog).getroot().iter(f"{NAMESPACE}loadData"):
             csv_file = REPO / "src/main/resources" / element.get("file")
-            data_lines = [line for line in csv_file.read_text().splitlines()[1:] if line.strip()]
-            expectations.append((element.get("tableName"), len(data_lines)))
+            with csv_file.open(newline="") as source:
+                rows = list(csv.DictReader(source, delimiter=element.get("separator", ",")))
+            table = element.get("tableName")
+            if table == "jhi_user_authority":
+                # The course-authorities migration removes these rows after the historical seed runs. Keep that seed
+                # unchanged for installations that have recorded its checksum, but expect only its surviving authorities.
+                rows = [row for row in rows if row["authority_name"] not in {"ROLE_TA", "ROLE_EDITOR", "ROLE_INSTRUCTOR"}]
+            expectations.append((table, len(rows)))
     return expectations
 
 

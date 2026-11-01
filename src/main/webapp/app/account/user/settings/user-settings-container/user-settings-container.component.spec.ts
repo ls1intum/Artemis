@@ -11,7 +11,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/account/user/settings/user-settings-container/user-settings-container.component';
 import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { User } from 'app/account/user/user.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -21,7 +21,6 @@ describe('UserSettingsContainerComponent', () => {
     let component: UserSettingsContainerComponent;
 
     let translateService: TranslateService;
-    let featureToggleService: FeatureToggleService;
     let accountService: AccountService;
 
     const router = new MockRouter();
@@ -43,7 +42,6 @@ describe('UserSettingsContainerComponent', () => {
         component = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
         translateService.use('en');
-        featureToggleService = TestBed.inject(FeatureToggleService);
         accountService = TestBed.inject(AccountService);
         // The sidebar reads the identity signal, so the logged-in user has to be on it.
         accountService.userIdentity.set({ id: 99, login: 'admin', imageUrl: 'profile-pictures/first.png' } as User);
@@ -57,6 +55,19 @@ describe('UserSettingsContainerComponent', () => {
         component.ngOnInit();
         expect(component.currentUser()).toBeDefined();
         expect(component.isAtLeastTutor()).toBe(true);
+    });
+
+    it('shows the agent access tab only if it is enabled and the user may create tokens', () => {
+        component.isAgentAccessEnabled.set(false);
+        expect(component.showAgentAccess()).toBe(false);
+
+        component.isAgentAccessEnabled.set(true);
+        expect(component.showAgentAccess()).toBe(true);
+
+        vi.spyOn(accountService, 'mayCreateAgentTokens').mockReturnValue(false);
+        component.isAgentAccessEnabled.set(false);
+        component.isAgentAccessEnabled.set(true);
+        expect(component.showAgentAccess()).toBe(false);
     });
 
     it('follows the profile picture when it changes while the user stays logged in', () => {
@@ -132,7 +143,6 @@ describe('UserSettingsContainerComponent', () => {
 
         it('should hide the learner profile tab when no module backs any of its sections', () => {
             setActiveModules([]);
-            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, false);
             component.ngOnInit();
             expect(component.isLearnerProfileEnabled()).toBe(false);
             expect(queryLearnerProfileLink()).toBeFalsy();
@@ -140,7 +150,6 @@ describe('UserSettingsContainerComponent', () => {
 
         it('should show the learner profile tab when the atlas module is active', () => {
             setActiveModules([MODULE_FEATURE_ATLAS]);
-            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, false);
             component.ngOnInit();
             expect(component.isLearnerProfileEnabled()).toBe(true);
             const learnerProfileLink = queryLearnerProfileLink();
@@ -148,24 +157,9 @@ describe('UserSettingsContainerComponent', () => {
             expect(learnerProfileLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.learnerProfile');
         });
 
-        it('should show the learner profile tab for the insights section once Memiris is switched on', () => {
+        it('should hide the learner profile tab when only the iris module is active', () => {
+            // The learner profile has no iris-backed section, so iris alone must not show a tab for an empty page
             setActiveModules([MODULE_FEATURE_IRIS]);
-            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, false);
-            component.ngOnInit();
-            expect(component.isLearnerProfileEnabled()).toBe(false);
-            expect(queryLearnerProfileLink()).toBeFalsy();
-
-            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, true);
-
-            expect(component.isLearnerProfileEnabled()).toBe(true);
-            expect(queryLearnerProfileLink()).toBeTruthy();
-        });
-
-        it('should hide the learner profile tab when Memiris is on but the iris module serving it is not', () => {
-            // IrisMemoryResource is @Conditional(IrisEnabled) as well as @FeatureToggle(Memiris), and the toggle is
-            // seeded independently of the module, so the toggle alone must not show a tab that would answer 404
-            setActiveModules([]);
-            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, true);
             component.ngOnInit();
             expect(component.isLearnerProfileEnabled()).toBe(false);
             expect(queryLearnerProfileLink()).toBeFalsy();

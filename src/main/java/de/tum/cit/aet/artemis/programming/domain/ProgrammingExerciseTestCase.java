@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType.DEFAULT;
+import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -35,6 +36,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Table(name = "programming_exercise_test_case")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseTestCase extends DomainObject {
+
+    private static final int MAX_TEST_NAME_LENGTH = 255;
 
     @Column(name = "test_name")
     private String testName;
@@ -77,6 +80,35 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     public String getTestName() {
         return testName;
+    }
+
+    /**
+     * Keeps a CI test name within the database limit without merging distinct names that share a prefix.
+     * The digest follows the same codepoint case equivalence as {@link String#equalsIgnoreCase(String)}, so
+     * changing only case retains the test case and its grading settings. The readable prefix stays unchanged.
+     * A parameter list cut by the length limit is closed after the digest so task and diagram references still parse.
+     *
+     * @param testName the original name reported by CI or written in a task marker
+     * @return the name used to store and look up the test case
+     */
+    public static String normalizeTestName(String testName) {
+        if (testName.length() <= MAX_TEST_NAME_LENGTH) {
+            return testName;
+        }
+        StringBuilder foldedName = new StringBuilder(testName.length());
+        testName.codePoints().forEach(codePoint -> foldedName.appendCodePoint(Character.toLowerCase(Character.toUpperCase(codePoint))));
+        String suffix = "-" + sha256Hex(foldedName.toString());
+        int prefixLength = MAX_TEST_NAME_LENGTH - suffix.length();
+        int parameterStart = testName.lastIndexOf('(', prefixLength - 1);
+        boolean truncatedParameters = parameterStart > testName.lastIndexOf(')', prefixLength - 1);
+        if (truncatedParameters) {
+            prefixLength--;
+        }
+        if (Character.isHighSurrogate(testName.charAt(prefixLength - 1)) && Character.isLowSurrogate(testName.charAt(prefixLength))) {
+            prefixLength--;
+        }
+        // Reserving the closing parenthesis can remove an opener exactly at the prefix boundary.
+        return testName.substring(0, prefixLength) + suffix + (truncatedParameters && parameterStart < prefixLength ? ")" : "");
     }
 
     public ProgrammingExerciseTestCase testName(String testName) {

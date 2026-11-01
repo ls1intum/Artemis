@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiSelectComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -20,7 +21,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -29,7 +29,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -53,13 +53,17 @@ export enum BonusStrategyDiscreteness {
         TranslateDirective,
         DeleteButtonDirective,
         FontAwesomeModule,
-        NgbTooltipModule,
+        TumAetUiTooltipDirective,
         FormsModule,
         CommonModule,
         HelpIconComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
         TumAetUiButtonDirective,
+        PointsInputComponent,
+        TumAetUiTableDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
     ],
 })
 export class BonusComponent implements OnInit {
@@ -87,23 +91,21 @@ export class BonusComponent implements OnInit {
     readonly bonusStrategyOptions = [BonusStrategyOption.GRADES, BonusStrategyOption.POINTS].map((bonusStrategyOption) => ({
         value: bonusStrategyOption,
         labelKey: 'artemisApp.bonus.bonusStrategy.' + BonusStrategyOption[bonusStrategyOption].toLowerCase(),
-        btnClass: 'btn-secondary',
     }));
 
     readonly calculationSigns = [
         {
             value: this.CALCULATION_MINUS,
             label: '−',
-            btnClass: 'btn-secondary',
         },
         {
             value: this.CALCULATION_PLUS,
             label: '+',
-            btnClass: 'btn-secondary',
         },
     ];
 
     readonly sourceGradingScales = signal<GradingScale[]>([]);
+    readonly sourceGradingScaleOptions = computed(() => this.sourceGradingScales().map((scale) => ({ label: this.getGradingScaleTitle(scale) ?? '', value: scale })));
 
     readonly bonusToGradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
 
@@ -181,7 +183,7 @@ export class BonusComponent implements OnInit {
                     );
                 }),
             ),
-            this.gradingService.findGradeSteps(this.courseId, this.examId).pipe(
+            this.gradingService.findGradeSteps(this.courseId, this.examId, 'management').pipe(
                 tap((gradeSteps) => {
                     if (gradeSteps) {
                         this.bonusToGradeStepsDTO.set(gradeSteps);

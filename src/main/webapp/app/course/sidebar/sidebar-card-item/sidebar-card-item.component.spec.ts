@@ -87,6 +87,9 @@ describe('SidebarCardItemComponent', () => {
 
         const unreadCountElem = fixture.nativeElement.querySelector('.unread-count');
         expect(unreadCountElem?.textContent).toContain('5');
+        // A negative end margin would pull the badge over the favorite button that follows the card.
+        expect(unreadCountElem?.classList).not.toContain('me-n2');
+        expect(unreadCountElem?.classList).toContain('me-1');
 
         const titleElem = fixture.nativeElement.querySelector('[data-testid="sidebar-card-title"]');
         expect(titleElem?.classList).toContain('fw-bold');

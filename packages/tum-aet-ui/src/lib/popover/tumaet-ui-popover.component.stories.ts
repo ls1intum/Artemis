@@ -4,10 +4,11 @@ import { expect, fn, screen, waitFor, waitForElementToBeRemoved, within } from '
 import { TumAetUiButtonDirective } from '../button/tumaet-ui-button.directive';
 import type { TumAetUiOverlayPlacement } from '../overlay/tumaet-ui-overlay.service';
 import { TumAetUiPopoverTriggerDirective } from './tumaet-ui-popover-trigger.directive';
-import { TumAetUiPopoverComponent } from './tumaet-ui-popover.component';
+import { TumAetUiPopoverComponent, type TumAetUiPopoverPaddingOption } from './tumaet-ui-popover.component';
 
 interface PopoverStoryArgs {
     ariaLabel: string;
+    padding: TumAetUiPopoverPaddingOption;
     openChange: (open: boolean) => void;
     placement: TumAetUiOverlayPlacement;
     triggerLabel: string;
@@ -18,11 +19,16 @@ const meta = {
     component: TumAetUiPopoverComponent,
     args: {
         ariaLabel: 'Exercise actions',
+        padding: 'default',
         openChange: fn(),
         placement: 'bottom',
         triggerLabel: 'More actions',
     },
     argTypes: {
+        padding: {
+            control: 'inline-radio',
+            options: ['default', 'none'] satisfies TumAetUiPopoverPaddingOption[],
+        },
         placement: {
             control: 'inline-radio',
             options: ['top', 'bottom', 'left', 'right'] satisfies TumAetUiOverlayPlacement[],
@@ -55,6 +61,27 @@ export default meta;
 type Story = StoryObj<PopoverStoryArgs>;
 
 export const Default: Story = {};
+
+export const NoPadding: Story = {
+    args: {
+        ariaLabel: 'No-padding popover',
+        padding: 'none',
+        triggerLabel: 'Show No-Padding Popover',
+    },
+    render: (args) => ({
+        props: args,
+        template: `
+            <button tumAetUiButton [tumAetUiPopoverTrigger]="menu">{{ triggerLabel }}</button>
+            <tumaet-ui-popover #menu ${argsToTemplate(args, { exclude: ['triggerLabel'] })}>
+                <div class="tumaet:w-72">
+                    <div class="tumaet:flex tumaet:items-center tumaet:justify-center tumaet:py-6">Area 1</div>
+                    <div class="tumaet:border-t tumaet:border-border"></div>
+                    <div class="tumaet:flex tumaet:items-center tumaet:justify-center tumaet:py-6">Area 2</div>
+                </div>
+            </tumaet-ui-popover>
+        `,
+    }),
+};
 
 export const OpensAndTrapsFocus: Story = {
     tags: ['!dev', '!autodocs'],
