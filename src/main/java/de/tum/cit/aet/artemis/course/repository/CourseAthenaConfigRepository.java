@@ -54,7 +54,9 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
      * @return the switches, which read as switched off for a course whose settings row is missing, or empty if there is no such course
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(COALESCE(athenaConfig.gradingFeedbackEnabled, FALSE), COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE))
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(
+                COALESCE(athenaConfig.gradingFeedbackEnabled, FALSE), COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE),
+                COALESCE(athenaConfig.defaultFeedbackDetail, 0), COALESCE(athenaConfig.defaultFeedbackFormality, 0))
             FROM Course course
                 LEFT JOIN CourseAthenaConfig athenaConfig ON athenaConfig.course.id = course.id
             WHERE course.id = :courseId
@@ -122,6 +124,40 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
     int updateFormativeFeedbackEnabled(@Param("configId") long configId, @Param("enabled") boolean enabled);
 
     /**
+     * Changes the course default for Athena feedback detail, if it does not already have the requested value.
+     *
+     * @param configId the id of the configuration to update
+     * @param value    the default feedback detail (1-3), or 0 to clear it back to "no course default"
+     * @return 1 if the value changed, 0 if it already had the requested value
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE CourseAthenaConfig config
+            SET config.defaultFeedbackDetail = :value
+            WHERE config.id = :configId
+                AND config.defaultFeedbackDetail <> :value
+            """)
+    int updateDefaultFeedbackDetail(@Param("configId") long configId, @Param("value") int value);
+
+    /**
+     * Changes the course default for Athena feedback formality, if it does not already have the requested value.
+     *
+     * @param configId the id of the configuration to update
+     * @param value    the default feedback formality (1-3), or 0 to clear it back to "no course default"
+     * @return 1 if the value changed, 0 if it already had the requested value
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE CourseAthenaConfig config
+            SET config.defaultFeedbackFormality = :value
+            WHERE config.id = :configId
+                AND config.defaultFeedbackFormality <> :value
+            """)
+    int updateDefaultFeedbackFormality(@Param("configId") long configId, @Param("value") int value);
+
+    /**
      * Returns the id of a course's Athena configuration, reading the foreign key without loading either entity.
      *
      * @param courseId the id of the course to read the configuration id of
@@ -133,20 +169,4 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
             WHERE athenaConfig.course.id = :courseId
             """)
     Optional<Long> findAthenaConfigIdByCourseId(@Param("courseId") long courseId);
-
-    /**
-     * Reads back what is stored for a configuration.
-     * <p>
-     * A projection rather than the entity, so the values come from the database even when a caller has already loaded
-     * the entity: the statements above are issued as SQL and do not update an entity a persistence context may hold.
-     *
-     * @param configId the id of the configuration to read
-     * @return the stored configuration, or empty if there is no configuration with that id
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(config.gradingFeedbackEnabled, config.formativeFeedbackEnabled)
-            FROM CourseAthenaConfig config
-            WHERE config.id = :configId
-            """)
-    Optional<CourseAthenaConfigDTO> findConfigById(@Param("configId") long configId);
 }
