@@ -39,6 +39,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
@@ -67,6 +69,7 @@ import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseService;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * REST controller for managing TextExercise.
@@ -149,6 +152,8 @@ public class TextExerciseResource {
      */
     @GetMapping("courses/{courseId}/text-exercises")
     @EnforceAtLeastTutorInCourse
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "List the text exercises of a course", description = "Returns a summary of every text exercise of the course, with its id, title, dates and points. Get one exercise for all its fields.")
     public ResponseEntity<List<TextExerciseListItemDTO>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         List<TextExercise> exercises = textExerciseRepository.findByCourseIdWithCategories(courseId);
@@ -170,6 +175,8 @@ public class TextExerciseResource {
      */
     @GetMapping("text-exercises/{exerciseId}")
     @EnforceAtLeastTutorInExercise
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Get a text exercise", description = "Returns all fields of a text exercise. Exercises of exams cannot be read with a personal access token.")
     public ResponseEntity<TextExerciseResponseDTO> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         return loadTextExerciseDetails(exerciseId, withPlagiarismDetectionConfig, false);
     }
