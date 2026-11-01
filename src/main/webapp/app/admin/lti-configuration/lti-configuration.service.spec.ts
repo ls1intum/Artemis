@@ -71,15 +71,15 @@ describe('LtiConfigurationService', () => {
             .subscribe((response) => {
                 expect(response.body).toHaveLength(4);
                 expect(response.body).toEqual(dummyLtiPlatforms);
+                expect(response.headers.get('X-Total-Count')).toBe('4');
             });
 
-        const req = httpMock.expectOne('api/lti/admin/lti-platforms?page=0&size=50&sort=id&sort=desc');
+        const req = httpMock.expectOne('/api/lti/admin/lti-platforms?page=0&size=50&sort=id&sort=desc');
         expect(req.request.method).toBe('GET');
-        req.flush(dummyLtiPlatforms);
+        req.flush(dummyLtiPlatforms, { headers: { 'X-Total-Count': '4' } });
     });
 
     it('should update lti platform', () => {
-        const dummyResponse = { status: 200, statusText: 'OK' };
         const dummyConfig: LtiPlatformConfiguration = {
             id: 1,
             customName: 'Updated Platform',
@@ -90,29 +90,25 @@ describe('LtiConfigurationService', () => {
         };
 
         service.updateLtiPlatformConfiguration(dummyConfig).subscribe((response) => {
-            expect(response.status).toBe(200);
+            expect(response).toEqual(dummyConfig);
         });
 
-        const req = httpMock.expectOne(`api/lti/admin/lti-platforms`);
+        const req = httpMock.expectOne('/api/lti/admin/lti-platforms');
         expect(req.request.method).toBe('PUT');
-        req.flush(dummyResponse);
+        expect(req.request.body).toMatchObject(dummyConfig);
+        req.flush(dummyConfig);
     });
 
     it('should send a delete a lti response', () => {
         const platformId = 123;
-        const dummyResponse = { status: 200, statusText: 'Deleted' };
+        service.deleteLtiPlatform(platformId).subscribe();
 
-        service.deleteLtiPlatform(platformId).subscribe((response) => {
-            expect(response.status).toBe(200);
-        });
-
-        const req = httpMock.expectOne(`api/lti/admin/lti-platforms/${platformId}`);
+        const req = httpMock.expectOne(`/api/lti/admin/lti-platforms/${platformId}`);
         expect(req.request.method).toBe('DELETE');
-        req.flush(dummyResponse);
+        req.flush(null);
     });
 
     it('should add new lti platform', () => {
-        const dummyResponse = { status: 200, statusText: 'OK' };
         const dummyConfig: LtiPlatformConfiguration = {
             customName: 'New Platform',
             clientId: 'created-client-id',
@@ -122,17 +118,18 @@ describe('LtiConfigurationService', () => {
         };
 
         service.addLtiPlatformConfiguration(dummyConfig).subscribe((response) => {
-            expect(response.status).toBe(200);
+            expect(response).toEqual(dummyConfig);
         });
 
-        const req = httpMock.expectOne(`api/lti/admin/lti-platforms`);
+        const req = httpMock.expectOne('/api/lti/admin/lti-platforms');
         expect(req.request.method).toBe('POST');
-        req.flush(dummyResponse);
+        expect(req.request.body).toMatchObject(dummyConfig);
+        req.flush(dummyConfig);
     });
 
     it('should query with different sorting parameters', () => {
         service.query({ sort: ['name,asc', 'id,desc'] }).subscribe();
-        const req = httpMock.expectOne('api/lti/admin/lti-platforms?sort=name,asc&sort=id,desc');
+        const req = httpMock.expectOne('/api/lti/admin/lti-platforms?sort=name%2Casc&sort=id%2Cdesc');
         expect(req.request.method).toBe('GET');
         req.flush([]);
     });
@@ -146,7 +143,7 @@ describe('LtiConfigurationService', () => {
             },
         });
 
-        const req = httpMock.expectOne('api/lti/admin/lti-platforms?page=0&size=50&sort=id&sort=desc');
+        const req = httpMock.expectOne('/api/lti/admin/lti-platforms?page=0&size=50&sort=id&sort=desc');
         expect(req.request.method).toBe('GET');
         req.flush({ message: 'No data found' }, { status: 404, statusText: 'Not Found' });
     });

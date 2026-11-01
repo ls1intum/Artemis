@@ -247,6 +247,21 @@ paths:
             application/json:
               schema: {type: object}
         '200': {description: OK}
+  /api/quiz/quiz-exercises/{quizExerciseId}/end-now:
+    put:
+      tags: [quiz-exercise]
+      operationId: endQuizExercise
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDates'}
   /api/quiz/quiz-exercises/{quizExerciseId}/add-batch:
     put:
       tags: [quiz-exercise-batch]
@@ -352,6 +367,72 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+  /api/lti/admin/lti-platforms:
+    get:
+      tags: [admin-lti-configuration]
+      operationId: getAllConfiguredLtiPlatforms
+      parameters:
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema: {type: integer, default: 0, minimum: 0}
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema: {type: integer, default: 20, minimum: 1}
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
+    put:
+      tags: [admin-lti-configuration]
+      operationId: updateLtiPlatformConfiguration
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LtiPlatformConfigurationUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
+    post:
+      tags: [admin-lti-configuration]
+      operationId: addLtiPlatformConfiguration
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LtiPlatformConfigurationUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/settings:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -860,6 +941,21 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/LeaderboardSetting'}
         required: true
+      responses:
+        '200': {description: OK}
+  /api/lti/admin/lti13/dynamic-registration:
+    post:
+      tags: [admin-lti-configuration]
+      operationId: lti13DynamicRegistration
+      parameters:
+      - name: openid_configuration
+        in: query
+        required: true
+        schema: {type: string}
+      - name: registration_token
+        in: query
+        required: false
+        schema: {type: string}
       responses:
         '200': {description: OK}
   /api/hyperion/programming-exercises/{exerciseId}/generation/variants:
@@ -1432,6 +1528,40 @@ paths:
                 type: array
                 items: {type: string}
                 uniqueItems: true
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-tutor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForTutor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-instructor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/json:
     get:
       tags: [tutorial-group]
@@ -1764,6 +1894,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizExerciseForStudentResponse'}
+  /api/quiz/quiz-exercises/{quizExerciseId}/for-exam:
+    get:
+      tags: [quiz-exercise-retrieval]
+      operationId: getQuizExerciseForExam
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDetails'}
   /api/quiz/quiz-exercises/{exerciseId}/participations/{participationId}/result:
     get:
       tags: [quiz-participation]
@@ -1819,6 +1964,31 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LeaderboardWithCurrentUserEntry'}
+  /api/lti/admin/lti-platforms/{platformId}:
+    get:
+      tags: [admin-lti-configuration]
+      operationId: getLtiPlatformConfiguration
+      parameters:
+      - name: platformId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
+    delete:
+      tags: [admin-lti-configuration]
+      operationId: deleteLtiPlatformConfiguration
+      parameters:
+      - name: platformId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
   /api/hyperion/variant-jobs:
     get:
       tags: [hyperion-exercise-variant]
@@ -3579,6 +3749,10 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    CourseWithId:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     MissingEntity:
       type: object
       properties:
@@ -3884,6 +4058,7 @@ components:
         testRunParticipationsExist: {type: boolean}
         isEditable: {type: boolean}
         canBeEvaluated: {type: boolean}
+        exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupWithIdAndExam'}
     TutorialGroupSummary:
       type: object
       properties:
@@ -4780,6 +4955,18 @@ components:
         isCorrect: {type: boolean}
         invalid: {type: boolean}
       required: [id, invalid, isCorrect, text]
+    LtiPlatformConfiguration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        registrationId: {type: string, maxLength: 255, minLength: 0}
+        clientId: {type: string, maxLength: 255, minLength: 0}
+        originalUrl: {type: string, maxLength: 255, minLength: 0}
+        customName: {type: string, maxLength: 50, minLength: 0}
+        authorizationUri: {type: string, maxLength: 255, minLength: 0}
+        jwkSetUri: {type: string, maxLength: 255, minLength: 0}
+        tokenUri: {type: string, maxLength: 255, minLength: 0}
+      required: [authorizationUri, clientId, id, jwkSetUri, registrationId, tokenUri]
     QuizStatisticsOverview:
       type: object
       properties:
@@ -4823,6 +5010,11 @@ components:
           items: {$ref: '#/components/schemas/QuestionStatistics'}
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    ExamWithIdAndCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        course: {$ref: '#/components/schemas/CourseWithId'}
     QuizPointStatistic:
       type: object
       properties:
@@ -4889,6 +5081,18 @@ components:
         maxTokens: {type: integer, format: int64, exclusiveMinimum: 0}
         maxJobDuration: {type: string, format: duration}
       required: [mode]
+    LtiPlatformConfigurationUpdate:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        registrationId: {type: string, maxLength: 255, minLength: 0}
+        clientId: {type: string, maxLength: 255, minLength: 0}
+        originalUrl: {type: string, maxLength: 255, minLength: 0}
+        customName: {type: string, maxLength: 50, minLength: 0}
+        authorizationUri: {type: string, maxLength: 255, minLength: 0}
+        jwkSetUri: {type: string, maxLength: 255, minLength: 0}
+        tokenUri: {type: string, maxLength: 255, minLength: 0}
+      required: [authorizationUri, clientId, customName, jwkSetUri, tokenUri]
     QuizExerciseForStudentResponse:
       discriminator:
         propertyName: quizQuestionsType
@@ -5250,6 +5454,11 @@ components:
             (1-indexed)}
         endLine: {type: integer, format: int32, description: 'Ending line number (1-indexed,
             inclusive)'}
+    ExerciseGroupWithIdAndExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exam: {$ref: '#/components/schemas/ExamWithIdAndCourse'}
     SubmittedAnswerBeforeEvaluation:
       discriminator:
         propertyName: type

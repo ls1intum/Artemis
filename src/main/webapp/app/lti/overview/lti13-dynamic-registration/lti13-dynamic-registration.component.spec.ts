@@ -62,7 +62,10 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith('api/lti/admin/lti13/dynamic-registration', null, expect.anything());
+        expect(httpStub).toHaveBeenCalledWith(
+            `/api/lti/admin/lti13/dynamic-registration?openid_configuration=${encodeURIComponent(PLATFORM_CONFIGURATION_URL)}&registration_token=token`,
+            null,
+        );
 
         expect(comp.isRegistering()).toBe(false);
         expect(comp.registeredSuccessfully()).toBe(true);
@@ -79,7 +82,10 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith('api/lti/admin/lti13/dynamic-registration', null, expect.anything());
+        expect(httpStub).toHaveBeenCalledWith(
+            `/api/lti/admin/lti13/dynamic-registration?openid_configuration=${encodeURIComponent(PLATFORM_CONFIGURATION_URL)}&registration_token=token`,
+            null,
+        );
 
         expect(comp.isRegistering()).toBe(false);
         expect(comp.registeredSuccessfully()).toBe(false);
