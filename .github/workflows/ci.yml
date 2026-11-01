@@ -67,6 +67,7 @@ jobs:
       has_beans: ${{ steps.decide.outputs.has_beans }}
       has_liquibase: ${{ steps.decide.outputs.has_liquibase }}
       has_skills: ${{ steps.decide.outputs.has_skills }}
+      has_quiz_openapi: ${{ steps.decide.outputs.has_quiz_openapi }}
       has_tum_aet_ui: ${{ steps.decide.outputs.has_tum_aet_ui }}
       sonar_relevant: ${{ steps.decide.outputs.sonar_relevant }}
       codeql_relevant: ${{ steps.decide.outputs.codeql_relevant }}
@@ -255,6 +256,14 @@ jobs:
               - 'build.gradle'
               - 'gradle.properties'
               - 'gradle/**'
+            # ci-quiz-openapi.yml regenerates the specification from the quiz controllers and their DTOs and compares the
+            # quiz operations with the committed file, so it follows the quiz server code and the specification tooling.
+            has_quiz_openapi:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-quiz-openapi.yml'
+              - 'src/main/java/de/tum/cit/aet/artemis/quiz/**'
+              - 'config/openapi/openapi.yaml'
+              - 'gradle/openapi.gradle'
             has_skills:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-skills.yml'
@@ -370,6 +379,7 @@ jobs:
           F_BEANS: ${{ steps.area.outputs.has_beans }}
           F_LIQUIBASE: ${{ steps.area.outputs.has_liquibase }}
           F_SKILLS: ${{ steps.area.outputs.has_skills }}
+          F_QUIZ_OPENAPI: ${{ steps.area.outputs.has_quiz_openapi }}
           F_TUM_AET_UI: ${{ steps.area.outputs.has_tum_aet_ui }}
           F_SONAR: ${{ steps.relevant.outputs.sonar }}
           F_SONAR_CONFIG: ${{ steps.area.outputs.has_sonar_config }}
@@ -385,7 +395,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant sonar_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
+            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_quiz_openapi has_tum_aet_ui codeql_relevant sonar_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -408,6 +418,7 @@ jobs:
                 echo "has_liquibase=false"
               fi
               echo "has_skills=${F_SKILLS:-false}"
+              echo "has_quiz_openapi=${F_QUIZ_OPENAPI:-false}"
               echo "has_tum_aet_ui=${F_TUM_AET_UI:-false}"
               if [ "${F_CODEQL:-false}" = "true" ] || [ "${F_CODEQL_CONFIG:-false}" = "true" ]; then
                 echo "codeql_relevant=true"
@@ -891,6 +902,16 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  quiz-openapi:
+    name: Quiz OpenAPI Contract
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_quiz_openapi == 'true'
+    uses: ./.github/workflows/ci-quiz-openapi.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
   # Not folded into `quality`: that job is gated on `build_relevant`, which is false when every
   # changed file is markdown. A PR editing only skills/ would then skip the check that guards it.
   skills:
@@ -1038,6 +1059,7 @@ jobs:
       - workflows
       - version-consistency
       - bean-instantiations
+      - quiz-openapi
       - skills
       - terminology
       - dead-code
@@ -1115,6 +1137,7 @@ jobs:
       - translation
       - version-consistency
       - bean-instantiations
+      - quiz-openapi
       - skills
       - terminology
       - dead-code

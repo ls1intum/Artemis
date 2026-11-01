@@ -421,6 +421,110 @@
         return requestHasNullSchema || responseHasNullSchema
     }
 
+    // Fails when the operations under one path prefix, or the components they reference, differ between the committed
+    // specification and a freshly generated and pruned one. CI runs it for the quiz module (ci-quiz-openapi.yml):
+    //   cp config/openapi/openapi.yaml build/committed-openapi.yaml
+    //   ./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp
+    //   ./gradlew checkOpenApiContract -x webapp -PcommittedOpenApiSpec=build/committed-openapi.yaml -PopenApiContractPathPrefix=/api/quiz/
+    tasks.register('checkOpenApiContract') {
+        description = 'Compare the operations under -PopenApiContractPathPrefix, and the components they reference, between -PcommittedOpenApiSpec and config/openapi/openapi.yaml'
+        mustRunAfter 'pruneOpenApiSpec'
+
+        doLast {
+            String committedSpecificationPath = project.findProperty('committedOpenApiSpec')
+            String pathPrefix = project.findProperty('openApiContractPathPrefix')
+            if (!committedSpecificationPath || !pathPrefix) {
+                throw new GradleException('Set -PcommittedOpenApiSpec=<file> and -PopenApiContractPathPrefix=<prefix>, for example /api/quiz/.')
+            }
+            def yamlParser = new Yaml()
+            Map<String, Object> committed = yamlParser.load(file(committedSpecificationPath).text) as Map<String, Object>
+            Map<String, Object> generated = yamlParser.load(file("${rootDir}/config/openapi/openapi.yaml").text) as Map<String, Object>
+
+            List<String> differences = openApiContractDifferences(committed, generated, pathPrefix)
+            if (!differences.isEmpty()) {
+                throw new GradleException("The committed config/openapi/openapi.yaml does not match the controllers under ${pathPrefix}:\n"
+                    + differences.collect { "  - ${it}" }.join('\n')
+                    + "\nRun ./gradlew generateOpenApiDocs -x webapp and ./gradlew openApiGenerate -x webapp, then commit config/openapi/openapi.yaml and src/main/webapp/app/openapi.")
+            }
+            println "✔ The committed specification matches the controllers under ${pathPrefix}"
+        }
+    }
+
+    /**
+     * Lists the operations under the path prefix, and the components they reference directly or indirectly, that are
+     * missing from one specification or differ between the two.
+     */
+    private static List<String> openApiContractDifferences(Map<String, Object> committed, Map<String, Object> generated, String pathPrefix) {
+        Map<String, Object> committedPaths = ((committed.paths ?: [:]) as Map<String, Object>).findAll { String path, Object item -> path.startsWith(pathPrefix) }
+        Map<String, Object> generatedPaths = ((generated.paths ?: [:]) as Map<String, Object>).findAll { String path, Object item -> path.startsWith(pathPrefix) }
+        List<String> differences = []
+
+        (committedPaths.keySet() + generatedPaths.keySet()).toSorted().each { String path ->
+            Map<String, Object> committedItem = (committedPaths[path] ?: [:]) as Map<String, Object>
+            Map<String, Object> generatedItem = (generatedPaths[path] ?: [:]) as Map<String, Object>
+            (committedItem.keySet() + generatedItem.keySet()).toSorted().each { String key ->
+                String operation = "${key.toUpperCase(Locale.ROOT)} ${path}"
+                if (!committedItem.containsKey(key)) {
+                    differences << "${operation} is missing from the committed specification".toString()
+                }
+                else if (!generatedItem.containsKey(key)) {
+                    differences << "${operation} is in the committed specification but no longer generated".toString()
+                }
+                else if (committedItem[key] != generatedItem[key]) {
+                    differences << "${operation} differs".toString()
+                }
+            }
+        }
+
+        Set<String> references = referencedComponents(committedPaths, committed) + referencedComponents(generatedPaths, generated)
+        references.toSorted().each { String reference ->
+            Object committedComponent = resolveComponent(committed, reference)
+            Object generatedComponent = resolveComponent(generated, reference)
+            if (committedComponent == null) {
+                differences << "${reference} is missing from the committed specification".toString()
+            }
+            else if (generatedComponent == null) {
+                differences << "${reference} is in the committed specification but no longer generated".toString()
+            }
+            else if (committedComponent != generatedComponent) {
+                differences << "${reference} differs".toString()
+            }
+        }
+        return differences
+    }
+
+    /**
+     * Returns every component reference ("#/components/<type>/<name>") reachable from the node, following references into
+     * the components of the specification.
+     */
+    private static Set<String> referencedComponents(Object node, Map<String, Object> specification) {
+        Set<String> references = new TreeSet<>()
+        Deque<Object> pending = new ArrayDeque<>()
+        pending.push(node)
+        while (!pending.isEmpty()) {
+            Object current = pending.pop()
+            if (current instanceof Map) {
+                Object reference = (current as Map)['$ref']
+                if (reference instanceof String && reference.startsWith('#/components/') && references.add(reference)) {
+                    Object component = resolveComponent(specification, reference)
+                    if (component != null) {
+                        pending.push(component)
+                    }
+                }
+                (current as Map).values().findAll { it != null }.each { pending.push(it) }
+            }
+            else if (current instanceof List) {
+                (current as List).findAll { it != null }.each { pending.push(it) }
+            }
+        }
+        return references
+    }
+
+    private static Object resolveComponent(Map<String, Object> specification, String reference) {
+        String[] parts = reference.substring('#/components/'.length()).split('/', 2)
+        return parts.length == 2 ? ((specification.components as Map)?.get(parts[0]) as Map)?.get(parts[1]) : null
+    }
+
 
 
     tasks.named('openApiGenerate') {
