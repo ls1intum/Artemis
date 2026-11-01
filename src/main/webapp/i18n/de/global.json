@@ -310,6 +310,7 @@
                     "metrics": "Metriken",
                     "statistics": "Statistiken",
                     "featureUsage": "Feature-Nutzung",
+                    "errorAnalysis": "Fehleranalyse",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agenten",
                     "buildQueue": "Build Übersicht",

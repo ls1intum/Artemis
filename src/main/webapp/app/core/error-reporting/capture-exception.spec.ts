@@ -90,10 +90,10 @@ describe('ClientErrorReporter', () => {
             expect(reportOf(0).stack).toContain('Caused by: {"status":503}');
         });
 
-        it('should use the severity of the context', () => {
-            reporter.report(new Error('only a hint'), { severity: 'INFO' });
+        it.each(['INFO', 'WARN', 'ERROR', 'CRITICAL'] as const)('should use the severity %s of the context', (severity) => {
+            reporter.report(new Error('with a severity'), { severity });
 
-            expect(reportOf(0).severity).toBe('INFO');
+            expect(reportOf(0).severity).toBe(severity);
         });
 
         it('should send the extra information and the tags as text', () => {

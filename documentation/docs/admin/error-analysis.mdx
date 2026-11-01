@@ -1,0 +1,97 @@
+---
+id: error-analysis
+title: Error Analysis
+sidebar_label: Error Analysis
+---
+
+The error analysis shows which errors happen on your Artemis installation, on the server and in the browsers of your users, without a separate monitoring service. Open it under **Administration > Error Analysis**.
+
+## What the page shows
+
+Errors that are alike are one row. A row has the severity, the location (**Server** or **Client**), the message, how often the error happened, when it happened first, and when it happened last. Numbers, identifiers, UUIDs and email addresses in a message are replaced by placeholders, so `Could not find exercise 17` and `Could not find exercise 42` are one row with the message `Could not find exercise <n>`.
+
+The filters above the table select what to look at, the location (all by default) and the least serious errors to show. The severity is a minimum: **Error**, the default, shows errors and critical errors, **Warning** adds warnings, and **Critical** shows only the errors that affect core functionality. What to look at is **Since current release** by default, or the last day, the last week or the last month.
+
+## Since the current release
+
+**Since current release** shows only the errors of the release that Artemis is running now, however long ago it was deployed. After you deploy a new release, the errors of 10.3 or 10.4 are no longer part of it, so a new release starts with an empty page, and a regression shows up as a new row instead of hiding between old ones. A restart of the same release is still the same release: the counts continue, and the first time of an error stays the first time it happened in this release.
+
+Artemis does not have to remember when you deployed. Every group of errors belongs to a release, and the page shows the groups of the release that is running. An error of the server belongs to the release of the server that logged it. An error of a client belongs to the release that the client reports, if that is the release that the server runs. A client that has been open since the last deployment reports the earlier release, so it counts for the last day, week and month but not for the current release. The other time spans add the releases up, so an error that happens in two releases is one row. The counts are kept for 30 days, so for a release that has been running longer than that, the page shows its last 30 days.
+
+## Sorting and pages
+
+Every column can be sorted by a click on its heading. A page shows 25 rows by default, and 10, 50 or 100 can be chosen. The server sorts all rows first and cuts the pages out of the sorted rows, so a page is always a part of the order that you chose, and changing the sort order, a filter or the size of a page starts again at the first page. Only one page is computed and sent to the browser at a time, which keeps the page fast on an installation with many different errors. The summary above the table counts the groups and the errors on all pages.
+
+## Where the errors come from
+
+The server counts every warning and error that it writes to its log, with the name of the logger as part of the message, and the type of the exception if there is one. The errors of the clients are the reports that the browsers send, see [Client Error Reports](/admin/client-error-reports). A hint, which a client reports with the severity `INFO`, is not an error and is not counted.
+
+## How the data is collected and stored
+
+Nothing is stored in the database, so the analysis cannot fill it. The counts live in the distributed data of the cluster, the same store that Artemis uses for its other shared state, so every core node answers with the errors of all core nodes. This section describes exactly what is written, when, and how it is removed again.
+
+### When data is written
+
+An error is **not** written to the distributed data when it happens. The log call of the server, and the request that carries a report of a client, only add to a buffer in the memory of that node. They never wait for the distributed data, so a slow or unreachable store cannot slow down logging or the requests of your users.
+
+The node hands the buffer to the distributed data **every ten seconds**, and once more when it shuts down gracefully, so a planned restart or a rolling deployment does not lose the last seconds. The interval can be changed:
+
+```yaml
+artemis:
+  error-analysis:
+    flush-interval: 10s
+```
+
+What this means for you:
+
+- A node writes only the groups that had new errors since the last run. A flood of one repeated error costs the same few writes as a single error. The load on the distributed data follows the number of different errors, not the number of errors.
+- An error that happened on another node can take up to the flush interval to appear on the page. The node that answers a request adds what it has collected and not written yet, so it shows its own errors immediately.
+- If a node is stopped abruptly, for example with `kill -9` or because it ran out of memory, the errors of the last interval on that node are lost.
+- If the distributed data cannot be reached, the part that could not be written stays in the buffer and is written by the next run, without being counted twice. Warnings and errors that Artemis logs while it starts, before the distributed data is ready, are handled the same way. The buffer is bounded, so a node cannot run out of memory while the store is down. Logging is not affected. The page itself needs the distributed data and shows an error message while it is unreachable.
+- Only core nodes write. The errors of a build agent are not counted.
+
+The page is not cached anywhere. Each time you open it or change a filter, the server reads the distributed data again, and the response tells the browser not to keep it.
+
+### What is stored
+
+Individual errors are not stored, only counters. There are two distributed maps:
+
+| Map | One entry per | Contains |
+|---|---|---|
+| `error-analysis-groups` | group of errors | the location, the severity, the release, the message pattern, and when the group was seen first and last |
+| `error-analysis-counts` | group and hour | how many errors of the group happened in that hour |
+
+A group is the errors that are alike: the same location, severity and release, and the same message once the numbers, identifiers, UUIDs and email addresses in it are replaced by placeholders. Ten thousand errors with the message `Could not find exercise 17` and its variants are one group, with one counter for each hour in which it happened. The message is cut after 300 characters. Stack traces, urls, browsers and logins of users are not stored.
+
+The messages of the clients are cleaned of personal data before they reach the analysis, see [Client Error Reports](/admin/client-error-reports). The messages of the server are the text of the log statement, with numbers and email addresses replaced, and nothing else removed. A log statement that writes a name or a login into its message puts it into the pattern, exactly as it appears in the log. The page is only open to administrators.
+
+### How much space it needs
+
+The size depends on how many different errors you have, not on how many errors happen:
+
+- The cluster keeps at most **1000 groups**.
+- Every group has at most one counter for each of the last 30 days times 24 hours, which is 720.
+- A counter, with its key, is in the order of 450 bytes. A group that had errors in every hour of 30 days is therefore about 300 KB. Typical groups happen in few of those hours.
+
+An installation with a few dozen kinds of errors needs well below a megabyte. The upper limit of 1000 groups that each occurred in every hour for 30 days is in the order of 300 MB, and no real installation comes near it. These are estimates from the size of the entries, not measurements.
+
+### How it is cleaned up
+
+Nothing needs to be cleaned up by hand. Two mechanisms remove data:
+
+1. **Expiry.** Every entry expires 31 days after it was last written, and every write starts the 31 days again. A group that still happens stays, and a group that stopped happening disappears on its own. This holds for each counter too: the counter of an hour disappears 31 days after that hour, even while its group goes on, so a group never keeps more than the counters of the last 30 days.
+2. **The limit of groups.** When the cluster already keeps 1000 groups and a new kind of error comes in, the group that was seen the longest time ago is removed to make room.
+
+There is one thing to know about the second mechanism. The counters of a group that was removed to make room are not removed with it: they stay until their own expiry, which is at most 31 days after they were written. On an installation whose errors contain different text every time, for example a message with a random value in it, new groups keep arriving, old ones keep being removed, and the leftover counters add up until they expire. If you see the entries of `error-analysis-counts` grow far beyond what the number of different errors explains, look in your log for the message that differs every time, and fix the log statement to use a placeholder. This is a known weakness of the first version of the analysis.
+
+To start the analysis again from nothing, delete the data. It is only used by this page, so deleting it loses the counts and nothing else.
+
+### How long the counts survive
+
+How long the data survives a restart depends on the distributed data provider.
+
+- With **Hazelcast**, the default, the data lives in the memory of the nodes. It survives the restart of a single node as long as another node keeps running, and it is lost when the whole cluster stops. There is nothing to clean up, because stopping the cluster removes it.
+- With **Redis** the data survives a restart of the Artemis cluster. The two maps are kept under the keys `artemis:v1:{error-analysis-groups}` and `artemis:v1:{error-analysis-counts}`, which you can find with `redis-cli --scan --pattern '*error-analysis*'`, measure with `redis-cli MEMORY USAGE '<key>'`, and delete. The pattern also finds helper keys that Redis keeps for the expiry of the entries, whose names start with `redisson`, and they belong together with the two maps. Whether the data survives a restart of Redis itself depends on how you configured Redis to persist its data.
+- With the **Local** provider of a single node, the data is lost when the node restarts.
+
+The counts for a release are kept for 30 days, so for a release that has been running longer than that, **Since current release** shows its last 30 days. For the full history, and for the errors of build agents, use the log of your deployment.

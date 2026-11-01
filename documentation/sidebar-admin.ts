@@ -46,6 +46,7 @@ const sidebars: SidebarsConfig = {
         'telemetry',
         'feature-usage',
         'client-error-reports',
+        'error-analysis',
         'cleanup-service',
         'extensions-setup',
         'tum-live-course-connection',

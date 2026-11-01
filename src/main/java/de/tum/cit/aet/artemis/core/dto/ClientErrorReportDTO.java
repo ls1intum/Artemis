@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.ClientErrorSeverity;
+import de.tum.cit.aet.artemis.core.domain.ErrorSeverity;
 
 /**
  * An error that the client reports to the server, which writes it to the log.
@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.ClientErrorSeverity;
  * @param tags          short labels with few distinct values to group related errors, such as the affected feature
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ClientErrorReportDTO(@NotNull ClientErrorSeverity severity, @NotBlank @Size(max = ClientErrorReportDTO.MAX_MESSAGE_LENGTH) String message,
+public record ClientErrorReportDTO(@NotNull ErrorSeverity severity, @NotBlank @Size(max = ClientErrorReportDTO.MAX_MESSAGE_LENGTH) String message,
         @Size(max = ClientErrorReportDTO.MAX_STACK_LENGTH) String stack, @Size(max = ClientErrorReportDTO.MAX_URL_LENGTH) String url,
         @Size(max = ClientErrorReportDTO.MAX_VERSION_LENGTH) String clientVersion,
         @Size(max = ClientErrorReportDTO.MAX_ENTRIES) Map<@Size(max = ClientErrorReportDTO.MAX_KEY_LENGTH) String, @Size(max = ClientErrorReportDTO.MAX_VALUE_LENGTH) String> extra,

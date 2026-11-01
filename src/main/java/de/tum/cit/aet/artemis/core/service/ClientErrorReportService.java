@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.dto.ClientErrorReportDTO;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisService;
 
 /**
  * Writes the errors that clients report to the log.
@@ -39,7 +40,9 @@ public class ClientErrorReportService {
 
     private final RateLimitService rateLimitService;
 
-    private static final String ENTRY_FORMAT = "Client error report [version={}, url={}, authenticated={}, userAgent={}, tags={}, extra={}]: {}";
+    private final ErrorAnalysisService errorAnalysisService;
+
+    private static final String ENTRY_FORMAT = "Client error report [severity={}, version={}, url={}, authenticated={}, userAgent={}, tags={}, extra={}]: {}";
 
     private static final String REMOVED = "[removed]";
 
@@ -61,8 +64,9 @@ public class ClientErrorReportService {
     /** The repositories of an exercise that belong to nobody, as in {@code abc123-solution}. */
     private static final List<String> EXERCISE_REPOSITORY_SUFFIXES = List.of("exercise", "solution", "tests");
 
-    public ClientErrorReportService(RateLimitService rateLimitService) {
+    public ClientErrorReportService(RateLimitService rateLimitService, ErrorAnalysisService errorAnalysisService) {
         this.rateLimitService = rateLimitService;
+        this.errorAnalysisService = errorAnalysisService;
     }
 
     /**
@@ -85,7 +89,7 @@ public class ClientErrorReportService {
     }
 
     /**
-     * Writes a reported error to the log, with the log level of its severity.
+     * Writes a reported error to the log, with the log level of its severity, and counts it in the error analysis.
      *
      * @param report        the error that the client reported
      * @param userAgent     the {@code User-Agent} header of the request, may be {@code null}
@@ -96,8 +100,9 @@ public class ClientErrorReportService {
         switch (report.severity()) {
             case INFO -> log.info(ENTRY_FORMAT, entry);
             case WARN -> log.warn(ENTRY_FORMAT, entry);
-            case ERROR -> log.error(ENTRY_FORMAT, entry);
+            case ERROR, CRITICAL -> log.error(ENTRY_FORMAT, entry);
         }
+        errorAnalysisService.recordClientError(report.severity(), report.clientVersion(), singleLine(report.message(), ClientErrorReportDTO.MAX_MESSAGE_LENGTH));
     }
 
     /**
@@ -113,7 +118,7 @@ public class ClientErrorReportService {
     }
 
     private static Object[] entryArguments(ClientErrorReportDTO report, String userAgent, boolean authenticated) {
-        return new Object[] { singleLine(report.clientVersion(), ClientErrorReportDTO.MAX_VERSION_LENGTH),
+        return new Object[] { report.severity(), singleLine(report.clientVersion(), ClientErrorReportDTO.MAX_VERSION_LENGTH),
                 singleLine(withoutQueryAndFragment(report.url()), ClientErrorReportDTO.MAX_URL_LENGTH), authenticated, singleLine(userAgent, MAX_USER_AGENT_LENGTH),
                 render(report.tags()), render(report.extra()), messageWithStack(report) };
     }
