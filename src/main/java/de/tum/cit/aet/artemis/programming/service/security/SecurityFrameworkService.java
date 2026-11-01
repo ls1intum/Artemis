@@ -144,9 +144,6 @@ public class SecurityFrameworkService {
 
     private final DistributedDataProvider distributedDataProvider;
 
-    @Nullable
-    private volatile DistributedMap<String, String> pendingProcessing;
-
     public SecurityFrameworkService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, TempFileUtilService tempFileUtilService,
             ProgrammingExerciseBuildConfigRepository buildConfigRepository, ResourceLoaderService resourceLoaderService, Optional<LocalVCServletService> localVCServletService,
             SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
@@ -607,15 +604,11 @@ public class SecurityFrameworkService {
     }
 
     /**
-     * The map is requested on first use rather than in the constructor, so creating the service never contacts the distributed data provider.
+     * The map is requested on each use rather than in the constructor, so creating the service never contacts the distributed data provider. Every provider
+     * returns a cheap view of the named map, so there is nothing worth keeping in a field.
      */
     private DistributedMap<String, String> pendingProcessing() {
-        DistributedMap<String, String> map = pendingProcessing;
-        if (map == null) {
-            map = distributedDataProvider.getExpiringMap(PENDING_PROCESSING_MAP, PENDING_PROCESSING_TIME_TO_LIVE);
-            pendingProcessing = map;
-        }
-        return map;
+        return distributedDataProvider.getExpiringMap(PENDING_PROCESSING_MAP, PENDING_PROCESSING_TIME_TO_LIVE);
     }
 
     private SecurityFrameworkConfigDTO readConfig(Repository repository) {
