@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { SecurityFrameworkChoice, withSecurityFrameworkChoice } from 'app/programming/shared/entities/security-framework-config.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -64,10 +65,17 @@ export class ProgrammingExerciseSharingService {
      * @param programmingExercise which should be setup
      * @param courseId id of the course in which the exercise should be imported
      * @param sharingInfo sharing related data needed for the import
+     * @param securityFramework the Security Framework setting to apply before the first builds; omit to keep the imported one
      */
-    setUpFromSharingImport(programmingExercise: ProgrammingExercise, courseId: number, sharingInfo: SharingInfo): Observable<EntityResponseType> {
+    setUpFromSharingImport(
+        programmingExercise: ProgrammingExercise,
+        courseId: number,
+        sharingInfo: SharingInfo,
+        securityFramework?: SecurityFrameworkChoice,
+    ): Observable<EntityResponseType> {
         let exerciseCopy = this.convertDataFromClient(programmingExercise);
         exerciseCopy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(exerciseCopy);
+        exerciseCopy = withSecurityFrameworkChoice(exerciseCopy, securityFramework);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrlSetupImport, { exercise: exerciseCopy, courseId, sharingInfo }, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));

@@ -297,6 +297,10 @@
                         "name": "Import and export programming exercises",
                         "description": "Importing exercises, exporting them and downloading repositories."
                     },
+                    "PROGRAMMING_SECURITY_FRAMEWORK": {
+                        "name": "Security framework",
+                        "description": "Activating and versioning the security framework policy of a programming exercise."
+                    },
                     "QUIZ_LIVE": {
                         "name": "Live quiz",
                         "description": "Taking part in a synchronized, batched or individual quiz."

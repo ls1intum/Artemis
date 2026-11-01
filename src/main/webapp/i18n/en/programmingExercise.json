@@ -275,6 +275,89 @@
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
                 "alert": "A valid configuration for the Online IDE must be selected."
             },
+            "security": {
+                "title": "Security",
+                "description": "Ares 2 sandboxes the student code while the tests run. Java exercises start with it activated; deactivating it removes the security policy from the tests repository.",
+                "activateLabel": "Activate Security Framework",
+                "subtitle": "Programming Exercise Security Framework",
+                "frameworkVersion": "Framework version",
+                "frameworkVersionHelp": "The Ares version pinned in the build file of the tests repository. Pin an older version only if the exercise must reproduce an older sandbox behavior.",
+                "status": {
+                    "inactive": "Inactive",
+                    "generating": "Generating",
+                    "active": "Active",
+                    "deleting": "Deleting",
+                    "error": "Error",
+                    "misconfigured": "Misconfigured",
+                    "unsupported": "Not supported",
+                    "unknown": "Known after import"
+                },
+                "desc": {
+                    "inactive": "All test classes run without the sandbox.",
+                    "generating": "Committing the security policy to the tests repository.",
+                    "activeEdit": "The tests enforce the sandbox.",
+                    "activeCreate": "The template's security policy is part of the tests repository the exercise is created with.",
+                    "deleting": "Removing the Security Framework from this exercise.",
+                    "error": "The last Security Framework operation failed. Retry it to sync the security policy.",
+                    "missingTestClasses": "These test classes are missing in the policy and are treated like student code: {{ classes }}",
+                    "testClassListNotFound": "The list of test classes in the policy file {{ path }} could not be checked.",
+                    "notRepairable": "Artemis cannot repair an invalid, too large or unreadable policy file automatically. Fix the file in the tests repository or deactivate the Security Framework.",
+                    "unsupported": "Artemis cannot manage the sandbox of this test setup automatically:",
+                    "unknown": "Whether the imported tests use the sandbox is known only after the import. Keep the imported setting, or activate or deactivate the sandbox."
+                },
+                "misconfigured": {
+                    "MISSING": "Misconfigured: the policy file {{ path }} is missing, so the tests of {{ classes }} fail.",
+                    "INVALID_PATH": "Misconfigured: the path of the policy file {{ path }} is invalid, so the tests of {{ classes }} fail.",
+                    "TOO_LARGE": "Misconfigured: the policy file {{ path }} is too large, so the tests of {{ classes }} fail.",
+                    "UNPARSEABLE": "Misconfigured: the policy file {{ path }} cannot be read, so the tests of {{ classes }} fail."
+                },
+                "unsupportedReason": {
+                    "UNEVALUABLE_ARGUMENTS": "{{ location }}: A @Policy annotation uses an expression instead of a literal value.",
+                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: A @Policy annotation is placed on a method, a field or a nested type instead of the test class.",
+                    "POLICY_ON_ANNOTATION_TYPE": "{{ location }}: A @Policy annotation is placed on an annotation type.",
+                    "MULTIPLE_TOP_LEVEL_TYPES": "{{ location }}: The file declares more than one top-level type that is a test class or carries a @Policy annotation.",
+                    "TESTS_IN_NESTED_TYPE": "{{ location }}: Tests or Ares annotations are inside a nested type.",
+                    "TEST_CLASS_WITHOUT_POLICY": "{{ location }}: A test class uses the Ares sandbox without its own @Policy annotation.",
+                    "TEST_CLASS_WITHOUT_ARES": "{{ location }}: A test class does not register the Ares sandbox through @Public, @Hidden, @PublicTest or @HiddenTest.",
+                    "ARES_1": "{{ location }}: The tests use Ares 1, whose own sandbox keeps running.",
+                    "NO_ARES_2": "{{ location }}: The tests do not use Ares 2.",
+                    "NO_ARES_VERSION_PINNED": "{{ location }}: The build file does not pin an Ares version."
+                },
+                "sync": {
+                    "inactive": "Activating restores the previous policy or generates a default one.",
+                    "generating": "Committing policy to the exercise-tests repository…",
+                    "active": "Policy committed to the tests repository.",
+                    "deleting": "Removing the security policy from the tests repository…",
+                    "error": "Sync failed · retry the operation.",
+                    "misconfigured": "Ares fails the affected tests until the policy is repaired or deactivated.",
+                    "staged": "Applied to the tests repository before the first build when the exercise is saved.",
+                    "unsupported": "Artemis leaves the sandbox of the tests repository as it is."
+                },
+                "importAction": {
+                    "keep": "Keep as imported",
+                    "activate": "Activate",
+                    "deactivate": "Deactivate",
+                    "repairHint": "Activating repairs missing policy files."
+                },
+                "repair": "Repair",
+                "deactivate": "Deactivate",
+                "deactivateConfirmation": {
+                    "header": "Deactivate the Security Framework?",
+                    "message": "Deactivating creates a commit in the tests repository that deletes the security policy, and the template and solution builds run again. Student code then runs without the sandbox.",
+                    "confirm": "Deactivate"
+                },
+                "stagedDeactivationHint": "Once the exercise is saved, student code runs without the sandbox.",
+                "templateVersionUnsupported": "The template uses {{ version }}, which is no longer supported.",
+                "notApplied": {
+                    "status": "The exercise was saved, but its Security Framework setting was not applied. Its status is {{ status }}. {{ details }}",
+                    "version": "The exercise was saved, but the Security Framework pins Ares {{ actual }} instead of the chosen {{ expected }}.",
+                    "verificationFailed": "Exercise saved; whether the security setting was applied could not be verified."
+                },
+                "retry": "Retry",
+                "loadError": "Couldn't load the security status.",
+                "latestSuffix": "(latest)",
+                "noLongerSupportedSuffix": "(no longer supported)"
+            },
             "onlineIdeExperienceLevel": {
                 "title": "Starting experience level in the Online IDE",
                 "notSet": "Not set (Artemis adds no configuration)",

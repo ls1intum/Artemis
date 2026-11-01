@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
@@ -51,12 +53,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
+import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
@@ -97,11 +101,13 @@ public class ProgrammingExerciseCreationResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final SecurityFrameworkService securityFrameworkService;
+
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             ExerciseVersionService exerciseVersionService, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, SecurityFrameworkService securityFrameworkService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
@@ -112,6 +118,7 @@ public class ProgrammingExerciseCreationResource {
         this.userRepository = userRepository;
         this.exerciseVersionService = exerciseVersionService;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.securityFrameworkService = securityFrameworkService;
     }
 
     /**
@@ -155,6 +162,7 @@ public class ProgrammingExerciseCreationResource {
         programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, buildConfig, course);
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
+        SecurityFrameworkChoiceDTO securityFrameworkChoice = validateSecurityFrameworkChoice(createDTO.securityFramework(), programmingExercise, course, emptyRepositories);
 
         // The request DTO does not bind the competency links itself: they need managed competencies, which only this
         // service resolves. The creation pipeline then reads them off the exercise, exactly as the entity request body
@@ -163,7 +171,8 @@ public class ProgrammingExerciseCreationResource {
 
         try {
             // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, buildConfig, emptyRepositories);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, buildConfig, emptyRepositories,
+                    false, securityFrameworkChoice);
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
@@ -180,6 +189,29 @@ public class ProgrammingExerciseCreationResource {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
         }
+    }
+
+    /**
+     * Validates the Security Framework choice before anything is persisted. A choice that changes the template's sandbox needs the instructor role, like the
+     * endpoints that change it later, and is rejected for repositories that are emptied for AI generation right afterwards.
+     *
+     * @return the choice to apply; null if there is none or it matches the template
+     */
+    private @Nullable SecurityFrameworkChoiceDTO validateSecurityFrameworkChoice(@Nullable SecurityFrameworkChoiceDTO choice, ProgrammingExercise programmingExercise,
+            Course course, boolean emptyRepositories) {
+        if (choice == null) {
+            return null;
+        }
+        securityFrameworkService.validateChoice(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), choice);
+        if (!securityFrameworkService.deviatesFromTemplate(programmingExercise.getProjectType(), choice)) {
+            return null;
+        }
+        if (emptyRepositories) {
+            throw new BadRequestAlertException("The Security Framework cannot be changed for an exercise whose repositories are emptied for generation.", ENTITY_NAME,
+                    "securityFrameworkChoiceWithEmptyRepositories");
+        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        return choice;
     }
 
     /**

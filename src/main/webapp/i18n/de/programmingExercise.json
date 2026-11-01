@@ -275,6 +275,89 @@
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
                 "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
             },
+            "security": {
+                "title": "Sicherheit",
+                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren wird die Sicherheitsrichtlinie aus dem Test-Repository entfernt.",
+                "activateLabel": "Security Framework aktivieren",
+                "subtitle": "Sicherheitsframework für Programmieraufgaben",
+                "frameworkVersion": "Framework-Version",
+                "frameworkVersionHelp": "Die Ares-Version, die in der Build-Datei des Test-Repositorys festgelegt ist. Wähle eine ältere Version nur, wenn die Aufgabe ein älteres Sandbox-Verhalten reproduzieren muss.",
+                "status": {
+                    "inactive": "Inaktiv",
+                    "generating": "Wird erstellt",
+                    "active": "Aktiv",
+                    "deleting": "Wird entfernt",
+                    "error": "Fehler",
+                    "misconfigured": "Fehlkonfiguriert",
+                    "unsupported": "Nicht unterstützt",
+                    "unknown": "Nach dem Import bekannt"
+                },
+                "desc": {
+                    "inactive": "Alle Testklassen laufen ohne Sandbox.",
+                    "generating": "Die Sicherheitsrichtlinie wird in das Test-Repository committet.",
+                    "activeEdit": "Die Tests setzen die Sandbox durch.",
+                    "activeCreate": "Die Sicherheitsrichtlinie der Vorlage ist Teil des Test-Repositorys, mit dem die Aufgabe erstellt wird.",
+                    "deleting": "Das Security Framework wird aus dieser Aufgabe entfernt.",
+                    "error": "Der letzte Vorgang des Security Frameworks ist fehlgeschlagen. Wiederhole ihn, um die Sicherheitsrichtlinie zu synchronisieren.",
+                    "missingTestClasses": "Diese Testklassen fehlen in der Richtlinie und werden wie Code der Studierenden behandelt: {{ classes }}",
+                    "testClassListNotFound": "Die Liste der Testklassen in der Richtliniendatei {{ path }} konnte nicht geprüft werden.",
+                    "notRepairable": "Artemis kann eine ungültige, zu große oder unlesbare Richtliniendatei nicht automatisch reparieren. Korrigiere die Datei im Test-Repository oder deaktiviere das Security Framework.",
+                    "unsupported": "Artemis kann die Sandbox dieses Test-Aufbaus nicht automatisch verwalten:",
+                    "unknown": "Ob die importierten Tests die Sandbox verwenden, ist erst nach dem Import bekannt. Behalte die importierte Einstellung bei oder aktiviere bzw. deaktiviere die Sandbox."
+                },
+                "misconfigured": {
+                    "MISSING": "Fehlkonfiguriert: Die Richtliniendatei {{ path }} fehlt, daher schlagen die Tests von {{ classes }} fehl.",
+                    "INVALID_PATH": "Fehlkonfiguriert: Der Pfad der Richtliniendatei {{ path }} ist ungültig, daher schlagen die Tests von {{ classes }} fehl.",
+                    "TOO_LARGE": "Fehlkonfiguriert: Die Richtliniendatei {{ path }} ist zu groß, daher schlagen die Tests von {{ classes }} fehl.",
+                    "UNPARSEABLE": "Fehlkonfiguriert: Die Richtliniendatei {{ path }} kann nicht gelesen werden, daher schlagen die Tests von {{ classes }} fehl."
+                },
+                "unsupportedReason": {
+                    "UNEVALUABLE_ARGUMENTS": "{{ location }}: Eine @Policy-Annotation verwendet einen Ausdruck statt eines literalen Werts.",
+                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einer Methode, einem Feld oder einem verschachtelten Typ statt an der Testklasse.",
+                    "POLICY_ON_ANNOTATION_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einem Annotationstyp.",
+                    "MULTIPLE_TOP_LEVEL_TYPES": "{{ location }}: Die Datei deklariert mehr als einen Top-Level-Typ, der eine Testklasse ist oder eine @Policy-Annotation trägt.",
+                    "TESTS_IN_NESTED_TYPE": "{{ location }}: Tests oder Ares-Annotationen befinden sich in einem verschachtelten Typ.",
+                    "TEST_CLASS_WITHOUT_POLICY": "{{ location }}: Eine Testklasse nutzt die Ares-Sandbox ohne eigene @Policy-Annotation.",
+                    "TEST_CLASS_WITHOUT_ARES": "{{ location }}: Eine Testklasse registriert die Ares-Sandbox nicht über @Public, @Hidden, @PublicTest oder @HiddenTest.",
+                    "ARES_1": "{{ location }}: Die Tests verwenden Ares 1, dessen eigene Sandbox weiterläuft.",
+                    "NO_ARES_2": "{{ location }}: Die Tests verwenden nicht Ares 2.",
+                    "NO_ARES_VERSION_PINNED": "{{ location }}: Die Build-Datei legt keine Ares-Version fest."
+                },
+                "sync": {
+                    "inactive": "Beim Aktivieren wird die vorherige Richtlinie wiederhergestellt oder eine Standardrichtlinie erzeugt.",
+                    "generating": "Richtlinie wird in das exercise-tests-Repository committet …",
+                    "active": "Richtlinie ist im Test-Repository committet.",
+                    "deleting": "Die Sicherheitsrichtlinie wird aus dem Test-Repository entfernt …",
+                    "error": "Synchronisierung fehlgeschlagen · versuche es erneut.",
+                    "misconfigured": "Ares lässt die betroffenen Tests fehlschlagen, bis die Richtlinie repariert oder deaktiviert wird.",
+                    "staged": "Wird beim Speichern der Aufgabe vor dem ersten Build auf das Test-Repository angewendet.",
+                    "unsupported": "Artemis lässt die Sandbox des Test-Repositorys unverändert."
+                },
+                "importAction": {
+                    "keep": "Unverändert",
+                    "activate": "Aktivieren",
+                    "deactivate": "Deaktivieren",
+                    "repairHint": "Beim Aktivieren werden fehlende Richtliniendateien repariert."
+                },
+                "repair": "Reparieren",
+                "deactivate": "Deaktivieren",
+                "deactivateConfirmation": {
+                    "header": "Security Framework deaktivieren?",
+                    "message": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der die Sicherheitsrichtlinie löscht, und die Builds der Vorlage und der Lösung laufen erneut. Der Code der Studierenden läuft danach ohne Sandbox.",
+                    "confirm": "Deaktivieren"
+                },
+                "stagedDeactivationHint": "Sobald die Aufgabe gespeichert ist, läuft der Code der Studierenden ohne Sandbox.",
+                "templateVersionUnsupported": "Die Vorlage verwendet Version {{ version }}, die nicht mehr unterstützt wird.",
+                "notApplied": {
+                    "status": "Die Aufgabe wurde gespeichert, aber ihre Einstellung des Security Frameworks wurde nicht angewendet. Ihr Status ist {{ status }}. {{ details }}",
+                    "version": "Die Aufgabe wurde gespeichert, aber das Security Framework legt Ares {{ actual }} statt der gewählten Version {{ expected }} fest.",
+                    "verificationFailed": "Aufgabe gespeichert; ob die Sicherheitseinstellung angewendet wurde, konnte nicht überprüft werden."
+                },
+                "retry": "Erneut versuchen",
+                "loadError": "Sicherheitsstatus konnte nicht geladen werden.",
+                "latestSuffix": "(neueste)",
+                "noLongerSupportedSuffix": "(nicht mehr unterstützt)"
+            },
             "onlineIdeExperienceLevel": {
                 "title": "Anfängliche Erfahrungsstufe in der Online IDE",
                 "notSet": "Nicht festgelegt (Artemis fügt keine Konfiguration hinzu)",

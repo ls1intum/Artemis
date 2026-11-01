@@ -20,6 +20,7 @@ import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators'
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -52,6 +53,16 @@ import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
+import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
+import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
+import {
+    SecurityActivationStatus,
+    SecurityCardMode,
+    SecurityFrameworkAction,
+    SecurityFrameworkChoice,
+    SecurityFrameworkConfig,
+    securityFrameworkProblemMessages,
+} from 'app/programming/shared/entities/security-framework-config.model';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
@@ -109,6 +120,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseModeComponent,
         ProgrammingExerciseLanguageComponent,
+        ProgrammingExerciseSecurityComponent,
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
         ProgrammingExerciseGradingComponent,
@@ -125,11 +137,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly courseService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
+    private readonly securityFrameworkService = inject(SecurityFrameworkService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly fileService = inject(FileService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -159,6 +173,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
+    /** Security Framework choice made while creating or importing, owned here so it is sent with the create or import request. Undefined keeps the template's or the imported setting. */
+    readonly stagedSecurityChoice = signal<SecurityFrameworkChoice | undefined>(undefined);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
@@ -331,6 +347,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public theiaEnabled = false;
+    readonly securityFrameworkInstructor = computed(() => this.accountService.isAtLeastInstructorInCourseWithId(this.courseId()));
     readonly plagiarismEnabled = signal(false);
 
     // Additional options for import
@@ -508,6 +525,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     set selectedProjectType(type: ProjectType) {
         // update the (selected) project type
         this.updateProjectTypeSettings(type);
+        // The black-box template has no Ares setup, so a staged Security Framework choice cannot be applied to it.
+        if (type === ProjectType.MAVEN_BLACKBOX) {
+            this.stagedSecurityChoice.set(undefined);
+        }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
@@ -624,6 +645,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     }),
                     switchMap(() => this.activatedRoute.params),
                     tap((params) => {
+                        // Normalize the course id to a number so instructor-role checks (numeric course-role ids) match on every route (course, exam, import).
+                        if (params['courseId'] !== undefined) {
+                            this.courseId.set(Number(params['courseId']));
+                        }
                         if (this.isImportFromFile) {
                             this.createProgrammingExerciseForImportFromFile();
                         }
@@ -648,11 +673,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 });
                                 // we need the course id  to make the request to the server if it's an import from file
                                 if (this.isImportFromFile || this.isImportFromSharing) {
-                                    this.courseId.set(params['courseId']);
+                                    this.courseId.set(Number(params['courseId']));
                                     this.loadCourseExerciseCategories(params['courseId']);
                                 }
                             } else if (params['courseId']) {
-                                this.courseId.set(params['courseId']);
+                                this.courseId.set(Number(params['courseId']));
                                 this.isExamMode.set(false);
                                 this.courseService.findForManagement(this.courseId()).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;
@@ -841,7 +866,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         const courseId = params['courseId'];
-        this.courseId.set(courseId);
+        // Route parameters are strings, but the course roles are looked up by the numeric id.
+        this.courseId.set(Number(courseId));
         if (courseId && params['examId'] && params['exerciseGroupId']) {
             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
@@ -972,18 +998,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 message: 'artemisApp.programmingExercise.auxiliaryRepository.editedWarning',
             });
         }
+        const securityChoice = this.securityFrameworkChoiceForRequest();
         if (this.isImportFromFile) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId()));
+            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId(), securityChoice), securityChoice);
         } else if (this.isImportFromSharing) {
-            this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.courseId(), this.sharingInfo).subscribe({
+            this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.courseId(), this.sharingInfo, securityChoice).subscribe({
                 next: (response: HttpResponse<ProgrammingExercise>) => {
                     this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
-                    this.onSaveSuccess(response.body!);
+                    this.onSaveSuccess(response.body!, securityChoice);
                 },
                 error: (err) => this.onSaveError(err),
             });
         } else if (this.isImportFromExistingExercise) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
+            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions, securityChoice), securityChoice);
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions: { notificationText?: string } = {};
             if (this.notificationText) {
@@ -991,7 +1018,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else {
-            this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
+            this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise, false, securityChoice), securityChoice);
         }
     }
 
@@ -1074,12 +1101,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         window.location.reload();
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
+    private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>, securityChoice?: SecurityFrameworkChoice) {
         const acknowledgeCanonicalSave = this.exerciseProblemComponent()?.editableInstructions()?.createCanonicalSaveAcknowledgement();
         result.subscribe({
             next: (response: HttpResponse<ProgrammingExercise>) => {
                 acknowledgeCanonicalSave?.(response.body?.problemStatement);
-                this.onSaveSuccess(response.body!);
+                this.onSaveSuccess(response.body!, securityChoice);
             },
             error: (error: HttpErrorResponse) => {
                 this.onSaveError(error);
@@ -1087,17 +1114,77 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         });
     }
 
-    private onSaveSuccess(exercise: ProgrammingExercise) {
-        this.isSaving.set(false);
+    /**
+     * Finishes saving and navigates away. If a Security Framework choice was sent with a create or import request, the new exercise's config is read
+     * first, and the instructor is warned if the server did not end up in the chosen state, e.g. because the imported tests are UNSUPPORTED. The
+     * exercise is saved either way, so a failure of this check never fails the save.
+     */
+    private onSaveSuccess(exercise: ProgrammingExercise, securityChoice?: SecurityFrameworkChoice) {
+        if (!securityChoice || exercise.id === undefined) {
+            this.navigateAfterSave(exercise);
+            return;
+        }
+        this.securityFrameworkService.getConfig(exercise.id).subscribe({
+            next: (config) => {
+                this.warnIfSecurityChoiceNotApplied(config, securityChoice);
+                this.navigateAfterSave(exercise);
+            },
+            error: () => {
+                this.alertService.warning('artemisApp.programmingExercise.security.notApplied.verificationFailed');
+                this.navigateAfterSave(exercise);
+            },
+        });
+    }
 
+    private navigateAfterSave(exercise: ProgrammingExercise) {
+        this.isSaving.set(false);
         if (this.goBackAfterSaving) {
             this.navigationUtilService.navigateBack();
-
             return;
         }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
         this.calendarService.reloadEvents();
+    }
+
+    /** Warns if the new exercise's Security Framework state does not match the choice sent with the create or import request. */
+    private warnIfSecurityChoiceNotApplied(config: SecurityFrameworkConfig, choice: SecurityFrameworkChoice) {
+        const expectedStatus = choice.action === SecurityFrameworkAction.ACTIVATE ? SecurityActivationStatus.ACTIVE : SecurityActivationStatus.INACTIVE;
+        if (config.status !== expectedStatus) {
+            const status = this.translateService.instant(`artemisApp.programmingExercise.security.status.${config.status.toLowerCase()}`);
+            const details = securityFrameworkProblemMessages(config)
+                .map((message) => this.translateService.instant(message.key, message.params))
+                .join(' ');
+            this.alertService.warning('artemisApp.programmingExercise.security.notApplied.status', { status, details });
+        } else if (choice.frameworkVersion && config.frameworkVersion !== choice.frameworkVersion) {
+            this.alertService.warning('artemisApp.programmingExercise.security.notApplied.version', { actual: config.frameworkVersion ?? '-', expected: choice.frameworkVersion });
+        }
+    }
+
+    /** Which form the Security Framework card is part of. During an import the exercise's id is the source's, so the card must not treat it as edit mode. */
+    securityCardMode(): SecurityCardMode {
+        if (this.isImportFromExistingExercise || this.isImportFromFile || this.isImportFromSharing) {
+            return 'import';
+        }
+        return this.programmingExercise.id !== undefined ? 'edit' : 'create';
+    }
+
+    /** The exercise an import copies from, whose Security Framework config the card shows read-only; absent for other imports and modes. */
+    securitySourceExerciseId(): number | undefined {
+        return this.isImportFromExistingExercise ? this.programmingExercise.id : undefined;
+    }
+
+    /** The Security Framework choice to send with a create or import request; only where the card is shown, i.e. for instructors and Java exercises with Ares. */
+    private securityFrameworkChoiceForRequest(): SecurityFrameworkChoice | undefined {
+        if (
+            this.securityCardMode() === 'edit' ||
+            !this.securityFrameworkInstructor() ||
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.JAVA ||
+            this.programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX
+        ) {
+            return undefined;
+        }
+        return this.stagedSecurityChoice();
     }
 
     private onSaveError(error: HttpErrorResponse) {
@@ -1138,6 +1225,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         // Select the correct pattern
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
+        // The Security Framework only supports Java, so discard any staged choice when switching to another
+        // language. Otherwise it would survive the (hidden) security card and trigger a doomed request on save.
+        if (language !== ProgrammingLanguage.JAVA) {
+            this.stagedSecurityChoice.set(undefined);
+        }
         return language;
     }
 

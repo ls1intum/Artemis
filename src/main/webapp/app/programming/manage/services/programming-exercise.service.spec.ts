@@ -23,6 +23,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+import { SecurityFrameworkAction, SecurityFrameworkChoice } from 'app/programming/shared/entities/security-framework-config.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -611,6 +612,46 @@ describe('ProgrammingExercise Service', () => {
         expect(sentLinks).toHaveLength(1);
         expect(sentLinks[0]).not.toHaveProperty('exercise');
         expect(() => JSON.stringify(req.request.body)).not.toThrow();
+        req.flush({});
+    });
+
+    it('should send the Security Framework choice in the automaticSetup request body only when one is given', () => {
+        const choice: SecurityFrameworkChoice = { action: SecurityFrameworkAction.DEACTIVATE };
+
+        service.automaticSetup(new ProgrammingExercise(undefined, undefined), false, choice).subscribe();
+        const withChoice = httpMock.expectOne({ method: 'POST' });
+        expect(withChoice.request.body.securityFramework).toEqual(choice);
+        withChoice.flush({});
+
+        service.automaticSetup(new ProgrammingExercise(undefined, undefined)).subscribe();
+        const withoutChoice = httpMock.expectOne({ method: 'POST' });
+        expect(withoutChoice.request.body).not.toHaveProperty('securityFramework');
+        withoutChoice.flush({});
+    });
+
+    it('should send the Security Framework choice in the importExercise request body', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        const choice: SecurityFrameworkChoice = { action: SecurityFrameworkAction.ACTIVATE, frameworkVersion: '2.3.0' };
+
+        service.importExercise(exercise, { recreateBuildPlans: false, setTestCaseVisibilityToAfterDueDate: false }, choice).subscribe();
+
+        const req = httpMock.expectOne((request) => request.method === 'POST' && request.url === `${resourceUrl}/import?sourceExerciseId=7`);
+        expect(req.request.body.securityFramework).toEqual(choice);
+        req.flush({});
+    });
+
+    it('should send the Security Framework choice in the programmingExercise part of an import from file', async () => {
+        const course = Object.assign(new Course(), { id: 1 });
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.zipFileForImport = new File([''], 'dummyFile');
+        const choice: SecurityFrameworkChoice = { action: SecurityFrameworkAction.DEACTIVATE };
+
+        service.importFromFile(exercise, course.id!, choice).subscribe();
+
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/programming/courses/1/programming-exercises/import-from-file' });
+        const part = (req.request.body as FormData).get('programmingExercise') as Blob;
+        expect(JSON.parse(await part.text()).securityFramework).toEqual(choice);
         req.flush({});
     });
 
