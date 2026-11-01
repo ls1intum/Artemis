@@ -539,7 +539,8 @@ substitutions, PR coverage exclusions or forced complete suites solely for Sonar
 
 ### Fork and token-restricted PRs
 
-Automatic fork events, and token-restricted internal PRs such as Dependabot updates, execute no\nsource in the analysis job and do not receive the Sonar token.
+Automatic fork events, and token-restricted internal PRs such as Dependabot updates, execute no
+source in the analysis job and do not receive the Sonar token.
 A required secretless verifier accepts only a passing public Sonar record matching the original
 PR number, exact head SHA, source branch and Sonar **target** branch. Missing/stale evidence,
 failed gates, malformed responses and API errors block merging.
