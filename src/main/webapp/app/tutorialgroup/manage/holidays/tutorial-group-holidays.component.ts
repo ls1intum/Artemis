@@ -309,8 +309,8 @@ export class TutorialGroupHolidaysComponent {
                 ),
                 takeUntilDestroyed(),
             )
-            .subscribe((response) => {
-                const configuration = response.body ? tutorialGroupsConfigurationEntityFromDto(response.body) : undefined;
+            .subscribe((loaded) => {
+                const configuration = loaded ? tutorialGroupsConfigurationEntityFromDto(loaded) : undefined;
                 this.configuration.set(configuration);
                 this.freePeriods.set(configuration?.tutorialGroupFreePeriods ?? []);
                 this.isLoading.set(false);

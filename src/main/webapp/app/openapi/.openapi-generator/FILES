@@ -14,6 +14,7 @@ api/hyperion-programming-variant-api.ts
 api/hyperion-quiz-question-generation-api.ts
 api/hyperion-quiz-question-pool-api.ts
 api/ingestion-browser-api.ts
+api/ingestion-coverage-api.ts
 api/query-params.ts
 api/quiz-assessment-api.ts
 api/quiz-exercise-api.ts
@@ -63,6 +64,7 @@ model/course-browser-data.ts
 model/course-competency.ts
 model/course-for-quiz-exercise.ts
 model/course-for-search-filter.ts
+model/course-with-id.ts
 model/create-exercise-variant-group.ts
 model/create-or-update-tutorial-group-request.ts
 model/create-or-update-tutorial-group-session-request.ts
@@ -94,6 +96,7 @@ model/drop-location-re-evaluate.ts
 model/drop-location.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
+model/exam-with-id-and-course.ts
 model/exercise-generation-activity.ts
 model/exercise-generation-capabilities.ts
 model/exercise-generation-effort-profile.ts
@@ -114,6 +117,7 @@ model/exercise-generation-status.ts
 model/exercise-generation-usage.ts
 model/exercise-generation-verdict.ts
 model/exercise-generation-wedged-slot.ts
+model/exercise-group-with-id-and-exam.ts
 model/exercise-variant-group-reference.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
@@ -121,11 +125,14 @@ model/global-search-result.ts
 model/grading-criterion.ts
 model/grading-instruction.ts
 model/hyperion-course-settings.ts
+model/index-overview.ts
+model/indexed-collection-count.ts
 model/indexed-content-object.ts
 model/indexed-content-presence.ts
 model/indexed-entity-record.ts
 model/indexed-entity.ts
 model/inferred-competency.ts
+model/ingestion-coverage.ts
 model/ingestion-type-count.ts
 model/leaderboard-entry.ts
 model/leaderboard-setting.ts
@@ -248,6 +255,7 @@ model/submitted-answer-from-live-client.ts
 model/submitted-answer-from-student.ts
 model/timing.ts
 model/tokens.ts
+model/tutorial-group-configuration-free-period.ts
 model/tutorial-group-configuration.ts
 model/tutorial-group-detail-data.ts
 model/tutorial-group-export-data.ts

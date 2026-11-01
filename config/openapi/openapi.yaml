@@ -247,6 +247,21 @@ paths:
             application/json:
               schema: {type: object}
         '200': {description: OK}
+  /api/quiz/quiz-exercises/{quizExerciseId}/end-now:
+    put:
+      tags: [quiz-exercise]
+      operationId: endQuizExercise
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDates'}
   /api/quiz/quiz-exercises/{quizExerciseId}/add-batch:
     put:
       tags: [quiz-exercise-batch]
@@ -1283,6 +1298,13 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/global-search/admin/coverage/refresh:
+    post:
+      tags: [ingestion-coverage]
+      operationId: refreshCoverage
+      responses:
+        '200': {description: Coverage recomputation completed}
+        '503': {description: Coverage could not be recomputed}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -1338,7 +1360,7 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            text/plain:
               schema: {type: string}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/unregistered-students:
     get:
@@ -1432,6 +1454,40 @@ paths:
                 type: array
                 items: {type: string}
                 uniqueItems: true
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-tutor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForTutor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-instructor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/json:
     get:
       tags: [tutorial-group]
@@ -1764,6 +1820,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizExerciseForStudentResponse'}
+  /api/quiz/quiz-exercises/{quizExerciseId}/for-exam:
+    get:
+      tags: [quiz-exercise-retrieval]
+      operationId: getQuizExerciseForExam
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDetails'}
   /api/quiz/quiz-exercises/{exerciseId}/participations/{participationId}/result:
     get:
       tags: [quiz-participation]
@@ -2041,6 +2112,104 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ExerciseGenerationWedgedSlot'}
+  /api/global-search/admin/index/overview:
+    get:
+      tags: [ingestion-coverage]
+      operationId: getIndexOverview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IndexOverview'}
+  /api/global-search/admin/coverage:
+    get:
+      tags: [ingestion-coverage]
+      operationId: getStoredCoverage
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [COMPLETE, INCOMPLETE, EMPTY]
+      - name: active
+        in: query
+        required: false
+        schema: {type: boolean}
+      - name: search
+        in: query
+        required: false
+        schema: {type: string}
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema: {type: integer, default: 0, minimum: 0}
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema: {type: integer, default: 20, minimum: 1}
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              style: simple
+              schema: {type: integer, format: int64}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/IngestionCoverage'}
+  /api/global-search/admin/coverage/page:
+    get:
+      tags: [ingestion-coverage]
+      operationId: getLiveCoveragePage
+      parameters:
+      - name: search
+        in: query
+        required: false
+        schema: {type: string}
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema: {type: integer, default: 0, minimum: 0}
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema: {type: integer, default: 20, minimum: 1}
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              style: simple
+              schema: {type: integer, format: int64}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/IngestionCoverage'}
   /api/global-search/admin/courses/{courseId}/units/{unitId}/content:
     get:
       tags: [ingestion-browser]
@@ -2558,6 +2727,7 @@ components:
         indexed: {type: integer, format: int64}
         missing: {type: integer, format: int64}
         orphaned: {type: integer, format: int64}
+      required: [expected, indexed, missing, orphaned, type]
     MultipleChoiceQuestionFromEditor:
       required: [answerOptions, points, scoringType, singleChoice, title, type]
       type: object
@@ -3078,6 +3248,7 @@ components:
         typeCounts:
           type: array
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
+      required: [contentGaps, contentPresence, entities, missingEntities, typeCounts]
     QuizQuestionBulkRefinementRequest:
       type: object
       description: Request to refine multiple quiz questions at once using a single
@@ -3113,8 +3284,12 @@ components:
       type: object
       properties:
         lectureUnitId: {type: integer, format: int64}
-        title: {type: string}
-        kind: {type: string}
+        title:
+          type: [string, 'null']
+        kind:
+          type: string
+          enum: [slides, transcript]
+      required: [kind, lectureUnitId]
     QuizQuestionGenerationResponse:
       type: object
       description: Response containing generated quiz questions
@@ -3140,6 +3315,14 @@ components:
       properties:
         title: {type: string}
         course: {$ref: '#/components/schemas/QuizSearchCourse'}
+    TutorialGroupConfigurationFreePeriod:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        start: {type: string}
+        end: {type: string}
+        reason: {type: string}
+      required: [end, start]
     QuizQuestionTraining:
       type: object
       properties:
@@ -3262,7 +3445,9 @@ components:
     IndexedContentObject:
       type: object
       properties:
-        ingestedAt: {type: string, format: date-time}
+        ingestedAt:
+          type: [string, 'null']
+          format: date-time
         properties:
           type: object
           additionalProperties: {}
@@ -3289,6 +3474,7 @@ components:
       properties:
         date: {type: string, format: date}
         count: {type: integer, format: int64}
+      required: [count, date]
     QuizExerciseWithQuestionsForStudent:
       required: [quizQuestionsType]
       type: object
@@ -3579,13 +3765,21 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    CourseWithId:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     MissingEntity:
       type: object
       properties:
         type: {type: string}
         entityId: {type: integer, format: int64}
-        title: {type: string}
-        lectureId: {type: integer, format: int64}
+        title:
+          type: [string, 'null']
+        lectureId:
+          type: [integer, 'null']
+          format: int64
+      required: [entityId, type]
     CreateExerciseVariantGroup:
       type: object
       properties:
@@ -3884,6 +4078,7 @@ components:
         testRunParticipationsExist: {type: boolean}
         isEditable: {type: boolean}
         canBeEvaluated: {type: boolean}
+        exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupWithIdAndExam'}
     TutorialGroupSummary:
       type: object
       properties:
@@ -4236,6 +4431,7 @@ components:
           type: array
           items: {type: integer, format: int64}
           uniqueItems: true
+      required: [key]
     DragAndDropQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -4460,6 +4656,31 @@ components:
       properties:
         faqText: {type: string, minLength: 1}
       required: [faqText]
+    IngestionCoverage:
+      type: object
+      properties:
+        courseId: {type: integer, format: int64}
+        courseTitle:
+          type: [string, 'null']
+        releaseDate:
+          type: [string, 'null']
+          format: date-time
+        active: {type: boolean}
+        semester:
+          type: [string, 'null']
+        status:
+          type: string
+          enum: [COMPLETE, INCOMPLETE, EMPTY]
+        coverageGapScore: {type: integer, format: int32}
+        computedAt: {type: string, format: date-time}
+        lastIngestedAt:
+          type: [string, 'null']
+          format: date-time
+        typeCounts:
+          type: array
+          items: {$ref: '#/components/schemas/IngestionTypeCount'}
+      required: [active, computedAt, courseId, courseTitle, coverageGapScore, lastIngestedAt,
+        releaseDate, semester, status, typeCounts]
     DragAndDropSubmittedAnswerFromStudent:
       required: [mappings, questionId, type]
       type: object
@@ -4477,11 +4698,15 @@ components:
       properties:
         type: {type: string}
         entityId: {type: integer, format: int64}
-        title: {type: string}
-        ingestedAt: {type: string, format: date-time}
+        title:
+          type: [string, 'null']
+        ingestedAt:
+          type: [string, 'null']
+          format: date-time
         properties:
           type: object
           additionalProperties: {}
+      required: [entityId, type]
     CompetencyExerciseLink:
       type: object
       properties:
@@ -4566,7 +4791,7 @@ components:
         usePublicTutorialGroupChannels: {type: boolean}
         tutorialGroupFreePeriods:
           type: array
-          items: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+          items: {$ref: '#/components/schemas/TutorialGroupConfigurationFreePeriod'}
           uniqueItems: true
       required: [tutorialPeriodEndInclusive, tutorialPeriodStartInclusive, usePublicTutorialGroupChannels,
         useTutorialGroupChannels]
@@ -4823,6 +5048,11 @@ components:
           items: {$ref: '#/components/schemas/QuestionStatistics'}
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    ExamWithIdAndCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        course: {$ref: '#/components/schemas/CourseWithId'}
     QuizPointStatistic:
       type: object
       properties:
@@ -4997,6 +5227,7 @@ components:
         id: {type: integer, format: int64}
         title: {type: string}
         active: {type: boolean}
+      required: [active, id]
     TutorialGroupStudentImportData:
       type: object
       properties:
@@ -5166,9 +5397,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -5250,6 +5481,11 @@ components:
             (1-indexed)}
         endLine: {type: integer, format: int32, description: 'Ending line number (1-indexed,
             inclusive)'}
+    ExerciseGroupWithIdAndExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exam: {$ref: '#/components/schemas/ExamWithIdAndCourse'}
     SubmittedAnswerBeforeEvaluation:
       discriminator:
         propertyName: type
@@ -5310,6 +5546,17 @@ components:
             in EUR, example: 0.016513}
         totalEur: {type: number, format: double, description: Total costs in EUR,
           example: 0.027738}
+    IndexOverview:
+      type: object
+      properties:
+        weaviateReachable: {type: boolean}
+        weaviateAddress: {type: string}
+        irisEnabled: {type: boolean}
+        irisReachable: {type: boolean}
+        collections:
+          type: array
+          items: {$ref: '#/components/schemas/IndexedCollectionCount'}
+      required: [collections, irisEnabled, irisReachable, weaviateAddress, weaviateReachable]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -5328,10 +5575,16 @@ components:
       properties:
         type: {type: string}
         entityId: {type: integer, format: int64}
-        title: {type: string}
-        lectureId: {type: integer, format: int64}
-        ingestedAt: {type: string, format: date-time}
+        title:
+          type: [string, 'null']
+        lectureId:
+          type: [integer, 'null']
+          format: int64
+        ingestedAt:
+          type: [string, 'null']
+          format: date-time
         expected: {type: boolean}
+      required: [entityId, expected]
     ShortAnswerSubmittedText:
       type: object
       properties:
@@ -5441,6 +5694,7 @@ components:
       properties:
         freePeriodId: {type: integer, format: int64}
         count: {type: integer, format: int64}
+      required: [count, freePeriodId]
     ShortAnswerSubmittedTextFromLiveClient:
       type: object
       properties:
@@ -5490,6 +5744,13 @@ components:
         text: {type: string, maxLength: 255, minLength: 0}
         spotId: {type: integer, format: int64}
       required: [spotId, text]
+    IndexedCollectionCount:
+      type: object
+      properties:
+        collection: {type: string}
+        count: {type: integer, format: int64}
+        readable: {type: boolean}
+      required: [collection, readable]
     QualityIssue:
       type: object
       description: A quality issue found in the problem statement

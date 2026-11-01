@@ -1,18 +1,23 @@
 package de.tum.cit.aet.artemis.globalsearch.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * The live object count of one indexed Weaviate collection, for the dashboard overview. A collection that cannot be read
- * (not present on this instance, or unreachable) is reported with {@code readable = false} and a {@code null} count rather
+ * (not present on this instance, or unreachable) is reported with {@code readable = false} and an omitted JSON count rather
  * than failing the whole overview.
  *
  * @param collection the collection name as addressed (the prefixed Artemis collection or an exact Iris collection name)
- * @param count      the number of objects in the collection, or {@code null} if it could not be read
+ * @param count      the number of objects in the collection, or {@code null} if it could not be read (omitted in JSON)
  * @param readable   whether the count could be read
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IndexedCollectionCountDTO(String collection, Long count, boolean readable) {
+public record IndexedCollectionCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String collection, @Nullable Long count,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean readable) {
 
     public static IndexedCollectionCountDTO of(String collection, long count) {
         return new IndexedCollectionCountDTO(collection, count, true);
