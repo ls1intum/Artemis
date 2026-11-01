@@ -5,7 +5,16 @@ import { FullscreenOverlayContainer, OVERLAY_DEFAULT_CONFIG, OverlayContainer } 
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
+import {
+    ApplicationConfig,
+    ErrorHandler,
+    LOCALE_ID,
+    importProvidersFrom,
+    inject,
+    provideAppInitializer,
+    provideBrowserGlobalErrorListeners,
+    provideZonelessChangeDetection,
+} from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouteReuseStrategy, provideRouter, withPreloading, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -57,6 +66,8 @@ export const appConfig: ApplicationConfig = {
             },
         }),
         provideZonelessChangeDetection(),
+        // Without zone.js nothing else forwards an uncaught error or an unhandled promise rejection to the ErrorHandler, which reports it
+        provideBrowserGlobalErrorListeners(),
 
         // TODO: we should add withComponentInputBinding here
         //  this would set non-route inputs to undefined, which not all components can handle, currently
