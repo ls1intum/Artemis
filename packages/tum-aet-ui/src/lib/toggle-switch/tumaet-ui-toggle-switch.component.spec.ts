@@ -68,6 +68,15 @@ describe('TumAetUiToggleSwitchComponent', () => {
         expect(input().checked).toBe(false);
     });
 
+    it('restores the native input when the previous value is written back before the next render', () => {
+        input().click();
+        component.writeValue(false);
+        fixture.detectChanges();
+
+        expect(input().checked).toBe(false);
+        expect(host.getAttribute('data-checked')).toBe('false');
+    });
+
     it('invokes the registered onChange / onTouched callbacks when toggled', () => {
         const onChange = vi.fn();
         const onTouched = vi.fn();

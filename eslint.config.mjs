@@ -801,6 +801,8 @@ export default tseslint.config(
             'src/main/webapp/app/exercise/feedback/**/*.html',
             'src/main/webapp/app/text/overview/text-editor/**/*.html',
             'src/main/webapp/app/fileupload/overview/file-upload-submission/**/*.html',
+            'src/main/webapp/app/course/manage/athena-settings-update/**/*.html',
+            'src/main/webapp/app/course/manage/control-center/about-athena-modal/**/*.html',
         ],
         languageOptions: {
             parser: angularTemplateParser,
