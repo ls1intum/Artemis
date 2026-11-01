@@ -350,7 +350,7 @@ test('full mode preserves the established suite and coverage contract without ru
     assert.equal(fs.readFileSync(context.outputFile, 'utf8'), 'mode=full\ncoverage=true\n');
 });
 
-test('affected mode prebuilds once, selects both projects, and produces no coverage', async () => {
+test('affected mode prebuilds once and keeps selected coverage separate from the complete-suite contract', async () => {
     const context = executionContext();
     const sources = [component];
     const result = await executePlan({ mode: 'affected', sources, reason: 'source change' }, context);
@@ -363,7 +363,28 @@ test('affected mode prebuilds once, selects both projects, and produces no cover
             { configFile: 'config/testing/vitest.monaco.config.ts', sources },
         ],
     );
-    assert.equal(fs.readFileSync(context.outputFile, 'utf8'), 'mode=affected\ncoverage=false\n');
+    assert.equal(fs.readFileSync(context.outputFile, 'utf8'), 'mode=affected\ncoverage=false\nsonar_coverage=false\n');
+});
+
+test('only successful affected runs with current LCOV reports advertise Sonar coverage', async () => {
+    for (const success of [true, false]) {
+        const context = executionContext({ selection: async (options) => ({ selected: 1, relatedSources: options.sources, success }) });
+        const prepare = context.prepareRelatedProject;
+        context.prepareRelatedProject = async (options) => {
+            const project = await prepare(options);
+            const run = project.run;
+            project.run = async () => {
+                const directory = path.join(context.root, 'build/test-results/vitest/sonar-coverage', options.configFile.includes('monaco') ? 'monaco' : 'normal');
+                fs.mkdirSync(directory, { recursive: true });
+                fs.writeFileSync(path.join(directory, 'lcov.info'), 'SF:src/main/webapp/app/lecture/widget/widget.component.ts\nDA:1,1\nend_of_record\n');
+                return run();
+            };
+            return project;
+        };
+        assert.equal(await executePlan({ mode: 'affected', sources: [component] }, context), success ? 0 : 1);
+        assert.match(fs.readFileSync(context.outputFile, 'utf8'), new RegExp(`sonar_coverage=${success}\\n$`));
+        assert.match(fs.readFileSync(context.outputFile, 'utf8'), /mode=affected\ncoverage=false\n/);
+    }
 });
 
 test('an explicitly prebuilt CI invocation reuses compile:tests setup in affected and full modes', async () => {
@@ -464,14 +485,18 @@ test('selected mode removes stale full-suite coverage instead of leaving a misle
     const coverage = path.join(context.root, 'build/test-results/vitest/coverage');
     fs.mkdirSync(coverage, { recursive: true });
     fs.writeFileSync(path.join(coverage, 'coverage-summary.json'), '{"total":{"lines":{"pct":100}}}');
+    const selectedCoverage = path.join(context.root, 'build/test-results/vitest/sonar-coverage/monaco');
+    fs.mkdirSync(selectedCoverage, { recursive: true });
+    fs.writeFileSync(path.join(selectedCoverage, 'lcov.info'), 'SF:stale.ts\nDA:1,1\nend_of_record\n');
     await executePlan({ mode: 'affected', sources: [component] }, context);
     assert.equal(fs.existsSync(coverage), false);
+    assert.equal(fs.existsSync(selectedCoverage), false);
 });
 
-test('Vitest graph selection executes indirect consumers and disables inherited all-files coverage', async () => {
+test('Vitest graph selection emits real partial LCOV without unselected specs or inherited coverage gates', async () => {
     const { root } = fixture({
-        'vitest.fixture.config.mjs': `export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'], coverage: { enabled: true, provider: 'istanbul', include: ['**/*.ts'], thresholds: { lines: 100 } } } };`,
-        'source.ts': 'export const answer = 42;',
+        'vitest.fixture.config.mjs': `export default { test: { globals: true, environment: 'node', include: ['**/*.spec.ts'], coverage: { enabled: true, provider: 'istanbul', cleanOnRerun: false, include: ['**/*.ts'], thresholds: { lines: 100 } } } };`,
+        'source.ts': 'export const answer = 42;\nexport function untouched() {\n  return 99;\n}\n',
         'consumer.ts': "export { answer } from './source';",
         'consumer.spec.ts': "import { answer } from './consumer'; test('indirect consumer', () => expect(answer).toBe(42));",
         'unrelated.spec.ts': "throw new Error('Unrelated spec was executed');",
@@ -482,8 +507,37 @@ test('Vitest graph selection executes indirect consumers and disables inherited 
     assert.deepEqual(result, { selected: 1, relatedSelected: 1, relatedSources: ['source.ts'], success: true });
     assert.ok(messages.includes('  consumer.spec.ts'));
     assert.ok(!messages.includes('  unrelated.spec.ts'));
+    const coverage = fs.readFileSync(path.join(root, 'build/test-results/vitest/sonar-coverage/normal/lcov.info'), 'utf8');
+    assert.match(coverage, /SF:source.ts\n/);
+    assert.match(coverage, /DA:1,[1-9]\d*\n/);
+    assert.match(coverage, /DA:3,0\n/);
+    assert.doesNotMatch(coverage, /SF:(?:unrelated.spec|uncovered)\.ts\n/);
     assert.equal(fs.existsSync(path.join(root, 'coverage')), false);
     assert.match(fs.readFileSync(path.join(root, 'build/test-results/vitest/junit.xml'), 'utf8'), /indirect consumer/);
+});
+
+test('normal and Monaco selected runs retain independent LCOV reports', async () => {
+    const { root } = fixture({
+        'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['normal.spec.ts'], coverage: { include: ['**/*.ts'] } } };",
+        'vitest.monaco.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['monaco.spec.ts'], coverage: { include: ['**/*.ts'] } } };",
+        'normal.ts': 'export const normal = 42;',
+        'monaco.ts': 'export const monaco = 99;',
+        'normal.spec.ts': "import { normal } from './normal'; test('normal', () => expect(normal).toBe(42));",
+        'monaco.spec.ts': "import { monaco } from './monaco'; test('monaco', () => expect(monaco).toBe(99));",
+    });
+    for (const [configFile, source] of [
+        ['vitest.fixture.config.mjs', 'normal.ts'],
+        ['vitest.monaco.fixture.config.mjs', 'monaco.ts'],
+    ]) {
+        const result = await runRelatedProject({ root, configFile, sources: [source], log: () => {} });
+        assert.equal(result.success, true);
+    }
+    const normal = fs.readFileSync(path.join(root, 'build/test-results/vitest/sonar-coverage/normal/lcov.info'), 'utf8');
+    const monaco = fs.readFileSync(path.join(root, 'build/test-results/vitest/sonar-coverage/monaco/lcov.info'), 'utf8');
+    assert.match(normal, /SF:normal.ts\n/);
+    assert.doesNotMatch(normal, /SF:monaco.ts\n/);
+    assert.match(monaco, /SF:monaco.ts\n/);
+    assert.doesNotMatch(monaco, /SF:normal.ts\n/);
 });
 
 test('graph discovery restores the environment before any full-suite fallback prebuild', async () => {
@@ -687,3 +741,60 @@ test('a failed close cannot prevent the other prepared context from closing', as
     });
     assert.deepEqual(context.closed, ['config/testing/vitest.monaco.config.ts', 'vitest.config.ts']);
 });
+
+for (const failure of ['preparation', 'execution']) {
+    test(`preserves the original ${failure} failure alongside every cleanup failure`, async () => {
+        const context = executionContext();
+        const primary = new Error(`${failure} failed`);
+        const closeErrors = [new Error('normal close failed'), new Error('Monaco close failed')];
+        const prepare = context.prepareRelatedProject;
+        context.prepareRelatedProject = async (options) => {
+            if (failure === 'preparation' && options.configFile.includes('monaco')) throw primary;
+            const project = await prepare(options);
+            project.run = async () => {
+                throw primary;
+            };
+            const close = project.close;
+            project.close = async () => {
+                await close();
+                throw closeErrors[options.configFile.includes('monaco') ? 1 : 0];
+            };
+            return project;
+        };
+        await assert.rejects(executePlan({ mode: 'affected', sources: [component] }, context), (error) => {
+            assert.ok(error instanceof AggregateError);
+            assert.deepEqual(error.errors, failure === 'preparation' ? [primary, closeErrors[0]] : [primary, closeErrors[1], closeErrors[0]]);
+            return true;
+        });
+        assert.deepEqual(context.closed, failure === 'preparation' ? ['vitest.config.ts'] : ['config/testing/vitest.monaco.config.ts', 'vitest.config.ts']);
+        assert.deepEqual(context.commands, [['run', 'prebuild']]);
+    });
+}
+
+for (const failureProject of ['vitest.config.ts', 'config/testing/vitest.monaco.config.ts']) {
+    test(`preserves returned selectionError from ${failureProject} when cleanup also fails`, async () => {
+        const primary = new Error('graph selection failed');
+        const context = executionContext({
+            selection: async (options) => (options.configFile === failureProject ? { selectionError: primary } : { selected: 1, relatedSources: options.sources, success: true }),
+        });
+        const closeErrors = [new Error('normal close failed'), new Error('Monaco close failed')];
+        const prepare = context.prepareRelatedProject;
+        context.prepareRelatedProject = async (options) => {
+            const project = await prepare(options);
+            const close = project.close;
+            project.close = async () => {
+                await close();
+                throw closeErrors[options.configFile.includes('monaco') ? 1 : 0];
+            };
+            return project;
+        };
+        await assert.rejects(executePlan({ mode: 'affected', sources: [component] }, context), (error) => {
+            assert.ok(error instanceof AggregateError);
+            assert.deepEqual(error.errors, failureProject.includes('monaco') ? [primary, closeErrors[1], closeErrors[0]] : [primary, closeErrors[0]]);
+            return true;
+        });
+        assert.deepEqual(context.closed, failureProject.includes('monaco') ? ['config/testing/vitest.monaco.config.ts', 'vitest.config.ts'] : ['vitest.config.ts']);
+        assert.deepEqual(context.runs, []);
+        assert.deepEqual(context.commands, [['run', 'prebuild']]);
+    });
+}

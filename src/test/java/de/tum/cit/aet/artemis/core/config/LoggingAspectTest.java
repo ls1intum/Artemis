@@ -13,7 +13,7 @@ import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 
-@ResourceLock("LoggingAspectLogger")
+@Isolated("Captures JVM-wide logger state; concurrent Spring bootstrap temporarily suppresses logging.")
 class LoggingAspectTest {
 
     private final Logger logger = (Logger) LoggerFactory.getLogger(LoggingAspect.class);

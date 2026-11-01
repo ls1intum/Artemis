@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,19 +24,19 @@ import { TranslateService } from '@ngx-translate/core';
 describe('ExerciseImportFromFileComponent', () => {
     let component: ExerciseImportFromFileComponent;
     let fixture: ComponentFixture<ExerciseImportFromFileComponent>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let alertService: AlertService;
     let alertServiceSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MockComponent(ButtonComponent), MockComponent(HelpIconComponent)],
-            providers: [MockProvider(DynamicDialogRef), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(TumAetUiDialogRef), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseImportFromFileComponent);
         component = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
         alertService = TestBed.inject(AlertService);
     });
 

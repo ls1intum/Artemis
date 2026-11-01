@@ -1,3 +1,12 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiPopoverComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+
 import { ProgrammingExerciseParticipationActionsComponent } from 'app/exercise/participation/programming-exercise-participation-actions/programming-exercise-participation-actions.component';
 import { StudentExerciseActionsDirective } from 'app/exercise/participation/student-exercise-actions.directive';
 import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
@@ -7,9 +16,8 @@ import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faEye, faFileSignature, faListAlt, faPaperPlane, faPlayCircle, faRobot, faSignal, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslatePipe } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -44,13 +52,14 @@ interface InstructorActionItem {
     selector: 'jhi-exercise-header-actions',
     templateUrl: './exercise-header-actions.component.html',
     imports: [
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         ProgrammingExerciseParticipationActionsComponent,
         FaIconComponent,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownItem,
-        NgbTooltip,
         RouterLink,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -59,8 +68,6 @@ interface InstructorActionItem {
         StartPracticeModeButtonComponent,
         CodeButtonComponent,
         RequestFeedbackButtonComponent,
-        NgbPopover,
-        TranslatePipe,
     ],
     providers: [ExternalCloningService],
 })
@@ -72,7 +79,8 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
 
     private readonly programmingActions = viewChildren(ProgrammingExerciseParticipationActionsComponent);
     private readonly actionButtons = viewChildren(ExerciseActionButtonComponent);
-    private readonly submitPopoverRef = viewChild<NgbPopover>('submitPopoverRef');
+    private readonly submitOrigin = viewChild<ElementRef<HTMLElement>>('submitOrigin');
+    private readonly submitPopoverRef = viewChild<TumAetUiPopoverComponent>('submitPopoverRef');
 
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
@@ -359,7 +367,8 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
         if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
         }
-        this.submitPopoverRef()?.open();
+        const origin = this.submitOrigin()?.nativeElement;
+        if (origin) this.submitPopoverRef()?.open(origin);
     }
 
     @HostListener('document:click', ['$event'])
@@ -372,7 +381,7 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
         const target = event.target as HTMLElement;
 
         // Don't close if clicking inside the popover, the trigger element, or an alert
-        if (target.closest('.popover') || target.closest('jhi-alert-overlay') || this.elementRef.nativeElement.contains(target)) {
+        if (target.closest('[role="dialog"]') || target.closest('jhi-alert-overlay') || this.elementRef.nativeElement.contains(target)) {
             return;
         }
 

@@ -1,4 +1,13 @@
 import { AccountService } from 'app/core/auth/account.service';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiMessageComponent,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTableDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -9,7 +18,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, Subscription, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/foundation/service/sort.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,7 +37,23 @@ import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model
 @Component({
     selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
-    imports: [TranslateDirective, FormsModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, SortDirective, SortByDirective],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        FaIconComponent,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
+        ArtemisDatePipe,
+        ArtemisDurationFromSecondsPipe,
+        SortDirective,
+        SortByDirective,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiProgressSpinnerComponent,
+    ],
     providers: [ArtemisDatePipe],
 })
 export class ListOfComplaintsComponent implements OnInit {
@@ -75,6 +99,16 @@ export class ListOfComplaintsComponent implements OnInit {
     private selectedComplaintScope: 'mine' | 'all' = 'mine';
 
     /** Distinct assessors among the currently loaded complaints, for the "all" scope's assessor filter. */
+    assessorFilterOptions(): { key: string | undefined; label: string }[] {
+        return [
+            { key: undefined, label: this.translateService.instant('artemisApp.complaint.listOfComplaints.allAssessors') },
+            ...this.assessorOptions().map((assessor) => ({
+                key: assessor.key,
+                label: assessor.label || this.translateService.instant('artemisApp.complaint.listOfComplaints.unknownAssessor'),
+            })),
+        ];
+    }
+
     readonly assessorOptions = computed(() => {
         const byKey = new Map<string, string>();
         for (const complaint of this.complaints()) {

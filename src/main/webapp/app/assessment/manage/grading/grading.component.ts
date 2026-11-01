@@ -1,3 +1,12 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiSelectButtonComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTableDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormField, applyEach, form, required, validate, validateTree } from '@angular/forms/signals';
@@ -21,7 +30,6 @@ import { GradingPresentationsComponent, PresentationType, PresentationsConfig } 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { GradingInfoModalComponent } from 'app/assessment/manage/grading/grading-info-modal/grading-info-modal.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -35,7 +43,6 @@ import { MAX_GRADING_POINTS, MAX_PRESENTATION_COUNT, MAX_PRESENTATION_SCORE } fr
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { faDownload, faFileImport, faMagic, faTrash } from '@fortawesome/free-solid-svg-icons';
 const csvColumnsGrade = Object.freeze({
@@ -91,7 +98,7 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
         TranslateDirective,
         GradingInfoModalComponent,
         FaIconComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         FormsModule,
         NgTemplateOutlet,
         FormField,
@@ -107,6 +114,11 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
         CourseTitleBarTitleDirective,
         TumAetUiButtonDirective,
         PointsInputComponent,
+        TumAetUiTableDirective,
+        TumAetUiMessageComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectButtonComponent,
+        TumAetUiSelectComponent,
     ],
 })
 export class GradingComponent implements OnInit {
@@ -134,6 +146,18 @@ export class GradingComponent implements OnInit {
 
     /** The non-editable {@link GradingScale} fields, recombined with {@link gradeStepsModel} in the {@link gradingScale} accessor. */
     private gradingScaleMeta: GradingScaleMeta = {};
+
+    /** Keep presentation input identity stable across grade-step edits and child configuration echoes. */
+    readonly presentationGradingScale = computed(
+        () => {
+            this.course();
+            return this.gradingScale;
+        },
+        {
+            equal: (previous, current) =>
+                previous.course === current.course && previous.presentationsNumber === current.presentationsNumber && previous.presentationsWeight === current.presentationsWeight,
+        },
+    );
 
     /**
      * Signal form over {@link gradeStepsModel}. Drives the grade-step rows reactively (so they render under zoneless) and
@@ -262,12 +286,10 @@ export class GradingComponent implements OnInit {
         {
             value: GradeEditMode.PERCENTAGE,
             labelKey: 'artemisApp.gradingSystem.intervalTab.percentageMode',
-            btnClass: 'btn-secondary',
         },
         {
             value: GradeEditMode.POINTS,
             labelKey: 'artemisApp.gradingSystem.intervalTab.pointsMode',
-            btnClass: 'btn-info',
         },
     ];
 
@@ -326,6 +348,8 @@ export class GradingComponent implements OnInit {
      * Handles updates to the presentations configuration emitted by the child component.
      */
     onPresentationsConfigChange(config: PresentationsConfig): void {
+        this.gradingScaleMeta.presentationsNumber = config.presentationsNumber;
+        this.gradingScaleMeta.presentationsWeight = config.presentationsWeight;
         this.presentationsConfig.set(config);
     }
 
