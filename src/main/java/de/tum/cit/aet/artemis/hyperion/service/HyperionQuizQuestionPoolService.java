@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCompetencyDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolDeletionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
@@ -109,6 +110,16 @@ public class HyperionQuizQuestionPoolService {
         if (!buildService.requestCancel(courseId)) {
             throw new ConflictException("No build of this quiz question pool is running", "QuizQuestionPool", "notRunning");
         }
+    }
+
+    /**
+     * Computes the pool a build would plan with the course's stored settings.
+     *
+     * @param course the course
+     * @return the planned questions and how many of them the next build would add
+     */
+    public QuizQuestionPoolPlanDTO getPlan(Course course) {
+        return buildService.plan(course);
     }
 
     /**

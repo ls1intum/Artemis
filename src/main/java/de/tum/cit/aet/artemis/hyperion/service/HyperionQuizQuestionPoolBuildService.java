@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterDecisionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
@@ -397,16 +398,10 @@ public class HyperionQuizQuestionPoolBuildService {
      * @return the number of items created
      */
     public int enqueue(Course course) {
-        CourseCompetencyApi api = courseCompetencyApi.orElseThrow(() -> new ApiConditionNotPresentException(CourseCompetencyApi.class, "artemis.atlas.enabled"));
-        List<Long> competencyIds = api.findAllForCourse(course.getId()).stream().map(CourseCompetency::getId).sorted().toList();
-        Map<Long, List<Long>> unitIdsByCompetency = new LinkedHashMap<>();
-        materialService.findGroundableUnits(competencyIds).forEach((competencyId, units) -> unitIdsByCompetency.put(competencyId, units.stream().map(LectureUnit::getId).toList()));
         HyperionCourseSettings settings = settingsService.getSettings(course.getId());
         buildSettings.put(course.getId(), settings);
-        Map<Cell, Integer> targets = planCells(unitIdsByCompetency, languageOf(course), settings);
-
-        Map<Cell, Integer> existingByCell = itemRepository.countByCellForCourse(course.getId()).stream().collect(Collectors
-                .toMap(count -> new Cell(count.competencyId(), count.lectureUnitId(), count.language(), count.questionType(), count.difficulty()), count -> (int) count.count()));
+        Map<Cell, Integer> targets = targetsOf(course, settings);
+        Map<Cell, Integer> existingByCell = existingByCell(course.getId());
         List<QuizQuestionPoolItem> created = new ArrayList<>();
         for (Map.Entry<Cell, Integer> target : targets.entrySet()) {
             Cell cell = target.getKey();
@@ -424,9 +419,40 @@ public class HyperionQuizQuestionPoolBuildService {
             }
         }
         itemRepository.saveAll(created);
-        log.info("Quiz question pool of course [{}]: {} of {} competencies have lecture material, {} cells, {} new items", course.getId(), unitIdsByCompetency.size(),
-                competencyIds.size(), targets.size(), created.size());
+        log.info("Quiz question pool of course [{}]: {} cells, {} new items", course.getId(), targets.size(), created.size());
         return created.size();
+    }
+
+    /**
+     * Computes the pool a build would plan with the course's stored settings, without creating any item.
+     *
+     * @param course the course
+     * @return how many questions the pool holds once such a build is complete, and how many that build would add
+     */
+    public QuizQuestionPoolPlanDTO plan(Course course) {
+        Map<Cell, Integer> targets = targetsOf(course, settingsService.getSettings(course.getId()));
+        Map<Cell, Integer> existingByCell = existingByCell(course.getId());
+        int planned = 0;
+        int missing = 0;
+        for (Map.Entry<Cell, Integer> target : targets.entrySet()) {
+            planned += target.getValue();
+            missing += Math.max(0, target.getValue() - existingByCell.getOrDefault(target.getKey(), 0));
+        }
+        return new QuizQuestionPoolPlanDTO(planned, missing);
+    }
+
+    /** The target of every cell of the course under the given settings, over the competencies and their groundable lecture units. */
+    private Map<Cell, Integer> targetsOf(Course course, HyperionCourseSettings settings) {
+        CourseCompetencyApi api = courseCompetencyApi.orElseThrow(() -> new ApiConditionNotPresentException(CourseCompetencyApi.class, "artemis.atlas.enabled"));
+        List<Long> competencyIds = api.findAllForCourse(course.getId()).stream().map(CourseCompetency::getId).sorted().toList();
+        Map<Long, List<Long>> unitIdsByCompetency = new LinkedHashMap<>();
+        materialService.findGroundableUnits(competencyIds).forEach((competencyId, units) -> unitIdsByCompetency.put(competencyId, units.stream().map(LectureUnit::getId).toList()));
+        return planCells(unitIdsByCompetency, languageOf(course), settings);
+    }
+
+    private Map<Cell, Integer> existingByCell(long courseId) {
+        return itemRepository.countByCellForCourse(courseId).stream().collect(Collectors
+                .toMap(count -> new Cell(count.competencyId(), count.lectureUnitId(), count.language(), count.questionType(), count.difficulty()), count -> (int) count.count()));
     }
 
     /**

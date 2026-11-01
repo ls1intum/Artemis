@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolDeletionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolReviewDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
@@ -102,6 +103,24 @@ public class HyperionQuizQuestionPoolResource {
         courseRepository.findByIdElseThrow(courseId);
         poolService.cancelBuild(courseId);
         return ResponseEntity.accepted().build();
+    }
+
+    /**
+     * GET /courses/{courseId}/quiz-question-pool/plan : The pool a build would plan with the course's stored settings.
+     *
+     * @param courseId the id of the course
+     * @return the planned questions and how many of them the next build would add; both 0 without Atlas or competencies
+     */
+    @EnforceAtLeastEditorInCourse
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("courses/{courseId}/quiz-question-pool/plan")
+    public ResponseEntity<QuizQuestionPoolPlanDTO> getQuizQuestionPoolPlan(@PathVariable long courseId) {
+        log.debug("REST request for the Hyperion quiz question pool plan of course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (courseCompetencyApi.isEmpty() || !courseCompetencyApi.get().courseHasCompetencies(courseId)) {
+            return ResponseEntity.ok(new QuizQuestionPoolPlanDTO(0, 0));
+        }
+        return ResponseEntity.ok(poolService.getPlan(course));
     }
 
     /**

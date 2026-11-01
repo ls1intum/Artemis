@@ -78,6 +78,15 @@ describe('QuizQuestionPoolService', () => {
         expect(completed).toBe(true);
     });
 
+    it('should load the plan of the stored settings', () => {
+        let result: { planned: number; missing: number } | undefined;
+        service.getPlan(7).subscribe((plan) => (result = plan));
+
+        httpMock.expectOne((r) => r.url === '/api/hyperion/courses/7/quiz-question-pool/plan').flush({ planned: 36, missing: 12 });
+
+        expect(result).toEqual({ planned: 36, missing: 12 });
+    });
+
     it('should map progress with defaults for omitted counts', () => {
         let result: PoolProgress | undefined;
         service.getProgress(7).subscribe((progress) => (result = progress));

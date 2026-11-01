@@ -75,7 +75,7 @@
                     <dl class="m-0 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
                         <div class="flex min-w-0 flex-col" data-testid="pool-progress-total">
                             <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.total"></dt>
-                            <dd class="m-0 text-2xl font-semibold tabular-nums">{{ progressValue.total }}</dd>
+                            <dd class="m-0 text-2xl font-semibold tabular-nums">{{ plannedCount() }}</dd>
                         </div>
                         <div class="flex min-w-0 flex-col" data-testid="pool-progress-ready">
                             <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.ready"></dt>
@@ -98,6 +98,14 @@
                             </tumaet-ui-tag>
                         } @else {
                             <span class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.idle"></span>
+                            @if (missingInNextBuild() > 0) {
+                                <span
+                                    class="ms-1 text-sm text-muted-color"
+                                    data-testid="pool-next-build-missing"
+                                    jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.nextBuildMissing"
+                                    [translateValues]="{ count: missingInNextBuild() }"
+                                ></span>
+                            }
                         }
                     </p>
                 </div>

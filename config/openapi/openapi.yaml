@@ -2047,6 +2047,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolDeletion'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/plan:
+    get:
+      tags: [hyperion-quiz-question-pool]
+      operationId: getQuizQuestionPoolPlan
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolPlan'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/progress:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -3335,6 +3350,15 @@ components:
         id: {type: integer, format: int64}
         solutionTempId: {type: integer, format: int64}
         spotTempId: {type: integer, format: int64}
+    QuizQuestionPoolPlan:
+      type: object
+      description: The pool a build would plan with the course's stored settings
+      properties:
+        planned: {type: integer, format: int32, description: Questions the pool holds
+            once a build with the stored settings is complete}
+        missing: {type: integer, format: int32, description: Questions a build with
+            the stored settings would add to the pool}
+      required: [missing, planned]
     QuizQuestionPoolProgress:
       type: object
       description: Progress of a course's quiz question pool build

@@ -189,6 +189,7 @@ model/quiz-question-pool-competency.ts
 model/quiz-question-pool-deletion.ts
 model/quiz-question-pool-item.ts
 model/quiz-question-pool-page.ts
+model/quiz-question-pool-plan.ts
 model/quiz-question-pool-progress.ts
 model/quiz-question-pool-review.ts
 model/quiz-question-re-evaluate.ts

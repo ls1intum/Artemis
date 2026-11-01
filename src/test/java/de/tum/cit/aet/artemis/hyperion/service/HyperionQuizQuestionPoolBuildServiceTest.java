@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolBuildService.Cell;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -166,6 +167,29 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         verify(itemRepository).saveAll(saved.capture());
         assertThat(created).isEqualTo(2);
         assertThat(saved.getValue()).extracting(QuizQuestionPoolItem::getItemIndex).containsExactly(10, 11);
+    }
+
+    @Test
+    void plan_sumsTheTargetsAndCountsOnlyMissingPlacesWithoutCreatingItems() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        Course course = new Course();
+        course.setId(5L);
+        Competency competency = new Competency();
+        competency.setId(9L);
+        TextUnit unit = new TextUnit();
+        unit.setId(4L);
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.<CourseCompetency>of(competency));
+        when(materialService.findGroundableUnits(List.of(9L))).thenReturn(Map.of(9L, List.<LectureUnit>of(unit)));
+        when(settingsService.getSettings(5L)).thenReturn(new HyperionCourseSettings(false, 12, true, 4, 1, 4, 0, 100, 0));
+        when(itemRepository.countByCellForCourse(5L)).thenReturn(
+                List.of(new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 15),
+                        new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 1)));
+
+        QuizQuestionPoolPlanDTO plan = service.plan(course);
+
+        assertThat(plan).isEqualTo(new QuizQuestionPoolPlanDTO(16, 3));
+        verify(itemRepository, never()).saveAll(any());
+        assertThat(service.settingsOfRunningBuild(5L)).isNull();
     }
 
     @Test

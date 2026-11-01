@@ -16,6 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { QuizQuestionPoolDeletion } from '../model/quiz-question-pool-deletion';
+import { QuizQuestionPoolPlan } from '../model/quiz-question-pool-plan';
 import { QuizQuestionPoolProgress } from '../model/quiz-question-pool-progress';
 import { QuizQuestionPoolPage } from '../model/quiz-question-pool-page';
 import { HyperionCourseSettings } from '../model/hyperion-course-settings';
@@ -62,6 +63,16 @@ export class HyperionQuizQuestionPoolApi {
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/questions${queryString ? `?${queryString}` : ''}`;
         return this.http.delete<QuizQuestionPoolDeletion>(url);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     */
+    getQuizQuestionPoolPlan(courseId: number): Observable<QuizQuestionPoolPlan> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/plan`;
+        return this.http.get<QuizQuestionPoolPlan>(url);
     }
 
     /**

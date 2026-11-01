@@ -13,6 +13,7 @@
                     "failed": "konnten in drei Versuchen nicht generiert werden",
                     "running": "Ein Lauf ist aktiv",
                     "idle": "Kein Lauf ist aktiv.",
+                    "nextBuildMissing": "{{ count }} Fragen werden im nächsten Lauf generiert.",
                     "empty": "Noch keine Fragen. Starte einen Lauf, um den Pool zu füllen.",
                     "build": "Jetzt generieren",
                     "refresh": "Aktualisieren",
@@ -66,6 +67,7 @@
                     "countHint": "Zwischen {{ min }} und {{ max }}.",
                     "summaryRunningBuild": "Aktueller Lauf:",
                     "summaryNextBuild": "Nächster Lauf:",
+                    "summaryPlanned": "{{ count }} Fragen geplant",
                     "nextBuildHeader": "Ein Lauf ist aktiv",
                     "nextBuildMessage": "Der aktive Lauf behält die Einstellungen, mit denen er gestartet wurde. Die gespeicherten Einstellungen gelten ab dem nächsten Lauf.",
                     "nextBuildAccept": "Für den nächsten Lauf speichern"

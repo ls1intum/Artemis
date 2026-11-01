@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolDeletionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolReviewDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
@@ -333,6 +334,22 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "editor1");
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldPlanThePoolWithoutCreatingItemsAndCountWhatTheNextBuildAdds() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        QuizQuestionPoolPlanDTO before = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/plan", HttpStatus.OK, QuizQuestionPoolPlanDTO.class);
+        assertThat(before).isEqualTo(new QuizQuestionPoolPlanDTO(EXPECTED_ITEMS, EXPECTED_ITEMS));
+        assertThat(poolService.getProgress(courseId).total()).isZero();
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted());
+        awaitBuild();
+
+        QuizQuestionPoolPlanDTO after = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/plan", HttpStatus.OK, QuizQuestionPoolPlanDTO.class);
+        assertThat(after).isEqualTo(new QuizQuestionPoolPlanDTO(EXPECTED_ITEMS, 0));
     }
 
     @Test

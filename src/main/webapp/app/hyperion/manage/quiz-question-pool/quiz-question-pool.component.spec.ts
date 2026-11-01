@@ -106,6 +106,7 @@ describe('QuizQuestionPoolComponent', () => {
         vi.spyOn(poolService, 'getProgress').mockReturnValue(of(progress));
         vi.spyOn(poolService, 'getQuestions').mockImplementation(pagesOf(questions()));
         vi.spyOn(poolService, 'getSettings').mockReturnValue(of(settings));
+        vi.spyOn(poolService, 'getPlan').mockReturnValue(of({ planned: 10, missing: 0 }));
         fixture = TestBed.createComponent(QuizQuestionPoolComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -381,14 +382,58 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.isRunning()).toBe(true);
     });
 
-    it('should compute the progress percentage from judged and failed items', () => {
+    it('should measure a running build by its judged and failed items', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
 
-        expect(component.progressPercent()).toBe(100);
-        component.progress.set({ ...progress, judged: 4, failed: 1 });
+        component.progress.set({ ...progress, running: true, judged: 4, failed: 1 });
+        expect(component.plannedCount()).toBe(10);
         expect(component.progressPercent()).toBe(50);
-        component.progress.set({ ...progress, total: 0 });
+        component.progress.set({ ...progress, running: true, total: 0 });
         expect(component.progressPercent()).toBe(0);
+    });
+
+    it('should measure an idle pool against the questions it holds after the next build', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        component.plan.set({ planned: 40, missing: 30 });
+        fixture.detectChanges();
+
+        expect(component.plannedCount()).toBe(40);
+        expect(component.progressPercent()).toBe(25);
+        expect(component.missingInNextBuild()).toBe(30);
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-next-build-missing"]')).not.toBeNull();
+
+        component.plan.set({ planned: 4, missing: 0 });
+        expect(component.plannedCount()).toBe(10);
+        expect(component.progressPercent()).toBe(100);
+
+        component.plan.set({ planned: 40, missing: 30 });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-next-build-missing"]')).not.toBeNull();
+
+        component.progress.set({ ...progress, running: true });
+        fixture.detectChanges();
+
+        expect(component.plannedCount()).toBe(10);
+        expect(component.missingInNextBuild()).toBe(0);
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-next-build-missing"]')).toBeNull();
+    });
+
+    it('should reload the plan once a build ends and after settings are saved', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const planSpy = vi.spyOn(poolService, 'getPlan').mockReturnValue(of({ planned: 20, missing: 0 }));
+        component.progress.set({ ...progress, running: true });
+        vi.spyOn(poolService, 'getProgress').mockReturnValue(of({ ...progress, running: false }));
+
+        component.refresh();
+
+        expect(planSpy).toHaveBeenCalledWith(1);
+        expect(component.plan()).toEqual({ planned: 20, missing: 0 });
+
+        planSpy.mockClear();
+        vi.spyOn(poolService, 'updateSettings').mockReturnValue(of(settings));
+        component.saveSettings(settings);
+
+        expect(planSpy).toHaveBeenCalledWith(1);
     });
 
     it('should start a build, report the added questions and poll until the build ends', () => {
@@ -537,8 +582,8 @@ describe('QuizQuestionPoolComponent', () => {
         fixture.detectChanges();
 
         expect(component.runningBuildSettings()).toEqual(buildSettings);
-        expect(component.runningBuildFacts().map((fact) => fact.values['count'])).toEqual([5, 12, undefined]);
-        expect(component.settingsFacts().map((fact) => fact.changed)).toEqual([true, true, false, false]);
+        expect(component.runningBuildFacts().map((fact) => fact.values['count'])).toEqual([10, 5, 12, undefined]);
+        expect(component.settingsFacts().map((fact) => fact.changed)).toEqual([false, true, true, false, false]);
         expect(fixture.nativeElement.querySelector('[data-testid="pool-build-settings-summary"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelectorAll('[data-testid="pool-settings-summary"] [data-changed]')).toHaveLength(2);
 

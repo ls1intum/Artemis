@@ -81,6 +81,12 @@ export interface PoolSettingsFact {
     changed: boolean;
 }
 
+/** The pool a build would plan with the stored settings: its size and how many questions that build would add. */
+export interface PoolPlan {
+    planned: number;
+    missing: number;
+}
+
 export interface PoolBuildStart {
     started: boolean;
     enqueued: number;

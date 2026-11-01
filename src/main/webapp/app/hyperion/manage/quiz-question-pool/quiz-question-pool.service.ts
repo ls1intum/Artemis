@@ -10,6 +10,7 @@ import { HyperionCourseSettings } from 'app/openapi/model/hyperion-course-settin
 import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 import {
     PoolBuildStart,
+    PoolPlan,
     PoolProgress,
     PoolQuestion,
     PoolQuestionPage,
@@ -29,6 +30,16 @@ export class QuizQuestionPoolService {
      */
     getProgress(courseId: number): Observable<PoolProgress> {
         return this.api.getQuizQuestionPoolProgress(courseId).pipe(map((progress) => this.toProgress(progress)));
+    }
+
+    /**
+     * Computes the pool a build would plan with the stored settings, without changing the pool.
+     *
+     * @param courseId the course
+     * @returns the planned size and how many questions the next build would add
+     */
+    getPlan(courseId: number): Observable<PoolPlan> {
+        return this.api.getQuizQuestionPoolPlan(courseId).pipe(map((plan) => ({ planned: plan.planned, missing: plan.missing })));
     }
 
     /**

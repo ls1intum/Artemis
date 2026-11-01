@@ -13,6 +13,7 @@
                     "failed": "could not be generated in three attempts",
                     "running": "A build is running",
                     "idle": "No build is running.",
+                    "nextBuildMissing": "{{ count }} questions will be generated in the next build.",
                     "empty": "No questions yet. Start a build to fill the pool.",
                     "build": "Build now",
                     "refresh": "Refresh",
@@ -66,6 +67,7 @@
                     "countHint": "Between {{ min }} and {{ max }}.",
                     "summaryRunningBuild": "Running build:",
                     "summaryNextBuild": "Next build:",
+                    "summaryPlanned": "{{ count }} questions planned",
                     "nextBuildHeader": "A build is running",
                     "nextBuildMessage": "The running build keeps the settings it was started with. The saved settings apply from the next build on.",
                     "nextBuildAccept": "Save for the next build"

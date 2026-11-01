@@ -37,6 +37,7 @@ import { QuizQuestionPoolItemListComponent } from 'app/hyperion/manage/quiz-ques
 import { QuizQuestionPoolSettingsDialogComponent } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool-settings-dialog/quiz-question-pool-settings-dialog.component';
 import {
     PoolCompetency,
+    PoolPlan,
     PoolProgress,
     PoolQuestion,
     PoolQuestionPage,
@@ -158,6 +159,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
     readonly progress = signal<PoolProgress | undefined>(undefined);
+    /** The pool a build would plan with the stored settings; reloaded when the settings, the pool or the build state change. */
+    readonly plan = signal<PoolPlan | undefined>(undefined);
     readonly questions = signal<PoolQuestion[]>([]);
     /** How many questions match the current competency filter across all pages. */
     readonly totalQuestionCount = signal(0);
@@ -200,12 +203,22 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     readonly canReview = computed(() => !!this.course()?.isAtLeastEditor);
     readonly canDelete = computed(() => !!this.course()?.isAtLeastInstructor);
     readonly isRunning = computed(() => !!this.progress()?.running);
+    /** The questions the pool holds once the next build is complete: those it holds now plus those that build would add. */
+    readonly nextBuildCount = computed(() => (this.progress()?.total ?? 0) + (this.plan()?.missing ?? 0));
+    /**
+     * The planned questions: those of the running build while one runs, otherwise those the pool holds after the next build. A build
+     * adds questions and never removes them, so lowering the settings leaves this number as it is.
+     */
+    readonly plannedCount = computed(() => (this.isRunning() ? (this.progress()?.total ?? 0) : this.nextBuildCount()));
+    /** Questions the next build would add, shown while no build runs. */
+    readonly missingInNextBuild = computed(() => (this.isRunning() ? 0 : (this.plan()?.missing ?? 0)));
     readonly progressPercent = computed(() => {
         const progress = this.progress();
-        if (!progress || progress.total === 0) {
+        const planned = this.plannedCount();
+        if (!progress || planned === 0) {
             return 0;
         }
-        return Math.round(((progress.judged + progress.failed) / progress.total) * 100);
+        return Math.round(((progress.judged + progress.failed) / planned) * 100);
     });
     /** The settings the running build was planned with, while a build runs and they differ from the stored settings in what a build uses. */
     readonly runningBuildSettings = computed(() => {
@@ -213,9 +226,12 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         const stored = this.settings();
         return build && stored && this.isRunning() && buildFactsOf(stored, build).some((fact) => fact.changed) ? build : undefined;
     });
-    readonly runningBuildFacts = computed(() => {
+    readonly runningBuildFacts = computed<PoolSettingsFact[]>(() => {
         const build = this.runningBuildSettings();
-        return build ? buildFactsOf(build) : [];
+        if (!build) {
+            return [];
+        }
+        return [{ key: SETTINGS_KEY_PREFIX + 'summaryPlanned', values: { count: this.progress()?.total ?? 0 }, changed: false }, ...buildFactsOf(build)];
     });
     /** The stored settings as the summary lists them, with the facts the running build differs in marked as changed. */
     readonly settingsFacts = computed<PoolSettingsFact[]>(() => {
@@ -224,7 +240,13 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             return [];
         }
         const overnight = { key: SETTINGS_KEY_PREFIX + (stored.poolGenerationEnabled ? 'summaryOvernightOn' : 'summaryOvernightOff'), values: {}, changed: false };
-        return [...buildFactsOf(stored, this.runningBuildSettings()), overnight];
+        const facts = [...buildFactsOf(stored, this.runningBuildSettings()), overnight];
+        if (this.runningBuildSettings() && this.plan()) {
+            const count = this.nextBuildCount();
+            const planned = { key: SETTINGS_KEY_PREFIX + 'summaryPlanned', values: { count }, changed: count !== this.progress()?.total };
+            return [planned, ...facts];
+        }
+        return facts;
     });
     readonly remainingQuestions = computed(() => Math.max(0, this.totalQuestionCount() - this.questions().length));
     readonly remainingNeedsReview = computed(() => Math.max(0, this.needsReviewTotal() - this.needsReviewQuestions().length));
@@ -264,6 +286,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.stopPolling();
         this.course.set(undefined);
         this.progress.set(undefined);
+        this.plan.set(undefined);
         this.questions.set([]);
         this.totalQuestionCount.set(0);
         this.needsReviewQuestions.set([]);
@@ -434,6 +457,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     loadPool(courseId: number): void {
         this.isLoading.set(true);
         this.loadProgress(courseId);
+        this.loadPlan(courseId);
         this.reloadQuestions(courseId, PAGE_SIZE)
             .pipe(
                 finalize(() => this.isLoading.set(false)),
@@ -463,12 +487,31 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             });
     }
 
-    /** Takes a progress response; a build that has stopped ends the cancelling state. */
+    /** Takes a progress response; a build that has stopped ends the cancelling state and brings the plan up to date. */
     private applyProgress(progress: PoolProgress): void {
+        const wasRunning = !!this.progress()?.running;
         this.progress.set(progress);
         if (!progress.running) {
             this.isCancelling.set(false);
+            const courseId = this.courseId();
+            if (wasRunning && courseId) {
+                this.loadPlan(courseId);
+            }
         }
+    }
+
+    private loadPlan(courseId: number): void {
+        this.poolService
+            .getPlan(courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (plan) => {
+                    if (this.isCurrent(courseId)) {
+                        this.plan.set(plan);
+                    }
+                },
+                error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed'),
+            });
     }
 
     private loadSettings(courseId: number): void {
@@ -620,6 +663,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         return;
                     }
                     this.settings.set(stored);
+                    this.loadPlan(courseId);
                     this.settingsDialogVisible.set(false);
                     this.alertService.success('artemisApp.hyperion.quizQuestionPool.settings.saved');
                 },
@@ -715,6 +759,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                     }
                     this.alertService.success('artemisApp.hyperion.quizQuestionPool.list.deleted');
                     this.loadProgress(courseId);
+                    this.loadPlan(courseId);
                 },
                 error: (error: HttpErrorResponse) => this.alertService.error(this.deleteErrorKey(error, 'artemisApp.hyperion.quizQuestionPool.list.deleteFailed')),
             });
