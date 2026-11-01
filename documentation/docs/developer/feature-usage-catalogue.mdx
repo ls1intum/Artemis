@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 151 features, 1093 REST endpoints in 29 modules, and 63 interaction overrides.
+Currently 20 product areas, 151 features, 1096 REST endpoints in 29 modules, and 66 interaction overrides.
 
 ## Courses
 
@@ -1121,7 +1121,7 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | hyperion | `HyperionQuizQuestionGenerationResource` | 3 | 0 | 0 | 0 |
-| hyperion | `HyperionQuizQuestionPoolResource` | 3 | 3 | 0 | 0 |
+| hyperion | `HyperionQuizQuestionPoolResource` | 6 | 0 | 3 | 0 |
 
 ### AI grading criteria
 
@@ -1512,6 +1512,9 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/course/courses/{courseId}/title` (`COURSE_OVERVIEW`)
 * `GET api/exam/exams/{examId}/title` (`EXAM_AUTHORING`)
 * `GET api/exercise/exercises/{exerciseId}/title` (`EXERCISE_DETAILS`)
+* `GET api/hyperion/courses/{courseId}/quiz-question-pool/progress` (`HYPERION_QUIZ_GENERATION`)
+* `GET api/hyperion/courses/{courseId}/quiz-question-pool/questions` (`HYPERION_QUIZ_GENERATION`)
+* `GET api/hyperion/courses/{courseId}/quiz-question-pool/settings` (`HYPERION_QUIZ_GENERATION`)
 * `GET api/hyperion/programming-exercises/{exerciseId}/code-generation/active-job` (`HYPERION_CODE_GENERATION`)
 * `GET api/hyperion/variant-jobs` (`HYPERION_VARIANT_GENERATION`)
 * `GET api/hyperion/variant-jobs/{jobId}` (`HYPERION_VARIANT_GENERATION`)

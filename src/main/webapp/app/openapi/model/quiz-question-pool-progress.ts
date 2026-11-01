@@ -8,6 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { HyperionCourseSettings } from './hyperion-course-settings';
 
 /**
  * Progress of a course\'s quiz question pool build
@@ -29,4 +30,6 @@ export interface QuizQuestionPoolProgress {
     rejected?: number;
     /** Items whose generation or filtering failed permanently */
     failed?: number;
+    /** The settings the running build planned its cells with; absent while no build is running */
+    buildSettings?: HyperionCourseSettings;
 }

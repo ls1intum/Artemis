@@ -185,7 +185,10 @@ model/quiz-question-from-editor.ts
 model/quiz-question-generation-request.ts
 model/quiz-question-generation-response.ts
 model/quiz-question-pool-build-start.ts
+model/quiz-question-pool-competency.ts
+model/quiz-question-pool-deletion.ts
 model/quiz-question-pool-item.ts
+model/quiz-question-pool-page.ts
 model/quiz-question-pool-progress.ts
 model/quiz-question-pool-review.ts
 model/quiz-question-re-evaluate.ts
