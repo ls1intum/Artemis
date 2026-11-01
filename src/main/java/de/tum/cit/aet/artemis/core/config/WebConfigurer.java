@@ -35,6 +35,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopesInterceptor;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolsInterceptor;
 import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageInterceptor;
@@ -161,6 +162,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         // not track, so widening the patterns cannot start counting anything unintended.
         registry.addInterceptor(featureUsageInterceptor).addPathPatterns("/api/**", "/.well-known/**");
         registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
+        // Default-deny for personal access tokens: only endpoints annotated with @AllowedScopes are reachable with one.
+        // Includes /api/*/public/** on purpose; a token never needs a public endpoint and none opts in.
+        registry.addInterceptor(new AllowedScopesInterceptor()).addPathPatterns("/api/**");
         // Tags responses on every API request that resolved to a multi-path controller (legacy + canonical
         // prefix). The interceptor reads the controller's @RequestMapping to derive the successor URL,
         // so adding a new module migration requires only updating that controller's mapping.

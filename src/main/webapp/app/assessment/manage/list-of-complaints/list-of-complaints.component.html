@@ -1,48 +1,49 @@
-<div class="col-12 mt-4">
+<div class="w-full mt-6!">
     @if (course() && !course().isAtLeastInstructor) {
-        <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-            <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="scopeTranslationKeyRoot() + '.scopeGroup' | artemisTranslate">
+        <div class="flex flex-wrap items-center gap-4! mb-4!">
+            <div role="group" [attr.aria-label]="scopeTranslationKeyRoot() + '.scopeGroup' | artemisTranslate">
                 <button
                     type="button"
-                    class="btn"
-                    [class.btn-primary]="!allComplaintsForTutorLoaded()"
-                    [class.btn-outline-primary]="allComplaintsForTutorLoaded()"
+                    [variant]="allComplaintsForTutorLoaded() ? 'outlined' : 'solid'"
+                    [attr.aria-pressed]="!allComplaintsForTutorLoaded()"
                     (click)="setComplaintScope('mine')"
                     id="button_scopeMine"
+                    tumAetUiButton
+                    severity="primary"
                 >
                     <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeMine"></span>
                 </button>
                 <button
                     type="button"
-                    class="btn"
-                    [class.btn-primary]="allComplaintsForTutorLoaded()"
-                    [class.btn-outline-primary]="!allComplaintsForTutorLoaded()"
+                    [variant]="allComplaintsForTutorLoaded() ? 'solid' : 'outlined'"
+                    [attr.aria-pressed]="allComplaintsForTutorLoaded()"
                     [disabled]="isLoadingAllComplaints()"
                     (click)="setComplaintScope('all')"
                     id="button_scopeAll"
+                    tumAetUiButton
+                    severity="primary"
                 >
                     @if (isLoadingAllComplaints()) {
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <tumaet-ui-progress-spinner class="h-4 w-4" [ariaLabel]="'loading' | artemisTranslate" />
                     }
                     <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeAll"></span>
                 </button>
             </div>
 
             @if (allComplaintsForTutorLoaded() && assessorOptions().length > 1) {
-                <select
-                    class="form-select form-select-sm w-auto"
-                    [attr.aria-label]="'artemisApp.complaint.listOfComplaints.filterByAssessor' | artemisTranslate"
+                <tumaet-ui-select
+                    [options]="assessorFilterOptions()"
+                    [placeholder]="'artemisApp.complaint.listOfComplaints.allAssessors' | artemisTranslate"
+                    optionLabel="label"
+                    optionValue="key"
+                    size="small"
+                    [ariaLabel]="'artemisApp.complaint.listOfComplaints.filterByAssessor' | artemisTranslate"
                     [ngModel]="assessorFilter()"
                     (ngModelChange)="onAssessorFilterChange($event)"
-                >
-                    <option [ngValue]="undefined" jhiTranslate="artemisApp.complaint.listOfComplaints.allAssessors"></option>
-                    @for (assessor of assessorOptions(); track assessor.key) {
-                        <option [ngValue]="assessor.key">{{ assessor.label || ('artemisApp.complaint.listOfComplaints.unknownAssessor' | artemisTranslate) }}</option>
-                    }
-                </select>
+                />
             }
 
-            <small class="text-muted">
+            <small class="text-(--tumaet-ui-muted-color)">
                 @if (allComplaintsForTutorLoaded()) {
                     <span [jhiTranslate]="scopeTranslationKeyRoot() + '.scopeAllCaption'"></span>
                 } @else {
@@ -52,16 +53,14 @@
         </div>
     }
     @if (!loading()) {
-        <div class="form-check mb-3">
-            <input
-                type="checkbox"
-                class="form-check-input"
+        <div class="flex items-center gap-2 mb-4!">
+            <tumaet-ui-checkbox
                 name="showAddressedComplaint"
-                id="field_showAddressedComplaint"
+                inputId="field_showAddressedComplaint"
                 [ngModel]="showAddressedComplaints()"
                 (ngModelChange)="triggerAddressedComplaints()"
             />
-            <label class="form-check-label" for="field_showAddressedComplaint">
+            <label class="inline-block" for="field_showAddressedComplaint">
                 @if (complaintType() === ComplaintType.COMPLAINT) {
                     <span
                         jhiTranslate="artemisApp.complaint.listOfComplaints.show{{ filterOption() === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : '' }}AddressedComplaints"
@@ -73,8 +72,8 @@
             </label>
         </div>
     }
-    <div class="row table-responsive pt-3">
-        <table class="table" [hidden]="complaintsToShow().length === 0">
+    <div class="flex flex-wrap gap-y-2 overflow-x-auto pt-4!">
+        <table class="w-full text-left" [hidden]="complaintsToShow().length === 0" tumAetUiTable>
             <thead>
                 <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="id">
@@ -162,29 +161,33 @@
                                 }
                                 {{ complaintService.getResponseTimeInSeconds(complaint) | artemisDurationFromSeconds: true }}
                                 @if (complaintService.shouldHighlightComplaint(complaint)) {
-                                    <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}" />
+                                    <fa-icon
+                                        [icon]="faExclamationTriangle"
+                                        class="text-state-warning"
+                                        tumAetUiTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
+                                    />
                                 }
                             </span>
                         </td>
                         <td>
                             @if (complaint.accepted === undefined) {
-                                <span class="text-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
+                                <span class="text-state-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
                             }
                             @if (complaint.accepted === true && complaintType() === ComplaintType.COMPLAINT) {
-                                <span class="text-success" jhiTranslate="artemisApp.complaint.listOfComplaints.accepted"></span>
+                                <span class="text-state-success" jhiTranslate="artemisApp.complaint.listOfComplaints.accepted"></span>
                             }
                             @if (complaint.accepted === true && complaintType() === ComplaintType.MORE_FEEDBACK) {
-                                <span class="text-success" jhiTranslate="artemisApp.moreFeedback.accepted"></span>
+                                <span class="text-state-success" jhiTranslate="artemisApp.moreFeedback.accepted"></span>
                             }
                             @if (complaint.accepted === false) {
-                                <span class="text-danger" jhiTranslate="artemisApp.complaint.listOfComplaints.rejected"></span>
+                                <span class="text-state-danger" jhiTranslate="artemisApp.complaint.listOfComplaints.rejected"></span>
                             }
                         </td>
                         <td>
                             {{ calculateComplaintLockStatus(complaint) }}
                         </td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" data-testid="show-complaint">
+                            <button type="button" (click)="openAssessmentEditor(complaint)" data-testid="show-complaint" tumAetUiButton severity="primary" size="small">
                                 <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                 @if (complaintType() === ComplaintType.COMPLAINT) {
                                     <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.showComplaint"></span>
@@ -199,12 +202,12 @@
             </tbody>
         </table>
     </div>
-    <div class="alert alert-info" [hidden]="complaints().length !== 0">
+    <tumaet-ui-message [hidden]="complaints().length !== 0" severity="info">
         @if (complaintType() === ComplaintType.COMPLAINT) {
             <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaints"></span>
         }
         @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
             <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests"></span>
         }
-    </div>
+    </tumaet-ui-message>
 </div>

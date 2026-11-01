@@ -177,7 +177,26 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId - the id of the course to be found
      */
     find(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<CourseManagementDTO>(`${this.resourceUrl}/${courseId}`, { observe: 'response' }).pipe(
+        return this.findWithProjection(courseId);
+    }
+
+    findForTutor(courseId: number): Observable<EntityResponseType> {
+        return this.findWithProjection(courseId, '/for-tutor');
+    }
+
+    findForInstructor(courseId: number): Observable<EntityResponseType> {
+        return this.findWithProjection(courseId, '/for-instructor');
+    }
+
+    /** Chooses the management audience from the persisted account context before requesting course data. */
+    findForManagement(courseId: number): Observable<EntityResponseType> {
+        // Angular route parameters may carry the numeric identifier as a string at runtime.
+        const id = Number(courseId);
+        return this.accountService.isAtLeastInstructorInCourseWithId(id) ? this.findForInstructor(id) : this.findForTutor(id);
+    }
+
+    private findWithProjection(courseId: number, suffix = ''): Observable<EntityResponseType> {
+        return this.http.get<CourseManagementDTO>(`${this.resourceUrl}/${courseId}${suffix}`, { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOResponse(res, courseFromManagementDTO)),
             map((res) => this.applyCourseResponseSideEffects(res)),
         );

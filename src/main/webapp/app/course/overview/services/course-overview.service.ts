@@ -513,6 +513,11 @@ export class CourseOverviewService {
         }
         let averageAttendanceRatio: number | undefined;
         let attendanceText: string | undefined;
+        // The list endpoint sends no sessions, only this server-computed average of the last completed sessions (students get it too).
+        if (tutorialGroup.averageAttendance !== undefined && tutorialGroup.averageAttendance !== null && capacity > 0) {
+            averageAttendanceRatio = tutorialGroup.averageAttendance / capacity;
+            return [`Ø ${(averageAttendanceRatio * 100).toFixed(0)}%`, averageAttendanceRatio];
+        }
         const sessionsWithAttendance = tutorialGroup.tutorialGroupSessions?.filter((session) => session.attendanceCount !== undefined && session.attendanceCount !== null) ?? [];
         if (sessionsWithAttendance.length !== 0) {
             const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;

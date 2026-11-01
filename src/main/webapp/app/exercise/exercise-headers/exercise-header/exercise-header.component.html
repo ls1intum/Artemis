@@ -3,12 +3,12 @@
     page reads like the other student pages. `px-*` rather than `p-*`, so Bootstrap's !important spacing does not
     overrule the class's vertical padding.
 -->
-<div #bar id="exercise-header" class="page-top-bar module-bg rounded-3 px-3 shell-divider-b d-flex align-items-center gap-2">
+<div #bar id="exercise-header" class="page-top-bar module-bg rounded-3 px-3 shell-divider-b flex items-center gap-2">
     @if (showSidebarToggle() && isSidebarCollapsed()) {
         <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
     }
     @if (exerciseIcon(); as icon) {
-        <h5 class="mb-0 text-truncate">
+        <h5 class="mb-0 truncate">
             <fa-icon [icon]="icon" />
             {{ exercise().title }}
         </h5>
@@ -19,12 +19,12 @@
         the information boxes leave that slot to the clock for as long as it runs.
     -->
     @if (exercise().type === ExerciseType.QUIZ) {
-        <div #countdown data-testid="exercise-header-countdown" class="d-flex align-items-center flex-shrink-0">
+        <div #countdown data-testid="exercise-header-countdown" class="flex items-center shrink-0">
             <jhi-quiz-exercise-countdown [info]="quizLiveHeaderInfo()" />
         </div>
     }
     @if (showsPills()) {
-        <div #pills data-testid="exercise-header-pills" class="d-flex align-items-center flex-shrink-0">
+        <div #pills data-testid="exercise-header-pills" class="flex items-center shrink-0">
             <jhi-exercise-headers-information
                 placement="titleBar"
                 [exercise]="exercise()"
@@ -41,7 +41,7 @@
         The controls the bar always keeps. `ms-auto` holds them at the far end, which is also what leaves the title and
         the pills beside it on the left. Their width is measured as space the title cannot have.
     -->
-    <div #controls data-testid="exercise-header-controls" class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
+    <div #controls data-testid="exercise-header-controls" class="flex items-center gap-2 ms-auto shrink-0">
         <jhi-participation-mode-toggle
             [mode]="participationMode()"
             (modeChange)="participationMode.set($event)"

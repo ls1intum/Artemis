@@ -4,7 +4,7 @@ const { captureExceptionMock } = vi.hoisted(() => ({
     captureExceptionMock: vi.fn(),
 }));
 
-vi.mock('@sentry/angular', () => ({
+vi.mock('app/core/error-reporting/capture-exception', () => ({
     captureException: captureExceptionMock,
 }));
 
@@ -196,7 +196,7 @@ describe('TeamStudentsOnlineListComponent', () => {
         expect(sendSpy).toHaveBeenLastCalledWith(`${sendDestination}/typing`, {});
     });
 
-    it('reports websocket receiver and typing stream errors to Sentry', async () => {
+    it('reports websocket receiver and typing stream errors', async () => {
         vi.useFakeTimers();
 
         await setInputsAndInitialize();

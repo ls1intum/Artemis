@@ -45,6 +45,8 @@ export interface StudentIdentifierDTO {
     visibleRegistrationNumber?: string;
 }
 
+export type TeamOverviewPurpose = 'student' | 'staff';
+
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
 
@@ -122,7 +124,7 @@ export interface ITeamService {
      * @param {Course} course - Course which to find
      * @param {Team} team - Team for which to find exercises and participations (by team short name)
      */
-    findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>>;
+    findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team, purpose?: TeamOverviewPurpose): Observable<HttpResponse<Course>>;
 
     /**
      * Exports given teams into json file
@@ -262,9 +264,11 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {Team} team - Team for which to find exercises and participations (by team short name)
      */
     // TODO: Move this method to the CourseManagementService and delete the only here used duplicated setAccessRightsCourseEntityResponseType() helper method
-    findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
+    findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team, purpose: TeamOverviewPurpose = 'student'): Observable<HttpResponse<Course>> {
         return this.http
-            .get<Course>(`api/exercise/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' })
+            .get<Course>(`api/exercise/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations${purpose === 'staff' ? '/for-staff' : ''}`, {
+                observe: 'response',
+            })
             .pipe(map((res: HttpResponse<Course>) => this.setAccessRightsCourseEntityResponseType(res)));
     }
 

@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -56,7 +57,8 @@ public class HyperionAuthoringRunResource {
      * @return bounded history page without sensitive content
      */
     @GetMapping("authoring-runs")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<AuthoringRunPageDTO> getAuthoringRuns(@RequestParam(required = false) @Positive Long beforeId) {
         return ResponseEntity.ok(history.history(users.getUserWithCourseRolesAndAuthorities(), beforeId));
     }
@@ -69,7 +71,8 @@ public class HyperionAuthoringRunResource {
      * @return the subset currently accessible to their owner
      */
     @PostMapping("authoring-runs/access")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @ApiResponse(responseCode = "200", description = "Currently authorized run identities", content = @Content(array = @ArraySchema(maxItems = 500, schema = @Schema(type = "string", maxLength = 128))))
     public ResponseEntity<List<String>> checkAuthoringRunAccess(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(array = @ArraySchema(minItems = 1, maxItems = 500, schema = @Schema(type = "string", minLength = 1, maxLength = 128)))) @RequestBody @NotEmpty @Size(max = 500) List<@NotBlank @Size(max = 128) String> jobIds) {

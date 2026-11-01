@@ -112,17 +112,12 @@
                 "remove": {
                     "label": "Rolle {{ role }} in {{ course }} entfernen",
                     "header": "Kursrolle entfernen",
-                    "message": "Die Rolle {{ role }} von {{ login }} im Kurs {{ course }} entfernen? Diese:r Nutzer:in verliert den Zugriff, den diese Rolle im Kurs gewährt, und die globalen Rollen können sich entsprechend ändern.",
+                    "message": "Die Rolle {{ role }} von {{ login }} im Kurs {{ course }} entfernen? Diese:r Nutzer:in verliert den Zugriff, den diese Rolle im Kurs gewährt.",
                     "accept": "Entfernen",
                     "success": "{{ login }} hat die Rolle {{ role }} in {{ course }} nicht mehr."
                 },
-                "syncFailed": "Die globalen Rollen konnten nach der letzten Änderung der Kursrollen nicht aktualisiert werden. Speichern ist gesperrt, bis sie geladen sind.",
-                "syncRetry": "Erneut laden",
                 "retry": "Erneut versuchen",
-                "courseCount": "Kurse: {{ count }}",
-                "globalRolesChanged": "Die globalen Rollen dieser Nutzer:in haben sich mit den Kursrollen geändert.",
-                "globalRolesAdded": "Hinzugefügt:",
-                "globalRolesRemoved": "Entfernt:"
+                "courseCount": "Kurse: {{ count }}"
             },
             "login": "Login",
             "firstName": "Vorname",
@@ -145,9 +140,6 @@
             "roles": {
                 "superAdmin": "Super-Administrator:in",
                 "admin": "Administrator:in",
-                "instructor": "Lehrende:r",
-                "editor": "Editor:in",
-                "tutor": "Tutor:in",
                 "user": "Nutzer:in"
             },
             "langKey": "Sprache",
