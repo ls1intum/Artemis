@@ -13,6 +13,7 @@ import {
     input,
     output,
     signal,
+    untracked,
 } from '@angular/core';
 import { TUM_AET_UI_TRANSLATOR } from '../i18n/tumaet-ui-translations';
 
@@ -88,11 +89,15 @@ export class TumAetUiSplitterComponent {
                     // Resizing remains available when browser storage is disabled.
                 }
             }
-            // Controlled/responsive updates end the gesture before replacing its geometry or state.
-            this.dragCleanup?.();
-            this.size.set(this.clamp(initial));
+            const next = this.clamp(initial);
+            // A parent may echo sizesChange while the same gesture is still in progress.
+            if (next !== untracked(this.size)) {
+                this.dragCleanup?.();
+            }
+            this.size.set(next);
         });
         effect(() => {
+            this.minSizes();
             this.layout();
             this.collapsedSecondSize();
             this.gutterSize();

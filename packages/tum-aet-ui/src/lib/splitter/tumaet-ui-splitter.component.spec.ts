@@ -13,7 +13,7 @@ import { TUM_AET_UI_TRANSLATOR } from '../i18n/tumaet-ui-translations';
         [layout]="orientation()"
         [collapsedSecondSize]="collapsed() ? '3rem' : undefined"
         [ariaLabel]="label()"
-        (sizesChange)="changes.push($event)"
+        (sizesChange)="onSizesChange($event)"
         (resizeEnd)="ends.push($event)"
     >
         <ng-template #panel><input aria-label="Draft" value="Unsaved draft" /></ng-template>
@@ -27,7 +27,15 @@ class PersistentSplitterHostComponent {
     readonly label = signal<string | undefined>('Resize documents');
     readonly orientation = signal<'horizontal' | 'vertical'>('horizontal');
     readonly collapsed = signal(false);
+    readonly echoChanges = signal(false);
     readonly changes: number[][] = [];
+
+    onSizesChange(value: number[]): void {
+        this.changes.push(value);
+        if (this.echoChanges()) {
+            this.sizes.set(value);
+        }
+    }
     readonly ends: number[][] = [];
 }
 
@@ -144,6 +152,18 @@ describe('TumAetUiSplitterComponent persistent panels and gesture cleanup', () =
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('input')).toBe(input);
         expect(input.value).toBe('Edited');
+    });
+
+    it('continues a controlled drag when the parent echoes the emitted panel sizes', () => {
+        host.echoChanges.set(true);
+        pointer(separator, 'pointerdown', 600);
+        pointer(document, 'pointermove', 650);
+        expect(document.querySelector('[data-tumaet-splitter-shield]')).not.toBeNull();
+        pointer(document, 'pointermove', 680);
+        expect(host.changes.at(-1)).toEqual([68, 32]);
+        pointer(document, 'pointerup', 680);
+        expect(host.ends).toEqual([[68, 32]]);
+        expect(document.querySelector('[data-tumaet-splitter-shield]')).toBeNull();
     });
 
     it('drags across embedded frames, emits sizes and removes the drag shield on commit', () => {
