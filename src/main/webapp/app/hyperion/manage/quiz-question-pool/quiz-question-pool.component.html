@@ -169,7 +169,7 @@
                     <span class="font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.needsReview" [translateValues]="{ count: pendingInQueue() }"></span>
                 }
             </div>
-            <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-3 pt-1">
                 <jhi-quiz-question-pool-item-list
                     [questions]="needsReviewQuestions()"
                     [canReview]="canReview()"
