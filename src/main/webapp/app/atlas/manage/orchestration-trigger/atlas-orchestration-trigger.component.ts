@@ -2,7 +2,7 @@ import { Component, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -31,7 +31,15 @@ import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestrati
     // (non-flex) action bars, e.g. the programming exercise detail toolbar. In flex containers the host
     // is a flex item and this display value is ignored, so projected usages are unaffected.
     styles: ':host { display: inline-block; vertical-align: top; }',
-    imports: [FaIconComponent, TooltipModule, FeatureToggleHideDirective, TranslateDirective, ArtemisTranslatePipe, OrchestrationResultDialogComponent],
+    imports: [
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        FeatureToggleHideDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        OrchestrationResultDialogComponent,
+    ],
 })
 export class AtlasOrchestrationTriggerComponent {
     private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
@@ -40,8 +48,8 @@ export class AtlasOrchestrationTriggerComponent {
 
     readonly exercise = input<Exercise>();
     readonly lectureUnitId = input<number>();
-    /** Button CSS classes, so each host page can match its own action-bar styling (solid vs outline). */
-    readonly buttonClass = input<string>('btn btn-primary btn-sm');
+    /** Optional additional layout classes supplied by host pages. */
+    readonly buttonClass = input<string>('');
     readonly showLabel = input(true);
 
     /**

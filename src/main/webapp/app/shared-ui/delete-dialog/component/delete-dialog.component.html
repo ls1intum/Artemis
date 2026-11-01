@@ -9,7 +9,8 @@
         }
         @if (isLoadingSummary()) {
             <div class="summary-loading-container">
-                <tumaet-ui-progress-spinner class="h-6 w-6" />
+                <!-- Inline, because the kit sets the spinner's 100px size in unlayered component styles that a Tailwind utility cannot override. -->
+                <tumaet-ui-progress-spinner [style.width.rem]="1.5" [style.height.rem]="1.5" [ariaLabel]="'loading' | artemisTranslate" />
                 <span class="ms-2" jhiTranslate="loading"></span>
             </div>
         } @else if (categorizedEntitySummary() && categorizedEntitySummary()!.length > 0) {

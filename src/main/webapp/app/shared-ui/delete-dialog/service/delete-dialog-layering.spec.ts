@@ -25,7 +25,7 @@ const deleteData: DeleteDialogData = {
     requireConfirmationOnlyForAdditionalChecks: false,
 };
 
-@Component({ template: '<button type="button" (click)="openConfirmation()">Delete presentation</button>' })
+@Component({ template: '<input aria-label="Presentation title" value="Unsaved title" /><button type="button" (click)="openConfirmation()">Delete presentation</button>' })
 class PresentationDialogComponent {
     private readonly deleteDialogService = inject(DeleteDialogService);
 
@@ -68,6 +68,7 @@ describe('DeleteDialogService layering', () => {
         dialogs.open(PresentationDialogComponent, { header: 'Edit presentation' });
         await TestBed.inject(ApplicationRef).whenStable();
         const parent = document.querySelector('[role="dialog"]')!;
+        const title = parent.querySelector<HTMLInputElement>('[aria-label="Presentation title"]')!;
         const trigger = Array.from(parent.querySelectorAll('button')).find((button) => button.textContent?.includes('Delete presentation'))!;
         trigger.focus();
         trigger.click();
@@ -83,6 +84,8 @@ describe('DeleteDialogService layering', () => {
 
         expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
         expect(document.activeElement).toBe(trigger);
+        expect(document.querySelector('[aria-label="Presentation title"]')).toBe(title);
+        expect(title.value).toBe('Unsaved title');
         expect(deleteData.delete).not.toHaveBeenCalled();
     });
 

@@ -172,7 +172,7 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeTruthy();
     });
 
     it('should hide the sidebar collapse button in the sidebar header while collapsed', () => {
@@ -181,7 +181,7 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeNull();
     });
 
     it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
@@ -191,7 +191,7 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.changeDetectorRef.detectChanges();
 
-        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+        fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).triggerEventHandler('click');
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });

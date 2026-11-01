@@ -1,20 +1,28 @@
-import { Service, inject, signal } from '@angular/core';
+import { DestroyRef, Service, inject, signal } from '@angular/core';
 import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Service()
 export class DeleteDialogService {
     private dialogService = inject(TumAetUiDialogService);
+    private readonly destroyRef = inject(DestroyRef);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
 
     readonly dialogRef = signal<TumAetUiDialogRef | undefined>(undefined);
     private errorSubscription?: Subscription;
+
+    constructor() {
+        this.destroyRef.onDestroy(() => {
+            this.dialogRef()?.close();
+            this.errorSubscription?.unsubscribe();
+        });
+    }
 
     /**
      * Opens delete dialog
@@ -25,6 +33,18 @@ export class DeleteDialogService {
         this.alertService.closeAll();
         // Clean up any previous error subscription
         this.errorSubscription?.unsubscribe();
+        this.errorSubscription = undefined;
+
+        // Keep errors observable after confirmation closes, including synchronous results during rendering.
+        if (deleteDialogData.dialogError) {
+            const errorSubscription = deleteDialogData.dialogError.pipe(take(1)).subscribe((errorMessage: string) => {
+                if (errorMessage !== '') {
+                    this.alertService.error(errorMessage);
+                }
+                this.errorSubscription = undefined;
+            });
+            this.errorSubscription = errorSubscription.closed ? undefined : errorSubscription;
+        }
 
         const ref = this.dialogService.open<DeleteDialogComponent, unknown, DeleteDialogData>(DeleteDialogComponent, {
             header: this.getDialogHeader(deleteDialogData.actionType),
@@ -51,21 +71,10 @@ export class DeleteDialogService {
 
         this.dialogRef.set(ref ?? undefined);
 
-        // Subscribe to dialogError in the service (which stays alive) to handle errors
-        // even after the dialog is closed. This ensures errors are displayed via AlertService.
-        if (deleteDialogData.dialogError) {
-            this.errorSubscription = deleteDialogData.dialogError.subscribe((errorMessage: string) => {
-                if (errorMessage !== '') {
-                    this.alertService.error(errorMessage);
-                }
-                // Clean up subscription after receiving a response (success or error)
-                this.errorSubscription?.unsubscribe();
-                this.errorSubscription = undefined;
-            });
-        }
-
         ref?.onClose.subscribe(() => {
-            this.dialogRef.set(undefined);
+            if (this.dialogRef() === ref) {
+                this.dialogRef.set(undefined);
+            }
         });
     }
 
@@ -76,7 +85,9 @@ export class DeleteDialogService {
             cleanup: 'entity.cleanup.title',
             remove: 'entity.remove.title',
             unlink: 'entity.unlink.title',
+            noButtonTextDelete: 'entity.noButtonTextDelete.title',
             'no-button-text-delete': 'entity.noButtonTextDelete.title',
+            endNow: 'entity.endNow.title',
             'end-now': 'entity.endNow.title',
         };
         const key = headerKeys[actionType || 'delete'] || 'entity.delete.title';

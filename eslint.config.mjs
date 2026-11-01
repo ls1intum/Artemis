@@ -702,7 +702,7 @@ export default tseslint.config(
         },
     },
     {
-        // Regression lock: these modules are fully migrated to Tailwind + PrimeNG, so Bootstrap CSS classes are
+        // Regression lock: these modules are fully migrated to Tailwind + TUM AET UI, so Bootstrap CSS classes are
         // forbidden in their templates. Add each module here once it is fully Bootstrap-free. See client-development.mdx
         // (### Styling).
         files: [
@@ -753,6 +753,26 @@ export default tseslint.config(
             'src/main/webapp/app/assessment/**/*.html',
             'src/main/webapp/app/shared-ui/table-view/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/button/**/*.html',
+            'src/main/webapp/app/exercise/result/**/*.html',
+            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.html',
+            'src/main/webapp/app/exercise/example-solution/**/*.html',
+            'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
+            'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
+            'src/main/webapp/app/lecture/**/*.html',
+            'src/main/webapp/app/tutorialgroup/**/*.html',
+            'src/main/webapp/app/shared-ui/components/resizable-panels/**/*.html',
+            'src/main/webapp/app/shared-ui/components/buttons/confirm-autofocus-button/**/*.html',
+            'src/main/webapp/app/shared-ui/loading-indicator-overlay/**/*.html',
+            'src/main/webapp/app/shared-ui/loading-indicator-container/**/*.html',
+            'src/main/webapp/app/shared-ui/components/checklist-check/**/*.html',
+            'src/main/webapp/app/shared-ui/information-box/**/*.html',
+            'src/main/webapp/app/shared-ui/detail-overview-list/detail-overview-list.component.html',
+            'src/main/webapp/app/course/shared/course-sidebar-toggle-button/**/*.html',
+            'src/main/webapp/app/atlas/shared/competency-contribution/**/*.html',
+            'src/main/webapp/app/atlas/manage/orchestration-trigger/**/*.html',
+            'src/main/webapp/app/atlas/shared/orchestration-result-dialog/**/*.html',
+            'src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.html',
+            'src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.html',
         ],
         languageOptions: {
             parser: angularTemplateParser,

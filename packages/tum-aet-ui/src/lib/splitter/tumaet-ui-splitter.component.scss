@@ -1,5 +1,6 @@
 :host {
     display: flex;
+    flex: 1;
     width: 100%;
     height: 100%;
     min-width: 0;
@@ -8,6 +9,8 @@
 }
 
 .tumaet-ui-splitter-panel {
+    display: flex;
+    flex-direction: column;
     flex-basis: 0;
     min-width: 0;
     min-height: 0;
@@ -21,6 +24,11 @@
     justify-content: center;
     cursor: ew-resize;
     touch-action: none;
+    user-select: none;
+
+    &[hidden] {
+        display: none;
+    }
 
     &::after {
         content: '';
