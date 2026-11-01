@@ -3,6 +3,7 @@ import {
     ChangeDetectionStrategy,
     Component,
     ComponentRef,
+    ElementRef,
     EnvironmentInjector,
     OnDestroy,
     OnInit,
@@ -62,6 +63,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private static nextInstanceId = 0;
 
     private viewContainerRef = inject(ViewContainerRef);
+    private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private programmingExerciseTaskWrapper = inject(ProgrammingExerciseTaskExtensionWrapper);
@@ -559,7 +561,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
     private injectTasksIntoDocument = () => {
         this.tasks().forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise()?.id}-task-${id}`);
+            // Only this component's own markdown: another instance of the same exercise on the page, e.g. the editor's hidden one, has the same class names
+            const taskHtmlContainers = this.elementRef.nativeElement.getElementsByClassName(`pe-${this.exercise()?.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const taskHtmlContainer = taskHtmlContainers[i];

@@ -162,6 +162,8 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(comp.participation().submissions).toHaveLength(1);
             expect(comp.participation().submissions![0].results).toEqual([expect.objectContaining({ id: 72, feedbacks })]);
             expect(comp.latestResult()?.id).toBe(72);
+            // the problem statement beside the editor shows the tasks of this result
+            expect(comp.earlierSubmissionParticipation()).toBe(comp.participation());
             expect(comp.loadingParticipation()).toBe(false);
             expect(comp.participationCouldNotBeFetched()).toBe(false);
         });
@@ -217,6 +219,7 @@ describe('CodeEditorStudentContainerComponent', () => {
 
             expect(comp.participationCouldNotBeFetched()).toBe(true);
             expect(comp.viewedSubmission()).toBeUndefined();
+            expect(comp.earlierSubmissionParticipation()).toBeUndefined();
         });
     });
 });

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
@@ -90,6 +90,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     readonly numberOfSubmissionsForSubmissionPolicy = signal<number | undefined>(undefined);
     /** The earlier submission opened from the result history, shown read-only at its commit; undefined for the latest code. */
     readonly viewedSubmission = signal<ProgrammingSubmission | undefined>(undefined);
+    /** The participation narrowed to the viewed earlier submission, so the problem statement beside the editor shows its tasks. */
+    readonly earlierSubmissionParticipation = computed(() => (this.viewedSubmission() ? this.participation() : undefined));
 
     // Icons
     faCircleNotch = faCircleNotch;

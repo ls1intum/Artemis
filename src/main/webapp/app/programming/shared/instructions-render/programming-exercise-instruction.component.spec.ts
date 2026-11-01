@@ -1015,6 +1015,40 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         visibleInstance.comp.ngOnDestroy();
     });
 
+    it('should keep the tasks of its own problem statement when another component of the same exercise renders again', async () => {
+        // The online editor keeps a hidden problem statement of the same exercise beside the visible one. Its tasks used to be looked up in
+        // the whole document, so it took over the task containers of the visible one, and destroyed them, with their titles, on its next render.
+        vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'getLatestResultWithFeedback').mockReturnValue(of(undefined as unknown as Result));
+        const hiddenInstance = createComponentInstance();
+        const visibleInstance = createComponentInstance();
+        const exercise = createExercise(10, problemStatementWithIds);
+        document.body.append(hiddenInstance.fixture.nativeElement, visibleInstance.fixture.nativeElement);
+
+        for (const { fixture, comp } of [hiddenInstance, visibleInstance]) {
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', { id: 110 });
+            internals(comp).setupMarkdownSubscriptions();
+        }
+        const settle = async () => {
+            hiddenInstance.fixture.detectChanges();
+            visibleInstance.fixture.detectChanges();
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            TestBed.inject(ApplicationRef).tick();
+        };
+        await settle();
+
+        hiddenInstance.comp.forceReRenderProblemStatement();
+        await settle();
+
+        const visibleTask: HTMLElement = visibleInstance.fixture.nativeElement.querySelector('.pe-10-task-0');
+        expect(visibleTask.textContent).toContain('Implement Bubble Sort');
+        expect(internals(hiddenInstance.comp).taskComponentRefs).toHaveLength(2);
+        expect(internals(visibleInstance.comp).taskComponentRefs).toHaveLength(2);
+
+        hiddenInstance.comp.ngOnDestroy();
+        visibleInstance.comp.ngOnDestroy();
+    });
+
     it('should call setExerciseId with the exercise ID before each render', async () => {
         const setExerciseIdSpy = vi.spyOn(plantUmlExtension, 'setExerciseId');
 
