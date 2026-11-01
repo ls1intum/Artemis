@@ -18,6 +18,10 @@ public class InternalServerErrorException extends ErrorResponseException {
         super(HttpStatus.INTERNAL_SERVER_ERROR, asProblemDetail(message), null);
     }
 
+    public InternalServerErrorException(String message, Throwable cause) {
+        super(HttpStatus.INTERNAL_SERVER_ERROR, asProblemDetail(message), cause);
+    }
+
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         detail.setType(ErrorConstants.DEFAULT_TYPE);

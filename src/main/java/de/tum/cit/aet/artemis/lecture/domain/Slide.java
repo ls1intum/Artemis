@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,6 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -46,10 +48,55 @@ public class Slide extends DomainObject {
     @Column(name = "hidden")
     private ZonedDateTime hidden;
 
+    /**
+     * The version of the attachment file this slide was split from. Together with {@link #attachmentSha256Hash} it tells whether the slide belongs to the stored file, which
+     * the student version needs: it removes hidden slides from that file by slide number.
+     */
+    @JsonIgnore
+    @Column(name = "attachment_version")
+    private Integer attachmentVersion;
+
+    /**
+     * The SHA-256 hash of the attachment file this slide was split from, see {@link #attachmentVersion}.
+     */
+    @JsonIgnore
+    @Column(name = "attachment_sha256_hash", length = 64)
+    private String attachmentSha256Hash;
+
     // Exercise ID is retained to sync the Slide's hidden date with the Exercise's due date when linked
     @ManyToOne
     @JoinColumn(name = "exercise_id")
     private Exercise exercise;
+
+    public Integer getAttachmentVersion() {
+        return attachmentVersion;
+    }
+
+    public String getAttachmentSha256Hash() {
+        return attachmentSha256Hash;
+    }
+
+    /**
+     * Records that this slide was split from the given file revision of its attachment.
+     *
+     * @param version    the version of the attachment file
+     * @param sha256Hash the hash of the attachment file
+     */
+    public void setAttachmentRevision(Integer version, String sha256Hash) {
+        this.attachmentVersion = version;
+        this.attachmentSha256Hash = sha256Hash;
+    }
+
+    /**
+     * Whether this slide was split from the given file revision.
+     *
+     * @param version    the version of the attachment file
+     * @param sha256Hash the hash of the attachment file
+     * @return whether version and hash match, treating two missing values as equal
+     */
+    public boolean belongsToRevision(Integer version, String sha256Hash) {
+        return Objects.equals(attachmentVersion, version) && Objects.equals(attachmentSha256Hash, sha256Hash);
+    }
 
     public boolean isSuperseded() {
         return superseded;
