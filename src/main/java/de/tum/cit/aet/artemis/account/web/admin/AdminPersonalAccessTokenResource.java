@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.account.web.admin;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,8 @@ public class AdminPersonalAccessTokenResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminPersonalAccessTokenResource.class);
 
+    private static final Pattern LINE_BREAK = Pattern.compile("[\\r\\n]");
+
     private final PersonalAccessTokenService personalAccessTokenService;
 
     public AdminPersonalAccessTokenResource(PersonalAccessTokenService personalAccessTokenService) {
@@ -66,7 +69,8 @@ public class AdminPersonalAccessTokenResource {
     @EnforceAdmin
     public ResponseEntity<Void> revokePersonalAccessTokensOfUser(@PathVariable String login) {
         int revoked = personalAccessTokenService.revokeAllForLogin(login);
-        log.info("Revoked {} personal access tokens of user {}", revoked, login);
+        // The login comes from the URL path, so strip line breaks before logging it to prevent log injection
+        log.info("Revoked {} personal access tokens of user {}", revoked, LINE_BREAK.matcher(login).replaceAll("_"));
         return ResponseEntity.noContent().build();
     }
 }
