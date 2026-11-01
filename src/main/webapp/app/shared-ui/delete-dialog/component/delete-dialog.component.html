@@ -17,23 +17,33 @@
             <div class="entity-summary-table">
                 <table tumAetUiTable size="small">
                     <tbody>
-                        @for (category of categorizedEntitySummary()!; track category.titleKey) {
+                        @for (category of categorizedEntitySummary()!; track category.titleKey; let categoryIndex = $index) {
                             <tr class="category-header-row">
-                                <td colspan="4" class="category-header-cell">
+                                <th [id]="summaryId + '-category-' + categoryIndex" colspan="4" class="category-header-cell">
                                     <span [jhiTranslate]="category.titleKey"></span>
-                                </td>
+                                </th>
                             </tr>
-                            @for (pair of getItemPairs(category.items); track pair[0].labelKey) {
+                            @for (pair of getItemPairs(category.items); track pair[0].labelKey; let pairIndex = $index) {
                                 <tr class="summary-item-row">
-                                    <td class="item-label-cell">
+                                    <th [id]="summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-0'" class="item-label-cell">
                                         <span [jhiTranslate]="pair[0].labelKey"></span>
+                                    </th>
+                                    <td
+                                        [attr.headers]="summaryId + '-category-' + categoryIndex + ' ' + summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-0'"
+                                        class="item-value-cell"
+                                    >
+                                        {{ pair[0].value }}
                                     </td>
-                                    <td class="item-value-cell">{{ pair[0].value }}</td>
                                     @if (pair[1]) {
-                                        <td class="item-label-cell">
+                                        <th [id]="summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-1'" class="item-label-cell">
                                             <span [jhiTranslate]="pair[1].labelKey"></span>
+                                        </th>
+                                        <td
+                                            [attr.headers]="summaryId + '-category-' + categoryIndex + ' ' + summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-1'"
+                                            class="item-value-cell"
+                                        >
+                                            {{ pair[1].value }}
                                         </td>
-                                        <td class="item-value-cell">{{ pair[1].value }}</td>
                                     } @else {
                                         <td class="item-label-cell"></td>
                                         <td class="item-value-cell"></td>
@@ -52,9 +62,9 @@
                         @for (summaryKey of objectKeys(summary); track summaryKey) {
                             @if (summary[summaryKey] !== undefined) {
                                 <tr class="summary-item-row">
-                                    <td class="item-label-cell">
+                                    <th scope="row" class="item-label-cell">
                                         <span [jhiTranslate]="summaryKey"></span>
-                                    </td>
+                                    </th>
                                     <td class="item-value-cell">{{ summary[summaryKey] }}</td>
                                 </tr>
                             }

@@ -74,6 +74,7 @@
                             </label>
                             <input
                                 tumAetUiInput
+                                [id]="'feedbackText' + i"
                                 [tumAetUiInputId]="'feedbackText' + i"
                                 type="text"
                                 class="w-full"
@@ -99,6 +100,7 @@
                                     tumAetUiInput
                                     type="text"
                                     class="w-full"
+                                    [id]="'feedbackErrorText' + i"
                                     [tumAetUiInputId]="'feedbackErrorText' + i"
                                     name="feedbackErrorText{{ i }}"
                                     [(ngModel)]="feedback.detailText"
