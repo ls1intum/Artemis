@@ -90,8 +90,8 @@ export class TumAetUiSplitterComponent {
                 }
             }
             const next = this.clamp(initial);
-            // A parent may echo sizesChange while the same gesture is still in progress.
-            if (next !== untracked(this.size)) {
+            // Normalizing a parent's sizesChange echo can introduce insignificant rounding.
+            if (Math.abs(next - untracked(this.size)) > 1e-9) {
                 this.dragCleanup?.();
             }
             this.size.set(next);

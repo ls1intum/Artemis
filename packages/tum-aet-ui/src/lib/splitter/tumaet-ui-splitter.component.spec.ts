@@ -154,16 +154,43 @@ describe('TumAetUiSplitterComponent persistent panels and gesture cleanup', () =
         expect(input.value).toBe('Edited');
     });
 
-    it('continues a controlled drag when the parent echoes the emitted panel sizes', () => {
+    it.each([
+        { width: 1008, firstMove: 650, secondMove: 680, expected: 68 },
+        { width: 966, firstMove: 601, secondMove: 603, expected: 60.31315240083507 },
+    ])('continues a controlled drag at $width px when the parent echoes the emitted panel sizes', ({ width, firstMove, secondMove, expected }) => {
+        vi.spyOn(fixture.debugElement.query(By.directive(TumAetUiSplitterComponent)).nativeElement, 'getBoundingClientRect').mockReturnValue({
+            left: 0,
+            top: 0,
+            width,
+            height: 508,
+        } as DOMRect);
         host.echoChanges.set(true);
         pointer(separator, 'pointerdown', 600);
-        pointer(document, 'pointermove', 650);
+        pointer(document, 'pointermove', firstMove);
         expect(document.querySelector('[data-tumaet-splitter-shield]')).not.toBeNull();
-        pointer(document, 'pointermove', 680);
-        expect(host.changes.at(-1)).toEqual([68, 32]);
-        pointer(document, 'pointerup', 680);
-        expect(host.ends).toEqual([[68, 32]]);
+        pointer(document, 'pointermove', secondMove);
+        expect(host.changes).toHaveLength(2);
+        expect(host.changes[1][0]).toBeCloseTo(expected, 10);
+        expect(host.changes[1][1]).toBeCloseTo(100 - expected, 10);
+        pointer(document, 'pointerup', secondMove);
+        expect(host.ends).toHaveLength(1);
+        expect(host.ends[0][0]).toBeCloseTo(expected, 10);
+        expect(host.ends[0][1]).toBeCloseTo(100 - expected, 10);
         expect(document.querySelector('[data-tumaet-splitter-shield]')).toBeNull();
+    });
+
+    it('ends an active gesture when the parent replaces the panel sizes', () => {
+        pointer(separator, 'pointerdown', 600);
+        pointer(document, 'pointermove', 650);
+        host.sizes.set([45, 55]);
+        fixture.detectChanges();
+        expect(document.querySelector('[data-tumaet-splitter-shield]')).toBeNull();
+        expect(separator.getAttribute('aria-valuenow')).toBe('45');
+        pointer(document, 'pointermove', 680);
+        pointer(document, 'pointerup', 680);
+        expect(separator.getAttribute('aria-valuenow')).toBe('45');
+        expect(host.changes).toHaveLength(1);
+        expect(host.ends).toEqual([]);
     });
 
     it('drags across embedded frames, emits sizes and removes the drag shield on commit', () => {
