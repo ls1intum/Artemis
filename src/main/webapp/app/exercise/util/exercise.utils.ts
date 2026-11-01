@@ -217,13 +217,14 @@ export const withPracticeParticipations = (current: StudentParticipation[] | und
  * @param exercise
  */
 export const areManualResultsAllowed = (exercise: Exercise): boolean => {
+    const earlyAssessmentAllowed = !!exercise.isAtLeastInstructor && !exercise.exerciseGroup;
     if (exercise.type === ExerciseType.QUIZ) {
         return false;
     } else if (exercise.type !== ExerciseType.PROGRAMMING) {
-        return !!exercise.isAtLeastInstructor || !exercise.dueDate || dayjs().isAfter(exercise.dueDate);
+        return earlyAssessmentAllowed || !exercise.dueDate || dayjs().isAfter(exercise.dueDate);
     } else {
         const relevantDueDate = (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate ?? exercise.dueDate;
-        return exercise.assessmentType !== AssessmentType.AUTOMATIC && (!!exercise.isAtLeastInstructor || !relevantDueDate || dayjs().isAfter(relevantDueDate));
+        return exercise.assessmentType !== AssessmentType.AUTOMATIC && (earlyAssessmentAllowed || !relevantDueDate || dayjs().isAfter(relevantDueDate));
     }
 };
 

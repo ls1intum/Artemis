@@ -210,7 +210,6 @@ public class SubmissionService {
         // TODO: it really does not make sense to fetch these submissions with all related data from the database just to select one submission afterwards
         // it would be better to fetch them with minimal related data (so we can select one) and then afterwards fetch the selected one with all related data
 
-        var user = userRepository.getUserWithAuthorities();
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
@@ -219,13 +218,13 @@ public class SubmissionService {
         }
         else {
             // Get all participations of submissions that are submitted and do not already have a manual result.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsIgnoreTestRuns(exercise.getId(), ZonedDateTime.now(),
-                    authCheckService.isAtLeastInstructorForExercise(exercise, user));
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsIgnoreTestRuns(exercise.getId());
         }
 
         if (participations.isEmpty()) {
             return List.of();
         }
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                 .filter(submission -> assessmentEligibilityService.canStartAssessment(submission, exercise, correctionRound, user)).toList();
 
@@ -761,17 +760,18 @@ public class SubmissionService {
         if (isExamMode) {
             checkThatAssessmentIsPossibleElseThrow(exercise, null);
         }
-        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+        else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
             if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                        && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+                        && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())
+                        && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
                     throw new AccessForbiddenException("The due date to build and test of exercise '" + exercise.getTitle() + "' has not been reached yet.");
                 }
             }
 
-            if (exerciseDateService.isBeforeEarliestDueDate(exercise).orElse(false)) {
+            if (exerciseDateService.isBeforeEarliestDueDate(exercise).orElse(false) && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
