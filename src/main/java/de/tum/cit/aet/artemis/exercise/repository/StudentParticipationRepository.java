@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -1081,7 +1082,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :exerciseId
-                AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
                 AND p.testRun = FALSE
                 AND NOT EXISTS (
                     SELECT prs
@@ -1095,8 +1095,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.submitted = TRUE
                 AND s.id = (SELECT MAX(s3.id) FROM p.submissions s3)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId,
-            @Param("now") ZonedDateTime now);
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT p
@@ -2303,15 +2302,22 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param pageable         pagination information
      * @param sortOrder        ascending or descending
      * @param sortedColumn     the column to sort by
+     * @param teamOwnerId      tutor whose assigned teams to include, or null for all teams
+     * @param assessmentFilter optional assessment eligibility filter; also excludes practice participations
      * @return a page of participation IDs
      */
     default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
-            Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
+            Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn, @Nullable Long teamOwnerId,
+            @Nullable Specification<StudentParticipation> assessmentFilter) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
-                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
-                .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
-                .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
+                .and(StudentParticipationSpecs.ownedByTeamTutor(teamOwnerId)).and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode))
+                .and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff)).and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper));
 
+        if (assessmentFilter != null) {
+            spec = spec.and(StudentParticipationSpecs.isNotPracticeMode()).and(assessmentFilter);
+        }
+
+        spec = spec.and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
         Page<StudentParticipation> page = findAll(spec, unsortedPageable);
         return page.map(StudentParticipation::getId);

@@ -16,13 +16,15 @@ export class ExerciseAssessmentDashboardPage {
     }
 
     async clickStartNewAssessment(assessmentRound: number = 1) {
-        const startAssessingButton = this.page.locator('[data-testid="start-new-assessment"]').nth(assessmentRound - 1);
+        const startAssessingButton = this.page
+            .locator(`[data-testid="manage-assessment-link"][data-assessment-action="assess"][data-correction-round="${assessmentRound - 1}"]`)
+            .first();
         await Commands.reloadUntilFound(this.page, startAssessingButton);
         await startAssessingButton.click();
     }
 
     async clickOpenAssessment() {
-        await this.page.locator('[data-testid="open-assessment"]').click();
+        await this.page.locator('[data-testid="manage-assessment-link"][data-assessment-action="open"]').first().click();
     }
 
     async clickEvaluateComplaint() {

@@ -75,6 +75,8 @@ public class SubmissionService {
 
     private final ExerciseDateService exerciseDateService;
 
+    protected final SubmissionAssessmentEligibilityService assessmentEligibilityService;
+
     protected final SubmissionRepository submissionRepository;
 
     protected final ResultRepository resultRepository;
@@ -105,7 +107,7 @@ public class SubmissionService {
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
             ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, SubmissionAssessmentEligibilityService assessmentEligibilityService) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -120,6 +122,7 @@ public class SubmissionService {
         this.athenaApi = athenaApi;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.assessmentEligibilityService = assessmentEligibilityService;
     }
 
     /**
@@ -210,30 +213,20 @@ public class SubmissionService {
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
-            // No manual result means that no tutor has started an assessment for the corresponding submission yet.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
                     correctionRound);
         }
         else {
             // Get all participations of submissions that are submitted and do not already have a manual result.
-            // No manual result means that no user has started an assessment for the corresponding submission yet.
-            // Does not fetch participations for which the due date has not yet passed.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
-                    ZonedDateTime.now());
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsIgnoreTestRuns(exercise.getId());
         }
 
-        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
-
-        if (correctionRound > 0) {
-            // remove submission if user already assessed first correction round
-            // if disabled, please switch tutorAssessUnique within the tests
-            // TODO: we could move this check into the database call of the if clause above (examMode == true) to avoid fetching all results and assessors
-            final var user = userRepository.getUser();
-            submissionsWithoutResult = submissionsWithoutResult.stream().filter(submission -> {
-                final var resultForCorrectionRound = submission.getResultForCorrectionRound(correctionRound - 1);
-                return resultForCorrectionRound != null && !resultForCorrectionRound.getAssessor().equals(user);
-            }).toList();
+        if (participations.isEmpty()) {
+            return List.of();
         }
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .filter(submission -> assessmentEligibilityService.canStartAssessment(submission, exercise, correctionRound, user)).toList();
 
         if (!examMode && exercise.getDueDate() != null) {
             submissionsWithoutResult = selectOnlySubmissionsBeforeDueDate(submissionsWithoutResult);
@@ -678,6 +671,10 @@ public class SubmissionService {
     protected Result lockSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Result result = submission.getResultForCorrectionRound(correctionRound);
+        if (result == null || result.getAssessor() == null) {
+            assessmentEligibilityService.checkCanStartAssessmentElseThrow(submission, correctionRound);
+            checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+        }
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
             result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
@@ -752,7 +749,8 @@ public class SubmissionService {
     }
 
     /**
-     * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
+     * Checks if the exercise due date has passed, except for instructors assessing course exercises early.
+     * For exam exercises it checks if the latest possible exam end date has passed.
      *
      * @param exercise course exercise or exam exercise that is checked
      */
@@ -766,13 +764,14 @@ public class SubmissionService {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
             if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                        && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+                        && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())
+                        && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
                     throw new AccessForbiddenException("The due date to build and test of exercise '" + exercise.getTitle() + "' has not been reached yet.");
                 }
             }
 
-            if (exerciseDateService.isBeforeEarliestDueDate(exercise).orElse(false)) {
+            if (exerciseDateService.isBeforeEarliestDueDate(exercise).orElse(false) && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }

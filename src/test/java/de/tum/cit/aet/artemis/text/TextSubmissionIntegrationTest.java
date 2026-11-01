@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueRowDTO;
 import de.tum.cit.aet.artemis.exercise.dto.DetailedResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -711,6 +712,31 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission preserved = testSubmissionTestRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(existing.getId());
         assertThat(preserved.getText()).as("the result-bearing submission must not be overwritten by autosave").isEqualTo(originalText);
         assertThat(preserved.getResults()).as("the Athena result on the existing submission is preserved").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void assessmentQueueRetainsOwnedDraftAfterStudentAutosavesNewSubmission() throws Exception {
+        releasedTextExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        exerciseRepository.save(releasedTextExercise);
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        TextSubmission original = textExerciseUtilService.saveTextSubmission(releasedTextExercise, textSubmission, TEST_PREFIX + "student1");
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var assessment = request.get("/api/text/text-submissions/" + original.getId() + "/for-assessment", HttpStatus.OK, TextParticipationDTO.class);
+        long draftResultId = assessment.submissions().getFirst().results().getFirst().id();
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        var saved = request.putWithResponseBody("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions",
+                new TextSubmissionRequestDTO(original.getId(), "edited after assessment started", Language.ENGLISH, false), TextSubmissionResponseDTO.class, HttpStatus.OK);
+        assertThat(saved.id()).isNotEqualTo(original.getId());
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var rows = request.getList(
+                "/api/exercise/exercises/" + releasedTextExercise.getId() + "/assessment-queue?page=0&pageSize=20&sortingOrder=ASCENDING&sortedColumn=participationId",
+                HttpStatus.OK, AssessmentQueueRowDTO.class);
+        assertThat(rows).singleElement().satisfies(row -> assertThat(row.olderAssessmentDrafts()).singleElement()
+                .satisfies(draft -> assertThat(draft).extracting("submissionId", "resultId").containsExactly(original.getId(), draftResultId)));
     }
 
     @Test

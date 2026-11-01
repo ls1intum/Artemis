@@ -708,11 +708,21 @@ public class ProgrammingExercise extends Exercise {
      * @return true if manual results are allowed, false otherwise
      */
     public boolean areManualResultsAllowed() {
-        // Only allow manual results for programming exercises if option was enabled and due dates have passed;
+        return areManualResultsAllowed(false);
+    }
+
+    /**
+     * Checks manual assessment configuration, allowing instructors to assess course submissions before the deadline.
+     *
+     * @param instructor whether the current user is at least an instructor for this exercise
+     * @return whether manual results are allowed for the current user
+     */
+    public boolean areManualResultsAllowed(boolean instructor) {
+        // Manual assessment must be configured even for instructors.
         if (!isManualAssessmentConfigured()) {
             return false;
         }
-        if (isExamExercise()) {
+        if (isExamExercise() || instructor) {
             return true;
         }
 

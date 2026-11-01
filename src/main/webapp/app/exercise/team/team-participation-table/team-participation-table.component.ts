@@ -3,7 +3,7 @@ import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { Component, OnInit, ViewEncapsulation, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -18,7 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
+import { areManualResultsAllowed, getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
@@ -291,18 +291,10 @@ export class TeamParticipationTableComponent implements OnInit {
         if (!submission || !submission.submitted) {
             return true;
         }
-        // Exercises without due date can be assessed
-        if (!exercise.dueDate) {
-            return false;
-        }
-        // Programming exercises can only be assessed by anyone / all other exercises can be assessed by tutors
-        // if the exercise due date has passed
-        if (exercise.type === ExerciseType.PROGRAMMING || !exercise.isAtLeastInstructor) {
-            return !hasExerciseDueDatePassed(exercise, submission.participation);
-        } else if (exercise.isAtLeastInstructor) {
-            return false;
-        }
-        return true;
+        return (
+            !areManualResultsAllowed(exercise) ||
+            (!exercise.isAtLeastInstructor && !!getExerciseDueDate(exercise, submission.participation) && !hasExerciseDueDatePassed(exercise, submission.participation))
+        );
     }
 
     private onError(error: HttpErrorResponse) {

@@ -37,6 +37,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueRowDTO;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.DetailedParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.DetailedSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
@@ -228,6 +230,31 @@ public class ParticipationRetrievalResource {
 
         List<ParticipationNameExportDTO> result = participationService.getParticipationNamesForExport(exercise);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Gets assessment queue rows independently of participation management and the scores page.
+     *
+     * @param exerciseId the exercise to assess
+     * @param search     pagination, sorting and filtering parameters
+     * @return score rows with participant identities hidden unless the requester is an instructor or the team's tutor
+     */
+    @GetMapping("exercises/{exerciseId}/assessment-queue")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<List<AssessmentQueueRowDTO>> getAssessmentQueue(@PathVariable Long exerciseId, @Valid AssessmentQueueSearchDTO search) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        Long teamOwnerId = exercise.isTeamMode() && !authCheckService.isAtLeastInstructorForExercise(exercise) ? userRepository.getUser().getId() : null;
+        if (exercise.isExamExercise()) {
+            throw new AccessForbiddenException("Exam assessments use the correction-round submission queues.");
+        }
+        boolean hideParticipant = teamOwnerId == null && shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
+        Page<AssessmentQueueRowDTO> page = participationService.findAssessmentQueue(exercise, search, teamOwnerId);
+        if (hideParticipant) {
+            page = page.map(AssessmentQueueRowDTO::withoutParticipantInformation);
+        }
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 
     private boolean canSeeParticipant(StudentParticipation participation) {

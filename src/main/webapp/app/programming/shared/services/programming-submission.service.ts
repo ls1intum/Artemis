@@ -1,19 +1,17 @@
 import { OnDestroy, Service, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SelectedBuildRun, SelectedBuildRunStatus } from 'app/programming/shared/services/programming-build-run.service';
-import { SubmissionType, getAllResultsOfAllSubmissions, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/foundation/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submission-processing-dto';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -1013,27 +1011,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
-     * Returns programming submissions for exercise from the server
-     * @param exerciseId the id of the exercise
-     * @param req request parameters
-     * @param correctionRound for which to get the Submissions
-     */
-    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<ProgrammingSubmission[]>> {
-        const url = `api/programming/exercises/${exerciseId}/programming-submissions`;
-        let params = createRequestOption(req);
-        if (correctionRound !== 0) {
-            params = params.set('correction-round', correctionRound.toString());
-        }
-
-        return this.http
-            .get<ProgrammingSubmission[]>(url, {
-                params,
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<ProgrammingSubmission[]>) => ProgrammingSubmissionService.convertArrayResponse(res)));
-    }
-
-    /**
      * Returns next programming submission without assessment from the server
      * @param exerciseId the id of the exercise
      * @param lock
@@ -1063,23 +1040,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             params = params.set('correction-round', correctionRound.toString());
         }
         return this.http.get<ProgrammingSubmission>(`api/programming/programming-submissions/${submissionId}/lock`, { params });
-    }
-
-    private static convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
-        const submissions = res.body!;
-        const convertedSubmissions: ProgrammingSubmission[] = [];
-        for (const submission of submissions) {
-            this.convertItemWithLatestSubmissionResultFromServer(submission);
-            convertedSubmissions.push(deepClone(submission));
-        }
-        return res.clone({ body: convertedSubmissions });
-    }
-
-    private static convertItemWithLatestSubmissionResultFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
-        const convertedProgrammingSubmission = deepClone(programmingSubmission);
-        setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
-        convertedProgrammingSubmission.participation = ParticipationService.convertParticipationDatesFromServer(programmingSubmission.participation);
-        return convertedProgrammingSubmission;
     }
 
     /**

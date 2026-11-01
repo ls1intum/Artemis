@@ -18,7 +18,6 @@ import {
     FileUploadSubmissionDTO,
     FileUploadSubmissionInputDTO,
 } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -75,40 +74,6 @@ export class FileUploadSubmissionService {
         return this.http
             .get<FileUploadSubmissionDTO>(url, { params, observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadSubmissionDTO>) => this.convertFileSubmissionResponseFromServer(res)));
-    }
-
-    /**
-     * Lists file upload submissions with participant identities; requires instructor access.
-     * @param exerciseId the id of the exercise
-     * @param req request parameters
-     * @param correctionRound for which to get the Submissions
-     */
-    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByMe?: boolean }, correctionRound = 0): Observable<HttpResponse<FileUploadSubmission[]>> {
-        return this.getSubmissionList(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, req, correctionRound);
-    }
-
-    /** Lists the authenticated assessor's submissions with anonymous participants, including for instructors. */
-    getMyAssessedSubmissions(exerciseId: number, correctionRound = 0): Observable<HttpResponse<FileUploadSubmission[]>> {
-        return this.getSubmissionList(`api/fileupload/exercises/${exerciseId}/file-upload-submissions/assessed-by-me`, undefined, correctionRound);
-    }
-
-    private getSubmissionList(
-        url: string,
-        req: { submittedOnly?: boolean; assessedByMe?: boolean } | undefined,
-        correctionRound: number,
-    ): Observable<HttpResponse<FileUploadSubmission[]>> {
-        let params = createRequestOption(req);
-        if (correctionRound !== 0) {
-            params = params.set('correction-round', correctionRound.toString());
-        }
-        return this.http
-            .get<FileUploadSubmissionDTO[]>(url, {
-                params,
-                observe: 'response',
-            })
-            .pipe(
-                map((res: HttpResponse<FileUploadSubmissionDTO[]>) => res.clone({ body: res.body?.map((submission) => this.convertFileSubmissionFromServer(submission)) ?? null })),
-            );
     }
 
     /**

@@ -140,6 +140,7 @@
 @source './app/text/overview/text-editor';
 @source './app/fileupload/overview/file-upload-submission';
 @source './app/exercise/dashboards/tutor-leaderboard';
+@source './app/exercise/exercise-scores/manage-assessment-buttons';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/structured-grading-criterion/grading-instructions-details';

@@ -13,6 +13,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Submission, SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import dayjs from 'dayjs/esm';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('Submission Service', () => {
@@ -20,6 +21,43 @@ describe('Submission Service', () => {
     let httpMock: HttpTestingController;
     let expectedResult: any;
     let submission: TextSubmission;
+
+    it.each(
+        [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD].flatMap((type) => [false, true].map((instructor) => ({ type, instructor }))),
+    )('loads own exam assessments and one proposed submission for $type, instructor=$instructor', ({ type, instructor }) => {
+        const prefix = `api/${type.replace('-', '')}/exercises/7/${type}`;
+        const first = { id: 1, participation: { id: 11 }, results: [{ id: 21, correctionRound: 1 }] };
+        service.getExamAssessmentQueue(type, 7, 1, true, instructor).subscribe((submissions) => expect(submissions.map((submission) => submission.id)).toEqual([1, 2]));
+        const tutorRoute = type !== ExerciseType.PROGRAMMING && !instructor;
+        const own = httpMock.expectOne((request) => request.url === `${prefix}-submissions${tutorRoute ? '/assessed-by-me' : ''}`);
+        expect(own.request.params.get('correction-round')).toBe('1');
+        expect(own.request.params.has('assessedByTutor')).toBe(type === ExerciseType.PROGRAMMING);
+        expect(own.request.params.has('assessedByMe')).toBe(type !== ExerciseType.PROGRAMMING && instructor);
+        own.flush([first]);
+        const offered = httpMock.expectOne((request) => request.url === `${prefix}-submission-without-assessment`);
+        expect(offered.request.params.get('correction-round')).toBe('1');
+        expect(offered.request.params.has('head')).toBe(type === ExerciseType.TEXT);
+        offered.flush({ id: 2, participation: { id: 12 }, results: [] });
+    });
+
+    it('keeps own assessments when the lock limit prevents proposing another', () => {
+        service.getExamAssessmentQueue(ExerciseType.TEXT, 7, 0, true).subscribe((submissions) => expect(submissions.map((submission) => submission.id)).toEqual([1]));
+        httpMock.expectOne((request) => request.url.endsWith('/text-submissions/assessed-by-me')).flush([{ id: 1, participation: { id: 11 } }]);
+        httpMock
+            .expectOne((request) => request.url.endsWith('/text-submission-without-assessment'))
+            .flush({ errorKey: 'lockedSubmissionsLimitReached' }, { status: 400, statusText: 'Bad Request' });
+    });
+
+    it('does not request manual assessment queues for quizzes', () => {
+        service.getExamAssessmentQueue(ExerciseType.QUIZ, 7, 0, true).subscribe((submissions) => expect(submissions).toEqual([]));
+        httpMock.expectNone((request) => request.url.includes('/quiz'));
+    });
+
+    it('does not request a proposed assessment while the correction round is disabled', () => {
+        service.getExamAssessmentQueue(ExerciseType.PROGRAMMING, 7, 1, false).subscribe((submissions) => expect(submissions).toEqual([]));
+        httpMock.expectOne((request) => request.url.endsWith('/programming-submissions')).flush([]);
+        httpMock.expectNone((request) => request.url.endsWith('/programming-submission-without-assessment'));
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -290,7 +290,7 @@ describe('TeamParticipationTableComponent', () => {
         expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
-    it('Check disabled assessment button for programming exercises before due date as instructor', () => {
+    it('Check enabled assessment button for programming exercises before due date as instructor', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
             {
                 ...exercise4,
@@ -298,7 +298,16 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
+
+    it('keeps automatic programming exercises disabled for instructors', () => {
+        expect(comp.isAssessmentButtonDisabled({ ...exercise4, isAtLeastInstructor: true, assessmentType: AssessmentType.AUTOMATIC }, submission4)).toBe(true);
+    });
+
+    it('keeps a future individual deadline disabled for tutors', () => {
+        const submission = { ...submission3, participation: { individualDueDate: dayjs().add(1, 'day') } };
+        expect(comp.isAssessmentButtonDisabled({ ...exercise3, isAtLeastInstructor: false }, submission)).toBe(true);
     });
 
     it('Check enabled assessment button for exercises before due date as instructor', () => {
