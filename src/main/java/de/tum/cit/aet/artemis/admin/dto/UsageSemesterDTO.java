@@ -12,8 +12,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param label           human readable semester, e.g. "WS 2025/26" or "SS 2026"
  * @param courses         number of real courses that started in the semester
  * @param students        unique students enrolled in at least one of these courses
- * @param activeStudents  unique students with at least one submission in the semester
- * @param submissions     number of submissions of students in these courses during the semester
+ * @param activeStudents  unique students with at least one submission in an exercise of these courses, including their exams
+ * @param submissions     number of submissions of students in the exercises of these courses, regardless of the submission date
  * @param lectures        number of lectures in these courses
  * @param exercisesByType number of exercises in these courses, keyed by exercise type (all types present, possibly 0)
  */

@@ -7,12 +7,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,6 +96,21 @@ class PublicUsageStatisticsServiceTest {
         assertThat(semester.activeStudents()).isZero();
         assertThat(semester.exercisesByType()).containsOnlyKeys("text", "programming", "modeling", "file-upload", "quiz").containsEntry("programming", 3L).containsEntry("quiz",
                 0L);
+    }
+
+    @Test
+    void manyExercises_areQueriedInChunksAndTheCountsAreSummedPerStudent() {
+        givenOnlyTheNewestSemesterHasData();
+        Set<Long> manyExercises = LongStream.rangeClosed(1, PublicUsageStatisticsService.EXERCISE_IDS_PER_QUERY + 1L).boxed().collect(Collectors.toSet());
+        when(repository.findExerciseIdsOfCourses(THREE_COURSES)).thenReturn(manyExercises);
+        when(repository.countSubmissionsByStudent(any())).thenReturn(List.of(new StudentSubmissionCountDTO(1L, 3), new StudentSubmissionCountDTO(null, 1)))
+                .thenReturn(List.of(new StudentSubmissionCountDTO(1L, 4)));
+
+        var semester = service.getUsageStatistics().semesters().getFirst();
+
+        verify(repository, times(2)).countSubmissionsByStudent(any());
+        assertThat(semester.activeStudents()).isEqualTo(1);
+        assertThat(semester.submissions()).isEqualTo(8);
     }
 
     @Test

@@ -5,13 +5,17 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -55,6 +59,11 @@ public class PublicUsageStatisticsService {
 
     static final int NUMBER_OF_SEMESTERS = 4;
 
+    /**
+     * Exercises per submission query, far below the bind parameter limit of PostgreSQL (32767).
+     */
+    static final int EXERCISE_IDS_PER_QUERY = 5000;
+
     private final PublicUsageStatisticsRepository publicUsageStatisticsRepository;
 
     public PublicUsageStatisticsService(PublicUsageStatisticsRepository publicUsageStatisticsRepository) {
@@ -82,8 +91,7 @@ public class PublicUsageStatisticsService {
             return Optional.empty();
         }
         Set<Long> studentIds = publicUsageStatisticsRepository.findStudentIds(courseIds);
-        List<StudentSubmissionCountDTO> submissionCounts = publicUsageStatisticsRepository
-                .countSubmissionsByStudent(publicUsageStatisticsRepository.findExerciseIdsOfCourses(courseIds));
+        List<StudentSubmissionCountDTO> submissionCounts = countSubmissionsByStudent(publicUsageStatisticsRepository.findExerciseIdsOfCourses(courseIds));
         // Only submissions of counted students and of teams are published, so the numbers never include staff, test users or deleted users.
         var countedSubmissions = submissionCounts.stream().filter(count -> count.studentId() == null || studentIds.contains(count.studentId())).toList();
         long activeStudents = countedSubmissions.stream().filter(count -> count.studentId() != null).count();
@@ -91,6 +99,23 @@ public class PublicUsageStatisticsService {
         long lectures = publicUsageStatisticsRepository.countLectures(courseIds);
         return Optional.of(new UsageSemesterDTO(semester.label(), courseIds.size(), studentIds.size(), activeStudents, submissions, lectures,
                 exercisesByType(publicUsageStatisticsRepository.countExercisesByType(courseIds))));
+    }
+
+    /**
+     * Counts the submissions in chunks of exercises, because every exercise id of an {@code IN} list is a bind parameter and a large instance can
+     * exceed the limit of the database driver. Each submission belongs to exactly one exercise, so summing the counts of the chunks per student is exact.
+     * The entry without student id (team submissions) is merged like any other.
+     *
+     * @param exerciseIds the exercises of the real courses
+     * @return one entry per student, plus one entry without student id for team submissions
+     */
+    private List<StudentSubmissionCountDTO> countSubmissionsByStudent(Set<Long> exerciseIds) {
+        Map<Long, Long> submissionsByStudent = new HashMap<>();
+        for (List<Long> chunk : ListUtils.partition(new ArrayList<>(exerciseIds), EXERCISE_IDS_PER_QUERY)) {
+            publicUsageStatisticsRepository.countSubmissionsByStudent(new HashSet<>(chunk))
+                    .forEach(count -> submissionsByStudent.merge(count.studentId(), count.submissions(), Long::sum));
+        }
+        return submissionsByStudent.entrySet().stream().map(entry -> new StudentSubmissionCountDTO(entry.getKey(), entry.getValue())).toList();
     }
 
     /**
