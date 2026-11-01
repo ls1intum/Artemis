@@ -42,7 +42,7 @@ describe('TutorialGroupsChecklistComponent', () => {
                 fixture = TestBed.createComponent(TutorialGroupsChecklistComponent);
                 component = fixture.componentInstance;
                 courseManagementService = TestBed.inject(CourseManagementService);
-                getCourseSpy = vi.spyOn(courseManagementService, 'find').mockReturnValue(
+                getCourseSpy = vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: course,

@@ -29,8 +29,8 @@ readonly MINIMUM_DISK_GIB=40
 readonly K3S_VERSION="v1.37.1+k3s1"
 readonly K3S_INSTALLER_URL="https://raw.githubusercontent.com/k3s-io/k3s/356c025475bbefaa09cf0d7e48e8e2adbbde57db/install.sh"
 readonly K3S_INSTALLER_SHA256="ed01f89fd977bf20ac1516bbebf8370bf3ddbaa55dac8aba610956a4c78cc00b"
-readonly HELM_VERSION="v3.22.0"
-readonly HELM_INSTALLER_URL="https://raw.githubusercontent.com/helm/helm/144ca65f8501953fa8b41cd1d37c7223051c85b7/scripts/get-helm-3"
+readonly HELM_VERSION="v3.22.1"
+readonly HELM_INSTALLER_URL="https://raw.githubusercontent.com/helm/helm/d6c1a0e4027caa6abc7892e7ea9f0cda7447baa3/scripts/get-helm-3"
 readonly HELM_INSTALLER_SHA256="e4a604efcff328eef2b2c7e67445d609f333e3875b34420ebf4e5ae379d259bb"
 
 COMMAND="${1:-install}"

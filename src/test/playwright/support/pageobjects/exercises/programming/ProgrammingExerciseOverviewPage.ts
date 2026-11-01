@@ -113,11 +113,13 @@ export class ProgrammingExerciseOverviewPage {
         }
     }
 
-    /** Close the modal popover through its keyboard handler; its backdrop covers the trigger while open. */
+    /** Dismisses repository actions without clicking the trigger covered by the popover backdrop. */
     async closeCloneMenu() {
-        const popover = this.getRepositoryActionsDialog();
-        await popover.press('Escape');
-        await expect(popover).toBeHidden();
+        const dialog = this.getRepositoryActionsDialog();
+        if (await dialog.isVisible()) {
+            await dialog.press('Escape');
+        }
+        await expect(dialog).toBeHidden();
     }
 
     /**

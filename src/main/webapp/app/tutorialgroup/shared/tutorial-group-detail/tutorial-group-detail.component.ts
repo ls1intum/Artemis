@@ -1,3 +1,4 @@
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -26,7 +27,6 @@ import {
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { FormsModule } from '@angular/forms';
-import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
@@ -37,13 +37,11 @@ import { OneToOneChatService } from 'app/communication/conversations/service/one
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import {
     TutorialSessionCreateOrEditModalComponent,
     UpdateTutorialGroupSessionData,
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
-import { TooltipModule } from 'primeng/tooltip';
 import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/create-or-update-tutorial-group-session-request';
 
 interface TutorialGroupDetailSession {
@@ -105,6 +103,7 @@ export enum TutorialGroupDetailAccessLevel {
 @Component({
     selector: 'jhi-tutorial-group-detail',
     imports: [
+        TumAetUiTableDirective,
         ProfilePictureComponent,
         FaIconComponent,
         TranslateDirective,
@@ -115,12 +114,12 @@ export enum TutorialGroupDetailAccessLevel {
         TutorialGroupDetailSessionStatusIndicatorComponent,
         NgClass,
         RouterLink,
-        ConfirmDialogModule,
+        TumAetUiConfirmDialogComponent,
         TutorialSessionCreateOrEditModalComponent,
-        TooltipModule,
+        TumAetUiTooltipDirective,
         CourseSidebarToggleButtonComponent,
     ],
-    providers: [ConfirmationService],
+    providers: [TumAetUiConfirmationService],
     templateUrl: './tutorial-group-detail.component.html',
     styleUrl: './tutorial-group-detail.component.scss',
 })
@@ -129,7 +128,7 @@ export class TutorialGroupDetailComponent {
     private translateService = inject(TranslateService);
     private oneToOneChatService = inject(OneToOneChatService);
     private alertService = inject(AlertService);
-    private confirmationService = inject(ConfirmationService);
+    private confirmationService = inject(TumAetUiConfirmationService);
     private router = inject(Router);
     activatedRoute = inject(ActivatedRoute);
 
@@ -211,38 +210,26 @@ export class TutorialGroupDetailComponent {
         }
     }
 
-    confirmTutorialGroupDeletion(event: Event) {
+    confirmTutorialGroupDeletion(_event: Event) {
         this.confirmationService.confirm({
-            target: event.target as EventTarget,
             message: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteGroup.message'),
             header: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteGroup.header'),
-            rejectButtonProps: {
-                label: this.translateService.instant('entity.action.cancel'),
-                severity: 'secondary',
-            },
-            acceptButtonProps: {
-                label: this.translateService.instant('entity.action.delete'),
-                severity: 'danger',
-            },
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptLabel: this.translateService.instant('entity.action.delete'),
+            acceptSeverity: 'danger',
             accept: () => {
                 this.deleteTutorialGroup();
             },
         });
     }
 
-    confirmSessionDeletion(event: Event, sessionId: number) {
+    confirmSessionDeletion(_event: Event, sessionId: number) {
         this.confirmationService.confirm({
-            target: event.target as EventTarget,
             message: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteSession.message'),
             header: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteSession.header'),
-            rejectButtonProps: {
-                label: this.translateService.instant('entity.action.cancel'),
-                severity: 'secondary',
-            },
-            acceptButtonProps: {
-                label: this.translateService.instant('entity.action.delete'),
-                severity: 'danger',
-            },
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptLabel: this.translateService.instant('entity.action.delete'),
+            acceptSeverity: 'danger',
             accept: () => {
                 this.deleteTutorialGroupSession(sessionId);
             },
@@ -388,19 +375,19 @@ export class TutorialGroupDetailComponent {
     private computePieChartColors(): string[] {
         const averageAttendanceRatio = this.averageAttendanceRatio();
         if (averageAttendanceRatio === undefined) {
-            return [GraphColors.LIGHT_GREY];
+            return ['var(--tumaet-ui-disabled-background)'];
         } else {
             let color: string;
             if (averageAttendanceRatio >= 0.9) {
-                color = 'var(--red)';
+                color = 'var(--tumaet-ui-state-danger)';
             } else if (averageAttendanceRatio >= 0.8) {
-                color = 'var(--orange)';
+                color = 'color-mix(in srgb, var(--tumaet-ui-state-warning) 50%, var(--tumaet-ui-state-danger))';
             } else if (averageAttendanceRatio >= 0.7) {
-                color = 'var(--yellow)';
+                color = 'var(--tumaet-ui-state-warning)';
             } else {
-                color = 'var(--green)';
+                color = 'var(--tumaet-ui-state-success)';
             }
-            return [color, GraphColors.LIGHT_GREY];
+            return [color, 'var(--tumaet-ui-disabled-background)'];
         }
     }
 

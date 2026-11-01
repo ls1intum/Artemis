@@ -10,7 +10,7 @@ buildscript {
             // Plugin dependencies resolve independently of the application constraint below.
             // Guava < 33.7.2 is affected by CVE-2026-102554 (deserialization memory exhaustion).
             force "com.google.guava:guava:33.7.2-jre"
-            force "com.github.jknack:handlebars:4.5.5"
+            force "com.github.jknack:handlebars:4.5.7"
             // Force the patched Apache HttpComponents onto the build-script / plugin classpath too. The
             // org.owasp.dependencycheck and org.springframework.boot plugins drag in httpclient5 5.6.1 /
             // httpcore5 5.4.2 / httpcore5-h2 5.4, which the GitHub dependency graph reports and Dependabot flags
@@ -116,7 +116,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.5"
+version = "10.6"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -463,7 +463,6 @@ dependencies {
         }
     }
 
-    // Sentry depends on this
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.26.1"
     // Declared explicitly so the direct version wins over the log4j-bom version managed by the Spring Boot BOM, which
     // still sits in the range vulnerable to the improper encoding of non-finite floating-point values during
@@ -500,9 +499,6 @@ dependencies {
     }
 
     implementation "com.thoughtworks.qdox:qdox:2.2.0"
-    implementation "io.sentry:sentry-logback:${sentry_version}"
-    // Use sentry-spring-boot-4-starter for Spring Boot 4 compatibility (replaces sentry-spring-boot-starter-jakarta)
-    implementation "io.sentry:sentry-spring-boot-4-starter:${sentry_version}"
 
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
@@ -727,7 +723,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
     // needed for OpenAPI generation (v3 required for Spring Boot 4)
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -778,11 +774,11 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:9.8.2"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.0"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.1"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:${testcontainers_redis_version}"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
-    testImplementation "com.icegreen:greenmail-junit5:2.1.14"
+    testImplementation "com.icegreen:greenmail-junit5:2.1.15"
     testImplementation "com.tngtech.archunit:archunit:1.5.1"
 
     // we only need the database present at runtime
@@ -952,5 +948,5 @@ tasks.named("dependencyUpdates").configure {
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp
-// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp
+// 15) Generate OpenAPI spec:                       ./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp
 // 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp

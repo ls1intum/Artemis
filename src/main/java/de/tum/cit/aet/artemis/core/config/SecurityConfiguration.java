@@ -42,9 +42,12 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.security.PersonalAccessTokenFilter;
 import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.account.service.PersonalAccessTokenService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.UploadedFileHeaderWriter;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -243,8 +246,8 @@ public class SecurityConfiguration {
     /**
      * Defines the hierarchy of roles within the application's security context.
      * <p>
-     * Administrator identity and teaching roles are separate. Administrators remain regular users, but only explicit teaching authorities or passkey-backed administrator elevation
-     * can satisfy teaching-role authorization.
+     * Global authorities only tell administrators and signed-in users apart. Teaching roles are not global: they belong to a course and are decided from the course roles in the
+     * database, and an administrator satisfies them only through passkey-backed administrator elevation.
      * </p>
      *
      * <p>
@@ -261,7 +264,7 @@ public class SecurityConfiguration {
         return RoleHierarchyImpl.fromHierarchy("""
                 ROLE_SUPER_ADMIN > ROLE_ADMIN
                 ROLE_ADMIN > ROLE_USER
-                ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS
+                ROLE_USER > ROLE_ANONYMOUS
                 """);
     }
 
@@ -294,14 +297,18 @@ public class SecurityConfiguration {
      * </ul>
      * </p>
      *
-     * @param http          The {@link HttpSecurity} object to configure security settings for HTTP requests.
-     * @param entryPoint    The {@link AuthenticationEntryPoint} to handle unauthenticated requests.
-     * @param deniedHandler The {@link AccessDeniedHandler} to handle access denied responses.
+     * @param http                       The {@link HttpSecurity} object to configure security settings for HTTP requests.
+     * @param entryPoint                 The {@link AuthenticationEntryPoint} to handle unauthenticated requests.
+     * @param deniedHandler              The {@link AccessDeniedHandler} to handle access denied responses.
+     * @param personalAccessTokenService Resolved when a request arrives for the same reason as the elevated access service: the service exists only
+     *                                       when {@code artemis.agent-access.enabled} is true, and no request without a personal access token needs it.
+     *                                       A parameter of this method rather than of the constructor keeps the constructor within the dependency limit.
      * @return The configured {@link SecurityFilterChain}.
      * @throws Exception If an error occurs during the configuration process.
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint, AccessDeniedHandler deniedHandler) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint, AccessDeniedHandler deniedHandler,
+            ObjectProvider<PersonalAccessTokenService> personalAccessTokenService) throws Exception {
         // @formatter:off
         http
             // Disables Spring Security's CSRF token protection. Note what does and does not make that safe here:
@@ -329,6 +336,8 @@ public class SecurityConfiguration {
             .csrf(CsrfConfigurer::disable)
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+            // Authenticates personal access tokens (bearer tokens starting with art_pat_) on /api/ requests. Inert unless agent access is enabled.
+            .addFilterBefore(new PersonalAccessTokenFilter(personalAccessTokenService), UsernamePasswordAuthenticationFilter.class)
             // Configures exception handling with a custom entry point and access denied handler for authentication issues.
             .exceptionHandling(handler -> handler.authenticationEntryPoint(entryPoint).accessDeniedHandler(deniedHandler))
             // Adds a custom filter for Single Page Applications (SPA), i.e. the client, after the basic authentication filter.
@@ -346,7 +355,9 @@ public class SecurityConfiguration {
                 // Disables HTTP Strict Transport Security as it is managed at the reverse proxy level (typically nginx).
                 .httpStrictTransportSecurity((HeadersConfigurer.HstsConfig::disable))
                 // Defines Permissions Policy to restrict what features the browser is allowed to use.
-                .permissionsPolicyHeader(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
+                .permissionsPolicyHeader(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()"))
+                // Replaces the policy above for uploaded files, which must never run scripts in the Artemis origin. Added last so it overrides the policy above.
+                .addHeaderWriter(new UploadedFileHeaderWriter()))
             // Configures sessions to be stateless; appropriate for REST APIs where no session is required.
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // Configures authorization for various URL patterns. The patterns are considered in order.
@@ -387,6 +398,9 @@ public class SecurityConfiguration {
                         new AuthorizationDecision(elevatedAccessService.getObject().isAdminElevationActive(authentication.get())))
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
+                    // The agent API group of the specification generation, see OpenAPIConfiguration#agentApi. Like the two above, it
+                    // answers only while springdoc is enabled, which it is not on a running server.
+                    .requestMatchers(("/api-docs/agent")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
                     .requestMatchers("/api/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile

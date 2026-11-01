@@ -1,18 +1,18 @@
-<div class="row mb-3 d-flex justify-content-center">
-    <div class="col-xl-1 d-flex flex-column">
+<div class="grid grid-cols-12 gap-4 mb-3 justify-center">
+    <div class="col-span-12 xl:col-span-1 flex flex-col">
         <h3 jhiTranslate="artemisApp.course.averageScore"></h3>
         <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage() }}%</h4>
     </div>
-    <div class="row col-xl-11 chart-row">
+    <div class="col-span-12 grid grid-cols-12 gap-4 xl:col-span-11 chart-row">
         <fa-icon
             [icon]="faArrowLeft"
             size="2x"
-            class="col-1 d-flex align-items-center justify-content-end"
+            class="col-span-1 flex items-center justify-end"
             role="button"
             (click)="switchTimeSpan(LEFT)"
             [class.hidden]="!(currentSize() > MAX_SPAN_SIZE && currentPeriod() > 0)"
         />
-        <div class="col-lg-8 ps-0 chart-container" style="height: 300px">
+        <div class="col-span-12 lg:col-span-8 ps-0 chart-container" style="height: 300px">
             <tumaet-ui-bar-chart
                 [labels]="chartData().labels"
                 [series]="chartData().series"
@@ -25,7 +25,7 @@
         <fa-icon
             [icon]="faArrowRight"
             size="2x"
-            class="col-1 d-flex align-items-center switch-forward"
+            class="col-span-1 flex items-center switch-forward"
             role="button"
             (click)="switchTimeSpan(RIGHT)"
             [class.hidden]="!(currentSize() > MAX_SPAN_SIZE + currentPeriod())"
@@ -33,15 +33,14 @@
         <ng-template #placeholder>
             <div class="switch-forward-placeholder"></div>
         </ng-template>
-        <div class="col-lg-2 d-flex flex-column align-items-center justify-content-center">
+        <div class="col-span-12 lg:col-span-2 flex flex-col items-center justify-center">
             @if (exerciseTypeFilter.typeSet.size > 0) {
-                <div class="filter my-3" aria-label="Filter Dropdown" ngbDropdown>
+                <div class="filter my-3" aria-label="Filter Dropdown">
                     <button
+                        tumAetUiButton
                         type="button"
-                        class="btn"
-                        [class.btn-secondary]="!(chartCategoryFilter.numberOfActiveFilters + exerciseTypeFilter.numberOfActiveFilters)"
-                        [class.btn-success]="chartCategoryFilter.numberOfActiveFilters + exerciseTypeFilter.numberOfActiveFilters > 0"
-                        ngbDropdownToggle
+                        [severity]="chartCategoryFilter.numberOfActiveFilters + exerciseTypeFilter.numberOfActiveFilters > 0 ? 'success' : 'secondary'"
+                        [tumAetUiPopoverTrigger]="filterPopover"
                         id="filter-dropdown-button"
                     >
                         <fa-icon [icon]="faFilter" />
@@ -50,64 +49,71 @@
                             [translateValues]="{ num: exerciseTypeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }"
                         ></span>
                     </button>
-                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                        @if (exerciseTypeFilter.typeSet.size) {
-                            <li>
-                                <b class="ms-2" jhiTranslate="artemisApp.exercise-scores-chart.includeType"></b>
+                    <tumaet-ui-popover
+                        #filterPopover
+                        [ariaLabel]="
+                            'artemisApp.courseOverview.exerciseList.filter'
+                                | artemisTranslate: { num: exerciseTypeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }
+                        "
+                        ><ul class="whitespace-nowrap space-y-2">
+                            @if (exerciseTypeFilter.typeSet.size) {
+                                <li>
+                                    <b class="ms-2" jhiTranslate="artemisApp.exercise-scores-chart.includeType"></b>
+                                </li>
+                            }
+                            @for (type of exerciseTypeFilter.typeSet; track type) {
+                                <li>
+                                    <label>
+                                        <input
+                                            class="ms-2 accent-primary"
+                                            (change)="toggleType(type)"
+                                            [checked]="exerciseTypeFilter.getCurrentFilterState(convertToMapKey(type))"
+                                            type="checkbox"
+                                        />
+                                        <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase().replace('-', '_') + 'Plural' | artemisTranslate }}</span>
+                                    </label>
+                                </li>
+                            }
+                            <li class="mt-1 mb-1">
+                                <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></b>
                             </li>
-                        }
-                        @for (type of exerciseTypeFilter.typeSet; track type) {
                             <li>
-                                <label>
-                                    <input
-                                        class="ms-2 form-check-input"
-                                        (change)="toggleType(type)"
-                                        [checked]="exerciseTypeFilter.getCurrentFilterState(convertToMapKey(type))"
-                                        type="checkbox"
-                                    />
-                                    <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase().replace('-', '_') + 'Plural' | artemisTranslate }}</span>
+                                <label class="mb-1">
+                                    <input class="ms-2 accent-primary" (change)="toggleAllCategories()" [checked]="chartCategoryFilter.allCategoriesSelected" type="checkbox" />
+                                    <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"></b>
                                 </label>
                             </li>
-                        }
-                        <li class="mt-1 mb-1">
-                            <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></b>
-                        </li>
-                        <li>
-                            <label class="mb-1">
-                                <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="chartCategoryFilter.allCategoriesSelected" type="checkbox" />
-                                <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"></b>
-                            </label>
-                        </li>
-                        @if (chartCategoryFilter.exercisesWithoutCategoriesPresent) {
-                            <li>
-                                <label>
-                                    <input
-                                        class="ms-2 form-check-input"
-                                        (change)="toggleExercisesWithNoCategory()"
-                                        [checked]="chartCategoryFilter.includeExercisesWithNoCategory"
-                                        type="checkbox"
-                                    />
-                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.exercisesWithNoCategories"></span>
-                                </label>
-                            </li>
-                        }
-                        @for (category of chartCategoryFilter.exerciseCategories; track category) {
-                            <li>
-                                <label>
-                                    <input
-                                        class="ms-2 form-check-input"
-                                        (change)="toggleCategory(category)"
-                                        [checked]="chartCategoryFilter.getCurrentFilterState(category)"
-                                        type="checkbox"
-                                    />
-                                    <span class="ms-2">{{ category }}</span>
-                                </label>
-                            </li>
-                        }
-                    </ul>
+                            @if (chartCategoryFilter.exercisesWithoutCategoriesPresent) {
+                                <li>
+                                    <label>
+                                        <input
+                                            class="ms-2 accent-primary"
+                                            (change)="toggleExercisesWithNoCategory()"
+                                            [checked]="chartCategoryFilter.includeExercisesWithNoCategory"
+                                            type="checkbox"
+                                        />
+                                        <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.exercisesWithNoCategories"></span>
+                                    </label>
+                                </li>
+                            }
+                            @for (category of chartCategoryFilter.exerciseCategories; track category) {
+                                <li>
+                                    <label>
+                                        <input
+                                            class="ms-2 accent-primary"
+                                            (change)="toggleCategory(category)"
+                                            [checked]="chartCategoryFilter.getCurrentFilterState(category)"
+                                            type="checkbox"
+                                        />
+                                        <span class="ms-2">{{ category }}</span>
+                                    </label>
+                                </li>
+                            }
+                        </ul></tumaet-ui-popover
+                    >
                 </div>
             }
-            <div class="d-flex align-items-center">
+            <div class="flex items-center">
                 <div class="legend-container">
                     @for (interval of performanceIntervals; track interval) {
                         <div

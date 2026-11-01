@@ -91,7 +91,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
      * exercise come back in one query, so opening a "build all" does not cost a round trip per student.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void readingTheTriggerInputsOfAnExerciseIsOneQuery() throws Exception {
         createParticipationsWithSubmissions(4);
 
@@ -116,7 +116,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
      * exam exercise, the individual working period check actually look at.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void theDetachedParticipationCarriesEverythingTheTriggerReads() throws Exception {
         createParticipationsWithSubmissions(1);
         var exercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
@@ -152,7 +152,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
      * separate lookups the trigger would otherwise make. Measured, this case went from five queries to four.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggeringOneParticipationResolvesThePerExerciseWorkOnce() throws Exception {
         var participations = participationEntitiesWithSubmissions(1);
 
@@ -163,7 +163,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggeringManyParticipationsOnlyAddsOneQueryEach() throws Exception {
         int participationCount = 4;
         var participations = participationEntitiesWithSubmissions(participationCount);
@@ -181,7 +181,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
      * is loaded again and the only query per participation is the insert of its build job.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggeringFromTheProjectionOnlyAddsOneQueryEach() throws Exception {
         int participationCount = 4;
         List<ParticipationBuildTriggerDTO> triggerData = createParticipationsWithSubmissions(participationCount);

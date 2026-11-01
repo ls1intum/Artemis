@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, BuildJobDetail } from 'app/localci/shared/entities/build-job.model';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';

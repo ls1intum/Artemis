@@ -331,7 +331,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void requestAthenaFeedback_shouldDispatchForInstructorTestRun() {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -348,7 +348,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void requestAthenaFeedback_shouldRejectTestRunWhileAnotherTestRunIsUnsubmitted() {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -593,7 +593,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void requestAthenaFeedback_shouldDispatchTheCurrentAnswerWhenItWasSavedAfterHandIn() {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -828,7 +828,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void getAthenaFeedbackUsage_shouldCountTestRunsInTheirOwnBucket() {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -848,7 +848,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
     class RestEndpoints {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void restRequestAthenaFeedback_shouldReturnOkForOwnTestRunAndCountItInTheTestRunBucket() throws Exception {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -889,7 +889,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void restRequestAthenaFeedback_shouldReturnForbiddenForOwnTestRunAfterInstructorAccessWasRevoked() throws Exception {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);

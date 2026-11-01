@@ -12,7 +12,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 

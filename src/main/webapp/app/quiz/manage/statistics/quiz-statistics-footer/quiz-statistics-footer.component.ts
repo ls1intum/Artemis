@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
@@ -57,7 +58,10 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((quizExercise) => this.loadQuiz(quizExercise));
+                (isExamExerciseRoute(this.route.snapshot)
+                    ? this.quizExerciseService.findForExam(params['exerciseId'])
+                    : this.quizExerciseService.find(params['exerciseId'])
+                ).subscribe((quizExercise) => this.loadQuiz(quizExercise));
             }
         });
 

@@ -16,7 +16,7 @@
             display: contents;
 
             .danger {
-                color: var(--danger);
+                color: var(--tumaet-ui-state-danger);
             }
 
             // The picker and its error message share the single grid cell opposite the label, stacked.
@@ -28,11 +28,11 @@
 
             .field-error {
                 font-size: 12px;
-                color: var(--danger);
+                color: var(--tumaet-ui-state-danger);
             }
 
             .required-asterisk {
-                color: var(--danger);
+                color: var(--tumaet-ui-state-danger);
             }
         }
     }

@@ -476,12 +476,12 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
         return;
     }
     await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
-    await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
+    await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id, undefined, undefined, undefined, 'exam');
     // Two builds are in flight here: the after-due-date one the server scheduled for ten seconds after the exam
     // ended, and the instructor trigger above. The wait returns after whichever lands first, so without settling
     // the second result is still being written while the caller starts assessing - and the manual submit is then
     // rejected with a 404 or 409 that surfaces much later as a wrong-score assertion.
-    await Commands.waitForExerciseResultsToSettle(page, exerciseAPIRequests, programmingExercise.id);
+    await Commands.waitForExerciseResultsToSettle(page, exerciseAPIRequests, programmingExercise.id, undefined, undefined, undefined, 'exam');
     // The "Run Tests after Due Date" date does not have to be moved here: the exercise is created with it set to
     // `getExamBuildAndTestAfterDueDate(exam)`, which is ten seconds after the exam ends with its grace period, and
     // this helper only runs once the exam is over. Writing it again through the timeline endpoint used to be part of

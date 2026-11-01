@@ -589,7 +589,7 @@ describe('TumAetUiTabs family (appearance)', () => {
                 <tumaet-ui-tab [value]="2">Statement</tumaet-ui-tab>
             </tumaet-ui-tab-list>
             <tumaet-ui-tab-panels>
-                <tumaet-ui-tab-panel [value]="1" preserveContent><span class="kept">Files</span></tumaet-ui-tab-panel>
+                <tumaet-ui-tab-panel [value]="1" [fill]="fill()" preserveContent><span class="kept">Files</span></tumaet-ui-tab-panel>
                 <tumaet-ui-tab-panel [value]="2"><span class="discarded">Statement</span></tumaet-ui-tab-panel>
             </tumaet-ui-tab-panels>
         </tumaet-ui-tabs>
@@ -597,6 +597,7 @@ describe('TumAetUiTabs family (appearance)', () => {
     imports: [TumAetUiTabsComponent, TumAetUiTabListComponent, TumAetUiTabComponent, TumAetUiTabPanelsComponent, TumAetUiTabPanelComponent],
 })
 class PreserveContentHostComponent {
+    readonly fill = signal(true);
     readonly value = signal<number | string>(1);
 }
 
@@ -629,6 +630,16 @@ describe('TumAetUiTabPanelComponent preserveContent', () => {
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('.kept')).nativeElement).toBe(content);
         fixture.componentInstance.value.set(1);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.kept')).nativeElement).toBe(content);
+    });
+
+    it('keeps the same preserved content when its fill layout changes', () => {
+        const content = fixture.debugElement.query(By.css('.kept')).nativeElement;
+        fixture.componentInstance.fill.set(false);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.kept')).nativeElement).toBe(content);
+        fixture.componentInstance.fill.set(true);
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('.kept')).nativeElement).toBe(content);
     });

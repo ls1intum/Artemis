@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamResultSummaryComponent } from '../../../overview/summary/exam-result-summary.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
@@ -26,7 +27,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
                 <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
             </button>
         </ng-template>
-        <jhi-exam-participation-summary #summary [studentExam]="studentExam()!" [instructorView]="true" />
+        <jhi-exam-participation-summary #summary [studentExam]="studentExam()!" [instructorView]="true" [managementGradeInfo]="studentExamWithGrade()" />
     `,
     imports: [
         ExamResultSummaryComponent,
@@ -41,6 +42,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class StudentExamSummaryComponent implements OnInit {
     private route = inject(ActivatedRoute);
 
+    readonly studentExamWithGrade = signal<StudentExamWithGradeDTO | undefined>(undefined);
     readonly studentExam = signal<StudentExam | undefined>(undefined);
     readonly summaryComponent = viewChild<ExamResultSummaryComponent>('summary');
     readonly faPrint = faPrint;
@@ -53,6 +55,9 @@ export class StudentExamSummaryComponent implements OnInit {
      * Initialize the studentExam
      */
     ngOnInit(): void {
-        this.route.data.subscribe(({ studentExam: studentExamWithGrade }) => this.studentExam.set(studentExamWithGrade.studentExam));
+        this.route.data.subscribe(({ studentExam: studentExamWithGrade }) => {
+            this.studentExamWithGrade.set(studentExamWithGrade);
+            this.studentExam.set(studentExamWithGrade.studentExam);
+        });
     }
 }
