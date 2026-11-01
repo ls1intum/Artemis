@@ -78,9 +78,17 @@ unified diffs:
    snapshot that was emitted without any omission or truncation.
 
 Diffs contain changed lines with surrounding context, together with file paths, abbreviated commit hashes, and
-submission timestamps. The model receives this history and classifies the participation as malicious or benign, with a
+submission timestamps. Every text file is included, shell and batch scripts as well. Binary files, such as images or
+archives, are left out; their names are still checked for imitated markers. The model receives this history and classifies the participation as malicious or benign, with a
 short rationale. It is instructed to look for patterns across snapshots, such as incremental probing or escalation,
 not only for a single incriminating line.
+
+Independently of the model, Artemis checks the complete content of every snapshot, and every file path, for text that
+imitates the markers separating student code from the instructions to the model, such as
+`---END UNTRUSTED DATA ...---`. Case, spacing and the identifier do not matter, and text around the marker, for
+example a comment sign, does not hide it. The check covers files that the size limits below keep from the model, so
+padding a submission does not hide a forged marker from it. A marker that the exercise template already contains is
+not attributed to the student. A hit is reported as a *manipulation attempt*.
 
 ### Snapshots are not commits
 
@@ -91,23 +99,27 @@ to be finer-grained than the snapshots the model was shown.
 
 ### Size limits and truncation
 
-The payload sent to the model is bounded, so a single very large participation cannot consume the whole run:
+The payload sent to the model is bounded, so a single very large participation cannot consume the whole run. Your
+administrator can change these bounds; the defaults are:
 
-| Bound | Value | Effect |
+| Bound | Default | Effect |
 | --- | --- | --- |
 | Input size per file | 256 KiB | Files above this are not diffed at all. |
 | Diff size per file | 32 KiB | Larger per-file diffs are truncated at a line boundary. |
-| Total payload | about 128 KiB | Snapshots beyond the budget are dropped. Diff headers and omission notices are added on top, so the rendered payload can end up marginally larger. |
-| Reserved for the final state | 32 KiB | Held back so there is always room for the cumulative diff against the template. A cumulative diff larger than the remaining budget is itself truncated. |
+| Total payload | 128 KiB | A hard bound on the submission history the model receives for one participation, including diff headers and omission notices. The fixed instructions around it come on top. Files and snapshots beyond it are dropped. |
+| Reserved for the final state | 32 KiB | Part of the total held back so there is always room for the cumulative diff against the template. A cumulative diff larger than the remaining budget is itself truncated. |
 
 Omissions caused by these budgets are marked explicitly in the data the model receives, and the reservation for the
 final state exists so that exhausting the budget cannot leave the model judging only the earliest part of a long
-history. Still, a participation with a very large repository is analysed less completely than a small one.
+history. Still, a participation with a very large repository is analysed less completely than a small one. When the
+model finds such a participation benign, the completion email reports it as *incompletely checked* instead, with the
+limit, the file and the snapshot of each omission, so you know which parts nobody has looked at.
 
-One gap is not marked in the payload at all. Submissions that carry no commit hash are excluded before the history is
-even built, and a submission with a blank hash is skipped with only a server-side log entry. Neither leaves a trace in
-the data the model sees. Both are rare, and they are distinct from a hash that exists but cannot be resolved in the
-repository: that case is not silent, it makes the whole participation fail with *Repository could not be read*.
+A submission with a blank commit hash cannot be read. It is marked in the data the model receives and makes an
+otherwise benign participation *incompletely checked* as well. Submissions that carry no commit hash at all are excluded before the
+history is even built and leave no trace. Both are rare, and they are distinct from a hash that exists but cannot be
+resolved in the repository: that case is not silent, it makes the whole participation fail with *Repository could not
+be read*.
 
 ## What Deimos does not see
 
@@ -120,8 +132,8 @@ repository: that case is not silent, it makes the whole participation fail with 
 - **Anything outside the repository**, such as an attack carried out through the web interface.
 
 <Callout variant={CalloutVariant.warning}>
-    A benign classification means the model saw nothing malicious in the diffs it received. Given the bounds above,
-    that is not the same as the participation being clean.
+    A benign classification means the model saw nothing malicious in the diffs it received. Even when nothing was
+    omitted, that is not the same as the participation being clean.
 </Callout>
 
 ## After the run

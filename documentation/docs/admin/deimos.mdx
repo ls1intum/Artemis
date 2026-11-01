@@ -46,8 +46,9 @@ No student name, login, email address, or matriculation number is included.
 </Callout>
 
 The payload is size-limited. Individual files above a size threshold are not diffed, very large per-file diffs are
-truncated, and snapshots beyond the total budget are dropped. Every omission is marked explicitly in the data sent to
-the model and does not silently change the verdict.
+truncated, and files and snapshots beyond the total budget are dropped. Every omission is marked explicitly in the
+data sent to the model, and a participation the model finds benign despite an omission is reported to the instructor
+as *incompletely checked* rather than benign. The limits are configurable, see [Limits](#limits).
 
 Deimos reads repositories through Artemis' integrated version control. It reconstructs the history from Artemis
 `ProgrammingSubmission` records rather than by walking the git commit graph, so several commits pushed together can
@@ -84,23 +85,43 @@ artemis:
       temperature: 0
       timeout-seconds: 90
       max-retries: 3
+    payload:
+      max-file-input-bytes: 262144
+      max-file-diff-bytes: 32768
+      max-payload-bytes: 131072
+      final-state-reserved-bytes: 32768
+    batch:
+      max-participations-per-run: 5000
+      max-window-days: 31
 ```
 
 | Property | Required | Description |
 | --- | --- | --- |
 | `artemis.deimos.enabled` | yes | Loads the Deimos beans. When `false`, no Deimos endpoint or bean exists. |
-| `artemis.deimos.llm.base-url` | yes | Absolute HTTP(S) URL of the endpoint, including a host. No default. |
+| `artemis.deimos.llm.base-url` | yes | Absolute **HTTPS** URL of the endpoint, including a host, without a query (`?`) or fragment (`#`), since the completions path is appended to it. No default. Plain `http` is rejected at startup, on the loopback interface as well: the request carries student source code and the API key. |
 | `artemis.deimos.llm.model` | yes | Model identifier sent with each request. No default. |
-| `artemis.deimos.llm.api-key` | no | Leave empty for an unauthenticated self-hosted endpoint. |
-| `artemis.deimos.llm.completions-path` | no | Must end with `/chat/completions`. Defaults to `/api/chat/completions`. |
+| `artemis.deimos.llm.api-key` | no | Leave empty for an unauthenticated self-hosted endpoint; no `Authorization` header is sent then. |
+| `artemis.deimos.llm.completions-path` | no | Must start with `/` and end with `/chat/completions`, without query or fragment. Defaults to `/api/chat/completions`. |
 | `artemis.deimos.llm.temperature` | no | Sampling temperature. Defaults to `0`. |
-| `artemis.deimos.llm.timeout-seconds` | no | Per-request timeout. Defaults to `90`. |
-| `artemis.deimos.llm.max-retries` | no | Transport retries performed by the OpenAI SDK. Defaults to `3`. |
+| `artemis.deimos.llm.timeout-seconds` | no | Per-request timeout, greater than `0`. Defaults to `90`. |
+| `artemis.deimos.llm.max-retries` | no | Transport retries performed by the OpenAI SDK, at least `0`. Defaults to `3`. |
 | `artemis.deimos.executor.*` | no | Sizing of the dedicated batch executor. |
+| `artemis.deimos.payload.max-file-input-bytes` | no | Files larger than this are not diffed at all. Defaults to `262144` (256 KiB). |
+| `artemis.deimos.payload.max-file-diff-bytes` | no | Larger per-file diffs are truncated. Must not exceed `max-payload-bytes`. Defaults to `32768` (32 KiB). |
+| `artemis.deimos.payload.max-payload-bytes` | no | Hard bound on the submission history sent to the model for one participation, diff headers and omission notices included. The fixed instructions around it come on top. Defaults to `131072` (128 KiB). |
+| `artemis.deimos.payload.final-state-reserved-bytes` | no | Part of the payload held back for the final state. Must be smaller than `max-payload-bytes`. Defaults to `32768` (32 KiB). |
+| `artemis.deimos.batch.max-participations-per-run` | no | Largest number of participations one run may contain. Defaults to `5000`. |
+| `artemis.deimos.batch.max-window-days` | no | Longest analysis window an instructor may select, in days. Defaults to `31`. |
 
-If the module is enabled with a missing or invalid `base-url`, `model`, `completions-path`, `timeout-seconds`, or
-`max-retries`, Artemis refuses to start and reports which property is wrong. This is deliberate: a misconfigured
-endpoint would mean student code being sent somewhere you did not intend.
+Every byte limit must be at least `1024`, and both batch limits must be greater than `0`. If the module is enabled
+with a missing or invalid `base-url` or `model`, or with any of the other values outside these bounds, Artemis
+refuses to start and reports which property is wrong. This is deliberate: a misconfigured endpoint would mean student
+code being sent somewhere you did not intend, and a misconfigured limit would let a payload or a run grow unbounded.
+
+The API key is not validated at startup: an empty key is a valid choice for an endpoint without authentication. If
+the key is missing or wrong, the endpoint answers the first analysis request with HTTP `401` or `403`. Deimos then
+stops the run at that participation instead of sending one doomed request per participation, and the instructor's
+email reports the participations as *Analysis model rejected the API key (missing or wrong)*.
 
 ### Runtime feature toggle
 
@@ -109,8 +130,13 @@ set. While it is off, the trigger buttons are hidden and the REST endpoints retu
 
 ## Limits
 
-- Maximum analysis window: **31 days**.
-- Maximum participations per run: **5000**. A run exceeding this is rejected.
+- Maximum analysis window: **31 days** by default (`artemis.deimos.batch.max-window-days`). The date-range dialog
+  receives the configured value from the server, so it never accepts a window the server rejects.
+- Maximum participations per run: **5000** by default (`artemis.deimos.batch.max-participations-per-run`). A run
+  exceeding this is rejected.
+- Payload per participation: **128 KiB** by default, of which **32 KiB** are held back for the final state; files above
+  **256 KiB** are not diffed and per-file diffs are truncated at **32 KiB** (`artemis.deimos.payload.*`). Raising these
+  makes participations less likely to be reported as *incompletely checked*, at the cost of larger and slower requests.
 - Runs execute on a dedicated bounded executor; when its queue is full the endpoint returns `503`.
 
 ## Choosing a model
@@ -164,10 +190,21 @@ fail visibly is usually the better trade.
 
 ## Interpreting the results
 
-The completion email reports how many participations were analysed, how many were classified malicious or benign, and
-how many failed. Failures are broken down by category, which distinguishes "there was nothing to analyse" from "the
-model was unreachable". Any category other than *Nothing to analyze* means those participations were **not** examined,
-and the run should be repeated for the affected window.
+The completion email reports how many participations were analysed and how they were classified, and how many failed.
+Every analysed participation receives exactly one verdict; when several apply, the first one wins:
+
+1. *Manipulation attempt*: the submission contains text imitating the markers that fence student code in the prompt.
+   Deimos finds this deterministically over the complete content of every snapshot, independently of the model and of
+   the payload limits. The model is still asked whenever a non-empty history can be built, and its answer is shown as
+   additional information; otherwise the email says why there is no model assessment. The verdict holds either way.
+2. *Malicious*: the model classified the participation as malicious.
+3. *Incompletely checked*: the model found nothing malicious, but a limit caused part of the evidence to be omitted,
+   or a submission without a commit hash could not be read. The email names the reason, the file and the snapshot.
+4. *Benign*: the model found nothing malicious in the complete evidence.
+
+Failures are broken down by category, which distinguishes "there was nothing to analyse" from "the model was
+unreachable", and each failed participation is listed with its category. Any category other than *Nothing to analyze*
+means those participations were **not** examined, and the run should be repeated for the affected window.
 
 <Callout variant={CalloutVariant.warning}>
     Classifications are LLM-generated and can be wrong in both directions. A flagged participation is a pointer for
@@ -177,7 +214,8 @@ and the run should be repeated for the affected window.
 
 Deimos is also an adversarial setting: the analysed code is written by the people the analysis is meant to catch.
 Prompts fence student content between random per-request markers and instruct the model to treat it strictly as
-evidence, but no prompt construction makes injection impossible. Treat the output accordingly.
+evidence, and text imitating those markers is reported as a manipulation attempt without relying on the model. Still,
+no prompt construction makes injection impossible. Treat the output accordingly.
 
 ## Diagnosing a failing run
 
@@ -188,10 +226,11 @@ from what they report to what you should check:
 | --- | --- |
 | *Nothing to analyze* | Nothing. This is a normal outcome for participations without observable changes. |
 | *Repository could not be read* | Server log for the run id. Points at version control or repository access, not at the model. |
-| *Analysis model did not respond in time* | `timeout-seconds` versus what your endpoint actually needs for a 128 KiB payload, and the endpoint's own load. |
+| *Analysis model did not respond in time* | `timeout-seconds` versus what your endpoint actually needs for a full payload (`max-payload-bytes`, 128 KiB by default), and the endpoint's own load. |
 | *Analysis model rate limit reached* | Endpoint concurrency limits against `max-pool-size`. This is usually an executor sizing problem, not a model problem. |
+| *Analysis model rejected the API key (missing or wrong)* | `api-key`. The endpoint answered `401` or `403`, so the key is missing, wrong, or not authorised for the configured model. The run stopped at the first such answer. |
 | *Analysis model returned an unusable answer* | The model itself. A model that will not emit a plain JSON object with `malicious` and `rationale` is the wrong model for this feature. |
-| *Analysis model could not be reached* | Endpoint address, credentials, and network path. Also check `completions-path`. |
+| *Analysis model could not be reached* | Endpoint address and network path. Also check `completions-path`. |
 | *Other failure* | Server log. The instructor's email carries the technical reason per participation. |
 
 Ask the instructor for the technical reason lines in the *Failure details* block; they carry the exception type and

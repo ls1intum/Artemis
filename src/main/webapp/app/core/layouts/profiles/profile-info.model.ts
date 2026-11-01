@@ -147,6 +147,7 @@ export class ProfileInfo {
     public defaultContainerCpuCount!: number;
     public defaultContainerMemoryLimitInMB!: number;
     public defaultContainerMemorySwapLimitInMB!: number;
+    public deimosMaxWindowDays?: number; // only available when the Deimos module is enabled
     public externalCredentialProvider!: string;
     public externalPasswordResetLinkMap!: { [key: string]: string };
     public features!: ActiveFeatureToggles;
