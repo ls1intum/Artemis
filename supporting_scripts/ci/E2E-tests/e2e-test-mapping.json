@@ -1179,7 +1179,8 @@
         "e2e/shared/DateTimePicker.spec.ts": ["atlas", "course", "shared"],
         "e2e/shared/LayoutHelpers.spec.ts": ["shared"],
         "e2e/tutorialgroup/TutorialGroupDetailLayout.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],
-        "e2e/tutorialgroup/TutorialGroupEditing.spec.ts": ["communication", "course", "lecture", "tutorialgroup"]
+        "e2e/tutorialgroup/TutorialGroupEditing.spec.ts": ["communication", "course", "lecture", "tutorialgroup"],
+        "e2e/tutorialgroup/TutorialGroupSidebarAttendance.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"]
     },
     "ignoredPaths": ["documentation/", "src/test/javascript/", "README.md", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", ".github/PULL_REQUEST_TEMPLATE.md", ".agents/", "skills/"],
     "catalogModules": [
