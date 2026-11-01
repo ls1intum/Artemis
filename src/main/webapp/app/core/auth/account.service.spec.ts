@@ -24,6 +24,7 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -40,6 +41,14 @@ describe('AccountService', () => {
     const user = { id: 1 } as User;
     const user2 = { id: 2 } as User;
     const user3 = { id: 3, authorities: [Authority.STUDENT] } as User;
+
+    const pendingEmailChange: PendingEmailChangeDTO = {
+        newEmail: 'new@example.org',
+        requestedAt: '2026-10-13T10:00:00Z',
+        expiresAt: '2026-10-14T10:00:00Z',
+        currentAddressConfirmed: false,
+        newAddressConfirmed: true,
+    };
 
     const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN];
     const course = { id: 1 } as Course;
@@ -1000,15 +1009,63 @@ describe('AccountService', () => {
     });
 
     describe('test save', () => {
-        it('should save user data', () => {
+        it('should save user data and return the pending email change', () => {
             const userToSave = { id: 1, login: 'testuser' } as User;
+            let result: UpdateBasicInformationResponseDTO | undefined;
 
-            accountService.save(userToSave).subscribe((response) => {
-                expect(response.body).toEqual(userToSave);
-            });
+            accountService.save(userToSave).subscribe((response) => (result = response));
 
             const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/basic-information' });
-            req.flush(userToSave);
+            expect(req.request.body).toEqual(userToSave);
+            req.flush({ pendingEmailChange: pendingEmailChange });
+            expect(result).toEqual({ pendingEmailChange });
+        });
+
+        it('should return no pending email change when the server has none', () => {
+            let result: UpdateBasicInformationResponseDTO | undefined;
+
+            accountService.save({ id: 1 } as User).subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'PUT', url: 'api/account/basic-information' }).flush({ pendingEmailChange: null });
+            expect(result).toEqual({ pendingEmailChange: null });
+        });
+    });
+
+    describe('pending email change', () => {
+        it('should load the pending email change', () => {
+            let result: PendingEmailChangeDTO | undefined;
+
+            accountService.getPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'GET', url: 'api/account/pending-email-change' }).flush(pendingEmailChange);
+            expect(result).toEqual(pendingEmailChange);
+        });
+
+        it('should return undefined when no email change is pending', () => {
+            let result: PendingEmailChangeDTO | undefined = pendingEmailChange;
+
+            accountService.getPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'GET', url: 'api/account/pending-email-change' }).flush(null, { status: 204, statusText: 'No Content' });
+            expect(result).toBeUndefined();
+        });
+
+        it('should cancel the pending email change', () => {
+            let completed = false;
+
+            accountService.cancelPendingEmailChange().subscribe(() => (completed = true));
+
+            httpMock.expectOne({ method: 'DELETE', url: 'api/account/pending-email-change' }).flush(null);
+            expect(completed).toBe(true);
+        });
+
+        it('should resend the confirmation mails', () => {
+            let result: PendingEmailChangeDTO | undefined;
+
+            accountService.resendPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'POST', url: 'api/account/pending-email-change/resend' }).flush(pendingEmailChange);
+            expect(result).toEqual(pendingEmailChange);
         });
     });
 

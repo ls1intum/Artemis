@@ -1,0 +1,16 @@
+{
+    "confirmEmailChange": {
+        "title": "Änderung der E-Mail-Adresse bestätigen",
+        "explanation": "Für ein Artemis-Konto wurde eine Änderung der E-Mail-Adresse angefordert. Sie wird erst umgesetzt, wenn sie von der aktuellen und von der neuen Adresse aus bestätigt wurde. Wenn du diese Änderung nicht angefordert hast, bestätige sie nicht. Du kannst sie in deinen Kontoeinstellungen abbrechen.",
+        "button": "Änderung bestätigen",
+        "keyMissing": "<strong>Dieser Link ist unvollständig.</strong> Bitte öffne den Link aus der E-Mail erneut.",
+        "messages": {
+            "completed": "<strong>Fertig.</strong> Beide Adressen sind bestätigt und die E-Mail-Adresse des Kontos wurde geändert.",
+            "waitingForOther": "<strong>Diese Adresse ist bestätigt.</strong> Die E-Mail-Adresse ändert sich, sobald auch die andere Adresse über den Link in der dorthin gesendeten E-Mail bestätigt wurde.",
+            "invalid": "<strong>Dieser Link ist ungültig oder abgelaufen.</strong> Fordere die Änderung der E-Mail-Adresse in deinen Kontoeinstellungen erneut an.",
+            "emailAlreadyUsed": "<strong>Diese E-Mail-Adresse wird bereits verwendet.</strong> Die Änderung wurde abgebrochen. Bitte wähle in deinen Kontoeinstellungen eine andere Adresse.",
+            "error": "<strong>Die Änderung der E-Mail-Adresse konnte nicht bestätigt werden.</strong> Bitte versuche es später erneut."
+        },
+        "toSettings": "Zu den Kontoeinstellungen"
+    }
+}
