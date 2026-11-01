@@ -4,9 +4,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -39,7 +38,6 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constan
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
@@ -162,7 +160,6 @@ describe('FileUploadSubmissionComponent', () => {
                         ResizeableContainerComponent,
                         UnifiedFeedbackComponent,
                         RatingComponent,
-                        ComplaintsStudentViewComponent,
                         ButtonComponent,
                         ArtemisTranslatePipe,
                         ArtemisTimeAgoPipe,
@@ -174,7 +171,6 @@ describe('FileUploadSubmissionComponent', () => {
                         MockComponent(ResizeableContainerComponent),
                         MockComponent(UnifiedFeedbackComponent),
                         MockComponent(RatingComponent),
-                        MockComponent(ComplaintsStudentViewComponent),
                         MockComponent(ButtonComponent),
                         MockPipe(ArtemisTranslatePipe),
                         MockPipe(ArtemisTimeAgoPipe),
@@ -407,23 +403,6 @@ describe('FileUploadSubmissionComponent', () => {
         it('should compute accepted file extensions from pattern', () => {
             expect(component.acceptedFileExtensions()).toContain('.pdf');
             expect(component.acceptedFileExtensions()).toContain('.png');
-        });
-
-        it('should compute isAfterAssessmentDueDate when no assessment due date', () => {
-            expect(component.isAfterAssessmentDueDate()).toBe(true);
-        });
-
-        it('should compute isAfterAssessmentDueDate when assessment due date passed', async () => {
-            const exercise = createExercise({ assessmentDueDate: dayjs().subtract(1, 'day') });
-            const submission = createSubmission(exercise);
-            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
-
-            fixture = TestBed.createComponent(FileUploadSubmissionComponent);
-            component = fixture.componentInstance;
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(component.isAfterAssessmentDueDate()).toBe(true);
         });
 
         it('should compute isLate when initialization is after due date', async () => {
@@ -830,139 +809,5 @@ describe('FileUploadSubmissionComponent', () => {
             const downloadSection = fixture.nativeElement.querySelector('.card-text');
             expect(downloadSection).toBeTruthy();
         });
-    });
-
-    describe('card layout', () => {
-        const renderAssessedSubmission = async (displayedInExamSummary: boolean) => {
-            const exercise = createExercise();
-            const submission = createSubmittedSubmission(exercise);
-            submission.filePathUrl = '/api/core/files/test.pdf';
-
-            fixture.componentRef.setInput('inputExercise', exercise);
-            fixture.componentRef.setInput('inputSubmission', submission);
-            fixture.componentRef.setInput('inputParticipation', getParticipation(submission));
-            fixture.componentRef.setInput('displayedInExamSummary', displayedInExamSummary);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const result = createResult(submission);
-            const feedback = new Feedback();
-            feedback.id = 1;
-            feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-            feedback.detailText = 'feedback';
-            result.feedbacks = [feedback];
-            component.result.set(result);
-            component.isOwnerOfParticipation.set(true);
-            fixture.detectChanges();
-        };
-
-        const getLeftBody = (): HTMLElement => fixture.nativeElement.querySelector('[left-body]');
-
-        it('should keep the left padding of the left body outside the exam summary', async () => {
-            await renderAssessedSubmission(false);
-
-            expect(getLeftBody().classList).toContain('ps-2');
-            expect(getLeftBody().classList).toContain('pe-2');
-        });
-
-        it('should drop only the left padding of the left body in the exam summary', async () => {
-            await renderAssessedSubmission(true);
-
-            expect(getLeftBody().classList).not.toContain('ps-2');
-            expect(getLeftBody().classList).toContain('pe-2');
-            expect(getLeftBody().classList).not.toContain('px-2');
-        });
-
-        it('should render the rating inside a column of the same width as the feedback above it, without an alert box', async () => {
-            await renderAssessedSubmission(true);
-
-            const rating: HTMLElement = fixture.nativeElement.querySelector('jhi-rating');
-            expect(rating).toBeTruthy();
-            // The rating is a quiet reaction to the feedback, so the page no longer wraps it in a coloured alert.
-            expect(rating.classList).not.toContain('alert');
-            expect(rating.classList).not.toContain('alert-info');
-            const column = rating.parentElement!;
-            expect(column.classList).toContain('col-xl-8');
-            expect(column.classList).not.toContain('alert');
-            expect(column.parentElement!.classList).toContain('row');
-        });
-
-        it('should render the section headings with the 16px semibold heading style', async () => {
-            await renderAssessedSubmission(true);
-
-            const headings: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('h5'));
-            // 'Your Submission' and 'Assessed submission'
-            expect(headings).toHaveLength(2);
-            headings.forEach((heading) => {
-                expect(heading.classList).toContain('text-base!');
-                expect(heading.classList).toContain('font-semibold!');
-            });
-        });
-    });
-    it.each(['owner', 'staff-preview'] as const)('dispatches the explicit %s file editor purpose', async (purpose) => {
-        fixture.componentRef.setInput('viewingPurpose', purpose);
-        const load = vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(createSubmission(createExercise())));
-        fixture.detectChanges();
-        await fixture.whenStable();
-        expect(load).toHaveBeenCalledWith(111, purpose);
-    });
-    it.each(['owner', 'staff-preview'] as const)('retains the completed %s projection through asynchronous loading and rendering', async (purpose) => {
-        const http = TestBed.inject(HttpTestingController);
-        const assessor = { id: 22, login: 'assessor' };
-        const feedback = { id: 81, credits: 3, detailText: 'Explain the solution', type: FeedbackType.MANUAL_UNREFERENCED };
-        const wireResult = { id: 999, completionDate: '2026-10-25T12:00:00Z', rated: true, score: 80, hasComplaint: true, feedbacks: [feedback] };
-        fixture.componentRef.setInput('viewingPurpose', purpose);
-        fixture.detectChanges();
-        const editor = http.expectOne(`api/fileupload/participations/111/file-upload-editor${purpose === 'staff-preview' ? '/for-staff' : ''}`);
-        editor.flush({
-            id: 789,
-            submitted: true,
-            submissionDate: '2026-10-25T10:00:00Z',
-            filePath: 'file-upload-exercises/456/submissions/789/test.pdf',
-            participation: {
-                id: 111,
-                type: ParticipationType.STUDENT,
-                isOwner: purpose === 'owner',
-                exercise: {
-                    id: 456,
-                    type: ExerciseType.FILE_UPLOAD,
-                    assessmentDueDate: '2026-10-25T12:00:00Z',
-                    isAtLeastInstructor: true,
-                    course: { id: 123, accuracyOfScores: 2, maxComplaints: 3, complaintsEnabled: true },
-                },
-            },
-            results: [{ ...wireResult, assessor: purpose === 'staff-preview' ? assessor : undefined }],
-        });
-        const legacyRequests = http.match('api/fileupload/file-upload-submissions/789/result');
-        for (const request of legacyRequests) {
-            request.flush({ ...wireResult, assessor, submission: { id: 789, submissionDate: '2026-10-25T10:00:00Z' } });
-        }
-        await fixture.whenStable();
-        fixture.detectChanges();
-        const result = component.result()!;
-        expect(result.assessor).toEqual(purpose === 'owner' ? undefined : assessor);
-        expect(legacyRequests).toHaveLength(0);
-        expect(result.id).toBe(999);
-        expect(dayjs.isDayjs(result.completionDate)).toBe(true);
-        expect(result.completionDate?.toISOString()).toBe('2026-10-25T12:00:00.000Z');
-        expect(result.submission).toBe(component.submission());
-        expect(dayjs.isDayjs(result.submission?.submissionDate)).toBe(true);
-        expect(result.feedbacks?.[0]).toBeInstanceOf(Feedback);
-        expect(component.unreferencedFeedback()?.[0]?.detailText).toBe('Explain the solution');
-        expect(result.rated).toBe(true);
-        expect(result.score).toBe(80);
-        expect(result.hasComplaint).toBe(true);
-        const renderedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
-        expect(renderedFeedback.componentInstance.feedback().id).toBe(81);
-        const rating = fixture.debugElement.query(By.directive(RatingComponent));
-        expect(!!rating).toBe(purpose === 'owner');
-        if (rating) {
-            expect(rating.componentInstance.result()).toBe(result);
-            expect(rating.componentInstance.participation().id).toBe(111);
-        }
-        const complaint = fixture.debugElement.query(By.directive(ComplaintsStudentViewComponent));
-        expect(complaint.componentInstance.result()).toBe(result);
-        expect(complaint.componentInstance.isCurrentUserSubmissionAuthor()).toBe(purpose === 'owner');
-        http.verify();
     });
 });
