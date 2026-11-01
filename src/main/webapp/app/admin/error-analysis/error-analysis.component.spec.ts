@@ -6,7 +6,7 @@ import { Subject, of, throwError } from 'rxjs';
 
 import { ErrorAnalysisComponent } from './error-analysis.component';
 import { ErrorAnalysisService } from './error-analysis.service';
-import { ErrorGroup } from './error-analysis.model';
+import { ErrorAnalysisPage, ErrorAnalysisQuery, ErrorGroup } from './error-analysis.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 function group(overrides: Partial<ErrorGroup> = {}): ErrorGroup {
@@ -21,10 +21,14 @@ function group(overrides: Partial<ErrorGroup> = {}): ErrorGroup {
     };
 }
 
+function page(groups: ErrorGroup[], totalGroups = groups.length, totalErrors = groups.reduce((sum, g) => sum + g.count, 0)): ErrorAnalysisPage {
+    return { groups, totalGroups, totalErrors };
+}
+
 describe('ErrorAnalysisComponent', () => {
     let fixture: ComponentFixture<ErrorAnalysisComponent>;
     let component: ErrorAnalysisComponent;
-    let getGroups: ReturnType<typeof vi.fn>;
+    let getGroups: ReturnType<typeof vi.fn<(query: ErrorAnalysisQuery) => unknown>>;
     let alertError: ReturnType<typeof vi.fn>;
 
     const create = async () => {
@@ -35,9 +39,10 @@ describe('ErrorAnalysisComponent', () => {
     };
 
     const rows = () => Array.from(fixture.nativeElement.querySelectorAll('[data-testid="error-analysis-row"]')) as HTMLElement[];
+    const lastQuery = () => getGroups.mock.calls[getGroups.mock.calls.length - 1][0];
 
     beforeEach(() => {
-        getGroups = vi.fn().mockReturnValue(of([group()]));
+        getGroups = vi.fn().mockReturnValue(of(page([group()])));
         alertError = vi.fn();
         TestBed.configureTestingModule({
             providers: [
@@ -48,92 +53,229 @@ describe('ErrorAnalysisComponent', () => {
         });
     });
 
-    it('should show the errors of the server and the clients of the last day that are errors by default', async () => {
-        await create();
+    describe('what is shown by default', () => {
+        it('should show the errors of the release that is running, the most frequent first, on the first page', async () => {
+            await create();
 
-        expect(getGroups).toHaveBeenCalledExactlyOnceWith('DAY', 'ALL', 'ERROR');
-        expect(component.span()).toBe('DAY');
-        expect(component.location()).toBe('ALL');
-        expect(component.minSeverity()).toBe('ERROR');
+            expect(getGroups).toHaveBeenCalledExactlyOnceWith({
+                span: 'RELEASE',
+                location: 'ALL',
+                minSeverity: 'ERROR',
+                sortField: 'COUNT',
+                ascending: false,
+                page: 0,
+                pageSize: 25,
+            });
+        });
+
+        it('should offer the release before the time spans', async () => {
+            await create();
+
+            expect(component['spanOptions'].map((option) => option.value)).toEqual(['RELEASE', 'DAY', 'WEEK', 'MONTH']);
+        });
+
+        it('should keep the note short and free of details of the infrastructure', async () => {
+            await create();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="error-analysis-note"]')).not.toBeNull();
+        });
     });
 
-    it('should show a row with the severity, location, message, count and when the error happened first and last', async () => {
-        getGroups.mockReturnValue(of([group({ location: 'CLIENT', severity: 'CRITICAL', message: 'Cannot start', count: 12 })]));
+    describe('rows', () => {
+        it('should show a row with the severity, location, message, count and when the error happened first and last', async () => {
+            getGroups.mockReturnValue(of(page([group({ location: 'CLIENT', severity: 'CRITICAL', message: 'Cannot start', count: 12 })])));
 
-        await create();
+            await create();
 
-        expect(rows()).toHaveLength(1);
-        const row = rows()[0];
-        expect(row.querySelector('[data-testid="error-severity"]')?.textContent).toContain('artemisApp.errorAnalysis.severity.CRITICAL');
-        expect(row.querySelector('[data-testid="error-location"]')?.textContent).toContain('artemisApp.errorAnalysis.location.CLIENT');
-        expect(row.querySelector('[data-testid="error-message"]')?.textContent).toContain('Cannot start');
-        expect(row.querySelector('[data-testid="error-count"]')?.textContent?.trim()).toBe('12');
-        expect(row.querySelector('[data-testid="error-first-seen"]')?.textContent?.trim()).not.toBe('');
-        expect(row.querySelector('[data-testid="error-last-seen"]')?.textContent?.trim()).not.toBe('');
+            expect(rows()).toHaveLength(1);
+            const row = rows()[0];
+            expect(row.querySelector('[data-testid="error-severity"]')?.textContent).toContain('artemisApp.errorAnalysis.severity.CRITICAL');
+            expect(row.querySelector('[data-testid="error-location"]')?.textContent).toContain('artemisApp.errorAnalysis.location.CLIENT');
+            expect(row.querySelector('[data-testid="error-message"]')?.textContent).toContain('Cannot start');
+            expect(row.querySelector('[data-testid="error-count"]')?.textContent?.trim()).toBe('12');
+            expect(row.querySelector('[data-testid="error-first-seen"]')?.textContent?.trim()).not.toBe('');
+            expect(row.querySelector('[data-testid="error-last-seen"]')?.textContent?.trim()).not.toBe('');
+        });
+
+        it('should show the totals of all pages and not only of the page', async () => {
+            getGroups.mockReturnValue(of(page([group()], 61, 480)));
+
+            await create();
+
+            expect(component.totalGroups()).toBe(61);
+            expect(component.totalErrors()).toBe(480);
+            expect(rows()).toHaveLength(1);
+        });
+
+        it('should say so if there are no errors, and show no table and no pages', async () => {
+            getGroups.mockReturnValue(of(page([])));
+
+            await create();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="error-analysis-empty"]')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="error-analysis-table"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="error-analysis-paginator"]')).toBeNull();
+        });
+
+        it('should show the pages of a table that has rows', async () => {
+            await create();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="error-analysis-paginator"]')).not.toBeNull();
+        });
     });
 
-    it('should total the errors of all groups', async () => {
-        getGroups.mockReturnValue(of([group({ count: 4 }), group({ message: 'another', count: 6 })]));
+    describe('filters', () => {
+        it.each([
+            ['span', 'MONTH', { span: 'MONTH' }],
+            ['location', 'CLIENT', { location: 'CLIENT' }],
+            ['minSeverity', 'WARN', { minSeverity: 'WARN' }],
+        ] as const)('should load again when the %s filter changes', async (filter, value, expectedChange) => {
+            await create();
+            getGroups.mockClear();
 
-        await create();
+            (component[filter] as unknown as { set(value: string): void }).set(value);
+            await fixture.whenStable();
 
-        expect(component.totalCount()).toBe(10);
-        expect(rows()).toHaveLength(2);
+            expect(getGroups).toHaveBeenCalledExactlyOnceWith(expect.objectContaining(expectedChange));
+        });
+
+        it.each([
+            ['setSpan', 'DAY'],
+            ['setLocation', 'SERVER'],
+            ['setMinSeverity', 'CRITICAL'],
+        ] as const)('should start again at the first page when %s changes the filter', async (setter, value) => {
+            await create();
+            component['onPageChange'](3);
+            await fixture.whenStable();
+
+            (component[setter] as (value: string) => void)(value);
+            await fixture.whenStable();
+
+            expect(lastQuery().page).toBe(0);
+        });
     });
 
-    it('should say so if there are no errors', async () => {
-        getGroups.mockReturnValue(of([]));
+    describe('sorting', () => {
+        // many groups, so that every page exists
+        beforeEach(() => getGroups.mockReturnValue(of(page([group()], 500, 2000))));
 
-        await create();
+        it('should sort by the column that was chosen and take the direction of the table', async () => {
+            await create();
+            getGroups.mockClear();
 
-        expect(fixture.nativeElement.querySelector('[data-testid="error-analysis-empty"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelector('[data-testid="error-analysis-table"]')).toBeNull();
+            component['onSort']({ field: 'LAST_SEEN', order: 1 });
+            await fixture.whenStable();
+
+            expect(getGroups).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ sortField: 'LAST_SEEN', ascending: true }));
+        });
+
+        it('should sort descending when the table says so', async () => {
+            await create();
+
+            component['onSort']({ field: 'MESSAGE', order: -1 });
+            await fixture.whenStable();
+
+            expect(lastQuery()).toEqual(expect.objectContaining({ sortField: 'MESSAGE', ascending: false }));
+        });
+
+        it('should start again at the first page, because the page belongs to the sort order', async () => {
+            await create();
+            component['onPageChange'](4);
+            await fixture.whenStable();
+            expect(lastQuery().page).toBe(4);
+
+            component['onSort']({ field: 'COUNT', order: 1 });
+            await fixture.whenStable();
+
+            expect(lastQuery()).toEqual(expect.objectContaining({ sortField: 'COUNT', ascending: true, page: 0 }));
+        });
+
+        it('should make every column sortable by the field that the server knows', async () => {
+            await create();
+
+            const headers = Array.from(fixture.nativeElement.querySelectorAll('thead th[data-testid^="sort-"]')) as HTMLElement[];
+            expect(headers.map((header) => header.getAttribute('data-testid'))).toEqual([
+                'sort-severity',
+                'sort-location',
+                'sort-message',
+                'sort-count',
+                'sort-first-seen',
+                'sort-last-seen',
+            ]);
+        });
     });
 
-    it('should always say that the analysis starts again when the node restarts', async () => {
-        getGroups.mockReturnValue(of([]));
+    describe('paging', () => {
+        // many groups, so that every page exists
+        beforeEach(() => getGroups.mockReturnValue(of(page([group()], 500, 2000))));
 
-        await create();
+        it('should ask for the page that was chosen and keep the sort order', async () => {
+            await create();
+            component['onSort']({ field: 'MESSAGE', order: 1 });
+            await fixture.whenStable();
+            getGroups.mockClear();
 
-        expect(fixture.nativeElement.querySelector('[data-testid="error-analysis-note"]')).not.toBeNull();
+            component['onPageChange'](2);
+            await fixture.whenStable();
+
+            expect(getGroups).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ page: 2, sortField: 'MESSAGE', ascending: true }));
+        });
+
+        it('should start again at the first page when the size of a page changes', async () => {
+            await create();
+            component['onPageChange'](3);
+            await fixture.whenStable();
+
+            component['onPageSizeChange'](50);
+            await fixture.whenStable();
+
+            expect(lastQuery()).toEqual(expect.objectContaining({ page: 0, pageSize: 50 }));
+        });
+
+        it('should offer sizes that the server accepts', async () => {
+            await create();
+
+            expect(Math.max(...component['pageSizeOptions'])).toBeLessThanOrEqual(100);
+            expect(component['pageSizeOptions']).toContain(25);
+        });
+
+        it('should go to the last page that exists when the page that was shown is gone', async () => {
+            await create();
+            getGroups.mockReturnValueOnce(of(page([], 30, 120))).mockReturnValue(of(page([group()], 30, 120)));
+
+            component['onPageChange'](5);
+            await fixture.whenStable();
+
+            // 30 groups in pages of 25: the last page is page 1
+            expect(component.page()).toBe(1);
+            expect(rows()).toHaveLength(1);
+        });
     });
 
-    it.each([
-        ['span', 'MONTH', ['MONTH', 'ALL', 'ERROR']],
-        ['location', 'CLIENT', ['DAY', 'CLIENT', 'ERROR']],
-        ['minSeverity', 'WARN', ['DAY', 'ALL', 'WARN']],
-    ] as const)('should load again when the %s filter changes', async (filter, value, expectedArguments) => {
-        await create();
-        getGroups.mockClear();
+    describe('loading', () => {
+        it('should tell the user if the analysis cannot be loaded', async () => {
+            getGroups.mockReturnValue(throwError(() => new Error('boom')));
 
-        (component[filter] as unknown as { set(value: string): void }).set(value);
-        await fixture.whenStable();
+            await create();
 
-        expect(getGroups).toHaveBeenCalledExactlyOnceWith(...expectedArguments);
-    });
+            expect(alertError).toHaveBeenCalledExactlyOnceWith('artemisApp.errorAnalysis.loadError');
+            expect(component.loading()).toBe(false);
+        });
 
-    it('should tell the user if the analysis cannot be loaded', async () => {
-        getGroups.mockReturnValue(throwError(() => new Error('boom')));
+        it('should show the answer of the last query even if an earlier request answers later', async () => {
+            const first = new Subject<ErrorAnalysisPage>();
+            const second = new Subject<ErrorAnalysisPage>();
+            getGroups.mockReturnValueOnce(first).mockReturnValueOnce(second);
+            await create();
 
-        await create();
+            component['setSpan']('WEEK');
+            await fixture.whenStable();
+            second.next(page([group({ message: 'answer to the week' })]));
+            first.next(page([group({ message: 'late answer to the release' })]));
+            fixture.detectChanges();
 
-        expect(alertError).toHaveBeenCalledExactlyOnceWith('artemisApp.errorAnalysis.loadError');
-        expect(component.loading()).toBe(false);
-    });
-
-    it('should show the answer of the last filter even if an earlier request answers later', async () => {
-        const first = new Subject<ErrorGroup[]>();
-        const second = new Subject<ErrorGroup[]>();
-        getGroups.mockReturnValueOnce(first).mockReturnValueOnce(second);
-        await create();
-
-        component.span.set('WEEK');
-        await fixture.whenStable();
-        second.next([group({ message: 'answer to the week' })]);
-        first.next([group({ message: 'late answer to the day' })]);
-        fixture.detectChanges();
-
-        expect(component.groups()?.map((g) => g.message)).toEqual(['answer to the week']);
+            expect(component.groups().map((g) => g.message)).toEqual(['answer to the week']);
+        });
     });
 
     it.each([

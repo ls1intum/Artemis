@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import de.tum.cit.aet.artemis.core.domain.ErrorAnalysisSortField;
 import de.tum.cit.aet.artemis.core.domain.ErrorAnalysisSpan;
 import de.tum.cit.aet.artemis.core.domain.ErrorLocation;
 import de.tum.cit.aet.artemis.core.domain.ErrorSeverity;
@@ -42,7 +43,8 @@ class ErrorAnalysisAppenderTest {
 
     private ErrorGroupDTO groupOf(String text) {
         // a node answers with what it collected and has not handed to the cluster yet, which is all that this test produces
-        return new ErrorAnalysisService(new LocalDataProviderService()).getGroups(ErrorAnalysisSpan.DAY, null, ErrorSeverity.WARN).stream()
+        return new ErrorAnalysisService(new LocalDataProviderService(), "10.6")
+                .getGroups(ErrorAnalysisSpan.DAY, null, ErrorSeverity.WARN, ErrorAnalysisSortField.COUNT, false, 0, Integer.MAX_VALUE).groups().stream()
                 .filter(group -> group.message().contains(marker + text)).findFirst().orElse(null);
     }
 

@@ -8,9 +8,19 @@ The error analysis shows which errors happen on your Artemis installation, on th
 
 ## What the page shows
 
-Errors that are alike are one row. A row has the severity, the location (**Server** or **Client**), the message, how often the error happened in the selected time span, when it happened first, and when it happened last. The most frequent errors come first. Numbers, identifiers, UUIDs and email addresses in a message are replaced by placeholders, so `Could not find exercise 17` and `Could not find exercise 42` are one row with the message `Could not find exercise <n>`.
+Errors that are alike are one row. A row has the severity, the location (**Server** or **Client**), the message, how often the error happened, when it happened first, and when it happened last. Numbers, identifiers, UUIDs and email addresses in a message are replaced by placeholders, so `Could not find exercise 17` and `Could not find exercise 42` are one row with the message `Could not find exercise <n>`.
 
-The filters above the table select the time span (last day, last week or last month, the last day by default), the location (all by default) and the least serious errors to show. The severity is a minimum: **Error**, the default, shows errors and critical errors, **Warning** adds warnings, and **Critical** shows only the errors that stop the application from working at all. The time when an error happened first is the first time since the server started, so it can be earlier than the selected time span.
+The filters above the table select what to look at, the location (all by default) and the least serious errors to show. The severity is a minimum: **Error**, the default, shows errors and critical errors, **Warning** adds warnings, and **Critical** shows only the errors that affect core functionality. What to look at is **Since current release** by default, or the last day, the last week or the last month.
+
+## Since the current release
+
+**Since current release** shows only the errors of the release that Artemis is running now, however long ago it was deployed. After you deploy a new release, the errors of 10.3 or 10.4 are no longer part of it, so a new release starts with an empty page, and a regression shows up as a new row instead of hiding between old ones. A restart of the same release is still the same release: the counts continue, and the first time of an error stays the first time it happened in this release.
+
+Artemis does not have to remember when you deployed. Every group of errors belongs to a release, and the page shows the groups of the release that is running. An error of the server belongs to the release of the server that logged it. An error of a client belongs to the release that the client reports, if that is the release that the server runs. A client that has been open since the last deployment reports the earlier release, so it counts for the last day, week and month but not for the current release. The other time spans add the releases up, so an error that happens in two releases is one row. The counts are kept for 30 days, so for a release that has been running longer than that, the page shows its last 30 days.
+
+## Sorting and pages
+
+Every column can be sorted by a click on its heading. A page shows 25 rows by default, and 10, 50 or 100 can be chosen. The server sorts all rows first and cuts the pages out of the sorted rows, so a page is always a part of the order that you chose, and changing the sort order, a filter or the size of a page starts again at the first page. Only one page is computed and sent to the browser at a time, which keeps the page fast on an installation with many different errors. The summary above the table counts the groups and the errors on all pages.
 
 ## Where the errors come from
 

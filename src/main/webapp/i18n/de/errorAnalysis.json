@@ -2,12 +2,14 @@
     "artemisApp": {
         "errorAnalysis": {
             "title": "Fehleranalyse",
-            "note": "Gleichartige Fehler sind eine Zeile. Die Zählung gilt für alle Core-Knoten und wird bei jedem Öffnen dieser Seite neu berechnet. Ein Knoten übergibt, was er gesammelt hat, alle zehn Sekunden an den Cluster. Die Zählung geht verloren, wenn der ganze Cluster neu startet, es sei denn, der Provider der verteilten Daten behält seine Daten, was bei Hazelcast nicht der Fall ist. Gezählt werden nur Fehler, die Core-Knoten protokollieren und Clients melden, eine leere Seite ist also kein Beweis, dass nichts schiefgelaufen ist.",
+            "note": "Gleichartige Fehler sind eine Zeile. Die Zählung gilt für alle Core-Knoten und wird bei jedem Öffnen dieser Seite neu berechnet.",
             "empty": "Keine Fehler in diesem Zeitraum mit diesen Filtern.",
             "summary": "Gruppen: {{ groups }}, Fehler: {{ errors }}",
+            "pagination": "Seiten der Fehlergruppen",
             "loadError": "Die Fehleranalyse konnte nicht geladen werden.",
             "span": {
                 "label": "Zeitraum",
+                "RELEASE": "Seit aktuellem Release",
                 "DAY": "Letzter Tag",
                 "WEEK": "Letzte Woche",
                 "MONTH": "Letzter Monat"

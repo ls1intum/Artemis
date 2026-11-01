@@ -102,7 +102,7 @@ public class ClientErrorReportService {
             case WARN -> log.warn(ENTRY_FORMAT, entry);
             case ERROR, CRITICAL -> log.error(ENTRY_FORMAT, entry);
         }
-        errorAnalysisService.recordClientError(report.severity(), singleLine(report.message(), ClientErrorReportDTO.MAX_MESSAGE_LENGTH));
+        errorAnalysisService.recordClientError(report.severity(), report.clientVersion(), singleLine(report.message(), ClientErrorReportDTO.MAX_MESSAGE_LENGTH));
     }
 
     /**

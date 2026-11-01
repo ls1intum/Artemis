@@ -19,14 +19,17 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.ErrorAnalysisSortField;
 import de.tum.cit.aet.artemis.core.domain.ErrorAnalysisSpan;
 import de.tum.cit.aet.artemis.core.domain.ErrorLocation;
 import de.tum.cit.aet.artemis.core.domain.ErrorSeverity;
+import de.tum.cit.aet.artemis.core.dto.ErrorAnalysisPageDTO;
 import de.tum.cit.aet.artemis.core.dto.ErrorGroupDTO;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
@@ -45,6 +48,14 @@ import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisBuffer.Pen
  * stops, Redis keeps it. Only core nodes flush, so the errors of a build agent are not counted.
  * <p>
  * Several nodes write the same entries, so every write is additive or a merge, and it is retried if another node wrote first.
+ * <p>
+ * Every group belongs to a release, which is part of its key, so the errors of the running release can be told from the ones of
+ * the releases before it without storing when a release was deployed. An error of the server belongs to the release of the node
+ * that logged it. An error of a client belongs to the release of that client if it is the release that this node is running, and
+ * to {@value #OTHER_VERSION} otherwise: the version in a report of a client that is not signed in cannot be trusted, and a client
+ * that has been open since the last deployment is not an error of this release. The release of a group does not change when the
+ * server restarts, so a restart of the same release keeps counting in the same groups. For a time span that counts back from now
+ * the releases are added up again, so a group is one row whatever release it happened in.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -59,6 +70,9 @@ public class ErrorAnalysisService {
     /** How often a write is repeated because another node wrote the same entry at the same time. */
     private static final int MAX_ATTEMPTS = 20;
 
+    /** The release of a group of errors that a client reported with another release than the one that is running. */
+    static final String OTHER_VERSION = "other";
+
     private final DistributedMap<String, ErrorGroupState> groups;
 
     /** The counts per hour and group, by {@code <hours since the epoch>:<group key>}. */
@@ -68,12 +82,16 @@ public class ErrorAnalysisService {
 
     private final Clock clock;
 
+    /** The release that this node is running. */
+    private final String currentVersion;
+
     @Autowired
-    public ErrorAnalysisService(DistributedDataProvider distributedDataProvider) {
-        this(distributedDataProvider, ErrorAnalysisBuffer.shared(), Clock.systemUTC());
+    public ErrorAnalysisService(DistributedDataProvider distributedDataProvider, @Value("${artemis.version}") String artemisVersion) {
+        this(distributedDataProvider, ErrorAnalysisBuffer.shared(), Clock.systemUTC(), artemisVersion);
     }
 
-    ErrorAnalysisService(DistributedDataProvider distributedDataProvider, ErrorAnalysisBuffer buffer, Clock clock) {
+    ErrorAnalysisService(DistributedDataProvider distributedDataProvider, ErrorAnalysisBuffer buffer, Clock clock, String artemisVersion) {
+        this.currentVersion = artemisVersion.strip();
         this.groups = distributedDataProvider.getExpiringMap("error-analysis-groups", ENTRY_TIME_TO_LIVE);
         this.counts = distributedDataProvider.getExpiringMap("error-analysis-counts", ENTRY_TIME_TO_LIVE);
         this.buffer = buffer;
@@ -84,10 +102,11 @@ public class ErrorAnalysisService {
      * Counts an error that a client reported.
      *
      * @param severity how serious the client says the error is
+     * @param version  the release of the client as it states it, or {@code null} if it does not
      * @param message  what went wrong, already cleaned of personal data
      */
-    public void recordClientError(ErrorSeverity severity, String message) {
-        buffer.record(ErrorLocation.CLIENT, severity, message);
+    public void recordClientError(ErrorSeverity severity, String version, String message) {
+        buffer.record(ErrorLocation.CLIENT, severity, version == null ? OTHER_VERSION : version.strip(), message);
     }
 
     /**
@@ -105,7 +124,7 @@ public class ErrorAnalysisService {
         Map<String, PendingGroup> notWritten = new HashMap<>();
         for (Map.Entry<String, PendingGroup> entry : drained.entrySet()) {
             try {
-                write(entry.getKey(), entry.getValue());
+                write(entry.getValue());
             }
             catch (RuntimeException exception) {
                 notWritten.put(entry.getKey(), entry.getValue());
@@ -124,17 +143,36 @@ public class ErrorAnalysisService {
     }
 
     /**
-     * The groups of the errors that happened in a time span, of all nodes.
+     * One page of the groups of the errors that happened in a time span, of all nodes.
+     * <p>
+     * The groups are sorted before the page is cut out of them, so that the pages follow the order that was asked for. Groups that
+     * are equal in the field that is sorted by are in the order of the most recent first and then of the message, so that a group
+     * cannot move to another page while somebody browses.
      *
-     * @param span        how far to look back from now
+     * @param span        how far to look back from now, or the release that is running
      * @param location    only the errors of this location, or {@code null} for all of them
      * @param minSeverity only the errors that are at least this serious
-     * @return the groups, the most frequent first
+     * @param sortField   what to sort the groups by
+     * @param ascending   whether the smallest value comes first
+     * @param page        the number of the page to return, the first page is 0
+     * @param pageSize    how many groups a page has at most
+     * @return the groups of the page and the totals over all pages
      */
-    public List<ErrorGroupDTO> getGroups(ErrorAnalysisSpan span, ErrorLocation location, ErrorSeverity minSeverity) {
-        long sinceMillis = clock.millis() - span.getDuration().toMillis();
+    public ErrorAnalysisPageDTO getGroups(ErrorAnalysisSpan span, ErrorLocation location, ErrorSeverity minSeverity, ErrorAnalysisSortField sortField, boolean ascending, int page,
+            int pageSize) {
+        List<ErrorGroupDTO> sorted = collectGroups(span, location, minSeverity);
+        sorted.sort(comparatorOf(sortField, ascending));
+        long totalErrors = sorted.stream().mapToLong(ErrorGroupDTO::count).sum();
+        int from = (int) Math.min((long) page * pageSize, sorted.size());
+        int to = (int) Math.min((long) from + pageSize, sorted.size());
+        return new ErrorAnalysisPageDTO(new ArrayList<>(sorted.subList(from, to)), sorted.size(), totalErrors);
+    }
+
+    private List<ErrorGroupDTO> collectGroups(ErrorAnalysisSpan span, ErrorLocation location, ErrorSeverity minSeverity) {
+        boolean boundedByTime = span.isBoundedByTime();
+        long sinceMillis = boundedByTime ? clock.millis() - span.getDuration().toMillis() : Long.MIN_VALUE;
         // the hour that contains the start counts completely, so the count can be a little too high but never too low
-        long sinceHour = sinceMillis / MILLIS_PER_HOUR;
+        long sinceHour = boundedByTime ? sinceMillis / MILLIS_PER_HOUR : Long.MIN_VALUE;
 
         Map<String, ErrorGroupState> states = new HashMap<>(groups.getMapCopy());
         Map<String, Long> totals = new HashMap<>();
@@ -145,24 +183,56 @@ public class ErrorAnalysisService {
             }
         });
         // what this node saw and has not handed over yet
-        buffer.snapshot().forEach((key, pendingGroup) -> {
-            states.merge(key, pendingGroup.toState(), ErrorGroupState::mergedWith);
+        buffer.snapshot().forEach((rawKey, pendingGroup) -> {
+            String version = effectiveVersion(pendingGroup.version);
+            String key = ErrorAnalysisBuffer.keyOf(pendingGroup.location, pendingGroup.severity, version, pendingGroup.pattern);
+            states.merge(key, pendingGroup.toState(version), ErrorGroupState::mergedWith);
             pendingGroup.perHour.tailMap(sinceHour, true).values().forEach(count -> totals.merge(key, count, Long::sum));
         });
 
-        List<ErrorGroupDTO> result = new ArrayList<>();
+        // a group is one row, whatever release it happened in, unless only the running release is asked for
+        Map<String, ErrorGroupDTO> rows = new HashMap<>();
         states.forEach((key, state) -> {
             long count = totals.getOrDefault(key, 0L);
-            if (count > 0 && (location == null || state.location() == location) && state.severity().isAtLeast(minSeverity) && state.lastSeenMillis() >= sinceMillis) {
-                result.add(state.toDto(count));
+            boolean inRelease = span != ErrorAnalysisSpan.RELEASE || currentVersion.equals(state.version());
+            if (count > 0 && inRelease && (location == null || state.location() == location) && state.severity().isAtLeast(minSeverity) && state.lastSeenMillis() >= sinceMillis) {
+                rows.merge(state.location() + "|" + state.severity() + "|" + state.pattern(), state.toDto(count), ErrorAnalysisService::combine);
             }
         });
-        result.sort(Comparator.comparingLong(ErrorGroupDTO::count).reversed().thenComparing(ErrorGroupDTO::lastSeen, Comparator.reverseOrder()));
-        return result;
+        return new ArrayList<>(rows.values());
     }
 
-    private void write(String key, PendingGroup group) {
-        registerGroup(key, group.toState());
+    /**
+     * The release that a group counts as.
+     */
+    private String effectiveVersion(String reportedVersion) {
+        return reportedVersion == null || currentVersion.equals(reportedVersion.strip()) ? currentVersion : OTHER_VERSION;
+    }
+
+    private static ErrorGroupDTO combine(ErrorGroupDTO first, ErrorGroupDTO second) {
+        return new ErrorGroupDTO(first.location(), first.severity(), first.message(), first.count() + second.count(),
+                first.firstSeen().isBefore(second.firstSeen()) ? first.firstSeen() : second.firstSeen(),
+                first.lastSeen().isAfter(second.lastSeen()) ? first.lastSeen() : second.lastSeen());
+    }
+
+    private static Comparator<ErrorGroupDTO> comparatorOf(ErrorAnalysisSortField sortField, boolean ascending) {
+        Comparator<ErrorGroupDTO> primary = switch (sortField) {
+            case COUNT -> Comparator.comparingLong(ErrorGroupDTO::count);
+            case SEVERITY -> Comparator.comparing(ErrorGroupDTO::severity);
+            case LOCATION -> Comparator.comparing(ErrorGroupDTO::location);
+            case MESSAGE -> Comparator.comparing(ErrorGroupDTO::message);
+            case FIRST_SEEN -> Comparator.comparing(ErrorGroupDTO::firstSeen);
+            case LAST_SEEN -> Comparator.comparing(ErrorGroupDTO::lastSeen);
+        };
+        // the rest of the order never depends on the direction, and it is total: the location, severity and message identify a group
+        return (ascending ? primary : primary.reversed()).thenComparing(ErrorGroupDTO::lastSeen, Comparator.reverseOrder()).thenComparing(ErrorGroupDTO::message)
+                .thenComparing(ErrorGroupDTO::location).thenComparing(ErrorGroupDTO::severity);
+    }
+
+    private void write(PendingGroup group) {
+        String version = effectiveVersion(group.version);
+        String key = ErrorAnalysisBuffer.keyOf(group.location, group.severity, version, group.pattern);
+        registerGroup(key, group.toState(version));
         for (Iterator<Map.Entry<Long, Long>> hours = group.perHour.entrySet().iterator(); hours.hasNext();) {
             Map.Entry<Long, Long> hour = hours.next();
             add(hour.getKey() + ":" + key, hour.getValue());

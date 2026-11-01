@@ -68,15 +68,17 @@ public final class ErrorAnalysisBuffer {
      *
      * @param location where the error happened
      * @param severity how serious the error is
+     * @param version  the release that the error belongs to as the reporter states it, or {@code null} for the release of this node.
+     *                     The service decides what it counts as, because only it knows the release that is running.
      * @param message  what went wrong, the numbers and identifiers in it do not tell groups apart
      */
-    public synchronized void record(ErrorLocation location, ErrorSeverity severity, String message) {
+    public synchronized void record(ErrorLocation location, ErrorSeverity severity, String version, String message) {
         if (!severity.isAtLeast(ErrorSeverity.WARN)) {
             return;
         }
         long now = clock.millis();
         String pattern = toPattern(message);
-        pending.computeIfAbsent(keyOf(location, severity, pattern), key -> new PendingGroup(location, severity, pattern, now)).add(now);
+        pending.computeIfAbsent(keyOf(location, severity, version, pattern), key -> new PendingGroup(location, severity, version, pattern, now)).add(now);
         if (pending.size() > MAX_GROUPS) {
             pending.values().stream().min(Comparator.comparingLong(group -> group.lastSeenMillis)).ifPresent(oldest -> pending.values().remove(oldest));
         }
@@ -120,8 +122,8 @@ public final class ErrorAnalysisBuffer {
         pending.clear();
     }
 
-    static String keyOf(ErrorLocation location, ErrorSeverity severity, String pattern) {
-        return location + "|" + severity + "|" + pattern;
+    static String keyOf(ErrorLocation location, ErrorSeverity severity, String version, String pattern) {
+        return location + "|" + severity + "|" + (version == null ? "" : version) + "|" + pattern;
     }
 
     /**
@@ -144,6 +146,9 @@ public final class ErrorAnalysisBuffer {
 
         final ErrorSeverity severity;
 
+        /** The release as the reporter states it, {@code null} for the release of this node. */
+        final String version;
+
         final String pattern;
 
         long firstSeenMillis;
@@ -153,9 +158,10 @@ public final class ErrorAnalysisBuffer {
         /** The number of errors per hour, by the hours since the epoch. */
         final TreeMap<Long, Long> perHour = new TreeMap<>();
 
-        PendingGroup(ErrorLocation location, ErrorSeverity severity, String pattern, long now) {
+        PendingGroup(ErrorLocation location, ErrorSeverity severity, String version, String pattern, long now) {
             this.location = location;
             this.severity = severity;
+            this.version = version;
             this.pattern = pattern;
             this.firstSeenMillis = now;
             this.lastSeenMillis = now;
@@ -169,7 +175,7 @@ public final class ErrorAnalysisBuffer {
         }
 
         PendingGroup copy() {
-            PendingGroup copy = new PendingGroup(location, severity, pattern, firstSeenMillis);
+            PendingGroup copy = new PendingGroup(location, severity, version, pattern, firstSeenMillis);
             copy.lastSeenMillis = lastSeenMillis;
             copy.perHour.putAll(perHour);
             return copy;
@@ -182,8 +188,14 @@ public final class ErrorAnalysisBuffer {
             return this;
         }
 
-        ErrorGroupState toState() {
-            return new ErrorGroupState(location, severity, pattern, firstSeenMillis, lastSeenMillis);
+        /**
+         * What the cluster stores about this group.
+         *
+         * @param effectiveVersion the release that the group counts as, see {@link ErrorAnalysisService}
+         * @return the state of the group
+         */
+        ErrorGroupState toState(String effectiveVersion) {
+            return new ErrorGroupState(location, severity, effectiveVersion, pattern, firstSeenMillis, lastSeenMillis);
         }
     }
 }

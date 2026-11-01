@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -20,6 +21,7 @@ import org.springframework.util.MultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.ErrorLocation;
 import de.tum.cit.aet.artemis.core.domain.ErrorSeverity;
+import de.tum.cit.aet.artemis.core.dto.ErrorAnalysisPageDTO;
 import de.tum.cit.aet.artemis.core.dto.ErrorGroupDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -34,6 +36,10 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
     /** The analysis is shared by every test of the JVM, so each test marks its messages to find them again. Letters only, digits are replaced by placeholders. */
     private String marker;
 
+    /** The release that the server runs, which the clients of this test report. */
+    @Value("${artemis.version}")
+    private String artemisVersion;
+
     @BeforeEach
     void setUp() {
         marker = "analysistest" + ThreadLocalRandom.current().ints(16, 'a', 'z' + 1).collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append);
@@ -43,11 +49,21 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     private void report(String severity, String message) throws Exception {
-        request.postWithoutResponseBody(REPORT_ENDPOINT, Map.of("severity", severity, "message", marker + " " + message), HttpStatus.OK);
+        report(severity, message, artemisVersion);
     }
 
+    private void report(String severity, String message, String clientVersion) throws Exception {
+        request.postWithoutResponseBody(REPORT_ENDPOINT, Map.of("severity", severity, "message", marker + " " + message, "clientVersion", clientVersion), HttpStatus.OK);
+    }
+
+    /**
+     * The groups of this test. The analysis is shared with every other test, so the most recent groups come first, and there is room for
+     * all of them on the first page.
+     */
     private List<ErrorGroupDTO> analysis(MultiValueMap<String, String> params) throws Exception {
-        return request.getList(ANALYSIS_ENDPOINT, HttpStatus.OK, ErrorGroupDTO.class, params).stream().filter(group -> group.message().startsWith(marker)).toList();
+        params.putIfAbsent("sortBy", List.of("LAST_SEEN"));
+        params.putIfAbsent("size", List.of("100"));
+        return request.get(ANALYSIS_ENDPOINT, HttpStatus.OK, ErrorAnalysisPageDTO.class, params).groups().stream().filter(group -> group.message().startsWith(marker)).toList();
     }
 
     private static MultiValueMap<String, String> params(String... keyValues) {
@@ -100,7 +116,7 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "DAY", "WEEK", "MONTH" })
+    @ValueSource(strings = { "RELEASE", "DAY", "WEEK", "MONTH" })
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void acceptsEveryTimeSpan(String span) throws Exception {
         report("ERROR", "within every time span");
@@ -109,10 +125,53 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "span=YEAR", "location=EVERYWHERE", "minSeverity=FATAL" })
+    @ValueSource(strings = { "span=YEAR", "location=EVERYWHERE", "minSeverity=FATAL", "sortBy=COLOR", "direction=SIDEWAYS", "page=-1", "size=0", "size=101", "page=x" })
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void rejectsAnUnknownFilter(String parameter) throws Exception {
-        request.getList(ANALYSIS_ENDPOINT + "?" + parameter, HttpStatus.BAD_REQUEST, ErrorGroupDTO.class);
+        request.get(ANALYSIS_ENDPOINT + "?" + parameter, HttpStatus.BAD_REQUEST, ErrorAnalysisPageDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void showsTheReleaseThatIsRunningByDefaultAndLeavesOutClientsOfAnyOtherRelease() throws Exception {
+        report("ERROR", "client of this release");
+        report("ERROR", "client of an earlier release", "0.0.1-earlier");
+
+        assertThat(analysis(params())).extracting(group -> group.message().substring(marker.length() + 1)).containsExactly("client of this release");
+        assertThat(analysis(params("span", "DAY"))).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void returnsOnePageWithTheTotalsOfAllPages() throws Exception {
+        report("ERROR", "first of three");
+        report("ERROR", "second of three");
+        report("ERROR", "third of three");
+
+        ErrorAnalysisPageDTO page = request.get(ANALYSIS_ENDPOINT, HttpStatus.OK, ErrorAnalysisPageDTO.class, params("size", "1", "page", "0", "sortBy", "LAST_SEEN"));
+
+        assertThat(page.groups()).hasSize(1);
+        assertThat(page.totalGroups()).isGreaterThanOrEqualTo(3);
+        assertThat(page.totalErrors()).isGreaterThanOrEqualTo(3);
+        // the most recent group comes first when sorted by the last time, which is the third report
+        assertThat(page.groups().getFirst().message()).endsWith("third of three");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void sortsBeforeItCutsPagesAndAcceptsEverySortFieldInBothDirections() throws Exception {
+        report("ERROR", "alpha");
+        report("ERROR", "omega");
+
+        List<String> ascending = request.get(ANALYSIS_ENDPOINT, HttpStatus.OK, ErrorAnalysisPageDTO.class, params("sortBy", "MESSAGE", "direction", "ASC", "size", "100")).groups()
+                .stream().map(ErrorGroupDTO::message).toList();
+
+        assertThat(ascending).isSortedAccordingTo(String::compareTo);
+        for (String field : List.of("COUNT", "SEVERITY", "LOCATION", "MESSAGE", "FIRST_SEEN", "LAST_SEEN")) {
+            for (String direction : List.of("ASC", "DESC")) {
+                request.get(ANALYSIS_ENDPOINT, HttpStatus.OK, ErrorAnalysisPageDTO.class, params("sortBy", field, "direction", direction));
+            }
+        }
     }
 
     @Test
@@ -134,11 +193,11 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void forbidsEverybodyButAdministrators() throws Exception {
-        request.getList(ANALYSIS_ENDPOINT, HttpStatus.FORBIDDEN, ErrorGroupDTO.class);
+        request.get(ANALYSIS_ENDPOINT, HttpStatus.FORBIDDEN, ErrorAnalysisPageDTO.class);
     }
 
     @Test
     void requiresAuthentication() throws Exception {
-        request.getList(ANALYSIS_ENDPOINT, HttpStatus.UNAUTHORIZED, ErrorGroupDTO.class);
+        request.get(ANALYSIS_ENDPOINT, HttpStatus.UNAUTHORIZED, ErrorAnalysisPageDTO.class);
     }
 }

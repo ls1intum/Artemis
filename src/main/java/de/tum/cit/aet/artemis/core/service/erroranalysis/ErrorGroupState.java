@@ -15,11 +15,13 @@ import de.tum.cit.aet.artemis.core.dto.ErrorGroupDTO;
  *
  * @param location        where the errors happened
  * @param severity        how serious they are
+ * @param version         the release that the errors belong to: the release of the server that logged them, or the release of the client that
+ *                            reported them if it is the release that the server was running, and {@code other} for any other client
  * @param pattern         what they have in common: the message with numbers, identifiers and email addresses replaced by placeholders
  * @param firstSeenMillis when the first of them happened, in milliseconds since the epoch
  * @param lastSeenMillis  when the last of them happened
  */
-public record ErrorGroupState(ErrorLocation location, ErrorSeverity severity, String pattern, long firstSeenMillis, long lastSeenMillis) implements Serializable {
+public record ErrorGroupState(ErrorLocation location, ErrorSeverity severity, String version, String pattern, long firstSeenMillis, long lastSeenMillis) implements Serializable {
 
     /**
      * Combines what two nodes saw of the same group: the earlier first and the later last time.
@@ -28,7 +30,7 @@ public record ErrorGroupState(ErrorLocation location, ErrorSeverity severity, St
      * @return the combined state
      */
     ErrorGroupState mergedWith(ErrorGroupState other) {
-        return new ErrorGroupState(location, severity, pattern, Math.min(firstSeenMillis, other.firstSeenMillis), Math.max(lastSeenMillis, other.lastSeenMillis));
+        return new ErrorGroupState(location, severity, version, pattern, Math.min(firstSeenMillis, other.firstSeenMillis), Math.max(lastSeenMillis, other.lastSeenMillis));
     }
 
     ErrorGroupDTO toDto(long count) {

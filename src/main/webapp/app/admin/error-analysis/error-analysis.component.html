@@ -6,7 +6,7 @@
             [attr.aria-label]="'artemisApp.errorAnalysis.span.label' | artemisTranslate"
             [options]="spanOptions"
             [ngModel]="span()"
-            (ngModelChange)="span.set($event)"
+            (ngModelChange)="setSpan($event)"
             optionLabel="label"
             optionValue="value"
             size="small"
@@ -19,7 +19,7 @@
             [attr.aria-label]="'artemisApp.errorAnalysis.location.label' | artemisTranslate"
             [options]="locationOptions"
             [ngModel]="location()"
-            (ngModelChange)="location.set($event)"
+            (ngModelChange)="setLocation($event)"
             optionLabel="label"
             optionValue="value"
             size="small"
@@ -32,7 +32,7 @@
             [attr.aria-label]="'artemisApp.errorAnalysis.severity.label' | artemisTranslate"
             [options]="severityOptions"
             [ngModel]="minSeverity()"
-            (ngModelChange)="minSeverity.set($event)"
+            (ngModelChange)="setMinSeverity($event)"
             optionLabel="label"
             optionValue="value"
             size="small"
@@ -47,31 +47,46 @@
 
 <p class="text-muted-color text-sm mb-4" data-testid="error-analysis-note" jhiTranslate="artemisApp.errorAnalysis.note"></p>
 
-@if (loading() && !groups()) {
+@if (loading() && !result()) {
     <div class="flex justify-center my-5">
         <fa-icon [icon]="faSpinner" animation="spin" size="3x" />
     </div>
-} @else if (groups(); as groups) {
-    @if (groups.length === 0) {
+} @else if (result()) {
+    @if (totalGroups() === 0) {
         <p class="text-muted-color" data-testid="error-analysis-empty" jhiTranslate="artemisApp.errorAnalysis.empty"></p>
     } @else {
         <p class="text-sm mb-2" data-testid="error-analysis-summary" [class.opacity-50]="loading()">
-            {{ 'artemisApp.errorAnalysis.summary' | artemisTranslate: { groups: groups.length, errors: totalCount() } }}
+            {{ 'artemisApp.errorAnalysis.summary' | artemisTranslate: { groups: totalGroups(), errors: totalErrors() } }}
         </p>
         <div class="overflow-x-auto" [class.opacity-50]="loading()">
-            <table tumAetUiTable size="small" style="min-width: 100%" aria-describedby="error-analysis-page-heading" data-testid="error-analysis-table">
+            <table
+                tumAetUiTable
+                size="small"
+                style="min-width: 100%"
+                [sortField]="sortField()"
+                [sortOrder]="sortAscending() ? 1 : -1"
+                (sortChange)="onSort($event)"
+                aria-describedby="error-analysis-page-heading"
+                data-testid="error-analysis-table"
+            >
                 <thead>
                     <tr>
-                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.severity"></span></th>
-                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.location"></span></th>
-                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.message"></span></th>
-                        <th scope="col" class="text-end"><span jhiTranslate="artemisApp.errorAnalysis.column.count"></span></th>
-                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.firstSeen"></span></th>
-                        <th scope="col"><span jhiTranslate="artemisApp.errorAnalysis.column.lastSeen"></span></th>
+                        <th scope="col" [tumAetUiSortableColumn]="'SEVERITY'" data-testid="sort-severity"><span jhiTranslate="artemisApp.errorAnalysis.column.severity"></span></th>
+                        <th scope="col" [tumAetUiSortableColumn]="'LOCATION'" data-testid="sort-location"><span jhiTranslate="artemisApp.errorAnalysis.column.location"></span></th>
+                        <th scope="col" [tumAetUiSortableColumn]="'MESSAGE'" data-testid="sort-message"><span jhiTranslate="artemisApp.errorAnalysis.column.message"></span></th>
+                        <th scope="col" class="text-end" [tumAetUiSortableColumn]="'COUNT'" data-testid="sort-count">
+                            <span jhiTranslate="artemisApp.errorAnalysis.column.count"></span>
+                        </th>
+                        <th scope="col" [tumAetUiSortableColumn]="'FIRST_SEEN'" data-testid="sort-first-seen">
+                            <span jhiTranslate="artemisApp.errorAnalysis.column.firstSeen"></span>
+                        </th>
+                        <th scope="col" [tumAetUiSortableColumn]="'LAST_SEEN'" data-testid="sort-last-seen">
+                            <span jhiTranslate="artemisApp.errorAnalysis.column.lastSeen"></span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    @for (group of groups; track group.location + group.severity + group.message) {
+                    @for (group of groups(); track group.location + group.severity + group.message) {
                         <tr data-testid="error-analysis-row">
                             <td class="whitespace-nowrap">
                                 <tumaet-ui-tag [severity]="severityTag(group.severity)" data-testid="error-severity">{{
@@ -88,5 +103,17 @@
                 </tbody>
             </table>
         </div>
+        <tumaet-ui-paginator
+            class="mt-3 block"
+            [ariaLabel]="'artemisApp.errorAnalysis.pagination' | artemisTranslate"
+            [totalRecords]="totalGroups()"
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [pageSizeOptions]="pageSizeOptions"
+            [disabled]="loading()"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+            data-testid="error-analysis-paginator"
+        />
     }
 }
