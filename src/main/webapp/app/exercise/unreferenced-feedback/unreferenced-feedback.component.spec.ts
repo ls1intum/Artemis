@@ -1,4 +1,6 @@
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { Component, signal } from '@angular/core';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -339,5 +341,92 @@ describe('UnreferencedFeedbackComponent', () => {
 
             expect(comp.pointsSummary()).toEqual({ awarded: 12, deducted: -2, total: 10 });
         });
+    });
+});
+
+describe('Applying instructions with real feedback cards', () => {
+    it.each([
+        { count: 1, points: 0, linked: true, text: false },
+        { count: 2, points: 0, linked: false, text: false },
+        { count: 1, points: 1, linked: false, text: false },
+        { count: 1, points: 0, linked: false, text: false },
+        { count: 1, points: 0, linked: false, text: true },
+    ])('applies immediately for $count manual cards, points=$points, linked=$linked, text=$text', async ({ count, points, linked, text }) => {
+        await TestBed.configureTestingModule({
+            imports: [UnreferencedFeedbackComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+        }).compileComponents();
+        const fixture = TestBed.createComponent(UnreferencedFeedbackComponent);
+        const instruction: GradingInstruction = { id: 1, credits: 0, gradingScale: 'Scale', instructionDescription: 'Instruction', feedback: 'Rubric feedback' };
+        const feedbacks = Array.from({ length: count }, () => {
+            const feedback = new Feedback();
+            feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+            feedback.credits = points;
+            if (text) {
+                feedback.text = 'Manual title';
+                feedback.detailText = 'Manual comment';
+            }
+            return feedback;
+        });
+        if (linked) {
+            const feedback = new Feedback();
+            feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+            feedback.gradingInstruction = instruction;
+            feedbacks.push(feedback);
+        }
+        fixture.componentRef.setInput('gradingCriteria', [{ id: 1, title: 'Criterion', structuredGradingInstructions: [instruction] }]);
+        fixture.componentRef.setInput('feedbacks', feedbacks);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        await fixture.whenStable();
+        TestBed.inject(GradingInstructionSelectionService).toggleArmedInstruction(instruction);
+        await fixture.whenStable();
+        const target = fixture.debugElement.queryAll(By.directive(UnreferencedFeedbackDetailComponent)).find((card) => card.componentInstance.feedback() === feedbacks[0])!;
+        (target.nativeElement.querySelector('.assessment-apply-instruction') as HTMLButtonElement).click();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelectorAll('.unified-feedback-assessment-criterion')).toHaveLength(linked ? 2 : 1);
+        expect(fixture.nativeElement.querySelector('.unified-feedback-assessment-criterion')?.textContent).toContain('Instruction');
+        expect(fixture.componentInstance.unreferencedFeedback).toHaveLength(feedbacks.length);
+    });
+});
+
+@Component({
+    imports: [UnreferencedFeedbackComponent, StructuredGradingInstructionsAssessmentLayoutComponent],
+    template: `
+        <jhi-structured-grading-instructions-assessment-layout [criteria]="criteria" [readonly]="false" />
+        <jhi-unreferenced-feedback [(feedbacks)]="feedbacks" [allFeedbacks]="allFeedbacks()" [gradingCriteria]="criteria" [readOnly]="false" [resultId]="1" [maxPoints]="10" />
+    `,
+})
+class InstructionApplicationHost {
+    readonly feedbacks = signal<Feedback[]>([]);
+    allFeedbacks(): Feedback[] {
+        return [...this.feedbacks()];
+    }
+    readonly criteria: GradingCriterion[] = [
+        {
+            id: 1,
+            title: 'Criterion',
+            structuredGradingInstructions: [{ id: 1, credits: 0, gradingScale: 'Scale', instructionDescription: 'Instruction', feedback: 'Rubric feedback' }],
+        },
+    ];
+}
+
+describe('Instruction application through the full assessment controls', () => {
+    it('updates an empty zero-point manual card after Add, crosshair, Apply', async () => {
+        await TestBed.configureTestingModule({
+            imports: [InstructionApplicationHost],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: TumAetUiDialogService, useClass: MockDialogService }, provideHttpClient()],
+        }).compileComponents();
+        const fixture = TestBed.createComponent(InstructionApplicationHost);
+        await fixture.whenStable();
+        (fixture.nativeElement.querySelector('.add-unreferenced-feedback') as HTMLButtonElement).click();
+        await fixture.whenStable();
+        expect(fixture.componentInstance.feedbacks()[0].credits).toBe(0);
+        (fixture.nativeElement.querySelector('[data-testid="arm-instruction"]') as HTMLButtonElement).click();
+        await fixture.whenStable();
+        (fixture.nativeElement.querySelector('.assessment-apply-instruction') as HTMLButtonElement).click();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelector('.unified-feedback-assessment-criterion')?.textContent).toContain('Instruction');
+        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')?.textContent).toContain('Rubric feedback');
     });
 });

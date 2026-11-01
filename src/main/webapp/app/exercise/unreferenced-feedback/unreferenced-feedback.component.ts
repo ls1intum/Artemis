@@ -12,6 +12,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 
 //One rendered block of the feedback list: the feedback belonging to a single grading criterion.
 export interface FeedbackGroup {
+    /** Keep criterion groups distinct from Other feedback when linking inserts or removes a group. */
+    key: GradingCriterion | 'other';
     title: string;
     translateTitle: boolean;
     feedbacks: Feedback[];
@@ -124,12 +126,12 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
                 continue;
             }
             groupFeedbacks.forEach((feedback) => alreadyGrouped.add(feedback));
-            groups.push(toGroup(criterion.title ?? '', false, groupFeedbacks, contributingCredits));
+            groups.push(toGroup(criterion.title ?? '', false, groupFeedbacks, contributingCredits, criterion));
         }
 
         const ungrouped = feedbacks.filter((feedback) => !alreadyGrouped.has(feedback));
         if (ungrouped.length > 0) {
-            groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped, contributingCredits));
+            groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped, contributingCredits, 'other'));
         }
         return groups;
     });
@@ -299,7 +301,7 @@ function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number>
     return counts;
 }
 
-function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>): FeedbackGroup {
+function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>, key: FeedbackGroup['key']): FeedbackGroup {
     const points = feedbacks.reduce((sum, feedback) => sum + (contributingCredits.get(feedback) ?? 0), 0);
     let pointsSeverity: TumAetUiTagSeverity = 'secondary';
     if (points > 0) {
@@ -307,5 +309,5 @@ function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], 
     } else if (points < 0) {
         pointsSeverity = 'danger';
     }
-    return { title, translateTitle, feedbacks, points, pointsSeverity };
+    return { key, title, translateTitle, feedbacks, points, pointsSeverity };
 }

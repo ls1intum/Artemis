@@ -43,7 +43,7 @@
         <tumaet-ui-message severity="secondary" styleClass="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
     }
 
-    @for (group of feedbackGroups(); track $index) {
+    @for (group of feedbackGroups(); track group.key) {
         <section class="unreferenced-feedback__group">
             @if (showGroupHeaders()) {
                 <header class="unreferenced-feedback__group-header">
