@@ -191,6 +191,25 @@ export class Feedback implements BaseEntity {
     }
 
     /**
+     * Whether `text` holds the feedback's title rather than its comment. It is a title once the feedback has a
+     * description, even an empty one, or the feedback of its grading instruction; feedback written before titles
+     * existed never set `detailText` and kept its whole comment in `text`, which is then shown as the body under a
+     * default title.
+     */
+    public static isTextTitle(that: Feedback): boolean {
+        return that.detailText != undefined || !!that.gradingInstruction?.feedback;
+    }
+
+    /** Translation keys of the points-based default titles a feedback gets when its title is left empty. */
+    public static readonly DEFAULT_TITLE_KEYS = ['artemisApp.feedback.type.positive', 'artemisApp.feedback.type.needsRevision', 'artemisApp.feedback.type.feedback'];
+
+    /** The translation key of the default title for the given points: "Positive", "Needs Revision" or "Feedback". */
+    public static getDefaultTitleKey(credits: number | undefined): string {
+        const points = credits ?? 0;
+        return this.DEFAULT_TITLE_KEYS[points > 0 ? 0 : points < 0 ? 1 : 2];
+    }
+
+    /**
      * Checks for equality of two feedbacks. Only checking the ids is not enough because they are undefined for inline
      * feedbacks before they are saved.
      * @param f1 The feedback that is compared to f2
