@@ -1,0 +1,47 @@
+name: Quiz OpenAPI Contract
+
+# Regenerates the OpenAPI specification from the server and fails when an operation under /api/quiz/, or a component it
+# references, differs from the committed config/openapi/openapi.yaml. The generated Angular client is built from that file,
+# so a stale specification means a stale client. Restricted to the quiz module; see documentation/docs/developer/openapi.mdx.
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR runs use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+
+permissions: {}
+
+# Workflow-level java pin is drift-checked by ci-workflows.yml.
+env:
+  java: 25
+
+jobs:
+  check:
+    name: Compare quiz operations with the committed specification
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Set up JDK
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '${{ env.java }}'
+          # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      # generateOpenApiDocs overwrites the committed file, so keep a copy to compare against.
+      - name: Keep the committed specification
+        run: cp config/openapi/openapi.yaml "$RUNNER_TEMP/committed-openapi.yaml"
+      - name: Generate the specification and compare the quiz operations
+        run: >-
+          ./gradlew generateOpenApiDocs pruneOpenApiSpec checkOpenApiContract -x webapp
+          -PcommittedOpenApiSpec="$RUNNER_TEMP/committed-openapi.yaml"
+          -PopenApiContractPathPrefix=/api/quiz/

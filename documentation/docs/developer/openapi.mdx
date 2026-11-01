@@ -52,6 +52,28 @@ The generator returns the full `HttpResponse` for operations that declare a resp
 
 The generated client files are stored in the `src/main/webapp/app/openapi` directory.
 
+## Quiz Contract Check in CI
+
+The generated client is built from the committed `config/openapi/openapi.yaml`. If a pull request changes a quiz endpoint or DTO
+without regenerating that file, the client misses the change, and nothing fails at compile time.
+
+The **Quiz OpenAPI Contract** job (`.github/workflows/ci-quiz-openapi.yml`) prevents this for the quiz module. It runs when quiz server
+code, the specification or `gradle/openapi.gradle` changes. It regenerates the specification and fails when an operation under
+`/api/quiz/`, or a component that such an operation references, differs from the committed file. The job output lists each
+difference.
+
+To fix a failure, regenerate the specification and the client as described above, and commit `config/openapi/openapi.yaml` and
+`src/main/webapp/app/openapi`. To run the check locally:
+
+```bash
+cp config/openapi/openapi.yaml build/committed-openapi.yaml
+./gradlew generateOpenApiDocs pruneOpenApiSpec checkOpenApiContract -x webapp \
+    -PcommittedOpenApiSpec=build/committed-openapi.yaml -PopenApiContractPathPrefix=/api/quiz/
+```
+
+The check covers only the quiz operations. The other modules in the specification are not compared. The job does not run
+for a change outside the quiz module that alters a DTO which a quiz operation references; the next quiz change detects it.
+
 ## The Agent API Specification
 
 A second specification lists only the endpoints that a personal access token can call. It is not used to generate a client; it is

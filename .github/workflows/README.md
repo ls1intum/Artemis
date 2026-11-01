@@ -38,6 +38,7 @@ ci.yml                                                            (single entry 
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
+├── quiz-openapi    ── uses ci-quiz-openapi.yml   (if has_quiz_openapi; regenerates the spec, compares the quiz operations with the committed file)
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
@@ -69,8 +70,8 @@ Its only permission is `actions: read` (the timeline reads the jobs API).
 ### Required vs. advisory
 
 The single required check is `CI / All required CI Passed`. It includes change detection and
-the relevant build, tests, quality, wrapper, translation, docs, workflow, version, bean, skill,
-terminology, dead-code and migration checks, plus **Sonar** and **E2E**.
+the relevant build, tests, quality, wrapper, translation, docs, workflow, version, bean, quiz OpenAPI
+contract, skill, terminology, dead-code and migration checks, plus **Sonar** and **E2E**.
 
 Sonar waits for measured test coverage and the server-side quality-gate verdict, so it can add merge
 latency. E2E also gates merges, with a flakiness-aware verdict that exonerates failures known to be
