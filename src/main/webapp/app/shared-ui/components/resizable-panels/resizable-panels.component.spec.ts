@@ -28,7 +28,12 @@ class ResizeObserverMock {
 
 @Component({
     template: `
-        <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse" [storageKey]="storageKey" [flushLeftPanel]="flushLeftPanel">
+        <jhi-resizable-panels
+            [useViewportWidthForCollapse]="useViewportWidthForCollapse"
+            [storageKey]="storageKey"
+            [flushLeftPanel]="flushLeftPanel"
+            [leftMinSizePercent]="leftMinSizePercent"
+        >
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
             <ng-template jhiPanel [label]="'right'">Right Content<input aria-label="Draft" value="Right Content" /></ng-template>
             <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed">Iris Content</ng-template>
@@ -42,6 +47,7 @@ class ResizablePanelsTestComponent {
     irisStartsCollapsed = false;
     useViewportWidthForCollapse = false;
     flushLeftPanel = false;
+    leftMinSizePercent = 0;
     storageKey: string | undefined = undefined;
 }
 
@@ -249,6 +255,57 @@ describe('ResizablePanelsComponent', () => {
         expect(component.savedSizes()).toEqual([72, 28]);
         const splitter = fixture.nativeElement.querySelector('tumaet-ui-splitter');
         expect(splitter.querySelector('[role="separator"]').getAttribute('aria-valuenow')).toBe('72');
+    });
+
+    it('keeps the left panel at its minimum size while dragging', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinSizePercent = 36;
+        fixture.detectChanges();
+
+        // The splitter refuses a drag that would leave the left panel below the minimum; the right panel stays unbounded.
+        expect(fixture.debugElement.query(By.css('tumaet-ui-splitter')).componentInstance.minSizes()).toEqual([36, 0]);
+    });
+
+    it('caps the left minimum so the right panel can be dragged wider than the collapse threshold', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinSizePercent = 90;
+        fixture.detectChanges();
+
+        // With the default threshold of 12%, a minimum of 90% would leave every drag at a right panel of 10% or less, which snaps it shut
+        expect(fixture.debugElement.query(By.css('tumaet-ui-splitter')).componentInstance.minSizes()).toEqual([76, 0]);
+    });
+
+    it('widens a remembered split whose left panel is below the minimum, so the slider is not frozen', () => {
+        localStorage.setItem('test-split', JSON.stringify([20, 80]));
+
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.storageKey = 'test-split';
+        fixture.componentInstance.leftMinSizePercent = 36;
+        fixture.detectChanges();
+        fixture.detectChanges();
+        const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        expect(component.savedSizes()).toEqual([36, 64]);
+        expect(fixture.debugElement.query(By.css('tumaet-ui-splitter')).componentInstance.panelSizes()).toEqual([36, 64]);
+    });
+
+    it('widens the default split to a minimum above it, on init and when reopening', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinSizePercent = 75;
+        fixture.detectChanges();
+        const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        const splitter = fixture.debugElement.query(By.css('tumaet-ui-splitter')).componentInstance;
+
+        expect(component.savedSizes()).toBeUndefined();
+        expect(splitter.panelSizes()).toEqual([75, 25]);
+
+        component.onResizeEnd([100, 0]);
+        fixture.detectChanges();
+        component.expandRightPanel(0);
+        fixture.detectChanges();
+
+        expect(component.savedSizes()).toEqual([75, 25]);
+        expect(splitter.panelSizes()).toEqual([75, 25]);
     });
 
     it('stores an independent copy of emitted sizes', () => {
