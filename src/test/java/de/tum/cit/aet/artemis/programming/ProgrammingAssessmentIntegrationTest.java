@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
@@ -70,6 +71,8 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAsses
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -99,7 +102,47 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void manualResultAuthorizesBeforeRejectingAnotherExerciseType(boolean authorizedCourse) throws Exception {
+        Course course = authorizedCourse ? programmingExercise.getCourseViaExerciseGroupOrCourseMember() : courseUtilService.createCourse();
+        var exercise = exerciseRepository
+                .save(TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course));
+        var participation = studentParticipationRepository
+                .save(ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        long resultCount = resultRepository.count();
+
+        request.put("/api/programming/participations/" + participation.getId() + "/manual-results",
+                Map.of("rated", true, "score", 0.0, "successful", false, "feedbacks", List.of()), authorizedCourse ? HttpStatus.BAD_REQUEST : HttpStatus.FORBIDDEN);
+
+        assertThat(resultRepository.count()).isEqualTo(resultCount);
+        assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getId()).isEqualTo(exercise.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void assessmentLockAuthorizesBeforeRejectingAnotherSubmissionType(boolean authorizedCourse) throws Exception {
+        Course course = authorizedCourse ? programmingExercise.getCourseViaExerciseGroupOrCourseMember() : courseUtilService.createCourse();
+        var exercise = exerciseRepository
+                .save(TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course));
+        var participation = studentParticipationRepository
+                .save(ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.setText("Unchanged text submission");
+        textSubmission.setParticipation(participation);
+        textSubmission = submissionRepository.save(textSubmission);
+        long resultCount = resultRepository.count();
+
+        request.get("/api/programming/programming-submissions/" + textSubmission.getId() + "/lock", authorizedCourse ? HttpStatus.BAD_REQUEST : HttpStatus.FORBIDDEN, Map.class);
+
+        assertThat(resultRepository.count()).isEqualTo(resultCount);
+        assertThat(((TextSubmission) submissionRepository.findByIdElseThrow(textSubmission.getId())).getText()).isEqualTo("Unchanged text submission");
+        assertThat(submissionRepository.findByIdElseThrow(textSubmission.getId()).getParticipation().getId()).isEqualTo(participation.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void manualResultValidatesGradingInstructionOwnership(boolean ownInstruction) throws Exception {
         var instructionExercise = ownInstruction ? programmingExercise
                 : programmingExerciseUtilService.addProgrammingExerciseToCourse(
@@ -163,7 +206,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void updateAssessmentAfterComplaint_responseKeepsTypedAutomaticFeedback() throws Exception {
         ProgrammingSubmission submissionWithComplaint = ParticipationFactory.generateProgrammingSubmission(true);
         submissionWithComplaint = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submissionWithComplaint,
@@ -243,7 +286,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void updateAssessmentAfterComplaint_feedbackMarkedAsServerScored_creditsOutOfBounds() throws Exception {
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testCase");
         ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
@@ -282,7 +325,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
@@ -319,7 +362,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void updateAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
@@ -336,7 +379,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void updateAssessmentAfterComplaint_dueDateNotPassed_forbidden() throws Exception {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
@@ -353,7 +396,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void updateAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
         Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
@@ -371,46 +414,46 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
         overrideAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testOverrideAssessment_submitInstructorPossible() throws Exception {
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAssessment_submitSameTutorPossible() throws Exception {
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAssessment_submitSameTutorNoAssessmentDueDatePossible() throws Exception {
         exerciseUtilService.updateAssessmentDueDate(programmingExercise.getId(), null);
         overrideAssessment(HttpStatus.OK);
@@ -424,7 +467,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void programmingExerciseManualResult_submissionNotModified() throws Exception {
         ProgrammingSubmission newSubmission = new ProgrammingSubmission().commitHash("asdf");
         manualResult.setSubmission(newSubmission);
@@ -439,7 +482,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_save() throws Exception {
         Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
                 Result.class, HttpStatus.OK);
@@ -450,7 +493,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_submit() throws Exception {
         Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true",
                 manualResult, Result.class, HttpStatus.OK);
@@ -471,7 +514,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -494,7 +537,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -518,7 +561,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
@@ -531,7 +574,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_NotIncludedExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -556,7 +599,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_withResultOver100Percent() throws Exception {
         List<Feedback> feedbacks = new ArrayList<>();
         // Check that result is over 100% -> 105
@@ -585,7 +628,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_resultHasAutomaticFeedback() throws Exception {
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testCase");
         List<Feedback> feedbacks = new ArrayList<>();
@@ -611,7 +654,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
 
@@ -620,7 +663,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
         Result result = new Result();
         Feedback feedback = new Feedback();
@@ -653,7 +696,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void updateManualProgrammingExerciseResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
@@ -689,7 +732,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void updateManualProgrammingExerciseResult_newResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
@@ -712,7 +755,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void updateManualProgrammingExerciseResult_addFeedbackAfterManualLongFeedback() throws Exception {
         List<Feedback> feedbacks = new ArrayList<>();
         var manualLongFeedback = new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED);
@@ -741,7 +784,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void updateManualProgrammingExerciseResult_responseKeepsTypedAutomaticFeedback() throws Exception {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
@@ -775,7 +818,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldKeepExistingLongFeedbackWhenSavingAnAssessment(boolean submit) throws Exception {
         var manualLongFeedback = new Feedback().credits(0.0);
         var longText = "abc".repeat(5000);
@@ -801,7 +844,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldUpdateUnreferencedLongFeedbackWhenSavingAnAssessment(boolean submit) throws Exception {
         var manualLongFeedback = new Feedback().credits(0.0).type(FeedbackType.MANUAL_UNREFERENCED);
         var longText = "abc".repeat(5000);
@@ -833,7 +876,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void updateManualProgrammingExerciseResult_addFeedbackAfterAutomaticLongFeedback() throws Exception {
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testCase");
 
@@ -888,6 +931,20 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         return resultRepository.save(manualResult);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void cancelAssessmentRejectsTemplateAndSolutionSubmissionsWithoutMutation(boolean solution) throws Exception {
+        var participation = solution ? programmingExercise.getSolutionParticipation() : programmingExercise.getTemplateParticipation();
+        ProgrammingSubmission submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
+        assertThat(submission.getParticipation()).isNotInstanceOf(StudentParticipation.class);
+        request.put("/api/programming/programming-submissions/" + submission.getId() + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
+        Submission stored = submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        assertThat(stored.getParticipation().getId()).isEqualTo(participation.getId());
+        assertThat(stored.getResults()).isEmpty();
+        assertThat(((ProgrammingSubmission) stored).getCommitHash()).isEqualTo(submission.getCommitHash());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void cancelOwnAssessmentAsStudent() throws Exception {
@@ -895,25 +952,25 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void cancelOwnAssessmentAsTutor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSaveAssessmentNote() throws Exception {
         AssessmentNote assessmentNote = new AssessmentNote();
         assessmentNote.setNote("note");
@@ -947,7 +1004,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
      * deleted — most importantly its test-case reference.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void echoingTheLockedAssessmentBackKeepsAutomaticFeedbackTestCaseLinks() throws Exception {
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "echoedTestCase");
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
@@ -991,7 +1048,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
      * Saving a manual result replaces its feedback with the list in the request body, so a feedback id must belong to the result that is written.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void saveManualResultRejectsFeedbackOfAnotherResult() throws Exception {
         ProgrammingSubmission otherSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise,
                 ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student3", TEST_PREFIX + "tutor2", AssessmentType.SEMI_AUTOMATIC, true);
@@ -1015,7 +1072,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
      * including the automatic submission policy feedback copied by the lock, so the save has to write the loaded result and not the most recent one.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void submitLoadedAssessmentWhenTheSubmissionHasSeveralManualResults() throws Exception {
         var submission = createSubmissionWithAutomaticPolicyFeedback();
         // what an overlapping second lock request read before the first one created its manual result
@@ -1047,7 +1104,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
      * feedback is written by the server, so the stored rows are kept and the outdated ids in the request are ignored.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void submitLoadedAssessmentAfterANewBuildReplacedTheAutomaticFeedback() throws Exception {
         var submission = createSubmissionWithAutomaticPolicyFeedback();
         Result loadedResult = lockAndGetManualResult(submission.getId());
@@ -1072,7 +1129,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
      * participation and a result id of another participation are both rejected.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void submitLoadedAssessmentRejectsFeedbackAndResultsItDoesNotOwn() throws Exception {
         var submission = createSubmissionWithAutomaticPolicyFeedback();
         var submissionBeforeLock = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submission.getId());
@@ -1138,7 +1195,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
      * which the request body has to carry.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void savingThenSubmittingKeepsExactlyOneUnchangedLongFeedbackRow() throws Exception {
         var manualLongFeedback = new Feedback().credits(0.0).type(FeedbackType.MANUAL_UNREFERENCED);
         var longText = "abc".repeat(5000);
@@ -1178,7 +1235,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
      */
     @ParameterizedTest(name = "{displayName} [{index}] submit={0}")
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void creatingALongManualFeedbackStoresExactlyOneLongFeedbackRow(boolean submit) throws Exception {
         var longText = "abc".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH);
         var newFeedback = new ProgrammingManualFeedbackDTO(null, null, longText, false, null, 0.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null);
@@ -1243,7 +1300,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void multipleCorrectionRoundsForExam() throws Exception {
         // Setup exam with 2 correction rounds and a programming exercise
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
@@ -1451,7 +1508,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void overrideProgrammingAssessmentAfterComplaint() throws Exception {
         User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
 
@@ -1563,7 +1620,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @ParameterizedTest
     @EnumSource(value = AssessmentType.class, names = { "AUTOMATIC", "SEMI_AUTOMATIC" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteProgrammingResultWithDependentFeedbackAndNote(AssessmentType assessmentType) throws Exception {
         var submission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, ParticipationFactory.generateProgrammingSubmission(true),
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", assessmentType, true);
@@ -1601,20 +1658,38 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(testCaseFeedbackRepository.findById(retainedFeedback.getId())).isPresent();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = CourseRole.class, names = { "STUDENT", "TEACHING_ASSISTANT", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deleteAssessmentChecksInstructorRoleBeforeLookingUpResult(CourseRole role) throws Exception {
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        User caller = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, course, role);
+        Submission before = submissionRepository.findByIdWithResultsElseThrow(programmingSubmission.getId());
+        List<Long> resultIds = before.getResults().stream().map(Result::getId).toList();
+        request.delete("/api/programming/participations/" + before.getParticipation().getId() + "/programming-submissions/" + before.getId() + "/results/" + Long.MAX_VALUE,
+                HttpStatus.FORBIDDEN);
+        Submission stored = submissionRepository.findByIdWithResultsElseThrow(before.getId());
+        assertThat(stored.getParticipation().getId()).isEqualTo(before.getParticipation().getId());
+        assertThat(stored.getResults()).extracting(Result::getId).containsExactlyInAnyOrderElementsOf(resultIds);
+        assertThat(((ProgrammingSubmission) stored).getCommitHash()).isEqualTo(programmingSubmission.getCommitHash());
+    }
+
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void deleteAssessmentOfOtherTutorAsTutor() throws Exception {
         deleteAssessmentAsForbiddenUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void deleteAssessmentAsTutor() throws Exception {
         deleteAssessmentAsForbiddenUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteOwnAssessmentAsStudent() throws Exception {
         deleteAssessmentAsForbiddenUser();
     }
@@ -1632,7 +1707,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteAssessmentAsInstructor() throws Exception {
         Course course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "programming", 1, Optional.empty());
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().findFirst().orElseThrow();
@@ -1643,6 +1718,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
+        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + Long.MAX_VALUE,
+                HttpStatus.NOT_FOUND);
+        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + Long.MAX_VALUE + "/results/"
+                + submission.getFirstResult().getId(), HttpStatus.NOT_FOUND);
         Result resultToDelete = resultsInCreationOrder(submission).get(0);
         Result secondResult = resultsInCreationOrder(submission).get(1);
         Result thirdResult = resultsInCreationOrder(submission).get(2);

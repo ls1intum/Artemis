@@ -72,7 +72,7 @@ export class MessageEditorSuggestions {
         if (!load) {
             load = Promise.all([
                 firstValueFrom(this.channels.getPublicChannelsOfCourse(courseId)),
-                firstValueFrom(this.exercises.getTitlesForCourse(courseId)),
+                firstValueFrom(this.exercises.getTitlesForAccessibleCourse(courseId)),
                 firstValueFrom(this.lectures.findAllByCourseIdForOverview(courseId)),
             ])
                 .then(([channels, exercises, lectures]) => [

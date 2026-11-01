@@ -109,7 +109,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetCourseWithLLMTokenUsageData_shouldNotViolateForeignKeyConstraint() {
         // Create a trace with an associated request (simulating real LLM usage)
         var trace = new LLMTokenUsageTrace();
@@ -141,7 +141,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetCourseWithMultipleLLMTokenUsageRequests_shouldDeleteAll() {
         // Create a trace with multiple requests
         var trace = new LLMTokenUsageTrace();
@@ -172,7 +172,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetDeletesExamUsersAndConversationParticipantsButKeepsCourseAndInstructor() {
         Exercise exercise = course.getExercises().iterator().next();
         long courseId = course.getId();
@@ -222,7 +222,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetDeletesPresentationAssessmentInstancesButKeepsDefinitions() {
         Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         PresentationAssessment presentationAssessment = createPresentationAssessmentWithInstance(course, "Course presentation");

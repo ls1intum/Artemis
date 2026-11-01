@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -15,9 +14,8 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -37,7 +35,6 @@ describe('Lecture', () => {
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
     let profileService: ProfileService;
-    let dialogService: DialogService;
 
     let pastLecture: Lecture;
     let pastLecture2: Lecture;
@@ -120,7 +117,6 @@ describe('Lecture', () => {
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useValue: new MockProfileService() },
                 {
@@ -173,7 +169,6 @@ describe('Lecture', () => {
         lectureComponentFixture = TestBed.createComponent(LectureComponent);
         lectureComponent = lectureComponentFixture.componentInstance;
         lectureService = TestBed.inject(LectureService);
-        dialogService = TestBed.inject(DialogService);
         profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
@@ -231,24 +226,16 @@ describe('Lecture', () => {
     });
 
     it('should import lecture', async () => {
-        const onCloseSubject = new Subject<Lecture | undefined>();
-        const mockDialogRef = {
-            onClose: onCloseSubject.asObservable(),
-            close: vi.fn(),
-        } as unknown as DynamicDialogRef;
-
-        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         const importSpy = vi.spyOn(lectureService, 'import');
 
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
         lectureComponent.openImportModal();
 
-        expect(openSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledWith(LectureImportComponent, expect.objectContaining({ modal: true }));
+        expect(lectureComponent.isImportDialogVisible()).toBe(true);
 
         // Emit the result from the dialog
-        onCloseSubject.next({ id: 123 } as Lecture);
+        lectureComponent.importLecture({ id: 123 } as Lecture);
         await lectureComponentFixture.whenStable();
 
         expect(importSpy).toHaveBeenCalledOnce();
@@ -350,13 +337,6 @@ describe('Lecture', () => {
     });
 
     it('should handle import modal dismissal gracefully', async () => {
-        const onCloseSubject = new Subject<Lecture | undefined>();
-        const mockDialogRef = {
-            onClose: onCloseSubject.asObservable(),
-            close: vi.fn(),
-        } as unknown as DynamicDialogRef;
-
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         const importSpy = vi.spyOn(lectureService, 'import');
 
         lectureComponentFixture.detectChanges();
@@ -364,7 +344,7 @@ describe('Lecture', () => {
         lectureComponent.openImportModal();
 
         // Emit undefined (dismissed)
-        onCloseSubject.next(undefined);
+        lectureComponent.isImportDialogVisible.set(false);
         await lectureComponentFixture.whenStable();
 
         expect(importSpy).not.toHaveBeenCalled();
@@ -374,13 +354,6 @@ describe('Lecture', () => {
         const alertService = TestBed.inject(AlertService);
         const errorSpy = vi.spyOn(alertService, 'error');
 
-        const onCloseSubject = new Subject<Lecture | undefined>();
-        const mockDialogRef = {
-            onClose: onCloseSubject.asObservable(),
-            close: vi.fn(),
-        } as unknown as DynamicDialogRef;
-
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         // Use status 400 because onError explicitly skips 500 errors
         vi.spyOn(lectureService, 'import').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
 
@@ -388,7 +361,7 @@ describe('Lecture', () => {
         await lectureComponentFixture.whenStable();
         lectureComponent.openImportModal();
 
-        onCloseSubject.next({ id: 123 } as Lecture);
+        lectureComponent.importLecture({ id: 123 } as Lecture);
         await lectureComponentFixture.whenStable();
 
         expect(errorSpy).toHaveBeenCalledWith('error.http.400');

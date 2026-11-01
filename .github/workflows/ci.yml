@@ -1,9 +1,11 @@
 name: CI
+run-name: >-
+  ${{ github.event_name == 'pull_request' && github.event.action == 'edited' && !github.event.changes.base && format('PR metadata edit #{0}', github.event.pull_request.number) || format('CI: {0}', github.event.pull_request.title || github.ref_name) }}
 # Single CI entry point. See .github/workflows/README.md for the contract.
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
   push:
     branches:
       - develop
@@ -31,7 +33,8 @@ on:
 # image, which are what a deployment of that commit needs, for the better part of an hour.
 concurrency:
   group: >-
-    ${{ github.event_name == 'pull_request' && format('ci-pr-{0}', github.event.pull_request.number)
+    ${{ github.event_name == 'pull_request' && github.event.action == 'edited' && !github.event.changes.base && format('ci-pr-metadata-{0}', github.run_id)
+     || github.event_name == 'pull_request' && format('ci-pr-{0}', github.event.pull_request.number)
      || github.event_name == 'merge_group'  && format('ci-mq-{0}', github.event.merge_group.head_sha)
      || github.event_name == 'release'      && format('ci-release-{0}', github.event.release.tag_name)
      || format('ci-{0}-{1}', github.ref, github.sha) }}
@@ -40,9 +43,10 @@ concurrency:
 permissions: {}
 
 jobs:
-
   detect-changes:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    if: >-
+      (github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')) &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
     name: Detect Changed Areas
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -50,6 +54,8 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
+      current: ${{ steps.ready.outputs.current }}
+      tests_deferred: ${{ steps.ready.outputs.tests_deferred }}
       build_relevant: ${{ steps.decide.outputs.build_relevant }}
       has_java: ${{ steps.decide.outputs.has_java }}
       has_sandbox_tests: ${{ steps.decide.outputs.has_sandbox_tests }}
@@ -62,6 +68,7 @@ jobs:
       has_liquibase: ${{ steps.decide.outputs.has_liquibase }}
       has_skills: ${{ steps.decide.outputs.has_skills }}
       has_tum_aet_ui: ${{ steps.decide.outputs.has_tum_aet_ui }}
+      sonar_relevant: ${{ steps.decide.outputs.sonar_relevant }}
       codeql_relevant: ${{ steps.decide.outputs.codeql_relevant }}
       run_server_tests: ${{ steps.decide.outputs.run_server_tests }}
       run_client_tests: ${{ steps.decide.outputs.run_client_tests }}
@@ -72,6 +79,19 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
+
+      # Use the existing public runner; no additional checkout/job or timed wait.
+      - name: Check current revision and draft scope
+        id: ready
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: await require('./.github/scripts/pr-ready.js')({ github, context, core })
+
+      # Immutable run metadata for promoted Sonar coverage lookup. A same-head run from before
+      # retargeting may have selected different tests, so its coverage cannot prove the new target.
+      - name: 'Sonar coverage target: ${{ github.event.pull_request.base.ref }}'
+        if: github.event_name == 'pull_request' && steps.ready.outputs.current == 'true'
+        run: echo 'Recorded the test-selection target in this run step name.'
 
       # dorny/paths-filter handles the edge cases hand-rolled `git diff` does not:
       # initial commits, force-pushes, missing merge-base, and `merge_group` events.
@@ -95,6 +115,11 @@ jobs:
             # OpenAPI client, workflows and skills are not analysed (see .github/codeql/codeql-config.yml),
             # so a change that touches only those has nothing new for CodeQL to look at. A deny-list,
             # so a new top-level directory is scanned until someone decides it is not worth it.
+            sonar:
+              - '{src/main/java,src/main/resources,src/main/webapp,packages/tum-aet-ui/src}/**'
+              - '!src/main/resources/templates/**'
+              - '!**/*.spec.ts'
+              - '!**/*.stories.ts'
             codeql:
               - '!**/*.md'
               - '!LICENSE'
@@ -119,6 +144,8 @@ jobs:
               - '!src/test/playwright/**'
               - '!packages/**'
               - '!skills/**'
+              - '!config/stylelint/stylelint.config.json'
+              - '!config/stylelint/stylelint.config.js'
             # `build.gradle` and `gradle/` are deliberately absent: supporting_scripts/client/prebuild.mjs
             # reads the app version from build.gradle, and prebuild runs in front of every client test;
             # config/eslint/rules/tum-aet-ui-package.spec.mjs reads gradle/profile_{dev,prod}.gradle.
@@ -152,6 +179,34 @@ jobs:
         with:
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
           filters: |
+            has_sonar_config:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-sonar.yml'
+              - '.github/workflows/ci-test.yml'
+              - '.github/scripts/sonar-*'
+              - '.github/scripts/run-sonar.sh'
+              - 'supporting_scripts/client/run-affected-tests*'
+              - 'build.gradle'
+              - 'settings.gradle'
+              - 'gradle.properties'
+              - 'gradle/**'
+              - 'gradlew'
+              - 'gradlew.bat'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.nvmrc'
+              - '.npmrc'
+              - '.codacy.yaml'
+              - '.gitignore'
+              - '.gitattributes'
+              - 'angular.json'
+              - 'tsconfig*.json'
+              - 'vitest.config.ts'
+              - 'config/testing/**'
+              - 'config/client/**'
+              - 'packages/tum-aet-ui/package.json'
+              - 'packages/tum-aet-ui/tsconfig*.json'
             has_java:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-quality.yml'
@@ -258,6 +313,12 @@ jobs:
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
+              - '.github/scripts/**'
+              - 'supporting_scripts/get_changed_modules.sh'
+              - 'supporting_scripts/select_server_test_modules.py'
+              - 'supporting_scripts/tests/**'
+              - 'supporting_scripts/client/run-affected-tests*'
+              - 'supporting_scripts/ci/E2E-tests/**'
               - 'deployment/kubernetes/install-localci-kubernetes-ubuntu.sh'
               - 'supporting_scripts/test_verified_installers.py'
               - 'supporting_scripts/check_action_pinning.py'
@@ -310,6 +371,8 @@ jobs:
           F_LIQUIBASE: ${{ steps.area.outputs.has_liquibase }}
           F_SKILLS: ${{ steps.area.outputs.has_skills }}
           F_TUM_AET_UI: ${{ steps.area.outputs.has_tum_aet_ui }}
+          F_SONAR: ${{ steps.relevant.outputs.sonar }}
+          F_SONAR_CONFIG: ${{ steps.area.outputs.has_sonar_config }}
           F_CODEQL: ${{ steps.relevant.outputs.codeql }}
           F_CODEQL_CONFIG: ${{ steps.area.outputs.has_codeql_config }}
           F_SERVER_TESTS: ${{ steps.relevant.outputs.server_tests }}
@@ -322,7 +385,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
+            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant sonar_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -351,9 +414,14 @@ jobs:
               else
                 echo "codeql_relevant=false"
               fi
+              if [ "${F_SONAR:-false}" = "true" ] || [ "${F_SONAR_CONFIG:-false}" = "true" ] || { [ "${EVENT_NAME}" = "pull_request" ] && [ "${CHANGED_FILES:-0}" -ge 3000 ]; }; then
+                echo "sonar_relevant=true"
+              else
+                echo "sonar_relevant=false"
+              fi
               echo "server_test_inputs=${F_SERVER_TEST_INPUTS:-false}"
-              # Only a pull request may skip a suite or E2E. A push to develop, a merge group and a manual run
-              # still run both: the coverage badge and Sonar read both suites' coverage on develop, and
+              # Only a pull request may select individual suites. When Test is relevant, a push to develop,
+              # a merge group and a manual run still run both: the coverage badge and Sonar read both suites' coverage on develop, and
               # develop is where a change that slipped past the pull request's own run would show up.
               # A pull request that large is also never trusted with a skip: for a pull request the
               # changed files come from the pulls API, which stops at 3000 files, so the filters may
@@ -361,7 +429,12 @@ jobs:
               if [ "$EVENT_NAME" != "pull_request" ] || [ "${CHANGED_FILES:-0}" -ge 3000 ]; then
                 echo "run_server_tests=true"
                 echo "run_client_tests=true"
-                echo "run_e2e=true"
+                # The API cap expands relevant scope; draft deferral still applies.
+                if [ "$EVENT_NAME" != "pull_request" ] || [ "$IS_DRAFT" != "true" ]; then
+                  echo "run_e2e=true"
+                else
+                  echo "run_e2e=false"
+                fi
                 echo "build_pr_image=true"
               else
                 # E2E is the slowest stage, so a draft does not start it; `ready_for_review` starts a
@@ -387,10 +460,24 @@ jobs:
             } >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Validate mandatory scope outputs
+        env:
+          CURRENT: ${{ steps.ready.outputs.current }}
+          DEFERRED: ${{ steps.ready.outputs.tests_deferred }}
+          SONAR_RELEVANT: ${{ steps.decide.outputs.sonar_relevant }}
+        run: |
+          set -Eeuo pipefail
+          for key in CURRENT DEFERRED SONAR_RELEVANT; do
+            case "${!key}" in
+              true | false) ;;
+              *) echo "::error::Missing or invalid $key scope metadata"; exit 1 ;;
+            esac
+          done
+
   build:
     name: Build
     needs: detect-changes
-    if: needs.detect-changes.outputs.build_relevant == 'true'
+    if: needs.detect-changes.outputs.current == 'true' && needs.detect-changes.outputs.build_relevant == 'true'
     uses: ./.github/workflows/ci-build.yml
     permissions:
       # These are the CEILING for ci-build.yml, not a grant to its jobs: a called workflow can only
@@ -425,9 +512,12 @@ jobs:
     needs: detect-changes
     # `server_test_inputs` keeps a change that `build` ignores but a server test reads (the feature usage
     # catalogue, the markdown templates) from merging unchecked; only the server suite runs for it.
+    # Drafts retain public style/type/architecture checks; test suites start on ready_for_review.
     if: >-
-      needs.detect-changes.outputs.build_relevant == 'true' ||
-      needs.detect-changes.outputs.server_test_inputs == 'true'
+      needs.detect-changes.outputs.current == 'true' &&
+      needs.detect-changes.outputs.tests_deferred != 'true' &&
+      (needs.detect-changes.outputs.build_relevant == 'true' ||
+      needs.detect-changes.outputs.server_test_inputs == 'true')
     uses: ./.github/workflows/ci-test.yml
     permissions:
       contents: read
@@ -435,8 +525,9 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
-      # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
-      run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+      # PRs select affected tests, falling back to full suites for broad or unknown inputs.
+      # Push, merge-group, release and manual runs retain complete suites and coverage.
+      run_all_tests: ${{ github.event_name != 'pull_request' }}
       run_sandbox_tests: ${{ needs.detect-changes.outputs.has_sandbox_tests == 'true' }}
       # A pull request that cannot affect one suite does not run it (see `detect-changes`). Always true
       # for anything but a pull request.
@@ -466,7 +557,7 @@ jobs:
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.detect-changes.outputs.build_relevant == 'true' &&
-      needs.test.result != 'skipped' && needs.test.result != 'cancelled'
+      (needs.test.result != 'skipped' || needs.detect-changes.outputs.tests_deferred == 'true') && needs.test.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -491,14 +582,14 @@ jobs:
         with:
           script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
       - name: Download server JaCoCo XML
-        if: steps.changes.outputs.has_server_changes == 'true'
+        if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && steps.changes.outputs.has_server_changes == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         continue-on-error: true
         with:
           name: Server JaCoCo XML
           path: build/reports/jacoco/
       - name: Download client coverage summaries
-        if: steps.changes.outputs.has_client_changes == 'true'
+        if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && steps.changes.outputs.has_client_changes == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         continue-on-error: true
         with:
@@ -507,13 +598,13 @@ jobs:
           # local-pr-coverage.mjs reads it (VITEST_COVERAGE_SUMMARY). Don't shorten to build/test-results/.
           path: build/test-results/vitest/coverage/
       - name: Setup Node.js
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
       - name: Generate coverage table
         id: coverage
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         env:
           CLIENT_MODULES: ${{ steps.changes.outputs.client_modules }}
           SERVER_MODULES: ${{ steps.changes.outputs.server_modules }}
@@ -537,6 +628,7 @@ jobs:
           COVERAGE_TABLE: ${{ steps.coverage.outputs.coverage_table }}
           COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
           # The TEST job result, not the whole-run conclusion (which e2e pollutes on internal PRs).
+          TEST_SCOPE: ${{ needs.detect-changes.outputs.tests_deferred == 'true' && 'deferred' || needs.test.outputs.affected_tests == 'true' && 'affected' || 'full' }}
           TEST_CONCLUSION: ${{ needs.test.result }}
           TEST_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           POST_AUTHOR_COMMENT: 'false'
@@ -552,6 +644,7 @@ jobs:
       contents: read
       checks: write  # server-style's architecture-test reporter posts a check-run
     with:
+      check_test_types: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == true }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
       has_java: ${{ needs.detect-changes.outputs.has_java == 'true' }}
@@ -745,28 +838,28 @@ jobs:
           fi
           exit 0
 
-  # SonarQube Cloud analysis, running alongside Codacy so the two code-quality grades can be compared
-  # on the same code before either is trusted with a README badge. Scope is pinned to Codacy's in
-  # `gradle/sonar.gradle`; see README.md ("The code quality analyses").
-  #
-  # Develop-push only, and gated on `test` having SUCCEEDED, for the same reason `coverage-badge`
-  # above is: coverage imported from a partially failed run is artificially low, and unlike a badge
-  # this would persist into Sonar's own history as a real dip. Skipping instead leaves the last
-  # analysis standing. `ci-sonar.yml` is separately dispatchable for an on-demand grade.
-  #
-  # ADVISORY: never in another job's `needs:` and never gating — the called job is
-  # `continue-on-error`, so a Sonar outage or an expired token cannot turn develop red.
+  # Required before merging relevant ready PRs. Reuse complete or explicitly selected coverage;
+  # never rerun full test suites merely to populate Sonar. Forks verify maintainer-published evidence.
   sonar:
     name: Sonar
-    needs: test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success' }}
+    needs: [detect-changes, test]
+    if: >-
+      !cancelled() && needs.detect-changes.outputs.current == 'true' &&
+      needs.detect-changes.outputs.tests_deferred != 'true' &&
+      ((github.event_name == 'pull_request' && !github.event.pull_request.draft &&
+        needs.detect-changes.outputs.sonar_relevant != 'false' &&
+        (needs.test.result == 'success' || needs.test.result == 'skipped')) ||
+       (github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success') ||
+       (github.event_name == 'merge_group' && needs.test.result == 'success') ||
+       (github.event_name == 'workflow_dispatch' && needs.detect-changes.outputs.sonar_relevant != 'false' && needs.test.result == 'success'))
     uses: ./.github/workflows/ci-sonar.yml
     permissions:
       contents: read
-      actions: read  # ci-sonar.yml lists runs and downloads artifacts when it is dispatched on its own
+      actions: read
+      pull-requests: read
     with:
-      commit_sha: ${{ github.sha }}
-      with_coverage: true
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      with_coverage: ${{ needs.test.result == 'success' }}
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -812,7 +905,9 @@ jobs:
 
   # Prose changes need terminology checks regardless of which area changed.
   terminology:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    if: >-
+      (github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')) &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
     name: Terminology
     uses: ./.github/workflows/ci-terminology.yml
     permissions:
@@ -822,7 +917,9 @@ jobs:
 
   # Deleting the last caller can orphan code in any area of the repository.
   dead-code:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    if: >-
+      (github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')) &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
     name: Dead Code
     uses: ./.github/workflows/ci-dead-code.yml
     permissions:
@@ -858,6 +955,7 @@ jobs:
     if: >-
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository) &&
+      needs.detect-changes.outputs.tests_deferred != 'true' &&
       needs.detect-changes.outputs.run_e2e != 'false'
     uses: ./.github/workflows/ci-e2e.yml
     permissions:
@@ -866,6 +964,7 @@ jobs:
       actions: read
       checks: write  # E2E JUnit reports create check runs
     with:
+      run_full_suite: ${{ github.event_name != 'pull_request' }}
       branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
@@ -924,8 +1023,10 @@ jobs:
   # caught. If a future required job is made to `needs:` another required job's output, add that
   # producer here too, or a cascading skip could pass the gate green over broken code.
   all-required-ci-passed:
-    name: All required CI Passed
-    if: ${{ !cancelled() }}
+    # Drafts never publish the canonical required status for untested commits. Promotion on the
+    # same SHA must wait for a fresh ready-for-review run rather than reuse a draft's green check.
+    name: ${{ github.event.action == 'edited' && !github.event.changes.base && 'PR metadata updated (validation unchanged)' || needs.detect-changes.outputs.current == 'false' && 'Superseded revision (tests skipped)' || github.event_name == 'pull_request' && github.event.pull_request.draft == true && 'Draft checks passed (tests deferred)' || 'All required CI Passed' }}
+    if: ${{ !cancelled() && (github.event.action != 'edited' || github.event.changes.base != null) }}
     needs:
       - detect-changes
       - build
@@ -942,6 +1043,7 @@ jobs:
       - dead-code
       - liquibase
       - e2e
+      - sonar
     runs-on: ubuntu-latest
     permissions: {}  # reads only the `needs` context; no checkout, no token scope
     timeout-minutes: 5
@@ -953,6 +1055,7 @@ jobs:
       - name: Evaluate gate
         env:
           NEEDS: ${{ toJSON(needs) }}
+          TESTS_DEFERRED: ${{ needs.detect-changes.outputs.tests_deferred }}
         run: |
           set -Eeuo pipefail
           # Fail closed: malformed/empty NEEDS must abort red, never pass green. `jq -e` on a
@@ -971,7 +1074,12 @@ jobs:
           done <<< "$parsed"
 
           if [ "$(( ${#failed[@]} + ${#cancelled[@]} ))" -eq 0 ]; then
-            echo "::notice::All required CI checks passed."
+            if [ "$TESTS_DEFERRED" = "true" ]; then
+              echo "::notice::Draft checks passed. Test suites run when the PR is marked ready for review."
+              echo "Draft checks passed; server, client and sandbox test suites are deferred until ready for review. The required full-test status is not published for this draft." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::notice::All required CI checks passed."
+            fi
             exit 0
           fi
 
@@ -995,7 +1103,7 @@ jobs:
   # another job's `needs:`, so it cannot block merging.
   ci-summary:
     name: CI Summary
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && (github.event.action != 'edited' || github.event.changes.base != null) }}
     needs:
       - detect-changes
       - build
@@ -1012,6 +1120,7 @@ jobs:
       - dead-code
       - liquibase
       - e2e
+      - sonar
       - codeql
       - coverage-report
     runs-on: ubuntu-latest
@@ -1019,8 +1128,12 @@ jobs:
       actions: read  # actions-timeline reads the run's jobs API
     timeout-minutes: 5
     steps:
+      # workflow_run reporters read this enum from this exact run attempt's GitHub job metadata.
+      # No fork-provided file is executed, and no extra reporting job or artifact is needed.
+      - name: "Test validation scope: ${{ needs.detect-changes.outputs.tests_deferred == 'true' && 'deferred' || needs.test.outputs.affected_tests == 'true' && 'affected' || needs.test.result == 'success' && 'full' || 'unavailable' }}"
+        run: echo 'Test validation scope is recorded in the step name.'
       - name: Render run timeline
-        uses: Kesin11/actions-timeline@57fc93f20c6da7fbc14063c6d24a2a5627c799ad  # v3.2.0
+        uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf  # v3.2.1
         with:
           show-waiting-runner: true
       - name: Render summary

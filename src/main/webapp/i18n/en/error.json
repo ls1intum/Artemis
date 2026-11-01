@@ -190,7 +190,6 @@
             "invalidSeatCondition": "Room {{ roomNumber }} has an unknown seat condition: '{{ seatCondition }}'",
             "missingLayouts": "Couldn't parse layouts from room {{ roomNumber }}",
             "malformedLayout": "Layout {{ layoutName }} is malformed in room {{ roomNumber }}",
-            "unknownLayoutType": "Unknown layout type '{{ layoutType }}' in layout '{{ layoutName }}' in room {{ roomNumber }}",
             "invalidLayout": "The layout {{ layoutName }} in room {{ roomNumber }} is invalid",
             "seatNotFoundFixedSelection": "The seat at row index {{ rowIndex }} and seat index {{ seatIndex }} in room {{ roomNumber }} does not exist",
             "missingDefaultLayout": "The room {{ roomNumber }} does not have a default layout",

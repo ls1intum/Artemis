@@ -42,6 +42,10 @@
             <span id="fileHelp" class="text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></span>
             @let supportedTypes = 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions };
             <button
+                tumAetUiButton
+                severity="secondary"
+                variant="text"
+                size="small"
                 type="button"
                 class="inline-flex cursor-help border-0 bg-transparent p-0"
                 [attr.aria-label]="supportedTypes"

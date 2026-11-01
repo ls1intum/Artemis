@@ -6,11 +6,33 @@ import {
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackSuggestionType,
+    FeedbackType,
     buildFeedbackTextForReview,
 } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 describe('Feedback', () => {
+    describe('haveCreditsInBounds', () => {
+        it('should only accept points within the bounds for feedback the assessor gives', () => {
+            const withinBounds: Feedback[] = [
+                { credits: 100, type: FeedbackType.MANUAL },
+                { credits: -100, type: FeedbackType.MANUAL_UNREFERENCED },
+            ];
+            expect(Feedback.haveCreditsInBounds(withinBounds)).toBe(true);
+            expect(Feedback.haveCreditsInBounds([{ credits: 100.5, type: FeedbackType.MANUAL }])).toBe(false);
+            expect(Feedback.haveCreditsInBounds([{ credits: Number.NaN }])).toBe(false);
+            expect(Feedback.haveCreditsInBounds(undefined)).toBe(true);
+        });
+
+        it('should not check the points of an instruction or of automatic feedback', () => {
+            const notGivenByAssessor: Feedback[] = [
+                { credits: 150, gradingInstruction: new GradingInstruction() },
+                { credits: 150, type: FeedbackType.AUTOMATIC },
+            ];
+            expect(Feedback.haveCreditsInBounds(notGivenByAssessor)).toBe(true);
+        });
+    });
+
     describe('getReferenceLineRange', () => {
         it('should parse valid programming reference line ranges', () => {
             expect(Feedback.getReferenceLineRange({ reference: 'file:src/Main.java_line:3-5' })).toEqual({ start: 3, end: 5 });

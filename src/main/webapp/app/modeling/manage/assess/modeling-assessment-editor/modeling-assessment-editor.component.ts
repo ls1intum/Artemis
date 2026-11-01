@@ -53,7 +53,7 @@ import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/a
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
-/** The message of the bound the server enforces on the points of a feedback, see {@link ModelingAssessmentService.areFeedbackCreditsInBounds}. */
+/** The message of the bound the server enforces on the points of a feedback, see {@link Feedback.haveCreditsInBounds}. */
 const FEEDBACK_CREDITS_OUT_OF_BOUNDS = 'error.feedbackCreditsOutOfBounds';
 
 function isCreditsOutOfBounds(error: HttpErrorResponse): boolean {
@@ -403,7 +403,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (!this.submission()) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.submission()!.id!).subscribe({
+        this.complaintService.findBySubmissionIdForAssessment(this.submission()!.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
@@ -500,7 +500,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
-        if (!this.modelingAssessmentService.areFeedbackCreditsInBounds(this.feedback)) {
+        if (!Feedback.haveCreditsInBounds(this.feedback)) {
             this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
             return;
         }
@@ -549,7 +549,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
-        if (!this.modelingAssessmentService.areFeedbackCreditsInBounds(this.feedback)) {
+        if (!Feedback.haveCreditsInBounds(this.feedback)) {
             this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
             return;
         }
@@ -586,7 +586,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             assessmentAfterComplaint.onError();
             return;
         }
-        if (!this.modelingAssessmentService.areFeedbackCreditsInBounds(this.feedback)) {
+        if (!Feedback.haveCreditsInBounds(this.feedback)) {
             this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
             assessmentAfterComplaint.onError();
             return;

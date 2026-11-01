@@ -747,7 +747,7 @@ class StructuralOracleSeederTest {
                 ```
                 """, Set.of("Sorter", "Order", "MergeSort"));
         assertThat(parsed.errors()).isEmpty();
-        String oracle = parsed.contract().toOracle("sorting", JsonMapper.builder().build());
+        String oracle = parsed.contract().toOracle("sorting");
         assertThat(oracle).contains("\"isInterface\"", "\"isEnum\"", "\"isAbstract\"");
 
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
@@ -774,38 +774,6 @@ class StructuralOracleSeederTest {
     }
 
     @Test
-    void filterOracle_keepsOnlyCreatedPublicClasses_andStripsPrivateMembers() throws Exception {
-        // MergeSort is a public class missing from the template (keep, but drop its private member); BubbleSort exists in the template (drop the whole entry).
-        String oracle = """
-                [ { "class": { "name": "MergeSort", "package": "sorting" },
-                    "methods": [ { "name": "sort", "modifiers": ["public"] }, { "name": "merge", "modifiers": ["private"] } ] },
-                  { "class": { "name": "BubbleSort", "package": "sorting" },
-                    "methods": [ { "name": "helper", "modifiers": ["private"] } ] } ]
-                """;
-        Map<String, String> templateFiles = Map.of("src/sorting/BubbleSort.java", "package sorting;\npublic class BubbleSort {}");
-        Map<String, String> solutionFiles = Map.of("src/sorting/BubbleSort.java", "package sorting;\npublic class BubbleSort {}", "src/sorting/MergeSort.java",
-                "package sorting;\npublic class MergeSort {}");
-
-        String filtered = StructuralOracleSeeder.filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles);
-
-        assertThat(filtered).contains("MergeSort").contains("sort").doesNotContain("BubbleSort").doesNotContain("merge").doesNotContain("helper");
-    }
-
-    @Test
-    void approvedOwnershipPreventsASolutionOnlyHelperFromBecomingGradedStructure() throws Exception {
-        String oracle = """
-                [ { "class": { "name": "StudentStrategy", "package": "sorting" }, "methods": [] },
-                  { "class": { "name": "SolutionHelper", "package": "sorting" }, "methods": [] } ]
-                """;
-        Map<String, String> solutionFiles = Map.of("src/sorting/StudentStrategy.java", "package sorting; public class StudentStrategy {}", "src/sorting/SolutionHelper.java",
-                "package sorting; public class SolutionHelper {}");
-
-        String filtered = StructuralOracleSeeder.filterOracleToCreatedPublicApi(oracle, Map.of(), solutionFiles, Set.of("StudentStrategy"));
-
-        assertThat(filtered).contains("StudentStrategy").doesNotContain("SolutionHelper");
-    }
-
-    @Test
     void approvedSpecificationWithNoStudentCreatedTypesDoesNotGradeSolutionOnlyHelpers() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         Map<String, String> solution = Map.of("src/sorting/SolutionHelper.java", "package sorting;\npublic class SolutionHelper { public void help() {} }");
@@ -826,16 +794,6 @@ class StructuralOracleSeederTest {
 
         assertThat(seededTests.testNames()).isEmpty();
         verify(sandbox, never()).copyIn(any(), any(), any());
-    }
-
-    @Test
-    void filterOracle_dropsAMissingButNonPublicClass() throws Exception {
-        // A package-private helper class missing from the template is an implementation detail, not a contract the student must fulfil — do not enforce it.
-        String oracle = "[ { \"class\": { \"name\": \"Helper\", \"package\": \"x\" }, \"methods\": [ { \"name\": \"h\", \"modifiers\": [\"public\"] } ] } ]";
-        Map<String, String> templateFiles = Map.of("src/x/Main.java", "package x;\npublic class Main {}");
-        Map<String, String> solutionFiles = Map.of("src/x/Helper.java", "package x;\nclass Helper { public void h(){} }");
-
-        assertThat(StructuralOracleSeeder.filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles)).isEqualTo("[]");
     }
 
     @Test

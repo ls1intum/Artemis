@@ -13,10 +13,10 @@ import * as credentialOptionUtil from './util/credential-option.util';
 import { encodeAsBase64Url } from 'app/foundation/util/base64.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { signal } from '@angular/core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
-vi.mock('@sentry/angular', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('@sentry/angular')>()),
+vi.mock('app/core/error-reporting/capture-exception', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('app/core/error-reporting/capture-exception')>()),
     captureException: vi.fn(),
 }));
 

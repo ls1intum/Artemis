@@ -1,3 +1,11 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDoughnutChartComponent,
+    TumAetUiDoughnutChartConfig,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
@@ -50,7 +58,6 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -62,9 +69,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TooltipModule } from 'primeng/tooltip';
-import { Message } from 'primeng/message';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
@@ -109,9 +113,8 @@ export interface ExampleSubmissionQueryParams {
         ModelingEditorComponent,
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
-        NgbTooltip,
-        TooltipModule,
-        Message,
+        TumAetUiTooltipDirective,
+        TumAetUiMessageComponent,
         SortDirective,
         SortByDirective,
         LanguageTableCellComponent,
@@ -122,6 +125,7 @@ export interface ExampleSubmissionQueryParams {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
+        TumAetUiTableDirective,
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
@@ -455,20 +459,24 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 }
                 this.scheduleAssessmentAvailabilityUpdate();
 
+                if (!this.isTestRun()) {
+                    const complaintQueue = this.accountService.isAtLeastInstructorForExercise(exercise)
+                        ? this.submissionService.getSubmissionsWithComplaintsForInstructor(this.exerciseId())
+                        : this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId());
+                    complaintQueue.subscribe({
+                        next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+                            this.submissionsWithComplaints.set(res.body || []);
+                            this.sortComplaintRows();
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                }
                 this.setupLinks();
             },
             error: (response: string) => this.onError(response),
         });
 
         if (!this.isTestRun()) {
-            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId()).subscribe({
-                next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
-                    this.submissionsWithComplaints.set(res.body || []);
-                    this.sortComplaintRows();
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
-
             this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithMoreFeedbackRequests.set(res.body || []);
@@ -631,13 +639,19 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             // TODO: This could be one generic endpoint.
             switch (this.exercise().type) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.textSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
                 case ExerciseType.MODELING:
-                    submissionsObservable = this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.modelingSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.fileUploadSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
                 case ExerciseType.PROGRAMMING:
                     submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
@@ -825,7 +839,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         if (!this.exercise()?.type || !submissionId) {
             return;
         }
-        const route = `/course-management/${this.courseId()}/${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
+        const group = this.exercise().exerciseGroup;
+        const sourcePath = group ? `exams/${group.exam!.id}/exercise-groups/${group.id}/` : '';
+        const route = `/course-management/${this.courseId()}/${sourcePath}${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
         const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {

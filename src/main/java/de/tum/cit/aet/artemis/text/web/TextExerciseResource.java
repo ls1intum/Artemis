@@ -39,16 +39,18 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -67,6 +69,7 @@ import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseService;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * REST controller for managing TextExercise.
@@ -113,8 +116,6 @@ public class TextExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final CourseRepository courseRepository;
-
     private final ChannelRepository channelRepository;
 
     private final Optional<AtlasMLApi> atlasMLApi;
@@ -122,7 +123,7 @@ public class TextExerciseResource {
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
-            GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, CourseRepository courseRepository, ChannelRepository channelRepository,
+            GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, ChannelRepository channelRepository,
             Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
             PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
@@ -138,7 +139,6 @@ public class TextExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.courseRepository = courseRepository;
         this.channelRepository = channelRepository;
         this.examAccessApi = examAccessApi;
         this.atlasMLApi = atlasMLApi;
@@ -151,11 +151,11 @@ public class TextExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
      */
     @GetMapping("courses/{courseId}/text-exercises")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "List the text exercises of a course", description = "Returns a summary of every text exercise of the course, with its id, title, dates and points. Get one exercise for all its fields.")
     public ResponseEntity<List<TextExerciseListItemDTO>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<TextExercise> exercises = textExerciseRepository.findByCourseIdWithCategories(courseId);
         for (TextExercise exercise : exercises) {
             Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
@@ -163,15 +163,6 @@ public class TextExerciseResource {
         }
         List<TextExerciseListItemDTO> dtos = exercises.stream().map(TextExerciseListItemDTO::of).toList();
         return ResponseEntity.ok().body(dtos);
-    }
-
-    private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
-        var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId);
-        if (includePlagiarismDetectionConfig) {
-            // The plagiarism detection configuration is not part of the exercise, so it is read here.
-            textExercise.ifPresent(plagiarismDetectionConfigRepository::attachTo);
-        }
-        return textExercise;
     }
 
     /**
@@ -183,19 +174,37 @@ public class TextExerciseResource {
      *         status 404 (Not Found)
      */
     @GetMapping("text-exercises/{exerciseId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Get a text exercise", description = "Returns all fields of a text exercise. Exercises of exams cannot be read with a personal access token.")
     public ResponseEntity<TextExerciseResponseDTO> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
-        log.debug("REST request to get TextExercise : {}", exerciseId);
-        var textExercise = findTextExercise(exerciseId, withPlagiarismDetectionConfig).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
+        return loadTextExerciseDetails(exerciseId, withPlagiarismDetectionConfig, false);
+    }
 
-        // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
-        if (textExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
+    /**
+     * Retrieves management details of an exam text exercise.
+     *
+     * @param exerciseId                    the id of the exam exercise to retrieve
+     * @param withPlagiarismDetectionConfig whether to include the plagiarism detection configuration
+     * @return the full management details of the exam exercise
+     */
+    @GetMapping("text-exercises/{exerciseId}/for-exam")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<TextExerciseResponseDTO> getTextExerciseForExam(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+        return loadTextExerciseDetails(exerciseId, withPlagiarismDetectionConfig, true);
+    }
+
+    private ResponseEntity<TextExerciseResponseDTO> loadTextExerciseDetails(Long exerciseId, boolean withPlagiarismDetectionConfig, boolean forExam) {
+        log.debug("REST request to get TextExercise : {}", exerciseId);
+        var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
+        if (forExam ? !textExercise.isExamExercise() : !textExercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
         }
-        else {
-            // in courses, also tutors can access the exercise
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
+        if (withPlagiarismDetectionConfig) {
+            plagiarismDetectionConfigRepository.attachTo(textExercise);
         }
+
         if (textExercise.isCourseExercise()) {
             String channelName = channelRepository.findChannelNameByExerciseId(textExercise.getId());
             if (channelName != null) {
@@ -222,12 +231,11 @@ public class TextExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("text-exercises/{exerciseId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete TextExercise : {}", exerciseId);
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
 
         // Notify AtlasML about the exercise deletion before actual deletion
         notifyAtlasML(textExercise, OperationTypeDTO.DELETE, "text exercise deletion");
@@ -251,21 +259,47 @@ public class TextExerciseResource {
     @GetMapping({ "participations/{participationId}/text-editor", "text-editor/{participationId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<TextParticipationDTO> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        return getDataForTextEditor(participationId, resultId, false);
+    }
+
+    /**
+     * Returns the text editor payload for staff in the participation's exercise.
+     *
+     * @param participationId the participation to view
+     * @param resultId        optional result selection
+     * @return the staff editor projection
+     */
+    @FeatureUsage(UserFeature.TEXT_EXERCISES)
+    @GetMapping("participations/{participationId}/text-editor/for-staff")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<TextParticipationDTO> getDataForTextEditorForStaff(@PathVariable Long participationId,
+            @RequestParam(value = "resultId", required = false) Long resultId) {
+        return getDataForTextEditor(participationId, resultId, true);
+    }
+
+    private ResponseEntity<TextParticipationDTO> getDataForTextEditor(Long participationId, Long resultId, boolean staffView) {
         User user = userRepository.getUserWithAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
+        if (staffView) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), user);
+        }
         if (!(participation.getExercise() instanceof TextExercise textExercise)) {
             throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
         }
 
-        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
-        if (!authCheckService.isOwnerOfParticipation(participation, user) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+        if (!staffView && !authCheckService.isOwnerOfParticipation(participation, user)) {
             throw new AccessForbiddenException();
         }
 
-        // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (textExercise.isExamExercise()) {
             ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
-            api.checkIfAllowedToGetExamResult(textExercise, participation, user);
+            if (staffView) {
+                api.checkIfAllowedToGetExamResult(textExercise, participation, user);
+            }
+            else {
+                api.checkIfOwnerAllowedToGetExamResult(textExercise, participation);
+            }
         }
 
         Set<Submission> submissions = participation.getSubmissions();
@@ -279,7 +313,7 @@ public class TextExerciseResource {
                 // set reference to participation to null, since we are already inside a participation
                 textSubmission.setParticipation(null);
 
-                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !staffView) {
                     // We want to have the preliminary feedback before the assessment due date too
                     List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
                     textSubmission.setResults(new LinkedHashSet<>(athenaResults));
@@ -307,8 +341,11 @@ public class TextExerciseResource {
                             returnedResult.setFeedbacks(assessments);
                         }
 
-                        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+                        if (!staffView) {
                             returnedResult.filterSensitiveInformation();
+                        }
+                        else if (returnedResult.getAssessor() != null) {
+                            returnedResult.setAssessor(userRepository.findByIdElseThrow(returnedResult.getAssessor().getId()));
                         }
                     }
                 }
@@ -354,7 +391,8 @@ public class TextExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("text-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<SearchResultPageDTO<TextExerciseListItemDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithAuthorities();

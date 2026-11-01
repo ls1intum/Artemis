@@ -1,16 +1,23 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiInputDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+} from '@tumaet/ui-angular';
+
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ButtonDirective } from 'primeng/button';
-import { ConfirmationService, MenuItem } from 'primeng/api';
-import { Menu, MenuModule } from 'primeng/menu';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
@@ -20,6 +27,11 @@ import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-revie
 import { consistencyIssueContentOf, sortCommentsByCreatedDateThenId, threadLocationLabel } from 'app/exercise/review/review-comment-utils';
 import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
+
+interface ReviewMenuItem {
+    id: string;
+    label: string;
+}
 
 interface RelatedThreadLocation {
     threadId: number;
@@ -35,22 +47,24 @@ interface RelatedThreadLocation {
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [
+        TumAetUiConfirmDialogComponent,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
         FormsModule,
-        ButtonDirective,
-        MenuModule,
-        ConfirmDialogModule,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
         FaIconComponent,
         MonacoDiffEditorComponent,
-        TumAetUiButtonDirective,
     ],
-    providers: [ConfirmationService],
+    providers: [TumAetUiConfirmationService],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
-    private readonly confirmationService = inject(ConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
 
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
@@ -73,11 +87,11 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly editingCommentId = signal<number | undefined>(undefined);
     readonly editingCommentType = signal<CommentType | undefined>(undefined);
     readonly editText = signal('');
-    readonly userCommentMenuItems = signal<MenuItem[]>([]);
-    readonly nonUserCommentMenuItems = signal<MenuItem[]>([]);
-    readonly resolveGroupMenuItems = signal<MenuItem[]>([]);
-    readonly commentMenus = viewChildren<Menu>('commentMenu');
-    readonly resolveGroupMenu = viewChild<Menu>('resolveGroupMenu');
+    readonly userCommentMenuItems = signal<ReviewMenuItem[]>([]);
+    readonly nonUserCommentMenuItems = signal<ReviewMenuItem[]>([]);
+    readonly resolveGroupMenuItems = signal<ReviewMenuItem[]>([]);
+    readonly commentMenus = viewChildren('commentMenu', { read: TumAetUiMenuTriggerDirective });
+    readonly resolveGroupMenu = viewChild('resolveGroupMenu', { read: TumAetUiMenuTriggerDirective });
     readonly suggestedInlineFixDiffEditor = viewChild(MonacoDiffEditorComponent);
 
     private readonly destroyed$ = new Subject<void>();
@@ -180,7 +194,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             key: this.deleteCommentDialogKey(),
             header: this.translateService.instant('artemisApp.review.deleteCommentConfirmTitle'),
             message: this.translateService.instant('artemisApp.review.deleteCommentConfirmText'),
-            acceptButtonStyleClass: 'p-button-danger',
+            acceptSeverity: 'danger',
+            acceptLabel: this.translateService.instant('entity.action.delete'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
             accept: () => this.reviewCommentService.deleteCommentInContext(commentId),
         });
     }
@@ -422,9 +438,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      */
     hideAllCommentMenus(): void {
         for (const menu of this.commentMenus()) {
-            menu.hide();
+            menu.close();
         }
-        this.resolveGroupMenu()?.hide();
+        this.resolveGroupMenu()?.close();
     }
 
     /**
@@ -453,7 +469,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             { id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') },
         ]);
         this.nonUserCommentMenuItems.set([{ id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') }]);
-        const resolveGroupMenuItems: MenuItem[] = [];
+        const resolveGroupMenuItems: ReviewMenuItem[] = [];
         if (this.canResolveGroup()) {
             resolveGroupMenuItems.push({ id: 'resolve-group', label: this.translateService.instant('artemisApp.review.resolveThreadGroup') });
         }
@@ -463,7 +479,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         this.resolveGroupMenuItems.set(resolveGroupMenuItems);
     }
 
-    private readonly hideOpenMenus = (): void => {
+    private readonly hideOpenMenus = (event: Event): void => {
+        // Focusing an Aria menu item can scroll its overlay. That does not move the editor anchor,
+        // and closing here would dismiss the menu before the user can choose an action.
+        if (event.target instanceof Element && event.target.closest('tumaet-ui-menu')) {
+            return;
+        }
         this.hideAllCommentMenus();
     };
 

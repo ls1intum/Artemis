@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -50,6 +51,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRe
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -287,7 +289,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExampleAssessmentAsTutor() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
@@ -313,7 +315,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @ParameterizedTest
     @ValueSource(strings = { "own", "foreign", "missing" })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exampleAssessmentValidatesGradingInstructionOwnership(String instructionSource) throws Exception {
         boolean ownInstruction = instructionSource.equals("own");
         var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
@@ -346,7 +348,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void assessmentCannotAttachInstructionToResultOfAnotherSubmission() throws Exception {
         var submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
         var otherSubmission = modelingExerciseUtilService.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/model.54727.json",
@@ -368,7 +370,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExampleAssessmentAsTutorNoTutorial() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, false));
@@ -382,7 +384,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExampleAssessmentAsInstructor() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
@@ -407,7 +409,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSave() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
@@ -425,7 +427,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSave_creditsOutOfBounds() throws Exception {
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
                 TEST_PREFIX + "student1");
@@ -444,7 +446,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSave_creditsOutOfBoundsNotExemptedByClientData() throws Exception {
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
                 TEST_PREFIX + "student1");
@@ -495,7 +497,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSubmit_classDiagram() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
@@ -518,7 +520,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSubmit_activityDiagram() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json",
@@ -535,7 +537,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSubmit_objectDiagram() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/object-model.json",
@@ -551,7 +553,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSubmit_useCaseDiagram() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json",
@@ -568,7 +570,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSaveAndSubmit() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
@@ -593,7 +595,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     @CsvSource({ "INCLUDED_COMPLETELY,true", "INCLUDED_COMPLETELY,false", "INCLUDED_AS_BONUS,true", "INCLUDED_AS_BONUS,false", "NOT_INCLUDED,true", "INCLUDED_AS_BONUS,false" })
     void testManualAssessmentSubmit(IncludedInOverallScore includedInOverallScore, boolean bonus) throws Exception {
         // setting up exercise
@@ -629,7 +631,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testManualAssessmentSubmit_withResultOver100Percent() throws Exception {
         useCaseExercise = (ModelingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(useCaseExercise);
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json",
@@ -659,7 +661,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAutomaticAssessment_existingManualAssessmentDoesNotChange() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         Feedback changedFeedback = new Feedback().credits(2.0).text("another text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
@@ -738,82 +740,82 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void cancelOwnAssessmentAsTutor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testOverrideAssessment_saveInstructorPossible() throws Exception {
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAssessment_saveSameTutorPossible() throws Exception {
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testOverrideAssessment_submitInstructorPossible() throws Exception {
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAssessment_submitSameTutorPossible() throws Exception {
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
@@ -821,28 +823,28 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
@@ -850,7 +852,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void multipleCorrectionRoundsForExam() throws Exception {
         // Setup exam with 2 correction rounds and a programming exercise
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
@@ -874,6 +876,13 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         Participation studentParticipation = submission.getParticipation();
 
+        var testRunSubmission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(exercise,
+                ParticipationFactory.generateModelingSubmission("{}", true), TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        var testRunParticipation = (StudentParticipation) testRunSubmission.getParticipation();
+        testRunParticipation.setTestRun(true);
+        studentParticipationRepository.save(testRunParticipation);
+        var assessedParticipationId = studentParticipation.getId();
+
         // request to manually assess latest submission (correction round: 0)
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
@@ -889,10 +898,9 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // make sure that new result correctly appears inside the continue box
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-                paramsGetAssessedCR1Tutor1);
+        var assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.OK,
+                ModelingSubmission.class, paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
@@ -908,7 +916,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
                 ResultDTO.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -931,8 +939,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
-        assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
+        assertThat(databaseRelationshipStateOfResultsOverSubmission).extracting(StudentParticipation::getId).containsExactlyInAnyOrder(assessedParticipationId,
+                testRunParticipation.getId());
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.stream().filter(participation -> participation.getId().equals(assessedParticipationId)).findFirst()
+                .orElseThrow();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
@@ -967,8 +977,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
                 .contains(submissionWithoutSecondAssessment.getLatestResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
-        assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
+        assertThat(databaseRelationshipStateOfResultsOverSubmission).extracting(StudentParticipation::getId).containsExactlyInAnyOrder(assessedParticipationId,
+                testRunParticipation.getId());
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.stream().filter(participation -> participation.getId().equals(assessedParticipationId)).findFirst()
+                .orElseThrow();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
@@ -985,9 +997,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // make sure that new result correctly appears after the assessment for second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -996,9 +1007,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
@@ -1025,7 +1035,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void overrideAssessment_inFirstCorrectionRoundByInstructor() throws Exception {
         String student = TEST_PREFIX + "student1";
         String originalAssessor = TEST_PREFIX + "tutor1";
@@ -1064,7 +1074,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void overrideAssessmentAfterComplaint() throws Exception {
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5),
                 ZonedDateTime.now().plusDays(8), DiagramType.ClassDiagram, course);
@@ -1144,7 +1154,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
      * {@link ComplaintResponseRequestDTO}. Pins the wire contract that the response carries the updated feedback references.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testUpdateModelingAssessmentAfterComplaint_overHttp() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -1177,7 +1187,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
      * feedback references, all of which the modeling assessment editor reads.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSaveModelingAssessment_responseCarriesWireContractFields() throws Exception {
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
                 TEST_PREFIX + "student1");
@@ -1198,7 +1208,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
      * The kept feedback keeps its id through the DTO round-trip; a fresh reload asserts the exact surviving feedback set.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSaveModelingAssessment_omittedFeedbackIsOrphanRemoved() throws Exception {
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
                 TEST_PREFIX + "student1");
@@ -1227,7 +1237,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
      * Performance guard: mapping preview-only long feedback DTOs must bulk-load both the stored previews and full texts.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSaveModelingAssessment_manyLongFeedbacks_hasBoundedQueryCount() throws Exception {
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
                 TEST_PREFIX + "student1");
@@ -1255,7 +1265,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
      * one query per feedback item.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSaveModelingAssessment_manyStructuredFeedbacks_hasBoundedQueryCount() throws Exception {
         // Persist 5 grading instructions across 3 criteria on the exercise.
         Set<GradingCriterion> criteria = exerciseUtilService.addGradingInstructionsToExercise(classExercise);
@@ -1320,4 +1330,82 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     private static List<Result> resultsInCreationOrder(Submission submission) {
         return submission.getResults().stream().filter(Objects::nonNull).sorted(Comparator.comparing(Result::getId)).toList();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ownerWithoutResultRequiresCurrentCourseMembership() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmission(classExercise, ParticipationFactory.generateModelingSubmission(validModel, true),
+                TEST_PREFIX + "student1");
+        var url = API_MODELING_SUBMISSIONS + submission.getId() + "/result";
+        assertThat(submission.getLatestResult()).isNull();
+        request.get(url, HttpStatus.NOT_FOUND, ResultDTO.class);
+        userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), course);
+        request.get(url, HttpStatus.FORBIDDEN, ResultDTO.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getLatestResult()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerResultRequiresOwnershipEvenForInstructor() throws Exception {
+        saveModelingSubmissionAndAssessment(true);
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        var url = API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result";
+        request.get(url, HttpStatus.FORBIDDEN, ResultDTO.class);
+        request.get(url + "?resultId=" + modelingSubmission.getLatestResult().getId(), HttpStatus.FORBIDDEN, ResultDTO.class);
+        assertThat(request.get(url + "/for-instructor", HttpStatus.OK, ResultDTO.class).assessor()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerResultAlwaysFiltersInstructorOwner() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise,
+                ParticipationFactory.generateModelingSubmission(validModel, true), TEST_PREFIX + "instructor1", TEST_PREFIX + "tutor1");
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        var url = API_MODELING_SUBMISSIONS + submission.getId() + "/result";
+        assertThat(request.get(url, HttpStatus.OK, ResultDTO.class).assessor()).isNull();
+        assertThat(request.get(url + "?resultId=" + submission.getLatestResult().getId(), HttpStatus.OK, ResultDTO.class).assessor()).isNull();
+        assertThat(request.get(url + "/for-instructor", HttpStatus.OK, ResultDTO.class).assessor()).isNotNull();
+    }
+
+    @ParameterizedTest
+    @EnumSource(CourseRole.class)
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void instructorResultReadsUseCurrentOwningCourseRole(CourseRole role) throws Exception {
+        saveModelingSubmissionAndAssessment(true);
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, course, role);
+        var url = API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result";
+        for (var suffix : List.of("", "?resultId=" + modelingSubmission.getLatestResult().getId())) {
+            request.get(url + "/for-instructor" + suffix, role == CourseRole.INSTRUCTOR ? HttpStatus.OK : HttpStatus.FORBIDDEN, ResultDTO.class);
+            request.get(url + suffix, HttpStatus.FORBIDDEN, ResultDTO.class);
+        }
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, courseUtilService.addEnrolledEmptyCourse("foreignmodelresult"), CourseRole.INSTRUCTOR);
+        request.get(url + "/for-instructor", HttpStatus.FORBIDDEN, ResultDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorResultsRetainStrictEligibilityAndTestRunException() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise,
+                ParticipationFactory.generateModelingSubmission(validModel, true), TEST_PREFIX + "instructor1", TEST_PREFIX + "tutor1");
+        var url = API_MODELING_SUBMISSIONS + submission.getId() + "/result";
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().plusHours(1));
+        request.get(url + "/for-instructor", HttpStatus.FORBIDDEN, ResultDTO.class);
+        var result = resultRepository.findByIdElseThrow(submission.getLatestResult().getId());
+        result.setCompletionDate(null);
+        resultRepository.save(result);
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        request.get(url + "/for-instructor", HttpStatus.FORBIDDEN, ResultDTO.class);
+        var participation = studentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
+        participation.setTestRun(true);
+        studentParticipationRepository.save(participation);
+        for (var suffix : List.of("", "?resultId=" + result.getId())) {
+            request.get(url + "/for-instructor" + suffix, HttpStatus.OK, ResultDTO.class);
+            request.get(url + suffix, HttpStatus.FORBIDDEN, ResultDTO.class);
+        }
+    }
+
 }

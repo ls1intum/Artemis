@@ -17,8 +17,6 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -39,7 +37,6 @@ class CourseArchiveResourceTest {
         course.setEndDate(COURSE_END_DATE);
 
         CourseRepository courseRepository = mock(CourseRepository.class);
-        AuthorizationCheckService authorizationCheckService = mock(AuthorizationCheckService.class);
         CourseArchiveService courseArchiveService = mock(CourseArchiveService.class);
         CourseOperationProgressService progressService = mock(CourseOperationProgressService.class);
         var conflict = new ConflictException("Another operation is already in progress for this course", Course.ENTITY_NAME, "courseOperationInProgress");
@@ -47,12 +44,11 @@ class CourseArchiveResourceTest {
         when(courseRepository.findByIdElseThrow(COURSE_ID)).thenReturn(course);
         doThrow(conflict).when(progressService).startOperation(eq(COURSE_ID), eq(CourseOperationType.ARCHIVE), eq("Creating directories"), eq(4), any(ZonedDateTime.class));
 
-        var resource = new CourseArchiveResource(courseRepository, authorizationCheckService, mock(UserRepository.class), courseArchiveService, progressService);
+        var resource = new CourseArchiveResource(courseRepository, mock(UserRepository.class), courseArchiveService, progressService);
 
         assertThatThrownBy(() -> resource.archiveCourse(COURSE_ID)).isSameAs(conflict);
         verifyNoInteractions(courseArchiveService);
         verify(courseRepository, never()).findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(COURSE_ID);
-        verify(authorizationCheckService).checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
     }
 
     @Test
@@ -73,7 +69,7 @@ class CourseArchiveResourceTest {
                 .thenReturn(operationClaim);
         doThrow(error).when(courseArchiveService).archiveCourse(course, operationClaim);
 
-        var resource = new CourseArchiveResource(courseRepository, mock(AuthorizationCheckService.class), mock(UserRepository.class), courseArchiveService, progressService);
+        var resource = new CourseArchiveResource(courseRepository, mock(UserRepository.class), courseArchiveService, progressService);
 
         assertThatThrownBy(() -> resource.archiveCourse(COURSE_ID)).isSameAs(error);
         verify(progressService).releaseOperationClaim(operationClaim);
@@ -96,7 +92,7 @@ class CourseArchiveResourceTest {
                 .thenReturn(operationClaim);
         when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(COURSE_ID)).thenThrow(failure);
 
-        var resource = new CourseArchiveResource(courseRepository, mock(AuthorizationCheckService.class), mock(UserRepository.class), courseArchiveService, progressService);
+        var resource = new CourseArchiveResource(courseRepository, mock(UserRepository.class), courseArchiveService, progressService);
 
         assertThatThrownBy(() -> resource.archiveCourse(COURSE_ID)).isSameAs(failure);
         verify(progressService).failOperation(operationClaim, "Archive failed", 0, 4, 0, failure.getMessage(), 0);

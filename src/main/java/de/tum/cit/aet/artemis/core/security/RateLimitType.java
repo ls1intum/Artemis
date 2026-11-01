@@ -104,7 +104,19 @@ public enum RateLimitType {
      * Default: 300 requests per minute per client, overridable with
      * {@code artemis.rate-limiting.content-search-requests-per-minute}.
      */
-    CONTENT_SEARCH(300);
+    CONTENT_SEARCH(300),
+
+    /**
+     * Rate limit for the editor-facing fetch of an online resource's metadata. Each request makes the server open an
+     * outbound connection to a user-supplied link, so the limit bounds that use of the server as an HTTP client.
+     * <p>
+     * Kept in its own bucket rather than sharing {@link #AUTHENTICATION}, so that editors previewing links never draw
+     * down the allowance that logins and git authentication of everyone behind the same address depend on.
+     * <p>
+     * Default: 30 requests per minute per client, overridable with
+     * {@code artemis.rate-limiting.online-resource-fetch-requests-per-minute}.
+     */
+    ONLINE_RESOURCE_FETCH(30);
 
     private final int defaultRpm;
 

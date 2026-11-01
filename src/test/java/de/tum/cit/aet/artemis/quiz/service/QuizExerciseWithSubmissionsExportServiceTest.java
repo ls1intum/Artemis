@@ -53,7 +53,7 @@ class QuizExerciseWithSubmissionsExportServiceTest extends AbstractSpringIntegra
     private Path exportDir;
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportExerciseWithSubmissions_writesTheQuestionsAndTheirSolutionsWithoutTheEntityGraph() throws Exception {
         Course course = courseUtilService.createCourse();
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, RELEASE_DATE, RELEASE_DATE.plusHours(3), RELEASE_DATE.plusHours(4),
@@ -71,7 +71,7 @@ class QuizExerciseWithSubmissionsExportServiceTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportExerciseWithSubmissions_withBackgroundImage_reportsMissingBackgroundFile() {
         Course course = courseUtilService.createCourse();
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, RELEASE_DATE, RELEASE_DATE.plusHours(3), RELEASE_DATE.plusHours(4),
