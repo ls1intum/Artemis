@@ -40,7 +40,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String input = "$.components.schemas.UpdateGlobalNotificationSetting";
         String[] notificationTypes = Arrays.stream(GlobalNotificationType.values()).map(Enum::name).toArray(String[]::new);
 
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(16)))
                 .andExpect(jsonPath(read + ".operationId").value("getGlobalNotificationSettings"))
                 .andExpect(jsonPath(read + ".responses['200'].content['application/json'].schema.additionalProperties.type").value("boolean"))
                 .andExpect(jsonPath(update + ".operationId").value("updateGlobalNotificationSetting")).andExpect(jsonPath(update + ".parameters[0].name").value("notificationType"))
@@ -57,8 +57,8 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void shouldExportAllSevenSystemOperationsWithRealHeadersStatusesAndPageableParameters() throws Exception {
-        String list = "$.paths['/api/notification/system-notifications'].get";
-        String find = "$.paths['/api/notification/system-notifications/{notificationId}'].get";
+        String list = "$.paths['/api/notification/admin/system-notifications'].get";
+        String find = "$.paths['/api/notification/admin/system-notifications/{notificationId}'].get";
         String active = "$.paths['/api/notification/public/system-notifications/active'].get";
         String create = "$.paths['/api/notification/admin/system-notifications'].post";
         String update = "$.paths['/api/notification/admin/system-notifications'].put";
@@ -66,8 +66,12 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String count = "$.paths['/api/notification/admin/system-notifications/maintenance-recipients-count'].get";
         String response = "$.components.schemas.SystemNotification";
         String input = "$.components.schemas.SystemNotificationUpdate";
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(16)))
                 .andExpect(jsonPath(list + ".operationId").value("getAllSystemNotifications"))
+                .andExpect(jsonPath(list + ".tags", hasItem("admin-system-notification")))
+                .andExpect(jsonPath(find + ".tags", hasItem("admin-system-notification")))
+                .andExpect(jsonPath("$.paths['/api/notification/system-notifications']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/notification/system-notifications/{notificationId}']").doesNotExist())
                 .andExpect(jsonPath(list + ".parameters[*].name", containsInAnyOrder("page", "size", "sort"))).andExpect(jsonPath(list + ".parameters[0].schema.default").value(0))
                 .andExpect(jsonPath(list + ".parameters[1].schema.default").value(20)).andExpect(jsonPath(list + ".parameters[2].schema.type").value("array"))
                 .andExpect(jsonPath(list + ".responses['200'].content['application/json'].schema.type").value("array"))
@@ -116,7 +120,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String info = "$.components.schemas.CourseNotificationSettingInfo";
         String input = "$.components.schemas.CourseNotificationSettingSpecificationRequest";
         String channels = ".properties.notificationTypeChannels.additionalProperties";
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(16)))
                 .andExpect(jsonPath(read + ".operationId").value("getUserCourseNotificationSettings")).andExpect(jsonPath(read + ".parameters[0].name").value("courseId"))
                 .andExpect(jsonPath(read + ".parameters[0].in").value("path"))
                 .andExpect(jsonPath(read + ".responses['200'].content['application/json'].schema['$ref']").value("#/components/schemas/CourseNotificationSettingInfo"))
@@ -143,7 +147,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String state = "$.paths['/api/notification/courses/{courseId}/status'].put";
         String seen = "$.paths['/api/notification/courses/{courseId}/seen'].put";
         String archive = "$.paths['/api/notification/courses/{courseId}/archive-all'].put";
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(16)))
                 .andExpect(jsonPath(feed + ".operationId").value("getCourseNotifications"))
                 .andExpect(jsonPath(feed + ".parameters[*].name", containsInAnyOrder("courseId", "page", "size", "sort")))
                 .andExpect(jsonPath(feed + ".responses['200'].content['application/json'].schema['$ref']").value("#/components/schemas/CourseNotificationPage"))
@@ -176,7 +180,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         String unregister = "$.paths['/api/notification/push_notification/unregister'].delete";
         String input = "$.components.schemas.PushNotificationRegisterBody";
         String legacy = "$.components.schemas.PushNotificationUnregisterRequest";
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(18)))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andExpect(jsonPath("$.paths", aMapWithSize(16)))
                 .andExpect(jsonPath(register + ".operationId").value("registerPushNotificationDevice")).andExpect(jsonPath(register + ".requestBody.required").value(true))
                 .andExpect(jsonPath(register + ".requestBody.content['application/json'].schema['$ref']").value("#/components/schemas/PushNotificationRegisterBody"))
                 .andExpect(jsonPath(register + ".responses['200'].content['application/json'].schema['$ref']").value("#/components/schemas/PushNotificationRegister"))
@@ -206,7 +210,7 @@ class NotificationOpenApiContractTest extends AbstractSpringIntegrationIndepende
         var result = request.performMvcRequest(MockMvcRequestBuilders.get("/api-docs")).andExpect(status().isOk()).andReturn();
         var paths = objectMapper.readTree(result.getResponse().getContentAsString()).path("paths");
         Set<String> expected = Set.of("GET /api/notification/global-notification-settings", "PUT /api/notification/global-notification-settings/{notificationType}",
-                "GET /api/notification/system-notifications", "GET /api/notification/system-notifications/{notificationId}",
+                "GET /api/notification/admin/system-notifications", "GET /api/notification/admin/system-notifications/{notificationId}",
                 "GET /api/notification/public/system-notifications/active", "POST /api/notification/admin/system-notifications", "PUT /api/notification/admin/system-notifications",
                 "DELETE /api/notification/admin/system-notifications/{notificationId}", "GET /api/notification/admin/system-notifications/maintenance-recipients-count",
                 "GET /api/notification/courses/info", "GET /api/notification/courses/{courseId}", "GET /api/notification/courses/{courseId}/settings",

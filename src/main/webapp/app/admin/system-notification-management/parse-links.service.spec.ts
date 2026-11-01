@@ -50,9 +50,9 @@ describe('ParseLinks Service', () => {
     it('should return links when headers are passed even if link contains ,', () => {
         const expectedLinks = { last: 0, first: 1 };
         const parsedLinks = service.parse(
-            '<https://localhost/api/notification/system-notifications' +
+            '<https://localhost/api/notification/admin/system-notifications' +
                 '?sort=notificationDate,desc&sort=id&page=0&size=50>; rel="last",' +
-                '<https://localhost/api/notification/system-notifications' +
+                '<https://localhost/api/notification/admin/system-notifications' +
                 '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"',
         );
         expect(parsedLinks).toEqual(expectedLinks);
@@ -63,7 +63,7 @@ describe('ParseLinks Service', () => {
         const parsedLinks = service.parse(
             '<https://localhost/api/notification' +
                 ';a=b/system-notifications?sort=notificationDate,desc&sort=id&page=0&size=50>; rel="last",' +
-                '<https://localhost/api/notification/system-notifications' +
+                '<https://localhost/api/notification/admin/system-notifications' +
                 '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"',
         );
         expect(parsedLinks).toEqual(expectedLinks);
